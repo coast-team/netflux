@@ -1,5 +1,5 @@
 {
-  "name": "p2p",
+  "name": "netflux",
   "version": "0.1.0",
   "description": "Peer to peer client side transport API based on WebRTC",
   "main": "src/index.js",
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/coast-team/p2p.git"
+    "url": "git+https://github.com/coast-team/netflux.git"
   },
   "keywords": [
     "webRTC",
@@ -19,7 +19,7 @@
   "author": "Philippe Kalitine <philippe.kalitine@gmail.com> (http://philippe.kalitine.name/)",
   "license": "AGPL-3.0",
   "bugs": {
-    "url": "https://github.com/coast-team/p2p/issues"
+    "url": "https://github.com/coast-team/netflux/issues"
   },
-  "homepage": "https://github.com/coast-team/p2p#readme"
+  "homepage": "https://github.com/coast-team/netflux#readme"
 }
