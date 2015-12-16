@@ -1,0 +1,25 @@
+{
+  "name": "p2p",
+  "version": "0.1.0",
+  "description": "Peer to peer client side transport API based on WebRTC",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/coast-team/p2p.git"
+  },
+  "keywords": [
+    "webRTC",
+    "p2p",
+    "peer",
+    "network"
+  ],
+  "author": "Philippe Kalitine <philippe.kalitine@gmail.com> (http://philippe.kalitine.name/)",
+  "license": "AGPL-3.0",
+  "bugs": {
+    "url": "https://github.com/coast-team/p2p/issues"
+  },
+  "homepage": "https://github.com/coast-team/p2p#readme"
+}
