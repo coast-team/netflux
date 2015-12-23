@@ -1,14 +1,19 @@
 {
   "name": "netflux",
-  "version": "0.1.0",
+  "version": "0.0.0-semantic-release",
   "description": "Peer to peer client side transport API based on WebRTC",
-  "main": "src/index.js",
+  "main": "build/netflux.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "prebuild": "rm -rf build && mkdir build",
+    "build": "browserify -t [ babelify --presets [ es2015 ] ] src/index.js -o build/netflux.js",
+    "pretest": "rm -rf coverage",
+    "test": "karma start",
+    "commit": "git-cz",
+    "semantic-release": "semantic-release pre && npm publish && semantic-release post"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/coast-team/netflux.git"
+    "url": "https://github.com/coast-team/netflux.git"
   },
   "keywords": [
     "webRTC",
@@ -21,5 +26,35 @@
   "bugs": {
     "url": "https://github.com/coast-team/netflux/issues"
   },
-  "homepage": "https://github.com/coast-team/netflux#readme"
+  "homepage": "https://github.com/coast-team/netflux#readme",
+  "devDependencies": {
+    "babel-preset-es2015": "^6.3.13",
+    "babelify": "^7.2.0",
+    "browserify": "^12.0.1",
+    "browserify-istanbul": "^0.2.1",
+    "commitizen": "^2.4.6",
+    "cz-conventional-changelog": "^1.1.5",
+    "eslint": "^1.10.3",
+    "eslint-config-airbnb": "^2.1.1",
+    "ghooks": "^1.0.1",
+    "jasmine-core": "2.4.1",
+    "karma": "^0.13.15",
+    "karma-browserify": "^4.4.2",
+    "karma-chrome-launcher": "^0.2.2",
+    "karma-coverage": "^0.5.3",
+    "karma-firefox-launcher": "^0.1.7",
+    "karma-jasmine": "^0.3.6",
+    "karma-opera-launcher": "^0.3.0",
+    "semantic-release": "^4.3.5",
+    "semantic-release-cli": "^1.3.3",
+    "uniq": "^1.0.1"
+  },
+  "config": {
+    "ghooks": {
+      "pre-commit": "npm run test"
+    },
+    "commitizen": {
+      "path": "node_modules/cz-conventional-changelog"
+    }
+  }
 }

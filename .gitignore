@@ -1,1 +1,8 @@
+node_modules
 npm-debug.log
+
+# Build
+build
+
+# Coverage
+coverage
