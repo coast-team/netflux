@@ -1,10 +1,17 @@
 # Netflux
 
+------
+[![devDependency Status](https://david-dm.org/coast-team/netflux/dev-status.svg?style=flat-square)](https://david-dm.org/coast-team/netflux#info=devDependencies)
+[![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg?style=flat-square)](http://commitizen.github.io/cz-cli/)
+[![Build Status](https://travis-ci.org/coast-team/netflux.svg?branch=master)](https://travis-ci.org/coast-team/netflux)
+[![Code Climate](https://codeclimate.com/github/coast-team/netflux/badges/gpa.svg)](https://codeclimate.com/github/coast-team/netflux)
+[![Test Coverage](https://codeclimate.com/github/coast-team/netflux/badges/coverage.svg)](https://codeclimate.com/github/coast-team/netflux/coverage)
+
 Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done.
 
 ## API specification (*warning*: very early state)
 
-
+------
 ### Facade
 
 - **create**(networkTopology: *json*): *Network*
@@ -16,7 +23,7 @@ Abstract peer to peer client transport API. Implementations based on WebRTC and 
 
 - **leave**(net : *Network*)
    leave an existing network
-   
+
 - **connect**(signalingServerURL: *string*): *Peer*
    establish a direct connection with another peer without creating or joining any network.
 
@@ -52,7 +59,7 @@ Abstract peer to peer client transport API. Implementations based on WebRTC and 
 
 - **onMessage**(...)
    actions to do when a message arrives from the network.
- 
+
 
 ### Peer
 

@@ -10,13 +10,23 @@ module.exports = function(config) {
 
     // frameworks to use
     // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
-    frameworks: ['browserify', 'jasmine'],
+    frameworks: ['jspm', 'jasmine'],
 
+    jspm: {
+      config: 'config.js',
+      loadFiles: ['test/**/*.js'],
+      serveFiles: ['src/**/*.js']
+    },
+
+    proxies: {
+      '/src/': '/base/src/',
+      '/test/': '/base/test/',
+      '/jspm_packages/': '/base/jspm_packages/'
+    },
 
     // list of files / patterns to load in the browser
     files: [
-      {pattern:'src/**/*.js', included: false},
-      'test/**/*test.js'
+      'node_modules/babel-polyfill/dist/polyfill.js'
     ],
 
 
@@ -28,15 +38,18 @@ module.exports = function(config) {
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
     preprocessors: {
-      'src/**/*.js': ['browserify'],
-      'test/**/*.js': ['browserify']
+      'src/**/*.js': ['babel', 'sourcemap', 'coverage']
     },
 
-    browserify: {
-      debug: true,
-      transform: [['babelify', {presets: ['es2015']}],"browserify-istanbul"]
+    babelPreprocessor: {
+      options: {
+        presets: ['es2015'],
+        sourceMap: 'inline'
+      },
+      sourceFileName: function (file) {
+        return file.originalPath;
+      }
     },
-
 
     // test results reporter to use
     // possible values: 'dots', 'progress'
@@ -44,9 +57,14 @@ module.exports = function(config) {
     reporters: ['dots', 'coverage'],
 
     coverageReporter: {
+      instrumenters: {isparta: require('isparta')},
+      instrumenter: {
+          'src/*.js': 'isparta'
+      },
       reporters: [
         {type: 'html'},
-        {type: 'text'}
+        {type: 'text'},
+        {type: 'lcovonly', subdir: '.'}
       ]
     },
 

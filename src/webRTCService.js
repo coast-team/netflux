@@ -1,4 +1,4 @@
-import { Peer } from './peer';
+import { Peer } from '../src/peer';
 
 class WebRTCService {
   constructor() {
@@ -34,12 +34,12 @@ class WebRTCService {
   }
 
   connect(signalingServerURL) {
-    let peer = new Peer();
-    let me = new this.RTCPeerConnection(this.default);
-    let dataChannel = me.createDataChannel(this._randomString());
-    let promise = new Promise((resolve, reject) => {
-
-    });
+    // let peer = new Peer();
+    // let me = new this.RTCPeerConnection(this.default);
+    // let dataChannel = me.createDataChannel(this._randomString());
+    // let promise = new Promise((resolve, reject) => {
+    //
+    // });
   }
 
   disconnect(connectorObj) {

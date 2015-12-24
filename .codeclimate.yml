@@ -1,0 +1,8 @@
+engines:
+  eslint:
+    enabled: true
+  fixme:
+    enabled: true
+ratings:
+  paths:
+    "src/*.js"
