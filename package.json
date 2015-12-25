@@ -8,7 +8,7 @@
     "build": "browserify -t [ babelify --presets [ es2015 ] ] src/index.js -o build/netflux.js",
     "pretest": "rm -rf coverage",
     "test": "karma start",
-    "test:travis": "karma start --browsers Firefox",
+    "test:travis": "karma start karma.conf.travis.js",
     "commit": "git-cz",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post"
   },
