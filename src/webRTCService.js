@@ -1,5 +1,3 @@
-import { Peer } from '../src/peer';
-
 class WebRTCService {
   constructor() {
     this.RTCPeerConnection =

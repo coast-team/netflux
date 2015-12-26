@@ -1,0 +1,6 @@
+{
+  "ignore": [
+    "karma*.js",
+    "config.js"
+  ]
+}

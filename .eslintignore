@@ -1,4 +1,7 @@
 build
-spec
+jspm_packages
+node_modules
 karma.conf.js
+karma.conf.travis.js
+test
 config.js

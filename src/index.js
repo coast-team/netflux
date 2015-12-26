@@ -1,2 +1,2 @@
-import { Peer } from  './peer';
-import { WebRTCService } from  './webRTCService';
+import { Peer } from './peer';
+import { WebRTCService } from './webRTCService';
