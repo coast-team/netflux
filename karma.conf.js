@@ -12,17 +12,20 @@ module.exports = function(config) {
     // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
     frameworks: ['jspm', 'jasmine'],
 
+
+    // jspm parameters
     jspm: {
       config: 'config.js',
       loadFiles: ['test/**/*.js'],
-      serveFiles: ['src/**/*.js']
+      serveFiles: ['src/**/*.js', 'dist/*js']
     },
-
     proxies: {
       '/src/': '/base/src/',
+      '/dist/': '/base/dist/',
       '/test/': '/base/test/',
       '/jspm_packages/': '/base/jspm_packages/'
     },
+
 
     // list of files / patterns to load in the browser
     files: [
@@ -40,7 +43,6 @@ module.exports = function(config) {
     preprocessors: {
       'src/**/*.js': ['babel', 'sourcemap', 'coverage']
     },
-
     babelPreprocessor: {
       options: {
         presets: ['es2015'],
@@ -50,17 +52,15 @@ module.exports = function(config) {
         return file.originalPath;
       }
     },
+    
 
     // test results reporter to use
     // possible values: 'dots', 'progress'
     // available reporters: https://npmjs.org/browse/keyword/karma-reporter
     reporters: ['dots', 'coverage'],
-
     coverageReporter: {
       instrumenters: {isparta: require('isparta')},
-      instrumenter: {
-          'src/*.js': 'isparta'
-      },
+      instrumenter: {'src/*.js': 'isparta'},
       reporters: [
         {type: 'html'},
         {type: 'text'},

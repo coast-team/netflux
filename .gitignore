@@ -3,7 +3,7 @@ jspm_packages
 npm-debug.log
 
 # Build
-build
+dist
 
 # Coverage
 coverage

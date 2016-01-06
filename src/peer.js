@@ -1,21 +1,14 @@
 class Peer {
-  constructor(id, connector) {
-    this.id = id;
-    this.isNeighbour = true;
-    this.connector = connector;
+  constructor (id, connector) {
+    this.id = id
+    this.isNeighbour = true
   }
 
-  send() {
+  send () {}
 
-  }
+  onMessage () {}
 
-  onMessage() {
-
-  }
-
-  disconnect() {
-
-  }
+  disconnect () {}
 }
 
-export { Peer };
+export { Peer }
