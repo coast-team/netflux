@@ -14,65 +14,96 @@
 
 Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done.
 
-## API specification (*warning*: very early state)
+## API specification (*warning*: early state)
 
 ### Facade
 
-- **create**(networkTopology: *json*): *Network*
-   create a new peer to peer network which might be used to share data and new peer(s).
+#### attributes
 
-- **join**(net: *Network*)
-   join an existing network via signaling server (the peer inviting you to the network must be online).
-   join an existing network via tracking server (acts as signaling server and additionally stores network identifier and list of peers thus allow to join the network even if no other peers online).   
-
-- **leave**(net : *Network*)
-   leave an existing network
-
-- **connect**(signalingServerURL: *string*): *Peer*
-   establish a direct connection with another peer without creating or joining any network.
-
-------
-- **onPeerJoining**(peer: *Peer*, net: *Network*, ...)
-   actions to do when a new peer is joining an existing network.
-
-- **onPeerLeaving**(peer: *Peer*, net: *Network*, ...)
-   actions to do when another peer is leaving an existing network.
-
-------
-- **onJoinRequest**(peer: *Peer*, ...)
-   actions to do when a peer (connected to you directly of via a network) asks you to join one of his network.
-
-- **sendJoinRequest**(peer: *Peer*, net: *Network*)
-   send a join request to a peer connected to you directly of via a network.
-   // peer.sendJoinRequest(net)
-
-------
-- **onMessage**(func(net: Network, ...))
-   actions to do when a message arrives from a network.
-
-- **send**(net: *Network*, peer: *Peer*, ...)
-
-- **broadcast**(net: *Network*, ...)
+- **onPeerJoining**: function (new: *Peer*, oneOfMy: *Network*)
+  * When the *new* peer has joined *oneOfMy* network.
 
 
+- **onPeerLeaving**: function (left: *Peer*, oneOfMy: *Network*)
+  * When the *left* peer has disconnected from *oneOfMy* network.
+
+
+- **onBroadcastMessage**: function (from: Peer, to: Network, data: string)
+  * When a message has arrived from on the network (someone in the network sent a broadcast message).
+
+
+- **onPeerMessage**: function (from: *Peer*, data: *string*)
+  * When some peer in the network has sent a message only to you.
+
+
+- **onJoinRequest**: function (from: *Peer*,  requestData: *Object*)
+  * When some peer in the network has sent you a join request via network. This peer wants you to join one of his network with which you are not connected yet. (see ***Peer.acceptJoinRequest*** and ***Peer.rejectJoinRequest***)
+
+#### methods
+
+- **create** (topology: *string*): *Network*
+  * Create a new peer to peer network.
+
+
+- **connect** (serverURL: *string*): *Promise*
+- **.then** (function (net: *Network*)): *Promise*
+- **.catch** (function (err: *string*)): *Promise*
+  * Connect to a network with server help (LINK...)
+
+
+- **join** (serverURL: *string*): *Promise*
+- **.then** (function (net: *Network*)): *Promise*
+- **.catch** (function (err: *string*)): *Promise*
+  * Join network with server help. *serverURL* is obtained from a peer which started inviting (LINK...).
+
+
+- **sendJoinRequest** (to: *Array [Peer]*, oneOfMy: *Network*)
+  * Send join request message to peers via network to ask them to join *oneOfMy* network.
+
+___
 ### Network
 
-- **send**(peer: *Peer*, ...)
-
-- **broadcast**(...)
-
-- **onMessage**(...)
-   actions to do when a message arrives from the network.
+- **leave** (): *Promise*
+- **.then** (function ()): *Promise*
+- **.catch** (function (err: *string*)): *Promise*
+  * Disconnect from this network.
 
 
+- **send** (to: *Peer*, data: *string*)
+- **.then** (function ()): *Promise*
+- **.catch** (function (err: *string*)): *Promise*
+  * Send a message to some peer in this network.
+
+
+- **broadcast** (data: *string*)
+- **.then** (function ()): *Promise*
+- **.catch** (function (err: *string*)): *Promise*
+  * Send broadcast message to this network.
+
+
+- **startInviting** (serverURL: *string*): *string*
+  * Start inviting people to this network.
+
+
+- **stopInviting** ()
+  * Stop inviting people to this network.
+
+___
 ### Peer
 
-- **getId**(): *peerid*
+- **send** (data: *string*)
+- **.then** (function ()): *Promise*
+- **.catch** (function (err: *string*)): *Promise*
+  * Send message to this peer via network.
 
-- **send**(msg, ...)
 
-- **onMessage**(callback)
+- **sendJoinRequest** (oneOfMy: Network)
+  * Send join request message to this peer via network to ask him to join *oneOfMy* network.
 
-- **sendJoinRequest**(net: Network)
 
-- **disconnect**()
+- **acceptJoinRequest** (requestData.id: *string*)
+  * Accept join request received from this peer which has been sent by him with ***sendJoinRequest*** method.
+
+
+- **rejectJoinRequest** (requestData.id: *string*)
+  * Reject join request received from this peer which has been sent by him with ***sendJoinRequest*** method.
