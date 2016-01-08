@@ -110,3 +110,6 @@ ___
 
 - **rejectJoinRequest** (requestData.id: *string*)
   * Reject join request received from this peer which has been sent by him with ***sendJoinRequest*** method.
+
+## UML
+![Netflux UML class diagram](doc/UML.png)
