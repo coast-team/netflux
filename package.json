@@ -2,7 +2,7 @@
   "name": "netflux",
   "description": "Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done.",
   "main": "dist/netflux.js",
-  "version": "0.0.1",
+  "version": "0.0.0-sementically-released",
   "scripts": {
     "prebuild": "rm -rf dist && mkdir dist",
     "build": "browserify -t [ babelify --presets [ es2015 ] ] src/index.js -o dist/netflux.js",
