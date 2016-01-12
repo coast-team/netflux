@@ -16,7 +16,7 @@ module.exports = function(config) {
     // jspm parameters
     jspm: {
       config: 'config.js',
-      loadFiles: ['test/**/*.js'],
+      loadFiles: ['test/**/*test.js'],
       serveFiles: ['src/**/*.js', 'dist/netflux.js']
     },
     proxies: {
