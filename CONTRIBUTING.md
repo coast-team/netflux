@@ -11,6 +11,9 @@ npm install
 node_modules/.bin/jspm install
 ```
 
+## ES 2015 (Babel)
+The source code and tests are written on ES 2015 with help of Babel JavaScript compiler. You may look [here](https://babeljs.io/docs/learn-es2015/) to learn what features does Babel supports.
+
 ## Commit
 [![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg?style=flat-square)](http://commitizen.github.io/cz-cli/)
 
