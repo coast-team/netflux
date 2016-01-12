@@ -17,7 +17,7 @@ module.exports = function(config) {
     jspm: {
       config: 'config.js',
       loadFiles: ['test/**/*.js'],
-      serveFiles: ['src/**/*.js', 'dist/*js']
+      serveFiles: ['src/**/*.js', 'dist/netflux.js']
     },
     proxies: {
       '/src/': '/base/src/',
@@ -29,6 +29,7 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
+      'dist/netflux.js',
       'node_modules/babel-polyfill/dist/polyfill.js'
     ],
 
@@ -52,12 +53,12 @@ module.exports = function(config) {
         return file.originalPath;
       }
     },
-    
+
 
     // test results reporter to use
     // possible values: 'dots', 'progress'
     // available reporters: https://npmjs.org/browse/keyword/karma-reporter
-    reporters: ['dots', 'coverage'],
+    reporters: ['progress', 'coverage'],
     coverageReporter: {
       instrumenters: {isparta: require('isparta')},
       instrumenter: {'src/*.js': 'isparta'},

@@ -15,5 +15,12 @@ module.exports = function(config) {
         flags: ['--no-sandbox']
       }
     },
+
+    coverageReporter: {
+      reporters: [
+        {type: 'text'},
+        {type: 'lcovonly', subdir: '.'}
+      ]
+    },
   })
 }

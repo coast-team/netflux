@@ -4,6 +4,7 @@ npm-debug.log
 
 # Build
 dist
+!test/dist
 
 # Coverage
 coverage
