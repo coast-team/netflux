@@ -1,4 +1,4 @@
-sudo: false
+sudo: true
 language: node_js
 cache:
   directories:
@@ -9,6 +9,10 @@ node_js:
   - '5.4'
 before_install:
   - npm i -g npm@^3.0.0
+install:
+  - sudo apt-get install libxss1 libappindicator1 libindicator7
+  - wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+  - sudo dpkg -i google-chrome*.deb
 before_script:
   - npm prune
   - npm install -g codeclimate-test-reporter
