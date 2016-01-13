@@ -7,7 +7,7 @@ module.exports = function(config) {
   config.set({
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-    browsers: ['Firefox', 'Chrome_travis'],
+    browsers: ['Firefox'],
 
     customLaunchers: {
       Chrome_travis: {
