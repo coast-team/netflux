@@ -30,7 +30,7 @@ Abstract peer to peer client transport API. Implementations based on WebRTC and 
   * When a message has arrived from on the network (someone in the network sent a broadcast message).
 - **onPeerMessage**: function (from: *Peer*, data: *string*)
   * When some peer in the network has sent a message only to you.
-- **onJoinRequest**: function (from: *Peer*,  requestData: *Object*)
+- **onInvite**: function (from: *Peer*,  requestData: *Object*)
   * When some peer in the network has sent you a join request via network. This peer wants you to join one of his network with which you are not connected yet. (see ***Peer.acceptJoinRequest*** and ***Peer.rejectJoinRequest***).
 
 #### methods
@@ -41,7 +41,7 @@ Abstract peer to peer client transport API. Implementations based on WebRTC and 
 - .then (function (net: *Network*)): *Promise*
 - .catch (function (err: *string*)): *Promise*
   * Join network with server help. *serverURL* is obtained from a peer which started inviting (see *Network.startInviting*).
-- **sendJoinRequest** (to: *Array [Peer]*, oneOfMy: *Network*)
+- **invite** (to: *Array [Peer]*, oneOfMy: *Network*)
   * Send join request message to peers via network to ask them to join *oneOfMy* network.
 
 ___
@@ -71,11 +71,11 @@ ___
 - .then (function ()): *Promise*  
 - .catch (function (err: *string*)): *Promise*
   * Send message to this peer via network.
-- **sendJoinRequest** (oneOfMy: Network)
+- **invite** (oneOfMy: Network)
   * Send join request message to this peer via network to ask him to join *oneOfMy* network.
-- **acceptJoinRequest** (requestData.id: *string*)
+- **accpetInvite** (requestData.id: *string*)
   * Accept join request received from this peer which has been sent by him with ***sendJoinRequest*** method.
-- **rejectJoinRequest** (requestData.id: *string*)
+- **rejectInvite** (requestData.id: *string*)
   * Reject join request received from this peer which has been sent by him with ***sendJoinRequest*** method.
 
 ## UML
