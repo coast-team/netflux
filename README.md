@@ -51,11 +51,7 @@ ___
 - .then (function ()): *Promise*
 - .catch (function (err: *string*)): *Promise*
   * Disconnect from this network.
-- **send** (to: *Peer*, data: *string*): *Promise*
-- .then (function ()): *Promise*
-- .catch (function (err: *string*)): *Promise*
-  * Send a message to some peer in this network.
-- **broadcast** (data: *string*): *Promise
+- **send** (data: *string*): *Promise*
 - .then (function ()): *Promise*
 - .catch (function (err: *string*)): *Promise*
   * Send broadcast message to this network.
