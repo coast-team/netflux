@@ -5,6 +5,8 @@ cache:
     - node_modules
 notifications:
   email: false
+addons:
+  firefox: "latest"
 node_js:
   - '5.4'
 before_install:
