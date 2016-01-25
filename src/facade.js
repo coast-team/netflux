@@ -1,6 +1,3 @@
-import { Peer } from './peer'
-import { Network } from './network'
-
 class Facade {
   constructor (options = {}) {
     this.onPeerJoining = this._onPeerJoining
@@ -13,7 +10,6 @@ class Facade {
   }
 
   create () {
-    console.log('Hello world! This is create method of Netflux class')
   }
 
   join () {

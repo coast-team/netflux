@@ -83,7 +83,8 @@ ___
   * Reject join request received from this peer which has been sent by him with `invite` method.
 
 ## UML
-Green and green/red parts (`Facade`, `WebChannel` and `Peer`) is what we consider to expose to the API user)
+Green and green/red parts (`Facade`, `WebChannel` and `Peer`) is what we consider to expose to the API user).
+
 Gray parts represent some of internal elements of the API and they might change in the future (maybe find a new name for *Topology*).
 
 ![Netflux UML class diagram](doc/UML.png)

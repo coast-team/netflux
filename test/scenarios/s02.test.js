@@ -1,6 +1,6 @@
 import '../../dist/netflux.js'
 
-describe('2 peers in the network send/receive broadcast messages', () => {
+xdescribe('2 peers in the network send/receive broadcast messages', () => {
   let net1, net2, invitingURL
   it('Peer#1: initialize/configure API', () => {
     NF1.onBroadcastMessage = (peer, net, data) => {
