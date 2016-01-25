@@ -4,14 +4,14 @@
   "main": "dist/netflux.js",
   "version": "0.0.0-sementically-released",
   "scripts": {
-    "prebuild": "rm -rf dist",
+    "clean": "rm -rf coverage",
+    "prebuild": "npm run clean",
     "build": "webpack",
-    "beforeeachtest": "rm -rf coverage && npm run build",
-    "pretest": "npm run beforeeachtest",
-    "test": "karma start",
-    "pretest:single": "npm run beforeeachtest",
-    "test:single": "karma start --browsers Chrome",
-    "pretest:travis": "npm run beforeeachtest",
+    "pretest": "npm run build",
+    "test": "node ./node_modules/sigver/server.js & npm set SIGVER_PID $! && karma start && kill `npm get SIGVER_PID` || kill `npm get SIGVER_PID`",
+    "pretest:single": "npm run build",
+    "test:single": "node ./node_modules/sigver/server.js & npm set SIGVER_PID $! && karma start --browsers Chrome && kill `npm get SIGVER_PID` || kill `npm get SIGVER_PID`",
+    "pretest:travis": "npm run build",
     "test:travis": "karma start karma.conf.travis.js",
     "commit": "git-cz",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post"
@@ -66,10 +66,12 @@
     "karma-opera-launcher": "^0.3.0",
     "karma-sourcemap-loader": "^0.3.6",
     "semantic-release": "^4.3.5",
+    "sigver": "*",
     "standard": "^5.4.1",
     "webpack": "^1.12.11"
   },
   "jspm": {
+    "dependencies": {},
     "devDependencies": {
       "babel": "npm:babel-core@^5.8.24",
       "babel-runtime": "npm:babel-runtime@^5.8.24",
@@ -80,17 +82,20 @@
     "parser": "babel-eslint",
     "globals": [
       "describe",
+      "xdescribe",
       "it",
       "expect",
       "beforeEach",
       "afterEach",
       "beforeAll",
-      "afterAll"
+      "afterAll",
+      "DOMException"
     ],
     "ignore": [
       "karma*.js",
       "config.js",
       "webpack.config.js"
     ]
-  }
+  },
+  "dependencies": {}
 }
