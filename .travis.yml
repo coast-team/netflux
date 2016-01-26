@@ -8,7 +8,7 @@ notifications:
 addons:
   firefox: "latest"
 node_js:
-  - 'node'
+  - '5'
 before_install:
   - npm i -g npm@^3.0.0
 before_script:

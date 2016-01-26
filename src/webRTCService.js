@@ -2,7 +2,7 @@ class WebRTCService {
 
   constructor (options = {}) {
     this.defaults = {
-      signalling: '',
+      signaling: '',
       webRTCOptions: {
         iceServers: [{
           urls: ['stun:23.21.150.121', 'stun:stun.l.google.com:19302']
@@ -41,7 +41,7 @@ class WebRTCService {
     let settings = Object.assign({}, this.settings, {key: this._randomKey()}, options)
     return new Promise((resolve, reject) => {
       try {
-        this.socket = new window.WebSocket(settings.signalling)
+        this.socket = new window.WebSocket(settings.signaling)
         this.socket.onerror = (e) => { reject(e) }
         this.socket.onopen = () => {
           this.socket.send(JSON.stringify({key: settings.key}))
@@ -52,7 +52,7 @@ class WebRTCService {
               onchannel(e.channel)
             }
           }
-          resolve({url: this.settings.signalling, key: settings.key})
+          resolve({url: this.settings.signaling, key: settings.key})
         }
         this.socket.onmessage = (e) => {
           let msg = JSON.parse(e.data)
@@ -84,7 +84,7 @@ class WebRTCService {
     let settings = Object.assign({}, this.settings, options)
     return new Promise((resolve, reject) => {
       try {
-        let socket = new window.WebSocket(settings.signalling)
+        let socket = new window.WebSocket(settings.signaling)
         socket.onerror = (e) => { reject(e) }
         socket.onopen = () => {
           socket.send(JSON.stringify({joinkey}))
