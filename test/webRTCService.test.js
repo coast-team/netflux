@@ -1,6 +1,7 @@
-import { WebRTCService } from '../src/webRTCService.js'
+import WebRTCService from '../src/services/connectors/WebRTCService'
 
 const signaling = 'ws://localhost:8000'
+// const signaling = 'ws://sigver-coastteam.rhcloud.com:8000'
 
 describe('WebRTCService ->', () => {
   describe('_randomKey ->', () => {
@@ -15,7 +16,7 @@ describe('WebRTCService ->', () => {
     })
   })
 
-  describe('connection between two peers via dataChannel ->', () => {
+  describe('Master & 1 client connection ->', () => {
     let webRTCService1, webRTCService2
     beforeEach(() => {
       webRTCService1 = new WebRTCService({signaling})
@@ -30,7 +31,7 @@ describe('WebRTCService ->', () => {
             expect(true).toBeTruthy()
             done()
           })
-          .catch((e) => { done.fail(e) })
+          .catch(done.fail)
       })
 
       it('DataChannel with the specified key should open', (done) => {
@@ -44,6 +45,7 @@ describe('WebRTCService ->', () => {
             label = data.key
             webRTCService2.join(data.key)
           })
+          .catch(done.fail)
       })
 
       it('With wrong url: catch - should throw an exception', (done) => {
@@ -86,9 +88,9 @@ describe('WebRTCService ->', () => {
                 expect(true).toBeTruthy()
                 done()
               })
-              .catch((e) => { done.fail(e) })
+              .catch(done.fail)
           })
-          .catch((e) => { done.fail(e) })
+          .catch(done.fail)
       })
 
       it('With wrong url: catch - should throw an exception', (done) => {
@@ -121,35 +123,87 @@ describe('WebRTCService ->', () => {
     })
 
     describe('open & join ->', () => {
-      it('Message should be sent and received via dataChannel then close it', (done) => {
-        let peer1Msg = 'Hello! Here is peer #1'
-        let peer2Msg = 'Hi, I am peer #2'
+      it('Master establish connection with 1 client and send/receive a message', (done) => {
+        let masterMsg = 'Hello! Here is master'
+        let clientMsg = 'Hi, I am peer #2'
         webRTCService1
           .open((channel) => {
+            channel.send(masterMsg)
             channel.onmessage = (event) => {
-              expect(event.data).toEqual(peer2Msg)
+              expect(event.data).toEqual(clientMsg)
               channel.close()
             }
-            channel.onerror = (e) => { done.fail(e) }
-            channel.send(peer1Msg)
+            channel.onerror = done.fail
           })
           .then((data) => {
             webRTCService2
               .join(data.key)
               .then((channel) => {
                 channel.onmessage = (event) => {
-                  expect(event.data).toEqual(peer1Msg)
-                  channel.send(peer2Msg)
+                  expect(event.data).toEqual(masterMsg)
+                  channel.send(clientMsg)
                 }
-                channel.onclose = (event) => {
-                  expect(true).toBeTruthy()
-                  done()
-                }
-                channel.onerror = (e) => { done.fail(e) }
+                channel.onclose = (event) => { done() }
+                channel.onerror = done.fail
               })
-              .catch((e) => { done.fail(e) })
+              .catch(done.fail)
           })
-          .catch((e) => { done.fail(e) })
+          .catch(done.fail)
+      })
+    })
+  })
+
+  describe('Master & 2 clients connection ->', () => {
+    let webRTCService1, webRTCService2, webRTCService3
+    beforeEach(() => {
+      webRTCService1 = new WebRTCService({signaling})
+      webRTCService2 = new WebRTCService({signaling})
+      webRTCService3 = new WebRTCService({signaling})
+    })
+
+    describe('open & join ->', () => {
+      it('Master should establish connection with two clients and send/receive a few messages', (done) => {
+        let masterMsg = 'Hello! Here is master'
+        let client1Msg = 'Hi, I am client #1'
+        let client2Msg = 'Hi, I am client #2'
+        const MSG_LIMIT = 2
+        let limit = 0
+        webRTCService1
+          .open((channel) => {
+            channel.send(masterMsg)
+            channel.onmessage = (event) => {
+              expect(event.data).toMatch(/Hi, I am client #/)
+              channel.close()
+              if (++limit === MSG_LIMIT) { done() }
+            }
+            channel.onerror = done.fail
+          })
+          .then((data) => {
+            // Client #1 is trying to connect
+            webRTCService2
+              .join(data.key)
+              .then((channel) => {
+                channel.onmessage = (event) => {
+                  expect(event.data).toEqual(masterMsg)
+                  channel.send(client1Msg)
+                }
+                channel.onerror = done.fail
+              })
+              .catch(done.fail)
+
+            // Client #2 is trying to connect
+            webRTCService3
+              .join(data.key)
+              .then((channel) => {
+                channel.onmessage = (event) => {
+                  expect(event.data).toEqual(masterMsg)
+                  channel.send(client2Msg)
+                }
+                channel.onerror = done.fail
+              })
+              .catch(done.fail)
+          })
+          .catch(done.fail)
       })
     })
   })

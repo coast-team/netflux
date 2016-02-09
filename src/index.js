@@ -1,2 +1,2 @@
-import { Facade } from './facade.js'
+import Facade from './Facade'
 module.exports = new Facade()

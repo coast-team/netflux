@@ -1,4 +1,4 @@
-import { Facade } from '../src/facade.js'
+import Facade from '../src/Facade'
 
 // describe('Netflux', () => {
 //   describe('create', () => {

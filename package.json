@@ -2,7 +2,7 @@
   "name": "netflux",
   "description": "Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done.",
   "main": "dist/netflux.js",
-  "version": "0.0.0-sementically-released",
+  "version": "0.0.4",
   "scripts": {
     "prebuild": "rm -rf coverage",
     "build": "webpack",
