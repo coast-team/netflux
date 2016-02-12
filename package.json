@@ -9,6 +9,7 @@
     "signalling-up": "kill `cat /tmp/sigver.pid`; node ./node_modules/sigver/server.js & echo \"$!\" > /tmp/sigver.pid",
     "pretest": "npm run build && npm run signalling-up",
     "test": "karma start",
+    "testin": "npm run test -- --browsers",
     "commit": "git-cz",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post"
   },
@@ -63,7 +64,7 @@
     "karma-sourcemap-loader": "^0.3.6",
     "semantic-release": "^4.3.5",
     "sigver": "*",
-    "standard": "^5.4.1",
+    "standard": "^6.0.4",
     "webpack": "^1.12.11"
   },
   "jspm": {
