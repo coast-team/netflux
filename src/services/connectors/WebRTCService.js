@@ -9,7 +9,7 @@ export default class WebRTCService {
 
   constructor (options = {}) {
     this.NAME = this.constructor.name
-    this.protocol = ServiceProvider.get('ExchangeProtocolService')
+    this.protocol = ServiceProvider.get(cs.EXCHANGEPROTOCOL_SERVICE)
     this.defaults = {
       signaling: 'ws://localhost:8000',
       webRTCOptions: {

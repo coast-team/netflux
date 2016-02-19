@@ -6,7 +6,7 @@ export default class FullyConnectedService {
   constructor (options = {}) {}
 
   addStart (channel, webChannel) {
-    let protocol = ServiceProvider.get('ExchangeProtocolService')
+    let protocol = ServiceProvider.get(cs.EXCHANGEPROTOCOL_SERVICE)
     return new Promise((resolve, reject) => {
       channel.peerID = this._generateID()
       channel.send(protocol.message(cs.YOUR_NEW_ID, {
@@ -33,7 +33,7 @@ export default class FullyConnectedService {
             resolve(withId)
           }
         }
-        let connector = ServiceProvider.get('WebRTCService')
+        let connector = ServiceProvider.get(cs.WEBRTC_SERVICE)
         webChannel.channels.forEach((c) => {
           connector.connect(channel.peerID, webChannel, c.peerID)
         })
@@ -75,11 +75,12 @@ export default class FullyConnectedService {
     const MIN_LENGTH = 10
     const DELTA_LENGTH = 10
     const MASK = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-    let result = ''
     const length = MIN_LENGTH + Math.round(Math.random() * DELTA_LENGTH)
+    const maskLastIndex = MASK.length - 1
+    let result = ''
 
     for (let i = 0; i < length; i++) {
-      result += MASK[Math.round(Math.random() * (MASK.length - 1))]
+      result += MASK[Math.round(Math.random() * maskLastIndex)]
     }
     return result
   }

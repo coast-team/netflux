@@ -5,13 +5,13 @@ export default class WebChannel {
 
   constructor (options = {}) {
     this.defaults = {
-      connector: 'WebRTCService',
-      topology: 'FullyConnectedService'
+      connector: cs.WEBRTC_SERVICE,
+      topology: cs.FULLYCONNECTED_SERVICE
     }
     this.settings = Object.assign({}, this.defaults, options)
 
     // Private attributes
-    this.protocol = 'ExchangeProtocolService'
+    this.protocol = cs.EXCHANGEPROTOCOL_SERVICE
 
     // Public attributes
     this.id
