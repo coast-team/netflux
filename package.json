@@ -10,6 +10,8 @@
     "pretest": "npm run build && npm run signalling-up",
     "test": "karma start",
     "testin": "npm run test -- --browsers",
+    "doc": "jsdoc -d doc -c jsdoc.json -t ./node_modules/ink-docstrap/template -R README.md -r src",
+    "docdev": "jsdoc -d doc -p -c jsdoc.json -t ./node_modules/ink-docstrap/template -R README.md -r src",
     "commit": "git-cz",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post"
   },
@@ -40,18 +42,20 @@
   },
   "devDependencies": {
     "babel-core": "^6.3.17",
-    "babel-eslint": "^5.0.0-beta6",
+    "babel-eslint": "^6.0.0-beta.1",
     "babel-loader": "^6.2.1",
     "babel-polyfill": "^6.3.14",
     "babel-preset-es2015": "^6.3.13",
     "commitizen": "^2.4.6",
     "cz-conventional-changelog": "^1.1.5",
-    "eslint": "^1.10.3",
+    "eslint": "^2.2.0",
     "ghooks": "^1.0.1",
+    "ink-docstrap": "^1.1.2",
     "isparta": "^4.0.0",
     "istanbul": "gotwarlost/istanbul.git#source-map",
     "jasmine": "^2.4.1",
     "jasmine-core": "^2.4.1",
+    "jsdoc": "^3.4.0",
     "jspm": "^0.16.19",
     "karma": "^0.13.15",
     "karma-babel-preprocessor": "^6.0.1",
@@ -68,7 +72,6 @@
     "webpack": "^1.12.11"
   },
   "jspm": {
-    "dependencies": {},
     "devDependencies": {
       "babel": "npm:babel-core@^5.8.24",
       "babel-runtime": "npm:babel-runtime@^5.8.24",

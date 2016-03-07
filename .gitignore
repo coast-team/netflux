@@ -3,8 +3,12 @@ jspm_packages
 npm-debug.log
 
 # Build
-dist
-!test/dist
+dist/*
+!dist/netflux.js
+!dist/netflux.min.js
 
 # Coverage
 coverage
+
+# Documentation
+doc

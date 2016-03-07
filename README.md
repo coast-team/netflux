@@ -9,92 +9,33 @@
 
 Abstract peer to peer client transport API. Implementations based on WebRTC and WebSocket to be done.
 
-## Install
+## Remark
 
-```
-npm install
-./node_modules/.bin/jspm install
-```
+When using API, it may not work from the first attempt. This is because WebRTC uses `ws://sigver-coastteam.rhcloud.com:8000` signaling server by default. Due to the rhcloud application hosting specification, following a period of inactivity, the server will be available after a while. Try it again a few seconds later.
 
-## Run tests
-Run test in several browsers.
-```
-npm test
-```
-Run test in browser X, where is X is `Chrome`, `Firefox` or `Opera`.
-```
-npm run testin X
-```
-
-## API specification (*warning*: early state)
+## API specification (*warning*: alpha state)
 
 ### Remarks
 Perhaps `WebChannel.openForJoining` and `WebChannel.closeForJoining` could be used in case of *WebRTC* and *WebSocket*. Maybe leave the possibility to the API user to decide either is an invite-only `WebChannel` or not. Lets implement and see.
-
-### Facade
-
-#### Attributes
-- **onJoining**: function (someNew: *Peer*, oneOfMy: *WebChannel*)
-  * When the *someNew* peer has joined the *oneOfMy* `WebChannel`.
-- **onLeaving**: function (left: *Peer*, oneOfMy: *WebChannel*)
-  * When the *left* peer has disconnected from the *oneOfMy* `WebChannel`.
-- **onMessage**: function (from: Peer, to: WebChannel, data: string)
-  * When a message has arrived from a `WebChannel`.
-- **onPeerMessage**: function (from: *Peer*, data: *string*)
-  * When some peer in the network has sent a message to you.
-- **onInvite**: function (from: *Peer*,  data: *Object*)
-  * When some peer in the network invites you to join one of his `WebChannel` and this using one of the `WebChannel` you are both connected to. (see `Peer.acceptInvite` and `Peer.rejectInvite`).
-
-#### Methods
-- **join** (key: *string*): *Promise*
-- .then (function (net: *WebChannel*)): *Promise*
-- .catch (function (err: *string*)): *Promise*
-  * Join a `WebChannel` by providing the *key*. *key* is obtained from one of the peers who called `WebChannel.openForJoining`.
-- **invite** (to: *Array [Peer]*, oneOfMy: *WebChannel*)
-  * Send an invitation request to peer(s) to join *oneOfMy* `WebChannel` via another `WebChannel`(s).
 
 ___
 ### WebChannel
 
 #### Methods
-- **onJoining**: function (someNew: *Peer*, oneOfMy: *WebChannel*)
-  * When the *someNew* peer has joined the *oneOfMy* `WebChannel`.
-- **onLeaving**: function (left: *Peer*, oneOfMy: *WebChannel*)
-  * When the *left* peer has disconnected from the *oneOfMy* `WebChannel`.
-- **onMessage**: function (from: Peer, to: WebChannel, data: string)
-  * When a message has arrived from a `WebChannel`.
+- **onJoining**: function (peerId: *string*)
+  * When new peer has joined the `WebChannel`.
+- **onLeaving**: function (peerId: *string*)
+  * When the `peerId` peer has disconnected from the `WebChannel`.
+- **onMessage**: function (peerId: *string*, msg: *string*)
+  * When a broadcast message has arrived from the `peerId` peer.
 
 #### Attributes
-- **leave** (): *Promise*
-- .then (function ()): *Promise*
-- .catch (function (err: *string*)): *Promise*
+- **leave** ()
   * Disconnect from this `WebChannel`.
 - **send** (data: *string*): *Promise*
-- .then (function ()): *Promise*
-- .catch (function (err: *string*)): *Promise*
   * Send broadcast message to this `WebChannel`.
-- **openForJoining** (): *string*
-  * Enable people to join this `WebChannel`. This method return a key which must be provided by newcomers in order to join this `WebChannel`.
+- **openForJoining** (options: *Object*): *string*
+  * Enable other peers to join this `WebChannel` with your help as an intermediary
+    peer. Returns key.
 - **closeForJoining** ()
-  * Disable people to join this `WebChannel` even if they have a key.
-
-___
-### Peer
-
-- **send** (data: *string*): *Promise*
-- .then (function ()): *Promise*  
-- .catch (function (err: *string*)): *Promise*
-  * Send a message to this peer via `WebChannel`.
-- **Invite** (oneOfMy: Network)
-  * Send an invitation request to peer(s) to join *oneOfMy* `WebChannel` via another `WebChannel`.
-- **acceptInvite** ()
-  * Accept invitation received from this peer which has been sent by him with `invite` method.
-- **rejectInvite** ()
-  * Reject join request received from this peer which has been sent by him with `invite` method.
-
-## UML
-Green and green/red parts (`Facade`, `WebChannel` and `Peer`) is what we consider to expose to the API user).
-
-Gray parts represent some of internal elements of the API and they might change in the future (maybe find a new name for *Topology*).
-
-![Netflux UML class diagram](doc/UML.png)
+  * Prevent other peers to join this `WebChannel` even if they have a key.

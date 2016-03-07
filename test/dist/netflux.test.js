@@ -1,22 +1,33 @@
-describe('Distribution for', () => {
-  describe('Node (CommonJS)', () => {
+xdescribe('Distribution for', () => {
+  describe('NodeJS (CommonJS) ->', () => {
     var nfNode = require('../../dist/netflux')
-
     it('nfNode must be defined', () => {
       expect(nfNode).toBeDefined()
     })
-    it('nfNode.join must be defined', () => {
+    it('create must be defined', () => {
+      expect(nfNode.create).toBeDefined()
+    })
+    it('join must be defined', () => {
       expect(nfNode.join).toBeDefined()
+    })
+    it('service name constants must be defined', () => {
+      expect(nfNode.WEBRTC_SERVICE).toBeDefined()
+      expect(nfNode.FULLYCONNECTED_SERVICE).toBeDefined()
     })
   })
   describe('Browser (global variable)', () => {
     it('nf must be defined as a global variable', () => {
-      expect(window.nf).toBeDefined()
       expect(nf).toBeDefined()
     })
-    it('nf.join must be defined', () => {
-      expect(window.nf.join).toBeDefined()
+    it('create must be defined', () => {
+      expect(nf.create).toBeDefined()
+    })
+    it('join must be defined', () => {
       expect(nf.join).toBeDefined()
+    })
+    it('service name constants must be defined', () => {
+      expect(nf.WEBRTC_SERVICE).toBeDefined()
+      expect(nf.FULLYCONNECTED_SERVICE).toBeDefined()
     })
   })
 })

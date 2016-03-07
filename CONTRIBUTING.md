@@ -1,18 +1,38 @@
 # Developer guide
 ## Requirements
-* Nodejs.
-* Chrome, Opera, Firefox for run tests.
+* NodeJS.
+* Chrome, Firefox for run tests.
 
 ## Install on Linux
-```
+```shell
 git clone https://github.com/coast-team/netflux.git
 cd netflux
 npm install
 node_modules/.bin/jspm install
 ```
 
-## ES 2015 (Babel)
-The source code and tests are written on ES 2015 with help of Babel JavaScript compiler. You may look [here](https://babeljs.io/docs/learn-es2015/) to learn what features does Babel supports.
+## Run tests
+Run test in several browsers.
+```
+npm test
+```
+Run test in browser X, where is X is `Chrome` or `Firefox`.
+```
+npm run testin X
+```
+
+## Generate documentation
+For API users
+```
+npm run doc
+```
+For developers (shows private attributes, functions etc.)
+```
+npm run docdev
+```
+
+## ES2015 with Babel
+The source code and tests are written in ES2015. The distribution package is ES5 code compiled by Babel. Checkout [Babel ES2015 features support](https://babeljs.io/docs/learn-es2015/).
 
 ## Commit
 [![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg?style=flat-square)](http://commitizen.github.io/cz-cli/)
