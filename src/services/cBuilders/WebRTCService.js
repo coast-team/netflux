@@ -41,7 +41,7 @@ class WebRTCService extends cBuilder.Interface {
   }
 
   open (webChannel, onChannel, options = {}) {
-    let key = webChannel.myId
+    let key = webChannel.id
     let settings = Object.assign({}, this.settings, options)
     // Connection array, because several connections may be establishing
     // at the same time
@@ -128,15 +128,12 @@ class WebRTCService extends cBuilder.Interface {
     return new Promise((resolve, reject) => {
       let sender = webChannel.myId
       let connection = this.createConnectionFromOffer(
-        (candidate) => {
-          webChannel.sendSrvMsg(this.name, id, {sender, candidate})
-        },
-        (offer) => {
+        candidate => webChannel.sendSrvMsg(this.name, id, {sender, candidate}),
+        offer => {
           webChannel.connections.set(id, connection)
           webChannel.sendSrvMsg(this.name, id, {sender, offer})
         },
-        (channel) => {
-          //webChannel.connections.delete(id)
+        channel => {
           channel.peerId = id
           resolve(channel)
         },
@@ -152,13 +149,11 @@ class WebRTCService extends cBuilder.Interface {
       // TODO: add try/catch. On exception remove connection from webChannel.connections
       connections.set(msg.sender,
         this.createConnectionFromAnswer(
-          (candidate) => {
-            webChannel.sendSrvMsg(this.name, msg.sender, {sender: webChannel.myId, candidate})
-          },
-          (answer) => {
-            webChannel.sendSrvMsg(this.name, msg.sender, {sender: webChannel.myId, answer})
-          },
-          (channel) => {
+          candidate => webChannel.sendSrvMsg(this.name, msg.sender,
+            {sender: webChannel.myId, candidate}),
+          answer => webChannel.sendSrvMsg(this.name, msg.sender,
+            {sender: webChannel.myId, answer}),
+          channel => {
             webChannel.initChannel(channel, msg.sender)
             webChannel.connections.delete(channel.peerId)
           },
@@ -180,7 +175,7 @@ class WebRTCService extends cBuilder.Interface {
     let connection = this.initConnection(candidateCB)
     let dc = connection.createDataChannel(key)
     dc.onopen = () => channelCB(dc)
-    connection.createOffer((offer) => {
+    connection.createOffer(offer => {
       connection.setLocalDescription(offer, () => {
         sdpCB(connection.localDescription.toJSON())
       }, (err) => { throw new Error(`Could not set local description: ${err}`) })
@@ -194,7 +189,7 @@ class WebRTCService extends cBuilder.Interface {
       e.channel.onopen = () => channelCB(e.channel)
     }
     connection.setRemoteDescription(this.createSDP(offer), () => {
-      connection.createAnswer((answer) => {
+      connection.createAnswer(answer => {
         connection.setLocalDescription(answer, () => {
           sdpCB(connection.localDescription.toJSON())
         }, (err) => { throw new Error(`Could not set local description: ${err}`) })

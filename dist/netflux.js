@@ -431,21 +431,15 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _services = __webpack_require__(1);
 
-	var _loop = function _loop(_key2) {
-	  if (_key2 === "default") return 'continue';
-	  Object.defineProperty(exports, _key2, {
+	Object.keys(_services).forEach(function (key) {
+	  if (key === "default") return;
+	  Object.defineProperty(exports, key, {
 	    enumerable: true,
 	    get: function get() {
-	      return _services[_key2];
+	      return _services[key];
 	    }
 	  });
-	};
-
-	for (var _key2 in _services) {
-	  var _ret = _loop(_key2);
-
-	  if (_ret === 'continue') continue;
-	}
+	});
 
 	// API user's message
 	var USER_DATA = exports.USER_DATA = 0;
@@ -566,7 +560,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      var options = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
 
-	      var key = webChannel.myId;
+	      var key = webChannel.id;
 	      var settings = Object.assign({}, this.settings, options);
 	      // Connection array, because several connections may be establishing
 	      // at the same time
@@ -690,12 +684,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	      return new Promise(function (resolve, reject) {
 	        var sender = webChannel.myId;
 	        var connection = _this4.createConnectionFromOffer(function (candidate) {
-	          webChannel.sendSrvMsg(_this4.name, id, { sender: sender, candidate: candidate });
+	          return webChannel.sendSrvMsg(_this4.name, id, { sender: sender, candidate: candidate });
 	        }, function (offer) {
 	          webChannel.connections.set(id, connection);
 	          webChannel.sendSrvMsg(_this4.name, id, { sender: sender, offer: offer });
 	        }, function (channel) {
-	          //webChannel.connections.delete(id)
 	          channel.peerId = id;
 	          resolve(channel);
 	        }, id);
@@ -711,9 +704,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	      if (Reflect.has(msg, 'offer')) {
 	        // TODO: add try/catch. On exception remove connection from webChannel.connections
 	        connections.set(msg.sender, this.createConnectionFromAnswer(function (candidate) {
-	          webChannel.sendSrvMsg(_this5.name, msg.sender, { sender: webChannel.myId, candidate: candidate });
+	          return webChannel.sendSrvMsg(_this5.name, msg.sender, { sender: webChannel.myId, candidate: candidate });
 	        }, function (answer) {
-	          webChannel.sendSrvMsg(_this5.name, msg.sender, { sender: webChannel.myId, answer: answer });
+	          return webChannel.sendSrvMsg(_this5.name, msg.sender, { sender: webChannel.myId, answer: answer });
 	        }, function (channel) {
 	          webChannel.initChannel(channel, msg.sender);
 	          webChannel.connections.delete(channel.peerId);
