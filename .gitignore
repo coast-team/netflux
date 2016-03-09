@@ -11,4 +11,5 @@ dist/*
 coverage
 
 # Documentation
-doc
+doc/*
+!doc/uml.png

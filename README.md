@@ -44,3 +44,12 @@ ___
     peer. Returns key.
 - **closeForJoining** ()
   * Prevent other peers to join this `WebChannel` even if they have a key.
+
+  ## UML
+  The Green and green/red parts (`Facade`, `WebChannel` and `Peer`) is what we consider to expose to the API user).
+
+  The Gray parts represent some of internal elements of the API.
+
+  The White parts are not yet implemented.
+
+  ![Netflux UML class diagram](doc/uml.png)

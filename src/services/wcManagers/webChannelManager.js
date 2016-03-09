@@ -103,6 +103,10 @@ class Interface extends ServiceInterface {
     return ids
   }
 
+  add (webChannel, data) {
+    throw new Error('Must be implemented by subclass!')
+  }
+
   broadcast (webChannel, data) {
     throw new Error('Must be implemented by subclass!')
   }
@@ -112,14 +116,6 @@ class Interface extends ServiceInterface {
   }
 
   leave (webChannel) {
-    throw new Error('Must be implemented by subclass!')
-  }
-
-  connectWithSuccess (webChannel, id) {
-    throw new Error('Must be implemented by subclass!')
-  }
-
-  connectWithFail (webChannel, id) {
     throw new Error('Must be implemented by subclass!')
   }
 }
