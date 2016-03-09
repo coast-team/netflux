@@ -101,6 +101,19 @@ class WebChannel {
   }
 
   /**
+   * Send message to a particular peer.
+   *
+   * @param  {type} id Peer id of the recipient.
+   * @param  {type} data Message
+   */
+  sendTo (id, data) {
+    this.manager.sendTo(id, this, this.proxy.msg(
+      cs.USER_DATA,
+      {id: this.myId, data}
+    ))
+  }
+
+  /**
    * Enable other peers to join the `WebChannel` with your help as an intermediary
    * peer.
    *

@@ -35,10 +35,14 @@ ___
   * When a broadcast message has arrived from the `peerId` peer.
 
 #### Attributes
+- **join** (key: *string*, options: *Object*): Promise
+  * Join the `WebChannel` with `key` as identifier.
 - **leave** ()
   * Disconnect from this `WebChannel`.
-- **send** (data: *string*): *Promise*
+- **send** (data: *string*)
   * Send broadcast message to this `WebChannel`.
+- **sendTo** (id: *string*, data: *string*)
+  * Send a message to the `WebChannel` peer identified by `id`.
 - **openForJoining** (options: *Object*): *string*
   * Enable other peers to join this `WebChannel` with your help as an intermediary
     peer. Returns key.

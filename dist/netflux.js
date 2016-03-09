@@ -388,6 +388,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	      return ids;
 	    }
 	  }, {
+	    key: 'add',
+	    value: function add(webChannel, data) {
+	      throw new Error('Must be implemented by subclass!');
+	    }
+	  }, {
 	    key: 'broadcast',
 	    value: function broadcast(webChannel, data) {
 	      throw new Error('Must be implemented by subclass!');
@@ -400,16 +405,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'leave',
 	    value: function leave(webChannel) {
-	      throw new Error('Must be implemented by subclass!');
-	    }
-	  }, {
-	    key: 'connectWithSuccess',
-	    value: function connectWithSuccess(webChannel, id) {
-	      throw new Error('Must be implemented by subclass!');
-	    }
-	  }, {
-	    key: 'connectWithFail',
-	    value: function connectWithFail(webChannel, id) {
 	      throw new Error('Must be implemented by subclass!');
 	    }
 	  }]);
@@ -1281,6 +1276,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	    key: 'send',
 	    value: function send(data) {
 	      this.manager.broadcast(this, this.proxy.msg(cs.USER_DATA, { id: this.myId, data: data }));
+	    }
+
+	    /**
+	     * Send message to a particular peer.
+	     *
+	     * @param  {type} id Peer id of the recipient.
+	     * @param  {type} data Message
+	     */
+
+	  }, {
+	    key: 'sendTo',
+	    value: function sendTo(id, data) {
+	      this.manager.sendTo(id, this, this.proxy.msg(cs.USER_DATA, { id: this.myId, data: data }));
 	    }
 
 	    /**
