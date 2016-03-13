@@ -63,7 +63,7 @@ class WebRTCService extends cBuilder.Interface {
 
       // On SDP offer: add connection to the array, prepare answer and send it back
       if (Reflect.has(msg.data, 'offer')) {
-        connections[connections.length] = this.createConnectionFromAnswer(
+        connections[connections.length] = this.createConnectionAndAnswer(
             candidate => socket.send(this.toStr({id: msg.id, data: {candidate}})),
             answer => socket.send(this.toStr({id: msg.id, data: {answer}})),
             onChannel,
@@ -90,7 +90,7 @@ class WebRTCService extends cBuilder.Interface {
       let socket = new window.WebSocket(settings.signaling)
       socket.onopen = () => {
         // Prepare and send offer
-        connection = this.createConnectionFromOffer(
+        connection = this.createConnectionAndOffer(
           candidate => socket.send(this.toStr({data: {candidate}})),
           offer => socket.send(this.toStr({join: key, data: {offer}})),
           channel => resolve(channel),
@@ -127,7 +127,7 @@ class WebRTCService extends cBuilder.Interface {
   connectMeToOne (webChannel, id) {
     return new Promise((resolve, reject) => {
       let sender = webChannel.myId
-      let connection = this.createConnectionFromOffer(
+      let connection = this.createConnectionAndOffer(
         candidate => webChannel.sendSrvMsg(this.name, id, {sender, candidate}),
         offer => {
           webChannel.connections.set(id, connection)
@@ -148,7 +148,7 @@ class WebRTCService extends cBuilder.Interface {
     if (Reflect.has(msg, 'offer')) {
       // TODO: add try/catch. On exception remove connection from webChannel.connections
       connections.set(msg.sender,
-        this.createConnectionFromAnswer(
+        this.createConnectionAndAnswer(
           candidate => webChannel.sendSrvMsg(this.name, msg.sender,
             {sender: webChannel.myId, candidate}),
           answer => webChannel.sendSrvMsg(this.name, msg.sender,
@@ -160,18 +160,19 @@ class WebRTCService extends cBuilder.Interface {
           msg.offer
         )
       )
-    } else {
+      console.log(msg.sender + ' create a NEW CONNECTION')
+    } else if (connections.has(msg.sender)) {
       let connection = connections.get(msg.sender)
       if (Reflect.has(msg, 'answer')) {
         let sd = this.createSDP(msg.answer)
         connection.setRemoteDescription(sd, () => {}, () => {})
-      } else if (Reflect.has(msg, 'candidate')) {
+      } else if (Reflect.has(msg, 'candidate') && connection) {
         connection.addIceCandidate(this.createCandidate(msg.candidate))
       }
     }
   }
 
-  createConnectionFromOffer (candidateCB, sdpCB, channelCB, key) {
+  createConnectionAndOffer (candidateCB, sdpCB, channelCB, key) {
     let connection = this.initConnection(candidateCB)
     let dc = connection.createDataChannel(key)
     dc.onopen = () => channelCB(dc)
@@ -183,7 +184,7 @@ class WebRTCService extends cBuilder.Interface {
     return connection
   }
 
-  createConnectionFromAnswer (candidateCB, sdpCB, channelCB, offer) {
+  createConnectionAndAnswer (candidateCB, sdpCB, channelCB, offer) {
     let connection = this.initConnection(candidateCB)
     connection.ondatachannel = e => {
       e.channel.onopen = () => channelCB(e.channel)

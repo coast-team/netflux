@@ -64,7 +64,7 @@ class WebChannel {
     /** @private */
     this.proxy = services.get(services.CHANNEL_PROXY)
     /** @private */
-    this.manager = null
+    this.topology = this.settings.topology
   }
 
   /**
@@ -125,7 +125,6 @@ class WebChannel {
 
     let cBuilder = services.get(settings.connector, settings)
     let data = cBuilder.open(this, (channel) => {
-      this.initManager()
       this.initChannel(channel)
       let jp = new JoiningPeer(channel.peerId, this.myId)
       jp.intermediaryChannel = channel
@@ -249,6 +248,7 @@ class WebChannel {
    */
   set topology (name) {
     this.settings.topology = name
+    this.manager = services.get(this.settings.topology)
   }
 
   /**
@@ -276,28 +276,6 @@ class WebChannel {
       channel.peerId = id
     } else {
       channel.peerId = this.generateId()
-    }
-  }
-
-  /**
-   * initManager - description
-   *
-   * @private
-   * @param  {type} topology = '' description
-   * @return {type}               description
-   */
-  initManager (topology = '') {
-    if (this.manager !== null) {
-      if (this.topology === this.manager.constructor.name) {
-        return
-      } else {
-        throw new Error('Manager for this WebChannel has already been initialized and thus cannot be changed!')
-      }
-    } else {
-      if (topology !== '') {
-        this.topology = topology
-      }
-      this.manager = services.get(this.settings.topology)
     }
   }
 

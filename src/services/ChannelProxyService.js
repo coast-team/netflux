@@ -29,7 +29,7 @@ class ChannelProxyService extends ServiceInterface {
         }
         break
       case cs.JOIN_INIT:
-        webChannel.initManager(msg.manager)
+        webChannel.topology = msg.manager
         webChannel.myId = msg.id
         channel.peerId = msg.intermediaryId
         jp = new JoiningPeer(msg.id, msg.intermediaryId)

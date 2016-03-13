@@ -222,6 +222,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	          if (c.peerId === id) {
 	            c.send(data);
+	            return;
 	          }
 	        }
 	      } catch (err) {
@@ -577,7 +578,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        // On SDP offer: add connection to the array, prepare answer and send it back
 	        if (Reflect.has(msg.data, 'offer')) {
-	          connections[connections.length] = _this2.createConnectionFromAnswer(function (candidate) {
+	          connections[connections.length] = _this2.createConnectionAndAnswer(function (candidate) {
 	            return socket.send(_this2.toStr({ id: msg.id, data: { candidate: candidate } }));
 	          }, function (answer) {
 	            return socket.send(_this2.toStr({ id: msg.id, data: { answer: answer } }));
@@ -610,7 +611,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var socket = new window.WebSocket(settings.signaling);
 	        socket.onopen = function () {
 	          // Prepare and send offer
-	          connection = _this3.createConnectionFromOffer(function (candidate) {
+	          connection = _this3.createConnectionAndOffer(function (candidate) {
 	            return socket.send(_this3.toStr({ data: { candidate: candidate } }));
 	          }, function (offer) {
 	            return socket.send(_this3.toStr({ join: key, data: { offer: offer } }));
@@ -678,7 +679,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      return new Promise(function (resolve, reject) {
 	        var sender = webChannel.myId;
-	        var connection = _this4.createConnectionFromOffer(function (candidate) {
+	        var connection = _this4.createConnectionAndOffer(function (candidate) {
 	          return webChannel.sendSrvMsg(_this4.name, id, { sender: sender, candidate: candidate });
 	        }, function (offer) {
 	          webChannel.connections.set(id, connection);
@@ -698,7 +699,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var connections = webChannel.connections;
 	      if (Reflect.has(msg, 'offer')) {
 	        // TODO: add try/catch. On exception remove connection from webChannel.connections
-	        connections.set(msg.sender, this.createConnectionFromAnswer(function (candidate) {
+	        connections.set(msg.sender, this.createConnectionAndAnswer(function (candidate) {
 	          return webChannel.sendSrvMsg(_this5.name, msg.sender, { sender: webChannel.myId, candidate: candidate });
 	        }, function (answer) {
 	          return webChannel.sendSrvMsg(_this5.name, msg.sender, { sender: webChannel.myId, answer: answer });
@@ -706,19 +707,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	          webChannel.initChannel(channel, msg.sender);
 	          webChannel.connections.delete(channel.peerId);
 	        }, msg.offer));
-	      } else {
+	        console.log(msg.sender + ' create a NEW CONNECTION');
+	      } else if (connections.has(msg.sender)) {
 	        var connection = connections.get(msg.sender);
 	        if (Reflect.has(msg, 'answer')) {
 	          var sd = this.createSDP(msg.answer);
 	          connection.setRemoteDescription(sd, function () {}, function () {});
-	        } else if (Reflect.has(msg, 'candidate')) {
+	        } else if (Reflect.has(msg, 'candidate') && connection) {
 	          connection.addIceCandidate(this.createCandidate(msg.candidate));
 	        }
 	      }
 	    }
 	  }, {
-	    key: 'createConnectionFromOffer',
-	    value: function createConnectionFromOffer(candidateCB, sdpCB, channelCB, key) {
+	    key: 'createConnectionAndOffer',
+	    value: function createConnectionAndOffer(candidateCB, sdpCB, channelCB, key) {
 	      var connection = this.initConnection(candidateCB);
 	      var dc = connection.createDataChannel(key);
 	      dc.onopen = function () {
@@ -736,8 +738,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      return connection;
 	    }
 	  }, {
-	    key: 'createConnectionFromAnswer',
-	    value: function createConnectionFromAnswer(candidateCB, sdpCB, channelCB, offer) {
+	    key: 'createConnectionAndAnswer',
+	    value: function createConnectionAndAnswer(candidateCB, sdpCB, channelCB, offer) {
 	      var connection = this.initConnection(candidateCB);
 	      connection.ondatachannel = function (e) {
 	        e.channel.onopen = function () {
@@ -1039,7 +1041,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          }
 	          break;
 	        case cs.JOIN_INIT:
-	          webChannel.initManager(msg.manager);
+	          webChannel.topology = msg.manager;
 	          webChannel.myId = msg.id;
 	          channel.peerId = msg.intermediaryId;
 	          jp = new _JoiningPeer2.default(msg.id, msg.intermediaryId);
@@ -1234,7 +1236,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    /** @private */
 	    this.proxy = services.get(services.CHANNEL_PROXY);
 	    /** @private */
-	    this.manager = null;
+	    this.topology = this.settings.topology;
 	  }
 
 	  /**
@@ -1310,7 +1312,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      var cBuilder = services.get(settings.connector, settings);
 	      var data = cBuilder.open(this, function (channel) {
-	        _this.initManager();
 	        _this.initChannel(channel);
 	        var jp = new _JoiningPeer2.default(channel.peerId, _this.myId);
 	        jp.intermediaryChannel = channel;
@@ -1491,33 +1492,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        channel.peerId = id;
 	      } else {
 	        channel.peerId = this.generateId();
-	      }
-	    }
-
-	    /**
-	     * initManager - description
-	     *
-	     * @private
-	     * @param  {type} topology = '' description
-	     * @return {type}               description
-	     */
-
-	  }, {
-	    key: 'initManager',
-	    value: function initManager() {
-	      var topology = arguments.length <= 0 || arguments[0] === undefined ? '' : arguments[0];
-
-	      if (this.manager !== null) {
-	        if (this.topology === this.manager.constructor.name) {
-	          return;
-	        } else {
-	          throw new Error('Manager for this WebChannel has already been initialized and thus cannot be changed!');
-	        }
-	      } else {
-	        if (topology !== '') {
-	          this.topology = topology;
-	        }
-	        this.manager = services.get(this.settings.topology);
 	      }
 	    }
 
@@ -1705,6 +1679,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    key: 'topology',
 	    set: function set(name) {
 	      this.settings.topology = name;
+	      this.manager = services.get(this.settings.topology);
 	    }
 
 	    /**

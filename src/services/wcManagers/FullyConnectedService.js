@@ -32,6 +32,7 @@ class FullyConnectedService extends wcManager.Interface {
     for (let c of webChannel.channels) {
       if (c.peerId === id) {
         c.send(data)
+        return
       }
     }
   }
