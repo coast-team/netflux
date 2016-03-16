@@ -93,7 +93,10 @@ class WebRTCService extends cBuilder.Interface {
         connection = this.createConnectionAndOffer(
           candidate => socket.send(this.toStr({data: {candidate}})),
           offer => socket.send(this.toStr({join: key, data: {offer}})),
-          channel => resolve(channel),
+          channel => {
+            channel.myCon = connection
+            resolve(channel)
+          },
           key
         )
       }
@@ -134,6 +137,7 @@ class WebRTCService extends cBuilder.Interface {
           webChannel.sendSrvMsg(this.name, id, {sender, offer})
         },
         channel => {
+          channel.myCon = connection
           channel.peerId = id
           resolve(channel)
         },
@@ -187,6 +191,7 @@ class WebRTCService extends cBuilder.Interface {
   createConnectionAndAnswer (candidateCB, sdpCB, channelCB, offer) {
     let connection = this.initConnection(candidateCB)
     connection.ondatachannel = e => {
+      e.channel.myCon = connection
       e.channel.onopen = () => channelCB(e.channel)
     }
     connection.setRemoteDescription(this.createSDP(offer), () => {
@@ -201,6 +206,7 @@ class WebRTCService extends cBuilder.Interface {
 
   initConnection (candidateCB) {
     let connection = new this.RTCPeerConnection({iceServers: this.settings.iceServers})
+
     connection.onicecandidate = (e) => {
       if (e.candidate !== null) {
         let candidate = {

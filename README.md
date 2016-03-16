@@ -18,6 +18,12 @@ Abstract peer to peer client transport API. Implementations based on WebRTC and 
 
 When using API, it may not work from the first attempt. This is because WebRTC uses `ws://sigver-coastteam.rhcloud.com:8000` signaling server by default. Due to the rhcloud application hosting specification, following a period of inactivity, the server will be available after a while. Try it again a few seconds later.
 
+## Supported browsers
+
+*Chrome* 49 and above
+
+*Firefox* 45 and above
+
 ## API specification (*warning*: alpha state)
 
 ### Remarks

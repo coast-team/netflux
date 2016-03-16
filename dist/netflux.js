@@ -192,6 +192,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        for (var _iterator = webChannel.channels[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
 	          var c = _step.value;
 
+	          console.log(c.peerId + ': ready state: ' + c.readyState);
 	          c.send(data);
 	        }
 	      } catch (err) {
@@ -616,7 +617,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	          }, function (offer) {
 	            return socket.send(_this3.toStr({ join: key, data: { offer: offer } }));
 	          }, function (channel) {
-	            return resolve(channel);
+	            channel.myCon = connection;
+	            resolve(channel);
 	          }, key);
 	        };
 	        socket.onmessage = function (e) {
@@ -685,6 +687,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          webChannel.connections.set(id, connection);
 	          webChannel.sendSrvMsg(_this4.name, id, { sender: sender, offer: offer });
 	        }, function (channel) {
+	          channel.myCon = connection;
 	          channel.peerId = id;
 	          resolve(channel);
 	        }, id);
@@ -742,6 +745,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    value: function createConnectionAndAnswer(candidateCB, sdpCB, channelCB, offer) {
 	      var connection = this.initConnection(candidateCB);
 	      connection.ondatachannel = function (e) {
+	        e.channel.myCon = connection;
 	        e.channel.onopen = function () {
 	          return channelCB(e.channel);
 	        };
@@ -765,6 +769,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    key: 'initConnection',
 	    value: function initConnection(candidateCB) {
 	      var connection = new this.RTCPeerConnection({ iceServers: this.settings.iceServers });
+
 	      connection.onicecandidate = function (e) {
 	        if (e.candidate !== null) {
 	          var candidate = {
@@ -1031,7 +1036,33 @@ return /******/ (function(modules) { // webpackBootstrap
 	          break;
 	        case cs.LEAVE:
 	          webChannel.onLeaving(msg.id);
-	          webChannel.channels.delete(webChannel.channels.get(msg.id));
+	          var _iteratorNormalCompletion = true;
+	          var _didIteratorError = false;
+	          var _iteratorError = undefined;
+
+	          try {
+	            for (var _iterator = webChannel.channels[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+	              var c = _step.value;
+
+	              if (c.peerId === msg.id) {
+	                webChannel.channels.delete(c);
+	              }
+	            }
+	          } catch (err) {
+	            _didIteratorError = true;
+	            _iteratorError = err;
+	          } finally {
+	            try {
+	              if (!_iteratorNormalCompletion && _iterator.return) {
+	                _iterator.return();
+	              }
+	            } finally {
+	              if (_didIteratorError) {
+	                throw _iteratorError;
+	              }
+	            }
+	          }
+
 	          break;
 	        case cs.SERVICE_DATA:
 	          if (webChannel.myId === msg.recepient) {
@@ -1075,6 +1106,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	          }
 	          break;
 	      }
+	    }
+	  }, {
+	    key: 'onClose',
+	    value: function onClose() {
+	      console.log('DATA_CHANNEL CLOSE: ');
+	      this.webChannel.onLeaving(this.peerId);
+	      // this.webChannel.channels.delete(this)
+	    }
+	  }, {
+	    key: 'onError',
+	    value: function onError(err) {
+	      console.log('DATA_CHANNEL ERROR: ', err);
 	    }
 	  }, {
 	    key: 'onSrvMsg',
@@ -1484,15 +1527,27 @@ return /******/ (function(modules) { // webpackBootstrap
 	     * @return {type}         description
 	     */
 	    value: function initChannel(channel) {
+	      var _this3 = this;
+
 	      var id = arguments.length <= 1 || arguments[1] === undefined ? '' : arguments[1];
 
 	      channel.webChannel = this;
 	      channel.onmessage = this.proxy.onMsg;
+	      channel.onerror = this.proxy.onError;
+	      channel.onclose = this.proxy.onClose;
 	      if (id !== '') {
 	        channel.peerId = id;
 	      } else {
 	        channel.peerId = this.generateId();
 	      }
+	      var connection = channel.myCon;
+	      connection.oniceconnectionstatechange = function () {
+	        console.log('STATE CHANGED TO: ', connection.iceConnectionState);
+	        if (connection.iceConnectionState === 'disconnected') {
+	          _this3.channels.delete(channel);
+	          _this3.onLeaving(channel.peerId);
+	        }
+	      };
 	    }
 
 	    /**
@@ -1506,12 +1561,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'joinSuccess',
 	    value: function joinSuccess(id) {
-	      var _this3 = this;
+	      var _this4 = this;
 
 	      var jp = this.getJoiningPeer(id);
 	      jp.channelsToAdd.forEach(function (c) {
-	        _this3.channels.add(c);
-	        _this3.joiningPeers.delete(jp);
+	        _this4.channels.add(c);
+	        _this4.joiningPeers.delete(jp);
 	      });
 	    }
 

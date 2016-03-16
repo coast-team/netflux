@@ -24,6 +24,7 @@ class FullyConnectedService extends wcManager.Interface {
 
   broadcast (webChannel, data) {
     for (let c of webChannel.channels) {
+      console.log(c.peerId + ': ready state: ' + c.readyState)
       c.send(data)
     }
   }

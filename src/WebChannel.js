@@ -272,10 +272,20 @@ class WebChannel {
   initChannel (channel, id = '') {
     channel.webChannel = this
     channel.onmessage = this.proxy.onMsg
+    channel.onerror = this.proxy.onError
+    channel.onclose = this.proxy.onClose
     if (id !== '') {
       channel.peerId = id
     } else {
       channel.peerId = this.generateId()
+    }
+    let connection = channel.myCon
+    connection.oniceconnectionstatechange = () => {
+      console.log('STATE CHANGED TO: ', connection.iceConnectionState)
+      if (connection.iceConnectionState === 'disconnected') {
+        this.channels.delete(channel)
+        this.onLeaving(channel.peerId)
+      }
     }
   }
 

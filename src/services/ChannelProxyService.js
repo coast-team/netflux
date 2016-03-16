@@ -19,7 +19,11 @@ class ChannelProxyService extends ServiceInterface {
         break
       case cs.LEAVE:
         webChannel.onLeaving(msg.id)
-        webChannel.channels.delete(webChannel.channels.get(msg.id))
+        for (let c of webChannel.channels) {
+          if (c.peerId === msg.id) {
+            webChannel.channels.delete(c)
+          }
+        }
         break
       case cs.SERVICE_DATA:
         if (webChannel.myId === msg.recepient) {
@@ -63,6 +67,16 @@ class ChannelProxyService extends ServiceInterface {
         }
         break
     }
+  }
+
+  onClose () {
+    console.log('DATA_CHANNEL CLOSE: ')
+    this.webChannel.onLeaving(this.peerId)
+    // this.webChannel.channels.delete(this)
+  }
+
+  onError (err) {
+    console.log('DATA_CHANNEL ERROR: ', err)
   }
 
   onSrvMsg (webChannel, msg) {
