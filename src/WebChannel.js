@@ -124,28 +124,39 @@ class WebChannel {
     let settings = Object.assign({}, this.settings, options)
 
     let cBuilder = services.get(settings.connector, settings)
-    let data = cBuilder.open(this, (channel) => {
-      this.initChannel(channel)
-      let jp = new JoiningPeer(channel.peerId, this.myId)
-      jp.intermediaryChannel = channel
-      this.joiningPeers.add(jp)
-      channel.send(this.proxy.msg(cs.JOIN_INIT,
-        {manager: this.settings.topology,
-        id: channel.peerId,
-        intermediaryId: this.myId}
-      ))
-      this.manager.broadcast(this, this.proxy.msg(cs.JOIN_NEW_MEMBER,
-        {id: channel.peerId, intermediaryId: this.myId}
-      ))
-      this.manager.add(channel)
-        .then(() => {
-          channel.send(this.proxy.msg(cs.JOIN_FINILIZE))
-        })
-        .catch(() => {
-          // TODO: implement JOIN_FAIL
-        })
-    })
-    return data.key
+    try {
+      let data = cBuilder.open(this, (channel) => {
+        console.log('NEW PEER')
+        this.initChannel(channel)
+        let jp = new JoiningPeer(channel.peerId, this.myId)
+        jp.intermediaryChannel = channel
+        this.joiningPeers.add(jp)
+        channel.send(this.proxy.msg(cs.JOIN_INIT,
+          {manager: this.settings.topology,
+          id: channel.peerId,
+          intermediaryId: this.myId}
+        ))
+        console.log('BEFORE BROADCAST')
+        this.manager.broadcast(this, this.proxy.msg(cs.JOIN_NEW_MEMBER,
+          {id: channel.peerId, intermediaryId: this.myId}
+        ))
+        console.log('AFTER BROADCAST')
+        this.manager.add(channel)
+          .then(() => {
+            channel.send(this.proxy.msg(cs.JOIN_FINILIZE))
+          })
+          .catch((msg) => {
+            console.log(`Adding peer ${channel.peerId} failed: ${msg}`)
+            this.manager.broadcast(this, this.proxy.msg(cs.REMOVE_NEW_MEMBER,
+              {id: channel.peerId}
+            ))
+            this.removeJoiningPeer(jp.id)
+          })
+      })
+      return data.key
+    } catch (e) {
+      console.log('WebChannel open error: ', e)
+    }
   }
 
   /**
@@ -173,7 +184,11 @@ class WebChannel {
         .join(key)
         .then((channel) => {
           this.initChannel(channel)
+          console.log('JOIN channel established')
           this.onJoin = () => { resolve(this) }
+        })
+        .catch((msg) => {
+          console.log(msg)
         })
     })
   }
@@ -219,13 +234,16 @@ class WebChannel {
     } else {
       // If this function caller is a peer who is joining
       if (this.isJoining()) {
-        this.getJoiningPeer(this.myId).intermediaryChannel.send(stringifiedMsg)
+        let ch = this.getJoiningPeer(this.myId).intermediaryChannel
+        if (ch.readyState !== 'closed') {
+          ch.send(stringifiedMsg)
+        }
       } else {
         // If the recepient is a joining peer
         if (this.hasJoiningPeer(recepient)) {
           let jp = this.getJoiningPeer(recepient)
           // If I am an intermediary peer for recepient
-          if (jp.intermediaryId === this.myId) {
+          if (jp.intermediaryId === this.myId && jp.intermediaryChannel.readyState !== 'closed') {
             jp.intermediaryChannel.send(stringifiedMsg)
           // If not, then send this message to the recepient's intermediary peer
           } else {
@@ -279,10 +297,9 @@ class WebChannel {
     } else {
       channel.peerId = this.generateId()
     }
-    let connection = channel.myCon
-    connection.oniceconnectionstatechange = () => {
-      console.log('STATE CHANGED TO: ', connection.iceConnectionState)
-      if (connection.iceConnectionState === 'disconnected') {
+    channel.connection.oniceconnectionstatechange = () => {
+      console.log('STATE FOR ' + channel.peerId + ' CHANGED TO: ', channel.connection.iceConnectionState)
+      if (channel.connection.iceConnectionState === 'disconnected') {
         this.channels.delete(channel)
         this.onLeaving(channel.peerId)
       }
@@ -332,6 +349,12 @@ class WebChannel {
       throw new Error('Joining peer already exists!')
     }
     this.joiningPeers.add(jp)
+  }
+
+  removeJoiningPeer (id) {
+    if (this.hasJoiningPeer(id)) {
+      this.joiningPeers.delete(this.getJoiningPeer(id))
+    }
   }
 
   /**

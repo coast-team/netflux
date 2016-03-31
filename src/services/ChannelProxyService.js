@@ -43,6 +43,9 @@ class ChannelProxyService extends ServiceInterface {
       case cs.JOIN_NEW_MEMBER:
         webChannel.addJoiningPeer(new JoiningPeer(msg.id, msg.intermediaryId))
         break
+      case cs.REMOVE_NEW_MEMBER:
+        webChannel.removeJoiningPeer(msg.id)
+        break
       case cs.JOIN_FINILIZE:
         webChannel.joinSuccess(webChannel.myId)
         let nextMsg = webChannel.proxy.msg(cs.JOIN_SUCCESS, {id: webChannel.myId})
@@ -71,8 +74,6 @@ class ChannelProxyService extends ServiceInterface {
 
   onClose () {
     console.log('DATA_CHANNEL CLOSE: ')
-    this.webChannel.onLeaving(this.peerId)
-    // this.webChannel.channels.delete(this)
   }
 
   onError (err) {

@@ -8,31 +8,32 @@ import * as wcManager from './webChannelManager'
  */
 class FullyConnectedService extends wcManager.Interface {
 
-  add (channel) {
-    let webChannel = channel.webChannel
-    let peers = [webChannel.myId]
-    webChannel.channels.forEach((c) => {
-      peers[peers.length] = c.peerId
-    })
-    webChannel.joiningPeers.forEach((jp) => {
-      if (channel.peerId !== jp.id) {
+  add (ch) {
+    let wCh = ch.webChannel
+    let peers = [wCh.myId]
+    wCh.channels.forEach(ch => { peers[peers.length] = ch.peerId })
+    wCh.joiningPeers.forEach(jp => {
+      if (ch.peerId !== jp.id) {
         peers[peers.length] = jp.id
       }
     })
-    return this.connectWith(webChannel, channel.peerId, channel.peerId, peers)
+    return this.connectWith(wCh, ch.peerId, ch.peerId, peers)
   }
 
   broadcast (webChannel, data) {
     for (let c of webChannel.channels) {
-      console.log(c.peerId + ': ready state: ' + c.readyState)
-      c.send(data)
+      if (c.readyState !== 'closed') {
+        c.send(data)
+      }
     }
   }
 
   sendTo (id, webChannel, data) {
     for (let c of webChannel.channels) {
       if (c.peerId === id) {
-        c.send(data)
+        if (c.readyState !== 'closed') {
+          c.send(data)
+        }
         return
       }
     }

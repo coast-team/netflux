@@ -5,7 +5,7 @@
   "version": "0.0.0-semrelease",
   "scripts": {
     "prebuild": "rm -rf coverage",
-    "build": "webpack",
+    "build": "./node_modules/.bin/rollup -o dist/netflux.es2015.js -f umd -n nf src/index.js & ./node_modules/.bin/webpack",
     "signalling-up": "kill `cat /tmp/sigver.pid`; node ./node_modules/sigver/server.js & echo \"$!\" > /tmp/sigver.pid",
     "pretest": "npm run build && npm run signalling-up",
     "test": "karma start",
@@ -66,8 +66,9 @@
     "karma-jspm": "^2.0.2",
     "karma-opera-launcher": "^0.3.0",
     "karma-sourcemap-loader": "^0.3.6",
+    "rollup": "0.25.4",
     "semantic-release": "^4.3.5",
-    "sigver": "*",
+    "sigver": "^7.1.0",
     "standard": "^6.0.4",
     "webpack": "^1.12.11"
   },

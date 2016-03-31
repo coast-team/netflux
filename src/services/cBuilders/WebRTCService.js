@@ -1,6 +1,6 @@
 import * as cBuilder from './channelBuilder'
 
-const CONNECTION_CREATION_TIMEOUT = 2000
+const CONNECTION_CREATION_TIMEOUT = 4000
 
 /**
  * Service class responsible to establish connections between peers via `RTCDataChannel`.
@@ -77,7 +77,10 @@ class WebRTCService extends cBuilder.Interface {
     socket.onerror = (e) => {
       throw new Error(`Connection to the signaling server ${settings.signaling} failed: ${e.message}.`)
     }
-    socket.onclose = () => { delete webChannel.webRTCOpen }
+    socket.onclose = (e) => {
+      console.log('On open socket with signaling server is closed: ', e)
+      delete webChannel.webRTCOpen
+    }
     return {key, signaling: settings.signaling}
   }
 
@@ -94,7 +97,7 @@ class WebRTCService extends cBuilder.Interface {
           candidate => socket.send(this.toStr({data: {candidate}})),
           offer => socket.send(this.toStr({join: key, data: {offer}})),
           channel => {
-            channel.myCon = connection
+            channel.connection = connection
             resolve(channel)
           },
           key
@@ -115,16 +118,41 @@ class WebRTCService extends cBuilder.Interface {
           connection.addIceCandidate(this.createCandidate(msg.data.candidate))
         } else { reject() }
       }
-      socket.onerror = reject
+      socket.onerror = (e) => {
+        reject(`Signaling server socket error: ${e.message}`)
+      }
+      socket.onclose = (e) => {
+        console.log('Socket is closed: ', e)
+      }
     })
   }
 
   connectMeToMany (webChannel, ids) {
-    let promises = []
-    for (let id of ids) {
-      promises.push(this.connectMeToOne(webChannel, id))
-    }
-    return Promise.all(promises)
+    return new Promise((resolve, reject) => {
+      let counter = 0
+      let result = {channels: [], failed: []}
+      if (ids.length === 0) {
+        resolve(result)
+      } else {
+        for (let id of ids) {
+          this.connectMeToOne(webChannel, id)
+            .then((channel) => {
+              counter++
+              result.channels.push(channel)
+              if (counter === ids.length) {
+                resolve(result)
+              }
+            })
+            .catch((err) => {
+              counter++
+              result.failed.push({id, err})
+              if (counter === ids.length) {
+                resolve(result)
+              }
+            })
+        }
+      }
+    })
   }
 
   connectMeToOne (webChannel, id) {
@@ -137,7 +165,7 @@ class WebRTCService extends cBuilder.Interface {
           webChannel.sendSrvMsg(this.name, id, {sender, offer})
         },
         channel => {
-          channel.myCon = connection
+          channel.connection = connection
           channel.peerId = id
           resolve(channel)
         },
@@ -191,7 +219,7 @@ class WebRTCService extends cBuilder.Interface {
   createConnectionAndAnswer (candidateCB, sdpCB, channelCB, offer) {
     let connection = this.initConnection(candidateCB)
     connection.ondatachannel = e => {
-      e.channel.myCon = connection
+      e.channel.connection = connection
       e.channel.onopen = () => channelCB(e.channel)
     }
     connection.setRemoteDescription(this.createSDP(offer), () => {

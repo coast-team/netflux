@@ -16,6 +16,7 @@ import * as services from '../../services'
  */
 export const CONNECT_WITH = 1
 export const CONNECT_WITH_FEEDBACK = 2
+export const CONNECT_WITH_TIMEOUT = 1000
 export const ADD_INTERMEDIARY_CHANNEL = 4
 
 /**
@@ -33,26 +34,25 @@ class Interface extends ServiceInterface {
         msg.peers = this.reUseIntermediaryChannelIfPossible(webChannel, msg.jpId, msg.peers)
         cBuilder
           .connectMeToMany(webChannel, msg.peers)
-          .then((channels) => {
-            channels.forEach((c) => {
+          .then((result) => {
+            result.channels.forEach((c) => {
               webChannel.initChannel(c, c.peerId)
               webChannel.getJoiningPeer(msg.jpId).toAddList(c)
               c.send(webChannel.proxy.msg(cs.THIS_CHANNEL_TO_JOINING_PEER,
                 {id: msg.jpId, toBeAdded: true}
               ))
             })
+            console.log('connectMeToMany result: ', result)
             webChannel.sendSrvMsg(this.name, msg.sender,
-              {code: CONNECT_WITH_FEEDBACK, id: webChannel.myId, isDone: true}
+              {code: CONNECT_WITH_FEEDBACK, id: webChannel.myId, failed: result.failed}
             )
           })
           .catch((err) => {
-            webChannel.sendSrvMsg(this.name, msg.sender,
-              {code: CONNECT_WITH_FEEDBACK, id: webChannel.myId, isDone: false}
-            )
+            console.log('connectMeToMany FAILED, ', err)
           })
         break
       case CONNECT_WITH_FEEDBACK:
-        webChannel.connectWithRequests.get(msg.id)(msg.isDone)
+        webChannel.connectWithRequests.get(msg.id)(true)
         break
       case ADD_INTERMEDIARY_CHANNEL:
         let jp = webChannel.getJoiningPeer(msg.jpId)
@@ -69,12 +69,25 @@ class Interface extends ServiceInterface {
     return new Promise((resolve, reject) => {
       webChannel.connectWithRequests.set(id, (isDone) => {
         if (isDone) {
+          console.log('CONNECT WITH RESOLVED')
           resolve()
         } else {
+          console.log('CONNECT WITH REJECTED')
           reject()
         }
       })
+      setTimeout(() => {
+        reject('CONNECT_WITH_TIMEOUT')
+      }, this.calculateConnectWithTimeout(peers.length))
     })
+  }
+
+  calculateConnectWithTimeout (nbPeers) {
+    if (nbPeers > 0) {
+      return CONNECT_WITH_TIMEOUT + Math.log10(nbPeers)
+    } else {
+      return CONNECT_WITH_TIMEOUT
+    }
   }
 
   reUseIntermediaryChannelIfPossible (webChannel, jpId, ids) {
