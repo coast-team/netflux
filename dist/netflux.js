@@ -587,7 +587,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      var options = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
 
-	      var key = webChannel.id;
+	      var key = webChannel.id + webChannel.myId;
 	      var settings = Object.assign({}, this.settings, options);
 	      // Connection array, because several connections may be establishing
 	      // at the same time

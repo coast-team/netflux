@@ -349,7 +349,7 @@
     }
 
     open (webChannel, onChannel, options = {}) {
-      let key = webChannel.id
+      let key = webChannel.id + webChannel.myId
       let settings = Object.assign({}, this.settings, options)
       // Connection array, because several connections may be establishing
       // at the same time
