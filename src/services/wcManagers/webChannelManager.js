@@ -16,7 +16,7 @@ import * as services from '../../services'
  */
 export const CONNECT_WITH = 1
 export const CONNECT_WITH_FEEDBACK = 2
-export const CONNECT_WITH_TIMEOUT = 1000
+export const CONNECT_WITH_TIMEOUT = 4000
 export const ADD_INTERMEDIARY_CHANNEL = 4
 
 /**

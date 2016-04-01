@@ -1,6 +1,6 @@
 import * as cBuilder from './channelBuilder'
 
-const CONNECTION_CREATION_TIMEOUT = 4000
+const CONNECTION_CREATION_TIMEOUT = 2000
 
 /**
  * Service class responsible to establish connections between peers via `RTCDataChannel`.
@@ -118,11 +118,11 @@ class WebRTCService extends cBuilder.Interface {
           connection.addIceCandidate(this.createCandidate(msg.data.candidate))
         } else { reject() }
       }
-      socket.onerror = (e) => {
+      socket.onerror = e => {
         reject(`Signaling server socket error: ${e.message}`)
       }
-      socket.onclose = (e) => {
-        console.log('Socket is closed: ', e)
+      socket.onclose = e => {
+        if (e.code !== 1000) { reject(e.reason) }
       }
     })
   }

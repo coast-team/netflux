@@ -311,7 +311,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	var CONNECT_WITH = exports.CONNECT_WITH = 1;
 	var CONNECT_WITH_FEEDBACK = exports.CONNECT_WITH_FEEDBACK = 2;
-	var CONNECT_WITH_TIMEOUT = exports.CONNECT_WITH_TIMEOUT = 1000;
+	var CONNECT_WITH_TIMEOUT = exports.CONNECT_WITH_TIMEOUT = 4000;
 	var ADD_INTERMEDIARY_CHANNEL = exports.ADD_INTERMEDIARY_CHANNEL = 4;
 
 	/**
@@ -548,7 +548,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-	var CONNECTION_CREATION_TIMEOUT = 4000;
+	var CONNECTION_CREATION_TIMEOUT = 2000;
 
 	/**
 	 * Service class responsible to establish connections between peers via `RTCDataChannel`.
@@ -675,7 +675,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	          reject('Signaling server socket error: ' + e.message);
 	        };
 	        socket.onclose = function (e) {
-	          console.log('Socket is closed: ', e);
+	          if (e.code !== 1000) {
+	            reject(e.reason);
+	          }
 	        };
 	      });
 	    }
@@ -1478,8 +1480,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	          _this2.onJoin = function () {
 	            resolve(_this2);
 	          };
-	        }).catch(function (msg) {
-	          console.log(msg);
+	        }).catch(function (reason) {
+	          return reject(reason);
 	        });
 	      });
 	    }

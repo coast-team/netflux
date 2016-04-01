@@ -47,7 +47,7 @@
    */
   const CONNECT_WITH = 1
   const CONNECT_WITH_FEEDBACK = 2
-  const CONNECT_WITH_TIMEOUT = 1000
+  const CONNECT_WITH_TIMEOUT = 4000
   const ADD_INTERMEDIARY_CHANNEL = 4
 
   /**
@@ -308,7 +308,7 @@
     }
   }
 
-  const CONNECTION_CREATION_TIMEOUT = 4000
+  const CONNECTION_CREATION_TIMEOUT = 2000
 
   /**
    * Service class responsible to establish connections between peers via `RTCDataChannel`.
@@ -426,11 +426,11 @@
             connection.addIceCandidate(this.createCandidate(msg.data.candidate))
           } else { reject() }
         }
-        socket.onerror = (e) => {
+        socket.onerror = e => {
           reject(`Signaling server socket error: ${e.message}`)
         }
-        socket.onclose = (e) => {
-          console.log('Socket is closed: ', e)
+        socket.onclose = e => {
+          if (e.code !== 1000) { reject(e.reason) }
         }
       })
     }
@@ -896,9 +896,7 @@
             console.log('JOIN channel established')
             this.onJoin = () => { resolve(this) }
           })
-          .catch((msg) => {
-            console.log(msg)
-          })
+          .catch(reason => reject(reason))
       })
     }
 

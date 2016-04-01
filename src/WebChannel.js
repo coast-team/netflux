@@ -187,9 +187,7 @@ class WebChannel {
           console.log('JOIN channel established')
           this.onJoin = () => { resolve(this) }
         })
-        .catch((msg) => {
-          console.log(msg)
-        })
+        .catch(reason => reject(reason))
     })
   }
 
