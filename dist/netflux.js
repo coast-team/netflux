@@ -534,6 +534,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  value: true
 	});
 
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 	var _channelBuilder = __webpack_require__(7);
@@ -551,9 +553,33 @@ return /******/ (function(modules) { // webpackBootstrap
 	var CONNECTION_CREATION_TIMEOUT = 2000;
 
 	/**
+	 * Error which might occur during interaction with signaling server.
+	 * @extends Error
+	 */
+
+	var SignalingError = function (_Error) {
+	  _inherits(SignalingError, _Error);
+
+	  function SignalingError(msg) {
+	    var evt = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
+
+	    _classCallCheck(this, SignalingError);
+
+	    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(SignalingError).call(this, msg));
+
+	    _this.name = 'SignalingError';
+	    _this.evt = evt;
+	    return _this;
+	  }
+
+	  return SignalingError;
+	}(Error);
+
+	/**
 	 * Service class responsible to establish connections between peers via `RTCDataChannel`.
 	 * @extends {@link channelBuilder#Interface}
 	 */
+
 
 	var WebRTCService = function (_cBuilder$Interface) {
 	  _inherits(WebRTCService, _cBuilder$Interface);
@@ -563,75 +589,87 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    _classCallCheck(this, WebRTCService);
 
-	    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(WebRTCService).call(this));
+	    var _this2 = _possibleConstructorReturn(this, Object.getPrototypeOf(WebRTCService).call(this));
 
-	    _this.defaults = {
-	      signaling: 'ws://sigver-coastteam.rhcloud.com:8000',
+	    _this2.defaults = {
+	      signaling: 'wws://sigver-coastteam.rhcloud.com:8000',
 	      iceServers: [{ urls: 'stun:23.21.150.121' }, { urls: 'stun:stun.l.google.com:19302' }, { urls: 'turn:numb.viagenie.ca', credential: 'webrtcdemo', username: 'louis%40mozilla.com' }]
 	    };
-	    _this.settings = Object.assign({}, _this.defaults, options);
+	    _this2.settings = Object.assign({}, _this2.defaults, options);
 
 	    // Declare WebRTCService related global(window) constructors
-	    _this.RTCPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection || window.msRTCPeerConnection;
+	    _this2.RTCPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
 
-	    _this.RTCIceCandidate = window.RTCIceCandidate || window.mozRTCIceCandidate || window.RTCIceCandidate || window.msRTCIceCandidate;
+	    _this2.RTCIceCandidate = window.RTCIceCandidate || window.mozRTCIceCandidate || window.RTCIceCandidate;
 
-	    _this.RTCSessionDescription = window.RTCSessionDescription || window.mozRTCSessionDescription || window.webkitRTCSessionDescription || window.msRTCSessionDescription;
-	    return _this;
+	    _this2.RTCSessionDescription = window.RTCSessionDescription || window.mozRTCSessionDescription || window.webkitRTCSessionDescription;
+	    return _this2;
 	  }
 
 	  _createClass(WebRTCService, [{
 	    key: 'open',
-	    value: function open(webChannel, onChannel) {
-	      var _this2 = this;
+	    value: function open(key, onChannel) {
+	      var _this3 = this;
 
 	      var options = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
 
-	      var key = webChannel.id + webChannel.myId;
 	      var settings = Object.assign({}, this.settings, options);
 	      // Connection array, because several connections may be establishing
 	      // at the same time
 	      var connections = [];
 
-	      // Connect to the signaling server
-	      var socket = new window.WebSocket(settings.signaling);
+	      try {
+	        var _ret = function () {
+	          // Connect to the signaling server
+	          var socket = new window.WebSocket(settings.signaling);
 
-	      // Send a message to signaling server: ready to receive offer
-	      socket.onopen = function () {
-	        webChannel.webRTCOpen = socket;
-	        socket.send(_this2.toStr({ key: key }));
-	      };
-	      socket.onmessage = function (e) {
-	        var msg = JSON.parse(e.data);
-	        if (!Reflect.has(msg, 'id') || !Reflect.has(msg, 'data')) {
-	          throw new Error('Incorrect message format from the signaling server.');
-	        }
+	          // Send a message to signaling server: ready to receive offer
+	          socket.onopen = function () {
+	            socket.send(_this3.toStr({ key: key }));
+	          };
+	          socket.onmessage = function (evt) {
+	            var msg = JSON.parse(evt.data);
+	            if (!Reflect.has(msg, 'id') || !Reflect.has(msg, 'data')) {
+	              // throw new SignalingError(err.name + ': ' + err.message)
+	              throw new Error('Incorrect message format from the signaling server.');
+	            }
 
-	        // On SDP offer: add connection to the array, prepare answer and send it back
-	        if (Reflect.has(msg.data, 'offer')) {
-	          connections[connections.length] = _this2.createConnectionAndAnswer(function (candidate) {
-	            return socket.send(_this2.toStr({ id: msg.id, data: { candidate: candidate } }));
-	          }, function (answer) {
-	            return socket.send(_this2.toStr({ id: msg.id, data: { answer: answer } }));
-	          }, onChannel, msg.data.offer);
-	          // On Ice Candidate
-	        } else if (Reflect.has(msg.data, 'candidate')) {
-	            connections[msg.id].addIceCandidate(_this2.createCandidate(msg.data.candidate));
-	          }
-	      };
-	      socket.onerror = function (e) {
-	        throw new Error('Connection to the signaling server ' + settings.signaling + ' failed: ' + e.message + '.');
-	      };
-	      socket.onclose = function (e) {
-	        console.log('On open socket with signaling server is closed: ', e);
-	        delete webChannel.webRTCOpen;
-	      };
-	      return { key: key, signaling: settings.signaling };
+	            // On SDP offer: add connection to the array, prepare answer and send it back
+	            if (Reflect.has(msg.data, 'offer')) {
+	              connections[connections.length] = _this3.createConnectionAndAnswer(function (candidate) {
+	                return socket.send(_this3.toStr({ id: msg.id, data: { candidate: candidate } }));
+	              }, function (answer) {
+	                return socket.send(_this3.toStr({ id: msg.id, data: { answer: answer } }));
+	              }, onChannel, msg.data.offer);
+	              // On Ice Candidate
+	            } else if (Reflect.has(msg.data, 'candidate')) {
+	                connections[msg.id].addIceCandidate(_this3.createCandidate(msg.data.candidate));
+	              }
+	          };
+	          socket.onerror = function (evt) {
+	            throw new SignalingError('error occured on the socket with signaling server ' + settings.signaling);
+	          };
+	          socket.onclose = function (closeEvt) {
+	            // 1000 corresponds to CLOSE_NORMAL: Normal closure; the connection
+	            // successfully completed whatever purpose for which it was created.
+	            if (closeEvt.code !== 1000) {
+	              throw new SignalingError('connection with signaling server\n            ' + settings.signaling + ' has been closed abnormally.\n            CloseEvent code: ' + closeEvt.code + '. Reason: ' + closeEvt.reason);
+	            }
+	          };
+	          return {
+	            v: { key: key, socket: socket, signaling: settings.signaling }
+	          };
+	        }();
+
+	        if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
+	      } catch (err) {
+	        throw new SignalingError(err.name + ': ' + err.message);
+	      }
 	    }
 	  }, {
 	    key: 'join',
 	    value: function join(key) {
-	      var _this3 = this;
+	      var _this4 = this;
 
 	      var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
 
@@ -643,10 +681,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var socket = new window.WebSocket(settings.signaling);
 	        socket.onopen = function () {
 	          // Prepare and send offer
-	          connection = _this3.createConnectionAndOffer(function (candidate) {
-	            return socket.send(_this3.toStr({ data: { candidate: candidate } }));
+	          connection = _this4.createConnectionAndOffer(function (candidate) {
+	            return socket.send(_this4.toStr({ data: { candidate: candidate } }));
 	          }, function (offer) {
-	            return socket.send(_this3.toStr({ join: key, data: { offer: offer } }));
+	            return socket.send(_this4.toStr({ join: key, data: { offer: offer } }));
 	          }, function (channel) {
 	            channel.connection = connection;
 	            resolve(channel);
@@ -662,11 +700,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	          // If received an answer to the previously sent offer
 	          if (Reflect.has(msg.data, 'answer')) {
-	            var sd = _this3.createSDP(msg.data.answer);
+	            var sd = _this4.createSDP(msg.data.answer);
 	            connection.setRemoteDescription(sd, function () {}, reject);
 	            // If received an Ice candidate
 	          } else if (Reflect.has(msg.data, 'candidate')) {
-	              connection.addIceCandidate(_this3.createCandidate(msg.data.candidate));
+	              connection.addIceCandidate(_this4.createCandidate(msg.data.candidate));
 	            } else {
 	              reject();
 	            }
@@ -684,7 +722,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'connectMeToMany',
 	    value: function connectMeToMany(webChannel, ids) {
-	      var _this4 = this;
+	      var _this5 = this;
 
 	      return new Promise(function (resolve, reject) {
 	        var counter = 0;
@@ -700,7 +738,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var _loop = function _loop() {
 	              var id = _step.value;
 
-	              _this4.connectMeToOne(webChannel, id).then(function (channel) {
+	              _this5.connectMeToOne(webChannel, id).then(function (channel) {
 	                counter++;
 	                result.channels.push(channel);
 	                if (counter === ids.length) {
@@ -738,15 +776,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'connectMeToOne',
 	    value: function connectMeToOne(webChannel, id) {
-	      var _this5 = this;
+	      var _this6 = this;
 
 	      return new Promise(function (resolve, reject) {
 	        var sender = webChannel.myId;
-	        var connection = _this5.createConnectionAndOffer(function (candidate) {
-	          return webChannel.sendSrvMsg(_this5.name, id, { sender: sender, candidate: candidate });
+	        var connection = _this6.createConnectionAndOffer(function (candidate) {
+	          return webChannel.sendSrvMsg(_this6.name, id, { sender: sender, candidate: candidate });
 	        }, function (offer) {
 	          webChannel.connections.set(id, connection);
-	          webChannel.sendSrvMsg(_this5.name, id, { sender: sender, offer: offer });
+	          webChannel.sendSrvMsg(_this6.name, id, { sender: sender, offer: offer });
 	        }, function (channel) {
 	          channel.connection = connection;
 	          channel.peerId = id;
@@ -758,15 +796,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'onMessage',
 	    value: function onMessage(webChannel, msg) {
-	      var _this6 = this;
+	      var _this7 = this;
 
 	      var connections = webChannel.connections;
 	      if (Reflect.has(msg, 'offer')) {
 	        // TODO: add try/catch. On exception remove connection from webChannel.connections
 	        connections.set(msg.sender, this.createConnectionAndAnswer(function (candidate) {
-	          return webChannel.sendSrvMsg(_this6.name, msg.sender, { sender: webChannel.myId, candidate: candidate });
+	          return webChannel.sendSrvMsg(_this7.name, msg.sender, { sender: webChannel.myId, candidate: candidate });
 	        }, function (answer) {
-	          return webChannel.sendSrvMsg(_this6.name, msg.sender, { sender: webChannel.myId, answer: answer });
+	          return webChannel.sendSrvMsg(_this7.name, msg.sender, { sender: webChannel.myId, answer: answer });
 	        }, function (channel) {
 	          webChannel.initChannel(channel, msg.sender);
 	          webChannel.connections.delete(channel.peerId);
@@ -1275,22 +1313,23 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	/**
 	 * This class is an API starting point. It represents a group of collaborators
-	 * also called peers. Each member of the group can send/receive broadcast
-	 * as well as personal messages. Every peer in the group can invite another
-	 * person to join the group and he is able to add it respecting the current
-	 * group structure (network topology).
+	 * also called peers. Each peer can send/receive broadcast as well as personal
+	 * messages. Every peer in the `WebChannel` can invite another person to join
+	 * the *WebChannel* and he also possess enough information to be able to add it
+	 * preserving the current *WebChannel* structure (network topology).
 	 */
 
 	var WebChannel = function () {
 
 	  /**
-	   * Creates `WebChannel`.
+	   * `WebChannel` constructor. `WebChannel` can be parameterized in terms of
+	   * network topology and connector technology (WebRTC or WebSocket).
 	   *
 	   * @param  {Object} options `WebChannel` configuration.
 	   * @param  {string} options.topology = FULLY_CONNECTED Defines the network
 	   *            topology.
-	   * @param  {string} options.connector = WEBRTC Determines which connection
-	   *            service to use to build `WebChannel`.
+	   * @param  {string} options.connector = WEBRTC Determines the connection
+	   *            technology to use for build `WebChannel`.
 	   * @return {WebChannel} Empty `WebChannel` without any connection.
 	   */
 
@@ -1307,10 +1346,19 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    // Public attributes
 
-	    /** Unique identifier of this `WebChannel`. The same for all peers. */
+	    /**
+	     * Unique identifier of this `WebChannel`. The same for all peers.
+	     * @readonly
+	     */
 	    this.id = this.generateId();
 
-	    /** Unique peer identifier in this `WebChannel`. */
+	    /**
+	     * Unique peer identifier in this `WebChannel`. After each `join` function call
+	     * this id will change, because it is up to the `WebChannel` to assign it when
+	     * you join.
+	     *
+	     * @readonly
+	     */
 	    this.myId = this.generateId();
 
 	    /**
@@ -1386,9 +1434,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    /**
-	     * Send message to a particular peer.
+	     * Send the message to a particular peer.
 	     *
-	     * @param  {type} id Peer id of the recipient.
+	     * @param  {type} id Peer id of the recipient peer
 	     * @param  {type} data Message
 	     */
 
@@ -1416,9 +1464,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var settings = Object.assign({}, this.settings, options);
 
 	      var cBuilder = services.get(settings.connector, settings);
+	      var key = this.id + this.myId;
 	      try {
-	        var data = cBuilder.open(this, function (channel) {
-	          console.log('NEW PEER');
+	        var data = cBuilder.open(key, function (channel) {
 	          _this.initChannel(channel);
 	          var jp = new _JoiningPeer2.default(channel.peerId, _this.myId);
 	          jp.intermediaryChannel = channel;
@@ -1426,9 +1474,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          channel.send(_this.proxy.msg(cs.JOIN_INIT, { manager: _this.settings.topology,
 	            id: channel.peerId,
 	            intermediaryId: _this.myId }));
-	          console.log('BEFORE BROADCAST');
 	          _this.manager.broadcast(_this, _this.proxy.msg(cs.JOIN_NEW_MEMBER, { id: channel.peerId, intermediaryId: _this.myId }));
-	          console.log('AFTER BROADCAST');
 	          _this.manager.add(channel).then(function () {
 	            channel.send(_this.proxy.msg(cs.JOIN_FINILIZE));
 	          }).catch(function (msg) {
@@ -1437,6 +1483,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            _this.removeJoiningPeer(jp.id);
 	          });
 	        });
+	        this.webRTCOpen = data.socket;
 	        return data.key;
 	      } catch (e) {
 	        console.log('WebChannel open error: ', e);
@@ -1460,7 +1507,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	     *
 	     * @param  {string} key The key provided by a `WebChannel` member.
 	     * @param  {type} options = {} Any available connection service options.
-	     * @return {Promise} Is resolve once you became a `WebChannel` member.
+	     * @return {Promise} It resolves once you became a `WebChannel` member.
 	     */
 
 	  }, {
@@ -1703,6 +1750,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 	      this.joiningPeers.add(jp);
 	    }
+
+	    /**
+	     * removeJoiningPeer - description
+	     *
+	     * @private
+	     * @param  {type} id description
+	     * @return {type}    description
+	     */
+
 	  }, {
 	    key: 'removeJoiningPeer',
 	    value: function removeJoiningPeer(id) {

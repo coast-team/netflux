@@ -4,21 +4,22 @@ import JoiningPeer from './JoiningPeer'
 
 /**
  * This class is an API starting point. It represents a group of collaborators
- * also called peers. Each member of the group can send/receive broadcast
- * as well as personal messages. Every peer in the group can invite another
- * person to join the group and he is able to add it respecting the current
- * group structure (network topology).
+ * also called peers. Each peer can send/receive broadcast as well as personal
+ * messages. Every peer in the `WebChannel` can invite another person to join
+ * the *WebChannel* and he also possess enough information to be able to add it
+ * preserving the current *WebChannel* structure (network topology).
  */
 class WebChannel {
 
   /**
-   * Creates `WebChannel`.
+   * `WebChannel` constructor. `WebChannel` can be parameterized in terms of
+   * network topology and connector technology (WebRTC or WebSocket).
    *
-   * @param  {Object} options `WebChannel` configuration.
-   * @param  {string} options.topology = FULLY_CONNECTED Defines the network
+   * @param  {Object} [options] `WebChannel` configuration.
+   * @param  {string} [options.topology=FULLY_CONNECTED] Defines the network
    *            topology.
-   * @param  {string} options.connector = WEBRTC Determines which connection
-   *            service to use to build `WebChannel`.
+   * @param  {string} [options.connector=WEBRTC] Determines the connection
+   *            technology to use for build `WebChannel`.
    * @return {WebChannel} Empty `WebChannel` without any connection.
    */
   constructor (options = {}) {
@@ -30,10 +31,19 @@ class WebChannel {
 
     // Public attributes
 
-    /** Unique identifier of this `WebChannel`. The same for all peers. */
+    /**
+     * Unique identifier of this `WebChannel`. The same for all peers.
+     * @readonly
+     */
     this.id = this.generateId()
 
-    /** Unique peer identifier in this `WebChannel`. */
+    /**
+     * Unique peer identifier in this `WebChannel`. After each `join` function call
+     * this id will change, because it is up to the `WebChannel` to assign it when
+     * you join.
+     *
+     * @readonly
+     */
     this.myId = this.generateId()
 
     /**
@@ -101,9 +111,9 @@ class WebChannel {
   }
 
   /**
-   * Send message to a particular peer.
+   * Send the message to a particular peer.
    *
-   * @param  {type} id Peer id of the recipient.
+   * @param  {type} id Peer id of the recipient peer
    * @param  {type} data Message
    */
   sendTo (id, data) {
@@ -117,16 +127,16 @@ class WebChannel {
    * Enable other peers to join the `WebChannel` with your help as an intermediary
    * peer.
    *
-   * @param  {Object} options = {} Any available connection service options.
+   * @param  {Object} [options] Any available connection service options.
    * @return {string} The key required by other peer to join the `WebChannel`.
    */
   openForJoining (options = {}) {
     let settings = Object.assign({}, this.settings, options)
 
     let cBuilder = services.get(settings.connector, settings)
+    let key = this.id + this.myId
     try {
-      let data = cBuilder.open(this, (channel) => {
-        console.log('NEW PEER')
+      let data = cBuilder.open(key, channel => {
         this.initChannel(channel)
         let jp = new JoiningPeer(channel.peerId, this.myId)
         jp.intermediaryChannel = channel
@@ -136,11 +146,9 @@ class WebChannel {
           id: channel.peerId,
           intermediaryId: this.myId}
         ))
-        console.log('BEFORE BROADCAST')
         this.manager.broadcast(this, this.proxy.msg(cs.JOIN_NEW_MEMBER,
           {id: channel.peerId, intermediaryId: this.myId}
         ))
-        console.log('AFTER BROADCAST')
         this.manager.add(channel)
           .then(() => {
             channel.send(this.proxy.msg(cs.JOIN_FINILIZE))
@@ -153,6 +161,7 @@ class WebChannel {
             this.removeJoiningPeer(jp.id)
           })
       })
+      this.webRTCOpen = data.socket
       return data.key
     } catch (e) {
       console.log('WebChannel open error: ', e)
@@ -172,8 +181,8 @@ class WebChannel {
    * Join the `WebChannel`.
    *
    * @param  {string} key The key provided by a `WebChannel` member.
-   * @param  {type} options = {} Any available connection service options.
-   * @return {Promise} Is resolve once you became a `WebChannel` member.
+   * @param  {type} [options] Any available connection service options.
+   * @return {Promise} It resolves once you became a `WebChannel` member.
    */
   join (key, options = {}) {
     let settings = Object.assign({}, this.settings, options)
@@ -349,6 +358,13 @@ class WebChannel {
     this.joiningPeers.add(jp)
   }
 
+  /**
+   * removeJoiningPeer - description
+   *
+   * @private
+   * @param  {type} id description
+   * @return {type}    description
+   */
   removeJoiningPeer (id) {
     if (this.hasJoiningPeer(id)) {
       this.joiningPeers.delete(this.getJoiningPeer(id))

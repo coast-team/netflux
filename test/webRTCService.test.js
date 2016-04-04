@@ -1,26 +1,21 @@
 import WebRTCService from '../src/services/cBuilders/WebRTCService'
-import WebChannel from '../src/WebChannel'
 
 const signaling = 'ws://localhost:8000'
 // const signaling = 'ws://sigver-coastteam.rhcloud.com:8000'
 
 describe('WebRTCService ->', () => {
   let webRTCService = new WebRTCService({signaling})
-  let webChannel
-  beforeEach(() => {
-    webChannel = new WebChannel()
-  })
 
   describe('Master & 1 client connection ->', () => {
     describe('open ->', () => {
       it('Should succed', () => {
-        let data = webRTCService.open(webChannel, () => {})
+        let data = webRTCService.open('1', () => {})
         expect(data.signaling).toBeDefined()
       })
 
       it('DataChannel with the specified key should open', (done) => {
         let label
-        let data = webRTCService.open(webChannel, (dc) => {
+        let data = webRTCService.open('2', (dc) => {
           expect(dc.label).toBe(label)
           done()
         })
@@ -30,24 +25,24 @@ describe('WebRTCService ->', () => {
 
       it('With wrong url: catch - should throw an exception', () => {
         expect(() => {
-          webRTCService.open(webChannel, () => {}, {
+          webRTCService.open('3', () => {}, {
             signaling: 'https://github.com:8100/coast-team/netflux'
           })
         }).toThrow()
       })
 
-      it('With incorrect url syntax: catch - should throw DOMException', () => {
+      it('With incorrect url syntax: catch - should throw an Error', () => {
         expect(() => {
-          webRTCService.open(webChannel, () => {}, {
+          webRTCService.open('4', () => {}, {
             signaling: 'https://github.com:8100/coast-team/netflux'
           })
-        }).toThrowError(DOMException)
+        }).toThrow()
       })
     })
 
     describe('join ->', () => {
       it('DataChannel should open', (done) => {
-        let data = webRTCService.open(webChannel, () => {})
+        let data = webRTCService.open('5', () => {})
         webRTCService.join(data.key).then(done).catch(done.fail)
       })
 
@@ -57,14 +52,14 @@ describe('WebRTCService ->', () => {
         }).then(done.fail).catch(done)
       })
 
-      it('With incorrect url syntax: catch - should throw DOMException', (done) => {
+      it('With incorrect url syntax: catch - should throw an Error', (done) => {
         webRTCService
           .join('some key', {
             signaling: 'https://github.com:8100/coast-team/netflux'
           })
           .then(done.fail)
           .catch((e) => {
-            expect(e instanceof DOMException).toBeTruthy()
+            expect(e instanceof Error).toBeTruthy()
             expect(e.name).toBe('SyntaxError')
             expect(e.code).toBe(12)
             done()
@@ -76,7 +71,7 @@ describe('WebRTCService ->', () => {
       it('Master establish connection with 1 client and send/receive a message', (done) => {
         let masterMsg = 'Hello! Here is master'
         let clientMsg = 'Hi, I am peer #2'
-        let data = webRTCService.open(webChannel, (channel) => {
+        let data = webRTCService.open('6', (channel) => {
           channel.send(masterMsg)
           channel.onmessage = (event) => {
             expect(event.data).toEqual(clientMsg)
@@ -107,7 +102,7 @@ describe('WebRTCService ->', () => {
         let client2Msg = 'Hi, I am client #2'
         const MSG_LIMIT = 2
         let limit = 0
-        let data = webRTCService.open(webChannel, (channel) => {
+        let data = webRTCService.open('7', (channel) => {
           channel.send(masterMsg)
           channel.onmessage = (event) => {
             expect(event.data).toMatch(/Hi, I am client #/)

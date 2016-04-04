@@ -34,8 +34,8 @@ class Interface extends ServiceInterface {
         msg.peers = this.reUseIntermediaryChannelIfPossible(webChannel, msg.jpId, msg.peers)
         cBuilder
           .connectMeToMany(webChannel, msg.peers)
-          .then((result) => {
-            result.channels.forEach((c) => {
+          .then(result => {
+            result.channels.forEach(c => {
               webChannel.initChannel(c, c.peerId)
               webChannel.getJoiningPeer(msg.jpId).toAddList(c)
               c.send(webChannel.proxy.msg(cs.THIS_CHANNEL_TO_JOINING_PEER,
@@ -47,7 +47,7 @@ class Interface extends ServiceInterface {
               {code: CONNECT_WITH_FEEDBACK, id: webChannel.myId, failed: result.failed}
             )
           })
-          .catch((err) => {
+          .catch(err => {
             console.log('connectMeToMany FAILED, ', err)
           })
         break

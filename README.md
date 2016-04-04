@@ -31,29 +31,7 @@ Perhaps `WebChannel.openForJoining` and `WebChannel.closeForJoining` could be us
 
 ___
 ### WebChannel
-
-#### Methods
-- **onJoining**: function (peerId: *string*)
-  * When new peer has joined the `WebChannel`.
-- **onLeaving**: function (peerId: *string*)
-  * When the `peerId` peer has disconnected from the `WebChannel`.
-- **onMessage**: function (peerId: *string*, msg: *string*)
-  * When a broadcast message has arrived from the `peerId` peer.
-
-#### Attributes
-- **join** (key: *string*, options: *Object*): Promise
-  * Join the `WebChannel` with `key` as identifier.
-- **leave** ()
-  * Disconnect from this `WebChannel`.
-- **send** (data: *string*)
-  * Send broadcast message to this `WebChannel`.
-- **sendTo** (id: *string*, data: *string*)
-  * Send a message to the `WebChannel` peer identified by `id`.
-- **openForJoining** (options: *Object*): *string*
-  * Enable other peers to join this `WebChannel` with your help as an intermediary
-    peer. Returns key.
-- **closeForJoining** ()
-  * Prevent other peers to join this `WebChannel` even if they have a key.
+ See http://coast-team.github.io/netflux/WebChannel.html
 
   ## UML
   The Green and green/red parts (`Facade`, `WebChannel` and `Peer`) is what we consider to expose to the API user).

@@ -3,6 +3,18 @@ import * as cBuilder from './channelBuilder'
 const CONNECTION_CREATION_TIMEOUT = 2000
 
 /**
+ * Error which might occur during interaction with signaling server.
+ * @extends Error
+ */
+class SignalingError extends Error {
+  constructor (msg, evt = null) {
+    super(msg)
+    this.name = 'SignalingError'
+    this.evt = evt
+  }
+}
+
+/**
  * Service class responsible to establish connections between peers via `RTCDataChannel`.
  * @extends {@link channelBuilder#Interface}
  */
@@ -11,7 +23,7 @@ class WebRTCService extends cBuilder.Interface {
   constructor (options = {}) {
     super()
     this.defaults = {
-      signaling: 'ws://sigver-coastteam.rhcloud.com:8000',
+      signaling: 'wws://sigver-coastteam.rhcloud.com:8000',
       iceServers: [
         {urls: 'stun:23.21.150.121'},
         {urls: 'stun:stun.l.google.com:19302'},
@@ -24,64 +36,67 @@ class WebRTCService extends cBuilder.Interface {
     this.RTCPeerConnection =
       window.RTCPeerConnection ||
       window.mozRTCPeerConnection ||
-      window.webkitRTCPeerConnection ||
-      window.msRTCPeerConnection
+      window.webkitRTCPeerConnection
 
     this.RTCIceCandidate =
       window.RTCIceCandidate ||
       window.mozRTCIceCandidate ||
-      window.RTCIceCandidate ||
-      window.msRTCIceCandidate
+      window.RTCIceCandidate
 
     this.RTCSessionDescription =
       window.RTCSessionDescription ||
       window.mozRTCSessionDescription ||
-      window.webkitRTCSessionDescription ||
-      window.msRTCSessionDescription
+      window.webkitRTCSessionDescription
   }
 
-  open (webChannel, onChannel, options = {}) {
-    let key = webChannel.id + webChannel.myId
+  open (key, onChannel, options = {}) {
     let settings = Object.assign({}, this.settings, options)
     // Connection array, because several connections may be establishing
     // at the same time
     let connections = []
 
-    // Connect to the signaling server
-    let socket = new window.WebSocket(settings.signaling)
+    try {
+      // Connect to the signaling server
+      let socket = new window.WebSocket(settings.signaling)
 
-    // Send a message to signaling server: ready to receive offer
-    socket.onopen = () => {
-      webChannel.webRTCOpen = socket
-      socket.send(this.toStr({key}))
-    }
-    socket.onmessage = (e) => {
-      let msg = JSON.parse(e.data)
-      if (!Reflect.has(msg, 'id') || !Reflect.has(msg, 'data')) {
-        throw new Error('Incorrect message format from the signaling server.')
-      }
+      // Send a message to signaling server: ready to receive offer
+      socket.onopen = () => { socket.send(this.toStr({key})) }
+      socket.onmessage = evt => {
+        let msg = JSON.parse(evt.data)
+        if (!Reflect.has(msg, 'id') || !Reflect.has(msg, 'data')) {
+          // throw new SignalingError(err.name + ': ' + err.message)
+          throw new Error('Incorrect message format from the signaling server.')
+        }
 
-      // On SDP offer: add connection to the array, prepare answer and send it back
-      if (Reflect.has(msg.data, 'offer')) {
-        connections[connections.length] = this.createConnectionAndAnswer(
-            candidate => socket.send(this.toStr({id: msg.id, data: {candidate}})),
-            answer => socket.send(this.toStr({id: msg.id, data: {answer}})),
-            onChannel,
-            msg.data.offer
-          )
-      // On Ice Candidate
-      } else if (Reflect.has(msg.data, 'candidate')) {
-        connections[msg.id].addIceCandidate(this.createCandidate(msg.data.candidate))
+        // On SDP offer: add connection to the array, prepare answer and send it back
+        if (Reflect.has(msg.data, 'offer')) {
+          connections[connections.length] = this.createConnectionAndAnswer(
+              candidate => socket.send(this.toStr({id: msg.id, data: {candidate}})),
+              answer => socket.send(this.toStr({id: msg.id, data: {answer}})),
+              onChannel,
+              msg.data.offer
+            )
+        // On Ice Candidate
+        } else if (Reflect.has(msg.data, 'candidate')) {
+          connections[msg.id].addIceCandidate(this.createCandidate(msg.data.candidate))
+        }
       }
+      socket.onerror = evt => {
+        throw new SignalingError(`error occured on the socket with signaling server ${settings.signaling}`)
+      }
+      socket.onclose = closeEvt => {
+        // 1000 corresponds to CLOSE_NORMAL: Normal closure; the connection
+        // successfully completed whatever purpose for which it was created.
+        if (closeEvt.code !== 1000) {
+          throw new SignalingError(`connection with signaling server
+            ${settings.signaling} has been closed abnormally.
+            CloseEvent code: ${closeEvt.code}. Reason: ${closeEvt.reason}`)
+        }
+      }
+      return {key, socket, signaling: settings.signaling}
+    } catch (err) {
+      throw new SignalingError(err.name + ': ' + err.message)
     }
-    socket.onerror = (e) => {
-      throw new Error(`Connection to the signaling server ${settings.signaling} failed: ${e.message}.`)
-    }
-    socket.onclose = (e) => {
-      console.log('On open socket with signaling server is closed: ', e)
-      delete webChannel.webRTCOpen
-    }
-    return {key, signaling: settings.signaling}
   }
 
   join (key, options = {}) {
@@ -136,14 +151,14 @@ class WebRTCService extends cBuilder.Interface {
       } else {
         for (let id of ids) {
           this.connectMeToOne(webChannel, id)
-            .then((channel) => {
+            .then(channel => {
               counter++
               result.channels.push(channel)
               if (counter === ids.length) {
                 resolve(result)
               }
             })
-            .catch((err) => {
+            .catch(err => {
               counter++
               result.failed.push({id, err})
               if (counter === ids.length) {
