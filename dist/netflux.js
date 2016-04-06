@@ -211,6 +211,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	    key: 'onLeaving',
 	    value: function onLeaving(id) {}
 
+	    /**
+	     * On message event handler.
+	     *
+	     * @param  {string} id  - Peer id the message came from.
+	     * @param  {string} msg - Message
+	     */
+
+	  }, {
+	    key: 'onMessage',
+	    value: function onMessage(id, msg) {}
+
 	    /** Leave `WebChannel`. No longer can receive and send messages to the group. */
 
 	  }, {

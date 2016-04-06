@@ -11,7 +11,9 @@
     "test": "karma start",
     "testin": "npm run test -- --browsers",
     "doc": "jsdoc -d doc -c jsdoc.json -t ./node_modules/ink-docstrap/template -R README.md -r src",
+    "postdoc": "mkdir -p doc/doc && cp -f doc/uml.png doc/doc/",
     "docdev": "jsdoc -d doc -p -c jsdoc.json -t ./node_modules/ink-docstrap/template -R README.md -r src",
+    "postdocdev": "mkdir -p doc/doc && cp -f doc/uml.png doc/doc/",
     "commit": "git-cz",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post"
   },

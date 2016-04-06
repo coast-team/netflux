@@ -100,6 +100,14 @@ class WebChannel {
    */
   onLeaving (id) { }
 
+  /**
+   * On message event handler.
+   *
+   * @param  {string} id  - Peer id the message came from.
+   * @param  {string} msg - Message
+   */
+  onMessage (id, msg) {}
+
   /** Leave `WebChannel`. No longer can receive and send messages to the group. */
   leave () {
     this.manager.broadcast(this, this.proxy.msg(LEAVE,
