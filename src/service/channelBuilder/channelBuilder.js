@@ -1,4 +1,4 @@
-import ServiceInterface from '../../ServiceInterface'
+import * as service from '../service'
 
 /**
  * Channel Builder module - start point for all connection services. Composed of
@@ -11,7 +11,7 @@ import ServiceInterface from '../../ServiceInterface'
  * @interface
  * @extends ServiceInterface
  */
-class Interface extends ServiceInterface {
+class Interface extends service.Interface {
   /**
    * Sends a message to `peerExecutor.id` asking him to establish a connection
    * with `peers`. This function is used to add a new peer to the `webChannel`.
@@ -81,7 +81,7 @@ class Interface extends ServiceInterface {
    *           to be passed to {@link connector#join} function. It is rejected
    *           if an error occured.
    */
-  open (onChannel, options = {}) {
+  open (onChannel, options) {
     throw new Error('Must be implemented by subclass!')
   }
 
@@ -95,7 +95,7 @@ class Interface extends ServiceInterface {
    * @return {Promise} It is resolved when the connection is established,
    *           otherwise it is rejected.
    */
-  join (key, options = {}) {
+  join (key, options) {
     throw new Error('Must be implemented by subclass!')
   }
 }

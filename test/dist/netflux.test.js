@@ -1,6 +1,6 @@
 xdescribe('Distribution for', () => {
   describe('NodeJS (CommonJS) ->', () => {
-    var nfNode = require('../../dist/netflux')
+    var nfNode = require('../../dist/netflux.es2015')
     it('nfNode must be defined', () => {
       expect(nfNode).toBeDefined()
     })

@@ -1,7 +1,7 @@
-import * as services from './services'
 import WebChannel from './WebChannel'
+import * as service from './serviceProvider'
 
-const WEBRTC = services.WEBRTC
-const FULLY_CONNECTED = services.FULLY_CONNECTED
+const WEBRTC = service.WEBRTC
+const FULLY_CONNECTED = service.FULLY_CONNECTED
 
 export {WEBRTC, FULLY_CONNECTED, WebChannel}

@@ -1,5 +1,13 @@
-import * as cs from './constants'
-import * as services from './services'
+import * as serviceProvider from './serviceProvider'
+import {
+  JOIN_NEW_MEMBER,
+  LEAVE,
+  USER_DATA,
+  JOIN_INIT,
+  JOIN_FINILIZE,
+  REMOVE_NEW_MEMBER,
+  SERVICE_DATA
+} from './service/channelProxy/channelProxy'
 import JoiningPeer from './JoiningPeer'
 
 /**
@@ -13,7 +21,8 @@ class WebChannel {
 
   /**
    * `WebChannel` constructor. `WebChannel` can be parameterized in terms of
-   * network topology and connector technology (WebRTC or WebSocket).
+   * network topology and connector technology (WebRTC or WebSocket. Currently
+   * WebRTC is only available).
    *
    * @param  {Object} [options] `WebChannel` configuration.
    * @param  {string} [options.topology=FULLY_CONNECTED] Defines the network
@@ -24,8 +33,8 @@ class WebChannel {
    */
   constructor (options = {}) {
     this.defaults = {
-      connector: services.WEBRTC,
-      topology: services.FULLY_CONNECTED
+      connector: serviceProvider.WEBRTC,
+      topology: serviceProvider.FULLY_CONNECTED
     }
     this.settings = Object.assign({}, this.defaults, options)
 
@@ -72,7 +81,7 @@ class WebChannel {
     this.connections = new Map()
 
     /** @private */
-    this.proxy = services.get(services.CHANNEL_PROXY)
+    this.proxy = serviceProvider.get(serviceProvider.CHANNEL_PROXY)
     /** @private */
     this.topology = this.settings.topology
   }
@@ -93,7 +102,7 @@ class WebChannel {
 
   /** Leave `WebChannel`. No longer can receive and send messages to the group. */
   leave () {
-    this.manager.broadcast(this, this.proxy.msg(cs.LEAVE,
+    this.manager.broadcast(this, this.proxy.msg(LEAVE,
       {id: this.myId}
     ))
   }
@@ -105,7 +114,7 @@ class WebChannel {
    */
   send (data) {
     this.manager.broadcast(this, this.proxy.msg(
-      cs.USER_DATA,
+      USER_DATA,
       {id: this.myId, data}
     ))
   }
@@ -118,7 +127,7 @@ class WebChannel {
    */
   sendTo (id, data) {
     this.manager.sendTo(id, this, this.proxy.msg(
-      cs.USER_DATA,
+      USER_DATA,
       {id: this.myId, data}
     ))
   }
@@ -133,7 +142,7 @@ class WebChannel {
   openForJoining (options = {}) {
     let settings = Object.assign({}, this.settings, options)
 
-    let cBuilder = services.get(settings.connector, settings)
+    let cBuilder = serviceProvider.get(settings.connector, settings)
     let key = this.id + this.myId
     try {
       let data = cBuilder.open(key, channel => {
@@ -141,21 +150,21 @@ class WebChannel {
         let jp = new JoiningPeer(channel.peerId, this.myId)
         jp.intermediaryChannel = channel
         this.joiningPeers.add(jp)
-        channel.send(this.proxy.msg(cs.JOIN_INIT,
+        channel.send(this.proxy.msg(JOIN_INIT,
           {manager: this.settings.topology,
           id: channel.peerId,
           intermediaryId: this.myId}
         ))
-        this.manager.broadcast(this, this.proxy.msg(cs.JOIN_NEW_MEMBER,
+        this.manager.broadcast(this, this.proxy.msg(JOIN_NEW_MEMBER,
           {id: channel.peerId, intermediaryId: this.myId}
         ))
         this.manager.add(channel)
           .then(() => {
-            channel.send(this.proxy.msg(cs.JOIN_FINILIZE))
+            channel.send(this.proxy.msg(JOIN_FINILIZE))
           })
           .catch((msg) => {
             console.log(`Adding peer ${channel.peerId} failed: ${msg}`)
-            this.manager.broadcast(this, this.proxy.msg(cs.REMOVE_NEW_MEMBER,
+            this.manager.broadcast(this, this.proxy.msg(REMOVE_NEW_MEMBER,
               {id: channel.peerId}
             ))
             this.removeJoiningPeer(jp.id)
@@ -187,7 +196,7 @@ class WebChannel {
   join (key, options = {}) {
     let settings = Object.assign({}, this.settings, options)
 
-    let cBuilder = services.get(settings.connector, settings)
+    let cBuilder = serviceProvider.get(settings.connector, settings)
     return new Promise((resolve, reject) => {
       cBuilder
         .join(key)
@@ -235,7 +244,7 @@ class WebChannel {
    */
   sendSrvMsg (serviceName, recepient, msg = {}) {
     let completeMsg = {serviceName, recepient, data: Object.assign({}, msg)}
-    let stringifiedMsg = this.proxy.msg(cs.SERVICE_DATA, completeMsg)
+    let stringifiedMsg = this.proxy.msg(SERVICE_DATA, completeMsg)
     if (recepient === this.myId) {
       this.proxy.onSrvMsg(this, completeMsg)
     } else {
@@ -264,24 +273,11 @@ class WebChannel {
     }
   }
 
-  /**
-   * set - description
-   *
-   * @private
-   * @param  {type} name description
-   * @return {type}      description
-   */
   set topology (name) {
     this.settings.topology = name
-    this.manager = services.get(this.settings.topology)
+    this.manager = serviceProvider.get(this.settings.topology)
   }
 
-  /**
-   * get - description
-   *
-   * @private
-   * @return {type}  description
-   */
   get topology () {
     return this.settings.topology
   }

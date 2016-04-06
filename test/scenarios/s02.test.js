@@ -1,4 +1,4 @@
-import '../../dist/netflux.js'
+import '../../dist/netflux.es2015.js'
 
 xdescribe('2 peers in the network send/receive broadcast messages', () => {
   let net1, net2, invitingURL

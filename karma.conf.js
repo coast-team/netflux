@@ -17,7 +17,7 @@ module.exports = function(config) {
     jspm: {
       config: 'config.js',
       loadFiles: ['test/**/*test.js'],
-      serveFiles: ['src/**/*.js', 'dist/netflux.js']
+      serveFiles: ['src/**/*.js', 'dist/netflux.es2015.js']
     },
     proxies: {
       '/src/': '/base/src/',
@@ -29,7 +29,7 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
-      'dist/netflux.js',
+      'dist/netflux.es2015.js',
       'node_modules/babel-polyfill/dist/polyfill.js'
     ],
 

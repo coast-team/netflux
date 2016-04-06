@@ -1,4 +1,4 @@
-import WebRTCService from '../src/services/cBuilders/WebRTCService'
+import WebRTCService from '../src/service/channelBuilder/WebRTCService'
 
 const signaling = 'ws://localhost:8000'
 // const signaling = 'ws://sigver-coastteam.rhcloud.com:8000'
