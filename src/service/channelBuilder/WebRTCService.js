@@ -4,6 +4,8 @@ const CONNECTION_CREATION_TIMEOUT = 2000
 
 /**
  * Error which might occur during interaction with signaling server.
+ *
+ * @see [Error]{@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error}
  * @extends Error
  */
 class SignalingError extends Error {
@@ -15,11 +17,23 @@ class SignalingError extends Error {
 }
 
 /**
- * Service class responsible to establish connections between peers via `RTCDataChannel`.
- * @extends {@link channelBuilder#Interface}
+ * Service class responsible to establish connections between peers via
+ * `RTCDataChannel`.
+ *
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection}
+ * @extends module:channelBuilder~Interface
  */
 class WebRTCService extends cBuilder.Interface {
 
+  /**
+   * WebRTCService constructor.
+   *
+   * @param  {Object} [options] - This service options.
+   * @param  {Object} [options.signaling='wws://sigver-coastteam.rhcloud.com:8000'] -
+   * Signaling server URL.
+   * @param  {Object[]} [options.iceServers=[{urls: 'stun:23.21.150.121'},{urls: 'stun:stun.l.google.com:19302'},{urls: 'turn:numb.viagenie.ca', credential: 'webrtcdemo', username: 'louis%40mozilla.com'}]] - WebRTC options to setup which STUN
+   * and TURN servers to be used.
+   */
   constructor (options = {}) {
     super()
     this.defaults = {

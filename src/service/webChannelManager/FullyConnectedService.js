@@ -4,10 +4,9 @@ import * as wcManager from './webChannelManager'
  * Fully connected web channel manager. Implements fully connected topology
  * network, when each peer is connected to each other.
  *
- * @extends webChannelManager~Interface
+ * @extends module:webChannelManager~Interface
  */
 class FullyConnectedService extends wcManager.Interface {
-
   add (ch) {
     let wCh = ch.webChannel
     let peers = [wCh.myId]

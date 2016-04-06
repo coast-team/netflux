@@ -430,10 +430,9 @@
    * Fully connected web channel manager. Implements fully connected topology
    * network, when each peer is connected to each other.
    *
-   * @extends webChannelManager~Interface
+   * @extends module:webChannelManager~Interface
    */
   class FullyConnectedService extends Interface {
-
     add (ch) {
       let wCh = ch.webChannel
       let peers = [wCh.myId]
@@ -471,83 +470,77 @@
   }
 
   /**
-   * Channel Builder module - start point for all connection services. Composed of
-   * an Interface which each channel builder service should extend.
+   * Channel Builder module is responsible to create a connection between two
+   * peers.
    * @module channelBuilder
+   * @see ChannelInterface
    */
 
   /**
-   * Interface for all channel builder services. Its standalone instance is useless.
+   * Interface to be implemented by each connection service.
    * @interface
-   * @extends ServiceInterface
+   * @extends module:service~Interface
    */
   class Interface$2 extends Interface$1 {
     /**
-     * Sends a message to `peerExecutor.id` asking him to establish a connection
-     * with `peers`. This function is used to add a new peer to the `webChannel`.
+     * Callback function for resolved Promise state returned by
+     * {@link module:channelBuilder~Interface#connectMeToMany} function.
      *
-     * For exemple: A, B, C constitute the `webChannel`. N1 and N2 are not the
-     * `webChannel` members and they are about to join it. N1 is connected to A.
-     * Thus A is the intermediary peer for communicate with N1. N2 is connected
-     * to C thereby C is the intermediary peer for N2.
-     *
-     * N1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A<br />
-     * +------->+<br />
-     * &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br />
-     * &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br />
-     * &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+-----------+<------+<br />
-     * &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;B&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;N2<br />
-     *
-     *  Here are possible use cases:
-     *
-     * 1. A asks C to connect with N1
-     * 2. A asks B to connect with N1
-     * 3. B asks A to connect with N1
-     * 4. B asks C to connect with N1
-     * 5. B asks C to connect with A
-     * 6. A asks N1 to connect with B
-     * 7. A asks N1 to connect with C
-     * 8. B asks N1 to connect with C
-     * 9. A asks N1 to connect with N2
-     * 10. B asks N2 to connect with N1
-     *
-     * @param  {Object} peerExecutor The peer who must establish connection with `peers`.
-     * @param  {string} peerExecutor.id The `peerExecutor`'s id.
-     * @param  {string} [peerExecutor.intermediaryId] The id of the peer in the `webChannel`
-     *            who knows the `peerExecutor` which is not yet a member of the `webChannel`.
-     * @param  {WebChannel} webChannel - `webChannel` which has this function caller as member.
-     * @param  {Object[]} peers An array of peers with whom the `peerExecutor` must
-     *           establish a connection.
-     * @param  {string} peers[].id - The peer's id.
-     * @param  {string} [peers[].intermediaryId] - the id of an intermediary peer
-     *           to communicate with this partner (as for `peerExecutor`).
-     *
-     * @return {Promise} Once `peerExecutor` established all required connections,
-     *           the promise is resolved, otherwise it is rejected.
+     * @callback module:channelBuilder~Interface~connectMeToManyCallback
+     * @param {Object} result - Result object
+     * @param {ChannelInterface[]} result.channels - Channels which are
+     * succesfully created.
+     * @param {string[]} result.failed - Identifiers of peers with whom the
+     * connection could not be established.
      */
-    connectMeToMany (webChannel, ids) {
-      throw new Error('Must be implemented by subclass!')
-    }
 
-    connectMeToOne (webChannel, id) {
+     /**
+      * On channel callback for {@link module:channelBuilder~Interface#open}
+      * function.
+      *
+      * @callback module:channelBuilder~Interface~onChannelCallback
+      * @param {ChannelInterface} channel - A new channel.
+      */
+
+    /**
+     * Establish a connection between you and several peers. It is also possible
+     * to connect with a peer who is about to join the Web Channel.
+     *
+     * @abstract
+     * @param  {WebChannel} wc - Web Channel through which the connections will be
+     * established.
+     * @param  {string[]} ids Peers identifiers with whom it establishes
+     * connections.
+     * @return {Promise} - Is always resolved. The callback function type is
+     * {@link module:channelBuilder~Interface~connectMeToManyCallback}.
+     */
+    connectMeToMany (wc, ids) {
       throw new Error('Must be implemented by subclass!')
     }
 
     /**
-     * This callback type is `onChannelCallback`.
+     * Establish a connection between you and another peer (including
+     * joining peer).
      *
-     * @callback onChannelCallback
-     * @param {Channel} channel A new channel.
+     * @abstract
+     * @param  {WebChannel} wc - Web Channel through which the connection will be
+     * established.
+     * @param  {string} id - Peer id with whom the connection will be established.
+     * @return {Promise} - Resolved once the connection has been established,
+     * rejected otherwise.
      */
+    connectMeToOne (wc, id) {
+      throw new Error('Must be implemented by subclass!')
+    }
 
     /**
      * Enables other clients to establish a connection with you.
      *
      * @abstract
-     * @param {onChannelCallback} onChannel Callback function to execute once the
-     *          connection is established.
-     * @param {Object} [options] Any other options which depend on the implementation.
-     * @return {Promise} Once resolved, provide an Object with `key` attribute
+     * @param {module:channelBuilder~Interface~onChannelCallback} onChannel -
+     * Callback function to execute once the connection is established.
+     * @param {Object} [options] - Any other options which depend on the implementation.
+     * @return {Promise} - Once resolved, provide an Object with `key` attribute
      *           to be passed to {@link connector#join} function. It is rejected
      *           if an error occured.
      */
@@ -559,11 +552,11 @@
      * Connects you with the peer who provided the `key`.
      *
      * @abstract
-     * @param  {type} key A key obtained from a peer.
-     * @param  {type} options = {} Any other options which depend on the
-     *           implementation.
+     * @param  {string} key - A key obtained from a peer.
+     * @param  {Object} [options] Any other options which depend on the
+     * implementation.
      * @return {Promise} It is resolved when the connection is established,
-     *           otherwise it is rejected.
+     * otherwise it is rejected.
      */
     join (key, options) {
       throw new Error('Must be implemented by subclass!')
@@ -574,6 +567,8 @@
 
   /**
    * Error which might occur during interaction with signaling server.
+   *
+   * @see [Error]{@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error}
    * @extends Error
    */
   class SignalingError extends Error {
@@ -585,11 +580,23 @@
   }
 
   /**
-   * Service class responsible to establish connections between peers via `RTCDataChannel`.
-   * @extends {@link channelBuilder#Interface}
+   * Service class responsible to establish connections between peers via
+   * `RTCDataChannel`.
+   *
+   * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection}
+   * @extends module:channelBuilder~Interface
    */
   class WebRTCService extends Interface$2 {
 
+    /**
+     * WebRTCService constructor.
+     *
+     * @param  {Object} [options] - This service options.
+     * @param  {Object} [options.signaling='wws://sigver-coastteam.rhcloud.com:8000'] -
+     * Signaling server URL.
+     * @param  {Object[]} [options.iceServers=[{urls: 'stun:23.21.150.121'},{urls: 'stun:stun.l.google.com:19302'},{urls: 'turn:numb.viagenie.ca', credential: 'webrtcdemo', username: 'louis%40mozilla.com'}]] - WebRTC options to setup which STUN
+     * and TURN servers to be used.
+     */
     constructor (options = {}) {
       super()
       this.defaults = {
@@ -1145,13 +1152,13 @@
     }
 
     /**
-     * sendSrvMsg - description
+     * Send a message to a service of the same peer, joining peer or any peer in
+     * the Web Channel).
      *
      * @private
-     * @param  {type} serviceName description
-     * @param  {type} recepient   description
-     * @param  {type} msg = {}    description
-     * @return {type}             description
+     * @param  {string} serviceName - Service name.
+     * @param  {string} recepient - Identifier of recepient peer id.
+     * @param  {Object} [msg={}] - Message to send.
      */
     sendSrvMsg (serviceName, recepient, msg = {}) {
       let completeMsg = {serviceName, recepient, data: Object.assign({}, msg)}

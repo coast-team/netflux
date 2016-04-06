@@ -242,13 +242,13 @@ class WebChannel {
   }
 
   /**
-   * sendSrvMsg - description
+   * Send a message to a service of the same peer, joining peer or any peer in
+   * the Web Channel).
    *
    * @private
-   * @param  {type} serviceName description
-   * @param  {type} recepient   description
-   * @param  {type} msg = {}    description
-   * @return {type}             description
+   * @param  {string} serviceName - Service name.
+   * @param  {string} recepient - Identifier of recepient peer id.
+   * @param  {Object} [msg={}] - Message to send.
    */
   sendSrvMsg (serviceName, recepient, msg = {}) {
     let completeMsg = {serviceName, recepient, data: Object.assign({}, msg)}
