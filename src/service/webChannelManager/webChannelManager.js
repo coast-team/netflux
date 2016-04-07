@@ -23,7 +23,7 @@ import {THIS_CHANNEL_TO_JOINING_PEER} from '../channelProxy/channelProxy'
  */
 const CONNECT_WITH = 1
 const CONNECT_WITH_FEEDBACK = 2
-const CONNECT_WITH_TIMEOUT = 4000
+const CONNECT_WITH_TIMEOUT = 5000
 const ADD_INTERMEDIARY_CHANNEL = 4
 
 /**
@@ -36,10 +36,12 @@ class Interface extends service.Interface {
     let cBuilder = serviceProvider.get(wc.settings.connector, wc.settings)
     switch (msg.code) {
       case CONNECT_WITH:
+        console.log('CONNECT_WITH received: ', msg)
         msg.peers = this.reUseIntermediaryChannelIfPossible(wc, msg.jpId, msg.peers)
         cBuilder
           .connectMeToMany(wc, msg.peers)
           .then(result => {
+            console.log('CONNECT_WITH result: ', result)
             result.channels.forEach(c => {
               wc.initChannel(c, c.peerId)
               wc.getJoiningPeer(msg.jpId).toAddList(c)
@@ -47,6 +49,7 @@ class Interface extends service.Interface {
                 {id: msg.jpId, toBeAdded: true}
               ))
             })
+            console.log('CONNECT_WITH send feedback: ', {code: CONNECT_WITH_FEEDBACK, id: wc.myId, failed: result.failed})
             wc.sendSrvMsg(this.name, msg.sender,
               {code: CONNECT_WITH_FEEDBACK, id: wc.myId, failed: result.failed}
             )
@@ -56,6 +59,7 @@ class Interface extends service.Interface {
           })
         break
       case CONNECT_WITH_FEEDBACK:
+        console.log('CONNECT_WITH_FEEDBACK received: ', msg)
         wc.connectWithRequests.get(msg.id)(true)
         break
       case ADD_INTERMEDIARY_CHANNEL:
@@ -79,6 +83,7 @@ class Interface extends service.Interface {
    * @return {Promise} - Is resolved once some of the connections could be established. It is rejected when an error occured.
    */
   connectWith (wc, id, jpId, peers) {
+    console.log('send CONNECT_WITH to: ' + id + ' JoiningPeerID: ' + jpId + ' with peers', peers)
     wc.sendSrvMsg(this.name, id,
       {code: CONNECT_WITH, jpId: jpId,
         sender: wc.myId, peers}

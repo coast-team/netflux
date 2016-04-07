@@ -100,6 +100,7 @@ class ChannelProxyService extends service.Interface {
         }
         break
       case JOIN_INIT:
+        console.log('JOIN_INIT my new id: ' + msg.id)
         wc.topology = msg.manager
         wc.myId = msg.id
         ch.peerId = msg.intermediaryId

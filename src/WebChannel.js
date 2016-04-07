@@ -153,11 +153,13 @@ class WebChannel {
     let cBuilder = serviceProvider.get(settings.connector, settings)
     let key = this.id + this.myId
     try {
-      let data = cBuilder.open(key, channel => {
-        this.initChannel(channel)
+      let data = cBuilder.open(this, key, channel => {
+        //this.initChannel(channel)
         let jp = new JoiningPeer(channel.peerId, this.myId)
         jp.intermediaryChannel = channel
         this.joiningPeers.add(jp)
+        console.log('send JOIN_INIT his new id: ' + channel.peerId)
+        console.log('New channel: ' + channel.readyState)
         channel.send(this.proxy.msg(JOIN_INIT,
           {manager: this.settings.topology,
           id: channel.peerId,
@@ -170,7 +172,7 @@ class WebChannel {
           .then(() => {
             channel.send(this.proxy.msg(JOIN_FINILIZE))
           })
-          .catch((msg) => {
+          .catch(msg => {
             console.log(`Adding peer ${channel.peerId} failed: ${msg}`)
             this.manager.broadcast(this, this.proxy.msg(REMOVE_NEW_MEMBER,
               {id: channel.peerId}
@@ -207,9 +209,9 @@ class WebChannel {
     let cBuilder = serviceProvider.get(settings.connector, settings)
     return new Promise((resolve, reject) => {
       cBuilder
-        .join(key)
-        .then((channel) => {
-          this.initChannel(channel)
+        .join(this, key)
+        .then(channel => {
+          //this.initChannel(channel)
           console.log('JOIN channel established')
           this.onJoin = () => { resolve(this) }
         })

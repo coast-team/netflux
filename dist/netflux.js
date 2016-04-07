@@ -275,11 +275,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var cBuilder = serviceProvider.get(settings.connector, settings);
 	      var key = this.id + this.myId;
 	      try {
-	        var data = cBuilder.open(key, function (channel) {
-	          _this.initChannel(channel);
+	        var data = cBuilder.open(this, key, function (channel) {
+	          //this.initChannel(channel)
 	          var jp = new _JoiningPeer2.default(channel.peerId, _this.myId);
 	          jp.intermediaryChannel = channel;
 	          _this.joiningPeers.add(jp);
+	          console.log('send JOIN_INIT his new id: ' + channel.peerId);
+	          console.log('New channel: ' + channel.readyState);
 	          channel.send(_this.proxy.msg(_channelProxy.JOIN_INIT, { manager: _this.settings.topology,
 	            id: channel.peerId,
 	            intermediaryId: _this.myId }));
@@ -330,8 +332,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      var cBuilder = serviceProvider.get(settings.connector, settings);
 	      return new Promise(function (resolve, reject) {
-	        cBuilder.join(key).then(function (channel) {
-	          _this2.initChannel(channel);
+	        cBuilder.join(_this2, key).then(function (channel) {
+	          //this.initChannel(channel)
 	          console.log('JOIN channel established');
 	          _this2.onJoin = function () {
 	            resolve(_this2);
@@ -948,7 +950,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	var CONNECT_WITH = 1;
 	var CONNECT_WITH_FEEDBACK = 2;
-	var CONNECT_WITH_TIMEOUT = 4000;
+	var CONNECT_WITH_TIMEOUT = 5000;
 	var ADD_INTERMEDIARY_CHANNEL = 4;
 
 	/**
@@ -974,19 +976,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var cBuilder = serviceProvider.get(wc.settings.connector, wc.settings);
 	      switch (msg.code) {
 	        case CONNECT_WITH:
+	          console.log('CONNECT_WITH received: ', msg);
 	          msg.peers = this.reUseIntermediaryChannelIfPossible(wc, msg.jpId, msg.peers);
 	          cBuilder.connectMeToMany(wc, msg.peers).then(function (result) {
+	            console.log('CONNECT_WITH result: ', result);
 	            result.channels.forEach(function (c) {
 	              wc.initChannel(c, c.peerId);
 	              wc.getJoiningPeer(msg.jpId).toAddList(c);
 	              c.send(wc.proxy.msg(_channelProxy.THIS_CHANNEL_TO_JOINING_PEER, { id: msg.jpId, toBeAdded: true }));
 	            });
+	            console.log('CONNECT_WITH send feedback: ', { code: CONNECT_WITH_FEEDBACK, id: wc.myId, failed: result.failed });
 	            wc.sendSrvMsg(_this2.name, msg.sender, { code: CONNECT_WITH_FEEDBACK, id: wc.myId, failed: result.failed });
 	          }).catch(function (err) {
 	            console.log('connectMeToMany FAILED, ', err);
 	          });
 	          break;
 	        case CONNECT_WITH_FEEDBACK:
+	          console.log('CONNECT_WITH_FEEDBACK received: ', msg);
 	          wc.connectWithRequests.get(msg.id)(true);
 	          break;
 	        case ADD_INTERMEDIARY_CHANNEL:
@@ -1015,6 +1021,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    value: function connectWith(wc, id, jpId, peers) {
 	      var _this3 = this;
 
+	      console.log('send CONNECT_WITH to: ' + id + ' JoiningPeerID: ' + jpId + ' with peers', peers);
 	      wc.sendSrvMsg(this.name, id, { code: CONNECT_WITH, jpId: jpId,
 	        sender: wc.myId, peers: peers });
 	      return new Promise(function (resolve, reject) {
@@ -1373,6 +1380,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          }
 	          break;
 	        case JOIN_INIT:
+	          console.log('JOIN_INIT my new id: ' + msg.id);
 	          wc.topology = msg.manager;
 	          wc.myId = msg.id;
 	          ch.peerId = msg.intermediaryId;
@@ -1538,6 +1546,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+	var _serviceProvider = __webpack_require__(2);
+
+	var serviceProvider = _interopRequireWildcard(_serviceProvider);
+
 	var _channelBuilder = __webpack_require__(9);
 
 	var cBuilder = _interopRequireWildcard(_channelBuilder);
@@ -1623,10 +1635,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  _createClass(WebRTCService, [{
 	    key: 'open',
-	    value: function open(key, onChannel) {
+	    value: function open(webChannel, key, onChannel) {
 	      var _this3 = this;
 
-	      var options = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
+	      var options = arguments.length <= 3 || arguments[3] === undefined ? {} : arguments[3];
 
 	      var settings = Object.assign({}, this.settings, options);
 	      // Connection array, because several connections may be establishing
@@ -1644,6 +1656,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          };
 	          socket.onmessage = function (evt) {
 	            var msg = JSON.parse(evt.data);
+	            console.log('NETFLUX: message: ', msg);
 	            if (!Reflect.has(msg, 'id') || !Reflect.has(msg, 'data')) {
 	              // throw new SignalingError(err.name + ': ' + err.message)
 	              throw new Error('Incorrect message format from the signaling server.');
@@ -1655,10 +1668,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	                return socket.send(_this3.toStr({ id: msg.id, data: { candidate: candidate } }));
 	              }, function (answer) {
 	                return socket.send(_this3.toStr({ id: msg.id, data: { answer: answer } }));
-	              }, onChannel, msg.data.offer);
+	              }, onChannel, msg.data.offer, webChannel);
 	              // On Ice Candidate
 	            } else if (Reflect.has(msg.data, 'candidate')) {
-	                connections[msg.id].addIceCandidate(_this3.createCandidate(msg.data.candidate));
+	                console.log('NETFLUX adding candidate');
+	                connections[msg.id].addIceCandidate(_this3.createCandidate(msg.data.candidate), function () {}, function (e) {
+	                  console.log('NETFLUX adding candidate failed: ', e);
+	                });
 	              }
 	          };
 	          socket.onerror = function (evt) {
@@ -1683,30 +1699,33 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	  }, {
 	    key: 'join',
-	    value: function join(key) {
+	    value: function join(webChannel, key) {
 	      var _this4 = this;
 
-	      var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+	      var options = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
 
 	      var settings = Object.assign({}, this.settings, options);
+	      console.log('NETFLUX: joining: ' + key);
 	      return new Promise(function (resolve, reject) {
 	        var connection = void 0;
 
 	        // Connect to the signaling server
 	        var socket = new window.WebSocket(settings.signaling);
 	        socket.onopen = function () {
+	          console.log('NETFLUX: connection with Sigver has been established');
 	          // Prepare and send offer
 	          connection = _this4.createConnectionAndOffer(function (candidate) {
 	            return socket.send(_this4.toStr({ data: { candidate: candidate } }));
 	          }, function (offer) {
 	            return socket.send(_this4.toStr({ join: key, data: { offer: offer } }));
 	          }, function (channel) {
-	            channel.connection = connection;
+	            console.log('NETFLUX: channel created');
 	            resolve(channel);
-	          }, key);
+	          }, key, webChannel);
 	        };
 	        socket.onmessage = function (e) {
 	          var msg = JSON.parse(e.data);
+	          console.log('NETFLUX: message: ', msg);
 
 	          // Check message format
 	          if (!Reflect.has(msg, 'data')) {
@@ -1716,10 +1735,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	          // If received an answer to the previously sent offer
 	          if (Reflect.has(msg.data, 'answer')) {
 	            var sd = _this4.createSDP(msg.data.answer);
-	            connection.setRemoteDescription(sd, function () {}, reject);
+	            console.log('NETFLUX adding answer');
+	            connection.setRemoteDescription(sd, function () {}, function (e) {
+	              console.log('NETFLUX adding answer failed: ', e);
+	              reject();
+	            });
 	            // If received an Ice candidate
 	          } else if (Reflect.has(msg.data, 'candidate')) {
-	              connection.addIceCandidate(_this4.createCandidate(msg.data.candidate));
+	              console.log('NETFLUX adding candidate');
+	              connection.addIceCandidate(_this4.createCandidate(msg.data.candidate), function () {}, function (e) {
+	                console.log('NETFLUX adding candidate failed: ', e);
+	              });
 	            } else {
 	              reject();
 	            }
@@ -1728,6 +1754,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          reject('Signaling server socket error: ' + e.message);
 	        };
 	        socket.onclose = function (e) {
+	          console.log('Closing server: ', e);
 	          if (e.code !== 1000) {
 	            reject(e.reason);
 	          }
@@ -1801,10 +1828,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	          webChannel.connections.set(id, connection);
 	          webChannel.sendSrvMsg(_this6.name, id, { sender: sender, offer: offer });
 	        }, function (channel) {
-	          channel.connection = connection;
-	          channel.peerId = id;
-	          resolve(channel);
-	        }, id);
+	          return resolve(channel);
+	        }, id, webChannel, id);
 	        setTimeout(reject, CONNECTION_CREATION_TIMEOUT, 'Timeout');
 	      });
 	    }
@@ -1821,9 +1846,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }, function (answer) {
 	          return webChannel.sendSrvMsg(_this7.name, msg.sender, { sender: webChannel.myId, answer: answer });
 	        }, function (channel) {
-	          webChannel.initChannel(channel, msg.sender);
 	          webChannel.connections.delete(channel.peerId);
-	        }, msg.offer));
+	        }, msg.offer, webChannel, msg.sender));
 	        console.log(msg.sender + ' create a NEW CONNECTION');
 	      } else if (connections.has(msg.sender)) {
 	        var connection = connections.get(msg.sender);
@@ -1837,44 +1861,77 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	  }, {
 	    key: 'createConnectionAndOffer',
-	    value: function createConnectionAndOffer(candidateCB, sdpCB, channelCB, key) {
+	    value: function createConnectionAndOffer(candidateCB, sdpCB, channelCB, key, webChannel) {
+	      var id = arguments.length <= 5 || arguments[5] === undefined ? '' : arguments[5];
+
 	      var connection = this.initConnection(candidateCB);
 	      var dc = connection.createDataChannel(key);
+	      console.log('NETFLUX: dataChannel created');
 	      dc.onopen = function () {
-	        return channelCB(dc);
+	        console.log('NETFLUX: Channel opened');
+	        dc.send('ping');
+	        console.log('SEND PING');
+	      };
+	      window.dc = dc;
+	      dc.onmessage = function (msgEvt) {
+	        if (msgEvt.data === 'pong') {
+	          console.log('PONG Received');
+	          dc.connection = connection;
+	          webChannel.initChannel(dc, id);
+	          channelCB(dc);
+	        }
+	      };
+	      dc.onerror = function (evt) {
+	        console.log('NETFLUX: channel error: ', evt);
 	      };
 	      connection.createOffer(function (offer) {
 	        connection.setLocalDescription(offer, function () {
 	          sdpCB(connection.localDescription.toJSON());
 	        }, function (err) {
+	          console.log('NETFLUX: error 1: ', err);
 	          throw new Error('Could not set local description: ' + err);
 	        });
 	      }, function (err) {
+	        console.log('NETFLUX: error 2: ', err);
 	        throw new Error('Could not create offer: ' + err);
 	      });
 	      return connection;
 	    }
 	  }, {
 	    key: 'createConnectionAndAnswer',
-	    value: function createConnectionAndAnswer(candidateCB, sdpCB, channelCB, offer) {
+	    value: function createConnectionAndAnswer(candidateCB, sdpCB, channelCB, offer, webChannel) {
+	      var id = arguments.length <= 5 || arguments[5] === undefined ? '' : arguments[5];
+
 	      var connection = this.initConnection(candidateCB);
 	      connection.ondatachannel = function (e) {
-	        e.channel.connection = connection;
+	        e.channel.onmessage = function (msgEvt) {
+	          if (msgEvt.data === 'ping') {
+	            console.log('PING Received, send PONG');
+	            e.channel.connection = connection;
+	            webChannel.initChannel(e.channel, id);
+	            e.channel.send('pong');
+	            channelCB(e.channel);
+	          }
+	        };
 	        e.channel.onopen = function () {
-	          return channelCB(e.channel);
+	          console.log('NETFLUX: Channel opened');
 	        };
 	      };
+	      console.log('NETFLUX adding offer');
 	      connection.setRemoteDescription(this.createSDP(offer), function () {
 	        connection.createAnswer(function (answer) {
 	          connection.setLocalDescription(answer, function () {
 	            sdpCB(connection.localDescription.toJSON());
 	          }, function (err) {
+	            console.log('NETFLUX: error: ', err);
 	            throw new Error('Could not set local description: ' + err);
 	          });
 	        }, function (err) {
+	          console.log('NETFLUX: error: ', err);
 	          throw new Error('Could not create answer: ' + err);
 	        });
 	      }, function (err) {
+	        console.log('NETFLUX: error: ', err);
 	        throw new Error('Could not set remote description: ' + err);
 	      });
 	      return connection;
