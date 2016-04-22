@@ -1,6 +1,6 @@
 import * as service from '../service'
 import * as serviceProvider from '../../serviceProvider'
-import {THIS_CHANNEL_TO_JOINING_PEER} from '../channelProxy/channelProxy'
+import { THIS_CHANNEL_TO_JOINING_PEER } from '../channelProxy/channelProxy'
 
 /**
  * Web Channel Manager module is a submodule of {@link module:service} and the
@@ -40,9 +40,9 @@ class Interface extends service.Interface {
         msg.peers = this.reUseIntermediaryChannelIfPossible(wc, msg.jpId, msg.peers)
         cBuilder
           .connectMeToMany(wc, msg.peers)
-          .then(result => {
+          .then((result) => {
             console.log('CONNECT_WITH result: ', result)
-            result.channels.forEach(c => {
+            result.channels.forEach((c) => {
               wc.initChannel(c, c.peerId)
               wc.getJoiningPeer(msg.jpId).toAddList(c)
               c.send(wc.proxy.msg(THIS_CHANNEL_TO_JOINING_PEER,
@@ -54,7 +54,7 @@ class Interface extends service.Interface {
               {code: CONNECT_WITH_FEEDBACK, id: wc.myId, failed: result.failed}
             )
           })
-          .catch(err => {
+          .catch((err) => {
             console.log('connectMeToMany FAILED, ', err)
           })
         break
@@ -86,10 +86,10 @@ class Interface extends service.Interface {
     console.log('send CONNECT_WITH to: ' + id + ' JoiningPeerID: ' + jpId + ' with peers', peers)
     wc.sendSrvMsg(this.name, id,
       {code: CONNECT_WITH, jpId: jpId,
-        sender: wc.myId, peers}
+      sender: wc.myId, peers}
     )
     return new Promise((resolve, reject) => {
-      wc.connectWithRequests.set(id, isDone => {
+      wc.connectWithRequests.set(id, (isDone) => {
         if (isDone) {
           resolve()
         } else {
@@ -184,6 +184,5 @@ class Interface extends service.Interface {
 }
 
 export {
-  /** @see module:webChannelManager~Interface */
-  Interface
-}
+/** @see module:webChannelManager~Interface */
+Interface }

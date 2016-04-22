@@ -71,10 +71,10 @@
    * @module channelProxy
    */
 
-   /**
-    * Constant used to build a message designated to API user.
-    * @type {int}
-    */
+  /**
+   * Constant used to build a message designated to API user.
+   * @type {int}
+   */
   const USER_DATA = 0
 
   /**
@@ -181,7 +181,9 @@
           let nextMsg = wc.proxy.msg(JOIN_SUCCESS, {id: wc.myId})
           wc.manager.broadcast(wc, nextMsg)
           wc.onJoin()
+
           break
+
         case JOIN_SUCCESS:
           wc.joinSuccess(msg.id)
           wc.onJoining(msg.id)
@@ -289,9 +291,9 @@
           msg.peers = this.reUseIntermediaryChannelIfPossible(wc, msg.jpId, msg.peers)
           cBuilder
             .connectMeToMany(wc, msg.peers)
-            .then(result => {
+            .then((result) => {
               console.log('CONNECT_WITH result: ', result)
-              result.channels.forEach(c => {
+              result.channels.forEach((c) => {
                 wc.initChannel(c, c.peerId)
                 wc.getJoiningPeer(msg.jpId).toAddList(c)
                 c.send(wc.proxy.msg(THIS_CHANNEL_TO_JOINING_PEER,
@@ -303,7 +305,7 @@
                 {code: CONNECT_WITH_FEEDBACK, id: wc.myId, failed: result.failed}
               )
             })
-            .catch(err => {
+            .catch((err) => {
               console.log('connectMeToMany FAILED, ', err)
             })
           break
@@ -335,10 +337,10 @@
       console.log('send CONNECT_WITH to: ' + id + ' JoiningPeerID: ' + jpId + ' with peers', peers)
       wc.sendSrvMsg(this.name, id,
         {code: CONNECT_WITH, jpId: jpId,
-          sender: wc.myId, peers}
+        sender: wc.myId, peers}
       )
       return new Promise((resolve, reject) => {
-        wc.connectWithRequests.set(id, isDone => {
+        wc.connectWithRequests.set(id, (isDone) => {
           if (isDone) {
             resolve()
           } else {
@@ -442,8 +444,10 @@
     add (ch) {
       let wCh = ch.webChannel
       let peers = [wCh.myId]
-      wCh.channels.forEach(ch => { peers[peers.length] = ch.peerId })
-      wCh.joiningPeers.forEach(jp => {
+      wCh.channels.forEach((ch) => {
+        peers[peers.length] = ch.peerId
+      })
+      wCh.joiningPeers.forEach((jp) => {
         if (ch.peerId !== jp.id) {
           peers[peers.length] = jp.id
         }
@@ -470,8 +474,7 @@
       }
     }
 
-    leave (webChannel) {
-    }
+    leave (webChannel) {}
 
   }
 
@@ -643,8 +646,10 @@
         let socket = new window.WebSocket(settings.signaling)
 
         // Send a message to signaling server: ready to receive offer
-        socket.onopen = () => { socket.send(this.toStr({key})) }
-        socket.onmessage = evt => {
+        socket.onopen = () => {
+          socket.send(this.toStr({key}))
+        }
+        socket.onmessage = (evt) => {
           let msg = JSON.parse(evt.data)
           console.log('NETFLUX: message: ', msg)
           if (!Reflect.has(msg, 'id') || !Reflect.has(msg, 'data')) {
@@ -655,24 +660,25 @@
           // On SDP offer: add connection to the array, prepare answer and send it back
           if (Reflect.has(msg.data, 'offer')) {
             connections[connections.length] = this.createConnectionAndAnswer(
-                candidate => socket.send(this.toStr({id: msg.id, data: {candidate}})),
-                answer => socket.send(this.toStr({id: msg.id, data: {answer}})),
-                onChannel,
-                msg.data.offer,
-                webChannel
-              )
+              (candidate) => socket.send(this.toStr({id: msg.id, data: {candidate}})),
+              (answer) => socket.send(this.toStr({id: msg.id, data: {answer}})),
+              onChannel,
+              msg.data.offer,
+              webChannel
+            )
           // On Ice Candidate
           } else if (Reflect.has(msg.data, 'candidate')) {
             console.log('NETFLUX adding candidate')
-            connections[msg.id].addIceCandidate(this.createCandidate(msg.data.candidate), () => {}, (e) => {
+            connections[msg.id].addIceCandidate(this.createCandidate(msg.data.candidate), () => {
+            }, (e) => {
               console.log('NETFLUX adding candidate failed: ', e)
             })
           }
         }
-        socket.onerror = evt => {
+        socket.onerror = (evt) => {
           throw new SignalingError(`error occured on the socket with signaling server ${settings.signaling}`)
         }
-        socket.onclose = closeEvt => {
+        socket.onclose = (closeEvt) => {
           // 1000 corresponds to CLOSE_NORMAL: Normal closure; the connection
           // successfully completed whatever purpose for which it was created.
           if (closeEvt.code !== 1000) {
@@ -699,9 +705,9 @@
           console.log('NETFLUX: connection with Sigver has been established')
           // Prepare and send offer
           connection = this.createConnectionAndOffer(
-            candidate => socket.send(this.toStr({data: {candidate}})),
-            offer => socket.send(this.toStr({join: key, data: {offer}})),
-            channel => {
+            (candidate) => socket.send(this.toStr({data: {candidate}})),
+            (offer) => socket.send(this.toStr({join: key, data: {offer}})),
+            (channel) => {
               console.log('NETFLUX: channel created')
               resolve(channel)
             },
@@ -720,22 +726,24 @@
           if (Reflect.has(msg.data, 'answer')) {
             let sd = this.createSDP(msg.data.answer)
             console.log('NETFLUX adding answer')
-            connection.setRemoteDescription(sd, () => {}, (e) => {
+            connection.setRemoteDescription(sd, () => {
+            }, (e) => {
               console.log('NETFLUX adding answer failed: ', e)
               reject()
             })
           // If received an Ice candidate
           } else if (Reflect.has(msg.data, 'candidate')) {
             console.log('NETFLUX adding candidate')
-            connection.addIceCandidate(this.createCandidate(msg.data.candidate), () => {}, (e) => {
+            connection.addIceCandidate(this.createCandidate(msg.data.candidate), () => {
+            }, (e) => {
               console.log('NETFLUX adding candidate failed: ', e)
             })
           } else { reject() }
         }
-        socket.onerror = e => {
+        socket.onerror = (e) => {
           reject(`Signaling server socket error: ${e.message}`)
         }
-        socket.onclose = e => {
+        socket.onclose = (e) => {
           console.log('Closing server: ', e)
           if (e.code !== 1000) { reject(e.reason) }
         }
@@ -751,14 +759,14 @@
         } else {
           for (let id of ids) {
             this.connectMeToOne(webChannel, id)
-              .then(channel => {
+              .then((channel) => {
                 counter++
                 result.channels.push(channel)
                 if (counter === ids.length) {
                   resolve(result)
                 }
               })
-              .catch(err => {
+              .catch((err) => {
                 counter++
                 result.failed.push({id, err})
                 if (counter === ids.length) {
@@ -774,12 +782,12 @@
       return new Promise((resolve, reject) => {
         let sender = webChannel.myId
         let connection = this.createConnectionAndOffer(
-          candidate => webChannel.sendSrvMsg(this.name, id, {sender, candidate}),
-          offer => {
+          (candidate) => webChannel.sendSrvMsg(this.name, id, {sender, candidate}),
+          (offer) => {
             webChannel.connections.set(id, connection)
             webChannel.sendSrvMsg(this.name, id, {sender, offer})
           },
-          channel => resolve(channel),
+          (channel) => resolve(channel),
           id,
           webChannel,
           id
@@ -794,11 +802,11 @@
         // TODO: add try/catch. On exception remove connection from webChannel.connections
         connections.set(msg.sender,
           this.createConnectionAndAnswer(
-            candidate => webChannel.sendSrvMsg(this.name, msg.sender,
+            (candidate) => webChannel.sendSrvMsg(this.name, msg.sender,
               {sender: webChannel.myId, candidate}),
-            answer => webChannel.sendSrvMsg(this.name, msg.sender,
+            (answer) => webChannel.sendSrvMsg(this.name, msg.sender,
               {sender: webChannel.myId, answer}),
-            channel => {
+            (channel) => {
               webChannel.connections.delete(channel.peerId)
             },
             msg.offer,
@@ -811,7 +819,9 @@
         let connection = connections.get(msg.sender)
         if (Reflect.has(msg, 'answer')) {
           let sd = this.createSDP(msg.answer)
-          connection.setRemoteDescription(sd, () => {}, () => {})
+          connection.setRemoteDescription(sd, () => {
+          }, () => {
+          })
         } else if (Reflect.has(msg, 'candidate') && connection) {
           connection.addIceCandidate(this.createCandidate(msg.candidate))
         }
@@ -828,7 +838,7 @@
         console.log('SEND PING')
       }
       window.dc = dc
-      dc.onmessage = msgEvt => {
+      dc.onmessage = (msgEvt) => {
         if (msgEvt.data === 'pong') {
           console.log('PONG Received')
           dc.connection = connection
@@ -836,10 +846,10 @@
           channelCB(dc)
         }
       }
-      dc.onerror = evt => {
+      dc.onerror = (evt) => {
         console.log('NETFLUX: channel error: ', evt)
       }
-      connection.createOffer(offer => {
+      connection.createOffer((offer) => {
         connection.setLocalDescription(offer, () => {
           sdpCB(connection.localDescription.toJSON())
         }, (err) => {
@@ -855,8 +865,8 @@
 
     createConnectionAndAnswer (candidateCB, sdpCB, channelCB, offer, webChannel, id = '') {
       let connection = this.initConnection(candidateCB)
-      connection.ondatachannel = e => {
-        e.channel.onmessage = msgEvt => {
+      connection.ondatachannel = (e) => {
+        e.channel.onmessage = (msgEvt) => {
           if (msgEvt.data === 'ping') {
             console.log('PING Received, send PONG')
             e.channel.connection = connection
@@ -871,7 +881,7 @@
       }
       console.log('NETFLUX adding offer')
       connection.setRemoteDescription(this.createSDP(offer), () => {
-        connection.createAnswer(answer => {
+        connection.createAnswer((answer) => {
           connection.setLocalDescription(answer, () => {
             sdpCB(connection.localDescription.toJSON())
           }, (err) => {
@@ -1073,7 +1083,7 @@
      *
      * @param  {string} id - Peer id.
      */
-    onLeaving (id) { }
+    onLeaving (id) {}
 
     /**
      * On message event handler.
@@ -1128,8 +1138,8 @@
       let cBuilder = get(settings.connector, settings)
       let key = this.id + this.myId
       try {
-        let data = cBuilder.open(this, key, channel => {
-          //this.initChannel(channel)
+        let data = cBuilder.open(this, key, (channel) => {
+          // this.initChannel(channel)
           let jp = new JoiningPeer(channel.peerId, this.myId)
           jp.intermediaryChannel = channel
           this.joiningPeers.add(jp)
@@ -1137,7 +1147,7 @@
           console.log('New channel: ' + channel.readyState)
           channel.send(this.proxy.msg(JOIN_INIT,
             {manager: this.settings.topology,
-            id: channel.peerId,
+              id: channel.peerId,
             intermediaryId: this.myId}
           ))
           this.manager.broadcast(this, this.proxy.msg(JOIN_NEW_MEMBER,
@@ -1147,7 +1157,7 @@
             .then(() => {
               channel.send(this.proxy.msg(JOIN_FINILIZE))
             })
-            .catch(msg => {
+            .catch((msg) => {
               console.log(`Adding peer ${channel.peerId} failed: ${msg}`)
               this.manager.broadcast(this, this.proxy.msg(REMOVE_NEW_MEMBER,
                 {id: channel.peerId}
@@ -1185,12 +1195,14 @@
       return new Promise((resolve, reject) => {
         cBuilder
           .join(this, key)
-          .then(channel => {
-            //this.initChannel(channel)
+          .then((channel) => {
+            // this.initChannel(channel)
             console.log('JOIN channel established')
-            this.onJoin = () => { resolve(this) }
+            this.onJoin = () => {
+              resolve(this)
+            }
           })
-          .catch(reason => reject(reason))
+          .catch((reason) => reject(reason))
       })
     }
 

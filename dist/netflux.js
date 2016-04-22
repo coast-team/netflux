@@ -276,7 +276,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var key = this.id + this.myId;
 	      try {
 	        var data = cBuilder.open(this, key, function (channel) {
-	          //this.initChannel(channel)
+	          // this.initChannel(channel)
 	          var jp = new _JoiningPeer2.default(channel.peerId, _this.myId);
 	          jp.intermediaryChannel = channel;
 	          _this.joiningPeers.add(jp);
@@ -333,7 +333,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var cBuilder = serviceProvider.get(settings.connector, settings);
 	      return new Promise(function (resolve, reject) {
 	        cBuilder.join(_this2, key).then(function (channel) {
-	          //this.initChannel(channel)
+	          // this.initChannel(channel)
 	          console.log('JOIN channel established');
 	          _this2.onJoin = function () {
 	            resolve(_this2);
@@ -1399,7 +1399,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	          var nextMsg = wc.proxy.msg(JOIN_SUCCESS, { id: wc.myId });
 	          wc.manager.broadcast(wc, nextMsg);
 	          wc.onJoin();
+
 	          break;
+
 	        case JOIN_SUCCESS:
 	          wc.joinSuccess(msg.id);
 	          wc.onJoining(msg.id);
@@ -1545,10 +1547,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-	var _serviceProvider = __webpack_require__(2);
-
-	var serviceProvider = _interopRequireWildcard(_serviceProvider);
 
 	var _channelBuilder = __webpack_require__(9);
 

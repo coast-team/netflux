@@ -9,10 +9,10 @@ import JoiningPeer from '../../JoiningPeer'
  * @module channelProxy
  */
 
- /**
-  * Constant used to build a message designated to API user.
-  * @type {int}
-  */
+/**
+ * Constant used to build a message designated to API user.
+ * @type {int}
+ */
 export const USER_DATA = 0
 
 /**
@@ -119,7 +119,9 @@ class ChannelProxyService extends service.Interface {
         let nextMsg = wc.proxy.msg(JOIN_SUCCESS, {id: wc.myId})
         wc.manager.broadcast(wc, nextMsg)
         wc.onJoin()
+
         break
+
       case JOIN_SUCCESS:
         wc.joinSuccess(msg.id)
         wc.onJoining(msg.id)
@@ -190,6 +192,5 @@ class ChannelProxyService extends service.Interface {
 }
 
 export {
-  /** @see module:channelProxy~ChannelProxyService */
-  ChannelProxyService
-}
+/** @see module:channelProxy~ChannelProxyService */
+ChannelProxyService }

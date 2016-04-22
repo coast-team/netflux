@@ -15,7 +15,7 @@ class ChannelInterface {
 
   /**
    * On message event handler.
-   * 
+   *
    * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/MessageEvent}
    * @abstract
    * @param {MessageEvent} msgEvt - Message event.

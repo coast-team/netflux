@@ -1,13 +1,5 @@
 import * as serviceProvider from './serviceProvider'
-import {
-  JOIN_NEW_MEMBER,
-  LEAVE,
-  USER_DATA,
-  JOIN_INIT,
-  JOIN_FINILIZE,
-  REMOVE_NEW_MEMBER,
-  SERVICE_DATA
-} from './service/channelProxy/channelProxy'
+import { JOIN_NEW_MEMBER, LEAVE, USER_DATA, JOIN_INIT, JOIN_FINILIZE, REMOVE_NEW_MEMBER, SERVICE_DATA } from './service/channelProxy/channelProxy'
 import JoiningPeer from './JoiningPeer'
 
 /**
@@ -98,7 +90,7 @@ class WebChannel {
    *
    * @param  {string} id - Peer id.
    */
-  onLeaving (id) { }
+  onLeaving (id) {}
 
   /**
    * On message event handler.
@@ -153,8 +145,8 @@ class WebChannel {
     let cBuilder = serviceProvider.get(settings.connector, settings)
     let key = this.id + this.myId
     try {
-      let data = cBuilder.open(this, key, channel => {
-        //this.initChannel(channel)
+      let data = cBuilder.open(this, key, (channel) => {
+        // this.initChannel(channel)
         let jp = new JoiningPeer(channel.peerId, this.myId)
         jp.intermediaryChannel = channel
         this.joiningPeers.add(jp)
@@ -162,7 +154,7 @@ class WebChannel {
         console.log('New channel: ' + channel.readyState)
         channel.send(this.proxy.msg(JOIN_INIT,
           {manager: this.settings.topology,
-          id: channel.peerId,
+            id: channel.peerId,
           intermediaryId: this.myId}
         ))
         this.manager.broadcast(this, this.proxy.msg(JOIN_NEW_MEMBER,
@@ -172,7 +164,7 @@ class WebChannel {
           .then(() => {
             channel.send(this.proxy.msg(JOIN_FINILIZE))
           })
-          .catch(msg => {
+          .catch((msg) => {
             console.log(`Adding peer ${channel.peerId} failed: ${msg}`)
             this.manager.broadcast(this, this.proxy.msg(REMOVE_NEW_MEMBER,
               {id: channel.peerId}
@@ -210,12 +202,14 @@ class WebChannel {
     return new Promise((resolve, reject) => {
       cBuilder
         .join(this, key)
-        .then(channel => {
-          //this.initChannel(channel)
+        .then((channel) => {
+          // this.initChannel(channel)
           console.log('JOIN channel established')
-          this.onJoin = () => { resolve(this) }
+          this.onJoin = () => {
+            resolve(this)
+          }
         })
-        .catch(reason => reject(reason))
+        .catch((reason) => reject(reason))
     })
   }
 

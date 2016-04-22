@@ -10,8 +10,10 @@ class FullyConnectedService extends wcManager.Interface {
   add (ch) {
     let wCh = ch.webChannel
     let peers = [wCh.myId]
-    wCh.channels.forEach(ch => { peers[peers.length] = ch.peerId })
-    wCh.joiningPeers.forEach(jp => {
+    wCh.channels.forEach((ch) => {
+      peers[peers.length] = ch.peerId
+    })
+    wCh.joiningPeers.forEach((jp) => {
       if (ch.peerId !== jp.id) {
         peers[peers.length] = jp.id
       }
@@ -38,8 +40,7 @@ class FullyConnectedService extends wcManager.Interface {
     }
   }
 
-  leave (webChannel) {
-  }
+  leave (webChannel) {}
 
 }
 
