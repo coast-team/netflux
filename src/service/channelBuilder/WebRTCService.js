@@ -277,13 +277,12 @@ class WebRTCService extends channelBuilder.Interface {
     let connection = this.createConnection(onCandidate)
     let dc = connection.createDataChannel(key)
     dc.onopen = () => {
-      webChannel.initChannel(dc, id)
       dc.send('ping')
     }
-    window.dc = dc
     dc.onmessage = (msgEvt) => {
       if (msgEvt.data === 'pong') {
         dc.connection = connection
+        webChannel.initChannel(dc, id)
         onChannel(dc)
       }
     }

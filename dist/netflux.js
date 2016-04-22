@@ -73,6 +73,15 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+	/**
+	 * @external JSON
+	 * @see {@link https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/JSON}
+	 */
+	/**
+	 * @external Error
+	 * @see {@link https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Error}
+	 */
+
 	var WEBRTC = service.WEBRTC;
 	var FULLY_CONNECTED = service.FULLY_CONNECTED;
 
@@ -1550,7 +1559,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _channelBuilder = __webpack_require__(9);
 
-	var cBuilder = _interopRequireWildcard(_channelBuilder);
+	var channelBuilder = _interopRequireWildcard(_channelBuilder);
 
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
@@ -1558,15 +1567,40 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
-	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } /**
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * @external RTCPeerConnection
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * @see {@link https://developer.mozilla.org/en/docs/Web/API/RTCPeerConnection}
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                */
+	/**
+	 * @external RTCSessionDescription
+	 * @see {@link https://developer.mozilla.org/en/docs/Web/API/RTCSessionDescription}
+	 */
+	/**
+	 * @external RTCDataChannel
+	 * @see {@link https://developer.mozilla.org/en/docs/Web/API/RTCDataChannel}
+	 */
+	/**
+	 * @external RTCIceCandidate
+	 * @see {@link https://developer.mozilla.org/en/docs/Web/API/RTCIceCandidate}
+	 */
+	/**
+	 * @external RTCPeerConnectionIceEvent
+	 * @see {@link https://developer.mozilla.org/en/docs/Web/API/RTCPeerConnectionIceEvent}
+	 */
+
+	/**
+	 * Ice candidate event handler.
+	 *
+	 * @callback WebRTCService~onCandidate
+	 * @param {external:RTCPeerConnectionIceEvent} evt - Event.
+	 */
 
 	var CONNECTION_CREATION_TIMEOUT = 2000;
 
 	/**
 	 * Error which might occur during interaction with signaling server.
 	 *
-	 * @see [Error]{@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error}
-	 * @extends Error
+	 * @extends external:Error
 	 */
 
 	var SignalingError = function (_Error) {
@@ -1591,13 +1625,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * Service class responsible to establish connections between peers via
 	 * `RTCDataChannel`.
 	 *
-	 * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection}
+	 * @see {@link external:RTCPeerConnection}
 	 * @extends module:channelBuilder~Interface
 	 */
 
 
-	var WebRTCService = function (_cBuilder$Interface) {
-	  _inherits(WebRTCService, _cBuilder$Interface);
+	var WebRTCService = function (_channelBuilder$Inter) {
+	  _inherits(WebRTCService, _channelBuilder$Inter);
 
 	  /**
 	   * WebRTCService constructor.
@@ -1650,11 +1684,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	          // Send a message to signaling server: ready to receive offer
 	          socket.onopen = function () {
-	            socket.send(_this3.toStr({ key: key }));
+	            socket.send(JSON.stringify({ key: key }));
 	          };
 	          socket.onmessage = function (evt) {
 	            var msg = JSON.parse(evt.data);
-	            console.log('NETFLUX: message: ', msg);
 	            if (!Reflect.has(msg, 'id') || !Reflect.has(msg, 'data')) {
 	              // throw new SignalingError(err.name + ': ' + err.message)
 	              throw new Error('Incorrect message format from the signaling server.');
@@ -1663,15 +1696,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	            // On SDP offer: add connection to the array, prepare answer and send it back
 	            if (Reflect.has(msg.data, 'offer')) {
 	              connections[connections.length] = _this3.createConnectionAndAnswer(function (candidate) {
-	                return socket.send(_this3.toStr({ id: msg.id, data: { candidate: candidate } }));
+	                return socket.send(JSON.stringify({ id: msg.id, data: { candidate: candidate } }));
 	              }, function (answer) {
-	                return socket.send(_this3.toStr({ id: msg.id, data: { answer: answer } }));
+	                return socket.send(JSON.stringify({ id: msg.id, data: { answer: answer } }));
 	              }, onChannel, msg.data.offer, webChannel);
 	              // On Ice Candidate
 	            } else if (Reflect.has(msg.data, 'candidate')) {
-	                console.log('NETFLUX adding candidate');
 	                connections[msg.id].addIceCandidate(_this3.createCandidate(msg.data.candidate), function () {}, function (e) {
-	                  console.log('NETFLUX adding candidate failed: ', e);
+	                  console.error('NETFLUX adding candidate failed: ', e);
 	                });
 	              }
 	          };
@@ -1703,27 +1735,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var options = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
 
 	      var settings = Object.assign({}, this.settings, options);
-	      console.log('NETFLUX: joining: ' + key);
 	      return new Promise(function (resolve, reject) {
 	        var connection = void 0;
 
 	        // Connect to the signaling server
 	        var socket = new window.WebSocket(settings.signaling);
 	        socket.onopen = function () {
-	          console.log('NETFLUX: connection with Sigver has been established');
 	          // Prepare and send offer
 	          connection = _this4.createConnectionAndOffer(function (candidate) {
-	            return socket.send(_this4.toStr({ data: { candidate: candidate } }));
+	            return socket.send(JSON.stringify({ data: { candidate: candidate } }));
 	          }, function (offer) {
-	            return socket.send(_this4.toStr({ join: key, data: { offer: offer } }));
+	            return socket.send(JSON.stringify({ join: key, data: { offer: offer } }));
 	          }, function (channel) {
-	            console.log('NETFLUX: channel created');
 	            resolve(channel);
 	          }, key, webChannel);
 	        };
 	        socket.onmessage = function (e) {
 	          var msg = JSON.parse(e.data);
-	          console.log('NETFLUX: message: ', msg);
 
 	          // Check message format
 	          if (!Reflect.has(msg, 'data')) {
@@ -1732,17 +1760,15 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	          // If received an answer to the previously sent offer
 	          if (Reflect.has(msg.data, 'answer')) {
-	            var sd = _this4.createSDP(msg.data.answer);
-	            console.log('NETFLUX adding answer');
+	            var sd = _this4.createSessionDescription(msg.data.answer);
 	            connection.setRemoteDescription(sd, function () {}, function (e) {
-	              console.log('NETFLUX adding answer failed: ', e);
+	              console.error('NETFLUX adding answer failed: ', e);
 	              reject();
 	            });
 	            // If received an Ice candidate
 	          } else if (Reflect.has(msg.data, 'candidate')) {
-	              console.log('NETFLUX adding candidate');
 	              connection.addIceCandidate(_this4.createCandidate(msg.data.candidate), function () {}, function (e) {
-	                console.log('NETFLUX adding candidate failed: ', e);
+	                console.error('NETFLUX adding candidate failed: ', e);
 	              });
 	            } else {
 	              reject();
@@ -1752,7 +1778,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	          reject('Signaling server socket error: ' + e.message);
 	        };
 	        socket.onclose = function (e) {
-	          console.log('Closing server: ', e);
 	          if (e.code !== 1000) {
 	            reject(e.reason);
 	          }
@@ -1846,11 +1871,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }, function (channel) {
 	          webChannel.connections.delete(channel.peerId);
 	        }, msg.offer, webChannel, msg.sender));
-	        console.log(msg.sender + ' create a NEW CONNECTION');
 	      } else if (connections.has(msg.sender)) {
 	        var connection = connections.get(msg.sender);
 	        if (Reflect.has(msg, 'answer')) {
-	          var sd = this.createSDP(msg.answer);
+	          var sd = this.createSessionDescription(msg.answer);
 	          connection.setRemoteDescription(sd, function () {}, function () {});
 	        } else if (Reflect.has(msg, 'candidate') && connection) {
 	          connection.addIceCandidate(this.createCandidate(msg.candidate));
@@ -1859,130 +1883,132 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	  }, {
 	    key: 'createConnectionAndOffer',
-	    value: function createConnectionAndOffer(candidateCB, sdpCB, channelCB, key, webChannel) {
+	    value: function createConnectionAndOffer(onCandidate, onSDP, onChannel, key, webChannel) {
 	      var id = arguments.length <= 5 || arguments[5] === undefined ? '' : arguments[5];
 
-	      var connection = this.initConnection(candidateCB);
+	      var connection = this.createConnection(onCandidate);
 	      var dc = connection.createDataChannel(key);
-	      console.log('NETFLUX: dataChannel created');
 	      dc.onopen = function () {
-	        console.log('NETFLUX: Channel opened');
 	        dc.send('ping');
-	        console.log('SEND PING');
 	      };
-	      window.dc = dc;
 	      dc.onmessage = function (msgEvt) {
 	        if (msgEvt.data === 'pong') {
-	          console.log('PONG Received');
 	          dc.connection = connection;
 	          webChannel.initChannel(dc, id);
-	          channelCB(dc);
+	          onChannel(dc);
 	        }
 	      };
-	      dc.onerror = function (evt) {
-	        console.log('NETFLUX: channel error: ', evt);
-	      };
+	      dc.onerror = function (evt) {};
 	      connection.createOffer(function (offer) {
 	        connection.setLocalDescription(offer, function () {
-	          sdpCB(connection.localDescription.toJSON());
+	          onSDP(connection.localDescription.toJSON());
 	        }, function (err) {
-	          console.log('NETFLUX: error 1: ', err);
 	          throw new Error('Could not set local description: ' + err);
 	        });
 	      }, function (err) {
-	        console.log('NETFLUX: error 2: ', err);
 	        throw new Error('Could not create offer: ' + err);
 	      });
 	      return connection;
 	    }
 	  }, {
 	    key: 'createConnectionAndAnswer',
-	    value: function createConnectionAndAnswer(candidateCB, sdpCB, channelCB, offer, webChannel) {
+	    value: function createConnectionAndAnswer(onCandidate, onSDP, onChannel, offer, webChannel) {
 	      var id = arguments.length <= 5 || arguments[5] === undefined ? '' : arguments[5];
 
-	      var connection = this.initConnection(candidateCB);
+	      var connection = this.createConnection(onCandidate);
 	      connection.ondatachannel = function (e) {
 	        e.channel.onmessage = function (msgEvt) {
 	          if (msgEvt.data === 'ping') {
-	            console.log('PING Received, send PONG');
 	            e.channel.connection = connection;
 	            webChannel.initChannel(e.channel, id);
 	            e.channel.send('pong');
-	            channelCB(e.channel);
+	            onChannel(e.channel);
 	          }
 	        };
-	        e.channel.onopen = function () {
-	          console.log('NETFLUX: Channel opened');
-	        };
+	        e.channel.onopen = function () {};
 	      };
-	      console.log('NETFLUX adding offer');
-	      connection.setRemoteDescription(this.createSDP(offer), function () {
+	      connection.setRemoteDescription(this.createSessionDescription(offer), function () {
 	        connection.createAnswer(function (answer) {
 	          connection.setLocalDescription(answer, function () {
-	            sdpCB(connection.localDescription.toJSON());
+	            onSDP(connection.localDescription.toJSON());
 	          }, function (err) {
-	            console.log('NETFLUX: error: ', err);
+	            console.error('NETFLUX: error: ', err);
 	            throw new Error('Could not set local description: ' + err);
 	          });
 	        }, function (err) {
-	          console.log('NETFLUX: error: ', err);
+	          console.error('NETFLUX: error: ', err);
 	          throw new Error('Could not create answer: ' + err);
 	        });
 	      }, function (err) {
-	        console.log('NETFLUX: error: ', err);
+	        console.error('NETFLUX: error: ', err);
 	        throw new Error('Could not set remote description: ' + err);
 	      });
 	      return connection;
 	    }
+
+	    /**
+	     * Creates an instance of `RTCPeerConnection` and sets `onicecandidate` event
+	     * handler.
+	     *
+	     * @private
+	     * @param  {WebRTCService~onCandidate} onCandidate - Ice
+	     * candidate event handler.
+	     * @return {external:RTCPeerConnection} - Peer connection.
+	     */
+
 	  }, {
-	    key: 'initConnection',
-	    value: function initConnection(candidateCB) {
+	    key: 'createConnection',
+	    value: function createConnection(onCandidate) {
 	      var connection = new this.RTCPeerConnection({ iceServers: this.settings.iceServers });
 
-	      connection.onicecandidate = function (e) {
-	        if (e.candidate !== null) {
+	      connection.onicecandidate = function (evt) {
+	        if (evt.candidate !== null) {
 	          var candidate = {
-	            candidate: e.candidate.candidate,
-	            sdpMLineIndex: e.candidate.sdpMLineIndex
+	            candidate: evt.candidate.candidate,
+	            sdpMLineIndex: evt.candidate.sdpMLineIndex
 	          };
-	          candidateCB(candidate);
+	          onCandidate(candidate);
 	        }
 	      };
 	      return connection;
 	    }
+
+	    /**
+	     * Creates an instance of `RTCIceCandidate`.
+	     *
+	     * @private
+	     * @param  {Object} candidate - Candidate object created in
+	     * {@link WebRTCService#createConnection}.
+	     * @param {} candidate.candidate
+	     * @param {} candidate.sdpMLineIndex
+	     * @return {external:RTCIceCandidate} - Ice candidate.
+	     */
+
 	  }, {
 	    key: 'createCandidate',
 	    value: function createCandidate(candidate) {
 	      return new this.RTCIceCandidate(candidate);
 	    }
-	  }, {
-	    key: 'createSDP',
-	    value: function createSDP(sdp) {
-	      return Object.assign(new this.RTCSessionDescription(), sdp);
-	    }
-	  }, {
-	    key: 'randomKey',
-	    value: function randomKey() {
-	      var MIN_LENGTH = 10;
-	      var DELTA_LENGTH = 10;
-	      var MASK = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-	      var result = '';
-	      var length = MIN_LENGTH + Math.round(Math.random() * DELTA_LENGTH);
 
-	      for (var i = 0; i < length; i++) {
-	        result += MASK[Math.round(Math.random() * (MASK.length - 1))];
-	      }
-	      return result;
-	    }
+	    /**
+	     * Creates an instance of `RTCSessionDescription`.
+	     *
+	     * @private
+	     * @param  {Object} sd - An offer or an answer created by WebRTC API.
+	     * @param  {} sd.type
+	     * @param  {} sd.sdp
+	     * @return {external:RTCSessionDescription} - Session description.
+	     */
+
 	  }, {
-	    key: 'toStr',
-	    value: function toStr(msg) {
-	      return JSON.stringify(msg);
+	    key: 'createSessionDescription',
+	    value: function createSessionDescription(sd) {
+	      return Object.assign(new this.RTCSessionDescription(), sd);
 	    }
 	  }]);
 
 	  return WebRTCService;
-	}(cBuilder.Interface);
+	}(channelBuilder.Interface);
 
 	exports.default = WebRTCService;
 
