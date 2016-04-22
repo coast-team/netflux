@@ -16,13 +16,14 @@ describe('WebRTCService ->', () => {
   describe('Master & 1 client connection ->', () => {
     describe('open ->', () => {
       it('Should succed', () => {
-        let data = webRTCService.open(wc1, '1', () => {})
+        let data = webRTCService.open(wc1, wc1.generateId(), () => {
+        })
         expect(data.signaling).toBeDefined()
       })
 
       it('DataChannel with the specified key should open', (done) => {
         let label
-        let data = webRTCService.open(wc1, '2', (dc) => {
+        let data = webRTCService.open(wc1, wc1.generateId(), (dc) => {
           expect(dc.label).toBe(label)
           done()
         })
@@ -32,7 +33,8 @@ describe('WebRTCService ->', () => {
 
       it('With wrong url: catch - should throw an exception', () => {
         expect(() => {
-          webRTCService.open(wc1, '3', () => {}, {
+          webRTCService.open(wc1, wc1.generateId(), () => {
+          }, {
             signaling: 'https://github.com:8100/coast-team/netflux'
           })
         }).toThrow()
@@ -40,7 +42,8 @@ describe('WebRTCService ->', () => {
 
       it('With incorrect url syntax: catch - should throw an Error', () => {
         expect(() => {
-          webRTCService.open(wc1, '4', () => {}, {
+          webRTCService.open(wc1, wc1.generateId(), () => {
+          }, {
             signaling: 'https://github.com:8100/coast-team/netflux'
           })
         }).toThrow()
@@ -49,7 +52,8 @@ describe('WebRTCService ->', () => {
 
     describe('join ->', () => {
       it('DataChannel should open', (done) => {
-        let data = webRTCService.open(wc1, '5', () => {})
+        let data = webRTCService.open(wc1, wc1.generateId(), () => {
+        })
         webRTCService.join(wc2, data.key).then(done).catch(done.fail)
       })
 
@@ -78,7 +82,7 @@ describe('WebRTCService ->', () => {
       it('Master establish connection with 1 client and send/receive a message', (done) => {
         let masterMsg = 'Hello! Here is master'
         let clientMsg = 'Hi, I am peer #2'
-        let data = webRTCService.open(wc1, '6', (channel) => {
+        let data = webRTCService.open(wc1, wc1.generateId(), (channel) => {
           channel.send(masterMsg)
           channel.onmessage = (event) => {
             expect(event.data).toEqual(clientMsg)
@@ -110,7 +114,7 @@ describe('WebRTCService ->', () => {
         let client2Msg = 'Hi, I am client #2'
         const MSG_LIMIT = 2
         let limit = 0
-        let data = webRTCService.open(wc1, '7', (channel) => {
+        let data = webRTCService.open(wc1, wc1.generateId(), (channel) => {
           channel.send(masterMsg)
           channel.onmessage = (event) => {
             expect(event.data).toMatch(/Hi, I am client #/)
