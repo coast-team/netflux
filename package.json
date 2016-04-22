@@ -97,6 +97,7 @@
             "DOMException"
         ],
         "ignore": [
+            "dist/*",
             "karma*.js",
             "config.js",
             "webpack.config.js"

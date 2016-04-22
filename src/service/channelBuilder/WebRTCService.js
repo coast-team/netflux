@@ -1,12 +1,39 @@
-import * as cBuilder from './channelBuilder'
+/**
+ * @external RTCPeerConnection
+ * @see {@link https://developer.mozilla.org/en/docs/Web/API/RTCPeerConnection}
+ */
+/**
+ * @external RTCSessionDescription
+ * @see {@link https://developer.mozilla.org/en/docs/Web/API/RTCSessionDescription}
+ */
+/**
+ * @external RTCDataChannel
+ * @see {@link https://developer.mozilla.org/en/docs/Web/API/RTCDataChannel}
+ */
+/**
+ * @external RTCIceCandidate
+ * @see {@link https://developer.mozilla.org/en/docs/Web/API/RTCIceCandidate}
+ */
+/**
+ * @external RTCPeerConnectionIceEvent
+ * @see {@link https://developer.mozilla.org/en/docs/Web/API/RTCPeerConnectionIceEvent}
+ */
+
+import * as channelBuilder from './channelBuilder'
+
+/**
+ * Ice candidate event handler.
+ *
+ * @callback WebRTCService~onCandidate
+ * @param {external:RTCPeerConnectionIceEvent} evt - Event.
+ */
 
 const CONNECTION_CREATION_TIMEOUT = 2000
 
 /**
  * Error which might occur during interaction with signaling server.
  *
- * @see [Error]{@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error}
- * @extends Error
+ * @extends external:Error
  */
 class SignalingError extends Error {
   constructor (msg, evt = null) {
@@ -20,10 +47,10 @@ class SignalingError extends Error {
  * Service class responsible to establish connections between peers via
  * `RTCDataChannel`.
  *
- * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection}
+ * @see {@link external:RTCPeerConnection}
  * @extends module:channelBuilder~Interface
  */
-class WebRTCService extends cBuilder.Interface {
+class WebRTCService extends channelBuilder.Interface {
 
   /**
    * WebRTCService constructor.
@@ -75,11 +102,10 @@ class WebRTCService extends cBuilder.Interface {
 
       // Send a message to signaling server: ready to receive offer
       socket.onopen = () => {
-        socket.send(this.toStr({key}))
+        socket.send(JSON.stringify({key}))
       }
       socket.onmessage = (evt) => {
         let msg = JSON.parse(evt.data)
-        console.log('NETFLUX: message: ', msg)
         if (!Reflect.has(msg, 'id') || !Reflect.has(msg, 'data')) {
           // throw new SignalingError(err.name + ': ' + err.message)
           throw new Error('Incorrect message format from the signaling server.')
@@ -88,18 +114,17 @@ class WebRTCService extends cBuilder.Interface {
         // On SDP offer: add connection to the array, prepare answer and send it back
         if (Reflect.has(msg.data, 'offer')) {
           connections[connections.length] = this.createConnectionAndAnswer(
-            (candidate) => socket.send(this.toStr({id: msg.id, data: {candidate}})),
-            (answer) => socket.send(this.toStr({id: msg.id, data: {answer}})),
+            (candidate) => socket.send(JSON.stringify({id: msg.id, data: {candidate}})),
+            (answer) => socket.send(JSON.stringify({id: msg.id, data: {answer}})),
             onChannel,
             msg.data.offer,
             webChannel
           )
         // On Ice Candidate
         } else if (Reflect.has(msg.data, 'candidate')) {
-          console.log('NETFLUX adding candidate')
           connections[msg.id].addIceCandidate(this.createCandidate(msg.data.candidate), () => {
           }, (e) => {
-            console.log('NETFLUX adding candidate failed: ', e)
+            console.error('NETFLUX adding candidate failed: ', e)
           })
         }
       }
@@ -123,20 +148,17 @@ class WebRTCService extends cBuilder.Interface {
 
   join (webChannel, key, options = {}) {
     let settings = Object.assign({}, this.settings, options)
-    console.log('NETFLUX: joining: ' + key)
     return new Promise((resolve, reject) => {
       let connection
 
       // Connect to the signaling server
       let socket = new window.WebSocket(settings.signaling)
       socket.onopen = () => {
-        console.log('NETFLUX: connection with Sigver has been established')
         // Prepare and send offer
         connection = this.createConnectionAndOffer(
-          (candidate) => socket.send(this.toStr({data: {candidate}})),
-          (offer) => socket.send(this.toStr({join: key, data: {offer}})),
+          (candidate) => socket.send(JSON.stringify({data: {candidate}})),
+          (offer) => socket.send(JSON.stringify({join: key, data: {offer}})),
           (channel) => {
-            console.log('NETFLUX: channel created')
             resolve(channel)
           },
           key,
@@ -145,26 +167,23 @@ class WebRTCService extends cBuilder.Interface {
       }
       socket.onmessage = (e) => {
         let msg = JSON.parse(e.data)
-        console.log('NETFLUX: message: ', msg)
 
         // Check message format
         if (!Reflect.has(msg, 'data')) { reject() }
 
         // If received an answer to the previously sent offer
         if (Reflect.has(msg.data, 'answer')) {
-          let sd = this.createSDP(msg.data.answer)
-          console.log('NETFLUX adding answer')
+          let sd = this.createSessionDescription(msg.data.answer)
           connection.setRemoteDescription(sd, () => {
           }, (e) => {
-            console.log('NETFLUX adding answer failed: ', e)
+            console.error('NETFLUX adding answer failed: ', e)
             reject()
           })
         // If received an Ice candidate
         } else if (Reflect.has(msg.data, 'candidate')) {
-          console.log('NETFLUX adding candidate')
           connection.addIceCandidate(this.createCandidate(msg.data.candidate), () => {
           }, (e) => {
-            console.log('NETFLUX adding candidate failed: ', e)
+            console.error('NETFLUX adding candidate failed: ', e)
           })
         } else { reject() }
       }
@@ -172,7 +191,6 @@ class WebRTCService extends cBuilder.Interface {
         reject(`Signaling server socket error: ${e.message}`)
       }
       socket.onclose = (e) => {
-        console.log('Closing server: ', e)
         if (e.code !== 1000) { reject(e.reason) }
       }
     })
@@ -242,11 +260,10 @@ class WebRTCService extends cBuilder.Interface {
           msg.sender
         )
       )
-      console.log(msg.sender + ' create a NEW CONNECTION')
     } else if (connections.has(msg.sender)) {
       let connection = connections.get(msg.sender)
       if (Reflect.has(msg, 'answer')) {
-        let sd = this.createSDP(msg.answer)
+        let sd = this.createSessionDescription(msg.answer)
         connection.setRemoteDescription(sd, () => {
         }, () => {
         })
@@ -256,114 +273,117 @@ class WebRTCService extends cBuilder.Interface {
     }
   }
 
-  createConnectionAndOffer (candidateCB, sdpCB, channelCB, key, webChannel, id = '') {
-    let connection = this.initConnection(candidateCB)
+  createConnectionAndOffer (onCandidate, onSDP, onChannel, key, webChannel, id = '') {
+    let connection = this.createConnection(onCandidate)
     let dc = connection.createDataChannel(key)
-    console.log('NETFLUX: dataChannel created')
     dc.onopen = () => {
-      console.log('NETFLUX: Channel opened')
+      webChannel.initChannel(dc, id)
       dc.send('ping')
-      console.log('SEND PING')
     }
     window.dc = dc
     dc.onmessage = (msgEvt) => {
       if (msgEvt.data === 'pong') {
-        console.log('PONG Received')
         dc.connection = connection
-        webChannel.initChannel(dc, id)
-        channelCB(dc)
+        onChannel(dc)
       }
     }
     dc.onerror = (evt) => {
-      console.log('NETFLUX: channel error: ', evt)
     }
     connection.createOffer((offer) => {
       connection.setLocalDescription(offer, () => {
-        sdpCB(connection.localDescription.toJSON())
+        onSDP(connection.localDescription.toJSON())
       }, (err) => {
-        console.log('NETFLUX: error 1: ', err)
         throw new Error(`Could not set local description: ${err}`)
       })
     }, (err) => {
-      console.log('NETFLUX: error 2: ', err)
       throw new Error(`Could not create offer: ${err}`)
     })
     return connection
   }
 
-  createConnectionAndAnswer (candidateCB, sdpCB, channelCB, offer, webChannel, id = '') {
-    let connection = this.initConnection(candidateCB)
+  createConnectionAndAnswer (onCandidate, onSDP, onChannel, offer, webChannel, id = '') {
+    let connection = this.createConnection(onCandidate)
     connection.ondatachannel = (e) => {
       e.channel.onmessage = (msgEvt) => {
         if (msgEvt.data === 'ping') {
-          console.log('PING Received, send PONG')
           e.channel.connection = connection
           webChannel.initChannel(e.channel, id)
           e.channel.send('pong')
-          channelCB(e.channel)
+          onChannel(e.channel)
         }
       }
       e.channel.onopen = () => {
-        console.log('NETFLUX: Channel opened')
       }
     }
-    console.log('NETFLUX adding offer')
-    connection.setRemoteDescription(this.createSDP(offer), () => {
+    connection.setRemoteDescription(this.createSessionDescription(offer), () => {
       connection.createAnswer((answer) => {
         connection.setLocalDescription(answer, () => {
-          sdpCB(connection.localDescription.toJSON())
+          onSDP(connection.localDescription.toJSON())
         }, (err) => {
-          console.log('NETFLUX: error: ', err)
+          console.error('NETFLUX: error: ', err)
           throw new Error(`Could not set local description: ${err}`)
         })
       }, (err) => {
-        console.log('NETFLUX: error: ', err)
+        console.error('NETFLUX: error: ', err)
         throw new Error(`Could not create answer: ${err}`)
       })
     }, (err) => {
-      console.log('NETFLUX: error: ', err)
+      console.error('NETFLUX: error: ', err)
       throw new Error(`Could not set remote description: ${err}`)
     })
     return connection
   }
 
-  initConnection (candidateCB) {
+  /**
+   * Creates an instance of `RTCPeerConnection` and sets `onicecandidate` event
+   * handler.
+   *
+   * @private
+   * @param  {WebRTCService~onCandidate} onCandidate - Ice
+   * candidate event handler.
+   * @return {external:RTCPeerConnection} - Peer connection.
+   */
+  createConnection (onCandidate) {
     let connection = new this.RTCPeerConnection({iceServers: this.settings.iceServers})
 
-    connection.onicecandidate = (e) => {
-      if (e.candidate !== null) {
+    connection.onicecandidate = (evt) => {
+      if (evt.candidate !== null) {
         let candidate = {
-          candidate: e.candidate.candidate,
-          sdpMLineIndex: e.candidate.sdpMLineIndex
+          candidate: evt.candidate.candidate,
+          sdpMLineIndex: evt.candidate.sdpMLineIndex
         }
-        candidateCB(candidate)
+        onCandidate(candidate)
       }
     }
     return connection
   }
 
+  /**
+   * Creates an instance of `RTCIceCandidate`.
+   *
+   * @private
+   * @param  {Object} candidate - Candidate object created in
+   * {@link WebRTCService#createConnection}.
+   * @param {} candidate.candidate
+   * @param {} candidate.sdpMLineIndex
+   * @return {external:RTCIceCandidate} - Ice candidate.
+   */
   createCandidate (candidate) {
     return new this.RTCIceCandidate(candidate)
   }
 
-  createSDP (sdp) {
-    return Object.assign(new this.RTCSessionDescription(), sdp)
+  /**
+   * Creates an instance of `RTCSessionDescription`.
+   *
+   * @private
+   * @param  {Object} sd - An offer or an answer created by WebRTC API.
+   * @param  {} sd.type
+   * @param  {} sd.sdp
+   * @return {external:RTCSessionDescription} - Session description.
+   */
+  createSessionDescription (sd) {
+    return Object.assign(new this.RTCSessionDescription(), sd)
   }
-
-  randomKey () {
-    const MIN_LENGTH = 10
-    const DELTA_LENGTH = 10
-    const MASK = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-    let result = ''
-    const length = MIN_LENGTH + Math.round(Math.random() * DELTA_LENGTH)
-
-    for (let i = 0; i < length; i++) {
-      result += MASK[Math.round(Math.random() * (MASK.length - 1))]
-    }
-    return result
-  }
-
-  toStr (msg) { return JSON.stringify(msg) }
 }
 
 export default WebRTCService

@@ -1,3 +1,12 @@
+/**
+ * @external JSON
+ * @see {@link https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/JSON}
+ */
+/**
+ * @external Error
+ * @see {@link https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Error}
+ */
+
 import WebChannel from './WebChannel'
 import * as service from './serviceProvider'
 
