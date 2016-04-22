@@ -4,6 +4,7 @@
   "main": "dist/netflux.js",
   "version": "0.0.0-semrelease",
   "scripts": {
+    "postinstall": "./node_modules/.bin/jspm install",
     "prebuild": "rm -rf coverage",
     "build": "./node_modules/.bin/rollup -o dist/netflux.es2015.js -f umd -n nf src/index.js & ./node_modules/.bin/webpack",
     "signalling-up": "kill `cat /tmp/sigver.pid`; node ./node_modules/sigver/server.js & echo \"$!\" > /tmp/sigver.pid",
