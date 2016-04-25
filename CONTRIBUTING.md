@@ -1,14 +1,13 @@
 # Developer guide
 ## Requirements
-* NodeJS.
-* Chrome, Firefox for run tests.
+* NodeJS > v4.
+* Chrome, Firefox (stable channels) for run tests.
 
-## Install on Linux
+## Install
 ```shell
 git clone https://github.com/coast-team/netflux.git
 cd netflux
 npm install
-node_modules/.bin/jspm install
 ```
 
 ## Run tests
