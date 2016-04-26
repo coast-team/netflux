@@ -43,6 +43,9 @@
       "path": "node_modules/cz-conventional-changelog"
     }
   },
+  "dependencies": {
+    "webrtc-adapter": "^1.1.0"
+  },
   "devDependencies": {
     "babel-core": "^6.3.17",
     "babel-eslint": "^6.0.0",
@@ -69,7 +72,7 @@
     "karma-jspm": "^2.0.2",
     "karma-opera-launcher": "^0.3.0",
     "karma-sourcemap-loader": "^0.3.6",
-    "rollup": "^0.25.4",
+    "rollup": "^0.26.0",
     "semantic-release": "^4.3.5",
     "sigver": "^7.1.0",
     "standard": "^6.0.4",

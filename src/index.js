@@ -14,3 +14,4 @@ const WEBRTC = service.WEBRTC
 const FULLY_CONNECTED = service.FULLY_CONNECTED
 
 export { WEBRTC, FULLY_CONNECTED, WebChannel }
+export * from '../node_modules/webrtc-adapter/out/adapter_no_edge_no_global'
