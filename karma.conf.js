@@ -23,14 +23,14 @@ module.exports = function(config) {
       '/src/': '/base/src/',
       '/dist/': '/base/dist/',
       '/test/': '/base/test/',
-      '/jspm_packages/': '/base/jspm_packages/'
+      '/jspm_packages/': '/base/jspm_packages/',
+      '/node_modules/': '/base/node_modules/'
     },
 
 
     // list of files / patterns to load in the browser
     files: [
-      'dist/netflux.es2015.js',
-      'node_modules/babel-polyfill/dist/polyfill.js'
+      'node_modules/webrtc-adapter/out/adapter_no_edge_no_global.js'
     ],
 
 

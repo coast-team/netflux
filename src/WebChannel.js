@@ -1,5 +1,5 @@
 import * as serviceProvider from './serviceProvider'
-import { JOIN_NEW_MEMBER, LEAVE, USER_DATA, JOIN_INIT, JOIN_FINILIZE, REMOVE_NEW_MEMBER, SERVICE_DATA } from './service/channelProxy/channelProxy'
+import { JOIN_NEW_MEMBER, LEAVE, USER_DATA, JOIN_INIT, JOIN_FINILIZE, REMOVE_NEW_MEMBER, SERVICE_DATA, INIT_CHANNEL_PONG } from './service/channelProxy/channelProxy'
 import JoiningPeer from './JoiningPeer'
 
 /**
@@ -69,8 +69,6 @@ class WebChannel {
     this.joiningPeers = new Set()
     /** @private */
     this.connectWithRequests = new Map()
-    /** @private */
-    this.connections = new Map()
 
     /** @private */
     this.proxy = serviceProvider.get(serviceProvider.CHANNEL_PROXY)
@@ -144,39 +142,33 @@ class WebChannel {
 
     let cBuilder = serviceProvider.get(settings.connector, settings)
     let key = this.id + this.myId
-    try {
-      let data = cBuilder.open(this, key, (channel) => {
-        // this.initChannel(channel)
+    return cBuilder.open(key, (channel) => {
+      this.initChannel(channel, false).then((channel) => {
         let jp = new JoiningPeer(channel.peerId, this.myId)
         jp.intermediaryChannel = channel
         this.joiningPeers.add(jp)
-        console.log('send JOIN_INIT his new id: ' + channel.peerId)
-        console.log('New channel: ' + channel.readyState)
-        channel.send(this.proxy.msg(JOIN_INIT,
-          {manager: this.settings.topology,
-            id: channel.peerId,
-          intermediaryId: this.myId}
-        ))
-        this.manager.broadcast(this, this.proxy.msg(JOIN_NEW_MEMBER,
-          {id: channel.peerId, intermediaryId: this.myId}
-        ))
+        channel.send(this.proxy.msg(JOIN_INIT, {
+          manager: this.settings.topology,
+          id: channel.peerId,
+          intermediaryId: this.myId})
+        )
+        this.manager.broadcast(this, this.proxy.msg(JOIN_NEW_MEMBER, {
+          id: channel.peerId,
+          intermediaryId: this.myId})
+        )
         this.manager.add(channel)
-          .then(() => {
-            channel.send(this.proxy.msg(JOIN_FINILIZE))
-          })
+          .then(() => channel.send(this.proxy.msg(JOIN_FINILIZE)))
           .catch((msg) => {
-            console.log(`Adding peer ${channel.peerId} failed: ${msg}`)
-            this.manager.broadcast(this, this.proxy.msg(REMOVE_NEW_MEMBER,
-              {id: channel.peerId}
-            ))
+            this.manager.broadcast(this, this.proxy.msg(REMOVE_NEW_MEMBER, {
+              id: channel.peerId})
+            )
             this.removeJoiningPeer(jp.id)
           })
       })
+    }).then((data) => {
       this.webRTCOpen = data.socket
-      return data.key
-    } catch (e) {
-      console.log('WebChannel open error: ', e)
-    }
+      return {key: data.key, url: data.url}
+    })
   }
 
   /**
@@ -200,16 +192,12 @@ class WebChannel {
 
     let cBuilder = serviceProvider.get(settings.connector, settings)
     return new Promise((resolve, reject) => {
-      cBuilder
-        .join(this, key)
+      cBuilder.join(key)
         .then((channel) => {
-          // this.initChannel(channel)
-          console.log('JOIN channel established')
-          this.onJoin = () => {
-            resolve(this)
-          }
+          this.onJoin = () => resolve(this)
+          return this.initChannel(channel, true)
         })
-        .catch((reason) => reject(reason))
+        .catch(reject)
     })
   }
 
@@ -286,31 +274,25 @@ class WebChannel {
     return this.settings.topology
   }
 
-  /**
-   * initChannel - description
-   *
-   * @private
-   * @param  {type} channel description
-   * @param  {type} id = '' description
-   * @return {type}         description
-   */
-  initChannel (channel, id = '') {
-    channel.webChannel = this
-    channel.onmessage = this.proxy.onMsg
-    channel.onerror = this.proxy.onError
-    channel.onclose = this.proxy.onClose
-    if (id !== '') {
-      channel.peerId = id
-    } else {
-      channel.peerId = this.generateId()
-    }
-    channel.connection.oniceconnectionstatechange = () => {
-      console.log('STATE FOR ' + channel.peerId + ' CHANGED TO: ', channel.connection.iceConnectionState)
-      if (channel.connection.iceConnectionState === 'disconnected') {
-        this.channels.delete(channel)
-        this.onLeaving(channel.peerId)
+  initChannel (channel, isInitiator, id = '') {
+    return new Promise((resolve, reject) => {
+      channel.webChannel = this
+      channel.peerId = (id !== '') ? id : this.generateId()
+      // TODO: treat the case when the 'ping' or 'pong' message has not been received
+      if (isInitiator) {
+        this.proxy.configChannel(channel)
+        channel.onPong = () => resolve(channel)
+        channel.send('ping')
+      } else {
+        channel.onmessage = (msgEvt) => {
+          if (msgEvt.data === 'ping') {
+            this.proxy.configChannel(channel)
+            channel.send(this.proxy.msg(INIT_CHANNEL_PONG))
+            resolve(channel)
+          }
+        }
       }
-    }
+    })
   }
 
   /**

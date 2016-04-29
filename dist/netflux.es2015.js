@@ -4,6 +4,1029 @@
   (factory((global.nf = global.nf || {})));
 }(this, function (exports) { 'use strict';
 
+  (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+
+  },{}],2:[function(require,module,exports){
+  /*
+   *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
+   *
+   *  Use of this source code is governed by a BSD-style license
+   *  that can be found in the LICENSE file in the root of the source
+   *  tree.
+   */
+   /* eslint-env node */
+
+  'use strict';
+
+  // Shimming starts here.
+  (function() {
+    // Utils.
+    var logging = require('./utils').log;
+    var browserDetails = require('./utils').browserDetails;
+    // Export to the adapter global object visible in the browser.
+    module.exports.browserDetails = browserDetails;
+    module.exports.extractVersion = require('./utils').extractVersion;
+    module.exports.disableLog = require('./utils').disableLog;
+
+    // Comment out the line below if you want logging to occur, including logging
+    // for the switch statement below. Can also be turned on in the browser via
+    // adapter.disableLog(false), but then logging from the switch statement below
+    // will not appear.
+    require('./utils').disableLog(true);
+
+    // Browser shims.
+    var chromeShim = require('./chrome/chrome_shim') || null;
+    var edgeShim = require('./edge/edge_shim') || null;
+    var firefoxShim = require('./firefox/firefox_shim') || null;
+    var safariShim = require('./safari/safari_shim') || null;
+
+    // Shim browser if found.
+    switch (browserDetails.browser) {
+      case 'opera': // fallthrough as it uses chrome shims
+      case 'chrome':
+        if (!chromeShim || !chromeShim.shimPeerConnection) {
+          logging('Chrome shim is not included in this adapter release.');
+          return;
+        }
+        logging('adapter.js shimming chrome.');
+        // Export to the adapter global object visible in the browser.
+        module.exports.browserShim = chromeShim;
+
+        chromeShim.shimGetUserMedia();
+        chromeShim.shimSourceObject();
+        chromeShim.shimPeerConnection();
+        chromeShim.shimOnTrack();
+        break;
+      case 'firefox':
+        if (!firefoxShim || !firefoxShim.shimPeerConnection) {
+          logging('Firefox shim is not included in this adapter release.');
+          return;
+        }
+        logging('adapter.js shimming firefox.');
+        // Export to the adapter global object visible in the browser.
+        module.exports.browserShim = firefoxShim;
+
+        firefoxShim.shimGetUserMedia();
+        firefoxShim.shimSourceObject();
+        firefoxShim.shimPeerConnection();
+        firefoxShim.shimOnTrack();
+        break;
+      case 'edge':
+        if (!edgeShim || !edgeShim.shimPeerConnection) {
+          logging('MS edge shim is not included in this adapter release.');
+          return;
+        }
+        logging('adapter.js shimming edge.');
+        // Export to the adapter global object visible in the browser.
+        module.exports.browserShim = edgeShim;
+
+        edgeShim.shimPeerConnection();
+        break;
+      case 'safari':
+        if (!safariShim) {
+          logging('Safari shim is not included in this adapter release.');
+          return;
+        }
+        logging('adapter.js shimming safari.');
+        // Export to the adapter global object visible in the browser.
+        module.exports.browserShim = safariShim;
+
+        safariShim.shimGetUserMedia();
+        break;
+      default:
+        logging('Unsupported browser!');
+    }
+  })();
+
+  },{"./chrome/chrome_shim":3,"./edge/edge_shim":1,"./firefox/firefox_shim":5,"./safari/safari_shim":7,"./utils":8}],3:[function(require,module,exports){
+  /*
+   *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
+   *
+   *  Use of this source code is governed by a BSD-style license
+   *  that can be found in the LICENSE file in the root of the source
+   *  tree.
+   */
+   /* eslint-env node */
+  'use strict';
+  var logging = require('../utils.js').log;
+  var browserDetails = require('../utils.js').browserDetails;
+
+  var chromeShim = {
+    shimOnTrack: function() {
+      if (typeof window === 'object' && window.RTCPeerConnection && !('ontrack' in
+          window.RTCPeerConnection.prototype)) {
+        Object.defineProperty(window.RTCPeerConnection.prototype, 'ontrack', {
+          get: function() {
+            return this._ontrack;
+          },
+          set: function(f) {
+            var self = this;
+            if (this._ontrack) {
+              this.removeEventListener('track', this._ontrack);
+              this.removeEventListener('addstream', this._ontrackpoly);
+            }
+            this.addEventListener('track', this._ontrack = f);
+            this.addEventListener('addstream', this._ontrackpoly = function(e) {
+              // onaddstream does not fire when a track is added to an existing
+              // stream. But stream.onaddtrack is implemented so we use that.
+              e.stream.addEventListener('addtrack', function(te) {
+                var event = new Event('track');
+                event.track = te.track;
+                event.receiver = {track: te.track};
+                event.streams = [e.stream];
+                self.dispatchEvent(event);
+              });
+              e.stream.getTracks().forEach(function(track) {
+                var event = new Event('track');
+                event.track = track;
+                event.receiver = {track: track};
+                event.streams = [e.stream];
+                this.dispatchEvent(event);
+              }.bind(this));
+            }.bind(this));
+          }
+        });
+      }
+    },
+
+    shimSourceObject: function() {
+      if (typeof window === 'object') {
+        if (window.HTMLMediaElement &&
+          !('srcObject' in window.HTMLMediaElement.prototype)) {
+          // Shim the srcObject property, once, when HTMLMediaElement is found.
+          Object.defineProperty(window.HTMLMediaElement.prototype, 'srcObject', {
+            get: function() {
+              return this._srcObject;
+            },
+            set: function(stream) {
+              var self = this;
+              // Use _srcObject as a private property for this shim
+              this._srcObject = stream;
+              if (this.src) {
+                URL.revokeObjectURL(this.src);
+              }
+
+              if (!stream) {
+                this.src = '';
+                return;
+              }
+              this.src = URL.createObjectURL(stream);
+              // We need to recreate the blob url when a track is added or
+              // removed. Doing it manually since we want to avoid a recursion.
+              stream.addEventListener('addtrack', function() {
+                if (self.src) {
+                  URL.revokeObjectURL(self.src);
+                }
+                self.src = URL.createObjectURL(stream);
+              });
+              stream.addEventListener('removetrack', function() {
+                if (self.src) {
+                  URL.revokeObjectURL(self.src);
+                }
+                self.src = URL.createObjectURL(stream);
+              });
+            }
+          });
+        }
+      }
+    },
+
+    shimPeerConnection: function() {
+      // The RTCPeerConnection object.
+      window.RTCPeerConnection = function(pcConfig, pcConstraints) {
+        // Translate iceTransportPolicy to iceTransports,
+        // see https://code.google.com/p/webrtc/issues/detail?id=4869
+        logging('PeerConnection');
+        if (pcConfig && pcConfig.iceTransportPolicy) {
+          pcConfig.iceTransports = pcConfig.iceTransportPolicy;
+        }
+
+        var pc = new webkitRTCPeerConnection(pcConfig, pcConstraints);
+        var origGetStats = pc.getStats.bind(pc);
+        pc.getStats = function(selector, successCallback, errorCallback) {
+          var self = this;
+          var args = arguments;
+
+          // If selector is a function then we are in the old style stats so just
+          // pass back the original getStats format to avoid breaking old users.
+          if (arguments.length > 0 && typeof selector === 'function') {
+            return origGetStats(selector, successCallback);
+          }
+
+          var fixChromeStats_ = function(response) {
+            var standardReport = {};
+            var reports = response.result();
+            reports.forEach(function(report) {
+              var standardStats = {
+                id: report.id,
+                timestamp: report.timestamp,
+                type: report.type
+              };
+              report.names().forEach(function(name) {
+                standardStats[name] = report.stat(name);
+              });
+              standardReport[standardStats.id] = standardStats;
+            });
+
+            return standardReport;
+          };
+
+          if (arguments.length >= 2) {
+            var successCallbackWrapper_ = function(response) {
+              args[1](fixChromeStats_(response));
+            };
+
+            return origGetStats.apply(this, [successCallbackWrapper_,
+                arguments[0]]);
+          }
+
+          // promise-support
+          return new Promise(function(resolve, reject) {
+            if (args.length === 1 && typeof selector === 'object') {
+              origGetStats.apply(self,
+                  [function(response) {
+                    resolve.apply(null, [fixChromeStats_(response)]);
+                  }, reject]);
+            } else {
+              origGetStats.apply(self, [resolve, reject]);
+            }
+          });
+        };
+
+        return pc;
+      };
+      window.RTCPeerConnection.prototype = webkitRTCPeerConnection.prototype;
+
+      // wrap static methods. Currently just generateCertificate.
+      if (webkitRTCPeerConnection.generateCertificate) {
+        Object.defineProperty(window.RTCPeerConnection, 'generateCertificate', {
+          get: function() {
+            return webkitRTCPeerConnection.generateCertificate;
+          }
+        });
+      }
+
+      // add promise support
+      ['createOffer', 'createAnswer'].forEach(function(method) {
+        var nativeMethod = webkitRTCPeerConnection.prototype[method];
+        webkitRTCPeerConnection.prototype[method] = function() {
+          var self = this;
+          if (arguments.length < 1 || (arguments.length === 1 &&
+              typeof(arguments[0]) === 'object')) {
+            var opts = arguments.length === 1 ? arguments[0] : undefined;
+            return new Promise(function(resolve, reject) {
+              nativeMethod.apply(self, [resolve, reject, opts]);
+            });
+          }
+          return nativeMethod.apply(this, arguments);
+        };
+      });
+
+      ['setLocalDescription', 'setRemoteDescription', 'addIceCandidate']
+          .forEach(function(method) {
+            var nativeMethod = webkitRTCPeerConnection.prototype[method];
+            webkitRTCPeerConnection.prototype[method] = function() {
+              var args = arguments;
+              var self = this;
+              args[0] = new ((method === 'addIceCandidate')?
+                  RTCIceCandidate : RTCSessionDescription)(args[0]);
+              return new Promise(function(resolve, reject) {
+                nativeMethod.apply(self, [args[0],
+                    function() {
+                      resolve();
+                      if (args.length >= 2) {
+                        args[1].apply(null, []);
+                      }
+                    },
+                    function(err) {
+                      reject(err);
+                      if (args.length >= 3) {
+                        args[2].apply(null, [err]);
+                      }
+                    }]
+                  );
+              });
+            };
+          });
+    },
+
+    // Attach a media stream to an element.
+    attachMediaStream: function(element, stream) {
+      logging('DEPRECATED, attachMediaStream will soon be removed.');
+      if (browserDetails.version >= 43) {
+        element.srcObject = stream;
+      } else if (typeof element.src !== 'undefined') {
+        element.src = URL.createObjectURL(stream);
+      } else {
+        logging('Error attaching stream to element.');
+      }
+    },
+
+    reattachMediaStream: function(to, from) {
+      logging('DEPRECATED, reattachMediaStream will soon be removed.');
+      if (browserDetails.version >= 43) {
+        to.srcObject = from.srcObject;
+      } else {
+        to.src = from.src;
+      }
+    }
+  };
+
+
+  // Expose public methods.
+  module.exports = {
+    shimOnTrack: chromeShim.shimOnTrack,
+    shimSourceObject: chromeShim.shimSourceObject,
+    shimPeerConnection: chromeShim.shimPeerConnection,
+    shimGetUserMedia: require('./getusermedia'),
+    attachMediaStream: chromeShim.attachMediaStream,
+    reattachMediaStream: chromeShim.reattachMediaStream
+  };
+
+  },{"../utils.js":8,"./getusermedia":4}],4:[function(require,module,exports){
+  /*
+   *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
+   *
+   *  Use of this source code is governed by a BSD-style license
+   *  that can be found in the LICENSE file in the root of the source
+   *  tree.
+   */
+   /* eslint-env node */
+  'use strict';
+  var logging = require('../utils.js').log;
+
+  // Expose public methods.
+  module.exports = function() {
+    var constraintsToChrome_ = function(c) {
+      if (typeof c !== 'object' || c.mandatory || c.optional) {
+        return c;
+      }
+      var cc = {};
+      Object.keys(c).forEach(function(key) {
+        if (key === 'require' || key === 'advanced' || key === 'mediaSource') {
+          return;
+        }
+        var r = (typeof c[key] === 'object') ? c[key] : {ideal: c[key]};
+        if (r.exact !== undefined && typeof r.exact === 'number') {
+          r.min = r.max = r.exact;
+        }
+        var oldname_ = function(prefix, name) {
+          if (prefix) {
+            return prefix + name.charAt(0).toUpperCase() + name.slice(1);
+          }
+          return (name === 'deviceId') ? 'sourceId' : name;
+        };
+        if (r.ideal !== undefined) {
+          cc.optional = cc.optional || [];
+          var oc = {};
+          if (typeof r.ideal === 'number') {
+            oc[oldname_('min', key)] = r.ideal;
+            cc.optional.push(oc);
+            oc = {};
+            oc[oldname_('max', key)] = r.ideal;
+            cc.optional.push(oc);
+          } else {
+            oc[oldname_('', key)] = r.ideal;
+            cc.optional.push(oc);
+          }
+        }
+        if (r.exact !== undefined && typeof r.exact !== 'number') {
+          cc.mandatory = cc.mandatory || {};
+          cc.mandatory[oldname_('', key)] = r.exact;
+        } else {
+          ['min', 'max'].forEach(function(mix) {
+            if (r[mix] !== undefined) {
+              cc.mandatory = cc.mandatory || {};
+              cc.mandatory[oldname_(mix, key)] = r[mix];
+            }
+          });
+        }
+      });
+      if (c.advanced) {
+        cc.optional = (cc.optional || []).concat(c.advanced);
+      }
+      return cc;
+    };
+
+    var getUserMedia_ = function(constraints, onSuccess, onError) {
+      constraints = JSON.parse(JSON.stringify(constraints));
+      if (constraints.audio) {
+        constraints.audio = constraintsToChrome_(constraints.audio);
+      }
+      if (constraints.video) {
+        constraints.video = constraintsToChrome_(constraints.video);
+      }
+      logging('chrome: ' + JSON.stringify(constraints));
+      return navigator.webkitGetUserMedia(constraints, onSuccess, onError);
+    };
+    navigator.getUserMedia = getUserMedia_;
+
+    // Returns the result of getUserMedia as a Promise.
+    var getUserMediaPromise_ = function(constraints) {
+      return new Promise(function(resolve, reject) {
+        navigator.getUserMedia(constraints, resolve, reject);
+      });
+    };
+
+    if (!navigator.mediaDevices) {
+      navigator.mediaDevices = {
+        getUserMedia: getUserMediaPromise_,
+        enumerateDevices: function() {
+          return new Promise(function(resolve) {
+            var kinds = {audio: 'audioinput', video: 'videoinput'};
+            return MediaStreamTrack.getSources(function(devices) {
+              resolve(devices.map(function(device) {
+                return {label: device.label,
+                        kind: kinds[device.kind],
+                        deviceId: device.id,
+                        groupId: ''};
+              }));
+            });
+          });
+        }
+      };
+    }
+
+    // A shim for getUserMedia method on the mediaDevices object.
+    // TODO(KaptenJansson) remove once implemented in Chrome stable.
+    if (!navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia = function(constraints) {
+        return getUserMediaPromise_(constraints);
+      };
+    } else {
+      // Even though Chrome 45 has navigator.mediaDevices and a getUserMedia
+      // function which returns a Promise, it does not accept spec-style
+      // constraints.
+      var origGetUserMedia = navigator.mediaDevices.getUserMedia.
+          bind(navigator.mediaDevices);
+      navigator.mediaDevices.getUserMedia = function(c) {
+        if (c) {
+          logging('spec:   ' + JSON.stringify(c)); // whitespace for alignment
+          c.audio = constraintsToChrome_(c.audio);
+          c.video = constraintsToChrome_(c.video);
+          logging('chrome: ' + JSON.stringify(c));
+        }
+        return origGetUserMedia(c);
+      }.bind(this);
+    }
+
+    // Dummy devicechange event methods.
+    // TODO(KaptenJansson) remove once implemented in Chrome stable.
+    if (typeof navigator.mediaDevices.addEventListener === 'undefined') {
+      navigator.mediaDevices.addEventListener = function() {
+        logging('Dummy mediaDevices.addEventListener called.');
+      };
+    }
+    if (typeof navigator.mediaDevices.removeEventListener === 'undefined') {
+      navigator.mediaDevices.removeEventListener = function() {
+        logging('Dummy mediaDevices.removeEventListener called.');
+      };
+    }
+  };
+
+  },{"../utils.js":8}],5:[function(require,module,exports){
+  /*
+   *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
+   *
+   *  Use of this source code is governed by a BSD-style license
+   *  that can be found in the LICENSE file in the root of the source
+   *  tree.
+   */
+   /* eslint-env node */
+  'use strict';
+
+  var logging = require('../utils').log;
+  var browserDetails = require('../utils').browserDetails;
+
+  var firefoxShim = {
+    shimOnTrack: function() {
+      if (typeof window === 'object' && window.RTCPeerConnection && !('ontrack' in
+          window.RTCPeerConnection.prototype)) {
+        Object.defineProperty(window.RTCPeerConnection.prototype, 'ontrack', {
+          get: function() {
+            return this._ontrack;
+          },
+          set: function(f) {
+            if (this._ontrack) {
+              this.removeEventListener('track', this._ontrack);
+              this.removeEventListener('addstream', this._ontrackpoly);
+            }
+            this.addEventListener('track', this._ontrack = f);
+            this.addEventListener('addstream', this._ontrackpoly = function(e) {
+              e.stream.getTracks().forEach(function(track) {
+                var event = new Event('track');
+                event.track = track;
+                event.receiver = {track: track};
+                event.streams = [e.stream];
+                this.dispatchEvent(event);
+              }.bind(this));
+            }.bind(this));
+          }
+        });
+      }
+    },
+
+    shimSourceObject: function() {
+      // Firefox has supported mozSrcObject since FF22, unprefixed in 42.
+      if (typeof window === 'object') {
+        if (window.HTMLMediaElement &&
+          !('srcObject' in window.HTMLMediaElement.prototype)) {
+          // Shim the srcObject property, once, when HTMLMediaElement is found.
+          Object.defineProperty(window.HTMLMediaElement.prototype, 'srcObject', {
+            get: function() {
+              return this.mozSrcObject;
+            },
+            set: function(stream) {
+              this.mozSrcObject = stream;
+            }
+          });
+        }
+      }
+    },
+
+    shimPeerConnection: function() {
+      // The RTCPeerConnection object.
+      if (!window.RTCPeerConnection) {
+        window.RTCPeerConnection = function(pcConfig, pcConstraints) {
+          if (browserDetails.version < 38) {
+            // .urls is not supported in FF < 38.
+            // create RTCIceServers with a single url.
+            if (pcConfig && pcConfig.iceServers) {
+              var newIceServers = [];
+              for (var i = 0; i < pcConfig.iceServers.length; i++) {
+                var server = pcConfig.iceServers[i];
+                if (server.hasOwnProperty('urls')) {
+                  for (var j = 0; j < server.urls.length; j++) {
+                    var newServer = {
+                      url: server.urls[j]
+                    };
+                    if (server.urls[j].indexOf('turn') === 0) {
+                      newServer.username = server.username;
+                      newServer.credential = server.credential;
+                    }
+                    newIceServers.push(newServer);
+                  }
+                } else {
+                  newIceServers.push(pcConfig.iceServers[i]);
+                }
+              }
+              pcConfig.iceServers = newIceServers;
+            }
+          }
+          return new mozRTCPeerConnection(pcConfig, pcConstraints);
+        };
+        window.RTCPeerConnection.prototype = mozRTCPeerConnection.prototype;
+
+        // wrap static methods. Currently just generateCertificate.
+        if (mozRTCPeerConnection.generateCertificate) {
+          Object.defineProperty(window.RTCPeerConnection, 'generateCertificate', {
+            get: function() {
+              return mozRTCPeerConnection.generateCertificate;
+            }
+          });
+        }
+
+        window.RTCSessionDescription = mozRTCSessionDescription;
+        window.RTCIceCandidate = mozRTCIceCandidate;
+      }
+
+      // shim away need for obsolete RTCIceCandidate/RTCSessionDescription.
+      ['setLocalDescription', 'setRemoteDescription', 'addIceCandidate']
+          .forEach(function(method) {
+            var nativeMethod = RTCPeerConnection.prototype[method];
+            RTCPeerConnection.prototype[method] = function() {
+              arguments[0] = new ((method === 'addIceCandidate')?
+                  RTCIceCandidate : RTCSessionDescription)(arguments[0]);
+              return nativeMethod.apply(this, arguments);
+            };
+          });
+    },
+
+    shimGetUserMedia: function() {
+      // getUserMedia constraints shim.
+      var getUserMedia_ = function(constraints, onSuccess, onError) {
+        var constraintsToFF37_ = function(c) {
+          if (typeof c !== 'object' || c.require) {
+            return c;
+          }
+          var require = [];
+          Object.keys(c).forEach(function(key) {
+            if (key === 'require' || key === 'advanced' ||
+                key === 'mediaSource') {
+              return;
+            }
+            var r = c[key] = (typeof c[key] === 'object') ?
+                c[key] : {ideal: c[key]};
+            if (r.min !== undefined ||
+                r.max !== undefined || r.exact !== undefined) {
+              require.push(key);
+            }
+            if (r.exact !== undefined) {
+              if (typeof r.exact === 'number') {
+                r. min = r.max = r.exact;
+              } else {
+                c[key] = r.exact;
+              }
+              delete r.exact;
+            }
+            if (r.ideal !== undefined) {
+              c.advanced = c.advanced || [];
+              var oc = {};
+              if (typeof r.ideal === 'number') {
+                oc[key] = {min: r.ideal, max: r.ideal};
+              } else {
+                oc[key] = r.ideal;
+              }
+              c.advanced.push(oc);
+              delete r.ideal;
+              if (!Object.keys(r).length) {
+                delete c[key];
+              }
+            }
+          });
+          if (require.length) {
+            c.require = require;
+          }
+          return c;
+        };
+        constraints = JSON.parse(JSON.stringify(constraints));
+        if (browserDetails.version < 38) {
+          logging('spec: ' + JSON.stringify(constraints));
+          if (constraints.audio) {
+            constraints.audio = constraintsToFF37_(constraints.audio);
+          }
+          if (constraints.video) {
+            constraints.video = constraintsToFF37_(constraints.video);
+          }
+          logging('ff37: ' + JSON.stringify(constraints));
+        }
+        return navigator.mozGetUserMedia(constraints, onSuccess, onError);
+      };
+
+      navigator.getUserMedia = getUserMedia_;
+
+      // Returns the result of getUserMedia as a Promise.
+      var getUserMediaPromise_ = function(constraints) {
+        return new Promise(function(resolve, reject) {
+          navigator.getUserMedia(constraints, resolve, reject);
+        });
+      };
+
+      // Shim for mediaDevices on older versions.
+      if (!navigator.mediaDevices) {
+        navigator.mediaDevices = {getUserMedia: getUserMediaPromise_,
+          addEventListener: function() { },
+          removeEventListener: function() { }
+        };
+      }
+      navigator.mediaDevices.enumerateDevices =
+          navigator.mediaDevices.enumerateDevices || function() {
+            return new Promise(function(resolve) {
+              var infos = [
+                {kind: 'audioinput', deviceId: 'default', label: '', groupId: ''},
+                {kind: 'videoinput', deviceId: 'default', label: '', groupId: ''}
+              ];
+              resolve(infos);
+            });
+          };
+
+      if (browserDetails.version < 41) {
+        // Work around http://bugzil.la/1169665
+        var orgEnumerateDevices =
+            navigator.mediaDevices.enumerateDevices.bind(navigator.mediaDevices);
+        navigator.mediaDevices.enumerateDevices = function() {
+          return orgEnumerateDevices().then(undefined, function(e) {
+            if (e.name === 'NotFoundError') {
+              return [];
+            }
+            throw e;
+          });
+        };
+      }
+    },
+
+    // Attach a media stream to an element.
+    attachMediaStream: function(element, stream) {
+      logging('DEPRECATED, attachMediaStream will soon be removed.');
+      element.srcObject = stream;
+    },
+
+    reattachMediaStream: function(to, from) {
+      logging('DEPRECATED, reattachMediaStream will soon be removed.');
+      to.srcObject = from.srcObject;
+    }
+  };
+
+  // Expose public methods.
+  module.exports = {
+    shimOnTrack: firefoxShim.shimOnTrack,
+    shimSourceObject: firefoxShim.shimSourceObject,
+    shimPeerConnection: firefoxShim.shimPeerConnection,
+    shimGetUserMedia: require('./getusermedia'),
+    attachMediaStream: firefoxShim.attachMediaStream,
+    reattachMediaStream: firefoxShim.reattachMediaStream
+  };
+
+  },{"../utils":8,"./getusermedia":6}],6:[function(require,module,exports){
+  /*
+   *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
+   *
+   *  Use of this source code is governed by a BSD-style license
+   *  that can be found in the LICENSE file in the root of the source
+   *  tree.
+   */
+   /* eslint-env node */
+  'use strict';
+
+  var logging = require('../utils').log;
+  var browserDetails = require('../utils').browserDetails;
+
+  // Expose public methods.
+  module.exports = function() {
+    // getUserMedia constraints shim.
+    var getUserMedia_ = function(constraints, onSuccess, onError) {
+      var constraintsToFF37_ = function(c) {
+        if (typeof c !== 'object' || c.require) {
+          return c;
+        }
+        var require = [];
+        Object.keys(c).forEach(function(key) {
+          if (key === 'require' || key === 'advanced' || key === 'mediaSource') {
+            return;
+          }
+          var r = c[key] = (typeof c[key] === 'object') ?
+              c[key] : {ideal: c[key]};
+          if (r.min !== undefined ||
+              r.max !== undefined || r.exact !== undefined) {
+            require.push(key);
+          }
+          if (r.exact !== undefined) {
+            if (typeof r.exact === 'number') {
+              r. min = r.max = r.exact;
+            } else {
+              c[key] = r.exact;
+            }
+            delete r.exact;
+          }
+          if (r.ideal !== undefined) {
+            c.advanced = c.advanced || [];
+            var oc = {};
+            if (typeof r.ideal === 'number') {
+              oc[key] = {min: r.ideal, max: r.ideal};
+            } else {
+              oc[key] = r.ideal;
+            }
+            c.advanced.push(oc);
+            delete r.ideal;
+            if (!Object.keys(r).length) {
+              delete c[key];
+            }
+          }
+        });
+        if (require.length) {
+          c.require = require;
+        }
+        return c;
+      };
+      constraints = JSON.parse(JSON.stringify(constraints));
+      if (browserDetails.version < 38) {
+        logging('spec: ' + JSON.stringify(constraints));
+        if (constraints.audio) {
+          constraints.audio = constraintsToFF37_(constraints.audio);
+        }
+        if (constraints.video) {
+          constraints.video = constraintsToFF37_(constraints.video);
+        }
+        logging('ff37: ' + JSON.stringify(constraints));
+      }
+      return navigator.mozGetUserMedia(constraints, onSuccess, onError);
+    };
+
+    navigator.getUserMedia = getUserMedia_;
+
+    // Returns the result of getUserMedia as a Promise.
+    var getUserMediaPromise_ = function(constraints) {
+      return new Promise(function(resolve, reject) {
+        navigator.getUserMedia(constraints, resolve, reject);
+      });
+    };
+
+    // Shim for mediaDevices on older versions.
+    if (!navigator.mediaDevices) {
+      navigator.mediaDevices = {getUserMedia: getUserMediaPromise_,
+        addEventListener: function() { },
+        removeEventListener: function() { }
+      };
+    }
+    navigator.mediaDevices.enumerateDevices =
+        navigator.mediaDevices.enumerateDevices || function() {
+          return new Promise(function(resolve) {
+            var infos = [
+              {kind: 'audioinput', deviceId: 'default', label: '', groupId: ''},
+              {kind: 'videoinput', deviceId: 'default', label: '', groupId: ''}
+            ];
+            resolve(infos);
+          });
+        };
+
+    if (browserDetails.version < 41) {
+      // Work around http://bugzil.la/1169665
+      var orgEnumerateDevices =
+          navigator.mediaDevices.enumerateDevices.bind(navigator.mediaDevices);
+      navigator.mediaDevices.enumerateDevices = function() {
+        return orgEnumerateDevices().then(undefined, function(e) {
+          if (e.name === 'NotFoundError') {
+            return [];
+          }
+          throw e;
+        });
+      };
+    }
+  };
+
+  },{"../utils":8}],7:[function(require,module,exports){
+  /*
+   *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
+   *
+   *  Use of this source code is governed by a BSD-style license
+   *  that can be found in the LICENSE file in the root of the source
+   *  tree.
+   */
+  'use strict';
+  var safariShim = {
+    // TODO: DrAlex, should be here, double check against LayoutTests
+    // shimOnTrack: function() { },
+
+    // TODO: DrAlex
+    // attachMediaStream: function(element, stream) { },
+    // reattachMediaStream: function(to, from) { },
+
+    // TODO: once the back-end for the mac port is done, add.
+    // TODO: check for webkitGTK+
+    // shimPeerConnection: function() { },
+
+    shimGetUserMedia: function() {
+      navigator.getUserMedia = navigator.webkitGetUserMedia;
+    }
+  };
+
+  // Expose public methods.
+  module.exports = {
+    shimGetUserMedia: safariShim.shimGetUserMedia
+    // TODO
+    // shimOnTrack: safariShim.shimOnTrack,
+    // shimPeerConnection: safariShim.shimPeerConnection,
+    // attachMediaStream: safariShim.attachMediaStream,
+    // reattachMediaStream: safariShim.reattachMediaStream
+  };
+
+  },{}],8:[function(require,module,exports){
+  /*
+   *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
+   *
+   *  Use of this source code is governed by a BSD-style license
+   *  that can be found in the LICENSE file in the root of the source
+   *  tree.
+   */
+   /* eslint-env node */
+  'use strict';
+
+  var logDisabled_ = false;
+
+  // Utility methods.
+  var utils = {
+    disableLog: function(bool) {
+      if (typeof bool !== 'boolean') {
+        return new Error('Argument type: ' + typeof bool +
+            '. Please use a boolean.');
+      }
+      logDisabled_ = bool;
+      return (bool) ? 'adapter.js logging disabled' :
+          'adapter.js logging enabled';
+    },
+
+    log: function() {
+      if (typeof window === 'object') {
+        if (logDisabled_) {
+          return;
+        }
+        if (typeof console !== 'undefined' && typeof console.log === 'function') {
+          console.log.apply(console, arguments);
+        }
+      }
+    },
+
+    /**
+     * Extract browser version out of the provided user agent string.
+     *
+     * @param {!string} uastring userAgent string.
+     * @param {!string} expr Regular expression used as match criteria.
+     * @param {!number} pos position in the version string to be returned.
+     * @return {!number} browser version.
+     */
+    extractVersion: function(uastring, expr, pos) {
+      var match = uastring.match(expr);
+      return match && match.length >= pos && parseInt(match[pos], 10);
+    },
+
+    /**
+     * Browser detector.
+     *
+     * @return {object} result containing browser, version and minVersion
+     *     properties.
+     */
+    detectBrowser: function() {
+      // Returned result object.
+      var result = {};
+      result.browser = null;
+      result.version = null;
+      result.minVersion = null;
+
+      // Fail early if it's not a browser
+      if (typeof window === 'undefined' || !window.navigator) {
+        result.browser = 'Not a browser.';
+        return result;
+      }
+
+      // Firefox.
+      if (navigator.mozGetUserMedia) {
+        result.browser = 'firefox';
+        result.version = this.extractVersion(navigator.userAgent,
+            /Firefox\/([0-9]+)\./, 1);
+        result.minVersion = 31;
+
+      // all webkit-based browsers
+      } else if (navigator.webkitGetUserMedia) {
+        // Chrome, Chromium, Webview, Opera, all use the chrome shim for now
+        if (window.webkitRTCPeerConnection) {
+          result.browser = 'chrome';
+          result.version = this.extractVersion(navigator.userAgent,
+            /Chrom(e|ium)\/([0-9]+)\./, 2);
+          result.minVersion = 38;
+
+        // Safari or unknown webkit-based
+        // for the time being Safari has support for MediaStreams but not webRTC
+        } else {
+          // Safari UA substrings of interest for reference:
+          // - webkit version:           AppleWebKit/602.1.25 (also used in Op,Cr)
+          // - safari UI version:        Version/9.0.3 (unique to Safari)
+          // - safari UI webkit version: Safari/601.4.4 (also used in Op,Cr)
+          //
+          // if the webkit version and safari UI webkit versions are equals,
+          // ... this is a stable version.
+          //
+          // only the internal webkit version is important today to know if
+          // media streams are supported
+          //
+          if (navigator.userAgent.match(/Version\/(\d+).(\d+)/)) {
+            result.browser = 'safari';
+            result.version = this.extractVersion(navigator.userAgent,
+              /AppleWebKit\/([0-9]+)\./, 1);
+            result.minVersion = 602;
+
+          // unknown webkit-based browser
+          } else {
+            result.browser = 'Unsupported webkit-based browser ' +
+                'with GUM support but no WebRTC support.';
+            return result;
+          }
+        }
+
+      // Edge.
+      } else if (navigator.mediaDevices &&
+          navigator.userAgent.match(/Edge\/(\d+).(\d+)$/)) {
+        result.browser = 'edge';
+        result.version = this.extractVersion(navigator.userAgent,
+            /Edge\/(\d+).(\d+)$/, 2);
+        result.minVersion = 10547;
+
+      // Default fallthrough: not supported.
+      } else {
+        result.browser = 'Not a supported browser.';
+        return result;
+      }
+
+      // Warn if version is less than minVersion.
+      if (result.version < result.minVersion) {
+        utils.log('Browser: ' + result.browser + ' Version: ' + result.version +
+            ' < minimum supported version: ' + result.minVersion +
+            '\n some things might not work!');
+      }
+
+      return result;
+    }
+  };
+
+  // Export.
+  module.exports = {
+    log: utils.log,
+    disableLog: utils.disableLog,
+    browserDetails: utils.detectBrowser(),
+    extractVersion: utils.extractVersion
+  };
+
+  },{}]},{},[2]);
+
   /**
    * Service module includes {@link module:channelBuilder},
    * {@link module:webChannelManager} and {@link module:channelProxy} modules.
@@ -38,30 +1061,83 @@
      *
      * @abstract
      * @param  {WebChannel} wc - Web Channel from which the message is arrived.
+     * @param  {ChannelInterface} wc - Channel by which the message is arrived.
      * @param  {string} msg - Message in stringified JSON format.
      */
-    onMessage (wc, msg) {
+    onMessage (wc, channel, msg) {
       throw new Error('Must be implemented by subclass!')
     }
   }
 
+  /**
+   * This class represents a temporary state of a peer, while he is about to join
+   * the web channel. During the joining process every peer in the web channel
+   * and the joining peer have an instance of this class with the same `id` and
+   * `intermediaryId` attribute values. After the joining process has been finished
+   * regardless of success, these instances will be deleted.
+   */
   class JoiningPeer {
     constructor (id, intermediaryId) {
+      /**
+       * The joining peer id.
+       *
+       * @type {string}
+       */
       this.id = id
+
+      /**
+       * The id of the peer who invited the joining peer to the web channel. It is
+       * a member of the web channel and called an intermediary peer between the
+       * joining peer and the web channel. The same value for all instances.
+       *
+       * @type {string}
+       */
       this.intermediaryId = intermediaryId
+
+      /**
+       * The channel between the joining peer and intermediary peer. It is null
+       * for every peer, but the joining and intermediary peers.
+       *
+       * @type {ChannelInterface}
+       */
       this.intermediaryChannel = null
+
+      /**
+       * This attribute is proper to each peer. Array of channels which will be
+       * added to the current peer once the joining peer become the member of the
+       * web channel.
+       *
+       * @type {Array[ChannelInterface]}
+       */
       this.channelsToAdd = []
+
+      /**
+       * This attribute is proper to each peer. Array of channels which will be
+       * closed with the current peer once the joining peer become the member of the
+       * web channel.
+       *
+       * @type {Array[ChannelInterface]}
+       */
       this.channelsToRemove = []
     }
 
+    /**
+     * Add channel to `channelsToAdd` array.
+     *
+     * @param  {ChannelInterface} channel - Channel to add.
+     */
     toAddList (channel) {
       this.channelsToAdd[this.channelsToAdd.length] = channel
     }
 
+    /**
+     * Add channel to `channelsToRemove` array
+     *
+     * @param  {ChannelInterface} channel - Channel to add.
+     */
     toRemoveList (channel) {
       this.channelsToAdd[this.channelsToAdd.length] = channel
     }
-
   }
 
   /**
@@ -86,7 +1162,7 @@
    * Constant used to build a message that a user has left Web Channel.
    * @type {int}
    */
-  const LEAVE = 8
+  const LEAVE = 2
   /**
    * Constant used to build a message to be sent to a newly joining peer.
    * @type {int}
@@ -97,30 +1173,34 @@
    * notify them about a new peer who is about to join the Web Channel.
    * @type {int}
    */
-  const JOIN_NEW_MEMBER = 6
+  const JOIN_NEW_MEMBER = 4
   /**
    * Constant used to build a message to be sent to all peers in Web Channel to
    * notify them that the new peer who should join the Web Channel, refuse to join.
    * @type {int}
    */
-  const REMOVE_NEW_MEMBER = 9
+  const REMOVE_NEW_MEMBER = 5
   /**
    * Constant used to build a message to be sent to a newly joining peer that he
    * has can now succesfully join Web Channel.
    * @type {int}
    */
-  const JOIN_FINILIZE = 5
+  const JOIN_FINILIZE = 6
   /**
    * Constant used to build a message to be sent by the newly joining peer to all
    * peers in Web Channel to notify them that he has succesfully joined the Web
    * Channel.
    * @type {int}
    */
-  const JOIN_SUCCESS = 4
+  const JOIN_SUCCESS = 7
   /**
    * @type {int}
    */
-  const THIS_CHANNEL_TO_JOINING_PEER = 7
+  const THIS_CHANNEL_TO_JOINING_PEER = 8
+  /**
+   * @type {int}
+   */
+  const INIT_CHANNEL_PONG = 9
 
   /**
    * This is a special service class for {@link ChannelInterface}. It mostly
@@ -181,9 +1261,7 @@
           let nextMsg = wc.proxy.msg(JOIN_SUCCESS, {id: wc.myId})
           wc.manager.broadcast(wc, nextMsg)
           wc.onJoin()
-
           break
-
         case JOIN_SUCCESS:
           wc.joinSuccess(msg.id)
           wc.onJoining(msg.id)
@@ -200,6 +1278,10 @@
           } else {
             jp.toRemoveList(ch)
           }
+          break
+        case INIT_CHANNEL_PONG:
+          ch.onPong()
+          delete ch.onPong
           break
       }
     }
@@ -227,6 +1309,18 @@
       console.log('DATA_CHANNEL ERROR: ', evt)
     }
 
+    onDisconnect () {
+      this.webChannel.channels.delete(this)
+      this.webChannel.onLeaving(this.peerId)
+    }
+
+    configChannel (channel) {
+      channel.onmessage = this.onMsg
+      channel.onerror = this.onError
+      channel.onclose = this.onClose
+      channel.ondisconnect = this.onDisconnect
+    }
+
     /**
      * When the message is designated for a service. This is not an event handler
      * for a channel. The main difference with the `SERVICE_DATA` message arriving
@@ -236,8 +1330,8 @@
      * @param  {WebChannel} wc - Web Channel.
      * @param  {Object} msg - Message.
      */
-    onSrvMsg (wc, msg) {
-      get(msg.serviceName, wc.settings).onMessage(wc, msg.data)
+    onSrvMsg (wc, msg, channel = null) {
+      get(msg.serviceName, wc.settings).onMessage(wc, channel, msg.data)
     }
 
     /**
@@ -283,31 +1377,51 @@
    * @extends module:service~Interface
    */
   class Interface extends Interface$1 {
-    onMessage (wc, msg) {
+    onMessage (wc, channel, msg) {
       let cBuilder = get(wc.settings.connector, wc.settings)
       switch (msg.code) {
         case CONNECT_WITH:
-          console.log('CONNECT_WITH received: ', msg)
           msg.peers = this.reUseIntermediaryChannelIfPossible(wc, msg.jpId, msg.peers)
-          cBuilder
-            .connectMeToMany(wc, msg.peers)
-            .then((result) => {
-              console.log('CONNECT_WITH result: ', result)
-              result.channels.forEach((c) => {
-                wc.initChannel(c, c.peerId)
-                wc.getJoiningPeer(msg.jpId).toAddList(c)
-                c.send(wc.proxy.msg(THIS_CHANNEL_TO_JOINING_PEER,
-                  {id: msg.jpId, toBeAdded: true}
-                ))
-              })
-              console.log('CONNECT_WITH send feedback: ', {code: CONNECT_WITH_FEEDBACK, id: wc.myId, failed: result.failed})
-              wc.sendSrvMsg(this.name, msg.sender,
-                {code: CONNECT_WITH_FEEDBACK, id: wc.myId, failed: result.failed}
-              )
+          let failed = []
+          if (msg.peers.length === 0) {
+            wc.sendSrvMsg(this.name, msg.sender,
+              {code: CONNECT_WITH_FEEDBACK, id: wc.myId, failed}
+            )
+          } else {
+            let counter = 0
+            msg.peers.forEach((id) => {
+              cBuilder.connectMeTo(wc, id)
+                .then((channel) => {
+                  console.log('New channel established')
+                  return wc.initChannel(channel, true)
+                })
+                .then((channel) => {
+                  console.log('New channel has been initialized')
+                  wc.getJoiningPeer(msg.jpId).toAddList(channel)
+                  channel.send(wc.proxy.msg(THIS_CHANNEL_TO_JOINING_PEER,
+                    {id: msg.jpId, toBeAdded: true}
+                  ))
+                  counter++
+                  console.log('Counter becomes: ' + counter)
+                  if (counter === msg.peers.length) {
+                    wc.sendSrvMsg(this.name, msg.sender,
+                      {code: CONNECT_WITH_FEEDBACK, id: wc.myId, failed}
+                    )
+                  }
+                })
+                .catch((reason) => {
+                  console.log('New channel catch error: ' + reason)
+                  counter++
+                  console.log('Counter becomes: ' + counter)
+                  result.failed.push({id, reason})
+                  if (counter === msg.peers.length) {
+                    wc.sendSrvMsg(this.name, msg.sender,
+                      {code: CONNECT_WITH_FEEDBACK, id: wc.myId, failed}
+                    )
+                  }
+                })
             })
-            .catch((err) => {
-              console.log('connectMeToMany FAILED, ', err)
-            })
+          }
           break
         case CONNECT_WITH_FEEDBACK:
           console.log('CONNECT_WITH_FEEDBACK received: ', msg)
@@ -486,74 +1600,44 @@
    */
 
   /**
+   * On channel callback for {@link module:channelBuilder~Interface#open}
+   * function.
+   *
+   * @callback module:channelBuilder~onChannelCallback
+   * @param {ChannelInterface} channel - A new channel.
+   */
+
+  /**
+   * Call back to initialize the channel. It should be executed on both peer
+   * sides during connection establishment to assure that both channels would be
+   * ready to be used in the web channel.
+   *
+   * @callback module:channelBuilder~initChannel
+   * @param {ChannelInterface} ch - Channel.
+   * @param {string} id - Unique channel identifier.
+   */
+
+  /**
    * Interface to be implemented by each connection service.
+   *
    * @interface
    * @extends module:service~Interface
    */
   class Interface$2 extends Interface$1 {
     /**
-     * Callback function for resolved Promise state returned by
-     * {@link module:channelBuilder~Interface#connectMeToMany} function.
-     *
-     * @callback module:channelBuilder~Interface~connectMeToManyCallback
-     * @param {Object} result - Result object
-     * @param {ChannelInterface[]} result.channels - Channels which are
-     * succesfully created.
-     * @param {string[]} result.failed - Identifiers of peers with whom the
-     * connection could not be established.
-     */
-
-     /**
-      * On channel callback for {@link module:channelBuilder~Interface#open}
-      * function.
-      *
-      * @callback module:channelBuilder~Interface~onChannelCallback
-      * @param {ChannelInterface} channel - A new channel.
-      */
-
-    /**
-     * Establish a connection between you and several peers. It is also possible
-     * to connect with a peer who is about to join the Web Channel.
-     *
-     * @abstract
-     * @param  {WebChannel} wc - Web Channel through which the connections will be
-     * established.
-     * @param  {string[]} ids Peers identifiers with whom it establishes
-     * connections.
-     * @return {Promise} - Is always resolved. The callback function type is
-     * {@link module:channelBuilder~Interface~connectMeToManyCallback}.
-     */
-    connectMeToMany (wc, ids) {
-      throw new Error('Must be implemented by subclass!')
-    }
-
-    /**
-     * Establish a connection between you and another peer (including
-     * joining peer).
-     *
-     * @abstract
-     * @param  {WebChannel} wc - Web Channel through which the connection will be
-     * established.
-     * @param  {string} id - Peer id with whom the connection will be established.
-     * @return {Promise} - Resolved once the connection has been established,
-     * rejected otherwise.
-     */
-    connectMeToOne (wc, id) {
-      throw new Error('Must be implemented by subclass!')
-    }
-
-    /**
      * Enables other clients to establish a connection with you.
      *
      * @abstract
-     * @param {module:channelBuilder~Interface~onChannelCallback} onChannel -
-     * Callback function to execute once the connection is established.
-     * @param {Object} [options] - Any other options which depend on the implementation.
-     * @return {Promise} - Once resolved, provide an Object with `key` attribute
-     *           to be passed to {@link connector#join} function. It is rejected
-     *           if an error occured.
+     * @param {string} key - The unique identifier which has to be passed to the
+     * peers who need to connect to you.
+     * @param {module:channelBuilder~Interface~onChannelCallback} onChannel - Callback
+     * function to execute once the connection has been established.
+     * @param {Object} [options] - Any other options which depend on the service implementation.
+     * @return {Promise} - Once resolved, provide an Object with `key` and `url`
+     * attributes to be passed to {@link module:channelBuilder~Interface#join} function.
+     * It is rejected if an error occured.
      */
-    open (onChannel, options) {
+    open (key, onChannel, options) {
       throw new Error('Must be implemented by subclass!')
     }
 
@@ -561,13 +1645,24 @@
      * Connects you with the peer who provided the `key`.
      *
      * @abstract
-     * @param  {string} key - A key obtained from a peer.
-     * @param  {Object} [options] Any other options which depend on the
-     * implementation.
-     * @return {Promise} It is resolved when the connection is established,
-     * otherwise it is rejected.
+     * @param  {string} key - A key obtained from the peer who executed
+     * {@link module:channelBuilder~Interface#open} function.
+     * @param  {Object} [options] Any other options which depend on the implementation.
+     * @return {Promise} It is resolved when the connection is established, otherwise it is rejected.
      */
     join (key, options) {
+      throw new Error('Must be implemented by subclass!')
+    }
+
+    /**
+     * Establish a connection between you and another peer (including joining peer) via web channel.
+     *
+     * @abstract
+     * @param  {WebChannel} wc - Web Channel through which the connection will be established.
+     * @param  {string} id - Peer id with whom you will be connected.
+     * @return {Promise} - Resolved once the connection has been established, rejected otherwise.
+     */
+    connectMeTo (wc, id) {
       throw new Error('Must be implemented by subclass!')
     }
   }
@@ -579,20 +1674,101 @@
    * @param {external:RTCPeerConnectionIceEvent} evt - Event.
    */
 
-  const CONNECTION_CREATION_TIMEOUT = 2000
+  /**
+   * Session description event handler.
+   *
+   * @callback WebRTCService~onSDP
+   * @param {external:RTCPeerConnectionIceEvent} evt - Event.
+   */
 
   /**
-   * Error which might occur during interaction with signaling server.
+   * Data channel event handler.
    *
-   * @extends external:Error
+   * @callback WebRTCService~onChannel
+   * @param {external:RTCPeerConnectionIceEvent} evt - Event.
    */
-  class SignalingError extends Error {
-    constructor (msg, evt = null) {
-      super(msg)
-      this.name = 'SignalingError'
-      this.evt = evt
+
+  /**
+   * The goal of this class is to prevent the error when adding an ice candidate
+   * before the remote description has been set.
+   */
+  class RTCPendingConnections {
+    constructor () {
+      this.connections = new Map()
+    }
+
+    /**
+     * Prepares pending connection for the specified peer only if it has not been added already.
+     *
+     * @param  {string} id - Peer id
+     */
+    add (id) {
+      if (!this.connections.has(id)) {
+        let pc = null
+        let obj = {promise: null}
+        obj.promise = new Promise((resolve, reject) => {
+          Object.defineProperty(obj, 'pc', {
+            get: () => pc,
+            set: (value) => {
+              pc = value
+              resolve()
+            }
+          })
+          setTimeout(reject, CONNECT_TIMEOUT, 'timeout')
+        })
+        this.connections.set(id, obj)
+      }
+    }
+
+    /**
+     * Remove a pending connection from the Map. Usually when the connection has already
+     * been established and there is now interest to hold this reference.
+     *
+     * @param  {string} id - Peer id.
+     */
+    remove (id) {
+      this.connections.delete(id)
+    }
+
+    /**
+     * Returns RTCPeerConnection object for the provided peer id.
+     *
+     * @param  {string} id - Peer id.
+     * @return {external:RTCPeerConnection} - Peer connection.
+     */
+    getPC (id) {
+      return this.connections.get(id).pc
+    }
+
+    /**
+     * Updates RTCPeerConnection reference for the provided peer id.
+     *
+     * @param  {string} id - Peer id.
+     * @param  {external:RTCPeerConnection} pc - Peer connection.
+     */
+    setPC (id, pc) {
+      this.connections.get(id).pc = pc
+    }
+
+    /**
+     * When the remote description is set, it will add the ice candidate to the
+     * peer connection of specified peer.
+     *
+     * @param  {string} id - Peer id.
+     * @param  {external:RTCIceCandidate} candidate - Ice candidate.
+     * @return {Promise} - Resolved once the ice candidate has been succesfully added.
+     */
+    addIceCandidate (id, candidate) {
+      let obj = this.connections.get(id)
+      return obj.promise.then(() => {
+        return obj.pc.addIceCandidate(candidate)
+      })
     }
   }
+
+
+  const CONNECT_TIMEOUT = 2000
+  const connectionsByWC = new Map()
 
   /**
    * Service class responsible to establish connections between peers via
@@ -623,280 +1799,231 @@
         ]
       }
       this.settings = Object.assign({}, this.defaults, options)
-
-      // Declare WebRTCService related global(window) constructors
-      this.RTCPeerConnection =
-        window.RTCPeerConnection ||
-        window.mozRTCPeerConnection ||
-        window.webkitRTCPeerConnection
-
-      this.RTCIceCandidate =
-        window.RTCIceCandidate ||
-        window.mozRTCIceCandidate ||
-        window.RTCIceCandidate
-
-      this.RTCSessionDescription =
-        window.RTCSessionDescription ||
-        window.mozRTCSessionDescription ||
-        window.webkitRTCSessionDescription
     }
 
-    open (webChannel, key, onChannel, options = {}) {
+    open (key, onChannel, options = {}) {
       let settings = Object.assign({}, this.settings, options)
-      // Connection array, because several connections may be establishing
-      // at the same time
-      let connections = []
-
-      try {
-        // Connect to the signaling server
-        let socket = new window.WebSocket(settings.signaling)
-
+      return new Promise((resolve, reject) => {
+        let time
+        let connections = new RTCPendingConnections()
+        let socket
+        try {
+          socket = new window.WebSocket(settings.signaling)
+        } catch (err) {
+          reject(err.message)
+        }
         // Send a message to signaling server: ready to receive offer
         socket.onopen = () => {
-          socket.send(JSON.stringify({key}))
+          try {
+            socket.send(JSON.stringify({key}))
+          } catch (err) {
+            reject(err.message)
+          }
+          // TODO: find a better solution than setTimeout. This is for the case when the key already exists and thus the server will close the socket, but it will close it after this function resolves the Promise.
+          setTimeout(resolve, 100, {key, url: settings.signaling, socket})
         }
         socket.onmessage = (evt) => {
           let msg = JSON.parse(evt.data)
           if (!Reflect.has(msg, 'id') || !Reflect.has(msg, 'data')) {
-            // throw new SignalingError(err.name + ': ' + err.message)
-            throw new Error('Incorrect message format from the signaling server.')
+            console.log('Unknown message from the signaling server: ' + evt.data)
+            socket.close()
+            return
           }
-
-          // On SDP offer: add connection to the array, prepare answer and send it back
+          connections.add(msg.id)
           if (Reflect.has(msg.data, 'offer')) {
-            connections[connections.length] = this.createConnectionAndAnswer(
-              (candidate) => socket.send(JSON.stringify({id: msg.id, data: {candidate}})),
-              (answer) => socket.send(JSON.stringify({id: msg.id, data: {answer}})),
-              onChannel,
-              msg.data.offer,
-              webChannel
-            )
-          // On Ice Candidate
+            this.createPeerConnectionAndAnswer(
+                (candidate) => socket.send(JSON.stringify({id: msg.id, data: {candidate}})),
+                (answer) => socket.send(JSON.stringify({id: msg.id, data: {answer}})),
+                onChannel,
+                msg.data.offer
+              ).then((pc) => connections.setPC(msg.id, pc))
+              .catch((reason) => {
+                console.error(`Answer generation failed: ${reason}`)
+              })
           } else if (Reflect.has(msg.data, 'candidate')) {
-            connections[msg.id].addIceCandidate(this.createCandidate(msg.data.candidate), () => {
-            }, (e) => {
-              console.error('NETFLUX adding candidate failed: ', e)
-            })
+            connections.addIceCandidate(
+                msg.id,
+                this.createIceCandidate(msg.data.candidate)
+              ).catch((reason) => {
+                console.error(`Adding ice candidate failed: ${reason}`)
+              })
+          }
+        }
+        socket.onclose = (closeEvt) => {
+          if (closeEvt.code !== 1000) {
+            console.error(`Socket with signaling server ${settings.signaling} has been closed with code ${closeEvt.code}: ${closeEvt.reason}`)
+            reject(closeEvt.reason)
+          }
+        }
+      })
+    }
+
+    join (key, options = {}) {
+      let settings = Object.assign({}, this.settings, options)
+      return new Promise((resolve, reject) => {
+        let pc
+        // Connect to the signaling server
+        let socket = new WebSocket(settings.signaling)
+        socket.onopen = () => {
+          // Prepare and send offer
+          this.createPeerConnectionAndOffer(
+              (candidate) => socket.send(JSON.stringify({data: {candidate}})),
+              (offer) => socket.send(JSON.stringify({join: key, data: {offer}})),
+              resolve
+            )
+            .then((peerConnection) => { pc = peerConnection })
+            .catch(reject)
+        }
+        socket.onmessage = (evt) => {
+          try {
+            let msg = JSON.parse(evt.data)
+            // Check message format
+            if (!Reflect.has(msg, 'data')) {
+              reject(`Unknown message from the signaling server: ${evt.data}`)
+            }
+
+            if (Reflect.has(msg.data, 'answer')) {
+              pc.setRemoteDescription(this.createSessionDescription(msg.data.answer))
+                .catch(reject)
+            } else if (Reflect.has(msg.data, 'candidate')) {
+              pc.addIceCandidate(this.createIceCandidate(msg.data.candidate))
+                .catch((evt) => {
+                  // This exception does not reject the current Promise, because
+                  // still the connection may be established even without one or
+                  // several candidates
+                  console.error('Adding candidate failed: ', evt)
+                })
+            } else {
+              reject(`Unknown message from the signaling server: ${evt.data}`)
+            }
+          } catch (err) {
+            reject(err.message)
           }
         }
         socket.onerror = (evt) => {
-          throw new SignalingError(`error occured on the socket with signaling server ${settings.signaling}`)
+          reject('WebSocket with signaling server error')
         }
         socket.onclose = (closeEvt) => {
-          // 1000 corresponds to CLOSE_NORMAL: Normal closure; the connection
-          // successfully completed whatever purpose for which it was created.
           if (closeEvt.code !== 1000) {
-            throw new SignalingError(`connection with signaling server
-            ${settings.signaling} has been closed abnormally.
-            CloseEvent code: ${closeEvt.code}. Reason: ${closeEvt.reason}`)
-          }
-        }
-        return {key, socket, signaling: settings.signaling}
-      } catch (err) {
-        throw new SignalingError(err.name + ': ' + err.message)
-      }
-    }
-
-    join (webChannel, key, options = {}) {
-      let settings = Object.assign({}, this.settings, options)
-      return new Promise((resolve, reject) => {
-        let connection
-
-        // Connect to the signaling server
-        let socket = new window.WebSocket(settings.signaling)
-        socket.onopen = () => {
-          // Prepare and send offer
-          connection = this.createConnectionAndOffer(
-            (candidate) => socket.send(JSON.stringify({data: {candidate}})),
-            (offer) => socket.send(JSON.stringify({join: key, data: {offer}})),
-            (channel) => {
-              resolve(channel)
-            },
-            key,
-            webChannel
-          )
-        }
-        socket.onmessage = (e) => {
-          let msg = JSON.parse(e.data)
-
-          // Check message format
-          if (!Reflect.has(msg, 'data')) { reject() }
-
-          // If received an answer to the previously sent offer
-          if (Reflect.has(msg.data, 'answer')) {
-            let sd = this.createSessionDescription(msg.data.answer)
-            connection.setRemoteDescription(sd, () => {
-            }, (e) => {
-              console.error('NETFLUX adding answer failed: ', e)
-              reject()
-            })
-          // If received an Ice candidate
-          } else if (Reflect.has(msg.data, 'candidate')) {
-            connection.addIceCandidate(this.createCandidate(msg.data.candidate), () => {
-            }, (e) => {
-              console.error('NETFLUX adding candidate failed: ', e)
-            })
-          } else { reject() }
-        }
-        socket.onerror = (e) => {
-          reject(`Signaling server socket error: ${e.message}`)
-        }
-        socket.onclose = (e) => {
-          if (e.code !== 1000) { reject(e.reason) }
-        }
-      })
-    }
-
-    connectMeToMany (webChannel, ids) {
-      return new Promise((resolve, reject) => {
-        let counter = 0
-        let result = {channels: [], failed: []}
-        if (ids.length === 0) {
-          resolve(result)
-        } else {
-          for (let id of ids) {
-            this.connectMeToOne(webChannel, id)
-              .then((channel) => {
-                counter++
-                result.channels.push(channel)
-                if (counter === ids.length) {
-                  resolve(result)
-                }
-              })
-              .catch((err) => {
-                counter++
-                result.failed.push({id, err})
-                if (counter === ids.length) {
-                  resolve(result)
-                }
-              })
+            reject(`Socket with signaling server ${settings.signaling} has been closed with code ${closeEvt.code}: ${closeEvt.reason}`)
           }
         }
       })
     }
 
-    connectMeToOne (webChannel, id) {
+    connectMeTo (wc, id) {
       return new Promise((resolve, reject) => {
-        let sender = webChannel.myId
-        let connection = this.createConnectionAndOffer(
-          (candidate) => webChannel.sendSrvMsg(this.name, id, {sender, candidate}),
-          (offer) => {
-            webChannel.connections.set(id, connection)
-            webChannel.sendSrvMsg(this.name, id, {sender, offer})
-          },
-          (channel) => resolve(channel),
-          id,
-          webChannel,
-          id
-        )
-        setTimeout(reject, CONNECTION_CREATION_TIMEOUT, 'Timeout')
+        let sender = wc.myId
+        let connections = this.getPendingConnections(wc)
+        connections.add(id)
+        this.createPeerConnectionAndOffer(
+          (candidate) => wc.sendSrvMsg(this.name, id, {sender, candidate}),
+          (offer) => wc.sendSrvMsg(this.name, id, {sender, offer}),
+          (channel) => {
+            connections.remove(id)
+            resolve(channel)
+          }
+        ).then((pc) => connections.setPC(id, pc))
+        setTimeout(reject, CONNECT_TIMEOUT, 'Timeout')
       })
     }
 
-    onMessage (webChannel, msg) {
-      let connections = webChannel.connections
+    onMessage (wc, channel, msg) {
+      let connections = this.getPendingConnections(wc)
+      connections.add(msg.sender)
       if (Reflect.has(msg, 'offer')) {
-        // TODO: add try/catch. On exception remove connection from webChannel.connections
-        connections.set(msg.sender,
-          this.createConnectionAndAnswer(
-            (candidate) => webChannel.sendSrvMsg(this.name, msg.sender,
-              {sender: webChannel.myId, candidate}),
-            (answer) => webChannel.sendSrvMsg(this.name, msg.sender,
-              {sender: webChannel.myId, answer}),
-            (channel) => {
-              webChannel.connections.delete(channel.peerId)
-            },
-            msg.offer,
-            webChannel,
-            msg.sender
-          )
-        )
-      } else if (connections.has(msg.sender)) {
-        let connection = connections.get(msg.sender)
-        if (Reflect.has(msg, 'answer')) {
-          let sd = this.createSessionDescription(msg.answer)
-          connection.setRemoteDescription(sd, () => {
-          }, () => {
-          })
-        } else if (Reflect.has(msg, 'candidate') && connection) {
-          connection.addIceCandidate(this.createCandidate(msg.candidate))
-        }
-      }
-    }
-
-    createConnectionAndOffer (onCandidate, onSDP, onChannel, key, webChannel, id = '') {
-      let connection = this.createConnection(onCandidate)
-      let dc = connection.createDataChannel(key)
-      dc.onopen = () => {
-        dc.send('ping')
-      }
-      dc.onmessage = (msgEvt) => {
-        if (msgEvt.data === 'pong') {
-          dc.connection = connection
-          webChannel.initChannel(dc, id)
-          onChannel(dc)
-        }
-      }
-      dc.onerror = (evt) => {
-      }
-      connection.createOffer((offer) => {
-        connection.setLocalDescription(offer, () => {
-          onSDP(connection.localDescription.toJSON())
-        }, (err) => {
-          throw new Error(`Could not set local description: ${err}`)
+        this.createPeerConnectionAndAnswer(
+          (candidate) => wc.sendSrvMsg(this.name, msg.sender,
+            {sender: wc.myId, candidate}),
+          (answer) => wc.sendSrvMsg(this.name, msg.sender,
+            {sender: wc.myId, answer}),
+          (channel) => {
+            wc.initChannel(channel, false, msg.sender)
+            connections.remove(channel.peerId)
+          },
+          msg.offer
+        ).then((pc) => {
+          connections.setPC(msg.sender, pc)
         })
-      }, (err) => {
-        throw new Error(`Could not create offer: ${err}`)
-      })
-      return connection
-    }
-
-    createConnectionAndAnswer (onCandidate, onSDP, onChannel, offer, webChannel, id = '') {
-      let connection = this.createConnection(onCandidate)
-      connection.ondatachannel = (e) => {
-        e.channel.onmessage = (msgEvt) => {
-          if (msgEvt.data === 'ping') {
-            e.channel.connection = connection
-            webChannel.initChannel(e.channel, id)
-            e.channel.send('pong')
-            onChannel(e.channel)
-          }
-        }
-        e.channel.onopen = () => {
-        }
+      } if (Reflect.has(msg, 'answer')) {
+        connections.getPC(msg.sender)
+          .setRemoteDescription(this.createSessionDescription(msg.answer))
+          .catch((reason) => { console.error('Setting answer error: ' + reason) })
+      } else if (Reflect.has(msg, 'candidate')) {
+        connections.addIceCandidate(msg.sender, this.createIceCandidate(msg.candidate))
+          .catch((reason) => { console.error('Setting candidate error: ' + reason) })
       }
-      connection.setRemoteDescription(this.createSessionDescription(offer), () => {
-        connection.createAnswer((answer) => {
-          connection.setLocalDescription(answer, () => {
-            onSDP(connection.localDescription.toJSON())
-          }, (err) => {
-            console.error('NETFLUX: error: ', err)
-            throw new Error(`Could not set local description: ${err}`)
-          })
-        }, (err) => {
-          console.error('NETFLUX: error: ', err)
-          throw new Error(`Could not create answer: ${err}`)
-        })
-      }, (err) => {
-        console.error('NETFLUX: error: ', err)
-        throw new Error(`Could not set remote description: ${err}`)
-      })
-      return connection
     }
 
     /**
-     * Creates an instance of `RTCPeerConnection` and sets `onicecandidate` event
-     * handler.
+     * Creates a peer connection and generates an SDP offer.
+     *
+     * @param  {WebRTCService~onCandidate} onCandidate - Ice candidate event handler.
+     * @param  {WebRTCService~onSDP} sendOffer - Session description event handler.
+     * @param  {WebRTCService~onChannel} onChannel - Handler event when the data channel is ready.
+     * @return {Promise} - Resolved when the offer has been succesfully created,
+     * set as local description and sent to the peer.
+     */
+    createPeerConnectionAndOffer (onCandidate, sendOffer, onChannel) {
+      let pc = this.createPeerConnection(onCandidate)
+      let dc = pc.createDataChannel(null)
+      dc.ondisconnect = () => {}
+      pc.oniceconnectionstatechange = () => {
+        if (pc.iceConnectionState === 'disconnected') {
+          dc.ondisconnect()
+        }
+      }
+      dc.onopen = (evt) => onChannel(dc)
+      return pc.createOffer()
+        .then((offer) => pc.setLocalDescription(offer))
+        .then(() => {
+          sendOffer(pc.localDescription.toJSON())
+          return pc
+        })
+    }
+
+    /**
+     * Creates a peer connection and generates an SDP answer.
+     *
+     * @param  {WebRTCService~onCandidate} onCandidate - Ice candidate event handler.
+     * @param  {WebRTCService~onSDP} sendOffer - Session description event handler.
+     * @param  {WebRTCService~onChannel} onChannel - Handler event when the data channel is ready.
+     * @param  {Object} offer - Offer received from a peer.
+     * @return {Promise} - Resolved when the offer has been succesfully created,
+     * set as local description and sent to the peer.
+     */
+    createPeerConnectionAndAnswer (onCandidate, sendAnswer, onChannel, offer) {
+      let pc = this.createPeerConnection(onCandidate)
+      pc.ondatachannel = (dcEvt) => {
+        let dc = dcEvt.channel
+        dc.ondisconnect = () => {}
+        pc.oniceconnectionstatechange = () => {
+          if (pc.iceConnectionState === 'disconnected') {
+            dc.ondisconnect()
+          }
+        }
+        dc.onopen = (evt) => onChannel(dc)
+      }
+      return pc.setRemoteDescription(this.createSessionDescription(offer))
+        .then(() => pc.createAnswer())
+        .then((answer) => pc.setLocalDescription(answer))
+        .then(() => {
+          sendAnswer(pc.localDescription.toJSON())
+          return pc
+        })
+    }
+
+    /**
+     * Creates an instance of `RTCPeerConnection` and sets `onicecandidate` event handler.
      *
      * @private
      * @param  {WebRTCService~onCandidate} onCandidate - Ice
      * candidate event handler.
      * @return {external:RTCPeerConnection} - Peer connection.
      */
-    createConnection (onCandidate) {
-      let connection = new this.RTCPeerConnection({iceServers: this.settings.iceServers})
-
-      connection.onicecandidate = (evt) => {
+    createPeerConnection (onCandidate) {
+      let pc = new RTCPeerConnection({iceServers: this.settings.iceServers})
+      pc.onicecandidate = (evt) => {
         if (evt.candidate !== null) {
           let candidate = {
             candidate: evt.candidate.candidate,
@@ -905,7 +2032,7 @@
           onCandidate(candidate)
         }
       }
-      return connection
+      return pc
     }
 
     /**
@@ -913,13 +2040,13 @@
      *
      * @private
      * @param  {Object} candidate - Candidate object created in
-     * {@link WebRTCService#createConnection}.
+     * {@link WebRTCService#createPeerConnection}.
      * @param {} candidate.candidate
      * @param {} candidate.sdpMLineIndex
      * @return {external:RTCIceCandidate} - Ice candidate.
      */
-    createCandidate (candidate) {
-      return new this.RTCIceCandidate(candidate)
+    createIceCandidate (candidate) {
+      return new RTCIceCandidate(candidate)
     }
 
     /**
@@ -932,7 +2059,17 @@
      * @return {external:RTCSessionDescription} - Session description.
      */
     createSessionDescription (sd) {
-      return Object.assign(new this.RTCSessionDescription(), sd)
+      return Object.assign(new RTCSessionDescription(), sd)
+    }
+
+    getPendingConnections (wc) {
+      if (connectionsByWC.has(wc.id)) {
+        return connectionsByWC.get(wc.id)
+      } else {
+        let connections = new RTCPendingConnections()
+        connectionsByWC.set(wc.id, connections)
+        return connections
+      }
     }
   }
 
@@ -1060,8 +2197,6 @@
       this.joiningPeers = new Set()
       /** @private */
       this.connectWithRequests = new Map()
-      /** @private */
-      this.connections = new Map()
 
       /** @private */
       this.proxy = get(CHANNEL_PROXY)
@@ -1135,39 +2270,33 @@
 
       let cBuilder = get(settings.connector, settings)
       let key = this.id + this.myId
-      try {
-        let data = cBuilder.open(this, key, (channel) => {
-          // this.initChannel(channel)
+      return cBuilder.open(key, (channel) => {
+        this.initChannel(channel, false).then((channel) => {
           let jp = new JoiningPeer(channel.peerId, this.myId)
           jp.intermediaryChannel = channel
           this.joiningPeers.add(jp)
-          console.log('send JOIN_INIT his new id: ' + channel.peerId)
-          console.log('New channel: ' + channel.readyState)
-          channel.send(this.proxy.msg(JOIN_INIT,
-            {manager: this.settings.topology,
-              id: channel.peerId,
-            intermediaryId: this.myId}
-          ))
-          this.manager.broadcast(this, this.proxy.msg(JOIN_NEW_MEMBER,
-            {id: channel.peerId, intermediaryId: this.myId}
-          ))
+          channel.send(this.proxy.msg(JOIN_INIT, {
+            manager: this.settings.topology,
+            id: channel.peerId,
+            intermediaryId: this.myId})
+          )
+          this.manager.broadcast(this, this.proxy.msg(JOIN_NEW_MEMBER, {
+            id: channel.peerId,
+            intermediaryId: this.myId})
+          )
           this.manager.add(channel)
-            .then(() => {
-              channel.send(this.proxy.msg(JOIN_FINILIZE))
-            })
+            .then(() => channel.send(this.proxy.msg(JOIN_FINILIZE)))
             .catch((msg) => {
-              console.log(`Adding peer ${channel.peerId} failed: ${msg}`)
-              this.manager.broadcast(this, this.proxy.msg(REMOVE_NEW_MEMBER,
-                {id: channel.peerId}
-              ))
+              this.manager.broadcast(this, this.proxy.msg(REMOVE_NEW_MEMBER, {
+                id: channel.peerId})
+              )
               this.removeJoiningPeer(jp.id)
             })
         })
+      }).then((data) => {
         this.webRTCOpen = data.socket
-        return data.key
-      } catch (e) {
-        console.log('WebChannel open error: ', e)
-      }
+        return {key: data.key, url: data.url}
+      })
     }
 
     /**
@@ -1191,16 +2320,12 @@
 
       let cBuilder = get(settings.connector, settings)
       return new Promise((resolve, reject) => {
-        cBuilder
-          .join(this, key)
+        cBuilder.join(key)
           .then((channel) => {
-            // this.initChannel(channel)
-            console.log('JOIN channel established')
-            this.onJoin = () => {
-              resolve(this)
-            }
+            this.onJoin = () => resolve(this)
+            return this.initChannel(channel, true)
           })
-          .catch((reason) => reject(reason))
+          .catch(reject)
       })
     }
 
@@ -1277,31 +2402,25 @@
       return this.settings.topology
     }
 
-    /**
-     * initChannel - description
-     *
-     * @private
-     * @param  {type} channel description
-     * @param  {type} id = '' description
-     * @return {type}         description
-     */
-    initChannel (channel, id = '') {
-      channel.webChannel = this
-      channel.onmessage = this.proxy.onMsg
-      channel.onerror = this.proxy.onError
-      channel.onclose = this.proxy.onClose
-      if (id !== '') {
-        channel.peerId = id
-      } else {
-        channel.peerId = this.generateId()
-      }
-      channel.connection.oniceconnectionstatechange = () => {
-        console.log('STATE FOR ' + channel.peerId + ' CHANGED TO: ', channel.connection.iceConnectionState)
-        if (channel.connection.iceConnectionState === 'disconnected') {
-          this.channels.delete(channel)
-          this.onLeaving(channel.peerId)
+    initChannel (channel, isInitiator, id = '') {
+      return new Promise((resolve, reject) => {
+        channel.webChannel = this
+        channel.peerId = (id !== '') ? id : this.generateId()
+        // TODO: treat the case when the 'ping' or 'pong' message has not been received
+        if (isInitiator) {
+          this.proxy.configChannel(channel)
+          channel.onPong = () => resolve(channel)
+          channel.send('ping')
+        } else {
+          channel.onmessage = (msgEvt) => {
+            if (msgEvt.data === 'ping') {
+              this.proxy.configChannel(channel)
+              channel.send(this.proxy.msg(INIT_CHANNEL_PONG))
+              resolve(channel)
+            }
+          }
         }
-      }
+      })
     }
 
     /**

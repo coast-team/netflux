@@ -24,7 +24,7 @@ export const SERVICE_DATA = 1
  * Constant used to build a message that a user has left Web Channel.
  * @type {int}
  */
-export const LEAVE = 8
+export const LEAVE = 2
 /**
  * Constant used to build a message to be sent to a newly joining peer.
  * @type {int}
@@ -35,30 +35,34 @@ export const JOIN_INIT = 3
  * notify them about a new peer who is about to join the Web Channel.
  * @type {int}
  */
-export const JOIN_NEW_MEMBER = 6
+export const JOIN_NEW_MEMBER = 4
 /**
  * Constant used to build a message to be sent to all peers in Web Channel to
  * notify them that the new peer who should join the Web Channel, refuse to join.
  * @type {int}
  */
-export const REMOVE_NEW_MEMBER = 9
+export const REMOVE_NEW_MEMBER = 5
 /**
  * Constant used to build a message to be sent to a newly joining peer that he
  * has can now succesfully join Web Channel.
  * @type {int}
  */
-export const JOIN_FINILIZE = 5
+export const JOIN_FINILIZE = 6
 /**
  * Constant used to build a message to be sent by the newly joining peer to all
  * peers in Web Channel to notify them that he has succesfully joined the Web
  * Channel.
  * @type {int}
  */
-export const JOIN_SUCCESS = 4
+export const JOIN_SUCCESS = 7
 /**
  * @type {int}
  */
-export const THIS_CHANNEL_TO_JOINING_PEER = 7
+export const THIS_CHANNEL_TO_JOINING_PEER = 8
+/**
+ * @type {int}
+ */
+export const INIT_CHANNEL_PONG = 9
 
 /**
  * This is a special service class for {@link ChannelInterface}. It mostly
@@ -119,9 +123,7 @@ class ChannelProxyService extends service.Interface {
         let nextMsg = wc.proxy.msg(JOIN_SUCCESS, {id: wc.myId})
         wc.manager.broadcast(wc, nextMsg)
         wc.onJoin()
-
         break
-
       case JOIN_SUCCESS:
         wc.joinSuccess(msg.id)
         wc.onJoining(msg.id)
@@ -138,6 +140,10 @@ class ChannelProxyService extends service.Interface {
         } else {
           jp.toRemoveList(ch)
         }
+        break
+      case INIT_CHANNEL_PONG:
+        ch.onPong()
+        delete ch.onPong
         break
     }
   }
@@ -165,6 +171,18 @@ class ChannelProxyService extends service.Interface {
     console.log('DATA_CHANNEL ERROR: ', evt)
   }
 
+  onDisconnect () {
+    this.webChannel.channels.delete(this)
+    this.webChannel.onLeaving(this.peerId)
+  }
+
+  configChannel (channel) {
+    channel.onmessage = this.onMsg
+    channel.onerror = this.onError
+    channel.onclose = this.onClose
+    channel.ondisconnect = this.onDisconnect
+  }
+
   /**
    * When the message is designated for a service. This is not an event handler
    * for a channel. The main difference with the `SERVICE_DATA` message arriving
@@ -174,8 +192,8 @@ class ChannelProxyService extends service.Interface {
    * @param  {WebChannel} wc - Web Channel.
    * @param  {Object} msg - Message.
    */
-  onSrvMsg (wc, msg) {
-    serviceProvider.get(msg.serviceName, wc.settings).onMessage(wc, msg.data)
+  onSrvMsg (wc, msg, channel = null) {
+    serviceProvider.get(msg.serviceName, wc.settings).onMessage(wc, channel, msg.data)
   }
 
   /**

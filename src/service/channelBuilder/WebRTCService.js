@@ -28,20 +28,101 @@ import * as channelBuilder from './channelBuilder'
  * @param {external:RTCPeerConnectionIceEvent} evt - Event.
  */
 
-const CONNECTION_CREATION_TIMEOUT = 2000
+/**
+ * Session description event handler.
+ *
+ * @callback WebRTCService~onSDP
+ * @param {external:RTCPeerConnectionIceEvent} evt - Event.
+ */
 
 /**
- * Error which might occur during interaction with signaling server.
+ * Data channel event handler.
  *
- * @extends external:Error
+ * @callback WebRTCService~onChannel
+ * @param {external:RTCPeerConnectionIceEvent} evt - Event.
  */
-class SignalingError extends Error {
-  constructor (msg, evt = null) {
-    super(msg)
-    this.name = 'SignalingError'
-    this.evt = evt
+
+/**
+ * The goal of this class is to prevent the error when adding an ice candidate
+ * before the remote description has been set.
+ */
+class RTCPendingConnections {
+  constructor () {
+    this.connections = new Map()
+  }
+
+  /**
+   * Prepares pending connection for the specified peer only if it has not been added already.
+   *
+   * @param  {string} id - Peer id
+   */
+  add (id) {
+    if (!this.connections.has(id)) {
+      let pc = null
+      let obj = {promise: null}
+      obj.promise = new Promise((resolve, reject) => {
+        Object.defineProperty(obj, 'pc', {
+          get: () => pc,
+          set: (value) => {
+            pc = value
+            resolve()
+          }
+        })
+        setTimeout(reject, CONNECT_TIMEOUT, 'timeout')
+      })
+      this.connections.set(id, obj)
+    }
+  }
+
+  /**
+   * Remove a pending connection from the Map. Usually when the connection has already
+   * been established and there is now interest to hold this reference.
+   *
+   * @param  {string} id - Peer id.
+   */
+  remove (id) {
+    this.connections.delete(id)
+  }
+
+  /**
+   * Returns RTCPeerConnection object for the provided peer id.
+   *
+   * @param  {string} id - Peer id.
+   * @return {external:RTCPeerConnection} - Peer connection.
+   */
+  getPC (id) {
+    return this.connections.get(id).pc
+  }
+
+  /**
+   * Updates RTCPeerConnection reference for the provided peer id.
+   *
+   * @param  {string} id - Peer id.
+   * @param  {external:RTCPeerConnection} pc - Peer connection.
+   */
+  setPC (id, pc) {
+    this.connections.get(id).pc = pc
+  }
+
+  /**
+   * When the remote description is set, it will add the ice candidate to the
+   * peer connection of specified peer.
+   *
+   * @param  {string} id - Peer id.
+   * @param  {external:RTCIceCandidate} candidate - Ice candidate.
+   * @return {Promise} - Resolved once the ice candidate has been succesfully added.
+   */
+  addIceCandidate (id, candidate) {
+    let obj = this.connections.get(id)
+    return obj.promise.then(() => {
+      return obj.pc.addIceCandidate(candidate)
+    })
   }
 }
+
+
+const CONNECT_TIMEOUT = 2000
+const connectionsByWC = new Map()
 
 /**
  * Service class responsible to establish connections between peers via
@@ -72,280 +153,231 @@ class WebRTCService extends channelBuilder.Interface {
       ]
     }
     this.settings = Object.assign({}, this.defaults, options)
-
-    // Declare WebRTCService related global(window) constructors
-    this.RTCPeerConnection =
-      window.RTCPeerConnection ||
-      window.mozRTCPeerConnection ||
-      window.webkitRTCPeerConnection
-
-    this.RTCIceCandidate =
-      window.RTCIceCandidate ||
-      window.mozRTCIceCandidate ||
-      window.RTCIceCandidate
-
-    this.RTCSessionDescription =
-      window.RTCSessionDescription ||
-      window.mozRTCSessionDescription ||
-      window.webkitRTCSessionDescription
   }
 
-  open (webChannel, key, onChannel, options = {}) {
+  open (key, onChannel, options = {}) {
     let settings = Object.assign({}, this.settings, options)
-    // Connection array, because several connections may be establishing
-    // at the same time
-    let connections = []
-
-    try {
-      // Connect to the signaling server
-      let socket = new window.WebSocket(settings.signaling)
-
+    return new Promise((resolve, reject) => {
+      let time
+      let connections = new RTCPendingConnections()
+      let socket
+      try {
+        socket = new window.WebSocket(settings.signaling)
+      } catch (err) {
+        reject(err.message)
+      }
       // Send a message to signaling server: ready to receive offer
       socket.onopen = () => {
-        socket.send(JSON.stringify({key}))
+        try {
+          socket.send(JSON.stringify({key}))
+        } catch (err) {
+          reject(err.message)
+        }
+        // TODO: find a better solution than setTimeout. This is for the case when the key already exists and thus the server will close the socket, but it will close it after this function resolves the Promise.
+        setTimeout(resolve, 100, {key, url: settings.signaling, socket})
       }
       socket.onmessage = (evt) => {
         let msg = JSON.parse(evt.data)
         if (!Reflect.has(msg, 'id') || !Reflect.has(msg, 'data')) {
-          // throw new SignalingError(err.name + ': ' + err.message)
-          throw new Error('Incorrect message format from the signaling server.')
+          console.log('Unknown message from the signaling server: ' + evt.data)
+          socket.close()
+          return
         }
-
-        // On SDP offer: add connection to the array, prepare answer and send it back
+        connections.add(msg.id)
         if (Reflect.has(msg.data, 'offer')) {
-          connections[connections.length] = this.createConnectionAndAnswer(
-            (candidate) => socket.send(JSON.stringify({id: msg.id, data: {candidate}})),
-            (answer) => socket.send(JSON.stringify({id: msg.id, data: {answer}})),
-            onChannel,
-            msg.data.offer,
-            webChannel
-          )
-        // On Ice Candidate
+          this.createPeerConnectionAndAnswer(
+              (candidate) => socket.send(JSON.stringify({id: msg.id, data: {candidate}})),
+              (answer) => socket.send(JSON.stringify({id: msg.id, data: {answer}})),
+              onChannel,
+              msg.data.offer
+            ).then((pc) => connections.setPC(msg.id, pc))
+            .catch((reason) => {
+              console.error(`Answer generation failed: ${reason}`)
+            })
         } else if (Reflect.has(msg.data, 'candidate')) {
-          connections[msg.id].addIceCandidate(this.createCandidate(msg.data.candidate), () => {
-          }, (e) => {
-            console.error('NETFLUX adding candidate failed: ', e)
-          })
+          connections.addIceCandidate(
+              msg.id,
+              this.createIceCandidate(msg.data.candidate)
+            ).catch((reason) => {
+              console.error(`Adding ice candidate failed: ${reason}`)
+            })
+        }
+      }
+      socket.onclose = (closeEvt) => {
+        if (closeEvt.code !== 1000) {
+          console.error(`Socket with signaling server ${settings.signaling} has been closed with code ${closeEvt.code}: ${closeEvt.reason}`)
+          reject(closeEvt.reason)
+        }
+      }
+    })
+  }
+
+  join (key, options = {}) {
+    let settings = Object.assign({}, this.settings, options)
+    return new Promise((resolve, reject) => {
+      let pc
+      // Connect to the signaling server
+      let socket = new WebSocket(settings.signaling)
+      socket.onopen = () => {
+        // Prepare and send offer
+        this.createPeerConnectionAndOffer(
+            (candidate) => socket.send(JSON.stringify({data: {candidate}})),
+            (offer) => socket.send(JSON.stringify({join: key, data: {offer}})),
+            resolve
+          )
+          .then((peerConnection) => { pc = peerConnection })
+          .catch(reject)
+      }
+      socket.onmessage = (evt) => {
+        try {
+          let msg = JSON.parse(evt.data)
+          // Check message format
+          if (!Reflect.has(msg, 'data')) {
+            reject(`Unknown message from the signaling server: ${evt.data}`)
+          }
+
+          if (Reflect.has(msg.data, 'answer')) {
+            pc.setRemoteDescription(this.createSessionDescription(msg.data.answer))
+              .catch(reject)
+          } else if (Reflect.has(msg.data, 'candidate')) {
+            pc.addIceCandidate(this.createIceCandidate(msg.data.candidate))
+              .catch((evt) => {
+                // This exception does not reject the current Promise, because
+                // still the connection may be established even without one or
+                // several candidates
+                console.error('Adding candidate failed: ', evt)
+              })
+          } else {
+            reject(`Unknown message from the signaling server: ${evt.data}`)
+          }
+        } catch (err) {
+          reject(err.message)
         }
       }
       socket.onerror = (evt) => {
-        throw new SignalingError(`error occured on the socket with signaling server ${settings.signaling}`)
+        reject('WebSocket with signaling server error')
       }
       socket.onclose = (closeEvt) => {
-        // 1000 corresponds to CLOSE_NORMAL: Normal closure; the connection
-        // successfully completed whatever purpose for which it was created.
         if (closeEvt.code !== 1000) {
-          throw new SignalingError(`connection with signaling server
-            ${settings.signaling} has been closed abnormally.
-            CloseEvent code: ${closeEvt.code}. Reason: ${closeEvt.reason}`)
-        }
-      }
-      return {key, socket, signaling: settings.signaling}
-    } catch (err) {
-      throw new SignalingError(err.name + ': ' + err.message)
-    }
-  }
-
-  join (webChannel, key, options = {}) {
-    let settings = Object.assign({}, this.settings, options)
-    return new Promise((resolve, reject) => {
-      let connection
-
-      // Connect to the signaling server
-      let socket = new window.WebSocket(settings.signaling)
-      socket.onopen = () => {
-        // Prepare and send offer
-        connection = this.createConnectionAndOffer(
-          (candidate) => socket.send(JSON.stringify({data: {candidate}})),
-          (offer) => socket.send(JSON.stringify({join: key, data: {offer}})),
-          (channel) => {
-            resolve(channel)
-          },
-          key,
-          webChannel
-        )
-      }
-      socket.onmessage = (e) => {
-        let msg = JSON.parse(e.data)
-
-        // Check message format
-        if (!Reflect.has(msg, 'data')) { reject() }
-
-        // If received an answer to the previously sent offer
-        if (Reflect.has(msg.data, 'answer')) {
-          let sd = this.createSessionDescription(msg.data.answer)
-          connection.setRemoteDescription(sd, () => {
-          }, (e) => {
-            console.error('NETFLUX adding answer failed: ', e)
-            reject()
-          })
-        // If received an Ice candidate
-        } else if (Reflect.has(msg.data, 'candidate')) {
-          connection.addIceCandidate(this.createCandidate(msg.data.candidate), () => {
-          }, (e) => {
-            console.error('NETFLUX adding candidate failed: ', e)
-          })
-        } else { reject() }
-      }
-      socket.onerror = (e) => {
-        reject(`Signaling server socket error: ${e.message}`)
-      }
-      socket.onclose = (e) => {
-        if (e.code !== 1000) { reject(e.reason) }
-      }
-    })
-  }
-
-  connectMeToMany (webChannel, ids) {
-    return new Promise((resolve, reject) => {
-      let counter = 0
-      let result = {channels: [], failed: []}
-      if (ids.length === 0) {
-        resolve(result)
-      } else {
-        for (let id of ids) {
-          this.connectMeToOne(webChannel, id)
-            .then((channel) => {
-              counter++
-              result.channels.push(channel)
-              if (counter === ids.length) {
-                resolve(result)
-              }
-            })
-            .catch((err) => {
-              counter++
-              result.failed.push({id, err})
-              if (counter === ids.length) {
-                resolve(result)
-              }
-            })
+          reject(`Socket with signaling server ${settings.signaling} has been closed with code ${closeEvt.code}: ${closeEvt.reason}`)
         }
       }
     })
   }
 
-  connectMeToOne (webChannel, id) {
+  connectMeTo (wc, id) {
     return new Promise((resolve, reject) => {
-      let sender = webChannel.myId
-      let connection = this.createConnectionAndOffer(
-        (candidate) => webChannel.sendSrvMsg(this.name, id, {sender, candidate}),
-        (offer) => {
-          webChannel.connections.set(id, connection)
-          webChannel.sendSrvMsg(this.name, id, {sender, offer})
-        },
-        (channel) => resolve(channel),
-        id,
-        webChannel,
-        id
-      )
-      setTimeout(reject, CONNECTION_CREATION_TIMEOUT, 'Timeout')
+      let sender = wc.myId
+      let connections = this.getPendingConnections(wc)
+      connections.add(id)
+      this.createPeerConnectionAndOffer(
+        (candidate) => wc.sendSrvMsg(this.name, id, {sender, candidate}),
+        (offer) => wc.sendSrvMsg(this.name, id, {sender, offer}),
+        (channel) => {
+          connections.remove(id)
+          resolve(channel)
+        }
+      ).then((pc) => connections.setPC(id, pc))
+      setTimeout(reject, CONNECT_TIMEOUT, 'Timeout')
     })
   }
 
-  onMessage (webChannel, msg) {
-    let connections = webChannel.connections
+  onMessage (wc, channel, msg) {
+    let connections = this.getPendingConnections(wc)
+    connections.add(msg.sender)
     if (Reflect.has(msg, 'offer')) {
-      // TODO: add try/catch. On exception remove connection from webChannel.connections
-      connections.set(msg.sender,
-        this.createConnectionAndAnswer(
-          (candidate) => webChannel.sendSrvMsg(this.name, msg.sender,
-            {sender: webChannel.myId, candidate}),
-          (answer) => webChannel.sendSrvMsg(this.name, msg.sender,
-            {sender: webChannel.myId, answer}),
-          (channel) => {
-            webChannel.connections.delete(channel.peerId)
-          },
-          msg.offer,
-          webChannel,
-          msg.sender
-        )
-      )
-    } else if (connections.has(msg.sender)) {
-      let connection = connections.get(msg.sender)
-      if (Reflect.has(msg, 'answer')) {
-        let sd = this.createSessionDescription(msg.answer)
-        connection.setRemoteDescription(sd, () => {
-        }, () => {
-        })
-      } else if (Reflect.has(msg, 'candidate') && connection) {
-        connection.addIceCandidate(this.createCandidate(msg.candidate))
-      }
-    }
-  }
-
-  createConnectionAndOffer (onCandidate, onSDP, onChannel, key, webChannel, id = '') {
-    let connection = this.createConnection(onCandidate)
-    let dc = connection.createDataChannel(key)
-    dc.onopen = () => {
-      dc.send('ping')
-    }
-    dc.onmessage = (msgEvt) => {
-      if (msgEvt.data === 'pong') {
-        dc.connection = connection
-        webChannel.initChannel(dc, id)
-        onChannel(dc)
-      }
-    }
-    dc.onerror = (evt) => {
-    }
-    connection.createOffer((offer) => {
-      connection.setLocalDescription(offer, () => {
-        onSDP(connection.localDescription.toJSON())
-      }, (err) => {
-        throw new Error(`Could not set local description: ${err}`)
+      this.createPeerConnectionAndAnswer(
+        (candidate) => wc.sendSrvMsg(this.name, msg.sender,
+          {sender: wc.myId, candidate}),
+        (answer) => wc.sendSrvMsg(this.name, msg.sender,
+          {sender: wc.myId, answer}),
+        (channel) => {
+          wc.initChannel(channel, false, msg.sender)
+          connections.remove(channel.peerId)
+        },
+        msg.offer
+      ).then((pc) => {
+        connections.setPC(msg.sender, pc)
       })
-    }, (err) => {
-      throw new Error(`Could not create offer: ${err}`)
-    })
-    return connection
-  }
-
-  createConnectionAndAnswer (onCandidate, onSDP, onChannel, offer, webChannel, id = '') {
-    let connection = this.createConnection(onCandidate)
-    connection.ondatachannel = (e) => {
-      e.channel.onmessage = (msgEvt) => {
-        if (msgEvt.data === 'ping') {
-          e.channel.connection = connection
-          webChannel.initChannel(e.channel, id)
-          e.channel.send('pong')
-          onChannel(e.channel)
-        }
-      }
-      e.channel.onopen = () => {
-      }
+    } if (Reflect.has(msg, 'answer')) {
+      connections.getPC(msg.sender)
+        .setRemoteDescription(this.createSessionDescription(msg.answer))
+        .catch((reason) => { console.error('Setting answer error: ' + reason) })
+    } else if (Reflect.has(msg, 'candidate')) {
+      connections.addIceCandidate(msg.sender, this.createIceCandidate(msg.candidate))
+        .catch((reason) => { console.error('Setting candidate error: ' + reason) })
     }
-    connection.setRemoteDescription(this.createSessionDescription(offer), () => {
-      connection.createAnswer((answer) => {
-        connection.setLocalDescription(answer, () => {
-          onSDP(connection.localDescription.toJSON())
-        }, (err) => {
-          console.error('NETFLUX: error: ', err)
-          throw new Error(`Could not set local description: ${err}`)
-        })
-      }, (err) => {
-        console.error('NETFLUX: error: ', err)
-        throw new Error(`Could not create answer: ${err}`)
-      })
-    }, (err) => {
-      console.error('NETFLUX: error: ', err)
-      throw new Error(`Could not set remote description: ${err}`)
-    })
-    return connection
   }
 
   /**
-   * Creates an instance of `RTCPeerConnection` and sets `onicecandidate` event
-   * handler.
+   * Creates a peer connection and generates an SDP offer.
+   *
+   * @param  {WebRTCService~onCandidate} onCandidate - Ice candidate event handler.
+   * @param  {WebRTCService~onSDP} sendOffer - Session description event handler.
+   * @param  {WebRTCService~onChannel} onChannel - Handler event when the data channel is ready.
+   * @return {Promise} - Resolved when the offer has been succesfully created,
+   * set as local description and sent to the peer.
+   */
+  createPeerConnectionAndOffer (onCandidate, sendOffer, onChannel) {
+    let pc = this.createPeerConnection(onCandidate)
+    let dc = pc.createDataChannel(null)
+    dc.ondisconnect = () => {}
+    pc.oniceconnectionstatechange = () => {
+      if (pc.iceConnectionState === 'disconnected') {
+        dc.ondisconnect()
+      }
+    }
+    dc.onopen = (evt) => onChannel(dc)
+    return pc.createOffer()
+      .then((offer) => pc.setLocalDescription(offer))
+      .then(() => {
+        sendOffer(pc.localDescription.toJSON())
+        return pc
+      })
+  }
+
+  /**
+   * Creates a peer connection and generates an SDP answer.
+   *
+   * @param  {WebRTCService~onCandidate} onCandidate - Ice candidate event handler.
+   * @param  {WebRTCService~onSDP} sendOffer - Session description event handler.
+   * @param  {WebRTCService~onChannel} onChannel - Handler event when the data channel is ready.
+   * @param  {Object} offer - Offer received from a peer.
+   * @return {Promise} - Resolved when the offer has been succesfully created,
+   * set as local description and sent to the peer.
+   */
+  createPeerConnectionAndAnswer (onCandidate, sendAnswer, onChannel, offer) {
+    let pc = this.createPeerConnection(onCandidate)
+    pc.ondatachannel = (dcEvt) => {
+      let dc = dcEvt.channel
+      dc.ondisconnect = () => {}
+      pc.oniceconnectionstatechange = () => {
+        if (pc.iceConnectionState === 'disconnected') {
+          dc.ondisconnect()
+        }
+      }
+      dc.onopen = (evt) => onChannel(dc)
+    }
+    return pc.setRemoteDescription(this.createSessionDescription(offer))
+      .then(() => pc.createAnswer())
+      .then((answer) => pc.setLocalDescription(answer))
+      .then(() => {
+        sendAnswer(pc.localDescription.toJSON())
+        return pc
+      })
+  }
+
+  /**
+   * Creates an instance of `RTCPeerConnection` and sets `onicecandidate` event handler.
    *
    * @private
    * @param  {WebRTCService~onCandidate} onCandidate - Ice
    * candidate event handler.
    * @return {external:RTCPeerConnection} - Peer connection.
    */
-  createConnection (onCandidate) {
-    let connection = new this.RTCPeerConnection({iceServers: this.settings.iceServers})
-
-    connection.onicecandidate = (evt) => {
+  createPeerConnection (onCandidate) {
+    let pc = new RTCPeerConnection({iceServers: this.settings.iceServers})
+    pc.onicecandidate = (evt) => {
       if (evt.candidate !== null) {
         let candidate = {
           candidate: evt.candidate.candidate,
@@ -354,7 +386,7 @@ class WebRTCService extends channelBuilder.Interface {
         onCandidate(candidate)
       }
     }
-    return connection
+    return pc
   }
 
   /**
@@ -362,13 +394,13 @@ class WebRTCService extends channelBuilder.Interface {
    *
    * @private
    * @param  {Object} candidate - Candidate object created in
-   * {@link WebRTCService#createConnection}.
+   * {@link WebRTCService#createPeerConnection}.
    * @param {} candidate.candidate
    * @param {} candidate.sdpMLineIndex
    * @return {external:RTCIceCandidate} - Ice candidate.
    */
-  createCandidate (candidate) {
-    return new this.RTCIceCandidate(candidate)
+  createIceCandidate (candidate) {
+    return new RTCIceCandidate(candidate)
   }
 
   /**
@@ -381,7 +413,17 @@ class WebRTCService extends channelBuilder.Interface {
    * @return {external:RTCSessionDescription} - Session description.
    */
   createSessionDescription (sd) {
-    return Object.assign(new this.RTCSessionDescription(), sd)
+    return Object.assign(new RTCSessionDescription(), sd)
+  }
+
+  getPendingConnections (wc) {
+    if (connectionsByWC.has(wc.id)) {
+      return connectionsByWC.get(wc.id)
+    } else {
+      let connections = new RTCPendingConnections()
+      connectionsByWC.set(wc.id, connections)
+      return connections
+    }
   }
 }
 

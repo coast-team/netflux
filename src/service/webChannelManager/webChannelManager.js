@@ -32,31 +32,51 @@ const ADD_INTERMEDIARY_CHANNEL = 4
  * @extends module:service~Interface
  */
 class Interface extends service.Interface {
-  onMessage (wc, msg) {
+  onMessage (wc, channel, msg) {
     let cBuilder = serviceProvider.get(wc.settings.connector, wc.settings)
     switch (msg.code) {
       case CONNECT_WITH:
-        console.log('CONNECT_WITH received: ', msg)
         msg.peers = this.reUseIntermediaryChannelIfPossible(wc, msg.jpId, msg.peers)
-        cBuilder
-          .connectMeToMany(wc, msg.peers)
-          .then((result) => {
-            console.log('CONNECT_WITH result: ', result)
-            result.channels.forEach((c) => {
-              wc.initChannel(c, c.peerId)
-              wc.getJoiningPeer(msg.jpId).toAddList(c)
-              c.send(wc.proxy.msg(THIS_CHANNEL_TO_JOINING_PEER,
-                {id: msg.jpId, toBeAdded: true}
-              ))
-            })
-            console.log('CONNECT_WITH send feedback: ', {code: CONNECT_WITH_FEEDBACK, id: wc.myId, failed: result.failed})
-            wc.sendSrvMsg(this.name, msg.sender,
-              {code: CONNECT_WITH_FEEDBACK, id: wc.myId, failed: result.failed}
-            )
+        let failed = []
+        if (msg.peers.length === 0) {
+          wc.sendSrvMsg(this.name, msg.sender,
+            {code: CONNECT_WITH_FEEDBACK, id: wc.myId, failed}
+          )
+        } else {
+          let counter = 0
+          msg.peers.forEach((id) => {
+            cBuilder.connectMeTo(wc, id)
+              .then((channel) => {
+                console.log('New channel established')
+                return wc.initChannel(channel, true)
+              })
+              .then((channel) => {
+                console.log('New channel has been initialized')
+                wc.getJoiningPeer(msg.jpId).toAddList(channel)
+                channel.send(wc.proxy.msg(THIS_CHANNEL_TO_JOINING_PEER,
+                  {id: msg.jpId, toBeAdded: true}
+                ))
+                counter++
+                console.log('Counter becomes: ' + counter)
+                if (counter === msg.peers.length) {
+                  wc.sendSrvMsg(this.name, msg.sender,
+                    {code: CONNECT_WITH_FEEDBACK, id: wc.myId, failed}
+                  )
+                }
+              })
+              .catch((reason) => {
+                console.log('New channel catch error: ' + reason)
+                counter++
+                console.log('Counter becomes: ' + counter)
+                result.failed.push({id, reason})
+                if (counter === msg.peers.length) {
+                  wc.sendSrvMsg(this.name, msg.sender,
+                    {code: CONNECT_WITH_FEEDBACK, id: wc.myId, failed}
+                  )
+                }
+              })
           })
-          .catch((err) => {
-            console.log('connectMeToMany FAILED, ', err)
-          })
+        }
         break
       case CONNECT_WITH_FEEDBACK:
         console.log('CONNECT_WITH_FEEDBACK received: ', msg)
