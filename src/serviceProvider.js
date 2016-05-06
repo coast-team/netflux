@@ -1,18 +1,11 @@
 import FullyConnectedService from './service/webChannelManager/FullyConnectedService'
 import WebRTCService from './service/channelBuilder/WebRTCService'
-import {ChannelProxyService} from './service/channelProxy/channelProxy'
 /**
  * Service Provider module is a helper module for {@link module:service}. It is
  * responsible to instantiate all services. This module must be used to get
  * any service instance.
  * @module serviceProvider
  */
-
-/**
- * Constant used to get an instance of {@link ChannelProxyService}.
- * @type {string}
- */
-export const CHANNEL_PROXY = 'ChannelProxyService'
 
 /**
  * Constant used to get an instance of {@link WebRTCService}.
@@ -47,10 +40,6 @@ export function get (name, options = {}) {
       return new WebRTCService(options)
     case FULLY_CONNECTED:
       service = new FullyConnectedService()
-      services.set(name, service)
-      return service
-    case CHANNEL_PROXY:
-      service = new ChannelProxyService()
       services.set(name, service)
       return service
     default:

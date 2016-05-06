@@ -21,19 +21,19 @@ class FullyConnectedService extends wcManager.Interface {
     return this.connectWith(wCh, ch.peerId, ch.peerId, peers)
   }
 
-  broadcast (webChannel, data) {
+  broadcast (webChannel, code, data) {
     for (let c of webChannel.channels) {
       if (c.readyState !== 'closed') {
-        c.send(data)
+        c.send(code, data)
       }
     }
   }
 
-  sendTo (id, webChannel, data) {
+  sendTo (id, webChannel, code, data) {
     for (let c of webChannel.channels) {
       if (c.peerId === id) {
         if (c.readyState !== 'closed') {
-          c.send(data)
+          c.send(code, data)
         }
         return
       }

@@ -1061,7 +1061,7 @@
      *
      * @abstract
      * @param  {WebChannel} wc - Web Channel from which the message is arrived.
-     * @param  {ChannelInterface} wc - Channel by which the message is arrived.
+     * @param  {Channel} wc - Channel by which the message is arrived.
      * @param  {string} msg - Message in stringified JSON format.
      */
     onMessage (wc, channel, msg) {
@@ -1098,7 +1098,7 @@
        * The channel between the joining peer and intermediary peer. It is null
        * for every peer, but the joining and intermediary peers.
        *
-       * @type {ChannelInterface}
+       * @type {Channel}
        */
       this.intermediaryChannel = null
 
@@ -1107,7 +1107,7 @@
        * added to the current peer once the joining peer become the member of the
        * web channel.
        *
-       * @type {Array[ChannelInterface]}
+       * @type {Array[Channel]}
        */
       this.channelsToAdd = []
 
@@ -1116,7 +1116,7 @@
        * closed with the current peer once the joining peer become the member of the
        * web channel.
        *
-       * @type {Array[ChannelInterface]}
+       * @type {Array[Channel]}
        */
       this.channelsToRemove = []
     }
@@ -1124,7 +1124,7 @@
     /**
      * Add channel to `channelsToAdd` array.
      *
-     * @param  {ChannelInterface} channel - Channel to add.
+     * @param  {Channel} channel - Channel to add.
      */
     toAddList (channel) {
       this.channelsToAdd[this.channelsToAdd.length] = channel
@@ -1133,19 +1133,12 @@
     /**
      * Add channel to `channelsToRemove` array
      *
-     * @param  {ChannelInterface} channel - Channel to add.
+     * @param  {Channel} channel - Channel to add.
      */
     toRemoveList (channel) {
       this.channelsToAdd[this.channelsToAdd.length] = channel
     }
   }
-
-  /**
-   * Proxy module for configure channel event handlers and any message sent via
-   * a channel should be build here in order to be understand by the recepient
-   * peer.
-   * @module channelProxy
-   */
 
   /**
    * Constant used to build a message designated to API user.
@@ -1203,147 +1196,134 @@
   const INIT_CHANNEL_PONG = 9
 
   /**
-   * This is a special service class for {@link ChannelInterface}. It mostly
-   * contains event handlers (e.g. *onmessage*, *onclose* etc.) to configure
-   * a newly created channel. Thus be careful to use `this` in handlers, as
-   * it will refer to the instance of `ChannelInterface` and not to the
-   * instance of `ChannelProxyService`.
+   * Channel interface.
+   * [RTCDataChannel]{@link https://developer.mozilla.org/en-US/docs/Web/API/RTCDataChannel}
+   * and
+   * [WebSocket]{@link https://developer.mozilla.org/en-US/docs/Web/API/WebSocket}
+   * implement it implicitly. Any other channel must implement this interface.
+   *
+   * @interface
    */
-  class ChannelProxyService extends Interface$1 {
+  class Channel {
+    constructor (channel, webChannel, peerId) {
+      this.channel = channel
+      this.channel.binaryType = 'arraybuffer'
+      this.webChannel = webChannel
+      this.peerId = peerId
+    }
 
-    /**
-     * On message event handler.
-     * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/MessageEvent}
-     *
-     * @param  {MessageEvent} msgEvt - Message event
-     */
-    onMsg (msgEvt) {
-      let msg = JSON.parse(msgEvt.data)
-      let ch = msgEvt.currentTarget
-      let wc = ch.webChannel
-      let jp
-      switch (msg.code) {
-        case USER_DATA:
-          wc.onMessage(msg.id, msg.data)
-          break
-        case LEAVE:
-          wc.onLeaving(msg.id)
-          for (let c of wc.channels) {
-            if (c.peerId === msg.id) {
-              wc.channels.delete(c)
+    config () {
+      this.channel.onmessage = (msgEvt) => {
+        let decoder = new TextDecoder()
+        let i8array = new Uint8Array(msgEvt.data)
+        let code = i8array[0]
+        let msg = {}
+        // let msg = JSON.parse(msgEvt.data)
+        if (code === USER_DATA) {
+          let str = decoder.decode(i8array.subarray(1, i8array.length))
+          this.webChannel.onMessage(this.peerId, str)
+          return
+        } else {
+          let str = decoder.decode(i8array.subarray(1, i8array.length))
+          msg = JSON.parse(str)
+        }
+        let jp
+        switch (code) {
+          // case USER_DATA:
+          //   this.webChannel.onMessage(msg.id, msg.data)
+          //   break
+          case LEAVE:
+            this.webChannel.onLeaving(msg.id)
+            for (let c of this.webChannel.channels) {
+              if (c.peerId === msg.id) {
+                this.webChannel.channels.delete(c)
+              }
             }
-          }
-          break
-        case SERVICE_DATA:
-          if (wc.myId === msg.recepient) {
-            wc.proxy.onSrvMsg(wc, msg)
-          } else {
-            wc.sendSrvMsg(msg.serviceName, msg.recepient, msg.data)
-          }
-          break
-        case JOIN_INIT:
-          console.log('JOIN_INIT my new id: ' + msg.id)
-          wc.topology = msg.manager
-          wc.myId = msg.id
-          ch.peerId = msg.intermediaryId
-          jp = new JoiningPeer(msg.id, msg.intermediaryId)
-          jp.intermediaryChannel = ch
-          wc.addJoiningPeer(jp)
-          break
-        case JOIN_NEW_MEMBER:
-          wc.addJoiningPeer(new JoiningPeer(msg.id, msg.intermediaryId))
-          break
-        case REMOVE_NEW_MEMBER:
-          wc.removeJoiningPeer(msg.id)
-          break
-        case JOIN_FINILIZE:
-          wc.joinSuccess(wc.myId)
-          let nextMsg = wc.proxy.msg(JOIN_SUCCESS, {id: wc.myId})
-          wc.manager.broadcast(wc, nextMsg)
-          wc.onJoin()
-          break
-        case JOIN_SUCCESS:
-          wc.joinSuccess(msg.id)
-          wc.onJoining(msg.id)
-          break
-        case THIS_CHANNEL_TO_JOINING_PEER:
-          if (wc.hasJoiningPeer(msg.id)) {
-            jp = wc.getJoiningPeer(msg.id)
-          } else {
-            jp = new JoiningPeer(msg.id)
-            wc.addJoiningPeer(jp)
-          }
-          if (msg.toBeAdded) {
-            jp.toAddList(ch)
-          } else {
-            jp.toRemoveList(ch)
-          }
-          break
-        case INIT_CHANNEL_PONG:
-          ch.onPong()
-          delete ch.onPong
-          break
+            break
+          case SERVICE_DATA:
+            if (this.webChannel.myId === msg.recepient) {
+              get(msg.serviceName, this.webChannel.settings).onMessage(this.webChannel, this, msg.data)
+            } else {
+              this.webChannel.sendSrvMsg(msg.serviceName, msg.recepient, msg.data)
+            }
+            break
+          case JOIN_INIT:
+            this.webChannel.topology = msg.manager
+            this.webChannel.myId = msg.id
+            this.peerId = msg.intermediaryId
+            jp = new JoiningPeer(msg.id, msg.intermediaryId)
+            jp.intermediaryChannel = this
+            this.webChannel.addJoiningPeer(jp)
+            break
+          case JOIN_NEW_MEMBER:
+            this.webChannel.addJoiningPeer(new JoiningPeer(msg.id, msg.intermediaryId))
+            break
+          case REMOVE_NEW_MEMBER:
+            this.webChannel.removeJoiningPeer(msg.id)
+            break
+          case JOIN_FINILIZE:
+            this.webChannel.joinSuccess(this.webChannel.myId)
+            this.webChannel.manager.broadcast(this.webChannel, JOIN_SUCCESS, {id: this.webChannel.myId})
+            this.webChannel.onJoin()
+            break
+          case JOIN_SUCCESS:
+            this.webChannel.joinSuccess(msg.id)
+            this.webChannel.onJoining(msg.id)
+            break
+          case THIS_CHANNEL_TO_JOINING_PEER:
+            if (this.webChannel.hasJoiningPeer(msg.id)) {
+              jp = this.webChannel.getJoiningPeer(msg.id)
+            } else {
+              jp = new JoiningPeer(msg.id)
+              this.webChannel.addJoiningPeer(jp)
+            }
+            if (msg.toBeAdded) {
+              jp.toAddList(this)
+            } else {
+              jp.toRemoveList(this)
+            }
+            break
+          case INIT_CHANNEL_PONG:
+            this.onPong()
+            delete this.onPong
+            break
+        }
+      }
+      this.channel.onerror = (evt) => {
+        console.log('DATA_CHANNEL ERROR: ', evt)
+      }
+      this.channel.onclose = (evt) => {
+        console.log('DATA_CHANNEL CLOSE: ', evt)
       }
     }
 
     /**
-     * On channel close event handler.
-     * - For `RTCDataChannel` the type of `evt` is `Event`
-     * - For `WebSocket`, the type of `evt` is `CloseEvent`.
-     * @see [Event doc on MDN]{@link https://developer.mozilla.org/en-US/docs/Web/API/Event}
-     * @see [CloseEvent doc on MDN]{@link https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent}
+     * send - description.
      *
-     * @param  {Event} evt - Close event.
+     * @abstract
+     * @param {string} msg - Message in stringified JSON format.
      */
-    onClose (evt) {
-      console.log('DATA_CHANNEL CLOSE: ', evt)
+    send (code, data = {}) {
+      let i8array
+      let msgStr = code === USER_DATA ? data : JSON.stringify(data)
+      let encoder = new TextEncoder()
+      let msgEncoded = encoder.encode(msgStr)
+      i8array = new Uint8Array(1 + msgEncoded.length)
+      i8array[0] = code
+      let index = 1
+      for (let i in msgEncoded) {
+        i8array[index++] = msgEncoded[i]
+      }
+      this.channel.send(i8array)
     }
 
     /**
-     * On error event handler.
-     * @see [Event doc on MDN]{@link https://developer.mozilla.org/en-US/docs/Web/API/Event}
+     * Close channel.
      *
-     * @param  {Event} evt - Error event.
+     * @abstract
      */
-    onError (evt) {
-      console.log('DATA_CHANNEL ERROR: ', evt)
-    }
-
-    onDisconnect () {
-      this.webChannel.channels.delete(this)
-      this.webChannel.onLeaving(this.peerId)
-    }
-
-    configChannel (channel) {
-      channel.onmessage = this.onMsg
-      channel.onerror = this.onError
-      channel.onclose = this.onClose
-      channel.ondisconnect = this.onDisconnect
-    }
-
-    /**
-     * When the message is designated for a service. This is not an event handler
-     * for a channel. The main difference with the `SERVICE_DATA` message arriving
-     * for `onMessage` is that here the message could be sent by the peer to
-     * himself.
-     *
-     * @param  {WebChannel} wc - Web Channel.
-     * @param  {Object} msg - Message.
-     */
-    onSrvMsg (wc, msg, channel = null) {
-      get(msg.serviceName, wc.settings).onMessage(wc, channel, msg.data)
-    }
-
-    /**
-     * Message builder.
-     *
-     * @param  {int} code - One of the constant values in {@link constans}.
-     * @param  {Object} [data={}] - Data to be send.
-     * @return {string} - Data in stringified JSON format.
-     */
-    msg (code, data = {}) {
-      let msg = Object.assign({code}, data)
-      return JSON.stringify(msg)
+    close () {
+      this.channel.close()
     }
   }
 
@@ -1392,17 +1372,15 @@
             msg.peers.forEach((id) => {
               cBuilder.connectMeTo(wc, id)
                 .then((channel) => {
-                  console.log('New channel established')
-                  return wc.initChannel(channel, true)
+                  return wc.initChannel(channel, true, id)
                 })
                 .then((channel) => {
-                  console.log('New channel has been initialized')
                   wc.getJoiningPeer(msg.jpId).toAddList(channel)
-                  channel.send(wc.proxy.msg(THIS_CHANNEL_TO_JOINING_PEER,
+                  channel.send(
+                    THIS_CHANNEL_TO_JOINING_PEER,
                     {id: msg.jpId, toBeAdded: true}
-                  ))
+                  )
                   counter++
-                  console.log('Counter becomes: ' + counter)
                   if (counter === msg.peers.length) {
                     wc.sendSrvMsg(this.name, msg.sender,
                       {code: CONNECT_WITH_FEEDBACK, id: wc.myId, failed}
@@ -1410,10 +1388,8 @@
                   }
                 })
                 .catch((reason) => {
-                  console.log('New channel catch error: ' + reason)
                   counter++
-                  console.log('Counter becomes: ' + counter)
-                  result.failed.push({id, reason})
+                  failed.push({id, reason})
                   if (counter === msg.peers.length) {
                     wc.sendSrvMsg(this.name, msg.sender,
                       {code: CONNECT_WITH_FEEDBACK, id: wc.myId, failed}
@@ -1505,7 +1481,7 @@
      * Adds a new peer into Web Channel.
      *
      * @abstract
-     * @param  {ChannelInterface} ch - Channel to be added (it should has
+     * @param  {Channel} ch - Channel to be added (it should has
      * the `webChannel` property).
      * @return {Promise} - Resolved once the channel has been succesfully added,
      * rejected otherwise.
@@ -1569,19 +1545,19 @@
       return this.connectWith(wCh, ch.peerId, ch.peerId, peers)
     }
 
-    broadcast (webChannel, data) {
+    broadcast (webChannel, code, data) {
       for (let c of webChannel.channels) {
         if (c.readyState !== 'closed') {
-          c.send(data)
+          c.send(code, data)
         }
       }
     }
 
-    sendTo (id, webChannel, data) {
+    sendTo (id, webChannel, code, data) {
       for (let c of webChannel.channels) {
         if (c.peerId === id) {
           if (c.readyState !== 'closed') {
-            c.send(data)
+            c.send(code, data)
           }
           return
         }
@@ -1596,7 +1572,7 @@
    * Channel Builder module is responsible to create a connection between two
    * peers.
    * @module channelBuilder
-   * @see ChannelInterface
+   * @see Channel
    */
 
   /**
@@ -1604,7 +1580,7 @@
    * function.
    *
    * @callback module:channelBuilder~onChannelCallback
-   * @param {ChannelInterface} channel - A new channel.
+   * @param {Channel} channel - A new channel.
    */
 
   /**
@@ -1613,7 +1589,7 @@
    * ready to be used in the web channel.
    *
    * @callback module:channelBuilder~initChannel
-   * @param {ChannelInterface} ch - Channel.
+   * @param {Channel} ch - Channel.
    * @param {string} id - Unique channel identifier.
    */
 
@@ -1967,10 +1943,9 @@
     createPeerConnectionAndOffer (onCandidate, sendOffer, onChannel) {
       let pc = this.createPeerConnection(onCandidate)
       let dc = pc.createDataChannel(null)
-      dc.ondisconnect = () => {}
       pc.oniceconnectionstatechange = () => {
         if (pc.iceConnectionState === 'disconnected') {
-          dc.ondisconnect()
+          dc.onclose()
         }
       }
       dc.onopen = (evt) => onChannel(dc)
@@ -1996,10 +1971,10 @@
       let pc = this.createPeerConnection(onCandidate)
       pc.ondatachannel = (dcEvt) => {
         let dc = dcEvt.channel
-        dc.ondisconnect = () => {}
         pc.oniceconnectionstatechange = () => {
           if (pc.iceConnectionState === 'disconnected') {
-            dc.ondisconnect()
+            console.log('Data channel has been disconnected')
+            dc.onclose()
           }
         }
         dc.onopen = (evt) => onChannel(dc)
@@ -2081,12 +2056,6 @@
    */
 
   /**
-   * Constant used to get an instance of {@link ChannelProxyService}.
-   * @type {string}
-   */
-  const CHANNEL_PROXY = 'ChannelProxyService'
-
-  /**
    * Constant used to get an instance of {@link WebRTCService}.
    * @type {string}
    */
@@ -2119,10 +2088,6 @@
         return new WebRTCService(options)
       case FULLY_CONNECTED$1:
         service = new FullyConnectedService()
-        services.set(name, service)
-        return service
-      case CHANNEL_PROXY:
-        service = new ChannelProxyService()
         services.set(name, service)
         return service
       default:
@@ -2199,8 +2164,6 @@
       this.connectWithRequests = new Map()
 
       /** @private */
-      this.proxy = get(CHANNEL_PROXY)
-      /** @private */
       this.topology = this.settings.topology
     }
 
@@ -2228,9 +2191,7 @@
 
     /** Leave `WebChannel`. No longer can receive and send messages to the group. */
     leave () {
-      this.manager.broadcast(this, this.proxy.msg(LEAVE,
-        {id: this.myId}
-      ))
+      this.manager.broadcast(this, LEAVE, {id: this.myId})
     }
 
     /**
@@ -2239,10 +2200,7 @@
      * @param  {string} data Message
      */
     send (data) {
-      this.manager.broadcast(this, this.proxy.msg(
-        USER_DATA,
-        {id: this.myId, data}
-      ))
+      this.manager.broadcast(this, USER_DATA, data)
     }
 
     /**
@@ -2252,10 +2210,7 @@
      * @param  {type} data Message
      */
     sendTo (id, data) {
-      this.manager.sendTo(id, this, this.proxy.msg(
-        USER_DATA,
-        {id: this.myId, data}
-      ))
+      this.manager.sendTo(id, this, USER_DATA, {id: this.myId, data})
     }
 
     /**
@@ -2271,28 +2226,27 @@
       let cBuilder = get(settings.connector, settings)
       let key = this.id + this.myId
       return cBuilder.open(key, (channel) => {
-        this.initChannel(channel, false).then((channel) => {
-          let jp = new JoiningPeer(channel.peerId, this.myId)
-          jp.intermediaryChannel = channel
-          this.joiningPeers.add(jp)
-          channel.send(this.proxy.msg(JOIN_INIT, {
-            manager: this.settings.topology,
-            id: channel.peerId,
-            intermediaryId: this.myId})
-          )
-          this.manager.broadcast(this, this.proxy.msg(JOIN_NEW_MEMBER, {
-            id: channel.peerId,
-            intermediaryId: this.myId})
-          )
-          this.manager.add(channel)
-            .then(() => channel.send(this.proxy.msg(JOIN_FINILIZE)))
-            .catch((msg) => {
-              this.manager.broadcast(this, this.proxy.msg(REMOVE_NEW_MEMBER, {
-                id: channel.peerId})
-              )
-              this.removeJoiningPeer(jp.id)
-            })
-        })
+        this.initChannel(channel, false)
+          .then((channel) => {
+            let jp = new JoiningPeer(channel.peerId, this.myId)
+            jp.intermediaryChannel = channel
+            this.joiningPeers.add(jp)
+            channel.send(JOIN_INIT, {
+              manager: this.settings.topology,
+              id: channel.peerId,
+              intermediaryId: this.myId}
+            )
+            this.manager.broadcast(this, JOIN_NEW_MEMBER, {
+              id: channel.peerId,
+              intermediaryId: this.myId}
+            )
+            this.manager.add(channel)
+              .then(() => channel.send(JOIN_FINILIZE))
+              .catch((msg) => {
+                this.manager.broadcast(this, REMOVE_NEW_MEMBER, {id: channel.peerId})
+                this.removeJoiningPeer(jp.id)
+              })
+          })
       }).then((data) => {
         this.webRTCOpen = data.socket
         return {key: data.key, url: data.url}
@@ -2364,15 +2318,14 @@
      */
     sendSrvMsg (serviceName, recepient, msg = {}) {
       let completeMsg = {serviceName, recepient, data: Object.assign({}, msg)}
-      let stringifiedMsg = this.proxy.msg(SERVICE_DATA, completeMsg)
       if (recepient === this.myId) {
-        this.proxy.onSrvMsg(this, completeMsg)
+        get(msg.serviceName, this.settings).onMessage(this, null, msg.data)
       } else {
         // If this function caller is a peer who is joining
         if (this.isJoining()) {
           let ch = this.getJoiningPeer(this.myId).intermediaryChannel
           if (ch.readyState !== 'closed') {
-            ch.send(stringifiedMsg)
+            ch.send(SERVICE_DATA, completeMsg)
           }
         } else {
           // If the recepient is a joining peer
@@ -2380,14 +2333,14 @@
             let jp = this.getJoiningPeer(recepient)
             // If I am an intermediary peer for recepient
             if (jp.intermediaryId === this.myId && jp.intermediaryChannel.readyState !== 'closed') {
-              jp.intermediaryChannel.send(stringifiedMsg)
+              jp.intermediaryChannel.send(SERVICE_DATA, completeMsg)
             // If not, then send this message to the recepient's intermediary peer
             } else {
-              this.manager.sendTo(jp.intermediaryId, this, stringifiedMsg)
+              this.manager.sendTo(jp.intermediaryId, this, SERVICE_DATA, completeMsg)
             }
           // If the recepient is a member of webChannel
           } else {
-            this.manager.sendTo(recepient, this, stringifiedMsg)
+            this.manager.sendTo(recepient, this, SERVICE_DATA, completeMsg)
           }
         }
       }
@@ -2402,20 +2355,19 @@
       return this.settings.topology
     }
 
-    initChannel (channel, isInitiator, id = '') {
+    initChannel (ch, isInitiator, id = this.generateId()) {
       return new Promise((resolve, reject) => {
-        channel.webChannel = this
-        channel.peerId = (id !== '') ? id : this.generateId()
+        let channel = new Channel(ch, this, id)
         // TODO: treat the case when the 'ping' or 'pong' message has not been received
         if (isInitiator) {
-          this.proxy.configChannel(channel)
+          channel.config()
           channel.onPong = () => resolve(channel)
-          channel.send('ping')
+          ch.send('ping')
         } else {
-          channel.onmessage = (msgEvt) => {
+          ch.onmessage = (msgEvt) => {
             if (msgEvt.data === 'ping') {
-              this.proxy.configChannel(channel)
-              channel.send(this.proxy.msg(INIT_CHANNEL_PONG))
+              channel.config()
+              channel.send(INIT_CHANNEL_PONG)
               resolve(channel)
             }
           }

@@ -1,6 +1,6 @@
 import * as service from '../service'
 import * as serviceProvider from '../../serviceProvider'
-import { THIS_CHANNEL_TO_JOINING_PEER } from '../channelProxy/channelProxy'
+import { THIS_CHANNEL_TO_JOINING_PEER } from '../../Channel'
 
 /**
  * Web Channel Manager module is a submodule of {@link module:service} and the
@@ -47,17 +47,15 @@ class Interface extends service.Interface {
           msg.peers.forEach((id) => {
             cBuilder.connectMeTo(wc, id)
               .then((channel) => {
-                console.log('New channel established')
-                return wc.initChannel(channel, true)
+                return wc.initChannel(channel, true, id)
               })
               .then((channel) => {
-                console.log('New channel has been initialized')
                 wc.getJoiningPeer(msg.jpId).toAddList(channel)
-                channel.send(wc.proxy.msg(THIS_CHANNEL_TO_JOINING_PEER,
+                channel.send(
+                  THIS_CHANNEL_TO_JOINING_PEER,
                   {id: msg.jpId, toBeAdded: true}
-                ))
+                )
                 counter++
-                console.log('Counter becomes: ' + counter)
                 if (counter === msg.peers.length) {
                   wc.sendSrvMsg(this.name, msg.sender,
                     {code: CONNECT_WITH_FEEDBACK, id: wc.myId, failed}
@@ -65,10 +63,8 @@ class Interface extends service.Interface {
                 }
               })
               .catch((reason) => {
-                console.log('New channel catch error: ' + reason)
                 counter++
-                console.log('Counter becomes: ' + counter)
-                result.failed.push({id, reason})
+                failed.push({id, reason})
                 if (counter === msg.peers.length) {
                   wc.sendSrvMsg(this.name, msg.sender,
                     {code: CONNECT_WITH_FEEDBACK, id: wc.myId, failed}
@@ -160,7 +156,7 @@ class Interface extends service.Interface {
    * Adds a new peer into Web Channel.
    *
    * @abstract
-   * @param  {ChannelInterface} ch - Channel to be added (it should has
+   * @param  {Channel} ch - Channel to be added (it should has
    * the `webChannel` property).
    * @return {Promise} - Resolved once the channel has been succesfully added,
    * rejected otherwise.

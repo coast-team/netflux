@@ -321,10 +321,9 @@ class WebRTCService extends channelBuilder.Interface {
   createPeerConnectionAndOffer (onCandidate, sendOffer, onChannel) {
     let pc = this.createPeerConnection(onCandidate)
     let dc = pc.createDataChannel(null)
-    dc.ondisconnect = () => {}
     pc.oniceconnectionstatechange = () => {
       if (pc.iceConnectionState === 'disconnected') {
-        dc.ondisconnect()
+        dc.onclose()
       }
     }
     dc.onopen = (evt) => onChannel(dc)
@@ -350,10 +349,10 @@ class WebRTCService extends channelBuilder.Interface {
     let pc = this.createPeerConnection(onCandidate)
     pc.ondatachannel = (dcEvt) => {
       let dc = dcEvt.channel
-      dc.ondisconnect = () => {}
       pc.oniceconnectionstatechange = () => {
         if (pc.iceConnectionState === 'disconnected') {
-          dc.ondisconnect()
+          console.log('Data channel has been disconnected')
+          dc.onclose()
         }
       }
       dc.onopen = (evt) => onChannel(dc)

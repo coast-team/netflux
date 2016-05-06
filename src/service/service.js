@@ -32,7 +32,7 @@ class Interface {
    *
    * @abstract
    * @param  {WebChannel} wc - Web Channel from which the message is arrived.
-   * @param  {ChannelInterface} wc - Channel by which the message is arrived.
+   * @param  {Channel} wc - Channel by which the message is arrived.
    * @param  {string} msg - Message in stringified JSON format.
    */
   onMessage (wc, channel, msg) {

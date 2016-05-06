@@ -55,6 +55,7 @@ it('Client _1 creates a webChannel and open it to enable other clients to join',
               expect(msg).toEqual('And I am _1')
               done()
             } else {
+              console.log('FAILED: ' + id)
               done.fail()
             }
           }

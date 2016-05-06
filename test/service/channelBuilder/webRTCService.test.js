@@ -73,7 +73,31 @@ describe('WebRTCService ->', () => {
     })
   })
 
-  it('Open & Join: should open 1 dataChanne and exchange messages between 2 peers', (done) => {
+  it('Open & Join: should detect disconnected peer', (done) => {
+    let masterChannel
+    webRTCService.open(randKey(), (channel) => {
+      masterChannel = channel
+      channel.onclose = (closeEvt) => {
+        if (closeEvt) {
+          console.log('Close event: ', closeEvt)
+          console.log('Master channel state: ' + masterChannel.readyState)
+        }
+        done()
+      }
+      channel.onerror = done.fail
+    })
+      .then((data) => {
+        webRTCService.join(data.key)
+          .then((channel) => {
+            channel.onerror = done.fail
+            setTimeout(() => { channel.close() }, 500)
+          })
+          .catch(done.fail)
+      })
+      .catch(done.fail)
+  })
+
+  it('Open & Join: should open 1 dataChannel and exchange messages between 2 peers', (done) => {
     const masterPeerMsg = 'Hello! Here is master'
     const peerMsg = 'Hi, I am a peer'
     webRTCService.open(randKey(), (channel) => {
@@ -99,7 +123,7 @@ describe('WebRTCService ->', () => {
       .catch(done.fail)
   })
 
-  it('Open & Join: should open 2 dataChannels exchange messages between 3 peers', (done) => {
+  it('Open & Join: should open 2 dataChannels and exchange messages between 3 peers', (done) => {
     const masterPeerMsg = 'Do or do not, there is no try'
     const peerMsg1 = 'Hi, I am a peer #1'
     const peerMsg2 = 'Hi, I am a peer #2'

@@ -3,7 +3,7 @@ import * as service from '../service'
  * Channel Builder module is responsible to create a connection between two
  * peers.
  * @module channelBuilder
- * @see ChannelInterface
+ * @see Channel
  */
 
 /**
@@ -11,7 +11,7 @@ import * as service from '../service'
  * function.
  *
  * @callback module:channelBuilder~onChannelCallback
- * @param {ChannelInterface} channel - A new channel.
+ * @param {Channel} channel - A new channel.
  */
 
 /**
@@ -20,7 +20,7 @@ import * as service from '../service'
  * ready to be used in the web channel.
  *
  * @callback module:channelBuilder~initChannel
- * @param {ChannelInterface} ch - Channel.
+ * @param {Channel} ch - Channel.
  * @param {string} id - Unique channel identifier.
  */
 

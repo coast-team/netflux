@@ -27,7 +27,7 @@ class JoiningPeer {
      * The channel between the joining peer and intermediary peer. It is null
      * for every peer, but the joining and intermediary peers.
      *
-     * @type {ChannelInterface}
+     * @type {Channel}
      */
     this.intermediaryChannel = null
 
@@ -36,7 +36,7 @@ class JoiningPeer {
      * added to the current peer once the joining peer become the member of the
      * web channel.
      *
-     * @type {Array[ChannelInterface]}
+     * @type {Array[Channel]}
      */
     this.channelsToAdd = []
 
@@ -45,7 +45,7 @@ class JoiningPeer {
      * closed with the current peer once the joining peer become the member of the
      * web channel.
      *
-     * @type {Array[ChannelInterface]}
+     * @type {Array[Channel]}
      */
     this.channelsToRemove = []
   }
@@ -53,7 +53,7 @@ class JoiningPeer {
   /**
    * Add channel to `channelsToAdd` array.
    *
-   * @param  {ChannelInterface} channel - Channel to add.
+   * @param  {Channel} channel - Channel to add.
    */
   toAddList (channel) {
     this.channelsToAdd[this.channelsToAdd.length] = channel
@@ -62,7 +62,7 @@ class JoiningPeer {
   /**
    * Add channel to `channelsToRemove` array
    *
-   * @param  {ChannelInterface} channel - Channel to add.
+   * @param  {Channel} channel - Channel to add.
    */
   toRemoveList (channel) {
     this.channelsToAdd[this.channelsToAdd.length] = channel

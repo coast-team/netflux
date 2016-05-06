@@ -1,5 +1,5 @@
 import * as serviceProvider from './serviceProvider'
-import { JOIN_NEW_MEMBER, LEAVE, USER_DATA, JOIN_INIT, JOIN_FINILIZE, REMOVE_NEW_MEMBER, SERVICE_DATA, INIT_CHANNEL_PONG } from './service/channelProxy/channelProxy'
+import { Channel, JOIN_NEW_MEMBER, LEAVE, USER_DATA, JOIN_INIT, JOIN_FINILIZE, REMOVE_NEW_MEMBER, SERVICE_DATA, INIT_CHANNEL_PONG } from './Channel'
 import JoiningPeer from './JoiningPeer'
 
 /**
@@ -71,8 +71,6 @@ class WebChannel {
     this.connectWithRequests = new Map()
 
     /** @private */
-    this.proxy = serviceProvider.get(serviceProvider.CHANNEL_PROXY)
-    /** @private */
     this.topology = this.settings.topology
   }
 
@@ -100,9 +98,7 @@ class WebChannel {
 
   /** Leave `WebChannel`. No longer can receive and send messages to the group. */
   leave () {
-    this.manager.broadcast(this, this.proxy.msg(LEAVE,
-      {id: this.myId}
-    ))
+    this.manager.broadcast(this, LEAVE, {id: this.myId})
   }
 
   /**
@@ -111,10 +107,7 @@ class WebChannel {
    * @param  {string} data Message
    */
   send (data) {
-    this.manager.broadcast(this, this.proxy.msg(
-      USER_DATA,
-      {id: this.myId, data}
-    ))
+    this.manager.broadcast(this, USER_DATA, data)
   }
 
   /**
@@ -124,10 +117,7 @@ class WebChannel {
    * @param  {type} data Message
    */
   sendTo (id, data) {
-    this.manager.sendTo(id, this, this.proxy.msg(
-      USER_DATA,
-      {id: this.myId, data}
-    ))
+    this.manager.sendTo(id, this, USER_DATA, {id: this.myId, data})
   }
 
   /**
@@ -143,28 +133,27 @@ class WebChannel {
     let cBuilder = serviceProvider.get(settings.connector, settings)
     let key = this.id + this.myId
     return cBuilder.open(key, (channel) => {
-      this.initChannel(channel, false).then((channel) => {
-        let jp = new JoiningPeer(channel.peerId, this.myId)
-        jp.intermediaryChannel = channel
-        this.joiningPeers.add(jp)
-        channel.send(this.proxy.msg(JOIN_INIT, {
-          manager: this.settings.topology,
-          id: channel.peerId,
-          intermediaryId: this.myId})
-        )
-        this.manager.broadcast(this, this.proxy.msg(JOIN_NEW_MEMBER, {
-          id: channel.peerId,
-          intermediaryId: this.myId})
-        )
-        this.manager.add(channel)
-          .then(() => channel.send(this.proxy.msg(JOIN_FINILIZE)))
-          .catch((msg) => {
-            this.manager.broadcast(this, this.proxy.msg(REMOVE_NEW_MEMBER, {
-              id: channel.peerId})
-            )
-            this.removeJoiningPeer(jp.id)
-          })
-      })
+      this.initChannel(channel, false)
+        .then((channel) => {
+          let jp = new JoiningPeer(channel.peerId, this.myId)
+          jp.intermediaryChannel = channel
+          this.joiningPeers.add(jp)
+          channel.send(JOIN_INIT, {
+            manager: this.settings.topology,
+            id: channel.peerId,
+            intermediaryId: this.myId}
+          )
+          this.manager.broadcast(this, JOIN_NEW_MEMBER, {
+            id: channel.peerId,
+            intermediaryId: this.myId}
+          )
+          this.manager.add(channel)
+            .then(() => channel.send(JOIN_FINILIZE))
+            .catch((msg) => {
+              this.manager.broadcast(this, REMOVE_NEW_MEMBER, {id: channel.peerId})
+              this.removeJoiningPeer(jp.id)
+            })
+        })
     }).then((data) => {
       this.webRTCOpen = data.socket
       return {key: data.key, url: data.url}
@@ -236,15 +225,14 @@ class WebChannel {
    */
   sendSrvMsg (serviceName, recepient, msg = {}) {
     let completeMsg = {serviceName, recepient, data: Object.assign({}, msg)}
-    let stringifiedMsg = this.proxy.msg(SERVICE_DATA, completeMsg)
     if (recepient === this.myId) {
-      this.proxy.onSrvMsg(this, completeMsg)
+      serviceProvider.get(msg.serviceName, this.settings).onMessage(this, null, msg.data)
     } else {
       // If this function caller is a peer who is joining
       if (this.isJoining()) {
         let ch = this.getJoiningPeer(this.myId).intermediaryChannel
         if (ch.readyState !== 'closed') {
-          ch.send(stringifiedMsg)
+          ch.send(SERVICE_DATA, completeMsg)
         }
       } else {
         // If the recepient is a joining peer
@@ -252,14 +240,14 @@ class WebChannel {
           let jp = this.getJoiningPeer(recepient)
           // If I am an intermediary peer for recepient
           if (jp.intermediaryId === this.myId && jp.intermediaryChannel.readyState !== 'closed') {
-            jp.intermediaryChannel.send(stringifiedMsg)
+            jp.intermediaryChannel.send(SERVICE_DATA, completeMsg)
           // If not, then send this message to the recepient's intermediary peer
           } else {
-            this.manager.sendTo(jp.intermediaryId, this, stringifiedMsg)
+            this.manager.sendTo(jp.intermediaryId, this, SERVICE_DATA, completeMsg)
           }
         // If the recepient is a member of webChannel
         } else {
-          this.manager.sendTo(recepient, this, stringifiedMsg)
+          this.manager.sendTo(recepient, this, SERVICE_DATA, completeMsg)
         }
       }
     }
@@ -274,20 +262,19 @@ class WebChannel {
     return this.settings.topology
   }
 
-  initChannel (channel, isInitiator, id = '') {
+  initChannel (ch, isInitiator, id = this.generateId()) {
     return new Promise((resolve, reject) => {
-      channel.webChannel = this
-      channel.peerId = (id !== '') ? id : this.generateId()
+      let channel = new Channel(ch, this, id)
       // TODO: treat the case when the 'ping' or 'pong' message has not been received
       if (isInitiator) {
-        this.proxy.configChannel(channel)
+        channel.config()
         channel.onPong = () => resolve(channel)
-        channel.send('ping')
+        ch.send('ping')
       } else {
-        channel.onmessage = (msgEvt) => {
+        ch.onmessage = (msgEvt) => {
           if (msgEvt.data === 'ping') {
-            this.proxy.configChannel(channel)
-            channel.send(this.proxy.msg(INIT_CHANNEL_PONG))
+            channel.config()
+            channel.send(INIT_CHANNEL_PONG)
             resolve(channel)
           }
         }
