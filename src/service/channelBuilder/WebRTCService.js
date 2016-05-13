@@ -158,7 +158,6 @@ class WebRTCService extends channelBuilder.Interface {
   open (key, onChannel, options = {}) {
     let settings = Object.assign({}, this.settings, options)
     return new Promise((resolve, reject) => {
-      let time
       let connections = new RTCPendingConnections()
       let socket
       try {
@@ -351,7 +350,6 @@ class WebRTCService extends channelBuilder.Interface {
       let dc = dcEvt.channel
       pc.oniceconnectionstatechange = () => {
         if (pc.iceConnectionState === 'disconnected') {
-          console.log('Data channel has been disconnected')
           dc.onclose()
         }
       }

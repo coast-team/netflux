@@ -8,10 +8,5 @@
  */
 
 import '../node_modules/webrtc-adapter/out/adapter_no_edge_no_global'
-import WebChannel from './WebChannel'
-import * as service from './serviceProvider'
-
-const WEBRTC = service.WEBRTC
-const FULLY_CONNECTED = service.FULLY_CONNECTED
-
-export { WEBRTC, FULLY_CONNECTED, WebChannel }
+export { WebChannel } from './WebChannel'
+export { WEBRTC, FULLY_CONNECTED } from './serviceProvider'

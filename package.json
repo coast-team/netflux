@@ -110,7 +110,8 @@
       "dist/*",
       "karma*.js",
       "config.js",
-      "webpack.config.js"
+      "webpack.config.js",
+      "test/**/sendLargeData/*.js"
     ]
   }
 }

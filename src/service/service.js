@@ -26,18 +26,6 @@ class Interface {
   get name () {
     return this.constructor.name
   }
-
-  /**
-   * On message event handler.
-   *
-   * @abstract
-   * @param  {WebChannel} wc - Web Channel from which the message is arrived.
-   * @param  {Channel} wc - Channel by which the message is arrived.
-   * @param  {string} msg - Message in stringified JSON format.
-   */
-  onMessage (wc, channel, msg) {
-    throw new Error('Must be implemented by subclass!')
-  }
 }
 
 export {

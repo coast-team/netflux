@@ -1,6 +1,6 @@
+import {signaling} from '../../config'
 import WebRTCService from '../../../src/service/channelBuilder/WebRTCService'
 
-const signaling = 'ws://localhost:8000'
 // const signaling = 'ws://sigver-coastteam.rhcloud.com:8000'
 
 function randKey () {
@@ -74,16 +74,8 @@ describe('WebRTCService ->', () => {
   })
 
   it('Open & Join: should detect disconnected peer', (done) => {
-    let masterChannel
     webRTCService.open(randKey(), (channel) => {
-      masterChannel = channel
-      channel.onclose = (closeEvt) => {
-        if (closeEvt) {
-          console.log('Close event: ', closeEvt)
-          console.log('Master channel state: ' + masterChannel.readyState)
-        }
-        done()
-      }
+      channel.onclose = (closeEvt) => done()
       channel.onerror = done.fail
     })
       .then((data) => {

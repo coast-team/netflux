@@ -17,7 +17,7 @@ module.exports = function(config) {
     jspm: {
       config: 'config.js',
       loadFiles: ['test/**/*test.js'],
-      serveFiles: ['src/**/*.js', 'dist/netflux.es2015.js']
+      serveFiles: ['src/**/*.js', 'dist/netflux.es2015.js', 'test/config.js']
     },
     proxies: {
       '/src/': '/base/src/',

@@ -1,6 +1,6 @@
 import * as service from '../service'
-import * as serviceProvider from '../../serviceProvider'
-import { THIS_CHANNEL_TO_JOINING_PEER } from '../../Channel'
+import provide from '../../serviceProvider'
+import JoiningPeer from '../../JoiningPeer'
 
 /**
  * Web Channel Manager module is a submodule of {@link module:service} and the
@@ -25,6 +25,7 @@ const CONNECT_WITH = 1
 const CONNECT_WITH_FEEDBACK = 2
 const CONNECT_WITH_TIMEOUT = 5000
 const ADD_INTERMEDIARY_CHANNEL = 4
+const THIS_CHANNEL_TO_JOINING_PEER = 5
 
 /**
  * Each Web Channel Manager Service must implement this interface.
@@ -32,8 +33,9 @@ const ADD_INTERMEDIARY_CHANNEL = 4
  * @extends module:service~Interface
  */
 class Interface extends service.Interface {
+
   onMessage (wc, channel, msg) {
-    let cBuilder = serviceProvider.get(wc.settings.connector, wc.settings)
+    let cBuilder = provide(wc.settings.connector, wc.settings)
     switch (msg.code) {
       case CONNECT_WITH:
         msg.peers = this.reUseIntermediaryChannelIfPossible(wc, msg.jpId, msg.peers)
@@ -51,9 +53,9 @@ class Interface extends service.Interface {
               })
               .then((channel) => {
                 wc.getJoiningPeer(msg.jpId).toAddList(channel)
-                channel.send(
-                  THIS_CHANNEL_TO_JOINING_PEER,
-                  {id: msg.jpId, toBeAdded: true}
+                wc.sendSrvMsg(this.name, wc.myId,
+                  {code: THIS_CHANNEL_TO_JOINING_PEER, id: msg.jpId, toBeAdded: true},
+                  channel
                 )
                 counter++
                 if (counter === msg.peers.length) {
@@ -75,12 +77,24 @@ class Interface extends service.Interface {
         }
         break
       case CONNECT_WITH_FEEDBACK:
-        console.log('CONNECT_WITH_FEEDBACK received: ', msg)
         wc.connectWithRequests.get(msg.id)(true)
         break
       case ADD_INTERMEDIARY_CHANNEL:
         let jp = wc.getJoiningPeer(msg.jpId)
         jp.toAddList(jp.intermediaryChannel)
+        break
+      case THIS_CHANNEL_TO_JOINING_PEER:
+        if (wc.hasJoiningPeer(msg.id)) {
+          jp = wc.getJoiningPeer(msg.id)
+        } else {
+          jp = new JoiningPeer(msg.id)
+          wc.addJoiningPeer(jp)
+        }
+        if (msg.toBeAdded) {
+          jp.toAddList(this)
+        } else {
+          jp.toRemoveList(this)
+        }
         break
     }
   }
@@ -99,10 +113,8 @@ class Interface extends service.Interface {
    * @return {Promise} - Is resolved once some of the connections could be established. It is rejected when an error occured.
    */
   connectWith (wc, id, jpId, peers) {
-    console.log('send CONNECT_WITH to: ' + id + ' JoiningPeerID: ' + jpId + ' with peers', peers)
     wc.sendSrvMsg(this.name, id,
-      {code: CONNECT_WITH, jpId: jpId,
-      sender: wc.myId, peers}
+      {code: CONNECT_WITH, jpId: jpId, sender: wc.myId, peers}
     )
     return new Promise((resolve, reject) => {
       wc.connectWithRequests.set(id, (isDone) => {

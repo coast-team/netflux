@@ -1,5 +1,6 @@
 import FullyConnectedService from './service/webChannelManager/FullyConnectedService'
 import WebRTCService from './service/channelBuilder/WebRTCService'
+import MessageFormatterService from './service/MessageFormatterService'
 /**
  * Service Provider module is a helper module for {@link module:service}. It is
  * responsible to instantiate all services. This module must be used to get
@@ -19,6 +20,8 @@ export const WEBRTC = 'WebRTCService'
  */
 export const FULLY_CONNECTED = 'FullyConnectedService'
 
+export const MESSAGE_FORMATTER = 'MessageFormatterService'
+
 const services = new Map()
 
 /**
@@ -30,7 +33,7 @@ const services = new Map()
  * @param  {Object} [options] - Any options that the service accepts.
  * @return {module:service~Interface} - Service instance.
  */
-export function get (name, options = {}) {
+export default function provide (name, options = {}) {
   if (services.has(name)) {
     return services.get(name)
   }
@@ -40,6 +43,10 @@ export function get (name, options = {}) {
       return new WebRTCService(options)
     case FULLY_CONNECTED:
       service = new FullyConnectedService()
+      services.set(name, service)
+      return service
+    case MESSAGE_FORMATTER:
+      service = new MessageFormatterService()
       services.set(name, service)
       return service
     default:
