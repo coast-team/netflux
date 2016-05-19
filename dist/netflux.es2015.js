@@ -53,6 +53,7 @@
         module.exports.browserShim = chromeShim;
 
         chromeShim.shimGetUserMedia();
+        chromeShim.shimMediaStream();
         chromeShim.shimSourceObject();
         chromeShim.shimPeerConnection();
         chromeShim.shimOnTrack();
@@ -80,6 +81,7 @@
         // Export to the adapter global object visible in the browser.
         module.exports.browserShim = edgeShim;
 
+        edgeShim.shimGetUserMedia();
         edgeShim.shimPeerConnection();
         break;
       case 'safari':
@@ -99,6 +101,7 @@
   })();
 
   },{"./chrome/chrome_shim":3,"./edge/edge_shim":1,"./firefox/firefox_shim":5,"./safari/safari_shim":7,"./utils":8}],3:[function(require,module,exports){
+
   /*
    *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
    *
@@ -112,6 +115,10 @@
   var browserDetails = require('../utils.js').browserDetails;
 
   var chromeShim = {
+    shimMediaStream: function() {
+      window.MediaStream = window.MediaStream || window.webkitMediaStream;
+    },
+
     shimOnTrack: function() {
       if (typeof window === 'object' && window.RTCPeerConnection && !('ontrack' in
           window.RTCPeerConnection.prototype)) {
@@ -231,9 +238,21 @@
             return standardReport;
           };
 
+          // shim getStats with maplike support
+          var makeMapStats = function(stats, legacyStats) {
+            var map = new Map(Object.keys(stats).map(function(key) {
+              return[key, stats[key]];
+            }));
+            legacyStats = legacyStats || stats;
+            Object.keys(legacyStats).forEach(function(key) {
+              map[key] = legacyStats[key];
+            });
+            return map;
+          };
+
           if (arguments.length >= 2) {
             var successCallbackWrapper_ = function(response) {
-              args[1](fixChromeStats_(response));
+              args[1](makeMapStats(fixChromeStats_(response)));
             };
 
             return origGetStats.apply(this, [successCallbackWrapper_,
@@ -243,14 +262,19 @@
           // promise-support
           return new Promise(function(resolve, reject) {
             if (args.length === 1 && typeof selector === 'object') {
-              origGetStats.apply(self,
-                  [function(response) {
-                    resolve.apply(null, [fixChromeStats_(response)]);
-                  }, reject]);
+              origGetStats.apply(self, [
+                function(response) {
+                  resolve(makeMapStats(fixChromeStats_(response)));
+                }, reject]);
             } else {
-              origGetStats.apply(self, [resolve, reject]);
+              // Preserve legacy chrome stats only on legacy access of stats obj
+              origGetStats.apply(self, [
+                function(response) {
+                  resolve(makeMapStats(fixChromeStats_(response),
+                      response.result()));
+                }, reject]);
             }
-          });
+          }).then(successCallback, errorCallback);
         };
 
         return pc;
@@ -266,46 +290,55 @@
         });
       }
 
-      // add promise support
-      ['createOffer', 'createAnswer'].forEach(function(method) {
-        var nativeMethod = webkitRTCPeerConnection.prototype[method];
-        webkitRTCPeerConnection.prototype[method] = function() {
-          var self = this;
-          if (arguments.length < 1 || (arguments.length === 1 &&
-              typeof(arguments[0]) === 'object')) {
-            var opts = arguments.length === 1 ? arguments[0] : undefined;
-            return new Promise(function(resolve, reject) {
-              nativeMethod.apply(self, [resolve, reject, opts]);
-            });
-          }
-          return nativeMethod.apply(this, arguments);
-        };
-      });
+      // add promise support -- natively available in Chrome 51
+      if (browserDetails.version < 51) {
+        ['createOffer', 'createAnswer'].forEach(function(method) {
+          var nativeMethod = webkitRTCPeerConnection.prototype[method];
+          webkitRTCPeerConnection.prototype[method] = function() {
+            var self = this;
+            if (arguments.length < 1 || (arguments.length === 1 &&
+                typeof arguments[0] === 'object')) {
+              var opts = arguments.length === 1 ? arguments[0] : undefined;
+              return new Promise(function(resolve, reject) {
+                nativeMethod.apply(self, [resolve, reject, opts]);
+              });
+            }
+            return nativeMethod.apply(this, arguments);
+          };
+        });
 
+        ['setLocalDescription', 'setRemoteDescription', 'addIceCandidate']
+            .forEach(function(method) {
+              var nativeMethod = webkitRTCPeerConnection.prototype[method];
+              webkitRTCPeerConnection.prototype[method] = function() {
+                var args = arguments;
+                var self = this;
+                var promise = new Promise(function(resolve, reject) {
+                  nativeMethod.apply(self, [args[0], resolve, reject]);
+                });
+                if (args.length < 2) {
+                  return promise;
+                }
+                return promise.then(function() {
+                  args[1].apply(null, []);
+                },
+                function(err) {
+                  if (args.length >= 3) {
+                    args[2].apply(null, [err]);
+                  }
+                });
+              };
+            });
+      }
+
+      // shim implicit creation of RTCSessionDescription/RTCIceCandidate
       ['setLocalDescription', 'setRemoteDescription', 'addIceCandidate']
           .forEach(function(method) {
             var nativeMethod = webkitRTCPeerConnection.prototype[method];
             webkitRTCPeerConnection.prototype[method] = function() {
-              var args = arguments;
-              var self = this;
-              args[0] = new ((method === 'addIceCandidate')?
-                  RTCIceCandidate : RTCSessionDescription)(args[0]);
-              return new Promise(function(resolve, reject) {
-                nativeMethod.apply(self, [args[0],
-                    function() {
-                      resolve();
-                      if (args.length >= 2) {
-                        args[1].apply(null, []);
-                      }
-                    },
-                    function(err) {
-                      reject(err);
-                      if (args.length >= 3) {
-                        args[2].apply(null, [err]);
-                      }
-                    }]
-                  );
-              });
+              arguments[0] = new ((method === 'addIceCandidate') ?
+                  RTCIceCandidate : RTCSessionDescription)(arguments[0]);
+              return nativeMethod.apply(this, arguments);
             };
           });
     },
@@ -335,6 +368,7 @@
 
   // Expose public methods.
   module.exports = {
+    shimMediaStream: chromeShim.shimMediaStream,
     shimOnTrack: chromeShim.shimOnTrack,
     shimSourceObject: chromeShim.shimSourceObject,
     shimPeerConnection: chromeShim.shimPeerConnection,
@@ -408,17 +442,69 @@
       return cc;
     };
 
-    var getUserMedia_ = function(constraints, onSuccess, onError) {
+    var shimConstraints_ = function(constraints, func) {
       constraints = JSON.parse(JSON.stringify(constraints));
-      if (constraints.audio) {
+      if (constraints && constraints.audio) {
         constraints.audio = constraintsToChrome_(constraints.audio);
       }
-      if (constraints.video) {
+      if (constraints && typeof constraints.video === 'object') {
+        // Shim facingMode for mobile, where it defaults to "user".
+        var face = constraints.video.facingMode;
+        face = face && ((typeof face === 'object') ? face : {ideal: face});
+
+        if ((face && (face.exact === 'user' || face.exact === 'environment' ||
+                      face.ideal === 'user' || face.ideal === 'environment')) &&
+            !(navigator.mediaDevices.getSupportedConstraints &&
+              navigator.mediaDevices.getSupportedConstraints().facingMode)) {
+          delete constraints.video.facingMode;
+          if (face.exact === 'environment' || face.ideal === 'environment') {
+            // Look for "back" in label, or use last cam (typically back cam).
+            return navigator.mediaDevices.enumerateDevices()
+            .then(function(devices) {
+              devices = devices.filter(function(d) {
+                return d.kind === 'videoinput';
+              });
+              var back = devices.find(function(d) {
+                return d.label.toLowerCase().indexOf('back') !== -1;
+              }) || (devices.length && devices[devices.length - 1]);
+              if (back) {
+                constraints.video.deviceId = face.exact ? {exact: back.deviceId} :
+                                                          {ideal: back.deviceId};
+              }
+              constraints.video = constraintsToChrome_(constraints.video);
+              logging('chrome: ' + JSON.stringify(constraints));
+              return func(constraints);
+            });
+          }
+        }
         constraints.video = constraintsToChrome_(constraints.video);
       }
       logging('chrome: ' + JSON.stringify(constraints));
-      return navigator.webkitGetUserMedia(constraints, onSuccess, onError);
+      return func(constraints);
     };
+
+    var shimError_ = function(e) {
+      return {
+        name: {
+          PermissionDeniedError: 'NotAllowedError',
+          ConstraintNotSatisfiedError: 'OverconstrainedError'
+        }[e.name] || e.name,
+        message: e.message,
+        constraint: e.constraintName,
+        toString: function() {
+          return this.name + (this.message && ': ') + this.message;
+        }
+      };
+    };
+
+    var getUserMedia_ = function(constraints, onSuccess, onError) {
+      shimConstraints_(constraints, function(c) {
+        navigator.webkitGetUserMedia(c, onSuccess, function(e) {
+          onError(shimError_(e));
+        });
+      });
+    };
+
     navigator.getUserMedia = getUserMedia_;
 
     // Returns the result of getUserMedia as a Promise.
@@ -459,15 +545,13 @@
       // constraints.
       var origGetUserMedia = navigator.mediaDevices.getUserMedia.
           bind(navigator.mediaDevices);
-      navigator.mediaDevices.getUserMedia = function(c) {
-        if (c) {
-          logging('spec:   ' + JSON.stringify(c)); // whitespace for alignment
-          c.audio = constraintsToChrome_(c.audio);
-          c.video = constraintsToChrome_(c.video);
-          logging('chrome: ' + JSON.stringify(c));
-        }
-        return origGetUserMedia(c);
-      }.bind(this);
+      navigator.mediaDevices.getUserMedia = function(cs) {
+        return shimConstraints_(cs, function(c) {
+          return origGetUserMedia(c).catch(function(e) {
+            return Promise.reject(shimError_(e));
+          });
+        });
+      };
     }
 
     // Dummy devicechange event methods.
@@ -545,6 +629,10 @@
     },
 
     shimPeerConnection: function() {
+      if (typeof window !== 'object' || !(window.RTCPeerConnection ||
+          window.mozRTCPeerConnection)) {
+        return; // probably media.peerconnection.enabled=false in about:config
+      }
       // The RTCPeerConnection object.
       if (!window.RTCPeerConnection) {
         window.RTCPeerConnection = function(pcConfig, pcConstraints) {
@@ -595,11 +683,30 @@
           .forEach(function(method) {
             var nativeMethod = RTCPeerConnection.prototype[method];
             RTCPeerConnection.prototype[method] = function() {
-              arguments[0] = new ((method === 'addIceCandidate')?
+              arguments[0] = new ((method === 'addIceCandidate') ?
                   RTCIceCandidate : RTCSessionDescription)(arguments[0]);
               return nativeMethod.apply(this, arguments);
             };
           });
+
+      // shim getStats with maplike support
+      var makeMapStats = function(stats) {
+        var map = new Map();
+        Object.keys(stats).forEach(function(key) {
+          map.set(key, stats[key]);
+          map[key] = stats[key];
+        });
+        return map;
+      };
+
+      var nativeGetStats = RTCPeerConnection.prototype.getStats;
+      RTCPeerConnection.prototype.getStats = function(selector, onSucc, onErr) {
+        return nativeGetStats.apply(this, [selector || null])
+          .then(function(stats) {
+            return makeMapStats(stats);
+          })
+          .then(onSucc, onErr);
+      };
     },
 
     shimGetUserMedia: function() {
@@ -743,6 +850,22 @@
 
   // Expose public methods.
   module.exports = function() {
+    var shimError_ = e => ({
+      name: {
+        SecurityError: 'NotAllowedError',
+        PermissionDeniedError: 'NotAllowedError'
+      }[e.name] || e.name,
+      message: {
+        'The operation is insecure.': 'The request is not allowed by the user ' +
+        'agent or the platform in the current context.'
+      }[e.message] || e.message,
+      constraint: e.constraint,
+      toString: function() {
+        return this.name + (this.message && ': ') + this.message;
+      }
+    });
+
+
     // getUserMedia constraints shim.
     var getUserMedia_ = function(constraints, onSuccess, onError) {
       var constraintsToFF37_ = function(c) {
@@ -799,7 +922,8 @@
         }
         logging('ff37: ' + JSON.stringify(constraints));
       }
-      return navigator.mozGetUserMedia(constraints, onSuccess, onError);
+      return navigator.mozGetUserMedia(constraints, onSuccess,
+                                       e => onError(shimError_(e)));
     };
 
     navigator.getUserMedia = getUserMedia_;
@@ -841,6 +965,12 @@
           throw e;
         });
       };
+    }
+    if (browserDetails.version < 49) {
+      var origGetUserMedia = navigator.mediaDevices.getUserMedia.
+          bind(navigator.mediaDevices);
+      navigator.mediaDevices.getUserMedia = c =>
+          origGetUserMedia(c).catch(e => Promise.reject(shimError_(e)));
     }
   };
 
@@ -1854,88 +1984,245 @@
     }
   }
 
-  // Max message size sent on Channel: 16kb
-  const MAX_CHANNEL_MSG_BYTE_SIZE = 16384
+  const MAX_USER_MSG_SIZE = 16366
 
-  const USER_MSG_BYTE_OFFSET = 18
+  const USER_MSG_OFFSET = 18
 
-  const STRING_TYPE = 100
+  const HEADER_OFFSET = 9
 
-  const UINT8ARRAY_TYPE = 101
+  const MAX_MSG_ID_SIZE = 65535
 
-  const ARRAYBUFFER_TYPE = 102
+  const ARRAY_BUFFER_TYPE = 1
+  const U_INT_8_ARRAY_TYPE = 2
+  const STRING_TYPE = 3
+  const INT_8_ARRAY_TYPE = 4
+  const U_INT_8_CLAMPED_ARRAY_TYPE = 5
+  const INT_16_ARRAY_TYPE = 6
+  const U_INT_16_ARRAY_TYPE = 7
+  const INT_32_ARRAY_TYPE = 8
+  const U_INT_32_ARRAY_TYPE = 9
+  const FLOAT_32_ARRAY_TYPE = 10
+  const FLOAT_64_ARRAY_TYPE = 11
+  const DATA_VIEW_TYPE = 12
 
-  class MessageFormatter extends Interface$1 {
-    splitUserMessage (data, code, senderId, recipientId, action) {
-      const dataType = this.getDataType(data)
-      let uInt8Array
-      switch (dataType) {
-        case STRING_TYPE:
-          uInt8Array = new TextEncoder().encode(data)
-          break
-        case UINT8ARRAY_TYPE:
-          uInt8Array = data
-          break
-        case ARRAYBUFFER_TYPE:
-          uInt8Array = new Uint8Array(data)
-          break
-        default:
-          return
-      }
+  const buffers = new Map()
 
-      const maxUserDataLength = this.getMaxMsgByteLength()
-      const msgId = this.generateMsgId()
-      const totalChunksNb = Math.ceil(uInt8Array.byteLength / maxUserDataLength)
-      for (let chunkNb = 0; chunkNb < totalChunksNb; chunkNb++) {
-        let chunkMsgByteLength = Math.min(maxUserDataLength, uInt8Array.byteLength - maxUserDataLength * chunkNb)
-        let index = maxUserDataLength * chunkNb
-        let totalChunkByteLength = USER_MSG_BYTE_OFFSET + chunkMsgByteLength
-        let dataView = new DataView(new ArrayBuffer(totalChunkByteLength))
-        dataView.setUint8(0, code)
-        dataView.setUint8(1, dataType)
-        dataView.setUint32(2, senderId)
-        dataView.setUint32(6, recipientId)
-        dataView.setUint16(10, msgId)
-        dataView.setUint32(12, uInt8Array.byteLength)
-        dataView.setUint16(16, chunkNb)
+  class MessageBuilder extends Interface$1 {
+    handleUserMessage (data, senderId, recipientId, action) {
+      let workingData = this.userDataToType(data)
+      let dataUint8Array = workingData.content
+      if (dataUint8Array.byteLength <= MAX_USER_MSG_SIZE) {
+        let dataView = this.writeHeader(USER_DATA, senderId, recipientId,
+          dataUint8Array.byteLength + USER_MSG_OFFSET
+        )
+        dataView.setUint32(HEADER_OFFSET, dataUint8Array.byteLength)
+        dataView.setUint8(13, workingData.type)
         let resultUint8Array = new Uint8Array(dataView.buffer)
-        let j = USER_MSG_BYTE_OFFSET
-        for (let i = index; i < index + chunkMsgByteLength; i++) {
-          resultUint8Array[j++] = uInt8Array[i]
+        resultUint8Array.set(dataUint8Array, USER_MSG_OFFSET)
+        action(resultUint8Array.buffer)
+      } else {
+        const msgId = Math.ceil(Math.random() * MAX_MSG_ID_SIZE)
+        const totalChunksNb = Math.ceil(dataUint8Array.byteLength / MAX_USER_MSG_SIZE)
+        for (let chunkNb = 0; chunkNb < totalChunksNb; chunkNb++) {
+          let currentChunkMsgByteLength = Math.min(
+            MAX_USER_MSG_SIZE,
+            dataUint8Array.byteLength - MAX_USER_MSG_SIZE * chunkNb
+          )
+          let dataView = this.writeHeader(
+            USER_DATA,
+            senderId,
+            recipientId,
+            USER_MSG_OFFSET + currentChunkMsgByteLength
+          )
+          dataView.setUint32(9, dataUint8Array.byteLength)
+          dataView.setUint8(13, workingData.type)
+          dataView.setUint16(14, msgId)
+          dataView.setUint16(16, chunkNb)
+          let resultUint8Array = new Uint8Array(dataView.buffer)
+          let j = USER_MSG_OFFSET
+          let startIndex = MAX_USER_MSG_SIZE * chunkNb
+          let endIndex = startIndex + currentChunkMsgByteLength
+          for (let i = startIndex; i < endIndex; i++) {
+            resultUint8Array[j++] = dataUint8Array[i]
+          }
+          action(resultUint8Array.buffer)
         }
-        action(resultUint8Array)
       }
     }
 
     msg (code, data = {}) {
       let msgEncoded = (new TextEncoder()).encode(JSON.stringify(data))
-      let i8array = new Uint8Array(1 + msgEncoded.length)
-      i8array[0] = code
-      let index = 1
-      for (let i in msgEncoded) {
-        i8array[index++] = msgEncoded[i]
+      let msgSize = msgEncoded.byteLength + HEADER_OFFSET
+      let dataView = this.writeHeader(code, null, null, msgSize)
+      let fullMsg = new Uint8Array(dataView.buffer)
+      fullMsg.set(msgEncoded, HEADER_OFFSET)
+      return fullMsg
+    }
+
+    readUserMessage (wcId, senderId, data, action) {
+      let dataView = new DataView(data)
+      let msgSize = dataView.getUint32(HEADER_OFFSET)
+      let dataType = dataView.getUint8(13)
+      if (msgSize > MAX_USER_MSG_SIZE) {
+        let msgId = dataView.getUint16(14)
+        let chunk = dataView.getUint16(16)
+        let buffer = this.getBuffer(wcId, senderId, msgId)
+        if (buffer === undefined) {
+          this.setBuffer(wcId, senderId, msgId,
+            new Buffer(msgSize, data, chunk, (fullData) => {
+              action(this.extractUserData(fullData, dataType))
+            })
+          )
+        } else {
+          buffer.add(data, chunk)
+        }
+      } else {
+        let dataArray = new Uint8Array(data)
+        let userData = new Uint8Array(data.byteLength - USER_MSG_OFFSET)
+        let j = USER_MSG_OFFSET
+        for (let i in userData) {
+          userData[i] = dataArray[j++]
+        }
+        action(this.extractUserData(userData.buffer, dataType))
       }
-      return i8array
     }
 
-    getMaxMsgByteLength () {
-      return MAX_CHANNEL_MSG_BYTE_SIZE - USER_MSG_BYTE_OFFSET
+    readInternalMessage (data) {
+      let uInt8Array = new Uint8Array(data)
+      return JSON.parse((new TextDecoder())
+        .decode(uInt8Array.subarray(HEADER_OFFSET, uInt8Array.byteLength))
+      )
     }
 
-    generateMsgId () {
-      const MAX = 16777215
-      return Math.round(Math.random() * MAX)
+    readHeader (data) {
+      let dataView = new DataView(data)
+      return {
+        code: dataView.getUint8(0),
+        senderId: dataView.getUint32(1),
+        recepientId: dataView.getUint32(5)
+      }
     }
 
-    getDataType (data) {
-      if (typeof data === 'string' || data instanceof String) {
-        return STRING_TYPE
+    writeHeader (code, senderId, recipientId, dataSize) {
+      let dataView = new DataView(new ArrayBuffer(dataSize))
+      dataView.setUint8(0, code)
+      dataView.setUint32(1, senderId)
+      dataView.setUint32(5, recipientId)
+      return dataView
+    }
+
+    extractUserData (buffer, type) {
+      switch (type) {
+        case ARRAY_BUFFER_TYPE:
+          return buffer
+        case U_INT_8_ARRAY_TYPE:
+          return new Uint8Array(buffer)
+        case STRING_TYPE:
+          return new TextDecoder().decode(new Uint8Array(buffer))
+        case INT_8_ARRAY_TYPE:
+          return new Int8Array(buffer)
+        case U_INT_8_CLAMPED_ARRAY_TYPE:
+          return new Uint8ClampedArray(buffer)
+        case INT_16_ARRAY_TYPE:
+          return new Int16Array(buffer)
+        case U_INT_16_ARRAY_TYPE:
+          return new Uint16Array(buffer)
+        case INT_32_ARRAY_TYPE:
+          return new Int32Array(buffer)
+        case U_INT_32_ARRAY_TYPE:
+          return new Uint32Array(buffer)
+        case FLOAT_32_ARRAY_TYPE:
+          return new Float32Array(buffer)
+        case FLOAT_64_ARRAY_TYPE:
+          return new Float64Array(buffer)
+        case DATA_VIEW_TYPE:
+          return new DataView(buffer)
+      }
+    }
+
+    userDataToType (data) {
+      let result = {}
+      if (data instanceof ArrayBuffer) {
+        result.type = ARRAY_BUFFER_TYPE
+        result.content = new Uint8Array(data)
       } else if (data instanceof Uint8Array) {
-        return UINT8ARRAY_TYPE
-      } else if (data instanceof ArrayBuffer) {
-        return ARRAYBUFFER_TYPE
+        result.type = U_INT_8_ARRAY_TYPE
+        result.content = data
+      } else if (typeof data === 'string' || data instanceof String) {
+        result.type = STRING_TYPE
+        result.content = new TextEncoder().encode(data)
+      } else {
+        result.content = new Uint8Array(data.buffer)
+        if (data instanceof Int8Array) {
+          result.type = INT_8_ARRAY_TYPE
+        } else if (data instanceof Uint8ClampedArray) {
+          result.type = U_INT_8_CLAMPED_ARRAY_TYPE
+        } else if (data instanceof Int16Array) {
+          result.type = INT_16_ARRAY_TYPE
+        } else if (data instanceof Uint16Array) {
+          result.type = U_INT_16_ARRAY_TYPE
+        } else if (data instanceof Int32Array) {
+          result.type = INT_32_ARRAY_TYPE
+        } else if (data instanceof Uint32Array) {
+          result.type = U_INT_32_ARRAY_TYPE
+        } else if (data instanceof Float32Array) {
+          result.type = FLOAT_32_ARRAY_TYPE
+        } else if (data instanceof Float64Array) {
+          result.type = FLOAT_64_ARRAY_TYPE
+        } else if (data instanceof DataView) {
+          result.type = DATA_VIEW_TYPE
+        } else {
+          throw new Error('Unknown data object')
+        }
       }
-      return 0
+      return result
+    }
+
+    getBuffer (wcId, peerId, msgId) {
+      let wcBuffer = buffers.get(wcId)
+      if (wcBuffer !== undefined) {
+        let peerBuffer = wcBuffer.get(peerId)
+        if (peerBuffer !== undefined) {
+          return peerBuffer.get(msgId)
+        }
+      }
+      return undefined
+    }
+
+    setBuffer (wcId, peerId, msgId, buffer) {
+      let wcBuffer = buffers.get(wcId)
+      if (wcBuffer === undefined) {
+        wcBuffer = new Map()
+        buffers.set(wcId, wcBuffer)
+      }
+      let peerBuffer = wcBuffer.get(peerId)
+      if (peerBuffer === undefined) {
+        peerBuffer = new Map()
+        wcBuffer.set(peerId, peerBuffer)
+      }
+      peerBuffer.set(msgId, buffer)
+    }
+  }
+
+  class Buffer {
+    constructor (fullDataSize, data, chunkNb, action) {
+      this.fullData = new Uint8Array(fullDataSize)
+      this.currentSize = 0
+      this.action = action
+      this.add(data, chunkNb)
+    }
+
+    add (data, chunkNb) {
+      let dataChunk = new Uint8Array(data)
+      let dataChunkSize = data.byteLength
+      this.currentSize += dataChunkSize - USER_MSG_OFFSET
+      let index = chunkNb * MAX_USER_MSG_SIZE
+      for (let i = USER_MSG_OFFSET; i < dataChunkSize; i++) {
+        this.fullData[index++] = dataChunk[i]
+      }
+      if (this.currentSize === this.fullData.byteLength) {
+        this.action(this.fullData.buffer)
+      }
     }
   }
 
@@ -1958,7 +2245,7 @@
    */
   const FULLY_CONNECTED = 'FullyConnectedService'
 
-  const MESSAGE_FORMATTER = 'MessageFormatterService'
+  const MESSAGE_FORMATTER = 'MessageBuilderService'
 
   const services = new Map()
 
@@ -1984,7 +2271,7 @@
         services.set(name, service)
         return service
       case MESSAGE_FORMATTER:
-        service = new MessageFormatter()
+        service = new MessageBuilder()
         services.set(name, service)
         return service
       default:
@@ -2037,31 +2324,9 @@
     }
   }
 
-  const formatter$1 = provide(MESSAGE_FORMATTER)
-
-  class Buffer {
-    constructor (totalByteLength, action) {
-      this.totalByteLength = totalByteLength
-      this.currentByteLength = 0
-      this.i8array = new Uint8Array(this.totalByteLength)
-      this.action = action
-    }
-
-    add (data, chunkNb) {
-      const maxSize = formatter$1.getMaxMsgByteLength()
-      let intU8Array = new Uint8Array(data)
-      this.currentByteLength += data.byteLength - USER_MSG_BYTE_OFFSET
-      let index = chunkNb * maxSize
-      for (let i = USER_MSG_BYTE_OFFSET; i < data.byteLength; i++) {
-        this.i8array[index++] = intU8Array[i]
-      }
-      if (this.currentByteLength === this.totalByteLength) {
-        this.action(this.i8array)
-      }
-    }
-  }
-
   const formatter = provide(MESSAGE_FORMATTER)
+
+  const MAX_ID = 4294967295
 
   /**
    * Constant used to build a message designated to API user.
@@ -2185,8 +2450,6 @@
        */
       this.myId = this.generateId()
 
-      this.buffers = new Map()
-
       this.onJoining = (id) => {}
       this.onMessage = (id, msg) => {}
       this.onLeaving = (id) => {}
@@ -2204,7 +2467,7 @@
      * @param  {string} data Message
      */
     send (data) {
-      formatter.splitUserMessage(data, USER_DATA, this.myId, null, (dataChunk) => {
+      formatter.handleUserMessage(data, this.myId, null, (dataChunk) => {
         this.manager.broadcast(this, dataChunk)
       })
     }
@@ -2216,7 +2479,7 @@
      * @param  {type} data Message
      */
     sendTo (id, data) {
-      formatter.splitUserMessage(data, USER_DATA, this.myId, id, (dataChunk) => {
+      formatter.handleUserMessage(data, this.myId, id, (dataChunk) => {
         this.manager.sendTo(id, this, dataChunk)
       })
     }
@@ -2358,48 +2621,14 @@
     }
 
     onChannelMessage (channel, data) {
-      let decoder = new TextDecoder()
-      let dataView = new DataView(data)
-      let code = dataView.getUint8(0)
-      if (code === USER_DATA) {
-        let totalMsgByteLength = dataView.getUint32(12)
-        let senderId = dataView.getUint32(2)
-        if (totalMsgByteLength > formatter.getMaxMsgByteLength()) {
-          let msgId = dataView.getUint32(10)
-          let msgMap
-          if (this.buffers.has(senderId)) {
-            msgMap = this.buffers.get(senderId)
-          } else {
-            msgMap = new Map()
-            this.buffers.set(senderId, msgMap)
-          }
-          let chunkNb = dataView.getUint16(16)
-          if (msgMap.has(msgId)) {
-            msgMap.get(msgId).add(dataView.buffer, chunkNb)
-          } else {
-            let buf = new Buffer(totalMsgByteLength, (i8array) => {
-              this.onMessage(senderId, decoder.decode(i8array))
-              msgMap.delete(msgId)
-            })
-            buf.add(dataView.buffer, chunkNb)
-            msgMap.set(msgId, buf)
-          }
-        } else {
-          let uInt8Array = new Uint8Array(data)
-          let str = decoder.decode(uInt8Array.subarray(USER_MSG_BYTE_OFFSET, uInt8Array.byteLength))
-          this.onMessage(senderId, str)
-        }
-        return
+      let header = formatter.readHeader(data)
+      if (header.code === USER_DATA) {
+        formatter.readUserMessage(this.id, header.senderId, data, (fullData) => {
+          this.onMessage(header.senderId, fullData)
+        })
       } else {
-        let msg = {}
-        let uInt8Array = new Uint8Array(data)
-        let str = decoder.decode(uInt8Array.subarray(1, uInt8Array.byteLength))
-        msg = JSON.parse(str)
-        let jp
-        switch (code) {
-          // case USER_DATA:
-          //   this.webChannel.onMessage(msg.id, msg.data)
-          //   break
+        let msg = formatter.readInternalMessage(data)
+        switch (header.code) {
           case LEAVE:
             this.onLeaving(msg.id)
             for (let c of this.channels) {
@@ -2419,7 +2648,7 @@
             this.topology = msg.manager
             this.myId = msg.id
             channel.peerId = msg.intermediaryId
-            jp = new JoiningPeer(this.myId, channel.peerId)
+            let jp = new JoiningPeer(this.myId, channel.peerId)
             jp.intermediaryChannel = channel
             this.addJoiningPeer(jp)
             break
@@ -2593,18 +2822,14 @@
     }
 
     generateId () {
-      const MAX = 16777215
       let id
       do {
-        id = Math.floor(Math.random() * MAX)
+        id = Math.ceil(Math.random() * MAX_ID)
         for (let c of this.channels) {
-          if (c.peerId === id) {
-            continue
-          }
+          if (id === c.peerId) continue
         }
-        if (this.myId === id) {
-          continue
-        }
+        if (this.hasJoiningPeer(id)) continue
+        if (id === this.myId) continue
         break
       } while (true)
       return id

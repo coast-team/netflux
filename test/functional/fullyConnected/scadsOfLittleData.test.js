@@ -1,5 +1,5 @@
-import {signaling, MSG_NUMBER} from '../../../config'
-import {WebChannel} from '../../../../src/WebChannel'
+import {signaling, MSG_NUMBER, randString} from '../../config'
+import {WebChannel} from '../../../src/WebChannel'
 
 it('Should send/receive STRING messages', (done) => {
   let msg1Array = []
@@ -49,16 +49,3 @@ it('Should send/receive STRING messages', (done) => {
       .catch(done.fail)
   }).catch(done.fail)
 }, 15000)
-
-function randString () {
-  const MIN_LENGTH = 0
-  const DELTA_LENGTH = 3700 // To limit message  size to less than 16kb (4 bytes per character)
-  const MASK = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-  let result = ''
-  const length = MIN_LENGTH + Math.round(Math.random() * DELTA_LENGTH)
-
-  for (let i = 0; i < length; i++) {
-    result += MASK[Math.round(Math.random() * (MASK.length - 1))]
-  }
-  return result
-}

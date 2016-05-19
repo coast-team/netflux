@@ -1,16 +1,16 @@
 import provide, {FULLY_CONNECTED, WEBRTC, MESSAGE_FORMATTER} from './serviceProvider'
-import {USER_MSG_BYTE_OFFSET} from './service/MessageFormatterService'
 import Channel from './Channel'
-import Buffer from './Buffer'
 import JoiningPeer from './JoiningPeer'
 
 const formatter = provide(MESSAGE_FORMATTER)
+
+const MAX_ID = 4294967295
 
 /**
  * Constant used to build a message designated to API user.
  * @type {int}
  */
-const USER_DATA = 0
+export const USER_DATA = 0
 
 /**
  * Constant used to build a message designated to a specific service.
@@ -128,8 +128,6 @@ class WebChannel {
      */
     this.myId = this.generateId()
 
-    this.buffers = new Map()
-
     this.onJoining = (id) => {}
     this.onMessage = (id, msg) => {}
     this.onLeaving = (id) => {}
@@ -147,7 +145,7 @@ class WebChannel {
    * @param  {string} data Message
    */
   send (data) {
-    formatter.splitUserMessage(data, USER_DATA, this.myId, null, (dataChunk) => {
+    formatter.handleUserMessage(data, this.myId, null, (dataChunk) => {
       this.manager.broadcast(this, dataChunk)
     })
   }
@@ -159,7 +157,7 @@ class WebChannel {
    * @param  {type} data Message
    */
   sendTo (id, data) {
-    formatter.splitUserMessage(data, USER_DATA, this.myId, id, (dataChunk) => {
+    formatter.handleUserMessage(data, this.myId, id, (dataChunk) => {
       this.manager.sendTo(id, this, dataChunk)
     })
   }
@@ -301,48 +299,14 @@ class WebChannel {
   }
 
   onChannelMessage (channel, data) {
-    let decoder = new TextDecoder()
-    let dataView = new DataView(data)
-    let code = dataView.getUint8(0)
-    if (code === USER_DATA) {
-      let totalMsgByteLength = dataView.getUint32(12)
-      let senderId = dataView.getUint32(2)
-      if (totalMsgByteLength > formatter.getMaxMsgByteLength()) {
-        let msgId = dataView.getUint32(10)
-        let msgMap
-        if (this.buffers.has(senderId)) {
-          msgMap = this.buffers.get(senderId)
-        } else {
-          msgMap = new Map()
-          this.buffers.set(senderId, msgMap)
-        }
-        let chunkNb = dataView.getUint16(16)
-        if (msgMap.has(msgId)) {
-          msgMap.get(msgId).add(dataView.buffer, chunkNb)
-        } else {
-          let buf = new Buffer(totalMsgByteLength, (i8array) => {
-            this.onMessage(senderId, decoder.decode(i8array))
-            msgMap.delete(msgId)
-          })
-          buf.add(dataView.buffer, chunkNb)
-          msgMap.set(msgId, buf)
-        }
-      } else {
-        let uInt8Array = new Uint8Array(data)
-        let str = decoder.decode(uInt8Array.subarray(USER_MSG_BYTE_OFFSET, uInt8Array.byteLength))
-        this.onMessage(senderId, str)
-      }
-      return
+    let header = formatter.readHeader(data)
+    if (header.code === USER_DATA) {
+      formatter.readUserMessage(this.id, header.senderId, data, (fullData) => {
+        this.onMessage(header.senderId, fullData)
+      })
     } else {
-      let msg = {}
-      let uInt8Array = new Uint8Array(data)
-      let str = decoder.decode(uInt8Array.subarray(1, uInt8Array.byteLength))
-      msg = JSON.parse(str)
-      let jp
-      switch (code) {
-        // case USER_DATA:
-        //   this.webChannel.onMessage(msg.id, msg.data)
-        //   break
+      let msg = formatter.readInternalMessage(data)
+      switch (header.code) {
         case LEAVE:
           this.onLeaving(msg.id)
           for (let c of this.channels) {
@@ -362,7 +326,7 @@ class WebChannel {
           this.topology = msg.manager
           this.myId = msg.id
           channel.peerId = msg.intermediaryId
-          jp = new JoiningPeer(this.myId, channel.peerId)
+          let jp = new JoiningPeer(this.myId, channel.peerId)
           jp.intermediaryChannel = channel
           this.addJoiningPeer(jp)
           break
@@ -536,18 +500,14 @@ class WebChannel {
   }
 
   generateId () {
-    const MAX = 16777215
     let id
     do {
-      id = Math.floor(Math.random() * MAX)
+      id = Math.ceil(Math.random() * MAX_ID)
       for (let c of this.channels) {
-        if (c.peerId === id) {
-          continue
-        }
+        if (id === c.peerId) continue
       }
-      if (this.myId === id) {
-        continue
-      }
+      if (this.hasJoiningPeer(id)) continue
+      if (id === this.myId) continue
       break
     } while (true)
     return id
