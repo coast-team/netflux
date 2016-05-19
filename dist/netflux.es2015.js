@@ -2457,8 +2457,7 @@
 
     /** Leave `WebChannel`. No longer can receive and send messages to the group. */
     leave () {
-      let msg = formatter.msg(LEAVE, {id: this.myId})
-      this.manager.broadcast(this, msg)
+      this.manager.broadcast(this, formatter.msg(LEAVE, {id: this.myId}))
     }
 
     /**

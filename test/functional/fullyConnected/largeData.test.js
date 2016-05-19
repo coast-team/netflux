@@ -73,7 +73,7 @@ describe('Should send & receive ArrayBuffer between 2 peers -> ', () => {
     }
     startTime = Date.now()
     wc2.send(bigBuffer)
-  })
+  }, 10000)
 })
 
 const smallStr =

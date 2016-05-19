@@ -259,8 +259,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  _createClass(WebChannel, [{
 	    key: 'leave',
 	    value: function leave() {
-	      var msg = formatter.msg(LEAVE, { id: this.myId });
-	      this.manager.broadcast(this, msg);
+	      this.manager.broadcast(this, formatter.msg(LEAVE, { id: this.myId }));
 	    }
 
 	    /**
