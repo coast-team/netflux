@@ -259,7 +259,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	  _createClass(WebChannel, [{
 	    key: 'leave',
 	    value: function leave() {
-	      this.manager.broadcast(this, formatter.msg(LEAVE, { id: this.myId }));
+	      if (this.channels.size !== 0) {
+	        this.manager.broadcast(this, formatter.msg(LEAVE, { id: this.myId }));
+	        this.topology = this.settings.topology;
+	        this.channels.forEach(function (c) {
+	          c.close();
+	        });
+	        this.channels.clear();
+	      }
 	    }
 
 	    /**
@@ -273,9 +280,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    value: function send(data) {
 	      var _this = this;
 
-	      formatter.handleUserMessage(data, this.myId, null, function (dataChunk) {
-	        _this.manager.broadcast(_this, dataChunk);
-	      });
+	      if (this.channels.size !== 0) {
+	        formatter.handleUserMessage(data, this.myId, null, function (dataChunk) {
+	          _this.manager.broadcast(_this, dataChunk);
+	        });
+	      }
 	    }
 
 	    /**
@@ -290,9 +299,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    value: function sendTo(id, data) {
 	      var _this2 = this;
 
-	      formatter.handleUserMessage(data, this.myId, id, function (dataChunk) {
-	        _this2.manager.sendTo(id, _this2, dataChunk);
-	      });
+	      if (this.channels.size !== 0) {
+	        formatter.handleUserMessage(data, this.myId, id, function (dataChunk) {
+	          _this2.manager.sendTo(id, _this2, dataChunk);
+	        });
+	      }
 	    }
 
 	    /**
@@ -487,7 +498,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var msg = formatter.readInternalMessage(data);
 	        switch (header.code) {
 	          case LEAVE:
-	            this.onLeaving(msg.id);
 	            var _iteratorNormalCompletion2 = true;
 	            var _didIteratorError2 = false;
 	            var _iteratorError2 = undefined;
@@ -497,6 +507,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var c = _step2.value;
 
 	                if (c.peerId === msg.id) {
+	                  c.close();
 	                  this.channels.delete(c);
 	                }
 	              }
@@ -515,6 +526,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	              }
 	            }
 
+	            this.onLeaving(msg.id);
 	            break;
 	          case SERVICE_DATA:
 	            if (this.myId === msg.recepient) {
@@ -779,7 +791,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'generateKey',
 	    value: function generateKey() {
-	      var MIN_LENGTH = 2;
+	      var MIN_LENGTH = 5;
 	      var DELTA_LENGTH = 0;
 	      var MASK = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 	      var result = '';

@@ -135,7 +135,14 @@ class WebChannel {
 
   /** Leave `WebChannel`. No longer can receive and send messages to the group. */
   leave () {
-    this.manager.broadcast(this, formatter.msg(LEAVE, {id: this.myId}))
+    if (this.channels.size !== 0) {
+      this.manager.broadcast(this, formatter.msg(LEAVE, {id: this.myId}))
+      this.topology = this.settings.topology
+      this.channels.forEach((c) => {
+        c.close()
+      })
+      this.channels.clear()
+    }
   }
 
   /**
@@ -144,9 +151,11 @@ class WebChannel {
    * @param  {string} data Message
    */
   send (data) {
-    formatter.handleUserMessage(data, this.myId, null, (dataChunk) => {
-      this.manager.broadcast(this, dataChunk)
-    })
+    if (this.channels.size !== 0) {
+      formatter.handleUserMessage(data, this.myId, null, (dataChunk) => {
+        this.manager.broadcast(this, dataChunk)
+      })
+    }
   }
 
   /**
@@ -156,9 +165,11 @@ class WebChannel {
    * @param  {type} data Message
    */
   sendTo (id, data) {
-    formatter.handleUserMessage(data, this.myId, id, (dataChunk) => {
-      this.manager.sendTo(id, this, dataChunk)
-    })
+    if (this.channels.size !== 0) {
+      formatter.handleUserMessage(data, this.myId, id, (dataChunk) => {
+        this.manager.sendTo(id, this, dataChunk)
+      })
+    }
   }
 
   /**
@@ -307,12 +318,13 @@ class WebChannel {
       let msg = formatter.readInternalMessage(data)
       switch (header.code) {
         case LEAVE:
-          this.onLeaving(msg.id)
           for (let c of this.channels) {
             if (c.peerId === msg.id) {
+              c.close()
               this.channels.delete(c)
             }
           }
+          this.onLeaving(msg.id)
           break
         case SERVICE_DATA:
           if (this.myId === msg.recepient) {
@@ -486,7 +498,7 @@ class WebChannel {
    * @return {type}  description
    */
   generateKey () {
-    const MIN_LENGTH = 2
+    const MIN_LENGTH = 5
     const DELTA_LENGTH = 0
     const MASK = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
     let result = ''
