@@ -1,10 +1,10 @@
 import {signaling} from '../../config'
 import {WebChannel} from '../../../src/WebChannel'
 
-describe('2 peers -> ', () => {
+describe('3 peers -> ', () => {
   let wc1, wc2, wc3
 
-  it('3 peers should exchange messages', (done) => {
+  it('Should exchange messages', (done) => {
     const msg1 = 'And I am #1'
     const msg2 = 'Hi, I am #2'
     const msg3 = 'Hello, here is #3'

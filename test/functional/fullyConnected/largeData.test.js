@@ -1,79 +1,82 @@
 import {signaling, randArrayBuffer} from '../../config'
 import {WebChannel} from '../../../src/WebChannel'
 
-let wc1, wc2
 
 const MULTIPLIER_FOR_128KB_STRING = 64
 
-beforeAll((done) => {
-  // Peer #1
-  wc1 = new WebChannel({signaling})
-  wc1.openForJoining().then((data) => {
-    // Peer #2
-    wc2 = new WebChannel({signaling})
-    wc2.join(data.key).then(() => {
-      done()
+describe('Large data -> ', () => {
+  let wc1, wc2
+
+  beforeAll((done) => {
+    // Peer #1
+    wc1 = new WebChannel({signaling})
+    wc1.openForJoining().then((data) => {
+      // Peer #2
+      wc2 = new WebChannel({signaling})
+      wc2.join(data.key).then(() => {
+        done()
+      })
+        .catch(done.fail)
+    }).catch(done.fail)
+  })
+
+  describe('Should send & receive String between 2 peers -> ', () => {
+    it('~17kb', (done) => {
+      wc1.onMessage = (id, msg) => {
+        expect(msg).toEqual(smallStr)
+        done()
+      }
+      wc2.send(smallStr)
     })
-      .catch(done.fail)
-  }).catch(done.fail)
-})
 
-describe('Should send & receive String between 2 peers -> ', () => {
-  it('~17kb', (done) => {
-    wc1.onMessage = (id, msg) => {
-      expect(msg).toEqual(smallStr)
-      done()
-    }
-    wc2.send(smallStr)
+    it('~8192kb', (done) => {
+      let fullStr = ''
+      let startTime
+      for (let i = 0; i < MULTIPLIER_FOR_128KB_STRING; i++) {
+        fullStr += bigStr
+      }
+      wc1.onMessage = (id, msg) => {
+        console.info('~' + (128 * MULTIPLIER_FOR_128KB_STRING) + 'kb String sent between 2 peers in: ' + (Date.now() - startTime) + ' ms')
+        expect(msg).toEqual(fullStr)
+        done()
+      }
+      startTime = Date.now()
+      wc2.send(fullStr)
+    })
   })
 
-  it('~8192kb', (done) => {
-    let fullStr = ''
-    let startTime
-    for (let i = 0; i < MULTIPLIER_FOR_128KB_STRING; i++) {
-      fullStr += bigStr
-    }
-    wc1.onMessage = (id, msg) => {
-      console.info('~' + (128 * MULTIPLIER_FOR_128KB_STRING) + 'kb String sent between 2 peers in: ' + (Date.now() - startTime) + ' ms')
-      expect(msg).toEqual(fullStr)
-      done()
-    }
-    startTime = Date.now()
-    wc2.send(fullStr)
+  function isEqual (buffer1, buffer2) {
+    let array1 = new Uint8Array(buffer1)
+    let array2 = new Uint8Array(buffer2)
+
+    return array1.every((value, index) => {
+      return value === array2[index]
+    })
+  }
+
+  describe('Should send & receive ArrayBuffer between 2 peers -> ', () => {
+    let smallBuffer = randArrayBuffer(10000, 10000)
+    let bigBuffer = randArrayBuffer(8388608, 8400000)
+
+    it('between 16kb & 20kb', (done) => {
+      wc1.onMessage = (id, msg) => {
+        expect(isEqual(msg, smallBuffer)).toBeTruthy()
+        done()
+      }
+      wc2.send(smallBuffer)
+    }, 10000)
+
+    it('~8192kb', (done) => {
+      let startTime
+      wc1.onMessage = (id, msg) => {
+        console.info(bigBuffer.byteLength + ' bytes sent between 2 peers in: ' + (Date.now() - startTime) + ' ms')
+        expect(isEqual(msg, bigBuffer)).toBeTruthy()
+        done()
+      }
+      startTime = Date.now()
+      wc2.send(bigBuffer)
+    }, 10000)
   })
-})
-
-function isEqual (buffer1, buffer2) {
-  let array1 = new Uint8Array(buffer1)
-  let array2 = new Uint8Array(buffer2)
-
-  return array1.every((value, index) => {
-    return value === array2[index]
-  })
-}
-
-describe('Should send & receive ArrayBuffer between 2 peers -> ', () => {
-  let smallBuffer = randArrayBuffer(10000, 10000)
-  let bigBuffer = randArrayBuffer(8388608, 8400000)
-
-  it('between 16kb & 20kb', (done) => {
-    wc1.onMessage = (id, msg) => {
-      expect(isEqual(msg, smallBuffer)).toBeTruthy()
-      done()
-    }
-    wc2.send(smallBuffer)
-  }, 10000)
-
-  it('~8192kb', (done) => {
-    let startTime
-    wc1.onMessage = (id, msg) => {
-      console.info(bigBuffer.byteLength + ' bytes sent between 2 peers in: ' + (Date.now() - startTime) + ' ms')
-      expect(isEqual(msg, bigBuffer)).toBeTruthy()
-      done()
-    }
-    startTime = Date.now()
-    wc2.send(bigBuffer)
-  }, 10000)
 })
 
 const smallStr =

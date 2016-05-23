@@ -1,6 +1,5 @@
 import * as service from '../service'
 import provide from '../../serviceProvider'
-import JoiningPeer from '../../JoiningPeer'
 
 /**
  * Web Channel Manager module is a submodule of {@link module:service} and the
@@ -23,9 +22,9 @@ import JoiningPeer from '../../JoiningPeer'
  */
 const CONNECT_WITH = 1
 const CONNECT_WITH_FEEDBACK = 2
+const THIS_CHANNEL_TO_JOINING_PEER = 3
+
 const CONNECT_WITH_TIMEOUT = 5000
-const ADD_INTERMEDIARY_CHANNEL = 4
-const THIS_CHANNEL_TO_JOINING_PEER = 5
 
 /**
  * Each Web Channel Manager Service must implement this interface.
@@ -38,27 +37,40 @@ class Interface extends service.Interface {
     let cBuilder = provide(wc.settings.connector, wc.settings)
     switch (msg.code) {
       case CONNECT_WITH:
-        msg.peers = this.reUseIntermediaryChannelIfPossible(wc, msg.jpId, msg.peers)
+        if (wc.isJoining()) {
+          msg.joiningPeers.forEach((jp) => {
+            wc.addJoiningPeer(jp.jpId, jp.intermediaryId)
+            msg.peerIds.push(jp.jpId)
+          })
+        }
+        // console.log('Me ' + wc.myId + ' should connect to ----> ', msg.peerIds)
+        msg.peerIds = this.reUseIntermediaryChannelIfPossible(wc, msg.jpId, msg.peerIds)
         let failed = []
-        if (msg.peers.length === 0) {
+        if (msg.peerIds.length === 0) {
           wc.sendSrvMsg(this.name, msg.sender,
             {code: CONNECT_WITH_FEEDBACK, id: wc.myId, failed}
           )
         } else {
+          // console.log('Me ' + wc.myId + ' should connect to ----> ' + msg.peerIds + '--reUseIntermediaryChannelIfPossible')
           let counter = 0
-          msg.peers.forEach((id) => {
+          msg.peerIds.forEach((id) => {
             cBuilder.connectMeTo(wc, id)
               .then((channel) => {
                 return wc.initChannel(channel, true, id)
               })
               .then((channel) => {
-                wc.getJoiningPeer(msg.jpId).toAddList(channel)
-                wc.sendSrvMsg(this.name, wc.myId,
-                  {code: THIS_CHANNEL_TO_JOINING_PEER, id: msg.jpId, toBeAdded: true},
+                // console.log('PEER ' + wc.myId + ' CONNECTED TO ' + channel.peerId)
+                counter++
+                let jp = wc.getJoiningPeer(msg.jpId)
+                jp.toAddList(channel)
+                wc.sendSrvMsg(this.name, channel.peerId,
+                  {code: THIS_CHANNEL_TO_JOINING_PEER,
+                  jpId: msg.jpId,
+                  intermediaryId: jp.intermediaryId,
+                  toBeAdded: true},
                   channel
                 )
-                counter++
-                if (counter === msg.peers.length) {
+                if (counter === msg.peerIds.length) {
                   wc.sendSrvMsg(this.name, msg.sender,
                     {code: CONNECT_WITH_FEEDBACK, id: wc.myId, failed}
                   )
@@ -67,7 +79,7 @@ class Interface extends service.Interface {
               .catch((reason) => {
                 counter++
                 failed.push({id, reason})
-                if (counter === msg.peers.length) {
+                if (counter === msg.peerIds.length) {
                   wc.sendSrvMsg(this.name, msg.sender,
                     {code: CONNECT_WITH_FEEDBACK, id: wc.myId, failed}
                   )
@@ -79,21 +91,17 @@ class Interface extends service.Interface {
       case CONNECT_WITH_FEEDBACK:
         wc.connectWithRequests.get(msg.id)(true)
         break
-      case ADD_INTERMEDIARY_CHANNEL:
-        let jp = wc.getJoiningPeer(msg.jpId)
-        jp.toAddList(jp.intermediaryChannel)
-        break
       case THIS_CHANNEL_TO_JOINING_PEER:
-        if (wc.hasJoiningPeer(msg.id)) {
-          jp = wc.getJoiningPeer(msg.id)
+        let jp
+        if (wc.hasJoiningPeer(msg.jpId)) {
+          jp = wc.getJoiningPeer(msg.jpId)
         } else {
-          jp = new JoiningPeer(msg.id)
-          wc.addJoiningPeer(jp)
+          jp = wc.addJoiningPeer(msg.jpId, msg.intermediaryId)
         }
         if (msg.toBeAdded) {
-          jp.toAddList(this)
+          jp.toAddList(channel)
         } else {
-          jp.toRemoveList(this)
+          jp.toRemoveList(channel)
         }
         break
     }
@@ -108,13 +116,21 @@ class Interface extends service.Interface {
    * @param  {WebChannel} wc - The Web Channel.
    * @param  {string} id - Id of the peer who will receive this request.
    * @param  {string} jpId - Joining peer id (it is possible that `id`=`jpId`).
-   * @param  {string[]} peers - Ids of peers with whom `id` peer must established
+   * @param  {string[]} peerIds - Ids of peers with whom `id` peer must established
 *              connections.
    * @return {Promise} - Is resolved once some of the connections could be established. It is rejected when an error occured.
    */
-  connectWith (wc, id, jpId, peers) {
+  connectWith (wc, id, jpId, peerIds, jpIds) {
+    let joiningPeers = []
+    jpIds.forEach((id) => {
+      let jp = wc.getJoiningPeer(id)
+      joiningPeers.push({
+        jpId: jp.id,
+        intermediaryId: jp.intermediaryId
+      })
+    })
     wc.sendSrvMsg(this.name, id,
-      {code: CONNECT_WITH, jpId: jpId, sender: wc.myId, peers}
+      {code: CONNECT_WITH, jpId: jpId, sender: wc.myId, peerIds, joiningPeers}
     )
     return new Promise((resolve, reject) => {
       wc.connectWithRequests.set(id, (isDone) => {
@@ -126,7 +142,7 @@ class Interface extends service.Interface {
       })
       setTimeout(() => {
         reject('CONNECT_WITH_TIMEOUT')
-      }, this.calculateConnectWithTimeout(peers.length))
+      }, this.calculateConnectWithTimeout(peerIds.length))
     })
   }
 
@@ -138,29 +154,31 @@ class Interface extends service.Interface {
     }
   }
 
-  reUseIntermediaryChannelIfPossible (webChannel, jpId, ids) {
-    let idToRemove = null
-    let jp
-    if (webChannel.isJoining()) {
-      jp = webChannel.getJoiningPeer(jpId)
-      if (ids.indexOf(jp.intermediaryId) !== -1) {
-        idToRemove = jp.intermediaryId
-      }
-    } else {
-      if (ids.indexOf(jpId) !== -1) {
-        jp = webChannel.getJoiningPeer(jpId)
-        if (jp.intermediaryChannel !== null) {
-          idToRemove = jpId
+  reUseIntermediaryChannelIfPossible (wc, jpId, ids) {
+    let intermidiaryChannel
+    let peerIndex
+    for (let jp of wc.getJoiningPeers()) {
+      if (jp.intermediaryChannel !== null) {
+        peerIndex = ids.indexOf(jp.intermediaryId)
+        if (peerIndex === -1) {
+          peerIndex = ids.indexOf(jp.id)
+        }
+        if (peerIndex !== -1) {
+          intermidiaryChannel = jp.intermediaryChannel
+          break
         }
       }
     }
-    if (idToRemove !== null) {
-      jp.toAddList(jp.intermediaryChannel)
-      webChannel.sendSrvMsg(this.name, idToRemove, {
-        code: ADD_INTERMEDIARY_CHANNEL, jpId
-      })
-      ids.splice(ids.indexOf(idToRemove), 1)
-    }
+    let jp = wc.getJoiningPeer(jpId)
+    jp.toAddList(intermidiaryChannel)
+    wc.sendSrvMsg(this.name, jp.intermediaryId,
+      {code: THIS_CHANNEL_TO_JOINING_PEER,
+        jpId,
+        intermediaryId: jp.intermediaryId,
+        toBeAdded: true},
+      intermidiaryChannel
+    )
+    ids.splice(peerIndex, 1)
     return ids
   }
 

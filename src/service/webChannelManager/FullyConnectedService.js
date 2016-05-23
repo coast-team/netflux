@@ -7,18 +7,17 @@ import * as wcManager from './webChannelManager'
  * @extends module:webChannelManager~Interface
  */
 class FullyConnectedService extends wcManager.Interface {
-  add (ch) {
-    let wCh = ch.webChannel
-    let peers = [wCh.myId]
-    wCh.channels.forEach((ch) => {
-      peers[peers.length] = ch.peerId
-    })
-    wCh.joiningPeers.forEach((jp) => {
-      if (ch.peerId !== jp.id) {
-        peers[peers.length] = jp.id
+  add (channel) {
+    let wc = channel.webChannel
+    let peerIds = new Set([wc.myId])
+    let jpIds = new Set()
+    wc.channels.forEach((c) => peerIds.add(c.peerId))
+    wc.getJoiningPeers().forEach((jp) => {
+      if (channel.peerId !== jp.id && !peerIds.has(jp.id)) {
+        jpIds.add(jp.id)
       }
     })
-    return this.connectWith(wCh, ch.peerId, ch.peerId, peers)
+    return this.connectWith(wc, channel.peerId, channel.peerId, [...peerIds], [...jpIds])
   }
 
   broadcast (webChannel, data) {

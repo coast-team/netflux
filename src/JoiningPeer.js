@@ -6,7 +6,7 @@
  * regardless of success, these instances will be deleted.
  */
 class JoiningPeer {
-  constructor (id, intermediaryId) {
+  constructor (id, intermediaryId, intermediaryChannel) {
     /**
      * The joining peer id.
      *
@@ -29,7 +29,7 @@ class JoiningPeer {
      *
      * @type {Channel}
      */
-    this.intermediaryChannel = null
+    this.intermediaryChannel = intermediaryChannel
 
     /**
      * This attribute is proper to each peer. Array of channels which will be

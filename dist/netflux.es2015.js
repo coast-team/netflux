@@ -1188,77 +1188,6 @@
   }
 
   /**
-   * This class represents a temporary state of a peer, while he is about to join
-   * the web channel. During the joining process every peer in the web channel
-   * and the joining peer have an instance of this class with the same `id` and
-   * `intermediaryId` attribute values. After the joining process has been finished
-   * regardless of success, these instances will be deleted.
-   */
-  class JoiningPeer {
-    constructor (id, intermediaryId) {
-      /**
-       * The joining peer id.
-       *
-       * @type {string}
-       */
-      this.id = id
-
-      /**
-       * The id of the peer who invited the joining peer to the web channel. It is
-       * a member of the web channel and called an intermediary peer between the
-       * joining peer and the web channel. The same value for all instances.
-       *
-       * @type {string}
-       */
-      this.intermediaryId = intermediaryId
-
-      /**
-       * The channel between the joining peer and intermediary peer. It is null
-       * for every peer, but the joining and intermediary peers.
-       *
-       * @type {Channel}
-       */
-      this.intermediaryChannel = null
-
-      /**
-       * This attribute is proper to each peer. Array of channels which will be
-       * added to the current peer once the joining peer become the member of the
-       * web channel.
-       *
-       * @type {Array[Channel]}
-       */
-      this.channelsToAdd = []
-
-      /**
-       * This attribute is proper to each peer. Array of channels which will be
-       * closed with the current peer once the joining peer become the member of the
-       * web channel.
-       *
-       * @type {Array[Channel]}
-       */
-      this.channelsToRemove = []
-    }
-
-    /**
-     * Add channel to `channelsToAdd` array.
-     *
-     * @param  {Channel} channel - Channel to add.
-     */
-    toAddList (channel) {
-      this.channelsToAdd[this.channelsToAdd.length] = channel
-    }
-
-    /**
-     * Add channel to `channelsToRemove` array
-     *
-     * @param  {Channel} channel - Channel to add.
-     */
-    toRemoveList (channel) {
-      this.channelsToAdd[this.channelsToAdd.length] = channel
-    }
-  }
-
-  /**
    * Web Channel Manager module is a submodule of {@link module:service} and the
    * main component of any Web Channel. It is responsible to preserve Web Channel
    * structure intact (i.e. all peers have the same vision of the Web Channel).
@@ -1279,9 +1208,9 @@
    */
   const CONNECT_WITH = 1
   const CONNECT_WITH_FEEDBACK = 2
+  const THIS_CHANNEL_TO_JOINING_PEER = 3
+
   const CONNECT_WITH_TIMEOUT = 5000
-  const ADD_INTERMEDIARY_CHANNEL = 4
-  const THIS_CHANNEL_TO_JOINING_PEER = 5
 
   /**
    * Each Web Channel Manager Service must implement this interface.
@@ -1294,27 +1223,40 @@
       let cBuilder = provide(wc.settings.connector, wc.settings)
       switch (msg.code) {
         case CONNECT_WITH:
-          msg.peers = this.reUseIntermediaryChannelIfPossible(wc, msg.jpId, msg.peers)
+          if (wc.isJoining()) {
+            msg.joiningPeers.forEach((jp) => {
+              wc.addJoiningPeer(jp.jpId, jp.intermediaryId)
+              msg.peerIds.push(jp.jpId)
+            })
+          }
+          // console.log('Me ' + wc.myId + ' should connect to ----> ', msg.peerIds)
+          msg.peerIds = this.reUseIntermediaryChannelIfPossible(wc, msg.jpId, msg.peerIds)
           let failed = []
-          if (msg.peers.length === 0) {
+          if (msg.peerIds.length === 0) {
             wc.sendSrvMsg(this.name, msg.sender,
               {code: CONNECT_WITH_FEEDBACK, id: wc.myId, failed}
             )
           } else {
+            // console.log('Me ' + wc.myId + ' should connect to ----> ' + msg.peerIds + '--reUseIntermediaryChannelIfPossible')
             let counter = 0
-            msg.peers.forEach((id) => {
+            msg.peerIds.forEach((id) => {
               cBuilder.connectMeTo(wc, id)
                 .then((channel) => {
                   return wc.initChannel(channel, true, id)
                 })
                 .then((channel) => {
-                  wc.getJoiningPeer(msg.jpId).toAddList(channel)
-                  wc.sendSrvMsg(this.name, wc.myId,
-                    {code: THIS_CHANNEL_TO_JOINING_PEER, id: msg.jpId, toBeAdded: true},
+                  // console.log('PEER ' + wc.myId + ' CONNECTED TO ' + channel.peerId)
+                  counter++
+                  let jp = wc.getJoiningPeer(msg.jpId)
+                  jp.toAddList(channel)
+                  wc.sendSrvMsg(this.name, channel.peerId,
+                    {code: THIS_CHANNEL_TO_JOINING_PEER,
+                    jpId: msg.jpId,
+                    intermediaryId: jp.intermediaryId,
+                    toBeAdded: true},
                     channel
                   )
-                  counter++
-                  if (counter === msg.peers.length) {
+                  if (counter === msg.peerIds.length) {
                     wc.sendSrvMsg(this.name, msg.sender,
                       {code: CONNECT_WITH_FEEDBACK, id: wc.myId, failed}
                     )
@@ -1323,7 +1265,7 @@
                 .catch((reason) => {
                   counter++
                   failed.push({id, reason})
-                  if (counter === msg.peers.length) {
+                  if (counter === msg.peerIds.length) {
                     wc.sendSrvMsg(this.name, msg.sender,
                       {code: CONNECT_WITH_FEEDBACK, id: wc.myId, failed}
                     )
@@ -1335,21 +1277,17 @@
         case CONNECT_WITH_FEEDBACK:
           wc.connectWithRequests.get(msg.id)(true)
           break
-        case ADD_INTERMEDIARY_CHANNEL:
-          let jp = wc.getJoiningPeer(msg.jpId)
-          jp.toAddList(jp.intermediaryChannel)
-          break
         case THIS_CHANNEL_TO_JOINING_PEER:
-          if (wc.hasJoiningPeer(msg.id)) {
-            jp = wc.getJoiningPeer(msg.id)
+          let jp
+          if (wc.hasJoiningPeer(msg.jpId)) {
+            jp = wc.getJoiningPeer(msg.jpId)
           } else {
-            jp = new JoiningPeer(msg.id)
-            wc.addJoiningPeer(jp)
+            jp = wc.addJoiningPeer(msg.jpId, msg.intermediaryId)
           }
           if (msg.toBeAdded) {
-            jp.toAddList(this)
+            jp.toAddList(channel)
           } else {
-            jp.toRemoveList(this)
+            jp.toRemoveList(channel)
           }
           break
       }
@@ -1364,13 +1302,21 @@
      * @param  {WebChannel} wc - The Web Channel.
      * @param  {string} id - Id of the peer who will receive this request.
      * @param  {string} jpId - Joining peer id (it is possible that `id`=`jpId`).
-     * @param  {string[]} peers - Ids of peers with whom `id` peer must established
+     * @param  {string[]} peerIds - Ids of peers with whom `id` peer must established
   *              connections.
      * @return {Promise} - Is resolved once some of the connections could be established. It is rejected when an error occured.
      */
-    connectWith (wc, id, jpId, peers) {
+    connectWith (wc, id, jpId, peerIds, jpIds) {
+      let joiningPeers = []
+      jpIds.forEach((id) => {
+        let jp = wc.getJoiningPeer(id)
+        joiningPeers.push({
+          jpId: jp.id,
+          intermediaryId: jp.intermediaryId
+        })
+      })
       wc.sendSrvMsg(this.name, id,
-        {code: CONNECT_WITH, jpId: jpId, sender: wc.myId, peers}
+        {code: CONNECT_WITH, jpId: jpId, sender: wc.myId, peerIds, joiningPeers}
       )
       return new Promise((resolve, reject) => {
         wc.connectWithRequests.set(id, (isDone) => {
@@ -1382,7 +1328,7 @@
         })
         setTimeout(() => {
           reject('CONNECT_WITH_TIMEOUT')
-        }, this.calculateConnectWithTimeout(peers.length))
+        }, this.calculateConnectWithTimeout(peerIds.length))
       })
     }
 
@@ -1394,29 +1340,31 @@
       }
     }
 
-    reUseIntermediaryChannelIfPossible (webChannel, jpId, ids) {
-      let idToRemove = null
-      let jp
-      if (webChannel.isJoining()) {
-        jp = webChannel.getJoiningPeer(jpId)
-        if (ids.indexOf(jp.intermediaryId) !== -1) {
-          idToRemove = jp.intermediaryId
-        }
-      } else {
-        if (ids.indexOf(jpId) !== -1) {
-          jp = webChannel.getJoiningPeer(jpId)
-          if (jp.intermediaryChannel !== null) {
-            idToRemove = jpId
+    reUseIntermediaryChannelIfPossible (wc, jpId, ids) {
+      let intermidiaryChannel
+      let peerIndex
+      for (let jp of wc.getJoiningPeers()) {
+        if (jp.intermediaryChannel !== null) {
+          peerIndex = ids.indexOf(jp.intermediaryId)
+          if (peerIndex === -1) {
+            peerIndex = ids.indexOf(jp.id)
+          }
+          if (peerIndex !== -1) {
+            intermidiaryChannel = jp.intermediaryChannel
+            break
           }
         }
       }
-      if (idToRemove !== null) {
-        jp.toAddList(jp.intermediaryChannel)
-        webChannel.sendSrvMsg(this.name, idToRemove, {
-          code: ADD_INTERMEDIARY_CHANNEL, jpId
-        })
-        ids.splice(ids.indexOf(idToRemove), 1)
-      }
+      let jp = wc.getJoiningPeer(jpId)
+      jp.toAddList(intermidiaryChannel)
+      wc.sendSrvMsg(this.name, jp.intermediaryId,
+        {code: THIS_CHANNEL_TO_JOINING_PEER,
+          jpId,
+          intermediaryId: jp.intermediaryId,
+          toBeAdded: true},
+        intermidiaryChannel
+      )
+      ids.splice(peerIndex, 1)
       return ids
     }
 
@@ -1474,18 +1422,17 @@
    * @extends module:webChannelManager~Interface
    */
   class FullyConnectedService extends Interface {
-    add (ch) {
-      let wCh = ch.webChannel
-      let peers = [wCh.myId]
-      wCh.channels.forEach((ch) => {
-        peers[peers.length] = ch.peerId
-      })
-      wCh.joiningPeers.forEach((jp) => {
-        if (ch.peerId !== jp.id) {
-          peers[peers.length] = jp.id
+    add (channel) {
+      let wc = channel.webChannel
+      let peerIds = new Set([wc.myId])
+      let jpIds = new Set()
+      wc.channels.forEach((c) => peerIds.add(c.peerId))
+      wc.getJoiningPeers().forEach((jp) => {
+        if (channel.peerId !== jp.id && !peerIds.has(jp.id)) {
+          jpIds.add(jp.id)
         }
       })
-      return this.connectWith(wCh, ch.peerId, ch.peerId, peers)
+      return this.connectWith(wc, channel.peerId, channel.peerId, [...peerIds], [...jpIds])
     }
 
     broadcast (webChannel, data) {
@@ -2324,9 +2271,80 @@
     }
   }
 
+  /**
+   * This class represents a temporary state of a peer, while he is about to join
+   * the web channel. During the joining process every peer in the web channel
+   * and the joining peer have an instance of this class with the same `id` and
+   * `intermediaryId` attribute values. After the joining process has been finished
+   * regardless of success, these instances will be deleted.
+   */
+  class JoiningPeer {
+    constructor (id, intermediaryId, intermediaryChannel) {
+      /**
+       * The joining peer id.
+       *
+       * @type {string}
+       */
+      this.id = id
+
+      /**
+       * The id of the peer who invited the joining peer to the web channel. It is
+       * a member of the web channel and called an intermediary peer between the
+       * joining peer and the web channel. The same value for all instances.
+       *
+       * @type {string}
+       */
+      this.intermediaryId = intermediaryId
+
+      /**
+       * The channel between the joining peer and intermediary peer. It is null
+       * for every peer, but the joining and intermediary peers.
+       *
+       * @type {Channel}
+       */
+      this.intermediaryChannel = intermediaryChannel
+
+      /**
+       * This attribute is proper to each peer. Array of channels which will be
+       * added to the current peer once the joining peer become the member of the
+       * web channel.
+       *
+       * @type {Array[Channel]}
+       */
+      this.channelsToAdd = []
+
+      /**
+       * This attribute is proper to each peer. Array of channels which will be
+       * closed with the current peer once the joining peer become the member of the
+       * web channel.
+       *
+       * @type {Array[Channel]}
+       */
+      this.channelsToRemove = []
+    }
+
+    /**
+     * Add channel to `channelsToAdd` array.
+     *
+     * @param  {Channel} channel - Channel to add.
+     */
+    toAddList (channel) {
+      this.channelsToAdd[this.channelsToAdd.length] = channel
+    }
+
+    /**
+     * Add channel to `channelsToRemove` array
+     *
+     * @param  {Channel} channel - Channel to add.
+     */
+    toRemoveList (channel) {
+      this.channelsToAdd[this.channelsToAdd.length] = channel
+    }
+  }
+
   const formatter = provide(MESSAGE_FORMATTER)
 
-  const MAX_ID = 4294967295
+  const MAX_ID = 100 // 4294967295
 
   /**
    * Constant used to build a message designated to API user.
@@ -2508,16 +2526,15 @@
       return cBuilder.open(this.generateKey(), (channel) => {
         this.initChannel(channel, false)
           .then((channel) => {
-            let jp = new JoiningPeer(channel.peerId, this.myId)
-            jp.intermediaryChannel = channel
-            this.joiningPeers.add(jp)
+            // console.log('INITIATOR is adding: ' + channel.peerId)
+            let jp = this.addJoiningPeer(channel.peerId, this.myId, channel)
+            this.manager.broadcast(this, formatter.msg(
+              JOIN_NEW_MEMBER, {id: channel.peerId, intermediaryId: this.myId})
+            )
             channel.send(formatter.msg(JOIN_INIT, {
               manager: this.settings.topology,
               id: channel.peerId,
               intermediaryId: this.myId})
-            )
-            this.manager.broadcast(this, formatter.msg(
-              JOIN_NEW_MEMBER, {id: channel.peerId, intermediaryId: this.myId})
             )
             this.manager.add(channel)
               .then(() => channel.send(formatter.msg(JOIN_FINILIZE)))
@@ -2659,22 +2676,22 @@
             this.topology = msg.manager
             this.myId = msg.id
             channel.peerId = msg.intermediaryId
-            let jp = new JoiningPeer(this.myId, channel.peerId)
-            jp.intermediaryChannel = channel
-            this.addJoiningPeer(jp)
+            this.addJoiningPeer(msg.id, msg.intermediaryId, channel)
             break
           case JOIN_NEW_MEMBER:
-            this.addJoiningPeer(new JoiningPeer(msg.id, msg.intermediaryId))
+            this.addJoiningPeer(msg.id, msg.intermediaryId)
             break
           case REMOVE_NEW_MEMBER:
             this.removeJoiningPeer(msg.id)
             break
           case JOIN_FINILIZE:
             this.joinSuccess(this.myId)
+            // console.log(this.myId + ' JOINED SUCCESSFULLY')
             this.manager.broadcast(this, formatter.msg(JOIN_SUCCESS, {id: this.myId}))
             this.onJoin()
             break
           case JOIN_SUCCESS:
+            // console.log(this.myId + ' JOIN_SUCCESS from ' + msg.id)
             this.joinSuccess(msg.id)
             this.onJoining(msg.id)
             break
@@ -2735,8 +2752,9 @@
       let jp = this.getJoiningPeer(id)
       jp.channelsToAdd.forEach((c) => {
         this.channels.add(c)
-        this.joiningPeers.delete(jp)
       })
+      // TODO: handle channels which should be closed & removed
+      //this.joiningPeers.delete(jp)
     }
 
     /**
@@ -2747,12 +2765,19 @@
      * @return {type}    description
      */
     getJoiningPeer (id) {
+      // if (this.myId !== id) {
+      //   console.log('Me ' + this.myId + ' is looking for ' + id)
+      // }
       for (let jp of this.joiningPeers) {
         if (jp.id === id) {
           return jp
         }
       }
-      throw new Error('Joining peer not found!')
+      throw new Error('Peer ' + this.myId + ' could not find the joining peer ' + id)
+    }
+
+    getJoiningPeers () {
+      return this.joiningPeers
     }
 
     /**
@@ -2762,13 +2787,17 @@
      * @param  {type} jp description
      * @return {type}    description
      */
-    addJoiningPeer (jp) {
-      if (this.hasJoiningPeer(jp.id)) {
+    addJoiningPeer (peerId, intermediaryId, intermediaryChannel = null) {
+      // if (this.myId !== peerId) {
+      //   console.log('Me ' + this.myId + ' is adding: ' + peerId + ' where intermediaryId is ' + intermediaryId + ' and the channel is ' + (intermediaryChannel !== null))
+      // }
+      let jp = new JoiningPeer(peerId, intermediaryId, intermediaryChannel)
+      if (this.hasJoiningPeer(peerId)) {
         throw new Error('Joining peer already exists!')
       }
       this.joiningPeers.add(jp)
+      return jp
     }
-
     /**
      * removeJoiningPeer - description
      *

@@ -186,16 +186,15 @@ class WebChannel {
     return cBuilder.open(this.generateKey(), (channel) => {
       this.initChannel(channel, false)
         .then((channel) => {
-          let jp = new JoiningPeer(channel.peerId, this.myId)
-          jp.intermediaryChannel = channel
-          this.joiningPeers.add(jp)
+          // console.log('INITIATOR is adding: ' + channel.peerId)
+          let jp = this.addJoiningPeer(channel.peerId, this.myId, channel)
+          this.manager.broadcast(this, formatter.msg(
+            JOIN_NEW_MEMBER, {id: channel.peerId, intermediaryId: this.myId})
+          )
           channel.send(formatter.msg(JOIN_INIT, {
             manager: this.settings.topology,
             id: channel.peerId,
             intermediaryId: this.myId})
-          )
-          this.manager.broadcast(this, formatter.msg(
-            JOIN_NEW_MEMBER, {id: channel.peerId, intermediaryId: this.myId})
           )
           this.manager.add(channel)
             .then(() => channel.send(formatter.msg(JOIN_FINILIZE)))
@@ -337,22 +336,22 @@ class WebChannel {
           this.topology = msg.manager
           this.myId = msg.id
           channel.peerId = msg.intermediaryId
-          let jp = new JoiningPeer(this.myId, channel.peerId)
-          jp.intermediaryChannel = channel
-          this.addJoiningPeer(jp)
+          this.addJoiningPeer(msg.id, msg.intermediaryId, channel)
           break
         case JOIN_NEW_MEMBER:
-          this.addJoiningPeer(new JoiningPeer(msg.id, msg.intermediaryId))
+          this.addJoiningPeer(msg.id, msg.intermediaryId)
           break
         case REMOVE_NEW_MEMBER:
           this.removeJoiningPeer(msg.id)
           break
         case JOIN_FINILIZE:
           this.joinSuccess(this.myId)
+          // console.log(this.myId + ' JOINED SUCCESSFULLY')
           this.manager.broadcast(this, formatter.msg(JOIN_SUCCESS, {id: this.myId}))
           this.onJoin()
           break
         case JOIN_SUCCESS:
+          // console.log(this.myId + ' JOIN_SUCCESS from ' + msg.id)
           this.joinSuccess(msg.id)
           this.onJoining(msg.id)
           break
@@ -413,8 +412,9 @@ class WebChannel {
     let jp = this.getJoiningPeer(id)
     jp.channelsToAdd.forEach((c) => {
       this.channels.add(c)
-      this.joiningPeers.delete(jp)
     })
+    // TODO: handle channels which should be closed & removed
+    //this.joiningPeers.delete(jp)
   }
 
   /**
@@ -425,12 +425,19 @@ class WebChannel {
    * @return {type}    description
    */
   getJoiningPeer (id) {
+    // if (this.myId !== id) {
+    //   console.log('Me ' + this.myId + ' is looking for ' + id)
+    // }
     for (let jp of this.joiningPeers) {
       if (jp.id === id) {
         return jp
       }
     }
-    throw new Error('Joining peer not found!')
+    throw new Error('Peer ' + this.myId + ' could not find the joining peer ' + id)
+  }
+
+  getJoiningPeers () {
+    return this.joiningPeers
   }
 
   /**
@@ -440,13 +447,17 @@ class WebChannel {
    * @param  {type} jp description
    * @return {type}    description
    */
-  addJoiningPeer (jp) {
-    if (this.hasJoiningPeer(jp.id)) {
+  addJoiningPeer (peerId, intermediaryId, intermediaryChannel = null) {
+    // if (this.myId !== peerId) {
+    //   console.log('Me ' + this.myId + ' is adding: ' + peerId + ' where intermediaryId is ' + intermediaryId + ' and the channel is ' + (intermediaryChannel !== null))
+    // }
+    let jp = new JoiningPeer(peerId, intermediaryId, intermediaryChannel)
+    if (this.hasJoiningPeer(peerId)) {
       throw new Error('Joining peer already exists!')
     }
     this.joiningPeers.add(jp)
+    return jp
   }
-
   /**
    * removeJoiningPeer - description
    *
