@@ -230,6 +230,7 @@ class WebChannel {
   join (key, options = {}) {
     let settings = Object.assign({}, this.settings, options)
 
+    console.log('CONNECTOR webchannel: ' + this.settings.connector + ' --- ' + settings.connector)
     let cBuilder = provide(settings.connector, settings)
     return new Promise((resolve, reject) => {
       this.onJoin = () => resolve(this)

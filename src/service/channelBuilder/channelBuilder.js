@@ -31,6 +31,11 @@ import * as service from '../service'
  * @extends module:service~Interface
  */
 class Interface extends service.Interface {
+
+  constructor () {
+    super()
+  }
+
   /**
    * Enables other clients to establish a connection with you.
    *

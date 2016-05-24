@@ -27,6 +27,11 @@ const DATA_VIEW_TYPE = 12
 const buffers = new Map()
 
 class MessageBuilderService extends service.Interface {
+
+  constructor () {
+    super()
+  }
+
   handleUserMessage (data, senderId, recipientId, action) {
     let workingData = this.userDataToType(data)
     let dataUint8Array = workingData.content

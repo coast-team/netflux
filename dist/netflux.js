@@ -1186,6 +1186,10 @@
    */
   class Interface extends Interface$1 {
 
+    constructor () {
+      super()
+    }
+
     onMessage (wc, channel, msg) {
       let cBuilder = provide(wc.settings.connector, wc.settings)
       switch (msg.code) {
@@ -1389,6 +1393,11 @@
    * @extends module:webChannelManager~Interface
    */
   class FullyConnectedService extends Interface {
+
+    constructor () {
+      super()
+    }
+
     add (channel) {
       let wc = channel.webChannel
       let peerIds = new Set([wc.myId])
@@ -1452,6 +1461,11 @@
    * @extends module:service~Interface
    */
   class Interface$2 extends Interface$1 {
+
+    constructor () {
+      super()
+    }
+
     /**
      * Enables other clients to establish a connection with you.
      *
@@ -1922,6 +1936,11 @@
   const buffers = new Map()
 
   class MessageBuilderService extends Interface$1 {
+
+    constructor () {
+      super()
+    }
+
     handleUserMessage (data, senderId, recipientId, action) {
       let workingData = this.userDataToType(data)
       let dataUint8Array = workingData.content
@@ -2172,7 +2191,7 @@
    * @param  {Object} [options] - Any options that the service accepts.
    * @return {module:service~Interface} - Service instance.
    */
-  function provide (name, options = {}) {
+  let provide = function (name, options = {}) {
     if (services.has(name)) {
       return services.get(name)
     }
@@ -2537,6 +2556,7 @@
     join (key, options = {}) {
       let settings = Object.assign({}, this.settings, options)
 
+      console.log('CONNECTOR webchannel: ' + this.settings.connector + ' --- ' + settings.connector)
       let cBuilder = provide(settings.connector, settings)
       return new Promise((resolve, reject) => {
         this.onJoin = () => resolve(this)

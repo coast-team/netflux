@@ -33,7 +33,7 @@ const services = new Map()
  * @param  {Object} [options] - Any options that the service accepts.
  * @return {module:service~Interface} - Service instance.
  */
-function provide (name, options = {}) {
+let provide = function (name, options = {}) {
   if (services.has(name)) {
     return services.get(name)
   }

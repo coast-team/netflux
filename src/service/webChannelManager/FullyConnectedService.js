@@ -7,6 +7,11 @@ import * as wcManager from './webChannelManager'
  * @extends module:webChannelManager~Interface
  */
 class FullyConnectedService extends wcManager.Interface {
+
+  constructor () {
+    super()
+  }
+
   add (channel) {
     let wc = channel.webChannel
     let peerIds = new Set([wc.myId])

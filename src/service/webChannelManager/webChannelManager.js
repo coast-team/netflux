@@ -33,6 +33,10 @@ const CONNECT_WITH_TIMEOUT = 5000
  */
 class Interface extends service.Interface {
 
+  constructor () {
+    super()
+  }
+
   onMessage (wc, channel, msg) {
     let cBuilder = provide(wc.settings.connector, wc.settings)
     switch (msg.code) {

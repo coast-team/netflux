@@ -83,7 +83,7 @@ describe('2 peers -> ', () => {
       wc2.onLeaving = (id) => {
         expect(id).toBe(wc1.myId)
         wc1.send(message)
-        wc1.sendTo(message)
+        wc1.sendTo(wc2.myId, message)
         done()
       }
 
@@ -91,7 +91,7 @@ describe('2 peers -> ', () => {
         wc2.join(data.key).catch(done.fail)
       }).catch(done.fail)
       wc2.send(message)
-      wc2.sendTo(message)
+      wc2.sendTo(wc1.myId, message)
     })
 
     it('guest is leaving', (done) => {
@@ -102,7 +102,7 @@ describe('2 peers -> ', () => {
       wc1.onLeaving = (id) => {
         expect(id).toBe(wc2.myId)
         wc1.send(message)
-        wc1.sendTo(message)
+        wc1.sendTo(wc2.myId, message)
         done()
       }
       let wc2 = new WebChannel({signaling})
@@ -114,7 +114,7 @@ describe('2 peers -> ', () => {
           .catch(done.fail)
       }).catch(done.fail)
       wc2.send(message)
-      wc2.sendTo(message)
+      wc2.sendTo(wc1.myId, message)
     })
   })
 })
