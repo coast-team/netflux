@@ -115,7 +115,7 @@ describe('Should send & receive (between 2 peers) -> ', () => {
     wc2.send(original)
   })
 
-  it('Float32Array', (done) => {
+  xit('Float32Array', (done) => {
     let original = new Float32Array(buffer)
     wc1.onMessage = (id, msg) => {
       expect(msg instanceof Float32Array).toBeTruthy()
@@ -125,7 +125,7 @@ describe('Should send & receive (between 2 peers) -> ', () => {
     wc2.send(original)
   })
 
-  xit('Float64Array', (done) => {
+  it('Float64Array', (done) => {
     let original = new Float64Array(buffer)
     wc1.onMessage = (id, msg) => {
       expect(msg instanceof Float64Array).toBeTruthy()

@@ -1,14 +1,12 @@
-let nf = require('../../dist/netflux.es2015')
-
 describe('Browser (global variable)', () => {
-  it('nf must be defined as a global variable', () => {
-    expect(nf).toBeDefined()
+  it('netflux must be defined as a global variable', () => {
+    expect(window.netflux).toBeDefined()
   })
   it('WebChannel must be defined', () => {
-    expect(nf.WebChannel).toBeDefined()
+    expect(netflux.WebChannel).toBeDefined()
   })
   it('service name constants must be defined', () => {
-    expect(nf.WEBRTC).toBeDefined()
-    expect(nf.FULLY_CONNECTED).toBeDefined()
+    expect(netflux.WEBRTC).toBeDefined()
+    expect(netflux.FULLY_CONNECTED).toBeDefined()
   })
 })

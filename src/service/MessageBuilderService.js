@@ -1,14 +1,13 @@
 import * as service from './service'
-import {USER_DATA} from '../WebChannel'
 
 // Max message size sent on Channel: 16kb
-export const MAX_MSG_SIZE = 16384
+const MAX_MSG_SIZE = 16384
 
-export const MAX_USER_MSG_SIZE = 16366
+const MAX_USER_MSG_SIZE = 16366
 
-export const USER_MSG_OFFSET = 18
+const USER_MSG_OFFSET = 18
 
-export const HEADER_OFFSET = 9
+const HEADER_OFFSET = 9
 
 const MAX_MSG_ID_SIZE = 65535
 
@@ -27,12 +26,12 @@ const DATA_VIEW_TYPE = 12
 
 const buffers = new Map()
 
-class MessageBuilder extends service.Interface {
+class MessageBuilderService extends service.Interface {
   handleUserMessage (data, senderId, recipientId, action) {
     let workingData = this.userDataToType(data)
     let dataUint8Array = workingData.content
     if (dataUint8Array.byteLength <= MAX_USER_MSG_SIZE) {
-      let dataView = this.writeHeader(USER_DATA, senderId, recipientId,
+      let dataView = this.writeHeader(1, senderId, recipientId,
         dataUint8Array.byteLength + USER_MSG_OFFSET
       )
       dataView.setUint32(HEADER_OFFSET, dataUint8Array.byteLength)
@@ -49,7 +48,7 @@ class MessageBuilder extends service.Interface {
           dataUint8Array.byteLength - MAX_USER_MSG_SIZE * chunkNb
         )
         let dataView = this.writeHeader(
-          USER_DATA,
+          1,
           senderId,
           recipientId,
           USER_MSG_OFFSET + currentChunkMsgByteLength
@@ -246,4 +245,4 @@ class Buffer {
   }
 }
 
-export default MessageBuilder
+export {MessageBuilderService, MAX_MSG_SIZE, MAX_USER_MSG_SIZE, USER_MSG_OFFSET, HEADER_OFFSET}

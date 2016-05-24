@@ -1,5 +1,5 @@
 import * as service from '../service'
-import provide from '../../serviceProvider'
+import {provide} from '../../serviceProvider'
 
 /**
  * Web Channel Manager module is a submodule of {@link module:service} and the

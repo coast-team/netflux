@@ -1,15 +1,15 @@
 var webpack = require('webpack');
 module.exports = [
   {
-    entry: {
-        'netflux': './src/index.js',
-        'netflux.min': './src/index.js'
-    },
+    entry: [
+        'babel-polyfill',
+        './src/index.js'
+    ],
     output: {
       libraryTarget: "umd",
-      library: "nf",
+      library: "netflux",
       path: './dist',
-      filename: '[name].js'
+      filename: 'netflux.es5.js'
     },
     module: {
       loaders: [
@@ -18,17 +18,10 @@ module.exports = [
           loader: 'babel',
           exclude: /node_modules/,
           query: {
-            cacheDirectory: true,
             presets: ['es2015']
           }
         }
       ]
-    },
-    plugins: [
-      new webpack.optimize.UglifyJsPlugin({
-        include: /\.min\.js$/,
-        minimize: true
-      })
-    ]
+    }
   }
 ];

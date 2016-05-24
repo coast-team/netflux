@@ -304,7 +304,7 @@ class WebRTCService extends channelBuilder.Interface {
         .catch((reason) => { console.error('Setting answer error: ' + reason) })
     } else if (Reflect.has(msg, 'candidate')) {
       connections.addIceCandidate(msg.sender, this.createIceCandidate(msg.candidate))
-        .catch((reason) => { console.error('Setting candidate error: ' + reason) })
+        .catch((reason) => { console.error('Setting candidate error: ', reason) })
     }
   }
 

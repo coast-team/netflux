@@ -1,7 +1,7 @@
 {
   "ignore": [
     "karma*.js",
-    "config.js",
+    "webpack.*.js",
     "dist/*"
   ]
 }

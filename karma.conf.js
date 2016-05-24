@@ -10,27 +10,14 @@ module.exports = function(config) {
 
     // frameworks to use
     // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
-    frameworks: ['jspm', 'jasmine'],
-
-
-    // jspm parameters
-    jspm: {
-      config: 'config.js',
-      loadFiles: ['test/**/*test.js'],
-      serveFiles: ['src/**/*.js', 'dist/netflux.es2015.js', 'test/config.js']
-    },
-    proxies: {
-      '/src/': '/base/src/',
-      '/dist/': '/base/dist/',
-      '/test/': '/base/test/',
-      '/jspm_packages/': '/base/jspm_packages/',
-      '/node_modules/': '/base/node_modules/'
-    },
+    frameworks: ['jasmine'],
 
 
     // list of files / patterns to load in the browser
     files: [
-      'node_modules/webrtc-adapter/out/adapter_no_edge_no_global.js'
+      'node_modules/webrtc-adapter/out/adapter_no_edge_no_global.js',
+      'dist/netflux.js',
+      'test/**/*.test.js'
     ],
 
 
@@ -42,15 +29,23 @@ module.exports = function(config) {
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
     preprocessors: {
-      'src/**/*.js': ['babel', 'sourcemap', 'coverage']
+      'test/**/*.test.js': ['rollup']
     },
-    babelPreprocessor: {
-      options: {
-        presets: ['es2015'],
-        sourceMap: 'inline'
+
+
+    rollupPreprocessor: {
+      rollup: {
+        plugins: [
+          require('rollup-plugin-istanbul')({
+            exclude: [
+              'test/**/*.js',
+              'test/*.js'
+            ]
+          })
+        ]
       },
-      sourceFileName: function (file) {
-        return file.originalPath;
+      bundle: {
+        format: 'iife'
       }
     },
 
@@ -59,12 +54,13 @@ module.exports = function(config) {
     // possible values: 'dots', 'progress'
     // available reporters: https://npmjs.org/browse/keyword/karma-reporter
     reporters: ['progress', 'coverage'],
+
+
     coverageReporter: {
-      instrumenters: {isparta: require('isparta')},
-      instrumenter: {'src/*.js': 'isparta'},
+      dir : 'coverage',
       reporters: [
         {type: 'html'},
-        {type: 'text'},
+        {type: 'text-summary'},
         {type: 'lcovonly', subdir: '.'}
       ]
     },

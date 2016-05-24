@@ -1,4 +1,4 @@
-import provide, {FULLY_CONNECTED, WEBRTC, MESSAGE_FORMATTER} from './serviceProvider'
+import {provide, FULLY_CONNECTED, WEBRTC, MESSAGE_FORMATTER} from './serviceProvider'
 import Channel from './Channel'
 import JoiningPeer from './JoiningPeer'
 
@@ -10,52 +10,52 @@ const MAX_ID = 4294967295
  * Constant used to build a message designated to API user.
  * @type {int}
  */
-export const USER_DATA = 0
+const USER_DATA = 1
 
 /**
  * Constant used to build a message designated to a specific service.
  * @type {int}
  */
-const SERVICE_DATA = 1
+const SERVICE_DATA = 2
 /**
  * Constant used to build a message that a user has left Web Channel.
  * @type {int}
  */
-const LEAVE = 2
+const LEAVE = 3
 /**
  * Constant used to build a message to be sent to a newly joining peer.
  * @type {int}
  */
-const JOIN_INIT = 3
+const JOIN_INIT = 4
 /**
  * Constant used to build a message to be sent to all peers in Web Channel to
  * notify them about a new peer who is about to join the Web Channel.
  * @type {int}
  */
-const JOIN_NEW_MEMBER = 4
+const JOIN_NEW_MEMBER = 5
 /**
  * Constant used to build a message to be sent to all peers in Web Channel to
  * notify them that the new peer who should join the Web Channel, refuse to join.
  * @type {int}
  */
-const REMOVE_NEW_MEMBER = 5
+const REMOVE_NEW_MEMBER = 6
 /**
  * Constant used to build a message to be sent to a newly joining peer that he
  * has can now succesfully join Web Channel.
  * @type {int}
  */
-const JOIN_FINILIZE = 6
+const JOIN_FINILIZE = 7
 /**
  * Constant used to build a message to be sent by the newly joining peer to all
  * peers in Web Channel to notify them that he has succesfully joined the Web
  * Channel.
  * @type {int}
  */
-const JOIN_SUCCESS = 7
+const JOIN_SUCCESS = 8
 /**
  * @type {int}
  */
-const INIT_CHANNEL_PONG = 9
+const INIT_CHANNEL_PONG = 10
 
 /**
  * This class is an API starting point. It represents a group of collaborators
@@ -536,4 +536,4 @@ class WebChannel {
   }
 }
 
-export {WebChannel}
+export {WebChannel, USER_DATA}

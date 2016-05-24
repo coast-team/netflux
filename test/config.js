@@ -1,7 +1,7 @@
-export const signaling = 'ws://localhost:8000'
-export const MSG_NUMBER = 100
+const signaling = 'ws://localhost:8000'
+const MSG_NUMBER = 100
 
-export function randString () {
+function randString () {
   const MIN_LENGTH = 1
   const MAX_LENGTH = 3700 // To limit message  size to less than 16kb (4 bytes per character)
   const MASK = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
@@ -14,7 +14,7 @@ export function randString () {
   return result
 }
 
-export function randArrayBuffer (minLength = 8, maxLength = 16000) {
+function randArrayBuffer (minLength = 8, maxLength = 16000) {
   const length = minLength + 8 * Math.ceil(Math.random() * ((maxLength - minLength) / 8))
   let buffer = new ArrayBuffer(length)
   let bufferUint8 = new Uint8Array(buffer)
@@ -24,3 +24,5 @@ export function randArrayBuffer (minLength = 8, maxLength = 16000) {
   }
   return buffer
 }
+
+export {signaling, MSG_NUMBER, randString, randArrayBuffer}
