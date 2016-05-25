@@ -1,8 +1,8 @@
-import {provide, FULLY_CONNECTED, WEBRTC, MESSAGE_FORMATTER} from './serviceProvider'
+import {provide, FULLY_CONNECTED, WEBRTC, MESSAGE_BUILDER} from './serviceProvider'
 import Channel from './Channel'
 import JoiningPeer from './JoiningPeer'
 
-const formatter = provide(MESSAGE_FORMATTER)
+const formatter = provide(MESSAGE_BUILDER)
 
 const MAX_ID = 4294967295
 
@@ -168,7 +168,7 @@ class WebChannel {
     if (this.channels.size !== 0) {
       formatter.handleUserMessage(data, this.myId, id, (dataChunk) => {
         this.manager.sendTo(id, this, dataChunk)
-      })
+      }, false)
     }
   }
 
@@ -311,8 +311,8 @@ class WebChannel {
   onChannelMessage (channel, data) {
     let header = formatter.readHeader(data)
     if (header.code === USER_DATA) {
-      formatter.readUserMessage(this.id, header.senderId, data, (fullData) => {
-        this.onMessage(header.senderId, fullData)
+      formatter.readUserMessage(this.id, header.senderId, data, (fullData, isBroadcast) => {
+        this.onMessage(header.senderId, fullData, isBroadcast)
       })
     } else {
       let msg = formatter.readInternalMessage(data)
@@ -415,7 +415,7 @@ class WebChannel {
       this.channels.add(c)
     })
     // TODO: handle channels which should be closed & removed
-    //this.joiningPeers.delete(jp)
+    // this.joiningPeers.delete(jp)
   }
 
   /**
@@ -536,5 +536,4 @@ class WebChannel {
     return id
   }
 }
-
 export {WebChannel, USER_DATA}

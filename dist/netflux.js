@@ -1912,9 +1912,9 @@
     }
   }
 
-  const MAX_USER_MSG_SIZE = 16366
+  const MAX_USER_MSG_SIZE = 16365
 
-  const USER_MSG_OFFSET = 18
+  const USER_MSG_OFFSET = 19
 
   const HEADER_OFFSET = 9
 
@@ -1941,7 +1941,7 @@
       super()
     }
 
-    handleUserMessage (data, senderId, recipientId, action) {
+    handleUserMessage (data, senderId, recipientId, action, isBroadcast = true) {
       let workingData = this.userDataToType(data)
       let dataUint8Array = workingData.content
       if (dataUint8Array.byteLength <= MAX_USER_MSG_SIZE) {
@@ -1950,6 +1950,7 @@
         )
         dataView.setUint32(HEADER_OFFSET, dataUint8Array.byteLength)
         dataView.setUint8(13, workingData.type)
+        dataView.setUint8(14, isBroadcast ? 1 : 0)
         let resultUint8Array = new Uint8Array(dataView.buffer)
         resultUint8Array.set(dataUint8Array, USER_MSG_OFFSET)
         action(resultUint8Array.buffer)
@@ -1969,8 +1970,9 @@
           )
           dataView.setUint32(9, dataUint8Array.byteLength)
           dataView.setUint8(13, workingData.type)
-          dataView.setUint16(14, msgId)
-          dataView.setUint16(16, chunkNb)
+          dataView.setUint8(14, isBroadcast ? 1 : 0)
+          dataView.setUint16(15, msgId)
+          dataView.setUint16(17, chunkNb)
           let resultUint8Array = new Uint8Array(dataView.buffer)
           let j = USER_MSG_OFFSET
           let startIndex = MAX_USER_MSG_SIZE * chunkNb
@@ -1996,14 +1998,15 @@
       let dataView = new DataView(data)
       let msgSize = dataView.getUint32(HEADER_OFFSET)
       let dataType = dataView.getUint8(13)
+      let isBroadcast = dataView.getUint8(14)
       if (msgSize > MAX_USER_MSG_SIZE) {
-        let msgId = dataView.getUint16(14)
-        let chunk = dataView.getUint16(16)
+        let msgId = dataView.getUint16(15)
+        let chunk = dataView.getUint16(17)
         let buffer = this.getBuffer(wcId, senderId, msgId)
         if (buffer === undefined) {
           this.setBuffer(wcId, senderId, msgId,
             new Buffer(msgSize, data, chunk, (fullData) => {
-              action(this.extractUserData(fullData, dataType))
+              action(this.extractUserData(fullData, dataType), isBroadcast)
             })
           )
         } else {
@@ -2016,7 +2019,7 @@
         for (let i in userData) {
           userData[i] = dataArray[j++]
         }
-        action(this.extractUserData(userData.buffer, dataType))
+        action(this.extractUserData(userData.buffer, dataType), isBroadcast)
       }
     }
 
@@ -2178,7 +2181,7 @@
    */
   const FULLY_CONNECTED = 'FullyConnectedService'
 
-  const MESSAGE_FORMATTER = 'MessageBuilderService'
+  const MESSAGE_BUILDER = 'MessageBuilderService'
 
   const services = new Map()
 
@@ -2203,7 +2206,7 @@
         service = new FullyConnectedService()
         services.set(name, service)
         return service
-      case MESSAGE_FORMATTER:
+      case MESSAGE_BUILDER:
         service = new MessageBuilderService()
         services.set(name, service)
         return service
@@ -2328,7 +2331,7 @@
     }
   }
 
-  const formatter = provide(MESSAGE_FORMATTER)
+  const formatter = provide(MESSAGE_BUILDER)
 
   const MAX_ID = 4294967295
 
@@ -2494,7 +2497,7 @@
       if (this.channels.size !== 0) {
         formatter.handleUserMessage(data, this.myId, id, (dataChunk) => {
           this.manager.sendTo(id, this, dataChunk)
-        })
+        }, false)
       }
     }
 
@@ -2637,8 +2640,8 @@
     onChannelMessage (channel, data) {
       let header = formatter.readHeader(data)
       if (header.code === USER_DATA) {
-        formatter.readUserMessage(this.id, header.senderId, data, (fullData) => {
-          this.onMessage(header.senderId, fullData)
+        formatter.readUserMessage(this.id, header.senderId, data, (fullData, isBroadcast) => {
+          this.onMessage(header.senderId, fullData, isBroadcast)
         })
       } else {
         let msg = formatter.readInternalMessage(data)
@@ -2741,7 +2744,7 @@
         this.channels.add(c)
       })
       // TODO: handle channels which should be closed & removed
-      //this.joiningPeers.delete(jp)
+      // this.joiningPeers.delete(jp)
     }
 
     /**

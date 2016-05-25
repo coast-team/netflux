@@ -20,7 +20,7 @@ const WEBRTC = 'WebRTCService'
  */
 const FULLY_CONNECTED = 'FullyConnectedService'
 
-const MESSAGE_FORMATTER = 'MessageBuilderService'
+const MESSAGE_BUILDER = 'MessageBuilderService'
 
 const services = new Map()
 
@@ -45,7 +45,7 @@ let provide = function (name, options = {}) {
       service = new FullyConnectedService()
       services.set(name, service)
       return service
-    case MESSAGE_FORMATTER:
+    case MESSAGE_BUILDER:
       service = new MessageBuilderService()
       services.set(name, service)
       return service
@@ -54,4 +54,4 @@ let provide = function (name, options = {}) {
   }
 }
 
-export {WEBRTC, FULLY_CONNECTED, MESSAGE_FORMATTER, provide}
+export {WEBRTC, FULLY_CONNECTED, MESSAGE_BUILDER, provide}

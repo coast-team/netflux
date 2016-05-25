@@ -3,9 +3,9 @@ import * as service from './service'
 // Max message size sent on Channel: 16kb
 const MAX_MSG_SIZE = 16384
 
-const MAX_USER_MSG_SIZE = 16366
+const MAX_USER_MSG_SIZE = 16365
 
-const USER_MSG_OFFSET = 18
+const USER_MSG_OFFSET = 19
 
 const HEADER_OFFSET = 9
 
@@ -32,7 +32,7 @@ class MessageBuilderService extends service.Interface {
     super()
   }
 
-  handleUserMessage (data, senderId, recipientId, action) {
+  handleUserMessage (data, senderId, recipientId, action, isBroadcast = true) {
     let workingData = this.userDataToType(data)
     let dataUint8Array = workingData.content
     if (dataUint8Array.byteLength <= MAX_USER_MSG_SIZE) {
@@ -41,6 +41,7 @@ class MessageBuilderService extends service.Interface {
       )
       dataView.setUint32(HEADER_OFFSET, dataUint8Array.byteLength)
       dataView.setUint8(13, workingData.type)
+      dataView.setUint8(14, isBroadcast ? 1 : 0)
       let resultUint8Array = new Uint8Array(dataView.buffer)
       resultUint8Array.set(dataUint8Array, USER_MSG_OFFSET)
       action(resultUint8Array.buffer)
@@ -60,8 +61,9 @@ class MessageBuilderService extends service.Interface {
         )
         dataView.setUint32(9, dataUint8Array.byteLength)
         dataView.setUint8(13, workingData.type)
-        dataView.setUint16(14, msgId)
-        dataView.setUint16(16, chunkNb)
+        dataView.setUint8(14, isBroadcast ? 1 : 0)
+        dataView.setUint16(15, msgId)
+        dataView.setUint16(17, chunkNb)
         let resultUint8Array = new Uint8Array(dataView.buffer)
         let j = USER_MSG_OFFSET
         let startIndex = MAX_USER_MSG_SIZE * chunkNb
@@ -87,14 +89,15 @@ class MessageBuilderService extends service.Interface {
     let dataView = new DataView(data)
     let msgSize = dataView.getUint32(HEADER_OFFSET)
     let dataType = dataView.getUint8(13)
+    let isBroadcast = dataView.getUint8(14)
     if (msgSize > MAX_USER_MSG_SIZE) {
-      let msgId = dataView.getUint16(14)
-      let chunk = dataView.getUint16(16)
+      let msgId = dataView.getUint16(15)
+      let chunk = dataView.getUint16(17)
       let buffer = this.getBuffer(wcId, senderId, msgId)
       if (buffer === undefined) {
         this.setBuffer(wcId, senderId, msgId,
           new Buffer(msgSize, data, chunk, (fullData) => {
-            action(this.extractUserData(fullData, dataType))
+            action(this.extractUserData(fullData, dataType), isBroadcast)
           })
         )
       } else {
@@ -107,7 +110,7 @@ class MessageBuilderService extends service.Interface {
       for (let i in userData) {
         userData[i] = dataArray[j++]
       }
-      action(this.extractUserData(userData.buffer, dataType))
+      action(this.extractUserData(userData.buffer, dataType), isBroadcast)
     }
   }
 

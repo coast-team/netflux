@@ -22,7 +22,7 @@ describe('2 peers -> ', () => {
       .catch(done.fail)
   })
 
-  describe('Should send/receive message -> ', () => {
+  describe('Should send/receive broadcast/personal messages -> ', () => {
     let wc1, wc2
 
     beforeAll((done) => {
@@ -41,14 +41,16 @@ describe('2 peers -> ', () => {
     it('broadcast', (done) => {
       const message1 = 'Hi world!'
       const message2 = 'Hello world!'
-      wc1.onMessage = (id, msg) => {
+      wc1.onMessage = (id, msg, isBroadcast) => {
         expect(msg).toBe(message2)
         expect(id).toBe(wc2.myId)
+        expect(isBroadcast).toBeTruthy()
         wc1.send(message1)
       }
-      wc2.onMessage = (id, msg) => {
+      wc2.onMessage = (id, msg, isBroadcast) => {
         expect(msg).toBe(message1)
         expect(id).toBe(wc1.myId)
+        expect(isBroadcast).toBeTruthy()
         done()
       }
       wc2.send(message2)
@@ -57,14 +59,16 @@ describe('2 peers -> ', () => {
     it('send to', (done) => {
       const message1 = 'Hi world!'
       const message2 = 'Hello world!'
-      wc1.onMessage = (id, msg) => {
+      wc1.onMessage = (id, msg, isBroadcast) => {
         expect(msg).toBe(message2)
         expect(id).toBe(wc2.myId)
+        expect(isBroadcast).toBeFalsy()
         wc1.sendTo(wc2.myId, message1)
       }
-      wc2.onMessage = (id, msg) => {
+      wc2.onMessage = (id, msg, isBroadcast) => {
         expect(msg).toBe(message1)
         expect(id).toBe(wc1.myId)
+        expect(isBroadcast).toBeFalsy()
         done()
       }
       wc2.sendTo(wc1.myId, message2)

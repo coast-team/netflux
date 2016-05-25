@@ -2,12 +2,6 @@ node_modules
 jspm_packages
 npm-debug*
 
-# Build
-dist/*
-!dist/netflux.es2015.js
-!dist/netflux.js
-!dist/netflux.min.js
-
 # Coverage
 coverage
 
