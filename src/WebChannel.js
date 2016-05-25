@@ -57,6 +57,36 @@ const JOIN_SUCCESS = 8
  */
 const INIT_CHANNEL_PONG = 10
 
+
+class WebChannelGate {
+  constructor (action) {
+    this.door = null
+    this.accessData = null
+    this.action = action
+  }
+
+  getAccessData () {
+    return this.accessData
+  }
+
+  isOpen () {
+    return this.door !== null
+  }
+
+  setOpen (door, accessData, action) {
+    this.door = door
+    this.door.onclose = this.action
+    this.accessData = accessData
+  }
+
+  close () {
+    if (this.isOpen()) {
+      this.door.close()
+      this.door = null
+    }
+  }
+}
+
 /**
  * This class is an API starting point. It represents a group of collaborators
  * also called peers. Each peer can send/receive broadcast as well as personal
@@ -129,8 +159,11 @@ class WebChannel {
     this.myId = this.generateId()
 
     this.onJoining = (id) => {}
-    this.onMessage = (id, msg) => {}
+    this.onMessage = (id, msg, isBroadcast) => {}
     this.onLeaving = (id) => {}
+    this.onClose = (closeEvt) => {}
+
+    this.gate = new WebChannelGate((closeEvt) => this.onClose(closeEvt))
   }
 
   /** Leave `WebChannel`. No longer can receive and send messages to the group. */
@@ -142,6 +175,7 @@ class WebChannel {
         c.close()
       })
       this.channels.clear()
+      this.gate.close()
     }
   }
 
@@ -206,8 +240,9 @@ class WebChannel {
             })
         })
     }).then((data) => {
-      this.webRTCOpen = data.socket
-      return {key: data.key, url: data.url}
+      let accessData = {key: data.key, url: data.url}
+      this.gate.setOpen(data.socket, accessData)
+      return accessData
     })
   }
 
@@ -215,9 +250,15 @@ class WebChannel {
    * Prevent other peers to join the `WebChannel` even if they have a key.
    */
   closeForJoining () {
-    if (Reflect.has(this, 'webRTCOpen')) {
-      this.webRTCOpen.close()
-    }
+    this.gate.close()
+  }
+
+  isOpen () {
+    return this.gate.isOpen()
+  }
+
+  getAccess () {
+    return this.gate.getAccessData()
   }
 
   /**
@@ -239,14 +280,6 @@ class WebChannel {
         .catch(reject)
     })
   }
-
-  /**
-   *
-   *
-   * @private
-   * @return {type}  description
-   */
-  isInviting () {}
 
   /**
    * has - description
@@ -536,4 +569,5 @@ class WebChannel {
     return id
   }
 }
+
 export {WebChannel, USER_DATA}

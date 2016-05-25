@@ -9,8 +9,6 @@ describe('2 peers -> ', () => {
       expect(wc1.channels.size).toBe(wc2.channels.size)
       expect(wc1.channels.values().next().value.peerId).toBe(wc2.myId)
       expect(wc2.channels.values().next().value.peerId).toBe(wc1.myId)
-      // expect(wc1.joiningPeers.size).toBe(0)
-      // expect(wc2.joiningPeers.size).toBe(0)
       done()
     }
     wc1.openForJoining()
@@ -24,11 +22,13 @@ describe('2 peers -> ', () => {
 
   describe('Should send/receive broadcast/personal messages -> ', () => {
     let wc1, wc2
+    let access
 
     beforeAll((done) => {
       // Peer #1
       wc1 = new WebChannel({signaling})
       wc1.openForJoining().then((data) => {
+        access = data
         // Peer #2
         wc2 = new WebChannel({signaling})
         wc2.join(data.key).then(() => {
@@ -36,6 +36,11 @@ describe('2 peers -> ', () => {
         })
           .catch(done.fail)
       }).catch(done.fail)
+    })
+
+    it('isOpen', () => {
+      expect(wc1.isOpen()).toBeTruthy()
+      expect(wc2.isOpen()).toBeFalsy()
     })
 
     it('broadcast', (done) => {
@@ -73,6 +78,38 @@ describe('2 peers -> ', () => {
       }
       wc2.sendTo(wc1.myId, message2)
     })
+  })
+
+  it('Should get WebChannel access data after open', (done) => {
+    let wc1 = new WebChannel({signaling})
+    wc1.openForJoining().then((data) => {
+      expect(wc1.getAccess()).toBe(data)
+      done()
+    }).catch(done.fail)
+  })
+
+  it('Should catch onClose WebChannel event', (done) => {
+    let wc1 = new WebChannel({signaling})
+    wc1.onClose = (evt) => {
+      expect(evt instanceof Event).toBeTruthy()
+      done()
+    }
+    wc1.openForJoining().then((data) => {
+      wc1.closeForJoining()
+    }).catch(done.fail)
+  })
+
+  it('Should not enable to join the WebChannel after it has been closed', (done) => {
+    let wc1 = new WebChannel({signaling})
+    let wc2 = new WebChannel({signaling})
+
+    // Peer #1
+    wc1.openForJoining().then((data) => {
+      wc1.closeForJoining()
+      // Peer #2
+      wc2.join(data.key).then(done.fail)
+        .catch(done)
+    }).catch(done.fail)
   })
 
   describe('Should leave WebChannel -> ', () => {

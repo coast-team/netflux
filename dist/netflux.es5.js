@@ -11516,6 +11516,45 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	var INIT_CHANNEL_PONG = 10;
 
+	var WebChannelGate = function () {
+	  function WebChannelGate(action) {
+	    _classCallCheck(this, WebChannelGate);
+
+	    this.door = null;
+	    this.accessData = null;
+	    this.action = action;
+	  }
+
+	  _createClass(WebChannelGate, [{
+	    key: 'getAccessData',
+	    value: function getAccessData() {
+	      return this.accessData;
+	    }
+	  }, {
+	    key: 'isOpen',
+	    value: function isOpen() {
+	      return this.door !== null;
+	    }
+	  }, {
+	    key: 'setOpen',
+	    value: function setOpen(door, accessData, action) {
+	      this.door = door;
+	      this.door.onclose = this.action;
+	      this.accessData = accessData;
+	    }
+	  }, {
+	    key: 'close',
+	    value: function close() {
+	      if (this.isOpen()) {
+	        this.door.close();
+	        this.door = null;
+	      }
+	    }
+	  }]);
+
+	  return WebChannelGate;
+	}();
+
 	/**
 	 * This class is an API starting point. It represents a group of collaborators
 	 * also called peers. Each peer can send/receive broadcast as well as personal
@@ -11523,6 +11562,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * the *WebChannel* and he also possess enough information to be able to add it
 	 * preserving the current *WebChannel* structure (network topology).
 	 */
+
 
 	var WebChannel = function () {
 
@@ -11540,6 +11580,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	   */
 
 	  function WebChannel() {
+	    var _this = this;
+
 	    var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
 	    _classCallCheck(this, WebChannel);
@@ -11594,8 +11636,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.myId = this.generateId();
 
 	    this.onJoining = function (id) {};
-	    this.onMessage = function (id, msg) {};
+	    this.onMessage = function (id, msg, isBroadcast) {};
 	    this.onLeaving = function (id) {};
+	    this.onClose = function (closeEvt) {};
+
+	    this.gate = new WebChannelGate(function (closeEvt) {
+	      return _this.onClose(closeEvt);
+	    });
 	  }
 
 	  /** Leave `WebChannel`. No longer can receive and send messages to the group. */
@@ -11611,6 +11658,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          c.close();
 	        });
 	        this.channels.clear();
+	        this.gate.close();
 	      }
 	    }
 
@@ -11623,11 +11671,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'send',
 	    value: function send(data) {
-	      var _this = this;
+	      var _this2 = this;
 
 	      if (this.channels.size !== 0) {
 	        formatter.handleUserMessage(data, this.myId, null, function (dataChunk) {
-	          _this.manager.broadcast(_this, dataChunk);
+	          _this2.manager.broadcast(_this2, dataChunk);
 	        });
 	      }
 	    }
@@ -11642,11 +11690,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'sendTo',
 	    value: function sendTo(id, data) {
-	      var _this2 = this;
+	      var _this3 = this;
 
 	      if (this.channels.size !== 0) {
 	        formatter.handleUserMessage(data, this.myId, id, function (dataChunk) {
-	          _this2.manager.sendTo(id, _this2, dataChunk);
+	          _this3.manager.sendTo(id, _this3, dataChunk);
 	        }, false);
 	      }
 	    }
@@ -11662,7 +11710,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'openForJoining',
 	    value: function openForJoining() {
-	      var _this3 = this;
+	      var _this4 = this;
 
 	      var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
@@ -11670,24 +11718,25 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      var cBuilder = (0, _serviceProvider.provide)(settings.connector, settings);
 	      return cBuilder.open(this.generateKey(), function (channel) {
-	        _this3.initChannel(channel, false).then(function (channel) {
+	        _this4.initChannel(channel, false).then(function (channel) {
 	          // console.log('INITIATOR is adding: ' + channel.peerId)
-	          var jp = _this3.addJoiningPeer(channel.peerId, _this3.myId, channel);
-	          _this3.manager.broadcast(_this3, formatter.msg(JOIN_NEW_MEMBER, { id: channel.peerId, intermediaryId: _this3.myId }));
+	          var jp = _this4.addJoiningPeer(channel.peerId, _this4.myId, channel);
+	          _this4.manager.broadcast(_this4, formatter.msg(JOIN_NEW_MEMBER, { id: channel.peerId, intermediaryId: _this4.myId }));
 	          channel.send(formatter.msg(JOIN_INIT, {
-	            manager: _this3.settings.topology,
+	            manager: _this4.settings.topology,
 	            id: channel.peerId,
-	            intermediaryId: _this3.myId }));
-	          _this3.manager.add(channel).then(function () {
+	            intermediaryId: _this4.myId }));
+	          _this4.manager.add(channel).then(function () {
 	            return channel.send(formatter.msg(JOIN_FINILIZE));
 	          }).catch(function (msg) {
-	            _this3.manager.broadcast(_this3, formatter(REMOVE_NEW_MEMBER, { id: channel.peerId }));
-	            _this3.removeJoiningPeer(jp.id);
+	            _this4.manager.broadcast(_this4, formatter(REMOVE_NEW_MEMBER, { id: channel.peerId }));
+	            _this4.removeJoiningPeer(jp.id);
 	          });
 	        });
 	      }).then(function (data) {
-	        _this3.webRTCOpen = data.socket;
-	        return { key: data.key, url: data.url };
+	        var accessData = { key: data.key, url: data.url };
+	        _this4.gate.setOpen(data.socket, accessData);
+	        return accessData;
 	      });
 	    }
 
@@ -11698,9 +11747,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'closeForJoining',
 	    value: function closeForJoining() {
-	      if (Reflect.has(this, 'webRTCOpen')) {
-	        this.webRTCOpen.close();
-	      }
+	      this.gate.close();
+	    }
+	  }, {
+	    key: 'isOpen',
+	    value: function isOpen() {
+	      return this.gate.isOpen();
+	    }
+	  }, {
+	    key: 'getAccess',
+	    value: function getAccess() {
+	      return this.gate.getAccessData();
 	    }
 
 	    /**
@@ -11714,7 +11771,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'join',
 	    value: function join(key) {
-	      var _this4 = this;
+	      var _this5 = this;
 
 	      var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
 
@@ -11723,25 +11780,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	      console.log('CONNECTOR webchannel: ' + this.settings.connector + ' --- ' + settings.connector);
 	      var cBuilder = (0, _serviceProvider.provide)(settings.connector, settings);
 	      return new Promise(function (resolve, reject) {
-	        _this4.onJoin = function () {
-	          return resolve(_this4);
+	        _this5.onJoin = function () {
+	          return resolve(_this5);
 	        };
 	        cBuilder.join(key).then(function (channel) {
-	          return _this4.initChannel(channel, true);
+	          return _this5.initChannel(channel, true);
 	        }).catch(reject);
 	      });
 	    }
-
-	    /**
-	     *
-	     *
-	     * @private
-	     * @return {type}  description
-	     */
-
-	  }, {
-	    key: 'isInviting',
-	    value: function isInviting() {}
 
 	    /**
 	     * has - description
@@ -11832,12 +11878,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'onChannelMessage',
 	    value: function onChannelMessage(channel, data) {
-	      var _this5 = this;
+	      var _this6 = this;
 
 	      var header = formatter.readHeader(data);
 	      if (header.code === USER_DATA) {
 	        formatter.readUserMessage(this.id, header.senderId, data, function (fullData, isBroadcast) {
-	          _this5.onMessage(header.senderId, fullData, isBroadcast);
+	          _this6.onMessage(header.senderId, fullData, isBroadcast);
 	        });
 	      } else {
 	        var msg = formatter.readInternalMessage(data);
@@ -11923,15 +11969,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'initChannel',
 	    value: function initChannel(ch, isInitiator) {
-	      var _this6 = this;
+	      var _this7 = this;
 
 	      var id = arguments.length <= 2 || arguments[2] === undefined ? -1 : arguments[2];
 
 	      return new Promise(function (resolve, reject) {
 	        if (id === -1) {
-	          id = _this6.generateId();
+	          id = _this7.generateId();
 	        }
-	        var channel = new _Channel2.default(ch, _this6, id);
+	        var channel = new _Channel2.default(ch, _this7, id);
 	        // TODO: treat the case when the 'ping' or 'pong' message has not been received
 	        if (isInitiator) {
 	          channel.config();
@@ -11962,11 +12008,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'joinSuccess',
 	    value: function joinSuccess(id) {
-	      var _this7 = this;
+	      var _this8 = this;
 
 	      var jp = this.getJoiningPeer(id);
 	      jp.channelsToAdd.forEach(function (c) {
-	        _this7.channels.add(c);
+	        _this8.channels.add(c);
 	      });
 	      // TODO: handle channels which should be closed & removed
 	      // this.joiningPeers.delete(jp)
