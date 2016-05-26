@@ -5,11 +5,12 @@
   "version": "0.0.0-semrelease",
   "scripts": {
     "prebuild": "rm -rf coverage dist",
-    "build": "./node_modules/.bin/rollup -o dist/netflux.js -f umd -n netflux src/index.js & ./node_modules/.bin/webpack",
+    "build": "rollup -o dist/netflux.js -f umd -n netflux src/index.js & webpack",
     "signalling-up": "kill `cat /tmp/sigver.pid`; node ./node_modules/sigver/server.js & echo \"$!\" > /tmp/sigver.pid",
     "pretest": "npm run build && npm run signalling-up",
     "test": "karma start",
     "testin": "npm run test -- --browsers",
+    "test-coverage": "karma start karma.conf.coverage.js",
     "doc": "jsdoc -d doc -c jsdoc.json -t ./node_modules/ink-docstrap/template -R README.md -r src",
     "postdoc": "mkdir -p doc/doc && cp -f doc/uml.png doc/doc/",
     "docdev": "jsdoc -d doc -p -c jsdoc.json -t ./node_modules/ink-docstrap/template -R README.md -r src",
@@ -36,7 +37,7 @@
   "homepage": "https://github.com/coast-team/netflux#readme",
   "config": {
     "ghooks": {
-      "pre-commit": "npm run test"
+      "pre-commit": "npm run test-coverage"
     },
     "commitizen": {
       "path": "node_modules/cz-conventional-changelog"

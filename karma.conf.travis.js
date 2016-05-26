@@ -1,19 +1,16 @@
-// Karma configuration
-// Generated on Tue Dec 22 2015 18:29:31 GMT+0100 (CET)
-var karmaConf = require('./karma.conf.js');
-
 module.exports = function(config) {
-  karmaConf(config);
+  require('./karma.conf.coverage.js')(config);
   config.set({
-    // start these browsers
-    // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
+
     browsers: ['Firefox'],
-    
+
     coverageReporter: {
       reporters: [
         {type: 'text'},
         {type: 'lcovonly', subdir: '.'}
       ]
     },
+    autoWatch: false,
+    singleRun: true
   })
 }

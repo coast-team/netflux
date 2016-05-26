@@ -38,18 +38,12 @@ module.exports = function(config) {
         plugins: [
           require('rollup-plugin-string')({
             extensions: ['.txt']
-          }),
-          require('rollup-plugin-istanbul')({
-            exclude: [
-              'test/**/*.js',
-              'test/*.js',
-              'test/*.txt'
-            ]
           })
         ]
       },
       bundle: {
-        format: 'iife'
+        format: 'iife',
+        sourceMap: 'inline'
       }
     },
 
@@ -57,7 +51,7 @@ module.exports = function(config) {
     // test results reporter to use
     // possible values: 'dots', 'progress'
     // available reporters: https://npmjs.org/browse/keyword/karma-reporter
-    reporters: ['progress', 'coverage'],
+    reporters: ['progress'],
 
 
     coverageReporter: {
@@ -84,7 +78,7 @@ module.exports = function(config) {
 
 
     // enable / disable watching file and executing tests whenever any file changes
-    autoWatch: false,
+    autoWatch: true,
 
 
     // start these browsers
@@ -94,7 +88,7 @@ module.exports = function(config) {
 
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits
-    singleRun: true,
+    singleRun: false,
 
     // Concurrency level
     // how many browser should be started simultanous
