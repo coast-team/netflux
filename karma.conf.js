@@ -36,10 +36,14 @@ module.exports = function(config) {
     rollupPreprocessor: {
       rollup: {
         plugins: [
+          require('rollup-plugin-string')({
+            extensions: ['.txt']
+          }),
           require('rollup-plugin-istanbul')({
             exclude: [
               'test/**/*.js',
-              'test/*.js'
+              'test/*.js',
+              'test/*.txt'
             ]
           })
         ]
