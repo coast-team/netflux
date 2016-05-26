@@ -8942,13 +8942,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        };
 	        socket.onmessage = function (evt) {
 	          var msg = JSON.parse(evt.data);
-	          if (!Reflect.has(msg, 'id') || !Reflect.has(msg, 'data')) {
+	          if (!('id' in msg) || !('data' in msg)) {
 	            console.log('Unknown message from the signaling server: ' + evt.data);
 	            socket.close();
 	            return;
 	          }
 	          connections.add(msg.id);
-	          if (Reflect.has(msg.data, 'offer')) {
+	          if ('offer' in msg.data) {
 	            _this3.createPeerConnectionAndAnswer(function (candidate) {
 	              return socket.send(JSON.stringify({ id: msg.id, data: { candidate: candidate } }));
 	            }, function (answer) {
@@ -8958,7 +8958,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }).catch(function (reason) {
 	              console.error('Answer generation failed: ' + reason);
 	            });
-	          } else if (Reflect.has(msg.data, 'candidate')) {
+	          } else if ('candidate' in msg.data) {
 	            connections.addIceCandidate(msg.id, _this3.createIceCandidate(msg.data.candidate)).catch(function (reason) {
 	              console.error('Adding ice candidate failed: ' + reason);
 	            });
@@ -8998,13 +8998,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	          try {
 	            var msg = JSON.parse(evt.data);
 	            // Check message format
-	            if (!Reflect.has(msg, 'data')) {
+	            if (!('data' in msg)) {
 	              reject('Unknown message from the signaling server: ' + evt.data);
 	            }
 
-	            if (Reflect.has(msg.data, 'answer')) {
+	            if ('answer' in msg.data) {
 	              pc.setRemoteDescription(_this4.createSessionDescription(msg.data.answer)).catch(reject);
-	            } else if (Reflect.has(msg.data, 'candidate')) {
+	            } else if ('candidate' in msg.data) {
 	              pc.addIceCandidate(_this4.createIceCandidate(msg.data.candidate)).catch(function (evt) {
 	                // This exception does not reject the current Promise, because
 	                // still the connection may be established even without one or
@@ -9057,7 +9057,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      var connections = this.getPendingConnections(wc);
 	      connections.add(msg.sender);
-	      if (Reflect.has(msg, 'offer')) {
+	      if ('offer' in msg) {
 	        this.createPeerConnectionAndAnswer(function (candidate) {
 	          return wc.sendSrvMsg(_this6.name, msg.sender, { sender: wc.myId, candidate: candidate });
 	        }, function (answer) {
@@ -9068,11 +9068,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }, msg.offer).then(function (pc) {
 	          connections.setPC(msg.sender, pc);
 	        });
-	      }if (Reflect.has(msg, 'answer')) {
+	      }if ('answer' in msg) {
 	        connections.getPC(msg.sender).setRemoteDescription(this.createSessionDescription(msg.answer)).catch(function (reason) {
 	          console.error('Setting answer error: ' + reason);
 	        });
-	      } else if (Reflect.has(msg, 'candidate')) {
+	      } else if ('candidate' in msg) {
 	        connections.addIceCandidate(msg.sender, this.createIceCandidate(msg.candidate)).catch(function (reason) {
 	          console.error('Setting candidate error: ', reason);
 	        });

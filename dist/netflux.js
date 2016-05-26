@@ -1665,13 +1665,13 @@
         }
         socket.onmessage = (evt) => {
           let msg = JSON.parse(evt.data)
-          if (!Reflect.has(msg, 'id') || !Reflect.has(msg, 'data')) {
+          if (!('id' in msg) || !('data' in msg)) {
             console.log('Unknown message from the signaling server: ' + evt.data)
             socket.close()
             return
           }
           connections.add(msg.id)
-          if (Reflect.has(msg.data, 'offer')) {
+          if ('offer' in msg.data) {
             this.createPeerConnectionAndAnswer(
                 (candidate) => socket.send(JSON.stringify({id: msg.id, data: {candidate}})),
                 (answer) => socket.send(JSON.stringify({id: msg.id, data: {answer}})),
@@ -1681,7 +1681,7 @@
               .catch((reason) => {
                 console.error(`Answer generation failed: ${reason}`)
               })
-          } else if (Reflect.has(msg.data, 'candidate')) {
+          } else if ('candidate' in msg.data) {
             connections.addIceCandidate(
                 msg.id,
                 this.createIceCandidate(msg.data.candidate)
@@ -1719,14 +1719,14 @@
           try {
             let msg = JSON.parse(evt.data)
             // Check message format
-            if (!Reflect.has(msg, 'data')) {
+            if (!('data' in msg)) {
               reject(`Unknown message from the signaling server: ${evt.data}`)
             }
 
-            if (Reflect.has(msg.data, 'answer')) {
+            if ('answer' in msg.data) {
               pc.setRemoteDescription(this.createSessionDescription(msg.data.answer))
                 .catch(reject)
-            } else if (Reflect.has(msg.data, 'candidate')) {
+            } else if ('candidate' in msg.data) {
               pc.addIceCandidate(this.createIceCandidate(msg.data.candidate))
                 .catch((evt) => {
                   // This exception does not reject the current Promise, because
@@ -1772,7 +1772,7 @@
     onMessage (wc, channel, msg) {
       let connections = this.getPendingConnections(wc)
       connections.add(msg.sender)
-      if (Reflect.has(msg, 'offer')) {
+      if ('offer' in msg) {
         this.createPeerConnectionAndAnswer(
           (candidate) => wc.sendSrvMsg(this.name, msg.sender,
             {sender: wc.myId, candidate}),
@@ -1786,11 +1786,11 @@
         ).then((pc) => {
           connections.setPC(msg.sender, pc)
         })
-      } if (Reflect.has(msg, 'answer')) {
+      } if ('answer' in msg) {
         connections.getPC(msg.sender)
           .setRemoteDescription(this.createSessionDescription(msg.answer))
           .catch((reason) => { console.error('Setting answer error: ' + reason) })
-      } else if (Reflect.has(msg, 'candidate')) {
+      } else if ('candidate' in msg) {
         connections.addIceCandidate(msg.sender, this.createIceCandidate(msg.candidate))
           .catch((reason) => { console.error('Setting candidate error: ', reason) })
       }
