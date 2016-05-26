@@ -11461,9 +11461,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	var formatter = (0, _serviceProvider.provide)(_serviceProvider.MESSAGE_BUILDER);
+	var msgBuilder = (0, _serviceProvider.provide)(_serviceProvider.MESSAGE_BUILDER);
 
 	var MAX_ID = 4294967295;
+
+	var PING_TIMEOUT = 5000;
 
 	/**
 	 * Constant used to build a message designated to API user.
@@ -11515,6 +11517,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @type {int}
 	 */
 	var INIT_CHANNEL_PONG = 10;
+	/**
+	 * @type {int}
+	 */
+	var PING = 11;
+	/**
+	 * @type {int}
+	 */
+	var PONG = 12;
 
 	var WebChannelGate = function () {
 	  function WebChannelGate(action) {
@@ -11634,6 +11644,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	     * @readonly
 	     */
 	    this.myId = this.generateId();
+	    this.peerNb = 0;
+	    this.pingTime = 0;
 
 	    this.onJoining = function (id) {};
 	    this.onMessage = function (id, msg, isBroadcast) {};
@@ -11652,7 +11664,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    key: 'leave',
 	    value: function leave() {
 	      if (this.channels.size !== 0) {
-	        this.manager.broadcast(this, formatter.msg(LEAVE, { id: this.myId }));
+	        this.manager.broadcast(this, msgBuilder.msg(LEAVE, { id: this.myId }));
 	        this.topology = this.settings.topology;
 	        this.channels.forEach(function (c) {
 	          c.close();
@@ -11674,7 +11686,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var _this2 = this;
 
 	      if (this.channels.size !== 0) {
-	        formatter.handleUserMessage(data, this.myId, null, function (dataChunk) {
+	        msgBuilder.handleUserMessage(data, this.myId, null, function (dataChunk) {
 	          _this2.manager.broadcast(_this2, dataChunk);
 	        });
 	      }
@@ -11693,7 +11705,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var _this3 = this;
 
 	      if (this.channels.size !== 0) {
-	        formatter.handleUserMessage(data, this.myId, id, function (dataChunk) {
+	        msgBuilder.handleUserMessage(data, this.myId, id, function (dataChunk) {
 	          _this3.manager.sendTo(id, _this3, dataChunk);
 	        }, false);
 	      }
@@ -11721,15 +11733,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	        _this4.initChannel(channel, false).then(function (channel) {
 	          // console.log('INITIATOR is adding: ' + channel.peerId)
 	          var jp = _this4.addJoiningPeer(channel.peerId, _this4.myId, channel);
-	          _this4.manager.broadcast(_this4, formatter.msg(JOIN_NEW_MEMBER, { id: channel.peerId, intermediaryId: _this4.myId }));
-	          channel.send(formatter.msg(JOIN_INIT, {
+	          _this4.manager.broadcast(_this4, msgBuilder.msg(JOIN_NEW_MEMBER, { id: channel.peerId, intermediaryId: _this4.myId }));
+	          channel.send(msgBuilder.msg(JOIN_INIT, {
 	            manager: _this4.settings.topology,
 	            id: channel.peerId,
 	            intermediaryId: _this4.myId }));
 	          _this4.manager.add(channel).then(function () {
-	            return channel.send(formatter.msg(JOIN_FINILIZE));
+	            return channel.send(msgBuilder.msg(JOIN_FINILIZE));
 	          }).catch(function (msg) {
-	            _this4.manager.broadcast(_this4, formatter(REMOVE_NEW_MEMBER, { id: channel.peerId }));
+	            _this4.manager.broadcast(_this4, msgBuilder(REMOVE_NEW_MEMBER, { id: channel.peerId }));
 	            _this4.removeJoiningPeer(jp.id);
 	          });
 	        });
@@ -11759,6 +11771,26 @@ return /******/ (function(modules) { // webpackBootstrap
 	    value: function getAccess() {
 	      return this.gate.getAccessData();
 	    }
+	  }, {
+	    key: 'ping',
+	    value: function ping() {
+	      var _this5 = this;
+
+	      return new Promise(function (resolve, reject) {
+	        if (_this5.pingTime === 0) {
+	          _this5.pingTime = Date.now();
+	          _this5.maxTime = 0;
+	          _this5.pongNb = 0;
+	          _this5.pingFinish = function (delay) {
+	            resolve(delay);
+	          };
+	          _this5.manager.broadcast(_this5, msgBuilder.msg(PING, { senderId: _this5.myId }));
+	          setTimeout(function () {
+	            resolve(PING_TIMEOUT);
+	          }, PING_TIMEOUT);
+	        }
+	      });
+	    }
 
 	    /**
 	     * Join the `WebChannel`.
@@ -11771,20 +11803,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'join',
 	    value: function join(key) {
-	      var _this5 = this;
+	      var _this6 = this;
 
 	      var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
 
 	      var settings = Object.assign({}, this.settings, options);
-
-	      console.log('CONNECTOR webchannel: ' + this.settings.connector + ' --- ' + settings.connector);
 	      var cBuilder = (0, _serviceProvider.provide)(settings.connector, settings);
 	      return new Promise(function (resolve, reject) {
-	        _this5.onJoin = function () {
-	          return resolve(_this5);
+	        _this6.onJoin = function () {
+	          return resolve(_this6);
 	        };
 	        cBuilder.join(key).then(function (channel) {
-	          return _this5.initChannel(channel, true);
+	          return _this6.initChannel(channel, true);
 	        }).catch(reject);
 	      });
 	    }
@@ -11846,7 +11876,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var msg = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
 	      var channel = arguments.length <= 3 || arguments[3] === undefined ? null : arguments[3];
 
-	      var fullMsg = formatter.msg(SERVICE_DATA, { serviceName: serviceName, recepient: recepient, data: Object.assign({}, msg) });
+	      var fullMsg = msgBuilder.msg(SERVICE_DATA, { serviceName: serviceName, recepient: recepient, data: Object.assign({}, msg) });
 	      if (channel !== null) {
 	        channel.send(fullMsg);
 	        return;
@@ -11878,15 +11908,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'onChannelMessage',
 	    value: function onChannelMessage(channel, data) {
-	      var _this6 = this;
+	      var _this7 = this;
 
-	      var header = formatter.readHeader(data);
+	      var header = msgBuilder.readHeader(data);
 	      if (header.code === USER_DATA) {
-	        formatter.readUserMessage(this.id, header.senderId, data, function (fullData, isBroadcast) {
-	          _this6.onMessage(header.senderId, fullData, isBroadcast);
+	        msgBuilder.readUserMessage(this.id, header.senderId, data, function (fullData, isBroadcast) {
+	          _this7.onMessage(header.senderId, fullData, isBroadcast);
 	        });
 	      } else {
-	        var msg = formatter.readInternalMessage(data);
+	        var msg = msgBuilder.readInternalMessage(data);
 	        switch (header.code) {
 	          case LEAVE:
 	            var _iteratorNormalCompletion2 = true;
@@ -11917,6 +11947,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	              }
 	            }
 
+	            this.peerNb--;
 	            this.onLeaving(msg.id);
 	            break;
 	          case SERVICE_DATA:
@@ -11941,17 +11972,30 @@ return /******/ (function(modules) { // webpackBootstrap
 	          case JOIN_FINILIZE:
 	            this.joinSuccess(this.myId);
 	            // console.log(this.myId + ' JOINED SUCCESSFULLY')
-	            this.manager.broadcast(this, formatter.msg(JOIN_SUCCESS, { id: this.myId }));
+	            this.manager.broadcast(this, msgBuilder.msg(JOIN_SUCCESS, { id: this.myId }));
 	            this.onJoin();
 	            break;
 	          case JOIN_SUCCESS:
 	            // console.log(this.myId + ' JOIN_SUCCESS from ' + msg.id)
 	            this.joinSuccess(msg.id);
+	            this.peerNb++;
 	            this.onJoining(msg.id);
 	            break;
 	          case INIT_CHANNEL_PONG:
 	            channel.onPong();
 	            delete channel.onPong;
+	            break;
+	          case PING:
+	            this.manager.sendTo(msg.senderId, this, msgBuilder.msg(PONG));
+	            break;
+	          case PONG:
+	            var now = Date.now();
+	            this.pongNb++;
+	            this.maxTime = Math.max(this.maxTime, now - this.pingTime);
+	            if (this.pongNb === this.peerNb) {
+	              this.pingFinish(this.maxTime);
+	              this.pingTime = 0;
+	            }
 	            break;
 	        }
 	      }
@@ -11969,15 +12013,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'initChannel',
 	    value: function initChannel(ch, isInitiator) {
-	      var _this7 = this;
+	      var _this8 = this;
 
 	      var id = arguments.length <= 2 || arguments[2] === undefined ? -1 : arguments[2];
 
 	      return new Promise(function (resolve, reject) {
 	        if (id === -1) {
-	          id = _this7.generateId();
+	          id = _this8.generateId();
 	        }
-	        var channel = new _Channel2.default(ch, _this7, id);
+	        var channel = new _Channel2.default(ch, _this8, id);
 	        // TODO: treat the case when the 'ping' or 'pong' message has not been received
 	        if (isInitiator) {
 	          channel.config();
@@ -11989,7 +12033,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          ch.onmessage = function (msgEvt) {
 	            if (msgEvt.data === 'ping') {
 	              channel.config();
-	              channel.send(formatter.msg(INIT_CHANNEL_PONG));
+	              channel.send(msgBuilder.msg(INIT_CHANNEL_PONG));
 	              resolve(channel);
 	            }
 	          };
@@ -12008,11 +12052,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'joinSuccess',
 	    value: function joinSuccess(id) {
-	      var _this8 = this;
+	      var _this9 = this;
 
 	      var jp = this.getJoiningPeer(id);
 	      jp.channelsToAdd.forEach(function (c) {
-	        _this8.channels.add(c);
+	        _this9.channels.add(c);
 	      });
 	      // TODO: handle channels which should be closed & removed
 	      // this.joiningPeers.delete(jp)

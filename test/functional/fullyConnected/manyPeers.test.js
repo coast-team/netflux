@@ -7,12 +7,10 @@ describe('Many peers -> ', () => {
 
   describe('One door -> ', () => {
     it('Peers should join the same WebChannel', (done) => {
-      console.log('########################################################')
       let counter = 0
       for (let i = 0; i < NB_PEERS; i++) {
         wcArray[i] = new WebChannel({signaling})
       }
-      console.log('INITIATOR ID: ' + wcArray[0].myId)
       wcArray[0].onJoining = (id) => {
         counter++
         let found = false
@@ -25,13 +23,11 @@ describe('Many peers -> ', () => {
         expect(found).toBeTruthy()
         if (counter === NB_PEERS - 1) {
           setTimeout(() => {
-            for (let wc of wcArray) {
-              let array = []
-              wc.channels.forEach((v) => array.push(v.peerId))
-              console.log(wc.myId + ' CONNECTED TO ', array)
-            }
-            done()
-          }, 4000)
+            wcArray[0].ping().then((delay) => {
+              console.log('WebChannel PING for ' + NB_PEERS + ' peers: ' + delay + ' ms')
+              done()
+            })
+          }, 1500)
         }
       }
       for (let i = 1; i < NB_PEERS; i++) {
