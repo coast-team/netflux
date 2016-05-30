@@ -1,4 +1,4 @@
-import * as service from '../service'
+import {ServiceInterface} from '../service'
 import {provide} from '../../serviceProvider'
 
 /**
@@ -31,7 +31,7 @@ const CONNECT_WITH_TIMEOUT = 5000
  * @interface
  * @extends module:service~Interface
  */
-class Interface extends service.Interface {
+class WebChannelManagerInterface extends ServiceInterface {
 
   constructor () {
     super()
@@ -234,5 +234,6 @@ class Interface extends service.Interface {
 }
 
 export {
-/** @see module:webChannelManager~Interface */
-Interface }
+  /** @see module:webChannelManager~Interface */
+  WebChannelManagerInterface
+}

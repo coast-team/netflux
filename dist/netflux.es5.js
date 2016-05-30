@@ -62,13 +62,13 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(global) {/*istanbul ignore next*/"use strict";
+	/* WEBPACK VAR INJECTION */(function(global) {"use strict";
 
-	/*istanbul ignore next*/__webpack_require__(2);
+	__webpack_require__(2);
 
-	/*istanbul ignore next*/__webpack_require__(294);
+	__webpack_require__(294);
 
-	/*istanbul ignore next*/__webpack_require__(296);
+	__webpack_require__(296);
 
 	/* eslint max-len: 0 */
 
@@ -7323,8 +7323,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  var hasOwn = Object.prototype.hasOwnProperty;
 	  var undefined; // More compressible than void 0.
-	  var iteratorSymbol =
-	    typeof Symbol === "function" && Symbol.iterator || "@@iterator";
+	  var $Symbol = typeof Symbol === "function" ? Symbol : {};
+	  var iteratorSymbol = $Symbol.iterator || "@@iterator";
+	  var toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag";
 
 	  var inModule = typeof module === "object";
 	  var runtime = global.regeneratorRuntime;
@@ -7394,7 +7395,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype;
 	  GeneratorFunction.prototype = Gp.constructor = GeneratorFunctionPrototype;
 	  GeneratorFunctionPrototype.constructor = GeneratorFunction;
-	  GeneratorFunction.displayName = "GeneratorFunction";
+	  GeneratorFunctionPrototype[toStringTagSymbol] = GeneratorFunction.displayName = "GeneratorFunction";
 
 	  // Helper for defining the .next, .throw, and .return methods of the
 	  // Iterator interface in terms of a single ._invoke method.
@@ -7421,6 +7422,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	      Object.setPrototypeOf(genFun, GeneratorFunctionPrototype);
 	    } else {
 	      genFun.__proto__ = GeneratorFunctionPrototype;
+	      if (!(toStringTagSymbol in genFun)) {
+	        genFun[toStringTagSymbol] = "GeneratorFunction";
+	      }
 	    }
 	    genFun.prototype = Object.create(Gp);
 	    return genFun;
@@ -7440,46 +7444,54 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 
 	  function AsyncIterator(generator) {
-	    // This invoke function is written in a style that assumes some
-	    // calling function (or Promise) will handle exceptions.
-	    function invoke(method, arg) {
-	      var result = generator[method](arg);
-	      var value = result.value;
-	      return value instanceof AwaitArgument
-	        ? Promise.resolve(value.arg).then(invokeNext, invokeThrow)
-	        : Promise.resolve(value).then(function(unwrapped) {
-	            // When a yielded Promise is resolved, its final value becomes
-	            // the .value of the Promise<{value,done}> result for the
-	            // current iteration. If the Promise is rejected, however, the
-	            // result for this iteration will be rejected with the same
-	            // reason. Note that rejections of yielded Promises are not
-	            // thrown back into the generator function, as is the case
-	            // when an awaited Promise is rejected. This difference in
-	            // behavior between yield and await is important, because it
-	            // allows the consumer to decide what to do with the yielded
-	            // rejection (swallow it and continue, manually .throw it back
-	            // into the generator, abandon iteration, whatever). With
-	            // await, by contrast, there is no opportunity to examine the
-	            // rejection reason outside the generator function, so the
-	            // only option is to throw it from the await expression, and
-	            // let the generator function handle the exception.
-	            result.value = unwrapped;
-	            return result;
+	    function invoke(method, arg, resolve, reject) {
+	      var record = tryCatch(generator[method], generator, arg);
+	      if (record.type === "throw") {
+	        reject(record.arg);
+	      } else {
+	        var result = record.arg;
+	        var value = result.value;
+	        if (value instanceof AwaitArgument) {
+	          return Promise.resolve(value.arg).then(function(value) {
+	            invoke("next", value, resolve, reject);
+	          }, function(err) {
+	            invoke("throw", err, resolve, reject);
 	          });
+	        }
+
+	        return Promise.resolve(value).then(function(unwrapped) {
+	          // When a yielded Promise is resolved, its final value becomes
+	          // the .value of the Promise<{value,done}> result for the
+	          // current iteration. If the Promise is rejected, however, the
+	          // result for this iteration will be rejected with the same
+	          // reason. Note that rejections of yielded Promises are not
+	          // thrown back into the generator function, as is the case
+	          // when an awaited Promise is rejected. This difference in
+	          // behavior between yield and await is important, because it
+	          // allows the consumer to decide what to do with the yielded
+	          // rejection (swallow it and continue, manually .throw it back
+	          // into the generator, abandon iteration, whatever). With
+	          // await, by contrast, there is no opportunity to examine the
+	          // rejection reason outside the generator function, so the
+	          // only option is to throw it from the await expression, and
+	          // let the generator function handle the exception.
+	          result.value = unwrapped;
+	          resolve(result);
+	        }, reject);
+	      }
 	    }
 
 	    if (typeof process === "object" && process.domain) {
 	      invoke = process.domain.bind(invoke);
 	    }
 
-	    var invokeNext = invoke.bind(generator, "next");
-	    var invokeThrow = invoke.bind(generator, "throw");
-	    var invokeReturn = invoke.bind(generator, "return");
 	    var previousPromise;
 
 	    function enqueue(method, arg) {
 	      function callInvokeWithMethodAndArg() {
-	        return invoke(method, arg);
+	        return new Promise(function(resolve, reject) {
+	          invoke(method, arg, resolve, reject);
+	        });
 	      }
 
 	      return previousPromise =
@@ -7500,9 +7512,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          // Avoid propagating failures to Promises returned by later
 	          // invocations of the iterator.
 	          callInvokeWithMethodAndArg
-	        ) : new Promise(function (resolve) {
-	          resolve(callInvokeWithMethodAndArg());
-	        });
+	        ) : callInvokeWithMethodAndArg();
 	    }
 
 	    // Define the unified helper method that is used to implement .next,
@@ -7610,13 +7620,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 
 	        if (method === "next") {
-	          context._sent = arg;
+	          // Setting context._sent for legacy support of Babel's
+	          // function.sent implementation.
+	          context.sent = context._sent = arg;
 
-	          if (state === GenStateSuspendedYield) {
-	            context.sent = arg;
-	          } else {
-	            context.sent = undefined;
-	          }
 	        } else if (method === "throw") {
 	          if (state === GenStateSuspendedStart) {
 	            state = GenStateCompleted;
@@ -7677,6 +7684,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  Gp[iteratorSymbol] = function() {
 	    return this;
 	  };
+
+	  Gp[toStringTagSymbol] = "Generator";
 
 	  Gp.toString = function() {
 	    return "[object Generator]";
@@ -7786,7 +7795,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    reset: function(skipTempReset) {
 	      this.prev = 0;
 	      this.next = 0;
-	      this.sent = undefined;
+	      // Resetting context._sent for legacy support of Babel's
+	      // function.sent implementation.
+	      this.sent = this._sent = undefined;
 	      this.done = false;
 	      this.delegate = null;
 
@@ -8233,10 +8244,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _webChannelManager = __webpack_require__(302);
 
-	var wcManager = _interopRequireWildcard(_webChannelManager);
-
-	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
 	function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -8252,8 +8259,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @extends module:webChannelManager~Interface
 	 */
 
-	var FullyConnectedService = function (_wcManager$Interface) {
-	  _inherits(FullyConnectedService, _wcManager$Interface);
+	var FullyConnectedService = function (_WebChannelManagerInt) {
+	  _inherits(FullyConnectedService, _WebChannelManagerInt);
 
 	  function FullyConnectedService() {
 	    _classCallCheck(this, FullyConnectedService);
@@ -8342,7 +8349,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }]);
 
 	  return FullyConnectedService;
-	}(wcManager.Interface);
+	}(_webChannelManager.WebChannelManagerInterface);
 
 	exports.default = FullyConnectedService;
 
@@ -8355,17 +8362,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.Interface = undefined;
+	exports.WebChannelManagerInterface = undefined;
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 	var _service = __webpack_require__(303);
 
-	var service = _interopRequireWildcard(_service);
-
 	var _serviceProvider = __webpack_require__(300);
-
-	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -8404,16 +8407,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @extends module:service~Interface
 	 */
 
-	var Interface = function (_service$Interface) {
-	  _inherits(Interface, _service$Interface);
+	var WebChannelManagerInterface = function (_ServiceInterface) {
+	  _inherits(WebChannelManagerInterface, _ServiceInterface);
 
-	  function Interface() {
-	    _classCallCheck(this, Interface);
+	  function WebChannelManagerInterface() {
+	    _classCallCheck(this, WebChannelManagerInterface);
 
-	    return _possibleConstructorReturn(this, Object.getPrototypeOf(Interface).call(this));
+	    return _possibleConstructorReturn(this, Object.getPrototypeOf(WebChannelManagerInterface).call(this));
 	  }
 
-	  _createClass(Interface, [{
+	  _createClass(WebChannelManagerInterface, [{
 	    key: 'onMessage',
 	    value: function onMessage(wc, channel, msg) {
 	      var _this2 = this;
@@ -8639,12 +8642,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	  }]);
 
-	  return Interface;
-	}(service.Interface);
+	  return WebChannelManagerInterface;
+	}(_service.ServiceInterface);
 
 	exports.
 	/** @see module:webChannelManager~Interface */
-	Interface = Interface;
+	WebChannelManagerInterface = WebChannelManagerInterface;
 
 /***/ },
 /* 303 */
@@ -8679,12 +8682,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @interface
 	 */
 
-	var Interface = function () {
-	  function Interface() {
-	    _classCallCheck(this, Interface);
+	var ServiceInterface = function () {
+	  function ServiceInterface() {
+	    _classCallCheck(this, ServiceInterface);
 	  }
 
-	  _createClass(Interface, [{
+	  _createClass(ServiceInterface, [{
 	    key: "name",
 
 
@@ -8698,12 +8701,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	  }]);
 
-	  return Interface;
+	  return ServiceInterface;
 	}();
 
 	exports.
 	/** @see module:service~Interface */
-	Interface = Interface;
+	ServiceInterface = ServiceInterface;
 
 /***/ },
 /* 304 */
@@ -8715,32 +8718,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  value: true
 	});
 
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /**
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      * @external RTCPeerConnection
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      * @see {@link https://developer.mozilla.org/en/docs/Web/API/RTCPeerConnection}
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      */
-	/**
-	 * @external RTCSessionDescription
-	 * @see {@link https://developer.mozilla.org/en/docs/Web/API/RTCSessionDescription}
-	 */
-	/**
-	 * @external RTCDataChannel
-	 * @see {@link https://developer.mozilla.org/en/docs/Web/API/RTCDataChannel}
-	 */
-	/**
-	 * @external RTCIceCandidate
-	 * @see {@link https://developer.mozilla.org/en/docs/Web/API/RTCIceCandidate}
-	 */
-	/**
-	 * @external RTCPeerConnectionIceEvent
-	 * @see {@link https://developer.mozilla.org/en/docs/Web/API/RTCPeerConnectionIceEvent}
-	 */
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 	var _channelBuilder = __webpack_require__(305);
-
-	var channelBuilder = _interopRequireWildcard(_channelBuilder);
-
-	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
@@ -8886,8 +8866,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @extends module:channelBuilder~Interface
 	 */
 
-	var WebRTCService = function (_channelBuilder$Inter) {
-	  _inherits(WebRTCService, _channelBuilder$Inter);
+	var WebRTCService = function (_ChannelBuilderInterf) {
+	  _inherits(WebRTCService, _ChannelBuilderInterf);
 
 	  /**
 	   * WebRTCService constructor.
@@ -9217,7 +9197,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }]);
 
 	  return WebRTCService;
-	}(channelBuilder.Interface);
+	}(_channelBuilder.ChannelBuilderInterface);
 
 	exports.default = WebRTCService;
 
@@ -9230,15 +9210,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.Interface = undefined;
+	exports.ChannelBuilderInterface = undefined;
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 	var _service = __webpack_require__(303);
-
-	var service = _interopRequireWildcard(_service);
-
-	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -9278,13 +9254,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @extends module:service~Interface
 	 */
 
-	var Interface = function (_service$Interface) {
-	  _inherits(Interface, _service$Interface);
+	var ChannelBuilderInterface = function (_ServiceInterface) {
+	  _inherits(ChannelBuilderInterface, _ServiceInterface);
 
-	  function Interface() {
-	    _classCallCheck(this, Interface);
+	  function ChannelBuilderInterface() {
+	    _classCallCheck(this, ChannelBuilderInterface);
 
-	    return _possibleConstructorReturn(this, Object.getPrototypeOf(Interface).call(this));
+	    return _possibleConstructorReturn(this, Object.getPrototypeOf(ChannelBuilderInterface).call(this));
 	  }
 
 	  /**
@@ -9302,7 +9278,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	   */
 
 
-	  _createClass(Interface, [{
+	  _createClass(ChannelBuilderInterface, [{
 	    key: 'open',
 	    value: function open(key, onChannel, options) {
 	      throw new Error('Must be implemented by subclass!');
@@ -9340,12 +9316,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	  }]);
 
-	  return Interface;
-	}(service.Interface);
+	  return ChannelBuilderInterface;
+	}(_service.ServiceInterface);
 
 	exports.
 	/** @see module:channelBuilder~Interface */
-	Interface = Interface;
+	ChannelBuilderInterface = ChannelBuilderInterface;
 
 /***/ },
 /* 306 */
@@ -9361,10 +9337,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 	var _service = __webpack_require__(303);
-
-	var service = _interopRequireWildcard(_service);
-
-	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -9398,8 +9370,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var buffers = new Map();
 
-	var MessageBuilderService = function (_service$Interface) {
-	  _inherits(MessageBuilderService, _service$Interface);
+	var MessageBuilderService = function (_ServiceInterface) {
+	  _inherits(MessageBuilderService, _ServiceInterface);
 
 	  function MessageBuilderService() {
 	    _classCallCheck(this, MessageBuilderService);
@@ -9610,7 +9582,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }]);
 
 	  return MessageBuilderService;
-	}(service.Interface);
+	}(_service.ServiceInterface);
 
 	var Buffer = function () {
 	  function Buffer(fullDataSize, data, chunkNb, action) {
@@ -11468,38 +11440,44 @@ return /******/ (function(modules) { // webpackBootstrap
 	var PING_TIMEOUT = 5000;
 
 	/**
-	 * Constant used to build a message designated to API user.
+	 * One of the internal message type. It's a peer message.
 	 * @type {int}
 	 */
 	var USER_DATA = 1;
 
 	/**
-	 * Constant used to build a message designated to a specific service.
+	 * One of the internal message type. This message should be threated by a
+	 * specific service class
 	 * @type {int}
 	 */
 	var SERVICE_DATA = 2;
+
 	/**
-	 * Constant used to build a message that a user has left Web Channel.
+	 * One of the internal message type. Means a peer has left the WebChannel.
 	 * @type {int}
 	 */
 	var LEAVE = 3;
+
 	/**
-	 * Constant used to build a message to be sent to a newly joining peer.
+	 * One of the internal message type. Initialization message for the joining peer.
 	 * @type {int}
 	 */
+
 	var JOIN_INIT = 4;
 	/**
-	 * Constant used to build a message to be sent to all peers in Web Channel to
-	 * notify them about a new peer who is about to join the Web Channel.
+	 * One of the internal message type. The message is intended for the WebChannel
+	 * members to notify them about the joining peer.
 	 * @type {int}
 	 */
 	var JOIN_NEW_MEMBER = 5;
+
 	/**
-	 * Constant used to build a message to be sent to all peers in Web Channel to
-	 * notify them that the new peer who should join the Web Channel, refuse to join.
+	 * One of the internal message type. The message is intended for the WebChannel
+	 * members to notify them that the joining peer has not succeed.
 	 * @type {int}
 	 */
 	var REMOVE_NEW_MEMBER = 6;
+
 	/**
 	 * Constant used to build a message to be sent to a newly joining peer that he
 	 * has can now succesfully join Web Channel.
@@ -11577,6 +11555,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	var WebChannel = function () {
 
 	  /**
+	   * When the `WebChannel` is open, any clients should you this data to join
+	   * the `WebChannel`.
+	   *
+	   * @typedef {Object} WebChannel~AccessData
+	   * @property {string} key - The key to join the `WebChannel`
+	   * @property {string} url - Signaling server URL to use to join the `WebChannel`
+	   */
+
+	  /**
 	   * `WebChannel` constructor. `WebChannel` can be parameterized in terms of
 	   * network topology and connector technology (WebRTC or WebSocket. Currently
 	   * WebRTC is only available).
@@ -11625,10 +11612,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	    /** @private */
 	    this.connectWithRequests = new Map();
 
-	    /** @private */
 	    this.topology = this.settings.topology;
 
-	    // Public attributes
+	    /** @private */
+	    this.peerNb = 0;
+	    /** @private */
+	    this.pingTime = 0;
+
+	    /** @private */
+	    this.gate = new WebChannelGate(function (closeEvt) {
+	      return _this.onClose(closeEvt);
+	    });
 
 	    /**
 	     * Unique identifier of this `WebChannel`. The same for all peers.
@@ -11637,30 +11631,146 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.id = this.generateId();
 
 	    /**
-	     * Unique peer identifier in this `WebChannel`. After each `join` function call
+	     * Unique peer identifier of you in this `WebChannel`. After each `join` function call
 	     * this id will change, because it is up to the `WebChannel` to assign it when
 	     * you join.
 	     *
 	     * @readonly
 	     */
 	    this.myId = this.generateId();
-	    this.peerNb = 0;
-	    this.pingTime = 0;
 
+	    /**
+	     * Is the event handler called when a new peer has  joined the `WebChannel`.
+	     *
+	     * @param {number} id - Id of the joined peer
+	     */
 	    this.onJoining = function (id) {};
-	    this.onMessage = function (id, msg, isBroadcast) {};
-	    this.onLeaving = function (id) {};
-	    this.onClose = function (closeEvt) {};
 
-	    this.gate = new WebChannelGate(function (closeEvt) {
-	      return _this.onClose(closeEvt);
-	    });
+	    /**
+	     * Is the event handler called when a message is available on the `WebChannel`.
+	     *
+	     * @param {number} id - Id of the peer who sent this message
+	     * @param {string|external:ArrayBufferView} data - Message
+	     * @param {boolean} isBroadcast - It is true if the message is sent via
+	     * [send]{@link WebChannel#send} method and false if it is sent via
+	     * [sendTo]{@link WebChannel#sendTo} method
+	     */
+	    this.onMessage = function (id, msg, isBroadcast) {};
+
+	    /**
+	     * Is the event handler called when a peer hes left the `WebChannel`.
+	     *
+	     * @param {number} id - Id of the peer who has left
+	     */
+	    this.onLeaving = function (id) {};
+
+	    /**
+	     * Is the event handler called when the `WebChannel` has been closed.
+	     *
+	     * @param {external:CloseEvent} id - Close event object
+	     */
+	    this.onClose = function (closeEvt) {};
 	  }
 
-	  /** Leave `WebChannel`. No longer can receive and send messages to the group. */
+	  /**
+	   * Enable other peers to join the `WebChannel` with your help as an
+	   * intermediary peer.
+	   *
+	   * @param  {Object} [options] Any available connection service options
+	   * @return {PromiseWebChannel~AccessData} It is resolved once the `WebChannel`
+	   * is open. The callback function take a parameter of type {@link WebChannel~AccessData}.
+	   */
 
 
 	  _createClass(WebChannel, [{
+	    key: 'openForJoining',
+	    value: function openForJoining() {
+	      var _this2 = this;
+
+	      var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+	      var settings = Object.assign({}, this.settings, options);
+
+	      var cBuilder = (0, _serviceProvider.provide)(settings.connector, settings);
+	      return cBuilder.open(this.generateKey(), function (channel) {
+	        _this2.initChannel(channel, false).then(function (channel) {
+	          // console.log('INITIATOR is adding: ' + channel.peerId)
+	          var jp = _this2.addJoiningPeer(channel.peerId, _this2.myId, channel);
+	          _this2.manager.broadcast(_this2, msgBuilder.msg(JOIN_NEW_MEMBER, { id: channel.peerId, intermediaryId: _this2.myId }));
+	          channel.send(msgBuilder.msg(JOIN_INIT, {
+	            manager: _this2.settings.topology,
+	            id: channel.peerId,
+	            intermediaryId: _this2.myId }));
+	          _this2.manager.add(channel).then(function () {
+	            return channel.send(msgBuilder.msg(JOIN_FINILIZE));
+	          }).catch(function (msg) {
+	            _this2.manager.broadcast(_this2, msgBuilder(REMOVE_NEW_MEMBER, { id: channel.peerId }));
+	            _this2.removeJoiningPeer(jp.id);
+	          });
+	        });
+	      }).then(function (data) {
+	        var accessData = { key: data.key, url: data.url };
+	        _this2.gate.setOpen(data.socket, accessData);
+	        return accessData;
+	      });
+	    }
+
+	    /**
+	     * Prevent clients to join the `WebChannel` even if they possesses a key.
+	     */
+
+	  }, {
+	    key: 'closeForJoining',
+	    value: function closeForJoining() {
+	      this.gate.close();
+	    }
+
+	    /**
+	     * If the `WebChannel` is open, the clients can join it through you, otherwise
+	     * it is not possible.
+	     *
+	     * @returns {boolean} True if the `WebChannel` is open, false otherwise
+	     */
+
+	  }, {
+	    key: 'isOpen',
+	    value: function isOpen() {
+	      return this.gate.isOpen();
+	    }
+
+	    /**
+	     * Join the `WebChannel`.
+	     *
+	     * @param  {string} key - The key provided by one of the `WebChannel` members.
+	     * @param  {type} [options] - Any available connection service options.
+	     * @return {Promise} It resolves once you became a `WebChannel` member.
+	     */
+
+	  }, {
+	    key: 'join',
+	    value: function join(key) {
+	      var _this3 = this;
+
+	      var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+
+	      var settings = Object.assign({}, this.settings, options);
+	      var cBuilder = (0, _serviceProvider.provide)(settings.connector, settings);
+	      return new Promise(function (resolve, reject) {
+	        _this3.onJoin = function () {
+	          return resolve(_this3);
+	        };
+	        cBuilder.join(key).then(function (channel) {
+	          return _this3.initChannel(channel, true);
+	        }).catch(reject);
+	      });
+	    }
+
+	    /**
+	     * Leave the `WebChannel`. No longer can receive and send messages to the group.
+	     *
+	     */
+
+	  }, {
 	    key: 'leave',
 	    value: function leave() {
 	      if (this.channels.size !== 0) {
@@ -11675,116 +11785,78 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    /**
-	     * Send broadcast message.
+	     * Send the message to all `WebChannel` members.
 	     *
-	     * @param  {string} data Message
+	     * @param  {string|external:ArrayBufferView} data - Message
 	     */
 
 	  }, {
 	    key: 'send',
 	    value: function send(data) {
-	      var _this2 = this;
+	      var _this4 = this;
 
 	      if (this.channels.size !== 0) {
 	        msgBuilder.handleUserMessage(data, this.myId, null, function (dataChunk) {
-	          _this2.manager.broadcast(_this2, dataChunk);
+	          _this4.manager.broadcast(_this4, dataChunk);
 	        });
 	      }
 	    }
 
 	    /**
-	     * Send the message to a particular peer.
+	     * Send the message to a particular peer in the `WebChannel`.
 	     *
-	     * @param  {type} id Peer id of the recipient peer
-	     * @param  {type} data Message
+	     * @param  {number} id - Id of the recipient peer
+	     * @param  {string|external:ArrayBufferView} data - Message
 	     */
 
 	  }, {
 	    key: 'sendTo',
 	    value: function sendTo(id, data) {
-	      var _this3 = this;
+	      var _this5 = this;
 
 	      if (this.channels.size !== 0) {
 	        msgBuilder.handleUserMessage(data, this.myId, id, function (dataChunk) {
-	          _this3.manager.sendTo(id, _this3, dataChunk);
+	          _this5.manager.sendTo(id, _this5, dataChunk);
 	        }, false);
 	      }
 	    }
 
 	    /**
-	     * Enable other peers to join the `WebChannel` with your help as an intermediary
-	     * peer.
+	     * Get the data which should be provided to all clients who must join
+	     * the `WebChannel`. It is the same data which
+	     * {@link WebChannel#openForJoining} callback function provides.
 	     *
-	     * @param  {Object} [options] Any available connection service options.
-	     * @return {string} The key required by other peer to join the `WebChannel`.
+	     * @returns {WebChannel~AccessData|null} - Data to join the `WebChannel`
+	     * or null is the `WebChannel` is closed
 	     */
 
-	  }, {
-	    key: 'openForJoining',
-	    value: function openForJoining() {
-	      var _this4 = this;
-
-	      var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-
-	      var settings = Object.assign({}, this.settings, options);
-
-	      var cBuilder = (0, _serviceProvider.provide)(settings.connector, settings);
-	      return cBuilder.open(this.generateKey(), function (channel) {
-	        _this4.initChannel(channel, false).then(function (channel) {
-	          // console.log('INITIATOR is adding: ' + channel.peerId)
-	          var jp = _this4.addJoiningPeer(channel.peerId, _this4.myId, channel);
-	          _this4.manager.broadcast(_this4, msgBuilder.msg(JOIN_NEW_MEMBER, { id: channel.peerId, intermediaryId: _this4.myId }));
-	          channel.send(msgBuilder.msg(JOIN_INIT, {
-	            manager: _this4.settings.topology,
-	            id: channel.peerId,
-	            intermediaryId: _this4.myId }));
-	          _this4.manager.add(channel).then(function () {
-	            return channel.send(msgBuilder.msg(JOIN_FINILIZE));
-	          }).catch(function (msg) {
-	            _this4.manager.broadcast(_this4, msgBuilder(REMOVE_NEW_MEMBER, { id: channel.peerId }));
-	            _this4.removeJoiningPeer(jp.id);
-	          });
-	        });
-	      }).then(function (data) {
-	        var accessData = { key: data.key, url: data.url };
-	        _this4.gate.setOpen(data.socket, accessData);
-	        return accessData;
-	      });
-	    }
-
-	    /**
-	     * Prevent other peers to join the `WebChannel` even if they have a key.
-	     */
-
-	  }, {
-	    key: 'closeForJoining',
-	    value: function closeForJoining() {
-	      this.gate.close();
-	    }
-	  }, {
-	    key: 'isOpen',
-	    value: function isOpen() {
-	      return this.gate.isOpen();
-	    }
 	  }, {
 	    key: 'getAccess',
 	    value: function getAccess() {
 	      return this.gate.getAccessData();
 	    }
+
+	    /**
+	     * Get the ping of the `WebChannel`. It is an amount in milliseconds which
+	     * corresponds to the longest ping to each `WebChannel` member.
+	     *
+	     * @returns {Promise}
+	     */
+
 	  }, {
 	    key: 'ping',
 	    value: function ping() {
-	      var _this5 = this;
+	      var _this6 = this;
 
 	      return new Promise(function (resolve, reject) {
-	        if (_this5.pingTime === 0) {
-	          _this5.pingTime = Date.now();
-	          _this5.maxTime = 0;
-	          _this5.pongNb = 0;
-	          _this5.pingFinish = function (delay) {
+	        if (_this6.pingTime === 0) {
+	          _this6.pingTime = Date.now();
+	          _this6.maxTime = 0;
+	          _this6.pongNb = 0;
+	          _this6.pingFinish = function (delay) {
 	            resolve(delay);
 	          };
-	          _this5.manager.broadcast(_this5, msgBuilder.msg(PING, { senderId: _this5.myId }));
+	          _this6.manager.broadcast(_this6, msgBuilder.msg(PING, { senderId: _this6.myId }));
 	          setTimeout(function () {
 	            resolve(PING_TIMEOUT);
 	          }, PING_TIMEOUT);
@@ -11793,72 +11865,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    /**
-	     * Join the `WebChannel`.
+	     * // TODO: add doc
 	     *
-	     * @param  {string} key The key provided by a `WebChannel` member.
-	     * @param  {type} [options] Any available connection service options.
-	     * @return {Promise} It resolves once you became a `WebChannel` member.
 	     */
 
 	  }, {
-	    key: 'join',
-	    value: function join(key) {
-	      var _this6 = this;
+	    key: 'sendSrvMsg',
 
-	      var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-
-	      var settings = Object.assign({}, this.settings, options);
-	      var cBuilder = (0, _serviceProvider.provide)(settings.connector, settings);
-	      return new Promise(function (resolve, reject) {
-	        _this6.onJoin = function () {
-	          return resolve(_this6);
-	        };
-	        cBuilder.join(key).then(function (channel) {
-	          return _this6.initChannel(channel, true);
-	        }).catch(reject);
-	      });
-	    }
-
-	    /**
-	     * has - description
-	     *
-	     * @private
-	     * @param  {type} peerId description
-	     * @return {type}        description
-	     */
-
-	  }, {
-	    key: 'has',
-	    value: function has(peerId) {
-	      var _iteratorNormalCompletion = true;
-	      var _didIteratorError = false;
-	      var _iteratorError = undefined;
-
-	      try {
-	        for (var _iterator = this.channels[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-	          var c = _step.value;
-
-	          if (c.peerId === peerId) {
-	            return true;
-	          }
-	        }
-	      } catch (err) {
-	        _didIteratorError = true;
-	        _iteratorError = err;
-	      } finally {
-	        try {
-	          if (!_iteratorNormalCompletion && _iterator.return) {
-	            _iterator.return();
-	          }
-	        } finally {
-	          if (_didIteratorError) {
-	            throw _iteratorError;
-	          }
-	        }
-	      }
-
-	      return false;
-	    }
 
 	    /**
 	     * Send a message to a service of the same peer, joining peer or any peer in
@@ -11869,9 +11882,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	     * @param  {string} recepient - Identifier of recepient peer id.
 	     * @param  {Object} [msg={}] - Message to send.
 	     */
-
-	  }, {
-	    key: 'sendSrvMsg',
 	    value: function sendSrvMsg(serviceName, recepient) {
 	      var msg = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
 	      var channel = arguments.length <= 3 || arguments[3] === undefined ? null : arguments[3];
@@ -11905,6 +11915,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	      }
 	    }
+
+	    /**
+	     * // TODO: add doc
+	     *
+	     * @private
+	     */
+
 	  }, {
 	    key: 'onChannelMessage',
 	    value: function onChannelMessage(channel, data) {
@@ -11919,13 +11936,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var msg = msgBuilder.readInternalMessage(data);
 	        switch (header.code) {
 	          case LEAVE:
-	            var _iteratorNormalCompletion2 = true;
-	            var _didIteratorError2 = false;
-	            var _iteratorError2 = undefined;
+	            var _iteratorNormalCompletion = true;
+	            var _didIteratorError = false;
+	            var _iteratorError = undefined;
 
 	            try {
-	              for (var _iterator2 = this.channels[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-	                var c = _step2.value;
+	              for (var _iterator = this.channels[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+	                var c = _step.value;
 
 	                if (c.peerId === msg.id) {
 	                  c.close();
@@ -11933,16 +11950,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	              }
 	            } catch (err) {
-	              _didIteratorError2 = true;
-	              _iteratorError2 = err;
+	              _didIteratorError = true;
+	              _iteratorError = err;
 	            } finally {
 	              try {
-	                if (!_iteratorNormalCompletion2 && _iterator2.return) {
-	                  _iterator2.return();
+	                if (!_iteratorNormalCompletion && _iterator.return) {
+	                  _iterator.return();
 	                }
 	              } finally {
-	                if (_didIteratorError2) {
-	                  throw _iteratorError2;
+	                if (_didIteratorError) {
+	                  throw _iteratorError;
 	                }
 	              }
 	            }
@@ -12000,18 +12017,46 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	      }
 	    }
+
+	    /**
+	     * // TODO: add doc
+	     *
+	     * @private
+	     */
+
 	  }, {
 	    key: 'onChannelError',
 	    value: function onChannelError(evt) {
 	      console.log('DATA_CHANNEL ERROR: ', evt);
 	    }
+
+	    /**
+	     * // TODO: add doc
+	     *
+	     * @private
+	     */
+
 	  }, {
 	    key: 'onChannelClose',
 	    value: function onChannelClose(evt) {
 	      console.log('DATA_CHANNEL CLOSE: ', evt);
 	    }
+
+	    /**
+	     * // TODO: add doc
+	     *
+	     * @private
+	     */
+
 	  }, {
 	    key: 'initChannel',
+
+
+	    /**
+	     * // TODO: add doc
+	     *
+	     * @private
+	     */
 	    value: function initChannel(ch, isInitiator) {
 	      var _this8 = this;
 
@@ -12063,11 +12108,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    /**
-	     * getJoiningPeer - description
+	     * TODO: add doc
 	     *
 	     * @private
 	     * @param  {type} id description
-	     * @return {type}    description
 	     */
 
 	  }, {
@@ -12076,35 +12120,42 @@ return /******/ (function(modules) { // webpackBootstrap
 	      // if (this.myId !== id) {
 	      //   console.log('Me ' + this.myId + ' is looking for ' + id)
 	      // }
-	      var _iteratorNormalCompletion3 = true;
-	      var _didIteratorError3 = false;
-	      var _iteratorError3 = undefined;
+	      var _iteratorNormalCompletion2 = true;
+	      var _didIteratorError2 = false;
+	      var _iteratorError2 = undefined;
 
 	      try {
-	        for (var _iterator3 = this.joiningPeers[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-	          var jp = _step3.value;
+	        for (var _iterator2 = this.joiningPeers[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+	          var jp = _step2.value;
 
 	          if (jp.id === id) {
 	            return jp;
 	          }
 	        }
 	      } catch (err) {
-	        _didIteratorError3 = true;
-	        _iteratorError3 = err;
+	        _didIteratorError2 = true;
+	        _iteratorError2 = err;
 	      } finally {
 	        try {
-	          if (!_iteratorNormalCompletion3 && _iterator3.return) {
-	            _iterator3.return();
+	          if (!_iteratorNormalCompletion2 && _iterator2.return) {
+	            _iterator2.return();
 	          }
 	        } finally {
-	          if (_didIteratorError3) {
-	            throw _iteratorError3;
+	          if (_didIteratorError2) {
+	            throw _iteratorError2;
 	          }
 	        }
 	      }
 
 	      throw new Error('Peer ' + this.myId + ' could not find the joining peer ' + id);
 	    }
+
+	    /**
+	     * TODO: add doc
+	     *
+	     * @private
+	     */
+
 	  }, {
 	    key: 'getJoiningPeers',
 	    value: function getJoiningPeers() {
@@ -12112,7 +12163,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    /**
-	     * addJoiningPeer - description
+	     * TODO: add doc
 	     *
 	     * @private
 	     * @param  {type} jp description
@@ -12134,8 +12185,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	      this.joiningPeers.add(jp);
 	      return jp;
 	    }
+
 	    /**
-	     * removeJoiningPeer - description
+	     * TODO: add doc
 	     *
 	     * @private
 	     * @param  {type} id description
@@ -12151,7 +12203,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    /**
-	     * isJoining - description
+	     * TODO: add doc
 	     *
 	     * @private
 	     * @return {type}  description
@@ -12160,6 +12212,47 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'isJoining',
 	    value: function isJoining() {
+	      var _iteratorNormalCompletion3 = true;
+	      var _didIteratorError3 = false;
+	      var _iteratorError3 = undefined;
+
+	      try {
+	        for (var _iterator3 = this.joiningPeers[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+	          var jp = _step3.value;
+
+	          if (jp.id === this.myId) {
+	            return true;
+	          }
+	        }
+	      } catch (err) {
+	        _didIteratorError3 = true;
+	        _iteratorError3 = err;
+	      } finally {
+	        try {
+	          if (!_iteratorNormalCompletion3 && _iterator3.return) {
+	            _iterator3.return();
+	          }
+	        } finally {
+	          if (_didIteratorError3) {
+	            throw _iteratorError3;
+	          }
+	        }
+	      }
+
+	      return false;
+	    }
+
+	    /**
+	     * TODO: add doc
+	     *
+	     * @private
+	     * @param  {type} id description
+	     * @return {type}    description
+	     */
+
+	  }, {
+	    key: 'hasJoiningPeer',
+	    value: function hasJoiningPeer(id) {
 	      var _iteratorNormalCompletion4 = true;
 	      var _didIteratorError4 = false;
 	      var _iteratorError4 = undefined;
@@ -12168,7 +12261,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        for (var _iterator4 = this.joiningPeers[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
 	          var jp = _step4.value;
 
-	          if (jp.id === this.myId) {
+	          if (jp.id === id) {
 	            return true;
 	          }
 	        }
@@ -12191,48 +12284,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    /**
-	     * hasJoiningPeer - description
-	     *
-	     * @private
-	     * @param  {type} id description
-	     * @return {type}    description
-	     */
-
-	  }, {
-	    key: 'hasJoiningPeer',
-	    value: function hasJoiningPeer(id) {
-	      var _iteratorNormalCompletion5 = true;
-	      var _didIteratorError5 = false;
-	      var _iteratorError5 = undefined;
-
-	      try {
-	        for (var _iterator5 = this.joiningPeers[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-	          var jp = _step5.value;
-
-	          if (jp.id === id) {
-	            return true;
-	          }
-	        }
-	      } catch (err) {
-	        _didIteratorError5 = true;
-	        _iteratorError5 = err;
-	      } finally {
-	        try {
-	          if (!_iteratorNormalCompletion5 && _iterator5.return) {
-	            _iterator5.return();
-	          }
-	        } finally {
-	          if (_didIteratorError5) {
-	            throw _iteratorError5;
-	          }
-	        }
-	      }
-
-	      return false;
-	    }
-
-	    /**
-	     * generateKey - description
+	     * TODO: add doc
 	     *
 	     * @private
 	     * @return {type}  description
@@ -12252,33 +12304,41 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 	      return result;
 	    }
+
+	    /**
+	     * TODO: add doc
+	     *
+	     * @private
+	     * @return {type}  description
+	     */
+
 	  }, {
 	    key: 'generateId',
 	    value: function generateId() {
 	      var id = void 0;
 	      do {
 	        id = Math.ceil(Math.random() * MAX_ID);
-	        var _iteratorNormalCompletion6 = true;
-	        var _didIteratorError6 = false;
-	        var _iteratorError6 = undefined;
+	        var _iteratorNormalCompletion5 = true;
+	        var _didIteratorError5 = false;
+	        var _iteratorError5 = undefined;
 
 	        try {
-	          for (var _iterator6 = this.channels[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
-	            var c = _step6.value;
+	          for (var _iterator5 = this.channels[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+	            var c = _step5.value;
 
 	            if (id === c.peerId) continue;
 	          }
 	        } catch (err) {
-	          _didIteratorError6 = true;
-	          _iteratorError6 = err;
+	          _didIteratorError5 = true;
+	          _iteratorError5 = err;
 	        } finally {
 	          try {
-	            if (!_iteratorNormalCompletion6 && _iterator6.return) {
-	              _iterator6.return();
+	            if (!_iteratorNormalCompletion5 && _iterator5.return) {
+	              _iterator5.return();
 	            }
 	          } finally {
-	            if (_didIteratorError6) {
-	              throw _iteratorError6;
+	            if (_didIteratorError5) {
+	              throw _iteratorError5;
 	            }
 	          }
 	        }
@@ -12291,12 +12351,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	  }, {
 	    key: 'topology',
+	    get: function get() {
+	      return this.settings.topology;
+	    },
 	    set: function set(name) {
 	      this.settings.topology = name;
 	      this.manager = (0, _serviceProvider.provide)(this.settings.topology);
-	    },
-	    get: function get() {
-	      return this.settings.topology;
 	    }
 	  }]);
 
@@ -12444,7 +12504,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	     * added to the current peer once the joining peer become the member of the
 	     * web channel.
 	     *
-	     * @type {Array[Channel]}
+	     * @type {Channel[]}
 	     */
 	    this.channelsToAdd = [];
 
@@ -12453,7 +12513,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	     * closed with the current peer once the joining peer become the member of the
 	     * web channel.
 	     *
-	     * @type {Array[Channel]}
+	     * @type {Channel[]}
 	     */
 	    this.channelsToRemove = [];
 	  }
@@ -12518,11 +12578,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	  module.exports.extractVersion = require('./utils').extractVersion;
 	  module.exports.disableLog = require('./utils').disableLog;
 
-	  // Comment out the line below if you want logging to occur, including logging
+	  // Uncomment the line below if you want logging to occur, including logging
 	  // for the switch statement below. Can also be turned on in the browser via
 	  // adapter.disableLog(false), but then logging from the switch statement below
 	  // will not appear.
-	  require('./utils').disableLog(true);
+	  // require('./utils').disableLog(false);
 
 	  // Browser shims.
 	  var chromeShim = require('./chrome/chrome_shim') || null;
@@ -12814,6 +12874,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        };
 	      });
 	    }
+
+	    // support for addIceCandidate(null)
+	    var nativeAddIceCandidate = RTCPeerConnection.prototype.addIceCandidate;
+	    RTCPeerConnection.prototype.addIceCandidate = function () {
+	      return arguments[0] === null ? Promise.resolve() : nativeAddIceCandidate.apply(this, arguments);
+	    };
 
 	    // shim implicit creation of RTCSessionDescription/RTCIceCandidate
 	    ['setLocalDescription', 'setRemoteDescription', 'addIceCandidate'].forEach(function (method) {
@@ -13164,6 +13230,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	      };
 	    });
 
+	    // support for addIceCandidate(null)
+	    var nativeAddIceCandidate = RTCPeerConnection.prototype.addIceCandidate;
+	    RTCPeerConnection.prototype.addIceCandidate = function () {
+	      return arguments[0] === null ? Promise.resolve() : nativeAddIceCandidate.apply(this, arguments);
+	    };
+
 	    // shim getStats with maplike support
 	    var makeMapStats = function makeMapStats(stats) {
 	      var map = new Map();
@@ -13324,7 +13396,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        PermissionDeniedError: 'NotAllowedError'
 	      }[e.name] || e.name,
 	      message: {
-	        'The operation is insecure.': 'The request is not allowed by the user ' + 'agent or the platform in the current context.'
+	        'The operation is insecure.': 'The request is not allowed by the ' + 'user agent or the platform in the current context.'
 	      }[e.message] || e.message,
 	      constraint: e.constraint,
 	      toString: function toString() {
@@ -13388,7 +13460,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      logging('ff37: ' + JSON.stringify(constraints));
 	    }
 	    return navigator.mozGetUserMedia(constraints, onSuccess, function (e) {
-	      return onError(shimError_(e));
+	      onError(shimError_(e));
 	    });
 	  };
 
@@ -13487,7 +13559,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
-	var logDisabled_ = false;
+	var logDisabled_ = true;
 
 	// Utility methods.
 	var utils = {

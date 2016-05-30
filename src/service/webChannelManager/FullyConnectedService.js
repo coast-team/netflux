@@ -1,4 +1,4 @@
-import * as wcManager from './webChannelManager'
+import {WebChannelManagerInterface} from './webChannelManager'
 
 /**
  * Fully connected web channel manager. Implements fully connected topology
@@ -6,7 +6,7 @@ import * as wcManager from './webChannelManager'
  *
  * @extends module:webChannelManager~Interface
  */
-class FullyConnectedService extends wcManager.Interface {
+class FullyConnectedService extends WebChannelManagerInterface {
 
   constructor () {
     super()

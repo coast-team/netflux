@@ -16,7 +16,7 @@
  *
  * @interface
  */
-class Interface {
+class ServiceInterface {
 
   /**
    * Service name which corresponds to its class name.
@@ -30,5 +30,5 @@ class Interface {
 
 export {
   /** @see module:service~Interface */
-  Interface
+  ServiceInterface
 }

@@ -29,11 +29,11 @@
     module.exports.extractVersion = require('./utils').extractVersion;
     module.exports.disableLog = require('./utils').disableLog;
 
-    // Comment out the line below if you want logging to occur, including logging
+    // Uncomment the line below if you want logging to occur, including logging
     // for the switch statement below. Can also be turned on in the browser via
     // adapter.disableLog(false), but then logging from the switch statement below
     // will not appear.
-    require('./utils').disableLog(true);
+    // require('./utils').disableLog(false);
 
     // Browser shims.
     var chromeShim = require('./chrome/chrome_shim') || null;
@@ -325,6 +325,12 @@
           };
         });
       }
+
+      // support for addIceCandidate(null)
+      var nativeAddIceCandidate = RTCPeerConnection.prototype.addIceCandidate;
+      RTCPeerConnection.prototype.addIceCandidate = function () {
+        return arguments[0] === null ? Promise.resolve() : nativeAddIceCandidate.apply(this, arguments);
+      };
 
       // shim implicit creation of RTCSessionDescription/RTCIceCandidate
       ['setLocalDescription', 'setRemoteDescription', 'addIceCandidate'].forEach(function (method) {
@@ -675,6 +681,12 @@
         };
       });
 
+      // support for addIceCandidate(null)
+      var nativeAddIceCandidate = RTCPeerConnection.prototype.addIceCandidate;
+      RTCPeerConnection.prototype.addIceCandidate = function () {
+        return arguments[0] === null ? Promise.resolve() : nativeAddIceCandidate.apply(this, arguments);
+      };
+
       // shim getStats with maplike support
       var makeMapStats = function makeMapStats(stats) {
         var map = new Map();
@@ -835,7 +847,7 @@
           PermissionDeniedError: 'NotAllowedError'
         }[e.name] || e.name,
         message: {
-          'The operation is insecure.': 'The request is not allowed by the user ' + 'agent or the platform in the current context.'
+          'The operation is insecure.': 'The request is not allowed by the ' + 'user agent or the platform in the current context.'
         }[e.message] || e.message,
         constraint: e.constraint,
         toString: function toString() {
@@ -899,7 +911,7 @@
         logging('ff37: ' + JSON.stringify(constraints));
       }
       return navigator.mozGetUserMedia(constraints, onSuccess, function (e) {
-        return onError(shimError_(e));
+        onError(shimError_(e));
       });
     };
 
@@ -998,7 +1010,7 @@
 
   var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
-  var logDisabled_ = false;
+  var logDisabled_ = true;
 
   // Utility methods.
   var utils = {
@@ -1142,7 +1154,7 @@
    *
    * @interface
    */
-  class Interface$1 {
+  class ServiceInterface {
 
     /**
      * Service name which corresponds to its class name.
@@ -1184,7 +1196,7 @@
    * @interface
    * @extends module:service~Interface
    */
-  class Interface extends Interface$1 {
+  class WebChannelManagerInterface extends ServiceInterface {
 
     constructor () {
       super()
@@ -1392,7 +1404,7 @@
    *
    * @extends module:webChannelManager~Interface
    */
-  class FullyConnectedService extends Interface {
+  class FullyConnectedService extends WebChannelManagerInterface {
 
     constructor () {
       super()
@@ -1460,7 +1472,7 @@
    * @interface
    * @extends module:service~Interface
    */
-  class Interface$2 extends Interface$1 {
+  class ChannelBuilderInterface extends ServiceInterface {
 
     constructor () {
       super()
@@ -1608,7 +1620,6 @@
     }
   }
 
-
   const CONNECT_TIMEOUT = 2000
   const connectionsByWC = new Map()
 
@@ -1619,7 +1630,7 @@
    * @see {@link external:RTCPeerConnection}
    * @extends module:channelBuilder~Interface
    */
-  class WebRTCService extends Interface$2 {
+  class WebRTCService extends ChannelBuilderInterface {
 
     /**
      * WebRTCService constructor.
@@ -1935,7 +1946,7 @@
 
   const buffers = new Map()
 
-  class MessageBuilderService extends Interface$1 {
+  class MessageBuilderService extends ServiceInterface {
 
     constructor () {
       super()
@@ -2298,7 +2309,7 @@
        * added to the current peer once the joining peer become the member of the
        * web channel.
        *
-       * @type {Array[Channel]}
+       * @type {Channel[]}
        */
       this.channelsToAdd = []
 
@@ -2307,7 +2318,7 @@
        * closed with the current peer once the joining peer become the member of the
        * web channel.
        *
-       * @type {Array[Channel]}
+       * @type {Channel[]}
        */
       this.channelsToRemove = []
     }
@@ -2338,38 +2349,44 @@
   const PING_TIMEOUT = 5000
 
   /**
-   * Constant used to build a message designated to API user.
+   * One of the internal message type. It's a peer message.
    * @type {int}
    */
   const USER_DATA = 1
 
   /**
-   * Constant used to build a message designated to a specific service.
+   * One of the internal message type. This message should be threated by a
+   * specific service class
    * @type {int}
    */
   const SERVICE_DATA = 2
+
   /**
-   * Constant used to build a message that a user has left Web Channel.
+   * One of the internal message type. Means a peer has left the WebChannel.
    * @type {int}
    */
   const LEAVE = 3
+
   /**
-   * Constant used to build a message to be sent to a newly joining peer.
+   * One of the internal message type. Initialization message for the joining peer.
    * @type {int}
    */
+
   const JOIN_INIT = 4
   /**
-   * Constant used to build a message to be sent to all peers in Web Channel to
-   * notify them about a new peer who is about to join the Web Channel.
+   * One of the internal message type. The message is intended for the WebChannel
+   * members to notify them about the joining peer.
    * @type {int}
    */
   const JOIN_NEW_MEMBER = 5
+
   /**
-   * Constant used to build a message to be sent to all peers in Web Channel to
-   * notify them that the new peer who should join the Web Channel, refuse to join.
+   * One of the internal message type. The message is intended for the WebChannel
+   * members to notify them that the joining peer has not succeed.
    * @type {int}
    */
   const REMOVE_NEW_MEMBER = 6
+
   /**
    * Constant used to build a message to be sent to a newly joining peer that he
    * has can now succesfully join Web Channel.
@@ -2435,6 +2452,15 @@
   class WebChannel {
 
     /**
+     * When the `WebChannel` is open, any clients should you this data to join
+     * the `WebChannel`.
+     *
+     * @typedef {Object} WebChannel~AccessData
+     * @property {string} key - The key to join the `WebChannel`
+     * @property {string} url - Signaling server URL to use to join the `WebChannel`
+     */
+
+    /**
      * `WebChannel` constructor. `WebChannel` can be parameterized in terms of
      * network topology and connector technology (WebRTC or WebSocket. Currently
      * WebRTC is only available).
@@ -2476,10 +2502,15 @@
       /** @private */
       this.connectWithRequests = new Map()
 
-      /** @private */
       this.topology = this.settings.topology
 
-      // Public attributes
+      /** @private */
+      this.peerNb = 0
+      /** @private */
+      this.pingTime = 0
+
+      /** @private */
+      this.gate = new WebChannelGate((closeEvt) => this.onClose(closeEvt))
 
       /**
        * Unique identifier of this `WebChannel`. The same for all peers.
@@ -2488,70 +2519,54 @@
       this.id = this.generateId()
 
       /**
-       * Unique peer identifier in this `WebChannel`. After each `join` function call
+       * Unique peer identifier of you in this `WebChannel`. After each `join` function call
        * this id will change, because it is up to the `WebChannel` to assign it when
        * you join.
        *
        * @readonly
        */
       this.myId = this.generateId()
-      this.peerNb = 0
-      this.pingTime = 0
 
+      /**
+       * Is the event handler called when a new peer has  joined the `WebChannel`.
+       *
+       * @param {number} id - Id of the joined peer
+       */
       this.onJoining = (id) => {}
+
+      /**
+       * Is the event handler called when a message is available on the `WebChannel`.
+       *
+       * @param {number} id - Id of the peer who sent this message
+       * @param {string|external:ArrayBufferView} data - Message
+       * @param {boolean} isBroadcast - It is true if the message is sent via
+       * [send]{@link WebChannel#send} method and false if it is sent via
+       * [sendTo]{@link WebChannel#sendTo} method
+       */
       this.onMessage = (id, msg, isBroadcast) => {}
+
+      /**
+       * Is the event handler called when a peer hes left the `WebChannel`.
+       *
+       * @param {number} id - Id of the peer who has left
+       */
       this.onLeaving = (id) => {}
+
+      /**
+       * Is the event handler called when the `WebChannel` has been closed.
+       *
+       * @param {external:CloseEvent} id - Close event object
+       */
       this.onClose = (closeEvt) => {}
-
-      this.gate = new WebChannelGate((closeEvt) => this.onClose(closeEvt))
-    }
-
-    /** Leave `WebChannel`. No longer can receive and send messages to the group. */
-    leave () {
-      if (this.channels.size !== 0) {
-        this.manager.broadcast(this, msgBuilder.msg(LEAVE, {id: this.myId}))
-        this.topology = this.settings.topology
-        this.channels.forEach((c) => {
-          c.close()
-        })
-        this.channels.clear()
-        this.gate.close()
-      }
     }
 
     /**
-     * Send broadcast message.
+     * Enable other peers to join the `WebChannel` with your help as an
+     * intermediary peer.
      *
-     * @param  {string} data Message
-     */
-    send (data) {
-      if (this.channels.size !== 0) {
-        msgBuilder.handleUserMessage(data, this.myId, null, (dataChunk) => {
-          this.manager.broadcast(this, dataChunk)
-        })
-      }
-    }
-
-    /**
-     * Send the message to a particular peer.
-     *
-     * @param  {type} id Peer id of the recipient peer
-     * @param  {type} data Message
-     */
-    sendTo (id, data) {
-      if (this.channels.size !== 0) {
-        msgBuilder.handleUserMessage(data, this.myId, id, (dataChunk) => {
-          this.manager.sendTo(id, this, dataChunk)
-        }, false)
-      }
-    }
-
-    /**
-     * Enable other peers to join the `WebChannel` with your help as an intermediary
-     * peer.
-     *
-     * @param  {Object} [options] Any available connection service options.
-     * @return {string} The key required by other peer to join the `WebChannel`.
+     * @param  {Object} [options] Any available connection service options
+     * @return {PromiseWebChannel~AccessData} It is resolved once the `WebChannel`
+     * is open. The callback function take a parameter of type {@link WebChannel~AccessData}.
      */
     openForJoining (options = {}) {
       let settings = Object.assign({}, this.settings, options)
@@ -2587,38 +2602,27 @@
     }
 
     /**
-     * Prevent other peers to join the `WebChannel` even if they have a key.
+     * Prevent clients to join the `WebChannel` even if they possesses a key.
      */
     closeForJoining () {
       this.gate.close()
     }
 
+    /**
+     * If the `WebChannel` is open, the clients can join it through you, otherwise
+     * it is not possible.
+     *
+     * @returns {boolean} True if the `WebChannel` is open, false otherwise
+     */
     isOpen () {
       return this.gate.isOpen()
-    }
-
-    getAccess () {
-      return this.gate.getAccessData()
-    }
-
-    ping () {
-      return new Promise((resolve, reject) => {
-        if (this.pingTime === 0) {
-          this.pingTime = Date.now()
-          this.maxTime = 0
-          this.pongNb = 0
-          this.pingFinish = (delay) => { resolve(delay) }
-          this.manager.broadcast(this, msgBuilder.msg(PING, {senderId: this.myId}))
-          setTimeout(() => { resolve(PING_TIMEOUT) }, PING_TIMEOUT)
-        }
-      })
     }
 
     /**
      * Join the `WebChannel`.
      *
-     * @param  {string} key The key provided by a `WebChannel` member.
-     * @param  {type} [options] Any available connection service options.
+     * @param  {string} key - The key provided by one of the `WebChannel` members.
+     * @param  {type} [options] - Any available connection service options.
      * @return {Promise} It resolves once you became a `WebChannel` member.
      */
     join (key, options = {}) {
@@ -2633,19 +2637,85 @@
     }
 
     /**
-     * has - description
+     * Leave the `WebChannel`. No longer can receive and send messages to the group.
      *
-     * @private
-     * @param  {type} peerId description
-     * @return {type}        description
      */
-    has (peerId) {
-      for (let c of this.channels) {
-        if (c.peerId === peerId) {
-          return true
-        }
+    leave () {
+      if (this.channels.size !== 0) {
+        this.manager.broadcast(this, msgBuilder.msg(LEAVE, {id: this.myId}))
+        this.topology = this.settings.topology
+        this.channels.forEach((c) => {
+          c.close()
+        })
+        this.channels.clear()
+        this.gate.close()
       }
-      return false
+    }
+
+    /**
+     * Send the message to all `WebChannel` members.
+     *
+     * @param  {string|external:ArrayBufferView} data - Message
+     */
+    send (data) {
+      if (this.channels.size !== 0) {
+        msgBuilder.handleUserMessage(data, this.myId, null, (dataChunk) => {
+          this.manager.broadcast(this, dataChunk)
+        })
+      }
+    }
+
+    /**
+     * Send the message to a particular peer in the `WebChannel`.
+     *
+     * @param  {number} id - Id of the recipient peer
+     * @param  {string|external:ArrayBufferView} data - Message
+     */
+    sendTo (id, data) {
+      if (this.channels.size !== 0) {
+        msgBuilder.handleUserMessage(data, this.myId, id, (dataChunk) => {
+          this.manager.sendTo(id, this, dataChunk)
+        }, false)
+      }
+    }
+
+    /**
+     * Get the data which should be provided to all clients who must join
+     * the `WebChannel`. It is the same data which
+     * {@link WebChannel#openForJoining} callback function provides.
+     *
+     * @returns {WebChannel~AccessData|null} - Data to join the `WebChannel`
+     * or null is the `WebChannel` is closed
+     */
+    getAccess () {
+      return this.gate.getAccessData()
+    }
+
+    /**
+     * Get the ping of the `WebChannel`. It is an amount in milliseconds which
+     * corresponds to the longest ping to each `WebChannel` member.
+     *
+     * @returns {Promise}
+     */
+    ping () {
+      return new Promise((resolve, reject) => {
+        if (this.pingTime === 0) {
+          this.pingTime = Date.now()
+          this.maxTime = 0
+          this.pongNb = 0
+          this.pingFinish = (delay) => { resolve(delay) }
+          this.manager.broadcast(this, msgBuilder.msg(PING, {senderId: this.myId}))
+          setTimeout(() => { resolve(PING_TIMEOUT) }, PING_TIMEOUT)
+        }
+      })
+    }
+
+    /**
+     * // TODO: add doc
+     *
+     */
+    get topology () {
+      return this.settings.topology
     }
 
     /**
@@ -2692,6 +2762,11 @@
       }
     }
 
+    /**
+     * // TODO: add doc
+     *
+     * @private
+     */
     onChannelMessage (channel, data) {
       let header = msgBuilder.readHeader(data)
       if (header.code === USER_DATA) {
@@ -2762,23 +2837,39 @@
       }
     }
 
+    /**
+     * // TODO: add doc
+     *
+     * @private
+     */
     onChannelError (evt) {
       console.log('DATA_CHANNEL ERROR: ', evt)
     }
 
+    /**
+     * // TODO: add doc
+     *
+     * @private
+     */
     onChannelClose (evt) {
       console.log('DATA_CHANNEL CLOSE: ', evt)
     }
 
+    /**
+     * // TODO: add doc
+     *
+     * @private
+     */
     set topology (name) {
       this.settings.topology = name
       this.manager = provide(this.settings.topology)
     }
 
-    get topology () {
-      return this.settings.topology
-    }
-
+    /**
+     * // TODO: add doc
+     *
+     * @private
+     */
     initChannel (ch, isInitiator, id = -1) {
       return new Promise((resolve, reject) => {
         if (id === -1) { id = this.generateId() }
@@ -2817,11 +2908,10 @@
     }
 
     /**
-     * getJoiningPeer - description
+     * TODO: add doc
      *
      * @private
      * @param  {type} id description
-     * @return {type}    description
      */
     getJoiningPeer (id) {
       // if (this.myId !== id) {
@@ -2835,12 +2925,17 @@
       throw new Error('Peer ' + this.myId + ' could not find the joining peer ' + id)
     }
 
+    /**
+     * TODO: add doc
+     *
+     * @private
+     */
     getJoiningPeers () {
       return this.joiningPeers
     }
 
     /**
-     * addJoiningPeer - description
+     * TODO: add doc
      *
      * @private
      * @param  {type} jp description
@@ -2857,8 +2952,9 @@
       this.joiningPeers.add(jp)
       return jp
     }
+
     /**
-     * removeJoiningPeer - description
+     * TODO: add doc
      *
      * @private
      * @param  {type} id description
@@ -2871,7 +2967,7 @@
     }
 
     /**
-     * isJoining - description
+     * TODO: add doc
      *
      * @private
      * @return {type}  description
@@ -2886,7 +2982,7 @@
     }
 
     /**
-     * hasJoiningPeer - description
+     * TODO: add doc
      *
      * @private
      * @param  {type} id description
@@ -2902,7 +2998,7 @@
     }
 
     /**
-     * generateKey - description
+     * TODO: add doc
      *
      * @private
      * @return {type}  description
@@ -2920,6 +3016,12 @@
       return result
     }
 
+    /**
+     * TODO: add doc
+     *
+     * @private
+     * @return {type}  description
+     */
     generateId () {
       let id
       do {

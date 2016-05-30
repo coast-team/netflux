@@ -1,4 +1,4 @@
-import * as service from './service'
+import {ServiceInterface} from './service'
 
 // Max message size sent on Channel: 16kb
 const MAX_MSG_SIZE = 16384
@@ -26,7 +26,7 @@ const DATA_VIEW_TYPE = 12
 
 const buffers = new Map()
 
-class MessageBuilderService extends service.Interface {
+class MessageBuilderService extends ServiceInterface {
 
   constructor () {
     super()

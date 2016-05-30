@@ -36,7 +36,7 @@ class JoiningPeer {
      * added to the current peer once the joining peer become the member of the
      * web channel.
      *
-     * @type {Array[Channel]}
+     * @type {Channel[]}
      */
     this.channelsToAdd = []
 
@@ -45,7 +45,7 @@ class JoiningPeer {
      * closed with the current peer once the joining peer become the member of the
      * web channel.
      *
-     * @type {Array[Channel]}
+     * @type {Channel[]}
      */
     this.channelsToRemove = []
   }

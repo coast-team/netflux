@@ -1,25 +1,4 @@
-/**
- * @external RTCPeerConnection
- * @see {@link https://developer.mozilla.org/en/docs/Web/API/RTCPeerConnection}
- */
-/**
- * @external RTCSessionDescription
- * @see {@link https://developer.mozilla.org/en/docs/Web/API/RTCSessionDescription}
- */
-/**
- * @external RTCDataChannel
- * @see {@link https://developer.mozilla.org/en/docs/Web/API/RTCDataChannel}
- */
-/**
- * @external RTCIceCandidate
- * @see {@link https://developer.mozilla.org/en/docs/Web/API/RTCIceCandidate}
- */
-/**
- * @external RTCPeerConnectionIceEvent
- * @see {@link https://developer.mozilla.org/en/docs/Web/API/RTCPeerConnectionIceEvent}
- */
-
-import * as channelBuilder from './channelBuilder'
+import {ChannelBuilderInterface} from './channelBuilder'
 
 /**
  * Ice candidate event handler.
@@ -120,7 +99,6 @@ class RTCPendingConnections {
   }
 }
 
-
 const CONNECT_TIMEOUT = 2000
 const connectionsByWC = new Map()
 
@@ -131,7 +109,7 @@ const connectionsByWC = new Map()
  * @see {@link external:RTCPeerConnection}
  * @extends module:channelBuilder~Interface
  */
-class WebRTCService extends channelBuilder.Interface {
+class WebRTCService extends ChannelBuilderInterface {
 
   /**
    * WebRTCService constructor.

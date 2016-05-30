@@ -1,4 +1,4 @@
-import * as service from '../service'
+import {ServiceInterface} from '../service'
 /**
  * Channel Builder module is responsible to create a connection between two
  * peers.
@@ -30,7 +30,7 @@ import * as service from '../service'
  * @interface
  * @extends module:service~Interface
  */
-class Interface extends service.Interface {
+class ChannelBuilderInterface extends ServiceInterface {
 
   constructor () {
     super()
@@ -81,5 +81,5 @@ class Interface extends service.Interface {
 
 export {
   /** @see module:channelBuilder~Interface */
-  Interface
+  ChannelBuilderInterface
 }

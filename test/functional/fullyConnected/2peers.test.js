@@ -22,13 +22,11 @@ describe('2 peers -> ', () => {
 
   describe('Should send/receive broadcast/personal messages -> ', () => {
     let wc1, wc2
-    let access
 
     beforeAll((done) => {
       // Peer #1
       wc1 = new WebChannel({signaling})
       wc1.openForJoining().then((data) => {
-        access = data
         // Peer #2
         wc2 = new WebChannel({signaling})
         wc2.join(data.key).then(() => {

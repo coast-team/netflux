@@ -10,7 +10,7 @@
     "pretest": "npm run build && npm run signalling-up",
     "test": "karma start",
     "testin": "npm run test -- --browsers",
-    "test-coverage": "karma start karma.conf.coverage.js",
+    "test-coverage": "npm run test -- karma.conf.coverage.js",
     "doc": "jsdoc -d doc -c jsdoc.json -t ./node_modules/ink-docstrap/template -R README.md -r src",
     "postdoc": "mkdir -p doc/doc && cp -f doc/uml.png doc/doc/",
     "docdev": "jsdoc -d doc -p -c jsdoc.json -t ./node_modules/ink-docstrap/template -R README.md -r src",
@@ -95,7 +95,8 @@
       "RTCIceCandidate",
       "WebSocket",
       "TextEncoder",
-      "TextDecoder"
+      "TextDecoder",
+      "Event"
     ],
     "ignore": [
       "dist/*",
