@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# https://github.com/X1011/git-directory-deploy
 set -o errexit #abort if any command fails
 me=$(basename "$0")
 
@@ -92,24 +93,24 @@ main() {
 
 	commit_title=`git log -n 1 --format="%s" HEAD`
 	commit_hash=` git log -n 1 --format="%H" HEAD`
-	
+
 	#default commit message uses last title if a custom one is not supplied
 	if [[ -z $commit_message ]]; then
 		commit_message="publish: $commit_title"
 	fi
-	
+
 	#append hash to commit message unless no hash flag was found
 	if [ $append_hash = true ]; then
 		commit_message="$commit_message"$'\n\n'"generated from commit $commit_hash"
 	fi
-		
+
 	previous_branch=`git rev-parse --abbrev-ref HEAD`
 
 	if [ ! -d "$deploy_directory" ]; then
 		echo "Deploy directory '$deploy_directory' does not exist. Aborting." >&2
 		return 1
 	fi
-	
+
 	# must use short form of flag in ls for compatibility with OS X and BSD
 	if [[ -z `ls -A "$deploy_directory" 2> /dev/null` && -z $allow_empty ]]; then
 		echo "Deploy directory '$deploy_directory' is empty. Aborting. If you're sure you want to deploy an empty tree, use the --allow-empty / -e flag." >&2
@@ -118,7 +119,7 @@ main() {
 
 	if git ls-remote --exit-code $repo "refs/heads/$deploy_branch" ; then
 		# deploy_branch exists in $repo; make sure we have the latest version
-		
+
 		disable_expanded_output
 		git fetch --force $repo $deploy_branch:$deploy_branch
 		enable_expanded_output
@@ -201,7 +202,7 @@ restore_head() {
 	else
 		git symbolic-ref HEAD refs/heads/$previous_branch
 	fi
-	
+
 	git reset --mixed
 }
 
