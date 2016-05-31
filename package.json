@@ -15,7 +15,7 @@
     "postdoc": "mkdir -p doc/doc && cp -f doc/uml.png doc/doc/",
     "docdev": "jsdoc -d doc -p -c jsdoc.json -t ./node_modules/ink-docstrap/template -R README.md -r src",
     "postdocdev": "mkdir -p doc/doc && cp -f doc/uml.png doc/doc/",
-    "predocdeploy": "npm run docdev && json -I -f jsdoc.json -e \"this.templates.systemName=\\\"Netflux `git describe --abbrev=0 --tags`\\\"\"",
+    "predocdeploy": "json -I -f jsdoc.json -e \"this.templates.systemName=\\\"Netflux `git describe --abbrev=0 --tags`\\\"\" && npm run docdev",
     "docdeploy": "./jsdoc.deploy.sh",
     "postdocdeploy": "json -I -f jsdoc.json -e 'this.templates.systemName=\"Netflux\"'",
     "commit": "git-cz",
