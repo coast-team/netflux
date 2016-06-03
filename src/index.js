@@ -30,11 +30,71 @@ export { WebChannel } from './WebChannel'
  * @external RTCPeerConnectionIceEvent
  * @see {@link https://developer.mozilla.org/en/docs/Web/API/RTCPeerConnectionIceEvent}
  */
- /**
-  * @external CloseEvent
-  * @see {@link https://developer.mozilla.org/en/docs/Web/API/CloseEvent/CloseEvent}
-  */
-  /**
-   * @external ArrayBufferView
-   * @see {@link https://developer.mozilla.org/en/docs/Web/API/ArrayBufferView}
-   */
+/**
+ * @external CloseEvent
+ * @see {@link https://developer.mozilla.org/en/docs/Web/API/CloseEvent/CloseEvent}
+ */
+/**
+ * @external WebSocket
+ * @see {@link https://developer.mozilla.org/en/docs/Web/API/WebSocket}
+ */
+/**
+ * @external Set
+ * @see {@link https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Set}
+ */
+/**
+ * @external Map
+ * @see {@link https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Map}
+ */
+/**
+ * @external ArrayBufferView
+ * @see {@link https://developer.mozilla.org/en/docs/Web/API/ArrayBufferView}
+ */
+/**
+ * @external ArrayBuffer
+ * @see {@link https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer}
+ */
+/**
+ * @external String
+ * @see {@link https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/String}
+ */
+/**
+ * @external Int8Array
+ * @see {@link developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Int8Array}
+ */
+/**
+ * @external Uint8Array
+ * @see {@link developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array}
+ */
+/**
+ * @external Uint8ClampedArray
+ * @see {@link https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8ClampedArray}
+ */
+/**
+ * @external Int16Array
+ * @see {@link https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Int16Array}
+ */
+/**
+ * @external Uint16Array
+ * @see {@link https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint16Array}
+ */
+/**
+ * @external Int32Array
+ * @see {@link https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Int32Array}
+ */
+/**
+ * @external Uint32Array
+ * @see {@link https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint32Array}
+ */
+/**
+ * @external Float32Array
+ * @see {@link https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Float32Array}
+ */
+/**
+ * @external Float64Array
+ * @see {@link https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Float64Array}
+ */
+/**
+ * @external DataView
+ * @see {@link https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/DataView}
+ */

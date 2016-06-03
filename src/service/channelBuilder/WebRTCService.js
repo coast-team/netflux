@@ -107,7 +107,7 @@ const connectionsByWC = new Map()
  * `RTCDataChannel`.
  *
  * @see {@link external:RTCPeerConnection}
- * @extends module:channelBuilder~Interface
+ * @extends module:channelBuilder~ChannelBuilderInterface
  */
 class WebRTCService extends ChannelBuilderInterface {
 
@@ -123,11 +123,10 @@ class WebRTCService extends ChannelBuilderInterface {
   constructor (options = {}) {
     super()
     this.defaults = {
-      signaling: 'wws://sigver-coastteam.rhcloud.com:8000',
+      signaling: 'ws://sigver-coastteam.rhcloud.com:8000',
       iceServers: [
-        {urls: 'stun:23.21.150.121'},
-        {urls: 'stun:stun.l.google.com:19302'},
-        {urls: 'turn:numb.viagenie.ca', credential: 'webrtcdemo', username: 'louis%40mozilla.com'}
+        {urls: 'stun:turn01.uswest.xirsys.com'},
+        {urls: 'turn:turn01.uswest.xirsys.com:443?transport=udp', credential: 'ffd2ac3a-280e-11e6-a490-82fbe4816256', username: 'ffd2abae-280e-11e6-b8e6-4969dd337df0'}
       ]
     }
     this.settings = Object.assign({}, this.defaults, options)
@@ -208,6 +207,7 @@ class WebRTCService extends ChannelBuilderInterface {
       socket.onmessage = (evt) => {
         try {
           let msg = JSON.parse(evt.data)
+          console.log('Message from SIGNALING server: ', msg)
           // Check message format
           if (!('data' in msg)) {
             reject(`Unknown message from the signaling server: ${evt.data}`)
@@ -215,9 +215,15 @@ class WebRTCService extends ChannelBuilderInterface {
 
           if ('answer' in msg.data) {
             pc.setRemoteDescription(this.createSessionDescription(msg.data.answer))
+              .then(() => {
+                console.log('Answer has been set: ', msg.data.answer)
+              })
               .catch(reject)
           } else if ('candidate' in msg.data) {
             pc.addIceCandidate(this.createIceCandidate(msg.data.candidate))
+              .then(() => {
+                console.log('Candidate has been added: ', msg.data.candidate)
+              })
               .catch((evt) => {
                 // This exception does not reject the current Promise, because
                 // still the connection may be established even without one or
@@ -232,7 +238,7 @@ class WebRTCService extends ChannelBuilderInterface {
         }
       }
       socket.onerror = (evt) => {
-        reject('WebSocket with signaling server error')
+        reject('WebSocket with signaling server error: ' + evt.message)
       }
       socket.onclose = (closeEvt) => {
         if (closeEvt.code !== 1000) {
@@ -303,7 +309,10 @@ class WebRTCService extends ChannelBuilderInterface {
         dc.onclose()
       }
     }
-    dc.onopen = (evt) => onChannel(dc)
+    dc.onopen = (evt) => {
+      console.log('Data channel has been opened: ', evt)
+      onChannel(dc)
+    }
     return pc.createOffer()
       .then((offer) => pc.setLocalDescription(offer))
       .then(() => {
@@ -325,20 +334,34 @@ class WebRTCService extends ChannelBuilderInterface {
   createPeerConnectionAndAnswer (onCandidate, sendAnswer, onChannel, offer) {
     let pc = this.createPeerConnection(onCandidate)
     pc.ondatachannel = (dcEvt) => {
+      console.log('ondatachannel: ', dcEvt)
       let dc = dcEvt.channel
       pc.oniceconnectionstatechange = () => {
         if (pc.iceConnectionState === 'disconnected') {
           dc.onclose()
         }
       }
-      dc.onopen = (evt) => onChannel(dc)
+      dc.onopen = (evt) => {
+        console.log('Data channel has been opened: ', evt)
+        onChannel(dc)
+      }
     }
     return pc.setRemoteDescription(this.createSessionDescription(offer))
-      .then(() => pc.createAnswer())
-      .then((answer) => pc.setLocalDescription(answer))
       .then(() => {
+        console.log('Offer has been set: ', offer)
+        return pc.createAnswer()
+      })
+      .then((answer) => {
+        console.log('Local description has been set: ', answer)
+        pc.setLocalDescription(answer)
+      })
+      .then(() => {
+        console.log('answer has been sent: ', pc.localDescription.toJSON())
         sendAnswer(pc.localDescription.toJSON())
         return pc
+      })
+      .catch((reason) => {
+        console.error('Set offer, generate answer error: ', reason)
       })
   }
 

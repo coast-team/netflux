@@ -9,18 +9,57 @@ describe('2 peers -> ', () => {
       expect(wc1.channels.size).toBe(wc2.channels.size)
       expect(wc1.channels.values().next().value.peerId).toBe(wc2.myId)
       expect(wc2.channels.values().next().value.peerId).toBe(wc1.myId)
+      wc1.leave()
+      wc2.leave()
       done()
     }
     wc1.openForJoining()
       .then((data) => {
         wc2.join(data.key)
-          .then(() => {})
           .catch(done.fail)
       })
       .catch(done.fail)
   })
 
-  describe('Should send/receive broadcast/personal messages -> ', () => {
+  it('Should get WebChannel access data after open', (done) => {
+    let wc1 = new WebChannel({signaling})
+    wc1.openForJoining().then((data) => {
+      expect(wc1.getAccess()).toBe(data)
+      wc1.closeForJoining()
+      done()
+    }).catch(done.fail)
+  })
+
+  it('Should catch onClose WebChannel event', (done) => {
+    let wc1 = new WebChannel({signaling})
+    wc1.onClose = (evt) => {
+      expect(evt instanceof Event).toBeTruthy()
+      wc1.leave()
+      done()
+    }
+    wc1.openForJoining().then((data) => {
+      wc1.closeForJoining()
+    }).catch(done.fail)
+  })
+
+  it('Should not enable to join the WebChannel after it has been closed', (done) => {
+    let wc1 = new WebChannel({signaling})
+    let wc2 = new WebChannel({signaling})
+
+    // Peer #1
+    wc1.openForJoining().then((data) => {
+      wc1.closeForJoining()
+      // Peer #2
+      wc2.join(data.key).then(done.fail)
+        .catch(() => {
+          wc1.leave()
+          wc2.leave()
+          done()
+        })
+    }).catch(done.fail)
+  })
+
+  describe('Should send/receive messages -> ', () => {
     let wc1, wc2
 
     beforeAll((done) => {
@@ -34,6 +73,11 @@ describe('2 peers -> ', () => {
         })
           .catch(done.fail)
       }).catch(done.fail)
+    })
+
+    afterAll(() => {
+      wc1.leave()
+      wc2.leave()
     })
 
     it('isOpen', () => {
@@ -76,38 +120,6 @@ describe('2 peers -> ', () => {
       }
       wc2.sendTo(wc1.myId, message2)
     })
-  })
-
-  it('Should get WebChannel access data after open', (done) => {
-    let wc1 = new WebChannel({signaling})
-    wc1.openForJoining().then((data) => {
-      expect(wc1.getAccess()).toBe(data)
-      done()
-    }).catch(done.fail)
-  })
-
-  it('Should catch onClose WebChannel event', (done) => {
-    let wc1 = new WebChannel({signaling})
-    wc1.onClose = (evt) => {
-      expect(evt instanceof Event).toBeTruthy()
-      done()
-    }
-    wc1.openForJoining().then((data) => {
-      wc1.closeForJoining()
-    }).catch(done.fail)
-  })
-
-  it('Should not enable to join the WebChannel after it has been closed', (done) => {
-    let wc1 = new WebChannel({signaling})
-    let wc2 = new WebChannel({signaling})
-
-    // Peer #1
-    wc1.openForJoining().then((data) => {
-      wc1.closeForJoining()
-      // Peer #2
-      wc2.join(data.key).then(done.fail)
-        .catch(done)
-    }).catch(done.fail)
   })
 
   describe('Should leave WebChannel -> ', () => {

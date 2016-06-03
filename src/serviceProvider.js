@@ -1,6 +1,6 @@
 import FullyConnectedService from './service/webChannelManager/FullyConnectedService'
 import WebRTCService from './service/channelBuilder/WebRTCService'
-import {MessageBuilderService} from './service/MessageBuilderService'
+import {MessageBuilderService} from './service/messageBuilder'
 /**
  * Service Provider module is a helper module for {@link module:service}. It is
  * responsible to instantiate all services. This module must be used to get
@@ -15,23 +15,34 @@ import {MessageBuilderService} from './service/MessageBuilderService'
 const WEBRTC = 'WebRTCService'
 
 /**
- * Constant used to get an instance of {@link FullyConnectedService}.
+ * Constant used to get an instance of {@link FullyConnectedService}. It is a
+ * singleton service.
  * @type {string}
  */
 const FULLY_CONNECTED = 'FullyConnectedService'
 
+/**
+ * Constant used to get an instance of {@link MessageBuilderService}. It is a
+ * singleton service.
+ * @type {string}
+ */
 const MESSAGE_BUILDER = 'MessageBuilderService'
 
+/**
+ * Contains services who are singletons.
+ * @type {string}
+ */
 const services = new Map()
 
 /**
  * Provides the service instance specified by `name`.
  *
- * @param  {(module:serviceProvider.CHANNEL_PROXY|
+ * @param  {(module:serviceProvider.MESSAGE_BUILDER|
  *          module:serviceProvider.WEBRTC|
  *          module:serviceProvider.FULLY_CONNECTED)} name - The service name.
  * @param  {Object} [options] - Any options that the service accepts.
- * @return {module:service~Interface} - Service instance.
+ * @return {module:service~ServiceInterface} - Service instance.
+ * @throws An error if the service name is unknown
  */
 let provide = function (name, options = {}) {
   if (services.has(name)) {
@@ -50,7 +61,7 @@ let provide = function (name, options = {}) {
       services.set(name, service)
       return service
     default:
-      return null
+      throw new Error(`Unknown service name: "${name}"`)
   }
 }
 

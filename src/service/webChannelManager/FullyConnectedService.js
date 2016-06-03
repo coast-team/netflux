@@ -4,7 +4,7 @@ import {WebChannelManagerInterface} from './webChannelManager'
  * Fully connected web channel manager. Implements fully connected topology
  * network, when each peer is connected to each other.
  *
- * @extends module:webChannelManager~Interface
+ * @extends module:webChannelManager~WebChannelManagerInterface
  */
 class FullyConnectedService extends WebChannelManagerInterface {
 
