@@ -14,13 +14,12 @@
    *  that can be found in the LICENSE file in the root of the source
    *  tree.
    */
-  /* eslint-env node */
+   /* eslint-env node */
 
   'use strict';
 
   // Shimming starts here.
-
-  (function () {
+  (function() {
     // Utils.
     var logging = require('./utils').log;
     var browserDetails = require('./utils').browserDetails;
@@ -110,46 +109,44 @@
    *  that can be found in the LICENSE file in the root of the source
    *  tree.
    */
-  /* eslint-env node */
+   /* eslint-env node */
   'use strict';
-
-  var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
-
   var logging = require('../utils.js').log;
   var browserDetails = require('../utils.js').browserDetails;
 
   var chromeShim = {
-    shimMediaStream: function shimMediaStream() {
+    shimMediaStream: function() {
       window.MediaStream = window.MediaStream || window.webkitMediaStream;
     },
 
-    shimOnTrack: function shimOnTrack() {
-      if ((typeof window === 'undefined' ? 'undefined' : _typeof(window)) === 'object' && window.RTCPeerConnection && !('ontrack' in window.RTCPeerConnection.prototype)) {
+    shimOnTrack: function() {
+      if (typeof window === 'object' && window.RTCPeerConnection && !('ontrack' in
+          window.RTCPeerConnection.prototype)) {
         Object.defineProperty(window.RTCPeerConnection.prototype, 'ontrack', {
-          get: function get() {
+          get: function() {
             return this._ontrack;
           },
-          set: function set(f) {
+          set: function(f) {
             var self = this;
             if (this._ontrack) {
               this.removeEventListener('track', this._ontrack);
               this.removeEventListener('addstream', this._ontrackpoly);
             }
             this.addEventListener('track', this._ontrack = f);
-            this.addEventListener('addstream', this._ontrackpoly = function (e) {
+            this.addEventListener('addstream', this._ontrackpoly = function(e) {
               // onaddstream does not fire when a track is added to an existing
               // stream. But stream.onaddtrack is implemented so we use that.
-              e.stream.addEventListener('addtrack', function (te) {
+              e.stream.addEventListener('addtrack', function(te) {
                 var event = new Event('track');
                 event.track = te.track;
-                event.receiver = { track: te.track };
+                event.receiver = {track: te.track};
                 event.streams = [e.stream];
                 self.dispatchEvent(event);
               });
-              e.stream.getTracks().forEach(function (track) {
+              e.stream.getTracks().forEach(function(track) {
                 var event = new Event('track');
                 event.track = track;
-                event.receiver = { track: track };
+                event.receiver = {track: track};
                 event.streams = [e.stream];
                 this.dispatchEvent(event);
               }.bind(this));
@@ -159,15 +156,16 @@
       }
     },
 
-    shimSourceObject: function shimSourceObject() {
-      if ((typeof window === 'undefined' ? 'undefined' : _typeof(window)) === 'object') {
-        if (window.HTMLMediaElement && !('srcObject' in window.HTMLMediaElement.prototype)) {
+    shimSourceObject: function() {
+      if (typeof window === 'object') {
+        if (window.HTMLMediaElement &&
+          !('srcObject' in window.HTMLMediaElement.prototype)) {
           // Shim the srcObject property, once, when HTMLMediaElement is found.
           Object.defineProperty(window.HTMLMediaElement.prototype, 'srcObject', {
-            get: function get() {
+            get: function() {
               return this._srcObject;
             },
-            set: function set(stream) {
+            set: function(stream) {
               var self = this;
               // Use _srcObject as a private property for this shim
               this._srcObject = stream;
@@ -182,13 +180,13 @@
               this.src = URL.createObjectURL(stream);
               // We need to recreate the blob url when a track is added or
               // removed. Doing it manually since we want to avoid a recursion.
-              stream.addEventListener('addtrack', function () {
+              stream.addEventListener('addtrack', function() {
                 if (self.src) {
                   URL.revokeObjectURL(self.src);
                 }
                 self.src = URL.createObjectURL(stream);
               });
-              stream.addEventListener('removetrack', function () {
+              stream.addEventListener('removetrack', function() {
                 if (self.src) {
                   URL.revokeObjectURL(self.src);
                 }
@@ -200,9 +198,9 @@
       }
     },
 
-    shimPeerConnection: function shimPeerConnection() {
+    shimPeerConnection: function() {
       // The RTCPeerConnection object.
-      window.RTCPeerConnection = function (pcConfig, pcConstraints) {
+      window.RTCPeerConnection = function(pcConfig, pcConstraints) {
         // Translate iceTransportPolicy to iceTransports,
         // see https://code.google.com/p/webrtc/issues/detail?id=4869
         logging('PeerConnection');
@@ -212,7 +210,7 @@
 
         var pc = new webkitRTCPeerConnection(pcConfig, pcConstraints);
         var origGetStats = pc.getStats.bind(pc);
-        pc.getStats = function (selector, successCallback, errorCallback) {
+        pc.getStats = function(selector, successCallback, errorCallback) {
           var self = this;
           var args = arguments;
 
@@ -222,16 +220,16 @@
             return origGetStats(selector, successCallback);
           }
 
-          var fixChromeStats_ = function fixChromeStats_(response) {
+          var fixChromeStats_ = function(response) {
             var standardReport = {};
             var reports = response.result();
-            reports.forEach(function (report) {
+            reports.forEach(function(report) {
               var standardStats = {
                 id: report.id,
                 timestamp: report.timestamp,
                 type: report.type
               };
-              report.names().forEach(function (name) {
+              report.names().forEach(function(name) {
                 standardStats[name] = report.stat(name);
               });
               standardReport[standardStats.id] = standardStats;
@@ -241,36 +239,40 @@
           };
 
           // shim getStats with maplike support
-          var makeMapStats = function makeMapStats(stats, legacyStats) {
-            var map = new Map(Object.keys(stats).map(function (key) {
-              return [key, stats[key]];
+          var makeMapStats = function(stats, legacyStats) {
+            var map = new Map(Object.keys(stats).map(function(key) {
+              return[key, stats[key]];
             }));
             legacyStats = legacyStats || stats;
-            Object.keys(legacyStats).forEach(function (key) {
+            Object.keys(legacyStats).forEach(function(key) {
               map[key] = legacyStats[key];
             });
             return map;
           };
 
           if (arguments.length >= 2) {
-            var successCallbackWrapper_ = function successCallbackWrapper_(response) {
+            var successCallbackWrapper_ = function(response) {
               args[1](makeMapStats(fixChromeStats_(response)));
             };
 
-            return origGetStats.apply(this, [successCallbackWrapper_, arguments[0]]);
+            return origGetStats.apply(this, [successCallbackWrapper_,
+                arguments[0]]);
           }
 
           // promise-support
-          return new Promise(function (resolve, reject) {
-            if (args.length === 1 && (typeof selector === 'undefined' ? 'undefined' : _typeof(selector)) === 'object') {
-              origGetStats.apply(self, [function (response) {
-                resolve(makeMapStats(fixChromeStats_(response)));
-              }, reject]);
+          return new Promise(function(resolve, reject) {
+            if (args.length === 1 && typeof selector === 'object') {
+              origGetStats.apply(self, [
+                function(response) {
+                  resolve(makeMapStats(fixChromeStats_(response)));
+                }, reject]);
             } else {
               // Preserve legacy chrome stats only on legacy access of stats obj
-              origGetStats.apply(self, [function (response) {
-                resolve(makeMapStats(fixChromeStats_(response), response.result()));
-              }, reject]);
+              origGetStats.apply(self, [
+                function(response) {
+                  resolve(makeMapStats(fixChromeStats_(response),
+                      response.result()));
+                }, reject]);
             }
           }).then(successCallback, errorCallback);
         };
@@ -282,68 +284,75 @@
       // wrap static methods. Currently just generateCertificate.
       if (webkitRTCPeerConnection.generateCertificate) {
         Object.defineProperty(window.RTCPeerConnection, 'generateCertificate', {
-          get: function get() {
+          get: function() {
             return webkitRTCPeerConnection.generateCertificate;
           }
         });
       }
 
-      // add promise support -- natively available in Chrome 51
-      if (browserDetails.version < 51) {
-        ['createOffer', 'createAnswer'].forEach(function (method) {
-          var nativeMethod = webkitRTCPeerConnection.prototype[method];
-          webkitRTCPeerConnection.prototype[method] = function () {
-            var self = this;
-            if (arguments.length < 1 || arguments.length === 1 && _typeof(arguments[0]) === 'object') {
-              var opts = arguments.length === 1 ? arguments[0] : undefined;
-              return new Promise(function (resolve, reject) {
-                nativeMethod.apply(self, [resolve, reject, opts]);
-              });
-            }
-            return nativeMethod.apply(this, arguments);
-          };
-        });
-
-        ['setLocalDescription', 'setRemoteDescription', 'addIceCandidate'].forEach(function (method) {
-          var nativeMethod = webkitRTCPeerConnection.prototype[method];
-          webkitRTCPeerConnection.prototype[method] = function () {
-            var args = arguments;
-            var self = this;
-            var promise = new Promise(function (resolve, reject) {
-              nativeMethod.apply(self, [args[0], resolve, reject]);
-            });
-            if (args.length < 2) {
-              return promise;
-            }
-            return promise.then(function () {
-              args[1].apply(null, []);
-            }, function (err) {
-              if (args.length >= 3) {
-                args[2].apply(null, [err]);
-              }
-            });
-          };
-        });
-      }
-
-      // support for addIceCandidate(null)
-      var nativeAddIceCandidate = RTCPeerConnection.prototype.addIceCandidate;
-      RTCPeerConnection.prototype.addIceCandidate = function () {
-        return arguments[0] === null ? Promise.resolve() : nativeAddIceCandidate.apply(this, arguments);
-      };
-
-      // shim implicit creation of RTCSessionDescription/RTCIceCandidate
-      ['setLocalDescription', 'setRemoteDescription', 'addIceCandidate'].forEach(function (method) {
+      ['createOffer', 'createAnswer'].forEach(function(method) {
         var nativeMethod = webkitRTCPeerConnection.prototype[method];
-        webkitRTCPeerConnection.prototype[method] = function () {
-          arguments[0] = new (method === 'addIceCandidate' ? RTCIceCandidate : RTCSessionDescription)(arguments[0]);
+        webkitRTCPeerConnection.prototype[method] = function() {
+          var self = this;
+          if (arguments.length < 1 || (arguments.length === 1 &&
+              typeof arguments[0] === 'object')) {
+            var opts = arguments.length === 1 ? arguments[0] : undefined;
+            return new Promise(function(resolve, reject) {
+              nativeMethod.apply(self, [resolve, reject, opts]);
+            });
+          }
           return nativeMethod.apply(this, arguments);
         };
       });
+
+      // add promise support -- natively available in Chrome 51
+      if (browserDetails.version < 51) {
+        ['setLocalDescription', 'setRemoteDescription', 'addIceCandidate']
+            .forEach(function(method) {
+              var nativeMethod = webkitRTCPeerConnection.prototype[method];
+              webkitRTCPeerConnection.prototype[method] = function() {
+                var args = arguments;
+                var self = this;
+                var promise = new Promise(function(resolve, reject) {
+                  nativeMethod.apply(self, [args[0], resolve, reject]);
+                });
+                if (args.length < 2) {
+                  return promise;
+                }
+                return promise.then(function() {
+                  args[1].apply(null, []);
+                },
+                function(err) {
+                  if (args.length >= 3) {
+                    args[2].apply(null, [err]);
+                  }
+                });
+              };
+            });
+      }
+
+      // support for addIceCandidate(null)
+      var nativeAddIceCandidate =
+          RTCPeerConnection.prototype.addIceCandidate;
+      RTCPeerConnection.prototype.addIceCandidate = function() {
+        return arguments[0] === null ? Promise.resolve()
+            : nativeAddIceCandidate.apply(this, arguments);
+      };
+
+      // shim implicit creation of RTCSessionDescription/RTCIceCandidate
+      ['setLocalDescription', 'setRemoteDescription', 'addIceCandidate']
+          .forEach(function(method) {
+            var nativeMethod = webkitRTCPeerConnection.prototype[method];
+            webkitRTCPeerConnection.prototype[method] = function() {
+              arguments[0] = new ((method === 'addIceCandidate') ?
+                  RTCIceCandidate : RTCSessionDescription)(arguments[0]);
+              return nativeMethod.apply(this, arguments);
+            };
+          });
     },
 
     // Attach a media stream to an element.
-    attachMediaStream: function attachMediaStream(element, stream) {
+    attachMediaStream: function(element, stream) {
       logging('DEPRECATED, attachMediaStream will soon be removed.');
       if (browserDetails.version >= 43) {
         element.srcObject = stream;
@@ -354,7 +363,7 @@
       }
     },
 
-    reattachMediaStream: function reattachMediaStream(to, from) {
+    reattachMediaStream: function(to, from) {
       logging('DEPRECATED, reattachMediaStream will soon be removed.');
       if (browserDetails.version >= 43) {
         to.srcObject = from.srcObject;
@@ -363,6 +372,7 @@
       }
     }
   };
+
 
   // Expose public methods.
   module.exports = {
@@ -383,33 +393,30 @@
    *  that can be found in the LICENSE file in the root of the source
    *  tree.
    */
-  /* eslint-env node */
+   /* eslint-env node */
   'use strict';
-
-  var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
-
   var logging = require('../utils.js').log;
 
   // Expose public methods.
-  module.exports = function () {
-    var constraintsToChrome_ = function constraintsToChrome_(c) {
-      if ((typeof c === 'undefined' ? 'undefined' : _typeof(c)) !== 'object' || c.mandatory || c.optional) {
+  module.exports = function() {
+    var constraintsToChrome_ = function(c) {
+      if (typeof c !== 'object' || c.mandatory || c.optional) {
         return c;
       }
       var cc = {};
-      Object.keys(c).forEach(function (key) {
+      Object.keys(c).forEach(function(key) {
         if (key === 'require' || key === 'advanced' || key === 'mediaSource') {
           return;
         }
-        var r = _typeof(c[key]) === 'object' ? c[key] : { ideal: c[key] };
+        var r = (typeof c[key] === 'object') ? c[key] : {ideal: c[key]};
         if (r.exact !== undefined && typeof r.exact === 'number') {
           r.min = r.max = r.exact;
         }
-        var oldname_ = function oldname_(prefix, name) {
+        var oldname_ = function(prefix, name) {
           if (prefix) {
             return prefix + name.charAt(0).toUpperCase() + name.slice(1);
           }
-          return name === 'deviceId' ? 'sourceId' : name;
+          return (name === 'deviceId') ? 'sourceId' : name;
         };
         if (r.ideal !== undefined) {
           cc.optional = cc.optional || [];
@@ -429,7 +436,7 @@
           cc.mandatory = cc.mandatory || {};
           cc.mandatory[oldname_('', key)] = r.exact;
         } else {
-          ['min', 'max'].forEach(function (mix) {
+          ['min', 'max'].forEach(function(mix) {
             if (r[mix] !== undefined) {
               cc.mandatory = cc.mandatory || {};
               cc.mandatory[oldname_(mix, key)] = r[mix];
@@ -443,29 +450,34 @@
       return cc;
     };
 
-    var shimConstraints_ = function shimConstraints_(constraints, func) {
+    var shimConstraints_ = function(constraints, func) {
       constraints = JSON.parse(JSON.stringify(constraints));
       if (constraints && constraints.audio) {
         constraints.audio = constraintsToChrome_(constraints.audio);
       }
-      if (constraints && _typeof(constraints.video) === 'object') {
+      if (constraints && typeof constraints.video === 'object') {
         // Shim facingMode for mobile, where it defaults to "user".
         var face = constraints.video.facingMode;
-        face = face && ((typeof face === 'undefined' ? 'undefined' : _typeof(face)) === 'object' ? face : { ideal: face });
+        face = face && ((typeof face === 'object') ? face : {ideal: face});
 
-        if (face && (face.exact === 'user' || face.exact === 'environment' || face.ideal === 'user' || face.ideal === 'environment') && !(navigator.mediaDevices.getSupportedConstraints && navigator.mediaDevices.getSupportedConstraints().facingMode)) {
+        if ((face && (face.exact === 'user' || face.exact === 'environment' ||
+                      face.ideal === 'user' || face.ideal === 'environment')) &&
+            !(navigator.mediaDevices.getSupportedConstraints &&
+              navigator.mediaDevices.getSupportedConstraints().facingMode)) {
           delete constraints.video.facingMode;
           if (face.exact === 'environment' || face.ideal === 'environment') {
             // Look for "back" in label, or use last cam (typically back cam).
-            return navigator.mediaDevices.enumerateDevices().then(function (devices) {
-              devices = devices.filter(function (d) {
+            return navigator.mediaDevices.enumerateDevices()
+            .then(function(devices) {
+              devices = devices.filter(function(d) {
                 return d.kind === 'videoinput';
               });
-              var back = devices.find(function (d) {
+              var back = devices.find(function(d) {
                 return d.label.toLowerCase().indexOf('back') !== -1;
-              }) || devices.length && devices[devices.length - 1];
+              }) || (devices.length && devices[devices.length - 1]);
               if (back) {
-                constraints.video.deviceId = face.exact ? { exact: back.deviceId } : { ideal: back.deviceId };
+                constraints.video.deviceId = face.exact ? {exact: back.deviceId} :
+                                                          {ideal: back.deviceId};
               }
               constraints.video = constraintsToChrome_(constraints.video);
               logging('chrome: ' + JSON.stringify(constraints));
@@ -479,7 +491,7 @@
       return func(constraints);
     };
 
-    var shimError_ = function shimError_(e) {
+    var shimError_ = function(e) {
       return {
         name: {
           PermissionDeniedError: 'NotAllowedError',
@@ -487,15 +499,15 @@
         }[e.name] || e.name,
         message: e.message,
         constraint: e.constraintName,
-        toString: function toString() {
+        toString: function() {
           return this.name + (this.message && ': ') + this.message;
         }
       };
     };
 
-    var getUserMedia_ = function getUserMedia_(constraints, onSuccess, onError) {
-      shimConstraints_(constraints, function (c) {
-        navigator.webkitGetUserMedia(c, onSuccess, function (e) {
+    var getUserMedia_ = function(constraints, onSuccess, onError) {
+      shimConstraints_(constraints, function(c) {
+        navigator.webkitGetUserMedia(c, onSuccess, function(e) {
           onError(shimError_(e));
         });
       });
@@ -504,8 +516,8 @@
     navigator.getUserMedia = getUserMedia_;
 
     // Returns the result of getUserMedia as a Promise.
-    var getUserMediaPromise_ = function getUserMediaPromise_(constraints) {
-      return new Promise(function (resolve, reject) {
+    var getUserMediaPromise_ = function(constraints) {
+      return new Promise(function(resolve, reject) {
         navigator.getUserMedia(constraints, resolve, reject);
       });
     };
@@ -513,15 +525,15 @@
     if (!navigator.mediaDevices) {
       navigator.mediaDevices = {
         getUserMedia: getUserMediaPromise_,
-        enumerateDevices: function enumerateDevices() {
-          return new Promise(function (resolve) {
-            var kinds = { audio: 'audioinput', video: 'videoinput' };
-            return MediaStreamTrack.getSources(function (devices) {
-              resolve(devices.map(function (device) {
-                return { label: device.label,
-                  kind: kinds[device.kind],
-                  deviceId: device.id,
-                  groupId: '' };
+        enumerateDevices: function() {
+          return new Promise(function(resolve) {
+            var kinds = {audio: 'audioinput', video: 'videoinput'};
+            return MediaStreamTrack.getSources(function(devices) {
+              resolve(devices.map(function(device) {
+                return {label: device.label,
+                        kind: kinds[device.kind],
+                        deviceId: device.id,
+                        groupId: ''};
               }));
             });
           });
@@ -532,17 +544,18 @@
     // A shim for getUserMedia method on the mediaDevices object.
     // TODO(KaptenJansson) remove once implemented in Chrome stable.
     if (!navigator.mediaDevices.getUserMedia) {
-      navigator.mediaDevices.getUserMedia = function (constraints) {
+      navigator.mediaDevices.getUserMedia = function(constraints) {
         return getUserMediaPromise_(constraints);
       };
     } else {
       // Even though Chrome 45 has navigator.mediaDevices and a getUserMedia
       // function which returns a Promise, it does not accept spec-style
       // constraints.
-      var origGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
-      navigator.mediaDevices.getUserMedia = function (cs) {
-        return shimConstraints_(cs, function (c) {
-          return origGetUserMedia(c).catch(function (e) {
+      var origGetUserMedia = navigator.mediaDevices.getUserMedia.
+          bind(navigator.mediaDevices);
+      navigator.mediaDevices.getUserMedia = function(cs) {
+        return shimConstraints_(cs, function(c) {
+          return origGetUserMedia(c).catch(function(e) {
             return Promise.reject(shimError_(e));
           });
         });
@@ -552,12 +565,12 @@
     // Dummy devicechange event methods.
     // TODO(KaptenJansson) remove once implemented in Chrome stable.
     if (typeof navigator.mediaDevices.addEventListener === 'undefined') {
-      navigator.mediaDevices.addEventListener = function () {
+      navigator.mediaDevices.addEventListener = function() {
         logging('Dummy mediaDevices.addEventListener called.');
       };
     }
     if (typeof navigator.mediaDevices.removeEventListener === 'undefined') {
-      navigator.mediaDevices.removeEventListener = function () {
+      navigator.mediaDevices.removeEventListener = function() {
         logging('Dummy mediaDevices.removeEventListener called.');
       };
     }
@@ -571,32 +584,31 @@
    *  that can be found in the LICENSE file in the root of the source
    *  tree.
    */
-  /* eslint-env node */
+   /* eslint-env node */
   'use strict';
-
-  var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
   var logging = require('../utils').log;
   var browserDetails = require('../utils').browserDetails;
 
   var firefoxShim = {
-    shimOnTrack: function shimOnTrack() {
-      if ((typeof window === 'undefined' ? 'undefined' : _typeof(window)) === 'object' && window.RTCPeerConnection && !('ontrack' in window.RTCPeerConnection.prototype)) {
+    shimOnTrack: function() {
+      if (typeof window === 'object' && window.RTCPeerConnection && !('ontrack' in
+          window.RTCPeerConnection.prototype)) {
         Object.defineProperty(window.RTCPeerConnection.prototype, 'ontrack', {
-          get: function get() {
+          get: function() {
             return this._ontrack;
           },
-          set: function set(f) {
+          set: function(f) {
             if (this._ontrack) {
               this.removeEventListener('track', this._ontrack);
               this.removeEventListener('addstream', this._ontrackpoly);
             }
             this.addEventListener('track', this._ontrack = f);
-            this.addEventListener('addstream', this._ontrackpoly = function (e) {
-              e.stream.getTracks().forEach(function (track) {
+            this.addEventListener('addstream', this._ontrackpoly = function(e) {
+              e.stream.getTracks().forEach(function(track) {
                 var event = new Event('track');
                 event.track = track;
-                event.receiver = { track: track };
+                event.receiver = {track: track};
                 event.streams = [e.stream];
                 this.dispatchEvent(event);
               }.bind(this));
@@ -606,16 +618,17 @@
       }
     },
 
-    shimSourceObject: function shimSourceObject() {
+    shimSourceObject: function() {
       // Firefox has supported mozSrcObject since FF22, unprefixed in 42.
-      if ((typeof window === 'undefined' ? 'undefined' : _typeof(window)) === 'object') {
-        if (window.HTMLMediaElement && !('srcObject' in window.HTMLMediaElement.prototype)) {
+      if (typeof window === 'object') {
+        if (window.HTMLMediaElement &&
+          !('srcObject' in window.HTMLMediaElement.prototype)) {
           // Shim the srcObject property, once, when HTMLMediaElement is found.
           Object.defineProperty(window.HTMLMediaElement.prototype, 'srcObject', {
-            get: function get() {
+            get: function() {
               return this.mozSrcObject;
             },
-            set: function set(stream) {
+            set: function(stream) {
               this.mozSrcObject = stream;
             }
           });
@@ -623,13 +636,14 @@
       }
     },
 
-    shimPeerConnection: function shimPeerConnection() {
-      if ((typeof window === 'undefined' ? 'undefined' : _typeof(window)) !== 'object' || !(window.RTCPeerConnection || window.mozRTCPeerConnection)) {
+    shimPeerConnection: function() {
+      if (typeof window !== 'object' || !(window.RTCPeerConnection ||
+          window.mozRTCPeerConnection)) {
         return; // probably media.peerconnection.enabled=false in about:config
       }
       // The RTCPeerConnection object.
       if (!window.RTCPeerConnection) {
-        window.RTCPeerConnection = function (pcConfig, pcConstraints) {
+        window.RTCPeerConnection = function(pcConfig, pcConstraints) {
           if (browserDetails.version < 38) {
             // .urls is not supported in FF < 38.
             // create RTCIceServers with a single url.
@@ -662,7 +676,7 @@
         // wrap static methods. Currently just generateCertificate.
         if (mozRTCPeerConnection.generateCertificate) {
           Object.defineProperty(window.RTCPeerConnection, 'generateCertificate', {
-            get: function get() {
+            get: function() {
               return mozRTCPeerConnection.generateCertificate;
             }
           });
@@ -673,24 +687,28 @@
       }
 
       // shim away need for obsolete RTCIceCandidate/RTCSessionDescription.
-      ['setLocalDescription', 'setRemoteDescription', 'addIceCandidate'].forEach(function (method) {
-        var nativeMethod = RTCPeerConnection.prototype[method];
-        RTCPeerConnection.prototype[method] = function () {
-          arguments[0] = new (method === 'addIceCandidate' ? RTCIceCandidate : RTCSessionDescription)(arguments[0]);
-          return nativeMethod.apply(this, arguments);
-        };
-      });
+      ['setLocalDescription', 'setRemoteDescription', 'addIceCandidate']
+          .forEach(function(method) {
+            var nativeMethod = RTCPeerConnection.prototype[method];
+            RTCPeerConnection.prototype[method] = function() {
+              arguments[0] = new ((method === 'addIceCandidate') ?
+                  RTCIceCandidate : RTCSessionDescription)(arguments[0]);
+              return nativeMethod.apply(this, arguments);
+            };
+          });
 
       // support for addIceCandidate(null)
-      var nativeAddIceCandidate = RTCPeerConnection.prototype.addIceCandidate;
-      RTCPeerConnection.prototype.addIceCandidate = function () {
-        return arguments[0] === null ? Promise.resolve() : nativeAddIceCandidate.apply(this, arguments);
+      var nativeAddIceCandidate =
+          RTCPeerConnection.prototype.addIceCandidate;
+      RTCPeerConnection.prototype.addIceCandidate = function() {
+        return arguments[0] === null ? Promise.resolve()
+            : nativeAddIceCandidate.apply(this, arguments);
       };
 
       // shim getStats with maplike support
-      var makeMapStats = function makeMapStats(stats) {
+      var makeMapStats = function(stats) {
         var map = new Map();
-        Object.keys(stats).forEach(function (key) {
+        Object.keys(stats).forEach(function(key) {
           map.set(key, stats[key]);
           map[key] = stats[key];
         });
@@ -698,115 +716,22 @@
       };
 
       var nativeGetStats = RTCPeerConnection.prototype.getStats;
-      RTCPeerConnection.prototype.getStats = function (selector, onSucc, onErr) {
-        return nativeGetStats.apply(this, [selector || null]).then(function (stats) {
-          return makeMapStats(stats);
-        }).then(onSucc, onErr);
+      RTCPeerConnection.prototype.getStats = function(selector, onSucc, onErr) {
+        return nativeGetStats.apply(this, [selector || null])
+          .then(function(stats) {
+            return makeMapStats(stats);
+          })
+          .then(onSucc, onErr);
       };
-    },
-
-    shimGetUserMedia: function shimGetUserMedia() {
-      // getUserMedia constraints shim.
-      var getUserMedia_ = function getUserMedia_(constraints, onSuccess, onError) {
-        var constraintsToFF37_ = function constraintsToFF37_(c) {
-          if ((typeof c === 'undefined' ? 'undefined' : _typeof(c)) !== 'object' || c.require) {
-            return c;
-          }
-          var require = [];
-          Object.keys(c).forEach(function (key) {
-            if (key === 'require' || key === 'advanced' || key === 'mediaSource') {
-              return;
-            }
-            var r = c[key] = _typeof(c[key]) === 'object' ? c[key] : { ideal: c[key] };
-            if (r.min !== undefined || r.max !== undefined || r.exact !== undefined) {
-              require.push(key);
-            }
-            if (r.exact !== undefined) {
-              if (typeof r.exact === 'number') {
-                r.min = r.max = r.exact;
-              } else {
-                c[key] = r.exact;
-              }
-              delete r.exact;
-            }
-            if (r.ideal !== undefined) {
-              c.advanced = c.advanced || [];
-              var oc = {};
-              if (typeof r.ideal === 'number') {
-                oc[key] = { min: r.ideal, max: r.ideal };
-              } else {
-                oc[key] = r.ideal;
-              }
-              c.advanced.push(oc);
-              delete r.ideal;
-              if (!Object.keys(r).length) {
-                delete c[key];
-              }
-            }
-          });
-          if (require.length) {
-            c.require = require;
-          }
-          return c;
-        };
-        constraints = JSON.parse(JSON.stringify(constraints));
-        if (browserDetails.version < 38) {
-          logging('spec: ' + JSON.stringify(constraints));
-          if (constraints.audio) {
-            constraints.audio = constraintsToFF37_(constraints.audio);
-          }
-          if (constraints.video) {
-            constraints.video = constraintsToFF37_(constraints.video);
-          }
-          logging('ff37: ' + JSON.stringify(constraints));
-        }
-        return navigator.mozGetUserMedia(constraints, onSuccess, onError);
-      };
-
-      navigator.getUserMedia = getUserMedia_;
-
-      // Returns the result of getUserMedia as a Promise.
-      var getUserMediaPromise_ = function getUserMediaPromise_(constraints) {
-        return new Promise(function (resolve, reject) {
-          navigator.getUserMedia(constraints, resolve, reject);
-        });
-      };
-
-      // Shim for mediaDevices on older versions.
-      if (!navigator.mediaDevices) {
-        navigator.mediaDevices = { getUserMedia: getUserMediaPromise_,
-          addEventListener: function addEventListener() {},
-          removeEventListener: function removeEventListener() {}
-        };
-      }
-      navigator.mediaDevices.enumerateDevices = navigator.mediaDevices.enumerateDevices || function () {
-        return new Promise(function (resolve) {
-          var infos = [{ kind: 'audioinput', deviceId: 'default', label: '', groupId: '' }, { kind: 'videoinput', deviceId: 'default', label: '', groupId: '' }];
-          resolve(infos);
-        });
-      };
-
-      if (browserDetails.version < 41) {
-        // Work around http://bugzil.la/1169665
-        var orgEnumerateDevices = navigator.mediaDevices.enumerateDevices.bind(navigator.mediaDevices);
-        navigator.mediaDevices.enumerateDevices = function () {
-          return orgEnumerateDevices().then(undefined, function (e) {
-            if (e.name === 'NotFoundError') {
-              return [];
-            }
-            throw e;
-          });
-        };
-      }
     },
 
     // Attach a media stream to an element.
-    attachMediaStream: function attachMediaStream(element, stream) {
+    attachMediaStream: function(element, stream) {
       logging('DEPRECATED, attachMediaStream will soon be removed.');
       element.srcObject = stream;
     },
 
-    reattachMediaStream: function reattachMediaStream(to, from) {
+    reattachMediaStream: function(to, from) {
       logging('DEPRECATED, reattachMediaStream will soon be removed.');
       to.srcObject = from.srcObject;
     }
@@ -830,50 +755,51 @@
    *  that can be found in the LICENSE file in the root of the source
    *  tree.
    */
-  /* eslint-env node */
+   /* eslint-env node */
   'use strict';
-
-  var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
   var logging = require('../utils').log;
   var browserDetails = require('../utils').browserDetails;
 
   // Expose public methods.
-  module.exports = function () {
-    var shimError_ = function shimError_(e) {
+  module.exports = function() {
+    var shimError_ = function(e) {
       return {
         name: {
           SecurityError: 'NotAllowedError',
           PermissionDeniedError: 'NotAllowedError'
         }[e.name] || e.name,
         message: {
-          'The operation is insecure.': 'The request is not allowed by the ' + 'user agent or the platform in the current context.'
+          'The operation is insecure.': 'The request is not allowed by the ' +
+          'user agent or the platform in the current context.'
         }[e.message] || e.message,
         constraint: e.constraint,
-        toString: function toString() {
+        toString: function() {
           return this.name + (this.message && ': ') + this.message;
         }
       };
     };
 
     // getUserMedia constraints shim.
-    var getUserMedia_ = function getUserMedia_(constraints, onSuccess, onError) {
-      var constraintsToFF37_ = function constraintsToFF37_(c) {
-        if ((typeof c === 'undefined' ? 'undefined' : _typeof(c)) !== 'object' || c.require) {
+    var getUserMedia_ = function(constraints, onSuccess, onError) {
+      var constraintsToFF37_ = function(c) {
+        if (typeof c !== 'object' || c.require) {
           return c;
         }
         var require = [];
-        Object.keys(c).forEach(function (key) {
+        Object.keys(c).forEach(function(key) {
           if (key === 'require' || key === 'advanced' || key === 'mediaSource') {
             return;
           }
-          var r = c[key] = _typeof(c[key]) === 'object' ? c[key] : { ideal: c[key] };
-          if (r.min !== undefined || r.max !== undefined || r.exact !== undefined) {
+          var r = c[key] = (typeof c[key] === 'object') ?
+              c[key] : {ideal: c[key]};
+          if (r.min !== undefined ||
+              r.max !== undefined || r.exact !== undefined) {
             require.push(key);
           }
           if (r.exact !== undefined) {
             if (typeof r.exact === 'number') {
-              r.min = r.max = r.exact;
+              r. min = r.max = r.exact;
             } else {
               c[key] = r.exact;
             }
@@ -883,7 +809,7 @@
             c.advanced = c.advanced || [];
             var oc = {};
             if (typeof r.ideal === 'number') {
-              oc[key] = { min: r.ideal, max: r.ideal };
+              oc[key] = {min: r.ideal, max: r.ideal};
             } else {
               oc[key] = r.ideal;
             }
@@ -910,39 +836,42 @@
         }
         logging('ff37: ' + JSON.stringify(constraints));
       }
-      return navigator.mozGetUserMedia(constraints, onSuccess, function (e) {
+      return navigator.mozGetUserMedia(constraints, onSuccess, function(e) {
         onError(shimError_(e));
       });
     };
 
-    navigator.getUserMedia = getUserMedia_;
-
     // Returns the result of getUserMedia as a Promise.
-    var getUserMediaPromise_ = function getUserMediaPromise_(constraints) {
-      return new Promise(function (resolve, reject) {
-        navigator.getUserMedia(constraints, resolve, reject);
+    var getUserMediaPromise_ = function(constraints) {
+      return new Promise(function(resolve, reject) {
+        getUserMedia_(constraints, resolve, reject);
       });
     };
 
     // Shim for mediaDevices on older versions.
     if (!navigator.mediaDevices) {
-      navigator.mediaDevices = { getUserMedia: getUserMediaPromise_,
-        addEventListener: function addEventListener() {},
-        removeEventListener: function removeEventListener() {}
+      navigator.mediaDevices = {getUserMedia: getUserMediaPromise_,
+        addEventListener: function() { },
+        removeEventListener: function() { }
       };
     }
-    navigator.mediaDevices.enumerateDevices = navigator.mediaDevices.enumerateDevices || function () {
-      return new Promise(function (resolve) {
-        var infos = [{ kind: 'audioinput', deviceId: 'default', label: '', groupId: '' }, { kind: 'videoinput', deviceId: 'default', label: '', groupId: '' }];
-        resolve(infos);
-      });
-    };
+    navigator.mediaDevices.enumerateDevices =
+        navigator.mediaDevices.enumerateDevices || function() {
+          return new Promise(function(resolve) {
+            var infos = [
+              {kind: 'audioinput', deviceId: 'default', label: '', groupId: ''},
+              {kind: 'videoinput', deviceId: 'default', label: '', groupId: ''}
+            ];
+            resolve(infos);
+          });
+        };
 
     if (browserDetails.version < 41) {
       // Work around http://bugzil.la/1169665
-      var orgEnumerateDevices = navigator.mediaDevices.enumerateDevices.bind(navigator.mediaDevices);
-      navigator.mediaDevices.enumerateDevices = function () {
-        return orgEnumerateDevices().then(undefined, function (e) {
+      var orgEnumerateDevices =
+          navigator.mediaDevices.enumerateDevices.bind(navigator.mediaDevices);
+      navigator.mediaDevices.enumerateDevices = function() {
+        return orgEnumerateDevices().then(undefined, function(e) {
           if (e.name === 'NotFoundError') {
             return [];
           }
@@ -951,13 +880,23 @@
       };
     }
     if (browserDetails.version < 49) {
-      var origGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
-      navigator.mediaDevices.getUserMedia = function (c) {
-        return origGetUserMedia(c).catch(function (e) {
+      var origGetUserMedia = navigator.mediaDevices.getUserMedia.
+          bind(navigator.mediaDevices);
+      navigator.mediaDevices.getUserMedia = function(c) {
+        return origGetUserMedia(c).catch(function(e) {
           return Promise.reject(shimError_(e));
         });
       };
     }
+    navigator.getUserMedia = function(constraints, onSuccess, onError) {
+      if (browserDetails.version < 44) {
+        return getUserMedia_(constraints, onSuccess, onError);
+      }
+      // Replace Firefox 44+'s deprecation warning with unprefixed version.
+      console.warn('navigator.getUserMedia has been replaced by ' +
+                   'navigator.mediaDevices.getUserMedia');
+      navigator.mediaDevices.getUserMedia(constraints).then(onSuccess, onError);
+    };
   };
 
   },{"../utils":8}],7:[function(require,module,exports){
@@ -969,7 +908,6 @@
    *  tree.
    */
   'use strict';
-
   var safariShim = {
     // TODO: DrAlex, should be here, double check against LayoutTests
     // shimOnTrack: function() { },
@@ -982,7 +920,7 @@
     // TODO: check for webkitGTK+
     // shimPeerConnection: function() { },
 
-    shimGetUserMedia: function shimGetUserMedia() {
+    shimGetUserMedia: function() {
       navigator.getUserMedia = navigator.webkitGetUserMedia;
     }
   };
@@ -1005,25 +943,25 @@
    *  that can be found in the LICENSE file in the root of the source
    *  tree.
    */
-  /* eslint-env node */
+   /* eslint-env node */
   'use strict';
-
-  var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
   var logDisabled_ = true;
 
   // Utility methods.
   var utils = {
-    disableLog: function disableLog(bool) {
+    disableLog: function(bool) {
       if (typeof bool !== 'boolean') {
-        return new Error('Argument type: ' + (typeof bool === 'undefined' ? 'undefined' : _typeof(bool)) + '. Please use a boolean.');
+        return new Error('Argument type: ' + typeof bool +
+            '. Please use a boolean.');
       }
       logDisabled_ = bool;
-      return bool ? 'adapter.js logging disabled' : 'adapter.js logging enabled';
+      return (bool) ? 'adapter.js logging disabled' :
+          'adapter.js logging enabled';
     },
 
-    log: function log() {
-      if ((typeof window === 'undefined' ? 'undefined' : _typeof(window)) === 'object') {
+    log: function() {
+      if (typeof window === 'object') {
         if (logDisabled_) {
           return;
         }
@@ -1041,7 +979,7 @@
      * @param {!number} pos position in the version string to be returned.
      * @return {!number} browser version.
      */
-    extractVersion: function extractVersion(uastring, expr, pos) {
+    extractVersion: function(uastring, expr, pos) {
       var match = uastring.match(expr);
       return match && match.length >= pos && parseInt(match[pos], 10);
     },
@@ -1052,7 +990,7 @@
      * @return {object} result containing browser, version and minVersion
      *     properties.
      */
-    detectBrowser: function detectBrowser() {
+    detectBrowser: function() {
       // Returned result object.
       var result = {};
       result.browser = null;
@@ -1068,58 +1006,66 @@
       // Firefox.
       if (navigator.mozGetUserMedia) {
         result.browser = 'firefox';
-        result.version = this.extractVersion(navigator.userAgent, /Firefox\/([0-9]+)\./, 1);
+        result.version = this.extractVersion(navigator.userAgent,
+            /Firefox\/([0-9]+)\./, 1);
         result.minVersion = 31;
 
-        // all webkit-based browsers
+      // all webkit-based browsers
       } else if (navigator.webkitGetUserMedia) {
-          // Chrome, Chromium, Webview, Opera, all use the chrome shim for now
-          if (window.webkitRTCPeerConnection) {
-            result.browser = 'chrome';
-            result.version = this.extractVersion(navigator.userAgent, /Chrom(e|ium)\/([0-9]+)\./, 2);
-            result.minVersion = 38;
+        // Chrome, Chromium, Webview, Opera, all use the chrome shim for now
+        if (window.webkitRTCPeerConnection) {
+          result.browser = 'chrome';
+          result.version = this.extractVersion(navigator.userAgent,
+            /Chrom(e|ium)\/([0-9]+)\./, 2);
+          result.minVersion = 38;
 
-            // Safari or unknown webkit-based
-            // for the time being Safari has support for MediaStreams but not webRTC
+        // Safari or unknown webkit-based
+        // for the time being Safari has support for MediaStreams but not webRTC
+        } else {
+          // Safari UA substrings of interest for reference:
+          // - webkit version:           AppleWebKit/602.1.25 (also used in Op,Cr)
+          // - safari UI version:        Version/9.0.3 (unique to Safari)
+          // - safari UI webkit version: Safari/601.4.4 (also used in Op,Cr)
+          //
+          // if the webkit version and safari UI webkit versions are equals,
+          // ... this is a stable version.
+          //
+          // only the internal webkit version is important today to know if
+          // media streams are supported
+          //
+          if (navigator.userAgent.match(/Version\/(\d+).(\d+)/)) {
+            result.browser = 'safari';
+            result.version = this.extractVersion(navigator.userAgent,
+              /AppleWebKit\/([0-9]+)\./, 1);
+            result.minVersion = 602;
+
+          // unknown webkit-based browser
           } else {
-              // Safari UA substrings of interest for reference:
-              // - webkit version:           AppleWebKit/602.1.25 (also used in Op,Cr)
-              // - safari UI version:        Version/9.0.3 (unique to Safari)
-              // - safari UI webkit version: Safari/601.4.4 (also used in Op,Cr)
-              //
-              // if the webkit version and safari UI webkit versions are equals,
-              // ... this is a stable version.
-              //
-              // only the internal webkit version is important today to know if
-              // media streams are supported
-              //
-              if (navigator.userAgent.match(/Version\/(\d+).(\d+)/)) {
-                result.browser = 'safari';
-                result.version = this.extractVersion(navigator.userAgent, /AppleWebKit\/([0-9]+)\./, 1);
-                result.minVersion = 602;
+            result.browser = 'Unsupported webkit-based browser ' +
+                'with GUM support but no WebRTC support.';
+            return result;
+          }
+        }
 
-                // unknown webkit-based browser
-              } else {
-                  result.browser = 'Unsupported webkit-based browser ' + 'with GUM support but no WebRTC support.';
-                  return result;
-                }
-            }
+      // Edge.
+      } else if (navigator.mediaDevices &&
+          navigator.userAgent.match(/Edge\/(\d+).(\d+)$/)) {
+        result.browser = 'edge';
+        result.version = this.extractVersion(navigator.userAgent,
+            /Edge\/(\d+).(\d+)$/, 2);
+        result.minVersion = 10547;
 
-          // Edge.
-        } else if (navigator.mediaDevices && navigator.userAgent.match(/Edge\/(\d+).(\d+)$/)) {
-            result.browser = 'edge';
-            result.version = this.extractVersion(navigator.userAgent, /Edge\/(\d+).(\d+)$/, 2);
-            result.minVersion = 10547;
-
-            // Default fallthrough: not supported.
-          } else {
-              result.browser = 'Not a supported browser.';
-              return result;
-            }
+      // Default fallthrough: not supported.
+      } else {
+        result.browser = 'Not a supported browser.';
+        return result;
+      }
 
       // Warn if version is less than minVersion.
       if (result.version < result.minVersion) {
-        utils.log('Browser: ' + result.browser + ' Version: ' + result.version + ' < minimum supported version: ' + result.minVersion + '\n some things might not work!');
+        utils.log('Browser: ' + result.browser + ' Version: ' + result.version +
+            ' < minimum supported version: ' + result.minVersion +
+            '\n some things might not work!');
       }
 
       return result;
@@ -3390,5 +3336,7 @@
   exports.WEBRTC = WEBRTC;
   exports.FULLY_CONNECTED = FULLY_CONNECTED;
   exports.WebChannel = WebChannel;
+
+  Object.defineProperty(exports, '__esModule', { value: true });
 
 }));
