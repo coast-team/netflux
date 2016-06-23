@@ -37,13 +37,12 @@ module.exports = function(config) {
       rollup: {
         plugins: [
           require('rollup-plugin-string')({
-            extensions: ['.txt']
+            include: 'test/*.txt'
           })
         ]
       },
       bundle: {
-        format: 'iife',
-        sourceMap: 'inline'
+        format: 'iife'
       }
     },
 

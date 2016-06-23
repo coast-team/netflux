@@ -6,7 +6,7 @@ module.exports = function(config) {
       rollup: {
         plugins: [
           require('rollup-plugin-string')({
-            extensions: ['.txt']
+            include: 'test/*.txt'
           }),
           require('rollup-plugin-istanbul')({
             exclude: [
