@@ -1,5 +1,5 @@
-module.exports = function(config) {
-  require('./karma.conf.coverage.js')(config);
+module.exports = (config) => {
+  require('./karma.conf.coverage.js')(config)
   config.set({
 
     browsers: ['Firefox'],

@@ -1,5 +1,5 @@
-module.exports = function(config) {
-  require('./karma.conf.js')(config);
+module.exports = (config) => {
+  require('./karma.conf.js')(config)
   config.set({
 
     rollupPreprocessor: {
@@ -25,7 +25,7 @@ module.exports = function(config) {
     reporters: ['progress', 'coverage'],
 
     coverageReporter: {
-      dir : 'coverage',
+      dir: 'coverage',
       reporters: [
         {type: 'html'},
         {type: 'text'},
