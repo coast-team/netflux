@@ -1,11 +1,12 @@
 {
   "name": "netflux",
   "description": "Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done.",
-  "main": "dist/netflux.js",
+  "main": "dist/netflux.es5.umd.js",
+  "jsnext:main": "dist/netflux.es2015.js",
   "version": "0.0.0-semrelease",
   "scripts": {
     "prebuild": "rm -rf coverage dist",
-    "build": "rollup -o dist/netflux.js -f umd -n netflux src/index.js & webpack",
+    "build": "rollup -c & rollup -i src/index.js -o dist/netflux.es2015.js & webpack --optimize-minimize",
     "signalling-up": "kill `cat /tmp/sigver.pid`; node ./node_modules/sigver/server.js & echo \"$!\" > /tmp/sigver.pid",
     "pretest": "npm run build && npm run signalling-up",
     "test": "karma start",
