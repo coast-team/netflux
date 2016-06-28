@@ -581,7 +581,7 @@ class WebChannel {
    * @param {external:Event} evt - Event
    */
   onChannelError (evt) {
-    console.log('DATA_CHANNEL ERROR: ', evt)
+    console.error(`RTCDataChannel: ${evt.message}`)
   }
 
   /**
@@ -589,8 +589,16 @@ class WebChannel {
    * @private
    * @param {external:CloseEvent} closeEvt - Close event
    */
-  onChannelClose (closeEvt) {
-    console.log('DATA_CHANNEL CLOSE: ', closeEvt)
+  onChannelClose (closeEvt, peerId) {
+    for (let c of this.channels) {
+      if (c.peerId === peerId) {
+        c.close()
+        this.channels.delete(c)
+      }
+    }
+    this.peerNb--
+    this.onLeaving(peerId)
+    console.info(`Channel with ${peerId} has been closed: ${closeEvt.type}`)
   }
 
   set topology (name) {

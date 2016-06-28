@@ -43,7 +43,7 @@ class Channel {
   config () {
     this.channel.onmessage = (msgEvt) => { this.webChannel.onChannelMessage(this, msgEvt.data) }
     this.channel.onerror = (evt) => { this.webChannel.onChannelError(evt) }
-    this.channel.onclose = (evt) => { this.webChannel.onChannelClose(evt) }
+    this.channel.onclose = (evt) => { this.webChannel.onChannelClose(evt, this.peerId) }
   }
 
   /**
