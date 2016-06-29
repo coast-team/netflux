@@ -73,6 +73,13 @@ const PING = 11
  */
 const PONG = 12
 
+/**
+  * Constant used to send a message to the server in order that
+  * he can join the webcahnnel
+  * @type {string}
+  */
+const ADD_BOT_SERVER = 'addBotServer'
+
 class WebChannelGate {
   constructor (action) {
     this.door = null
@@ -161,6 +168,8 @@ class WebChannel {
     this.joiningPeers = new Set()
     /** @private */
     this.connectWithRequests = new Map()
+    /** @private */
+    this.connectMeToRequests = new Map()
 
     this.topology = this.settings.topology
 
@@ -234,30 +243,96 @@ class WebChannel {
     let cBuilder = provide(settings.connector, settings)
     return cBuilder.open(this.generateKey(), (channel) => {
       this.initChannel(channel, false)
-        .then((channel) => {
-          // console.log('INITIATOR is adding: ' + channel.peerId)
-          let jp = this.addJoiningPeer(channel.peerId, this.myId, channel)
-          this.manager.broadcast(this, msgBuilder.msg(
-            JOIN_NEW_MEMBER, {id: channel.peerId, intermediaryId: this.myId})
-          )
-          channel.send(msgBuilder.msg(JOIN_INIT, {
-            manager: this.settings.topology,
-            id: channel.peerId,
-            intermediaryId: this.myId})
-          )
-          this.manager.add(channel)
-            .then(() => channel.send(msgBuilder.msg(JOIN_FINILIZE)))
-            .catch((msg) => {
-              this.manager.broadcast(this, msgBuilder(
-                REMOVE_NEW_MEMBER, {id: channel.peerId})
-              )
-              this.removeJoiningPeer(jp.id)
-            })
-        })
+        .then((channel) => this.addChannel(channel))
     }).then((data) => {
       let accessData = {key: data.key, url: data.url}
       this.gate.setOpen(data.socket, accessData)
       return accessData
+    })
+  }
+
+  /**
+    * Add a channel to the current peer network according to the topology
+    *
+    * @param {Object} channel - Channel which needs to be add in the topology
+    * @return {Promise} It resolves once the channel is add
+    */
+  addChannel (channel) {
+    let jp = this.addJoiningPeer(channel.peerId, this.myId, channel)
+    this.manager.broadcast(this, msgBuilder.msg(
+      JOIN_NEW_MEMBER, {id: channel.peerId, intermediaryId: this.myId})
+    )
+    channel.send(msgBuilder.msg(JOIN_INIT, {
+      manager: this.settings.topology,
+      id: channel.peerId,
+      intermediaryId: this.myId})
+    )
+    return this.manager.add(channel)
+      .then(() => {
+        channel.send(msgBuilder.msg(JOIN_FINILIZE))
+        // console.log('[DEBUG] Resolved manager.add(channel)')
+      })
+      .catch((msg) => {
+        // console.log('[DEBUG] Catched manager.add(channel): ', msg)
+        this.manager.broadcast(this, msgBuilder.msg(
+          REMOVE_NEW_MEMBER, {id: channel.peerId})
+        )
+        this.removeJoiningPeer(jp.id)
+      })
+  }
+
+  /**
+    * Add a bot server to the network with his hostname and port
+    *
+    * @param {string} host - The hotname or the ip of the bot server to be add
+    * @param {number} port - The port of the bot server to be add
+    * @return {Promise} It resolves once the bot server joined the network
+    */
+  addBotServer (host, port) {
+    return new Promise((resolve, reject) => {
+      if (typeof window !== 'undefined') {
+        let socket
+        try {
+          socket = new window.WebSocket('ws://' + host + ':' + port)
+        } catch (err) {
+          reject(err.message)
+        }
+        socket.onopen = () => {
+          /*
+            After opening the WebSocket with the server, a message is sent
+            to him in order that it can join the webchannel
+          */
+          socket.send(JSON.stringify({code: ADD_BOT_SERVER, sender: this.myId}))
+          this.initChannel(socket, false).then((channel) => {
+            // console.log('[DEBUG] Resolved initChannel addBotServer')
+            this.addChannel(channel).then(() => {
+              // console.log('[RESOLVED] Resolved addChannel in addBotServer')
+              resolve()
+            })
+          })
+        }
+        socket.onclose = () => {
+          reject('Connection with the WebSocket server closed')
+        }
+      } else reject('Only browser client can add a bot server')
+    })
+  }
+
+  /**
+    * Allow a bot server to join the network by creating a connection
+    * with the peer who asked his coming
+    *
+    * @param {Object} channel - The channel between the server and the pair
+    * who requested the add
+    * @param {number} id - The id of the peer who requested the add
+    * @return {Promise} It resolves once the the server has joined the network
+    */
+  joinAsBot (channel, id) {
+    return new Promise((resolve, reject) => {
+      this.onJoin = () => resolve(this)
+      this.initChannel(channel, true, id)// .then((channel) => {
+        // console.log('[DEBUG] Resolved initChannel by server')
+      // })
     })
   }
 
@@ -388,6 +463,8 @@ class WebChannel {
    * @param  {Object} [msg={}] - Message to send.
    */
   sendSrvMsg (serviceName, recepient, msg = {}, channel = null) {
+    // console.log('[DEBUG] sendSrvMsg (serviceName, recepient, msg = {}, channel = null) (',
+    // serviceName, ', ', recepient, ', ', msg, ', ', channel, ')')
     let fullMsg = msgBuilder.msg(
       SERVICE_DATA, {serviceName, recepient, data: Object.assign({}, msg)}
     )
@@ -429,6 +506,7 @@ class WebChannel {
    */
   onChannelMessage (channel, data) {
     let header = msgBuilder.readHeader(data)
+    // console.log('[DEBUG] {onChannelMessage} header: ', header)
     if (header.code === USER_DATA) {
       msgBuilder.readUserMessage(this.id, header.senderId, data, (fullData, isBroadcast) => {
         this.onMessage(header.senderId, fullData, isBroadcast)
@@ -531,6 +609,7 @@ class WebChannel {
    * @private
    */
   initChannel (ch, isInitiator, id = -1) {
+    // console.log('[DEBUG] initChannel (ch, isInitiator, id) (ch, ', isInitiator, ', ', id, ')')
     return new Promise((resolve, reject) => {
       if (id === -1) { id = this.generateId() }
       let channel = new Channel(ch, this, id)
@@ -538,11 +617,13 @@ class WebChannel {
       if (isInitiator) {
         channel.config()
         channel.onPong = () => resolve(channel)
+        // console.log('[DEBUG] send ping')
         ch.send('ping')
       } else {
         ch.onmessage = (msgEvt) => {
           if (msgEvt.data === 'ping') {
             channel.config()
+            // console.log('[DEBUG] send pong')
             channel.send(msgBuilder.msg(INIT_CHANNEL_PONG))
             resolve(channel)
           }

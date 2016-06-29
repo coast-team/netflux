@@ -1,7 +1,7 @@
 import {signaling} from '../../config'
 import {WebChannel} from '../../../src/WebChannel'
 
-describe('2 peers -> ', () => {
+xdescribe('2 peers -> ', () => {
   it('Should have equal WebChannel structure', (done) => {
     let wc1 = new WebChannel({signaling})
     let wc2 = new WebChannel({signaling})

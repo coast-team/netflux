@@ -1,7 +1,7 @@
 import {signaling} from '../../config'
 import {WebChannel} from '../../../src/WebChannel'
 
-describe('Many peers -> ', () => {
+xdescribe('Many peers -> ', () => {
   const NB_PEERS = 6
   let wcArray = []
 

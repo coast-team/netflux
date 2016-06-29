@@ -3,7 +3,7 @@ import {WebChannel} from '../../../src/WebChannel'
 import smallStr from '../../17kb.txt'
 import bigStr from '../../8mb.txt'
 
-describe('Large data -> ', () => {
+xdescribe('Large data -> ', () => {
   let wc1, wc2
 
   beforeAll((done) => {
