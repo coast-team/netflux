@@ -13,9 +13,11 @@ addons:
 node_js:
   - "6"
 before_install:
-  - npm update -g
+  - export CHROME_BIN=/usr/bin/google-chrome
   - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start
+  - sudo apt-get update -qq
+  - npm update -g
   - npm install -g codeclimate-test-reporter
 script:
   - npm test -- karma.conf.travis.js
