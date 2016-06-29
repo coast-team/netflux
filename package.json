@@ -1,12 +1,12 @@
 {
   "name": "netflux",
   "description": "Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done.",
-  "main": "dist/netflux.es5.umd.js",
+  "main": "dist/netflux.es2015.umd.js",
   "jsnext:main": "dist/netflux.es2015.js",
   "version": "0.0.0-semrelease",
   "scripts": {
     "prebuild": "rm -rf coverage dist",
-    "build": "rollup -c & rollup -i src/index.js -o dist/netflux.es2015.js & webpack --optimize-minimize",
+    "build": "rollup -c & rollup -i src/index.js -o dist/netflux.es2015.js",
     "signalling-up": "kill `cat /tmp/sigver.pid`; node ./node_modules/sigver/server.js & echo \"$!\" > /tmp/sigver.pid",
     "pretest": "npm run build && npm run signalling-up",
     "test": "karma start",
@@ -51,11 +51,6 @@
     "webrtc-adapter": "^1.1.0"
   },
   "devDependencies": {
-    "babel-core": "^6.3.17",
-    "babel-eslint": "^6.0.4",
-    "babel-loader": "^6.2.1",
-    "babel-polyfill": "^6.3.14",
-    "babel-preset-es2015": "^6.3.13",
     "commitizen": "^2.4.6",
     "cz-conventional-changelog": "^1.1.5",
     "eslint": "^2.2.0",
@@ -74,12 +69,11 @@
     "karma-rollup-preprocessor": "^2.0.2",
     "rollup": "^0.32.0",
     "rollup-plugin-istanbul": "^1.0.0",
-    "rollup-plugin-node-resolve": "^1.7.1",
+    "rollup-plugin-filesize": "^0.4.4",
     "rollup-plugin-string": "^2.0.0",
     "semantic-release": "^4.3.5",
     "sigver": "^7.1.0",
-    "standard": "^7.0.1",
-    "webpack": "^1.12.11"
+    "standard": "^7.0.1"
   },
   "standard": {
     "parser": "babel-eslint",
@@ -108,9 +102,7 @@
     "ignore": [
       "dist/*",
       "karma*.js",
-      "config.js",
-      "webpack.config.js",
-      "test/**/sendLargeData/*.js"
+      "*config.js"
     ]
   }
 }
