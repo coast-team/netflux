@@ -2429,7 +2429,11 @@
      */
     send (data) {
       if (this.channel.readyState !== 'closed') {
-        this.channel.send(data)
+        try {
+          this.channel.send(data)
+        } catch (err) {
+          console.error(`Channel send: ${err.message}`)
+        }
       }
     }
 
