@@ -60,11 +60,10 @@ class WebSocketService extends ChannelBuilderInterface {
   connectMeTo (wc, id) {
     // console.log('[DEBUG] connectMeTo (wc, id) (wc, ', id, ')')
     return new Promise((resolve, reject) => {
-      let host = this.settings.host
-      let port = this.settings.port
       let socket
       try {
-        socket = new window.WebSocket('ws://' + host + ':' + port)
+        socket = new window.WebSocket('ws://' +
+          this.settings.host + ':' + this.settings.port)
       } catch (err) {
         reject(err.message)
       }
