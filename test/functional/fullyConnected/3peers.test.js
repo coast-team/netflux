@@ -1,7 +1,7 @@
 import {signaling} from '../../config'
 import {WebChannel} from '../../../src/WebChannel'
 
-xdescribe('3 peers -> ', () => {
+describe('3 peers -> ', () => {
   let wc1, wc2, wc3
 
   it('Should exchange messages', (done) => {

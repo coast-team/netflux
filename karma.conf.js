@@ -14,7 +14,7 @@ module.exports = (config) => {
     // list of files / patterns to load in the browser
     files: [
       'node_modules/webrtc-adapter/out/adapter_no_edge_no_global.js',
-      'dist/netflux.js',
+      'dist/netflux.es2015.umd.js',
       'test/**/*.test.js'
     ],
 
