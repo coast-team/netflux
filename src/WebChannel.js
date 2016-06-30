@@ -351,7 +351,8 @@ class WebChannel {
     )
     channel.send(msgBuilder.msg(JOIN_INIT, {
       manager: this.settings.topology,
-      id: channel.peerId,
+      wcId: this.id,
+      myId: channel.peerId,
       intermediaryId: this.myId})
     )
     return this.manager.add(channel)
@@ -609,9 +610,10 @@ class WebChannel {
           break
         case JOIN_INIT:
           this.topology = msg.manager
-          this.myId = msg.id
+          this.id = msg.wcId
+          this.myId = msg.myId
           channel.peerId = msg.intermediaryId
-          this.addJoiningPeer(msg.id, msg.intermediaryId, channel)
+          this.addJoiningPeer(this.myId, msg.intermediaryId, channel)
           break
         case JOIN_NEW_MEMBER:
           this.addJoiningPeer(msg.id, msg.intermediaryId)

@@ -13,9 +13,9 @@ module.exports = (config) => {
 
     // list of files / patterns to load in the browser
     files: [
-      // 'node_modules/webrtc-adapter/out/adapter_no_edge_no_global.js',
-      // 'dist/netflux.js',
-      // 'test/**/*.test.js'
+      'node_modules/webrtc-adapter/out/adapter_no_edge_no_global.js',
+      'dist/netflux.js',
+      'test/**/*.test.js'
     ],
 
     // list of files to exclude
@@ -25,7 +25,7 @@ module.exports = (config) => {
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
     preprocessors: {
-      // 'test/**/*.test.js': ['rollup']
+      'test/**/*.test.js': ['rollup']
     },
 
     rollupPreprocessor: {
