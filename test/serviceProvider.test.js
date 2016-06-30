@@ -21,7 +21,7 @@ xdescribe('Service Provider', () => {
     expect(provide(WEBRTC)).not.toBe(provide(WEBRTC))
   })
 
-  it('should return null', () => {
-    expect(provide('unexisted service name')).toBeNull()
+  it('Should throw an exception', () => {
+    expect(() => provide('Inexistent service name')).toThrow()
   })
 })

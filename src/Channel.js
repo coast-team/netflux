@@ -1,42 +1,69 @@
 /**
- * Channel interface.
- * [RTCDataChannel]{@link https://developer.mozilla.org/en-US/docs/Web/API/RTCDataChannel}
- * and
- * [WebSocket]{@link https://developer.mozilla.org/en-US/docs/Web/API/WebSocket}
- * implement it implicitly. Any other channel must implement this interface.
- *
- * @interface
+ * Wrapper class for {@link external:RTCDataChannel} and
+ * {@link external:WebSocket}.
  */
 class Channel {
+
+  /**
+   * Creates *Channel* instance from existing data channel or web socket, assigns
+   * it to the specified *WebChannel* and gives him an identifier.
+   * @param {external:WebSocket|external:RTCDataChannel} - Data channel or web
+   * socket
+   * @param {WebChannel} - The *WebChannel* this channel will be part of
+   * @param {number} peerId - Identifier of the peer who is at the other end of
+   * this channel
+   */
   constructor (channel, webChannel, peerId) {
+    // FIXME:this does not work for WebSocket
     channel.binaryType = 'arraybuffer'
+
+    /**
+     * Data channel or web socket.
+     * @private
+     * @type {external:WebSocket|external:RTCDataChannel}
+     */
     this.channel = channel
+
+    /**
+     * The *WebChannel* which this channel belongs to.
+     * @type {WebChannel}
+     */
     this.webChannel = webChannel
+
+    /**
+     * Identifier of the peer who is at the other end of this channel
+     * @type {WebChannel}
+     */
     this.peerId = peerId
   }
 
+  /**
+   * Configure this channel. Set up message, error and close event handlers.
+   */
   config () {
     this.channel.onmessage = (msgEvt) => { this.webChannel.onChannelMessage(this, msgEvt.data) }
     this.channel.onerror = (evt) => { this.webChannel.onChannelError(evt) }
-    this.channel.onclose = (evt) => { this.webChannel.onChannelClose(evt) }
+    this.channel.onclose = (evt) => { this.webChannel.onChannelClose(evt, this.peerId) }
   }
 
   /**
-   * send - description.
-   *
-   * @abstract
-   * @param {string} msg - Message in stringified JSON format.
+   * Send message over this channel. The message should be prepared beforhand by
+   * the {@link MessageBuilderService}
+   * @see {@link MessageBuilderService#msg}, {@link MessageBuilderService#handleUserMessage}
+   * @param {extternal:ArrayBuffer} data - Message
    */
   send (data) {
     if (this.channel.readyState !== 'closed') {
-      this.channel.send(data)
+      try {
+        this.channel.send(data)
+      } catch (err) {
+        console.error(`Channel send: ${err.message}`)
+      }
     }
   }
 
   /**
-   * Close channel.
-   *
-   * @abstract
+   * Close the channel.
    */
   close () {
     this.channel.close()

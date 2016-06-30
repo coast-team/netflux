@@ -46,9 +46,13 @@ xdescribe('WebRTCService ->', () => {
     webRTCService.open(key, () => {})
       .then((data) => {
         webRTCService.open(key, () => {})
-          .then(done.fail)
+          .then((reason) => {
+            console.log('FAILED -----> ', JSON.stringify(reason))
+            done.fail(reason)
+          })
           .catch(done)
       })
+      .catch(done.fail)
   })
 
   it('Join: dataChannel should open', (done) => {

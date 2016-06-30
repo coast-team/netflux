@@ -7,7 +7,7 @@ import {ServiceInterface} from '../service'
  */
 
 /**
- * On channel callback for {@link module:channelBuilder~Interface#open}
+ * On channel callback for {@link module:channelBuilder~ChannelBuilderInterface#open}
  * function.
  *
  * @callback module:channelBuilder~onChannelCallback
@@ -28,7 +28,7 @@ import {ServiceInterface} from '../service'
  * Interface to be implemented by each connection service.
  *
  * @interface
- * @extends module:service~Interface
+ * @extends module:service~ServiceInterface
  */
 class ChannelBuilderInterface extends ServiceInterface {
 
@@ -42,11 +42,11 @@ class ChannelBuilderInterface extends ServiceInterface {
    * @abstract
    * @param {string} key - The unique identifier which has to be passed to the
    * peers who need to connect to you.
-   * @param {module:channelBuilder~Interface~onChannelCallback} onChannel - Callback
+   * @param {module:channelBuilder~ChannelBuilderInterface~onChannelCallback} onChannel - Callback
    * function to execute once the connection has been established.
    * @param {Object} [options] - Any other options which depend on the service implementation.
    * @return {Promise} - Once resolved, provide an Object with `key` and `url`
-   * attributes to be passed to {@link module:channelBuilder~Interface#join} function.
+   * attributes to be passed to {@link module:channelBuilder~ChannelBuilderInterface#join} function.
    * It is rejected if an error occured.
    */
   open (key, onChannel, options) {
@@ -58,7 +58,7 @@ class ChannelBuilderInterface extends ServiceInterface {
    *
    * @abstract
    * @param  {string} key - A key obtained from the peer who executed
-   * {@link module:channelBuilder~Interface#open} function.
+   * {@link module:channelBuilder~ChannelBuilderInterface#open} function.
    * @param  {Object} [options] Any other options which depend on the implementation.
    * @return {Promise} It is resolved when the connection is established, otherwise it is rejected.
    */
@@ -80,6 +80,6 @@ class ChannelBuilderInterface extends ServiceInterface {
 }
 
 export {
-  /** @see module:channelBuilder~Interface */
+  /** @see module:channelBuilder~ChannelBuilderInterface */
   ChannelBuilderInterface
 }

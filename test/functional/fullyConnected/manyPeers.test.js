@@ -43,7 +43,6 @@ xdescribe('Many peers -> ', () => {
         }
       }
       wcArray[0].openForJoining().then((data) => {
-        console.log('-------------------------------->  INITIATOR ID: ' + wcArray[0].myId)
         for (let i = 1; i < NB_PEERS; i++) {
           wcArray[i].join(data.key)
             .catch(done.fail)

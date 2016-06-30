@@ -1,8 +1,15 @@
-module.exports = function(config) {
-  require('./karma.conf.coverage.js')(config);
+module.exports = (config) => {
+  require('./karma.conf.coverage.js')(config)
   config.set({
 
-    browsers: ['Firefox'],
+    browsers: ['Firefox', 'Chrome_travis_ci'],
+
+    customLaunchers: {
+      Chrome_travis_ci: {
+        base: 'Chrome',
+        flags: ['--no-sandbox']
+      }
+    },
 
     coverageReporter: {
       reporters: [
@@ -11,6 +18,7 @@ module.exports = function(config) {
       ]
     },
     autoWatch: false,
-    singleRun: true
+    singleRun: true,
+    browserNoActivityTimeout: 20000
   })
 }

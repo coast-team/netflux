@@ -29,7 +29,7 @@ const CONNECT_WITH_TIMEOUT = 5000
 /**
  * Each Web Channel Manager Service must implement this interface.
  * @interface
- * @extends module:service~Interface
+ * @extends module:service~ServiceInterface
  */
 class WebChannelManagerInterface extends ServiceInterface {
 
@@ -114,9 +114,9 @@ class WebChannelManagerInterface extends ServiceInterface {
 
   /**
    * Send a request to a peer asking him to establish a connection with some
-   * peers. This function is used when a new peer is joining Web Channel.
+   * peers. This function is used when a new peer is joining the *WebChannel*.
    * The request can be sent to the peer who is joining as well as other peers
-   * who are already members of Web Channel.
+   * who are already members of the *WebChannel*.
    *
    * @param  {WebChannel} wc - The Web Channel.
    * @param  {string} id - Id of the peer who will receive this request.
@@ -235,6 +235,6 @@ class WebChannelManagerInterface extends ServiceInterface {
 }
 
 export {
-  /** @see module:webChannelManager~Interface */
+  /** @see module:webChannelManager~WebChannelManagerInterface */
   WebChannelManagerInterface
 }

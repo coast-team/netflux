@@ -85,7 +85,7 @@ class RTCPendingConnections {
 
   /**
    * When the remote description is set, it will add the ice candidate to the
-   * peer connection of specified peer.
+   * peer connection of the specified peer.
    *
    * @param  {string} id - Peer id.
    * @param  {external:RTCIceCandidate} candidate - Ice candidate.
@@ -107,7 +107,7 @@ const connectionsByWC = new Map()
  * `RTCDataChannel`.
  *
  * @see {@link external:RTCPeerConnection}
- * @extends module:channelBuilder~Interface
+ * @extends module:channelBuilder~ChannelBuilderInterface
  */
 class WebRTCService extends ChannelBuilderInterface {
 
@@ -123,11 +123,9 @@ class WebRTCService extends ChannelBuilderInterface {
   constructor (options = {}) {
     super()
     this.defaults = {
-      signaling: 'wws://sigver-coastteam.rhcloud.com:8000',
+      signaling: 'ws://sigver-coastteam.rhcloud.com:8000',
       iceServers: [
-        {urls: 'stun:23.21.150.121'},
-        {urls: 'stun:stun.l.google.com:19302'},
-        {urls: 'turn:numb.viagenie.ca', credential: 'webrtcdemo', username: 'louis%40mozilla.com'}
+        {urls: 'stun:turn01.uswest.xirsys.com'}
       ]
     }
     this.settings = Object.assign({}, this.defaults, options)
@@ -156,7 +154,7 @@ class WebRTCService extends ChannelBuilderInterface {
       socket.onmessage = (evt) => {
         let msg = JSON.parse(evt.data)
         if (!('id' in msg) || !('data' in msg)) {
-          console.log('Unknown message from the signaling server: ' + evt.data)
+          console.error('Unknown message from the signaling server: ' + evt.data)
           socket.close()
           return
         }
@@ -168,15 +166,13 @@ class WebRTCService extends ChannelBuilderInterface {
               onChannel,
               msg.data.offer
             ).then((pc) => connections.setPC(msg.id, pc))
-            .catch((reason) => {
-              console.error(`Answer generation failed: ${reason}`)
+            .catch((err) => {
+              console.error(`Answer generation failed: ${err.message}`)
             })
         } else if ('candidate' in msg.data) {
-          connections.addIceCandidate(
-              msg.id,
-              this.createIceCandidate(msg.data.candidate)
-            ).catch((reason) => {
-              console.error(`Adding ice candidate failed: ${reason}`)
+          connections.addIceCandidate(msg.id, new RTCIceCandidate(msg.data.candidate))
+            .catch((err) => {
+              console.error(`Adding ice candidate failed: ${err.message}`)
             })
         }
       }
@@ -214,15 +210,18 @@ class WebRTCService extends ChannelBuilderInterface {
           }
 
           if ('answer' in msg.data) {
-            pc.setRemoteDescription(this.createSessionDescription(msg.data.answer))
-              .catch(reject)
+            pc.setRemoteDescription(msg.data.answer)
+              .catch((err) => {
+                console.error(`Set answer: ${err.message}`)
+                reject(err)
+              })
           } else if ('candidate' in msg.data) {
-            pc.addIceCandidate(this.createIceCandidate(msg.data.candidate))
+            pc.addIceCandidate(new RTCIceCandidate(msg.data.candidate))
               .catch((evt) => {
                 // This exception does not reject the current Promise, because
                 // still the connection may be established even without one or
                 // several candidates
-                console.error('Adding candidate failed: ', evt)
+                console.error(`Add ICE candidate: ${evt.message}`)
               })
           } else {
             reject(`Unknown message from the signaling server: ${evt.data}`)
@@ -232,7 +231,7 @@ class WebRTCService extends ChannelBuilderInterface {
         }
       }
       socket.onerror = (evt) => {
-        reject('WebSocket with signaling server error')
+        reject('WebSocket with signaling server error: ' + evt.message)
       }
       socket.onclose = (closeEvt) => {
         if (closeEvt.code !== 1000) {
@@ -255,7 +254,7 @@ class WebRTCService extends ChannelBuilderInterface {
           resolve(channel)
         }
       ).then((pc) => connections.setPC(id, pc))
-      setTimeout(reject, CONNECT_TIMEOUT, 'Timeout')
+      setTimeout(reject, CONNECT_TIMEOUT, 'connectMeTo timeout')
     })
   }
 
@@ -278,11 +277,11 @@ class WebRTCService extends ChannelBuilderInterface {
       })
     } if ('answer' in msg) {
       connections.getPC(msg.sender)
-        .setRemoteDescription(this.createSessionDescription(msg.answer))
-        .catch((reason) => { console.error('Setting answer error: ' + reason) })
+        .setRemoteDescription(msg.answer)
+        .catch((err) => console.error(`Set answer: ${err.message}`))
     } else if ('candidate' in msg) {
-      connections.addIceCandidate(msg.sender, this.createIceCandidate(msg.candidate))
-        .catch((reason) => { console.error('Setting candidate error: ', reason) })
+      connections.addIceCandidate(msg.sender, new RTCIceCandidate(msg.candidate))
+        .catch((err) => { console.error(`Add ICE candidate: ${err.message}`) })
     }
   }
 
@@ -300,7 +299,7 @@ class WebRTCService extends ChannelBuilderInterface {
     let dc = pc.createDataChannel(null)
     pc.oniceconnectionstatechange = () => {
       if (pc.iceConnectionState === 'disconnected') {
-        dc.onclose()
+        dc.onclose(new CloseEvent(pc.iceConnectionState))
       }
     }
     dc.onopen = (evt) => onChannel(dc)
@@ -328,17 +327,20 @@ class WebRTCService extends ChannelBuilderInterface {
       let dc = dcEvt.channel
       pc.oniceconnectionstatechange = () => {
         if (pc.iceConnectionState === 'disconnected') {
-          dc.onclose()
+          dc.onclose(new CloseEvent(pc.iceConnectionState))
         }
       }
       dc.onopen = (evt) => onChannel(dc)
     }
-    return pc.setRemoteDescription(this.createSessionDescription(offer))
+    return pc.setRemoteDescription(offer)
       .then(() => pc.createAnswer())
       .then((answer) => pc.setLocalDescription(answer))
       .then(() => {
         sendAnswer(pc.localDescription.toJSON())
         return pc
+      })
+      .catch((err) => {
+        console.error(`Set offer & generate answer: ${err.message}`)
       })
   }
 
@@ -362,33 +364,6 @@ class WebRTCService extends ChannelBuilderInterface {
       }
     }
     return pc
-  }
-
-  /**
-   * Creates an instance of `RTCIceCandidate`.
-   *
-   * @private
-   * @param  {Object} candidate - Candidate object created in
-   * {@link WebRTCService#createPeerConnection}.
-   * @param {} candidate.candidate
-   * @param {} candidate.sdpMLineIndex
-   * @return {external:RTCIceCandidate} - Ice candidate.
-   */
-  createIceCandidate (candidate) {
-    return new RTCIceCandidate(candidate)
-  }
-
-  /**
-   * Creates an instance of `RTCSessionDescription`.
-   *
-   * @private
-   * @param  {Object} sd - An offer or an answer created by WebRTC API.
-   * @param  {} sd.type
-   * @param  {} sd.sdp
-   * @return {external:RTCSessionDescription} - Session description.
-   */
-  createSessionDescription (sd) {
-    return Object.assign(new RTCSessionDescription(), sd)
   }
 
   getPendingConnections (wc) {

@@ -1,27 +1,25 @@
 /**
  * Service module includes {@link module:channelBuilder},
- * {@link module:webChannelManager} and {@link module:channelProxy} modules.
+ * {@link module:webChannelManager} and {@link module:messageBuilder}.
  * Services are substitutable stateless objects. Each service is identified by
- * its class name and can receive messages via `WebChannel` sent by another
- * service.
+ * its class name and some of them can receive messages via `WebChannel` sent
+ * by another service.
  *
  * @module service
  * @see module:channelBuilder
  * @see module:webChannelManager
- * @see module:channelProxy
+ * @see module:messageBuilder
  */
 
 /**
  * Each service must implement this interface.
- *
  * @interface
  */
 class ServiceInterface {
 
   /**
    * Service name which corresponds to its class name.
-   *
-   * @return {string} - name
+   * @return {string} - Name
    */
   get name () {
     return this.constructor.name
@@ -29,6 +27,6 @@ class ServiceInterface {
 }
 
 export {
-  /** @see module:service~Interface */
+  /** @see module:service~ServiceInterface */
   ServiceInterface
 }
