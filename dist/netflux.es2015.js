@@ -1459,6 +1459,26 @@ class ChannelBuilderInterface extends ServiceInterface {
   }
 }
 
+let WebSocket;
+let WebRTC;
+try {
+  WebRTC = require('wrtc')
+  WebSocket = require('ws')
+} catch(e) {
+  console.log('require not done')
+}
+
+let RTCPeerConnection$1;
+let RTCIceCandidate$1;
+if (WebRTC) {
+  RTCPeerConnection$1 = WebRTC.RTCPeerConnection
+  RTCIceCandidate$1 = WebRTC.RTCIceCandidate
+} else {
+  RTCPeerConnection$1 = window.RTCPeerConnection
+  RTCIceCandidate$1 = window.RTCIceCandidate
+  WebSocket = window.WebSocket
+}
+
 /**
  * Ice candidate event handler.
  *
@@ -1596,7 +1616,21 @@ class WebRTCService extends ChannelBuilderInterface {
       let connections = new RTCPendingConnections()
       let socket
       try {
-        socket = new window.WebSocket(settings.signaling)
+          socket = new WebSocket(settings.signaling)
+
+          // Timeout for node (otherwise it will loop forever if incorrect address)
+          if (socket.readyState === WebSocket.CONNECTING) {
+            setTimeout(() => {
+              if (socket.readyState === WebSocket.CONNECTING ||
+                  socket.readyState === WebSocket.CLOSING ||
+                  socket.readyState === WebSocket.CLOSED) {
+                reject('Node Timeout reached')
+              }
+            }, 3000)
+          } else if (socket.readyState === WebSocket.CLOSING ||
+            socket.readyState === WebSocket.CLOSED) {
+            reject('Socked closed on open')
+          }
       } catch (err) {
         reject(err.message)
       }
@@ -1629,8 +1663,11 @@ class WebRTCService extends ChannelBuilderInterface {
               console.error(`Answer generation failed: ${err.message}`)
             })
         } else if ('candidate' in msg.data) {
-          connections.addIceCandidate(msg.id, new RTCIceCandidate(msg.data.candidate))
+          connections.addIceCandidate(msg.id, new RTCIceCandidate$1(msg.data.candidate))
             .catch((err) => {
+              console.log(msg.data.candidate.candidate)
+              console.log(msg.data.candidate.sdpMLineIndex)
+              console.log(msg.data.candidate.sdpMid)
               console.error(`Adding ice candidate failed: ${err.message}`)
             })
         }
@@ -1650,6 +1687,19 @@ class WebRTCService extends ChannelBuilderInterface {
       let pc
       // Connect to the signaling server
       let socket = new WebSocket(settings.signaling)
+      // Timeout for node (otherwise it will loop forever if incorrect address)
+      if (socket.readyState === WebSocket.CONNECTING) {
+        setTimeout(() => {
+          if (socket.readyState === WebSocket.CONNECTING ||
+              socket.readyState === WebSocket.CLOSING ||
+              socket.readyState === WebSocket.CLOSED) {
+            reject('Node Timeout reached')
+          }
+        }, 3000)
+      } else if (socket.readyState === WebSocket.CLOSING ||
+        socket.readyState === WebSocket.CLOSED) {
+        reject('Socked closed on open')
+      }
       socket.onopen = () => {
         // Prepare and send offer
         this.createPeerConnectionAndOffer(
@@ -1675,7 +1725,7 @@ class WebRTCService extends ChannelBuilderInterface {
                 reject(err)
               })
           } else if ('candidate' in msg.data) {
-            pc.addIceCandidate(new RTCIceCandidate(msg.data.candidate))
+            pc.addIceCandidate(new RTCIceCandidate$1(msg.data.candidate))
               .catch((evt) => {
                 // This exception does not reject the current Promise, because
                 // still the connection may be established even without one or
@@ -1739,7 +1789,7 @@ class WebRTCService extends ChannelBuilderInterface {
         .setRemoteDescription(msg.answer)
         .catch((err) => console.error(`Set answer: ${err.message}`))
     } else if ('candidate' in msg) {
-      connections.addIceCandidate(msg.sender, new RTCIceCandidate(msg.candidate))
+      connections.addIceCandidate(msg.sender, new RTCIceCandidate$1(msg.candidate))
         .catch((err) => { console.error(`Add ICE candidate: ${err.message}`) })
     }
   }
@@ -1765,7 +1815,15 @@ class WebRTCService extends ChannelBuilderInterface {
     return pc.createOffer()
       .then((offer) => pc.setLocalDescription(offer))
       .then(() => {
-        sendOffer(pc.localDescription.toJSON())
+        let test = {type: pc.localDescription.type, sdp: pc.localDescription.sdp}
+        let anothertest = JSON.parse(JSON.stringify(pc.localDescription))
+        // console.log(pc.localDescription.toJSON())
+        // console.log(pc.localDescription)
+        // console.log('-------')
+        // console.log('stringified')
+        // console.log(anothertest)
+        // console.log('-------')
+        sendOffer(anothertest)
         return pc
       })
   }
@@ -1791,11 +1849,26 @@ class WebRTCService extends ChannelBuilderInterface {
       }
       dc.onopen = (evt) => onChannel(dc)
     }
+    // console.log('offer')
+    // console.log(offer)
+    // console.log('-------')
+    // console.log('offer')
+    // console.log(offer.sdp)
+    // console.log('-------')
     return pc.setRemoteDescription(offer)
       .then(() => pc.createAnswer())
       .then((answer) => pc.setLocalDescription(answer))
       .then(() => {
-        sendAnswer(pc.localDescription.toJSON())
+        let test = {type: pc.localDescription.type, sdp: pc.localDescription.sdp}
+        let anothertest = JSON.parse(JSON.stringify(pc.localDescription))
+        // console.log('answer : test')
+        // console.log(test)
+        // console.log('-------')
+        // console.log('answer : test')
+        // console.log(test.sdp)
+        // console.log('-------')
+        // sendAnswer(pc.localDescription.toJSON())
+        sendAnswer(anothertest)
         return pc
       })
       .catch((err) => {
@@ -1812,11 +1885,12 @@ class WebRTCService extends ChannelBuilderInterface {
    * @return {external:RTCPeerConnection} - Peer connection.
    */
   createPeerConnection (onCandidate) {
-    let pc = new RTCPeerConnection({iceServers: this.settings.iceServers})
+    let pc = new RTCPeerConnection$1({iceServers: this.settings.iceServers})
     pc.onicecandidate = (evt) => {
       if (evt.candidate !== null) {
         let candidate = {
           candidate: evt.candidate.candidate,
+          sdpMid: evt.candidate.sdpMid,
           sdpMLineIndex: evt.candidate.sdpMLineIndex
         }
         onCandidate(candidate)

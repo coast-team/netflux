@@ -1,6 +1,115 @@
-import {ChannelBuilderInterface} from './channelBuilder'
-let WebSocket,
-    WebRTC
+const signaling = 'ws://localhost:8000'
+
+/**
+ * Service module includes {@link module:channelBuilder},
+ * {@link module:webChannelManager} and {@link module:messageBuilder}.
+ * Services are substitutable stateless objects. Each service is identified by
+ * its class name and some of them can receive messages via `WebChannel` sent
+ * by another service.
+ *
+ * @module service
+ * @see module:channelBuilder
+ * @see module:webChannelManager
+ * @see module:messageBuilder
+ */
+
+/**
+ * Each service must implement this interface.
+ * @interface
+ */
+class ServiceInterface {
+
+  /**
+   * Service name which corresponds to its class name.
+   * @return {string} - Name
+   */
+  get name () {
+    return this.constructor.name
+  }
+}
+
+/**
+ * Channel Builder module is responsible to create a connection between two
+ * peers.
+ * @module channelBuilder
+ * @see Channel
+ */
+
+/**
+ * On channel callback for {@link module:channelBuilder~ChannelBuilderInterface#open}
+ * function.
+ *
+ * @callback module:channelBuilder~onChannelCallback
+ * @param {Channel} channel - A new channel.
+ */
+
+/**
+ * Call back to initialize the channel. It should be executed on both peer
+ * sides during connection establishment to assure that both channels would be
+ * ready to be used in the web channel.
+ *
+ * @callback module:channelBuilder~initChannel
+ * @param {Channel} ch - Channel.
+ * @param {string} id - Unique channel identifier.
+ */
+
+/**
+ * Interface to be implemented by each connection service.
+ *
+ * @interface
+ * @extends module:service~ServiceInterface
+ */
+class ChannelBuilderInterface extends ServiceInterface {
+
+  constructor () {
+    super()
+  }
+
+  /**
+   * Enables other clients to establish a connection with you.
+   *
+   * @abstract
+   * @param {string} key - The unique identifier which has to be passed to the
+   * peers who need to connect to you.
+   * @param {module:channelBuilder~ChannelBuilderInterface~onChannelCallback} onChannel - Callback
+   * function to execute once the connection has been established.
+   * @param {Object} [options] - Any other options which depend on the service implementation.
+   * @return {Promise} - Once resolved, provide an Object with `key` and `url`
+   * attributes to be passed to {@link module:channelBuilder~ChannelBuilderInterface#join} function.
+   * It is rejected if an error occured.
+   */
+  open (key, onChannel, options) {
+    throw new Error('Must be implemented by subclass!')
+  }
+
+  /**
+   * Connects you with the peer who provided the `key`.
+   *
+   * @abstract
+   * @param  {string} key - A key obtained from the peer who executed
+   * {@link module:channelBuilder~ChannelBuilderInterface#open} function.
+   * @param  {Object} [options] Any other options which depend on the implementation.
+   * @return {Promise} It is resolved when the connection is established, otherwise it is rejected.
+   */
+  join (key, options) {
+    throw new Error('Must be implemented by subclass!')
+  }
+
+  /**
+   * Establish a connection between you and another peer (including joining peer) via web channel.
+   *
+   * @abstract
+   * @param  {WebChannel} wc - Web Channel through which the connection will be established.
+   * @param  {string} id - Peer id with whom you will be connected.
+   * @return {Promise} - Resolved once the connection has been established, rejected otherwise.
+   */
+  connectMeTo (wc, id) {
+    throw new Error('Must be implemented by subclass!')
+  }
+}
+
+let WebSocket;
+let WebRTC;
 try {
   WebRTC = require('wrtc')
   WebSocket = require('ws')
@@ -8,9 +117,8 @@ try {
   console.log('require not done')
 }
 
-let RTCPeerConnection,
-    RTCIceCandidate
-
+let RTCPeerConnection;
+let RTCIceCandidate;
 if (WebRTC) {
   RTCPeerConnection = WebRTC.RTCPeerConnection
   RTCIceCandidate = WebRTC.RTCIceCandidate
@@ -451,4 +559,172 @@ class WebRTCService extends ChannelBuilderInterface {
   }
 }
 
-export default WebRTCService
+// const signaling = 'ws://sigver-coastteam.rhcloud.com:8000'
+
+function randKey () {
+  const MIN_LENGTH = 5
+  const DELTA_LENGTH = 0
+  const MASK = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  let result = ''
+  const length = MIN_LENGTH + Math.round(Math.random() * DELTA_LENGTH)
+
+  for (let i = 0; i < length; i++) {
+    result += MASK[Math.round(Math.random() * (MASK.length - 1))]
+  }
+  return result
+}
+
+describe('WebRTCService ->', () => {
+  let webRTCService = new WebRTCService({signaling})
+
+  // it('Open: should succeed and return the provided key', (done) => {
+  //   let key = randKey()
+  //   console.log("\n\nI'm 1")
+  //   webRTCService.open(key, () => {})
+  //     .then((data) => {
+  //       expect(data.key).toBeDefined()
+  //       expect(data.url).toBeDefined()
+  //       expect(data.key).toEqual(key)
+  //       done()
+  //     })
+  //     .catch((reason) => {
+  //       console.log('Error: ' + reason)
+  //       done.fail(reason)
+  //     })
+  // })
+
+  // it('Open: should fail because of the wrong URL', (done) => {
+  //   console.log("\n\nI'm 2")
+  //   webRTCService.open(randKey(), () => {}, {
+  //     signaling: 'https://github.com:8100/coast-team/netflux'
+  //   }).then((data) => { done.fail() })
+  //     .catch(done)
+  // })
+
+  it('Open: should fail because the provided key is already opened', (done) => {
+    let key = randKey()
+    console.log("\n\nI'm 3")
+    webRTCService.open(key, () => {})
+      .then((data) => {
+        webRTCService.open(key, () => {})
+          .then((reason) => {
+            console.log('FAILED -----> ', reason)//JSON.stringify(reason))
+            done.fail(reason)
+          })
+          .catch(done)
+      })
+      .catch(done.fail)
+  })
+
+  // it('Join: dataChannel should open', (done) => {
+  //   console.log("\n\nI'm 4")
+  //   webRTCService.open(randKey(), () => {})
+  //     .then((data) => {
+  //       webRTCService.join(data.key).then(done).catch(done.fail)
+  //     })
+  // })
+
+  it('Join: should fail because of the wrong key', (done) => {
+    console.log("\n\nI'm 5")
+    webRTCService.open(randKey(), () => {})
+      .then((data) => {
+        webRTCService.join(randKey()).then(done.fail).catch(done)
+      })
+  })
+
+  // it('Join: should fail because of the wrong URL', (done) => {
+  //   console.log("\n\nI'm 6")
+  //   webRTCService.open(randKey(), () => {}).then((data) => {
+  //     webRTCService.join(randKey(), {
+  //       signaling: 'https://github.com:8100/coast-team/netflux'
+  //     }).then(done.fail).catch(done)
+  //   })
+  // })
+
+  // it('Open & Join: should detect disconnected peer', (done) => {
+  //   console.log("\n\nI'm 7")
+  //   webRTCService.open(randKey(), (channel) => {
+  //     channel.onclose = (closeEvt) => done()
+  //     channel.onerror = done.fail
+  //   })
+  //     .then((data) => {
+  //       webRTCService.join(data.key)
+  //         .then((channel) => {
+  //           channel.onerror = done.fail
+  //           setTimeout(() => { channel.close() }, 500)
+  //         })
+  //         .catch(done.fail)
+  //     })
+  //     .catch(done.fail)
+  // })
+
+  // it('Open & Join: should open 1 dataChannel and exchange messages between 2 peers', (done) => {
+  //   console.log("\n\nI'm 8")
+  //   const masterPeerMsg = 'Hello! Here is master'
+  //   const peerMsg = 'Hi, I am a peer'
+  //   webRTCService.open(randKey(), (channel) => {
+  //     channel.onmessage = (event) => {
+  //       expect(event.data).toEqual(peerMsg)
+  //       channel.close()
+  //     }
+  //     channel.onerror = done.fail
+  //     channel.send(masterPeerMsg)
+  //   })
+  //     .then((data) => {
+  //       webRTCService.join(data.key)
+  //         .then((channel) => {
+  //           channel.onmessage = (event) => {
+  //             expect(event.data).toEqual(masterPeerMsg)
+  //             channel.send(peerMsg)
+  //           }
+  //           channel.onclose = done
+  //           channel.onerror = done.fail
+  //         })
+  //         .catch(done.fail)
+  //     })
+  //     .catch(done.fail)
+  // })
+
+  // it('Open & Join: should open 2 dataChannels and exchange messages between 3 peers', (done) => {
+  //   console.log("\n\nI'm 9")
+  //   const masterPeerMsg = 'Do or do not, there is no try'
+  //   const peerMsg1 = 'Hi, I am a peer #1'
+  //   const peerMsg2 = 'Hi, I am a peer #2'
+  //   let limit = 0
+
+  //   // PEER MASTER
+  //   webRTCService.open(randKey(), (channel) => {
+  //     channel.onmessage = (event) => {
+  //       expect(event.data).toMatch(/Hi, I am a peer #/)
+  //       channel.close()
+  //       if (++limit === 2) { done() }
+  //     }
+  //     channel.onerror = done.fail
+  //     channel.send(masterPeerMsg)
+  //   })
+  //     .then((data) => {
+  //       // PEER #1
+  //       webRTCService.join(data.key)
+  //         .then((channel) => {
+  //           channel.onmessage = (event) => {
+  //             expect(event.data).toEqual(masterPeerMsg)
+  //             channel.send(peerMsg1)
+  //           }
+  //           channel.onerror = done.fail
+  //         })
+  //         .catch(done.fail)
+
+  //       // PEER #2
+  //       webRTCService.join(data.key)
+  //         .then((channel) => {
+  //           channel.onmessage = (event) => {
+  //             expect(event.data).toEqual(masterPeerMsg)
+  //             channel.send(peerMsg2)
+  //           }
+  //           channel.onerror = done.fail
+  //         })
+  //         .catch(done.fail)
+  //     })
+  //     .catch(done.fail)
+  // })
+})
