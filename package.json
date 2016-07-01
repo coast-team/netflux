@@ -1,109 +1,111 @@
 {
-    "name": "netflux",
-    "description": "Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done.",
-    "main": "dist/netflux.es2015.umd.js",
-    "jsnext:main": "dist/netflux.es2015.js",
-    "version": "0.0.0-semrelease",
-    "scripts": {
-        "prebuild": "rm -rf coverage dist",
-        "build": "rollup -c & rollup -i src/index.js -o dist/netflux.es2015.js",
-        "signalling-up": "kill `cat /tmp/sigver.pid`; node ./node_modules/sigver/server.js & echo \"$!\" > /tmp/sigver.pid",
-        "botserver": "kill `cat /tmp/botserver.pid`; node ./test/BotServer.js & echo \"$!\" > /tmp/botserver.pid",
-        "pretest": "npm run build && npm run signalling-up && npm run botserver",
-        "test": "karma start",
-        "testin": "npm run test -- --browsers",
-        "test-coverage": "npm run test -- karma.conf.coverage.js",
-        "doc": "jsdoc -d doc -c jsdoc.json -t ./node_modules/ink-docstrap/template -R README.md -r src",
-        "postdoc": "mkdir -p doc/doc && cp -f doc/uml.png doc/doc/",
-        "docdev": "jsdoc -d doc -p -c jsdoc.json -t ./node_modules/ink-docstrap/template -R README.md -r src",
-        "postdocdev": "mkdir -p doc/doc && cp -f doc/uml.png doc/doc/",
-        "predocdeploy": "json -I -f jsdoc.json -e \"this.templates.systemName=\\\"Netflux `git describe --abbrev=0 --tags`\\\"\" && npm run docdev",
-        "docdeploy": "./jsdoc.deploy.sh",
-        "postdocdeploy": "json -I -f jsdoc.json -e 'this.templates.systemName=\"Netflux\"'",
-        "commit": "git-cz",
-        "semantic-release": "semantic-release pre && npm publish && semantic-release post"
+  "name": "netflux",
+  "description": "Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done.",
+  "main": "dist/netflux.es2015.umd.js",
+  "jsnext:main": "dist/netflux.es2015.js",
+  "version": "0.0.0-semrelease",
+  "scripts": {
+    "prebuild": "rm -rf coverage dist",
+    "build": "rollup -c & rollup -i src/index.js -o dist/netflux.es2015.js",
+    "signalling-up": "kill `cat /tmp/sigver.pid`; node ./node_modules/sigver/server.js & echo \"$!\" > /tmp/sigver.pid",
+    "botserver": "kill `cat /tmp/botserver.pid`; node ./test/BotServer.js & echo \"$!\" > /tmp/botserver.pid",
+    "pretest": "npm run build && npm run signalling-up && npm run botserver",
+    "test": "karma start",
+    "testin": "npm run test -- --browsers",
+    "test-coverage": "npm run test -- karma.conf.coverage.js",
+    "doc": "jsdoc -d doc -c jsdoc.json -t ./node_modules/ink-docstrap/template -R README.md -r src",
+    "postdoc": "mkdir -p doc/doc && cp -f doc/uml.png doc/doc/",
+    "docdev": "jsdoc -d doc -p -c jsdoc.json -t ./node_modules/ink-docstrap/template -R README.md -r src",
+    "postdocdev": "mkdir -p doc/doc && cp -f doc/uml.png doc/doc/",
+    "predocdeploy": "json -I -f jsdoc.json -e \"this.templates.systemName=\\\"Netflux `git describe --abbrev=0 --tags`\\\"\" && npm run docdev",
+    "docdeploy": "./jsdoc.deploy.sh",
+    "postdocdeploy": "json -I -f jsdoc.json -e 'this.templates.systemName=\"Netflux\"'",
+    "commit": "git-cz",
+    "semantic-release": "semantic-release pre && npm publish && semantic-release post"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/coast-team/netflux.git"
+  },
+  "keywords": [
+    "netflux",
+    "webRTC",
+    "p2p",
+    "peer",
+    "network"
+  ],
+  "author": "Philippe Kalitine <philippe.kalitine@gmail.com> (http://philippe.kalitine.name/)",
+  "license": "AGPL-3.0",
+  "bugs": {
+    "url": "https://github.com/coast-team/netflux/issues"
+  },
+  "homepage": "https://github.com/coast-team/netflux#readme",
+  "config": {
+    "ghooks": {
+      "pre-commit": "npm run test-coverage"
     },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/coast-team/netflux.git"
-    },
-    "keywords": [
-        "netflux",
-        "webRTC",
-        "p2p",
-        "peer",
-        "network"
-    ],
-    "author": "Philippe Kalitine <philippe.kalitine@gmail.com> (http://philippe.kalitine.name/)",
-    "license": "AGPL-3.0",
-    "bugs": {
-        "url": "https://github.com/coast-team/netflux/issues"
-    },
-    "homepage": "https://github.com/coast-team/netflux#readme",
-    "config": {
-        "ghooks": {
-            "pre-commit": "npm run test-coverage"
-        },
-        "commitizen": {
-            "path": "node_modules/cz-conventional-changelog"
-        }
-    },
-    "dependencies": {
-        "webrtc-adapter": "^1.1.0"
-    },
-    "devDependencies": {
-        "commitizen": "^2.4.6",
-        "cz-conventional-changelog": "^1.1.5",
-        "eslint": "^2.2.0",
-        "ghooks": "^1.0.1",
-        "ink-docstrap": "^1.1.2",
-        "istanbul": "^0.4.3",
-        "jasmine-core": "^2.4.1",
-        "jsdoc": "^3.4.0",
-        "json": "^9.0.3",
-        "karma": "^1.1.0",
-        "karma-chrome-launcher": "^1.0.1",
-        "karma-coverage": "^1.0.0",
-        "karma-coverage-es6": "^0.2.7",
-        "karma-firefox-launcher": "^1.0.0",
-        "karma-jasmine": "^1.0.2",
-        "karma-rollup-preprocessor": "^2.0.2",
-        "rollup": "^0.33.0",
-        "rollup-plugin-istanbul": "^1.0.0",
-        "rollup-plugin-filesize": "^0.4.4",
-        "rollup-plugin-string": "^2.0.0",
-        "semantic-release": "^4.3.5",
-        "sigver": "^7.1.0",
-        "standard": "^7.0.1"
-    },
-    "standard": {
-        "parser": "babel-eslint",
-        "globals": [
-            "netflux",
-            "describe",
-            "xdescribe",
-            "it",
-            "xit",
-            "expect",
-            "beforeEach",
-            "afterEach",
-            "beforeAll",
-            "afterAll",
-            "DOMException",
-            "RTCPeerConnection",
-            "RTCSessionDescription",
-            "RTCDataChannel",
-            "RTCIceCandidate",
-            "WebSocket",
-            "TextEncoder",
-            "TextDecoder",
-            "Event",
-            "CloseEvent"
-        ],
-        "ignore": [
-            "dist/*",
-            "karma*.js",
-            "*config.js"
-        ]
+    "commitizen": {
+      "path": "node_modules/cz-conventional-changelog"
     }
+  },
+  "dependencies": {
+    "text-encoding": "^0.6.0",
+    "webrtc-adapter": "^1.1.0",
+    "ws": "^1.1.1"
+  },
+  "devDependencies": {
+    "commitizen": "^2.4.6",
+    "cz-conventional-changelog": "^1.1.5",
+    "eslint": "^2.2.0",
+    "ghooks": "^1.0.1",
+    "ink-docstrap": "^1.1.2",
+    "istanbul": "^0.4.3",
+    "jasmine-core": "^2.4.1",
+    "jsdoc": "^3.4.0",
+    "json": "^9.0.3",
+    "karma": "^1.1.0",
+    "karma-chrome-launcher": "^1.0.1",
+    "karma-coverage": "^1.0.0",
+    "karma-coverage-es6": "^0.2.7",
+    "karma-firefox-launcher": "^1.0.0",
+    "karma-jasmine": "^1.0.2",
+    "karma-rollup-preprocessor": "^2.0.2",
+    "rollup": "^0.33.0",
+    "rollup-plugin-istanbul": "^1.0.0",
+    "rollup-plugin-filesize": "^0.4.4",
+    "rollup-plugin-string": "^2.0.0",
+    "semantic-release": "^4.3.5",
+    "sigver": "^7.1.0",
+    "standard": "^7.0.1"
+  },
+  "standard": {
+    "parser": "babel-eslint",
+    "globals": [
+      "netflux",
+      "describe",
+      "xdescribe",
+      "it",
+      "xit",
+      "expect",
+      "beforeEach",
+      "afterEach",
+      "beforeAll",
+      "afterAll",
+      "DOMException",
+      "RTCPeerConnection",
+      "RTCSessionDescription",
+      "RTCDataChannel",
+      "RTCIceCandidate",
+      "WebSocket",
+      "TextEncoder",
+      "TextDecoder",
+      "Event",
+      "CloseEvent"
+    ],
+    "ignore": [
+      "dist/*",
+      "karma*.js",
+      "*config.js"
+    ]
+  }
 }

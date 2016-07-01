@@ -63,8 +63,10 @@ server.on('connection', (socket) => {
       case NEW_CHANNEL:
         log('new_channel', 'New channel request received')
         for (var wc of webChannels) {
-          if (!data.which_connector_asked) wc.connectMeToRequests.get(data.sender)(true, socket)
-          else wc.initChannel(socket, false, data.sender)
+          if (data.wcId == wc.id) {
+            if (!data.which_connector_asked) wc.connectMeToRequests.get(data.sender)(true, socket)
+            else wc.initChannel(socket, false, data.sender)
+          }
         }
         break
       default:
