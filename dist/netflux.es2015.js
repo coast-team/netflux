@@ -2309,33 +2309,6 @@ let provide = function (name, options = {}) {
   }
 }
 
-class Bot {
-  constructor (options = {}) {
-    if (typeof window === 'undefined') throw new Error('Bot can be instanciate only in Node\'s environment')
-    this.defaults = {
-      host: '127.0.0.1',
-      port: 8080
-    }
-    this.settings = Object.assign({}, this.defaults, options)
-
-    this.server
-  }
-
-  listen (options = {}) {
-    this.settings = Object.assign({}, this.defaults, options)
-    // let WebSocketServer = require('ws').Server
-    // this.server = new WebSocketServer({host: this.settings.host, port: this.settings.port})
-    //
-    // this.server.on('connection', (socket) => {
-    //   console.log('[CONNECTED] Connection of one client')
-    //
-    //   socket.on('message', (msg) => {
-    //     console.log('[MESSAGE] New message: ', msg)
-    //   })
-    // })
-  }
-}
-
 /**
  * Wrapper class for {@link external:RTCDataChannel} and
  * {@link external:WebSocket}.
@@ -2572,7 +2545,7 @@ const PONG = 12
   * he can join the webcahnnel
   * @type {string}
   */
-const ADD_BOT_SERVER = 'addBotServer'
+const ADD_BOT_SERVER$1 = 'addBotServer'
 
 /**
  * This class represents a door of the *WebChannel* for this peer. If the door
@@ -2867,7 +2840,7 @@ class WebChannel {
             After opening the WebSocket with the server, a message is sent
             to him in order that it can join the webchannel
           */
-          socket.send(JSON.stringify({code: ADD_BOT_SERVER, sender: this.myId}))
+          socket.send(JSON.stringify({code: ADD_BOT_SERVER$1, sender: this.myId}))
           this.initChannel(socket, false).then((channel) => {
             // console.log('[DEBUG] Resolved initChannel addBotServer')
             this.addChannel(channel).then(() => {
@@ -3340,6 +3313,83 @@ class WebChannel {
       break
     } while (true)
     return id
+  }
+}
+
+const ADD_BOT_SERVER = 'addBotServer'
+const NEW_CHANNEL$1 = 'newChannel'
+
+class Bot {
+  constructor (options = {}) {
+    if (typeof window !== 'undefined') throw new Error('Bot can be instanciate only in Node\'s environment')
+    this.defaults = {
+      host: '127.0.0.1',
+      port: 9000,
+      log: false
+    }
+    this.settings = Object.assign({}, this.defaults, options)
+    this.webChannels = []
+    this.onWebChannel = (wc) => {}
+    this.server
+  }
+
+  listen (options = {}) {
+    this.settings = Object.assign({}, this.settings, options)
+    let WebSocketServer = require('ws').Server
+    this.server = new WebSocketServer({host: this.settings.host, port: this.settings.port}, () => {
+      this.log('WebSocketServer', 'Server runs on: ws://' + this.settings.host + ':' + this.settings.port)
+    })
+
+    this.server.on('connection', (socket) => {
+      this.log('connected', 'Connection of one client')
+
+      socket.on('message', (msg) => {
+        var data = {code: ''}
+        try {
+          data = JSON.parse(msg)
+        } catch (e) {}
+        switch (data.code) {
+          case ADD_BOT_SERVER:
+            this.log('add', 'Add request received')
+            let webChannel
+
+            webChannel = new WebChannel({'connector': 'WebSocket',
+              host: this.settings.host, port: this.settings.port})
+
+            webChannel.joinAsBot(socket, data.sender).then(() => {
+              this.onWebChannel(webChannel)
+              this.log('connected', 'Connected to the network')
+              this.log('id', webChannel.myId)
+            })
+
+            this.webChannels.push(webChannel)
+            break
+          case NEW_CHANNEL$1:
+            this.log('new_channel', 'New channel request received')
+            for (var wc of this.webChannels) {
+              if (data.wcId == wc.id) {
+                if (!data.which_connector_asked) wc.connectMeToRequests.get(data.sender)(true, socket)
+                else wc.initChannel(socket, false, data.sender)
+              }
+            }
+            break
+          default:
+            this.log('error', 'Unknown code message')
+        }
+      })
+    })
+  }
+
+  getDate () {
+    var d = new Date()
+    return '' + d.toLocaleTimeString() + ' ' + d.toLocaleDateString()
+  }
+
+  log (label, msg) {
+    if (this.settings.log) {
+      let datetime = this.getDate()
+      console.log('[', label.toUpperCase(), '] [', datetime, ']', msg)
+    }
   }
 }
 
