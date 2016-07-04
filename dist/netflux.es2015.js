@@ -1838,6 +1838,13 @@ class WebRTCService extends ChannelBuilderInterface {
 }
 
 const CONNECT_TIMEOUT$1 = 2000
+
+/**
+  * Constant used to send a message to the server in order that
+  * he can join the webcahnnel
+  * @type {string}
+  */
+const ADD_BOT_SERVER = 'addBotServer'
 const NEW_CHANNEL = 'newChannel'
 
 class WebSocketService extends ChannelBuilderInterface {
@@ -1850,7 +1857,8 @@ class WebSocketService extends ChannelBuilderInterface {
         {urls: 'stun:23.21.150.121'},
         {urls: 'stun:stun.l.google.com:19302'},
         {urls: 'turn:numb.viagenie.ca', credential: 'webrtcdemo', username: 'louis%40mozilla.com'}
-      ]
+      ],
+      addBotServer: false
     }
     this.settings = Object.assign({}, this.defaults, options)
     this.toConnect = false
@@ -1905,9 +1913,22 @@ class WebSocketService extends ChannelBuilderInterface {
         reject(err.message)
       }
       socket.onopen = () => {
-        socket.send(JSON.stringify({code: NEW_CHANNEL, sender: wc.myId, wcId: wc.id,
-          which_connector_asked: this.settings.which_connector_asked}))
-        resolve(socket)
+        if (!this.settings.addBotServer) {
+          socket.send(JSON.stringify({code: NEW_CHANNEL, sender: wc.myId, wcId: wc.id,
+            which_connector_asked: this.settings.which_connector_asked}))
+          resolve(socket)
+        } else {
+          /*
+            After opening the WebSocket with the server, a message is sent
+            to him in order that it can join the webchannel
+          */
+          socket.send(JSON.stringify({code: ADD_BOT_SERVER, sender: wc.myId}))
+          wc.initChannel(socket, false).then((channel) => {
+            wc.addChannel(channel).then(() => {
+              resolve()
+            })
+          })
+        }
       }
       socket.onclose = () => {
         reject('Connection with the WebSocket server closed')
@@ -1945,9 +1966,10 @@ class ChannelBuilderService extends ServiceInterface {
         }
       })
       if (typeof window !== 'undefined') wc.sendSrvMsg(this.name, id, {code: WHICH_CONNECTOR, sender: wc.myId})
-      else wc.sendSrvMsg(this.name, id,
-        {code: CONNECTOR, connectors: [WEBSOCKET], sender: wc.myId,
-        host: wc.settings.host, port: wc.settings.port, which_connector_asked: false})
+      else {
+        wc.sendSrvMsg(this.name, id, {code: CONNECTOR, connectors: [WEBSOCKET], sender: wc.myId,
+          host: wc.settings.host, port: wc.settings.port, which_connector_asked: false})
+      }
     })
   }
 
@@ -2541,13 +2563,6 @@ const PING = 11
 const PONG = 12
 
 /**
-  * Constant used to send a message to the server in order that
-  * he can join the webcahnnel
-  * @type {string}
-  */
-const ADD_BOT_SERVER$1 = 'addBotServer'
-
-/**
  * This class represents a door of the *WebChannel* for this peer. If the door
  * is open, then clients can join the *WebChannel* through this peer, otherwise
  * they cannot.
@@ -2829,29 +2844,35 @@ class WebChannel {
   addBotServer (host, port) {
     return new Promise((resolve, reject) => {
       if (typeof window !== 'undefined') {
-        let socket
-        try {
-          socket = new window.WebSocket('ws://' + host + ':' + port)
-        } catch (err) {
-          reject(err.message)
-        }
-        socket.onopen = () => {
-          /*
-            After opening the WebSocket with the server, a message is sent
-            to him in order that it can join the webchannel
-          */
-          socket.send(JSON.stringify({code: ADD_BOT_SERVER$1, sender: this.myId}))
-          this.initChannel(socket, false).then((channel) => {
-            // console.log('[DEBUG] Resolved initChannel addBotServer')
-            this.addChannel(channel).then(() => {
-              // console.log('[RESOLVED] Resolved addChannel in addBotServer')
-              resolve()
-            })
-          })
-        }
-        socket.onclose = () => {
-          reject('Connection with the WebSocket server closed')
-        }
+        let cBuilder = provide(WEBSOCKET, {host, port, addBotServer: true})
+        cBuilder.connectMeTo(this, -1).then(() => {
+          resolve()
+        }).catch((reason) => {
+          reject(reason)
+        })
+        // let socket
+        // try {
+        //   socket = new window.WebSocket('ws://' + host + ':' + port)
+        // } catch (err) {
+        //   reject(err.message)
+        // }
+        // socket.onopen = () => {
+        //   /*
+        //     After opening the WebSocket with the server, a message is sent
+        //     to him in order that it can join the webchannel
+        //   */
+        //   socket.send(JSON.stringify({code: ADD_BOT_SERVER, sender: this.myId}))
+        //   this.initChannel(socket, false).then((channel) => {
+        //     // console.log('[DEBUG] Resolved initChannel addBotServer')
+        //     this.addChannel(channel).then(() => {
+        //       // console.log('[RESOLVED] Resolved addChannel in addBotServer')
+        //       resolve()
+        //     })
+        //   })
+        // }
+        // socket.onclose = () => {
+        //   reject('Connection with the WebSocket server closed')
+        // }
       } else reject('Only browser client can add a bot server')
     })
   }
@@ -3316,7 +3337,7 @@ class WebChannel {
   }
 }
 
-const ADD_BOT_SERVER = 'addBotServer'
+const ADD_BOT_SERVER$1 = 'addBotServer'
 const NEW_CHANNEL$1 = 'newChannel'
 
 class Bot {
@@ -3349,7 +3370,7 @@ class Bot {
           data = JSON.parse(msg)
         } catch (e) {}
         switch (data.code) {
-          case ADD_BOT_SERVER:
+          case ADD_BOT_SERVER$1:
             this.log('add', 'Add request received')
             let webChannel
 
@@ -3367,7 +3388,7 @@ class Bot {
           case NEW_CHANNEL$1:
             this.log('new_channel', 'New channel request received')
             for (var wc of this.webChannels) {
-              if (data.wcId == wc.id) {
+              if (data.wcId === wc.id) {
                 if (!data.which_connector_asked) wc.connectMeToRequests.get(data.sender)(true, socket)
                 else wc.initChannel(socket, false, data.sender)
               }
@@ -3380,14 +3401,10 @@ class Bot {
     })
   }
 
-  getDate () {
-    var d = new Date()
-    return '' + d.toLocaleTimeString() + ' ' + d.toLocaleDateString()
-  }
-
   log (label, msg) {
     if (this.settings.log) {
-      let datetime = this.getDate()
+      var d = new Date()
+      let datetime = '' + d.toLocaleTimeString() + ' ' + d.toLocaleDateString()
       console.log('[', label.toUpperCase(), '] [', datetime, ']', msg)
     }
   }

@@ -7,8 +7,6 @@ const DEBUG_PONG = 'DEBUG_PONG'
 
 let bot = new netflux.Bot({log: true})
 
-let onWebChannel
-
 bot.listen({host, port})
 
 bot.onWebChannel = (wc) => {

@@ -1,6 +1,13 @@
 import {ChannelBuilderInterface} from './channelBuilder'
 
 const CONNECT_TIMEOUT = 2000
+
+/**
+  * Constant used to send a message to the server in order that
+  * he can join the webcahnnel
+  * @type {string}
+  */
+const ADD_BOT_SERVER = 'addBotServer'
 const NEW_CHANNEL = 'newChannel'
 
 class WebSocketService extends ChannelBuilderInterface {
@@ -13,7 +20,8 @@ class WebSocketService extends ChannelBuilderInterface {
         {urls: 'stun:23.21.150.121'},
         {urls: 'stun:stun.l.google.com:19302'},
         {urls: 'turn:numb.viagenie.ca', credential: 'webrtcdemo', username: 'louis%40mozilla.com'}
-      ]
+      ],
+      addBotServer: false
     }
     this.settings = Object.assign({}, this.defaults, options)
     this.toConnect = false
@@ -58,7 +66,6 @@ class WebSocketService extends ChannelBuilderInterface {
    * @return {Promise} - Resolved once the connection has been established, rejected otherwise.
    */
   connectMeTo (wc, id) {
-    // console.log('[DEBUG] connectMeTo (wc, id) (wc, ', id, ')')
     return new Promise((resolve, reject) => {
       let socket
       try {
@@ -68,9 +75,22 @@ class WebSocketService extends ChannelBuilderInterface {
         reject(err.message)
       }
       socket.onopen = () => {
-        socket.send(JSON.stringify({code: NEW_CHANNEL, sender: wc.myId, wcId: wc.id,
-          which_connector_asked: this.settings.which_connector_asked}))
-        resolve(socket)
+        if (!this.settings.addBotServer) {
+          socket.send(JSON.stringify({code: NEW_CHANNEL, sender: wc.myId, wcId: wc.id,
+            which_connector_asked: this.settings.which_connector_asked}))
+          resolve(socket)
+        } else {
+          /*
+            After opening the WebSocket with the server, a message is sent
+            to him in order that it can join the webchannel
+          */
+          socket.send(JSON.stringify({code: ADD_BOT_SERVER, sender: wc.myId}))
+          wc.initChannel(socket, false).then((channel) => {
+            wc.addChannel(channel).then(() => {
+              resolve()
+            })
+          })
+        }
       }
       socket.onclose = () => {
         reject('Connection with the WebSocket server closed')

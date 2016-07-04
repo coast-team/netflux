@@ -25,9 +25,10 @@ class ChannelBuilderService extends ServiceInterface {
         }
       })
       if (typeof window !== 'undefined') wc.sendSrvMsg(this.name, id, {code: WHICH_CONNECTOR, sender: wc.myId})
-      else wc.sendSrvMsg(this.name, id,
-        {code: CONNECTOR, connectors: [WEBSOCKET], sender: wc.myId,
-        host: wc.settings.host, port: wc.settings.port, which_connector_asked: false})
+      else {
+        wc.sendSrvMsg(this.name, id, {code: CONNECTOR, connectors: [WEBSOCKET], sender: wc.myId,
+          host: wc.settings.host, port: wc.settings.port, which_connector_asked: false})
+      }
     })
   }
 

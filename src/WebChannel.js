@@ -1,4 +1,4 @@
-import {provide, FULLY_CONNECTED, WEBRTC, MESSAGE_BUILDER} from './serviceProvider'
+import {provide, FULLY_CONNECTED, WEBRTC, WEBSOCKET, MESSAGE_BUILDER} from './serviceProvider'
 import Channel from './Channel'
 import JoiningPeer from './JoiningPeer'
 
@@ -89,13 +89,6 @@ const PING = 11
  * @type {number}
  */
 const PONG = 12
-
-/**
-  * Constant used to send a message to the server in order that
-  * he can join the webcahnnel
-  * @type {string}
-  */
-const ADD_BOT_SERVER = 'addBotServer'
 
 /**
  * This class represents a door of the *WebChannel* for this peer. If the door
@@ -379,29 +372,12 @@ class WebChannel {
   addBotServer (host, port) {
     return new Promise((resolve, reject) => {
       if (typeof window !== 'undefined') {
-        let socket
-        try {
-          socket = new window.WebSocket('ws://' + host + ':' + port)
-        } catch (err) {
-          reject(err.message)
-        }
-        socket.onopen = () => {
-          /*
-            After opening the WebSocket with the server, a message is sent
-            to him in order that it can join the webchannel
-          */
-          socket.send(JSON.stringify({code: ADD_BOT_SERVER, sender: this.myId}))
-          this.initChannel(socket, false).then((channel) => {
-            // console.log('[DEBUG] Resolved initChannel addBotServer')
-            this.addChannel(channel).then(() => {
-              // console.log('[RESOLVED] Resolved addChannel in addBotServer')
-              resolve()
-            })
-          })
-        }
-        socket.onclose = () => {
-          reject('Connection with the WebSocket server closed')
-        }
+        let cBuilder = provide(WEBSOCKET, {host, port, addBotServer: true})
+        cBuilder.connectMeTo(this, -1).then(() => {
+          resolve()
+        }).catch((reason) => {
+          reject(reason)
+        })
       } else reject('Only browser client can add a bot server')
     })
   }

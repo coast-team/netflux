@@ -51,7 +51,7 @@ class Bot {
           case NEW_CHANNEL:
             this.log('new_channel', 'New channel request received')
             for (var wc of this.webChannels) {
-              if (data.wcId == wc.id) {
+              if (data.wcId === wc.id) {
                 if (!data.which_connector_asked) wc.connectMeToRequests.get(data.sender)(true, socket)
                 else wc.initChannel(socket, false, data.sender)
               }
@@ -64,14 +64,10 @@ class Bot {
     })
   }
 
-  getDate () {
-    var d = new Date()
-    return '' + d.toLocaleTimeString() + ' ' + d.toLocaleDateString()
-  }
-
   log (label, msg) {
     if (this.settings.log) {
-      let datetime = this.getDate()
+      var d = new Date()
+      let datetime = '' + d.toLocaleTimeString() + ' ' + d.toLocaleDateString()
       console.log('[', label.toUpperCase(), '] [', datetime, ']', msg)
     }
   }
