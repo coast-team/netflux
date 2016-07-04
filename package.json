@@ -12,6 +12,7 @@
     "test": "karma start",
     "testin": "npm run test -- --browsers",
     "test-coverage": "npm run test -- karma.conf.coverage.js",
+    "nodetest": "rollup -i test/service/channelBuilder/webRTCService.test.js -o spec/service/channelBuilder/webRTCServiceSpec.js",
     "doc": "jsdoc -d doc -c jsdoc.json -t ./node_modules/ink-docstrap/template -R README.md -r src",
     "postdoc": "mkdir -p doc/doc && cp -f doc/uml.png doc/doc/",
     "docdev": "jsdoc -d doc -p -c jsdoc.json -t ./node_modules/ink-docstrap/template -R README.md -r src",
@@ -20,8 +21,7 @@
     "docdeploy": "./jsdoc.deploy.sh",
     "postdocdeploy": "json -I -f jsdoc.json -e 'this.templates.systemName=\"Netflux\"'",
     "commit": "git-cz",
-    "semantic-release": "semantic-release pre && npm publish && semantic-release post",
-    "test_marc": "rollup -i test/service/channelBuilder/webRTCService.test.js -o spec/webRTCServiceSpec.js"
+    "semantic-release": "semantic-release pre && npm publish && semantic-release post"
   },
   "repository": {
     "type": "git",

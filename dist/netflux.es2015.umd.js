@@ -1643,12 +1643,16 @@ let   RTCIceCandidate$1;
         // Send a message to signaling server: ready to receive offer
         socket.onopen = () => {
           try {
-            socket.send(JSON.stringify({key}))
+            // if (WebRTC) {
+            //   socket.send(JSON.stringify({key}), (error) => {reject()})
+            // } else {
+              socket.send(JSON.stringify({key}))
+            // }
           } catch (err) {
             reject(err.message)
           }
           // TODO: find a better solution than setTimeout. This is for the case when the key already exists and thus the server will close the socket, but it will close it after this function resolves the Promise.
-          setTimeout(resolve, 100, {key, url: settings.signaling, socket})
+          setTimeout(resolve, 1000, {key, url: settings.signaling, socket})
         }
         socket.onmessage = (evt) => {
           let msg = JSON.parse(evt.data)
@@ -1749,6 +1753,7 @@ let   RTCIceCandidate$1;
           reject('WebSocket with signaling server error: ' + evt.message)
         }
         socket.onclose = (closeEvt) => {
+          console.log(closeEvt.code)
           if (closeEvt.code !== 1000) {
             reject(`Socket with signaling server ${settings.signaling} has been closed with code ${closeEvt.code}: ${closeEvt.reason}`)
           }
