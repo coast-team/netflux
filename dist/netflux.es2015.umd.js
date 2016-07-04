@@ -1909,11 +1909,13 @@
      * @return {Promise} - Resolved once the connection has been established, rejected otherwise.
      */
     connectMeTo (wc, id) {
-      // console.log('[DEBUG] connectMeTo (wc, id) (wc, ', id, ')')
       return new Promise((resolve, reject) => {
         let socket
+        let WebSocket
+        if (typeof window === 'undefined') WebSocket = require('ws')
+        else WebSocket = window.WebSocket
         try {
-          socket = new window.WebSocket('ws://' +
+          socket = new WebSocket('ws://' +
             this.settings.host + ':' + this.settings.port)
         } catch (err) {
           reject(err.message)
@@ -2856,29 +2858,6 @@
           }).catch((reason) => {
             reject(reason)
           })
-          // let socket
-          // try {
-          //   socket = new window.WebSocket('ws://' + host + ':' + port)
-          // } catch (err) {
-          //   reject(err.message)
-          // }
-          // socket.onopen = () => {
-          //   /*
-          //     After opening the WebSocket with the server, a message is sent
-          //     to him in order that it can join the webchannel
-          //   */
-          //   socket.send(JSON.stringify({code: ADD_BOT_SERVER, sender: this.myId}))
-          //   this.initChannel(socket, false).then((channel) => {
-          //     // console.log('[DEBUG] Resolved initChannel addBotServer')
-          //     this.addChannel(channel).then(() => {
-          //       // console.log('[RESOLVED] Resolved addChannel in addBotServer')
-          //       resolve()
-          //     })
-          //   })
-          // }
-          // socket.onclose = () => {
-          //   reject('Connection with the WebSocket server closed')
-          // }
         } else reject('Only browser client can add a bot server')
       })
     }
@@ -3405,6 +3384,14 @@
           }
         })
       })
+    }
+
+    getWebChannels () {
+      return this.webChannels
+    }
+
+    getServer () {
+      return this.server
     }
 
     log (label, msg) {

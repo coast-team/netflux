@@ -68,8 +68,11 @@ class WebSocketService extends ChannelBuilderInterface {
   connectMeTo (wc, id) {
     return new Promise((resolve, reject) => {
       let socket
+      let WebSocket
+      if (typeof window === 'undefined') WebSocket = require('ws')
+      else WebSocket = window.WebSocket
       try {
-        socket = new window.WebSocket('ws://' +
+        socket = new WebSocket('ws://' +
           this.settings.host + ':' + this.settings.port)
       } catch (err) {
         reject(err.message)

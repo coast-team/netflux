@@ -64,6 +64,14 @@ class Bot {
     })
   }
 
+  getWebChannels () {
+    return this.webChannels
+  }
+
+  getServer () {
+    return this.server
+  }
+
   log (label, msg) {
     if (this.settings.log) {
       var d = new Date()
