@@ -2,6 +2,7 @@ node_modules
 jspm_packages
 npm-debug*
 rollupfull.txt
+spec
 
 # Coverage
 coverage
