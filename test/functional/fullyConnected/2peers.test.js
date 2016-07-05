@@ -6,6 +6,7 @@ describe('2 peers -> ', () => {
     let wc1 = new WebChannel({signaling})
     let wc2 = new WebChannel({signaling})
     wc1.onJoining = (id) => {
+      expect(wc1.id).toBe(wc2.id)
       expect(wc1.channels.size).toBe(wc2.channels.size)
       expect(wc1.channels.values().next().value.peerId).toBe(wc2.myId)
       expect(wc2.channels.values().next().value.peerId).toBe(wc1.myId)

@@ -1147,7 +1147,7 @@
     }
 
     onMessage (wc, channel, msg) {
-      let cBuilder = provide(wc.settings.connector, wc.settings)
+      // console.log('[DEBUG] {webChannelManager} onMessage: ', msg)
       switch (msg.code) {
         case CONNECT_WITH:
           if (wc.isJoining()) {
@@ -1166,6 +1166,7 @@
           } else {
             // console.log('Me ' + wc.myId + ' should connect to ----> ' + msg.peerIds + '--reUseIntermediaryChannelIfPossible')
             let counter = 0
+            let cBuilder = provide(CHANNEL_BUILDER)
             msg.peerIds.forEach((id) => {
               cBuilder.connectMeTo(wc, id)
                 .then((channel) => {
@@ -1921,153 +1922,181 @@ let   RTCIceCandidate$1;
     }
   }
 
-  /**
-   * Maximum user message size sent over *Channel*. Is meant without metadata.
-   * @type {number}
-   */
-  const MAX_USER_MSG_SIZE = 16365
+  const CONNECT_TIMEOUT$1 = 2000
+  const NEW_CHANNEL = 'newChannel'
 
-  /**
-   * User message offset in the array buffer. All data before are metadata.
-   * @type {number}
-   */
-  const USER_MSG_OFFSET = 19
+  class WebSocketService extends ChannelBuilderInterface {
 
-  /**
-   * First index in the array buffer after header (which is the part of metadata).
-   * @type {number}
-   */
-  const HEADER_END_OFFSET = 9
-
-  /**
-   * Maximum message id number.
-   * @type {number}
-   */
-  const MAX_MSG_ID_SIZE = 65535
-
-  /**
-   * User allowed message type: {@link external:ArrayBuffer}
-   * @type {number}
-   */
-  const ARRAY_BUFFER_TYPE = 1
-
-  /**
-   * User allowed message type: {@link external:Uint8Array}
-   * @type {number}
-   */
-  const U_INT_8_ARRAY_TYPE = 2
-
-  /**
-   * User allowed message type: {@link external:String}
-   * @type {number}
-   */
-  const STRING_TYPE = 3
-
-  /**
-   * User allowed message type: {@link external:Int8Array}
-   * @type {number}
-   */
-  const INT_8_ARRAY_TYPE = 4
-
-  /**
-   * User allowed message type: {@link external:Uint8ClampedArray}
-   * @type {number}
-   */
-  const U_INT_8_CLAMPED_ARRAY_TYPE = 5
-
-  /**
-   * User allowed message type: {@link external:Int16Array}
-   * @type {number}
-   */
-  const INT_16_ARRAY_TYPE = 6
-
-  /**
-   * User allowed message type: {@link external:Uint16Array}
-   * @type {number}
-   */
-  const U_INT_16_ARRAY_TYPE = 7
-
-  /**
-   * User allowed message type: {@link external:Int32Array}
-   * @type {number}
-   */
-  const INT_32_ARRAY_TYPE = 8
-
-  /**
-   * User allowed message type: {@link external:Uint32Array}
-   * @type {number}
-   */
-  const U_INT_32_ARRAY_TYPE = 9
-
-  /**
-   * User allowed message type: {@link external:Float32Array}
-   * @type {number}
-   */
-  const FLOAT_32_ARRAY_TYPE = 10
-
-  /**
-   * User allowed message type: {@link external:Float64Array}
-   * @type {number}
-   */
-  const FLOAT_64_ARRAY_TYPE = 11
-
-  /**
-   * User allowed message type: {@link external:DataView}
-   * @type {number}
-   */
-  const DATA_VIEW_TYPE = 12
-
-  /**
-   * Buffer for big user messages.
-   */
-  const buffers = new Map()
-
-  /**
-   * Message builder service class.
-   */
-  class MessageBuilderService extends ServiceInterface {
-
-    /**
-     * @callback MessageBuilderService~Send
-     * @param {external:ArrayBuffer} dataChunk - If the message is too big this
-     * action would be executed for each data chunk until send whole message
-     */
-
-    /**
-     * @callback MessageBuilderService~Receive
-     * @param {external:ArrayBuffer|external:Uint8Array|external:String|
-     * external:Int8Array|external:Uint8ClampedArray|external:Int16Array|
-     * external:Uint16Array|external:Int32Array|external:Uint32Array|
-     * external:Float32Array|external:Float64Array|external:DataView} data - Message.
-     * Its type depends on what other
-     */
-
-    /**
-     * Header of the metadata of the messages sent/received over the *WebChannel*.
-     * @typedef {Object} MessageBuilderService~Header
-     * @property {number} code - Message type code
-     * @property {number} senderId - Id of the sender peer
-     * @property {number} recipientId - Id of the recipient peer
-     */
-
-    constructor () {
+    constructor (options = {}) {
       super()
+      this.defaults = {
+        signaling: 'ws://localhost:8000',
+        iceServers: [
+          {urls: 'stun:23.21.150.121'},
+          {urls: 'stun:stun.l.google.com:19302'},
+          {urls: 'turn:numb.viagenie.ca', credential: 'webrtcdemo', username: 'louis%40mozilla.com'}
+        ]
+      }
+      this.settings = Object.assign({}, this.defaults, options)
+      this.toConnect = false
     }
 
     /**
-     * Prepare user message to be sent over the *WebChannel*
-     * @param {external:ArrayBuffer|external:Uint8Array|external:String|
-     * external:Int8Array|external:Uint8ClampedArray|external:Int16Array|
-     * external:Uint16Array|external:Int32Array|external:Uint32Array|
-     * external:Float32Array|external:Float64Array|external:DataView} data -
-     * Message to be sent
-     * @param {number} senderId - Id of the peer who sends this message
-     * @param {number} recipientId - Id of the recipient peer
-     * @param {MessageBuilderService~Send} action - Send callback executed for each
-     * data chunk if the message is too big
-     * @param {boolean} isBroadcast - Equals to true if this message would be
-     * sent to all *WebChannel* members and false if only to one member
+     * Enables other clients to establish a connection with you.
+     *
+     * @abstract
+     * @param {string} key - The unique identifier which has to be passed to the
+     * peers who need to connect to you.
+     * @param {module:channelBuilder~Interface~onChannelCallback} onChannel - Callback
+     * function to execute once the connection has been established.
+     * @param {Object} [options] - Any other options which depend on the service implementation.
+     * @return {Promise} - Once resolved, provide an Object with `key` and `url`
+     * attributes to be passed to {@link module:channelBuilder~Interface#join} function.
+     * It is rejected if an error occured.
      */
+    open (key, onChannel, options) {
+      throw new Error('[TODO] {WebSocketService} open (key, onChannel, options)')
+    }
+
+    /**
+     * Connects you with the peer who provided the `key`.
+     *
+     * @abstract
+     * @param  {string} key - A key obtained from the peer who executed
+     * {@link module:channelBuilder~Interface#open} function.
+     * @param  {Object} [options] Any other options which depend on the implementation.
+     * @return {Promise} It is resolved when the connection is established, otherwise it is rejected.
+     */
+    join (key, options) {
+      throw new Error('[TODO] {WebSocketService} join (key, options)')
+    }
+
+    /**
+     * Establish a connection between you and another peer (including joining peer) via web channel.
+     *
+     * @abstract
+     * @param  {WebChannel} wc - Web Channel through which the connection will be established.
+     * @param  {string} id - Peer id with whom you will be connected.
+     * @return {Promise} - Resolved once the connection has been established, rejected otherwise.
+     */
+    connectMeTo (wc, id) {
+      // console.log('[DEBUG] connectMeTo (wc, id) (wc, ', id, ')')
+      return new Promise((resolve, reject) => {
+        let socket
+        try {
+          socket = new window.WebSocket('ws://' +
+            this.settings.host + ':' + this.settings.port)
+        } catch (err) {
+          reject(err.message)
+        }
+        socket.onopen = () => {
+          socket.send(JSON.stringify({code: NEW_CHANNEL, sender: wc.myId, wcId: wc.id,
+            which_connector_asked: this.settings.which_connector_asked}))
+          resolve(socket)
+        }
+        socket.onclose = () => {
+          reject('Connection with the WebSocket server closed')
+        }
+        setTimeout(reject, CONNECT_TIMEOUT$1, 'Timeout')
+      })
+    }
+
+    onMessage (wc, channel, msg) {
+      throw new Error('[TODO] {WebSocketService} connectMeTo (wc, id) [Resolves promises]')
+    }
+  }
+
+  const WHICH_CONNECTOR = 1
+  const CONNECTOR = 2
+
+  class ChannelBuilderService extends ServiceInterface {
+    constructor (options = {}) {
+      super()
+      this.default = {
+        connector: WEBRTC,
+        host: '',
+        port: 0
+      }
+      this.settings = Object.assign({}, this.defaults, options)
+    }
+
+    connectMeTo (wc, id) {
+      return new Promise((resolve, reject) => {
+        wc.connectMeToRequests.set(id, (isDone, channel) => {
+          if (isDone) {
+            resolve(channel)
+          } else {
+            reject(channel)
+          }
+        })
+        if (typeof window !== 'undefined') wc.sendSrvMsg(this.name, id, {code: WHICH_CONNECTOR, sender: wc.myId})
+        else wc.sendSrvMsg(this.name, id,
+          {code: CONNECTOR, connectors: [WEBSOCKET], sender: wc.myId,
+          host: wc.settings.host, port: wc.settings.port, which_connector_asked: false})
+      })
+    }
+
+    onMessage (wc, channel, msg) {
+      switch (msg.code) {
+        case WHICH_CONNECTOR:
+          let connectors = [WEBSOCKET]
+          if (typeof window !== 'undefined') connectors.push(WEBRTC)
+          wc.sendSrvMsg(this.name, msg.sender,
+            {code: CONNECTOR, connectors, sender: wc.myId,
+            host: wc.settings.host || '', port: wc.settings.port || 0, which_connector_asked: true})
+          break
+        case CONNECTOR:
+          let availabled = msg.connectors
+          let connector = WEBSOCKET
+          if (typeof window !== 'undefined' && availabled.indexOf(WEBRTC) > -1) connector = WEBRTC
+          let settings = Object.assign({}, wc.settings, {connector,
+            host: msg.host, port: msg.port, which_connector_asked: msg.which_connector_asked})
+          let cBuilder = provide(connector, settings)
+          cBuilder.connectMeTo(wc, msg.sender)
+            .then((channel) => {
+              if (!msg.which_connector_asked) wc.initChannel(channel, false, msg.sender)
+              else wc.connectMeToRequests.get(msg.sender)(true, channel)
+            })
+          break
+      }
+    }
+  }
+
+  const MAX_USER_MSG_SIZE = 16365
+
+  const USER_MSG_OFFSET = 19
+
+  const HEADER_OFFSET = 9
+
+  const MAX_MSG_ID_SIZE = 65535
+
+  const ARRAY_BUFFER_TYPE = 1
+  const U_INT_8_ARRAY_TYPE = 2
+  const STRING_TYPE = 3
+  const INT_8_ARRAY_TYPE = 4
+  const U_INT_8_CLAMPED_ARRAY_TYPE = 5
+  const INT_16_ARRAY_TYPE = 6
+  const U_INT_16_ARRAY_TYPE = 7
+  const INT_32_ARRAY_TYPE = 8
+  const U_INT_32_ARRAY_TYPE = 9
+  const FLOAT_32_ARRAY_TYPE = 10
+  const FLOAT_64_ARRAY_TYPE = 11
+  const DATA_VIEW_TYPE = 12
+
+  const buffers = new Map()
+
+  class MessageBuilderService extends ServiceInterface {
+
+    constructor () {
+      super()
+      this.TextEncoder
+      this.TextDecoder
+      if (typeof window === 'undefined') this.TextEncoder = require('text-encoding').TextEncoder
+      else this.TextEncoder = window.TextEncoder
+      if (typeof window === 'undefined') this.TextDecoder = require('text-encoding').TextDecoder
+      else this.TextDecoder = window.TextDecoder
+    }
+
     handleUserMessage (data, senderId, recipientId, action, isBroadcast = true) {
       let workingData = this.userDataToType(data)
       let dataUint8Array = workingData.content
@@ -2075,7 +2104,7 @@ let   RTCIceCandidate$1;
         let dataView = this.writeHeader(1, senderId, recipientId,
           dataUint8Array.byteLength + USER_MSG_OFFSET
         )
-        dataView.setUint32(HEADER_END_OFFSET, dataUint8Array.byteLength)
+        dataView.setUint32(HEADER_OFFSET, dataUint8Array.byteLength)
         dataView.setUint8(13, workingData.type)
         dataView.setUint8(14, isBroadcast ? 1 : 0)
         let resultUint8Array = new Uint8Array(dataView.buffer)
@@ -2112,34 +2141,18 @@ let   RTCIceCandidate$1;
       }
     }
 
-    /**
-     * Build a message which can be then sent trough the *Channel*.
-     * @param {number} code - One of the internal message type code (e.g. {@link
-     * USER_DATA})
-     * @param {Object} [data={}] - Message. Could be empty if the code is enough
-     * @returns {external:ArrayBuffer} - Built message
-     */
     msg (code, data = {}) {
-      let msgEncoded = (new TextEncoder()).encode(JSON.stringify(data))
-      let msgSize = msgEncoded.byteLength + HEADER_END_OFFSET
+      let msgEncoded = (new this.TextEncoder()).encode(JSON.stringify(data))
+      let msgSize = msgEncoded.byteLength + HEADER_OFFSET
       let dataView = this.writeHeader(code, null, null, msgSize)
       let fullMsg = new Uint8Array(dataView.buffer)
-      fullMsg.set(msgEncoded, HEADER_END_OFFSET)
-      return fullMsg.buffer
+      fullMsg.set(msgEncoded, HEADER_OFFSET)
+      return fullMsg
     }
 
-    /**
-     * Read user message which was prepared by another peer with
-     * {@link MessageBuilderService#handleUserMessage} and sent.
-     * @param {number} wcId - *WebChannel* identifier
-     * @param {number} senderId - Id of the peer who sent this message
-     * @param {external:ArrayBuffer} data - Message
-     * @param {MessageBuilderService~Receive} action - Callback when the message is
-     * ready
-     */
     readUserMessage (wcId, senderId, data, action) {
       let dataView = new DataView(data)
-      let msgSize = dataView.getUint32(HEADER_END_OFFSET)
+      let msgSize = dataView.getUint32(HEADER_OFFSET)
       let dataType = dataView.getUint8(13)
       let isBroadcast = dataView.getUint8(14)
       if (msgSize > MAX_USER_MSG_SIZE) {
@@ -2148,7 +2161,7 @@ let   RTCIceCandidate$1;
         let buffer = this.getBuffer(wcId, senderId, msgId)
         if (buffer === undefined) {
           this.setBuffer(wcId, senderId, msgId,
-            new Buffer(msgSize, data, (fullData) => {
+            new Buffer(msgSize, data, chunk, (fullData) => {
               action(this.extractUserData(fullData, dataType), isBroadcast)
             })
           )
@@ -2166,25 +2179,13 @@ let   RTCIceCandidate$1;
       }
     }
 
-    /**
-     * Read internal Netflux message.
-     * @param {external:ArrayBuffer} data - Message
-     * @returns {Object}
-     */
     readInternalMessage (data) {
       let uInt8Array = new Uint8Array(data)
-      return JSON.parse((new TextDecoder())
-        .decode(uInt8Array.subarray(HEADER_END_OFFSET, uInt8Array.byteLength))
+      return JSON.parse((new this.TextDecoder())
+        .decode(uInt8Array.subarray(HEADER_OFFSET, uInt8Array.byteLength))
       )
     }
 
-    /**
-     * Extract header from the message. Each user message has a header which is
-     * a part of the message metadata.
-     * TODO: add header also to the internal messages.
-     * @param {external:ArrayBuffer} data - Whole message
-     * @returns {MessageBuilderService~Header}
-     */
     readHeader (data) {
       let dataView = new DataView(data)
       return {
@@ -2194,15 +2195,6 @@ let   RTCIceCandidate$1;
       }
     }
 
-    /**
-     * Create an *ArrayBuffer* and fill in the header.
-     * @private
-     * @param {number} code - Message type code
-     * @param {number} senderId - Sender peer id
-     * @param {number} recipientId - Recipient peer id
-     * @param {number} dataSize - Message size in bytes
-     * @return {external:DataView} - Data view with initialized header
-     */
     writeHeader (code, senderId, recipientId, dataSize) {
       let dataView = new DataView(new ArrayBuffer(dataSize))
       dataView.setUint8(0, code)
@@ -2211,18 +2203,6 @@ let   RTCIceCandidate$1;
       return dataView
     }
 
-    /**
-     * Netflux sends data in *ArrayBuffer*, but the user can send data in different
-     * types. This function retrieve the inital message sent by the user.
-     * @private
-     * @param {external:ArrayBuffer} - Message as it was received by the *WebChannel*
-     * @param {number} - Message type as it was defined by the user
-     * @returns {external:ArrayBuffer|external:Uint8Array|external:String|
-     * external:Int8Array|external:Uint8ClampedArray|external:Int16Array|
-     * external:Uint16Array|external:Int32Array|external:Uint32Array|
-     * external:Float32Array|external:Float64Array|external:DataView} - Initial
-     * user message
-     */
     extractUserData (buffer, type) {
       switch (type) {
         case ARRAY_BUFFER_TYPE:
@@ -2230,7 +2210,7 @@ let   RTCIceCandidate$1;
         case U_INT_8_ARRAY_TYPE:
           return new Uint8Array(buffer)
         case STRING_TYPE:
-          return new TextDecoder().decode(new Uint8Array(buffer))
+          return new this.TextDecoder().decode(new Uint8Array(buffer))
         case INT_8_ARRAY_TYPE:
           return new Int8Array(buffer)
         case U_INT_8_CLAMPED_ARRAY_TYPE:
@@ -2252,15 +2232,6 @@ let   RTCIceCandidate$1;
       }
     }
 
-    /**
-     * Identify the user message type.
-     * @private
-     * @param {external:ArrayBuffer|external:Uint8Array|external:String|
-     * external:Int8Array|external:Uint8ClampedArray|external:Int16Array|
-     * external:Uint16Array|external:Int32Array|external:Uint32Array|
-     * external:Float32Array|external:Float64Array|external:DataView} - User message
-     * @returns {number} - User message type
-     */
     userDataToType (data) {
       let result = {}
       if (data instanceof ArrayBuffer) {
@@ -2271,7 +2242,7 @@ let   RTCIceCandidate$1;
         result.content = data
       } else if (typeof data === 'string' || data instanceof String) {
         result.type = STRING_TYPE
-        result.content = new TextEncoder().encode(data)
+        result.content = new this.TextEncoder().encode(data)
       } else {
         result.content = new Uint8Array(data.buffer)
         if (data instanceof Int8Array) {
@@ -2299,15 +2270,6 @@ let   RTCIceCandidate$1;
       return result
     }
 
-    /**
-     * Get the buffer.
-     * @private
-     * @param {number} wcId - *WebChannel* id
-     * @param {number} peerId - Peer id
-     * @param {number} msgId - Message id
-     * @returns {Buffer|undefined} - Returns buffer if it was found and undefined
-     * if not
-     */
     getBuffer (wcId, peerId, msgId) {
       let wcBuffer = buffers.get(wcId)
       if (wcBuffer !== undefined) {
@@ -2319,14 +2281,6 @@ let   RTCIceCandidate$1;
       return undefined
     }
 
-    /**
-     * Add a new buffer to the buffer array.
-     * @private
-     * @param {number} wcId - *WebChannel* id
-     * @param {number} peerId - Peer id
-     * @param {number} msgId - Message id
-     * @param {Buffer} - buffer
-     */
     setBuffer (wcId, peerId, msgId, buffer) {
       let wcBuffer = buffers.get(wcId)
       if (wcBuffer === undefined) {
@@ -2342,38 +2296,14 @@ let   RTCIceCandidate$1;
     }
   }
 
-  /**
-   * Buffer class used when the user message exceeds the message size limit which
-   * may be sent over a *Channel*. Each buffer is identified by *WebChannel* id,
-   * peer id (who sends the big message) and message id (in case if the peer sends
-   * more then 1 big message at a time).
-   */
   class Buffer {
-
-    /**
-     * @callback Buffer~onFullMessage
-     * @param {external:ArrayBuffer} - The full message as it was initially sent
-     * by user
-     */
-
-    /**
-     * @param {number} fullDataSize - The total user message size
-     * @param {external:ArrayBuffer} - The first chunk of the user message
-     * @param {Buffer~onFullMessage} action - Callback to be executed when all
-     * message chunks are received and thus the message is ready
-     */
-    constructor (fullDataSize, data, action) {
+    constructor (fullDataSize, data, chunkNb, action) {
       this.fullData = new Uint8Array(fullDataSize)
       this.currentSize = 0
       this.action = action
-      this.add(data, 0)
+      this.add(data, chunkNb)
     }
 
-    /**
-     * Add a chunk of message to the buffer.
-     * @param {external:ArrayBuffer} data - Message chunk
-     * @param {number} chunkNb - Number of the chunk
-     */
     add (data, chunkNb) {
       let dataChunk = new Uint8Array(data)
       let dataChunkSize = data.byteLength
@@ -2402,8 +2332,15 @@ let   RTCIceCandidate$1;
   const WEBRTC = 'WebRTCService'
 
   /**
-   * Constant used to get an instance of {@link FullyConnectedService}. It is a
-   * singleton service.
+   * Constant used to get an instance of {@link WebSocketService}.
+   * @type {string}
+   */
+  const WEBSOCKET = 'WebSocketService'
+
+  const CHANNEL_BUILDER = 'ChannelBuilderService'
+
+  /**
+   * Constant used to get an instance of {@link FullyConnectedService}.
    * @type {string}
    */
   const FULLY_CONNECTED = 'FullyConnectedService'
@@ -2426,6 +2363,7 @@ let   RTCIceCandidate$1;
    *
    * @param  {(module:serviceProvider.MESSAGE_BUILDER|
    *          module:serviceProvider.WEBRTC|
+              module:serviceProvider.WEBSOCKET|
    *          module:serviceProvider.FULLY_CONNECTED)} name - The service name.
    * @param  {Object} [options] - Any options that the service accepts.
    * @return {module:service~ServiceInterface} - Service instance.
@@ -2439,6 +2377,10 @@ let   RTCIceCandidate$1;
     switch (name) {
       case WEBRTC:
         return new WebRTCService(options)
+      case WEBSOCKET:
+        return new WebSocketService(options)
+      case CHANNEL_BUILDER:
+        return new ChannelBuilderService(options)
       case FULLY_CONNECTED:
         service = new FullyConnectedService()
         services.set(name, service)
@@ -2449,6 +2391,33 @@ let   RTCIceCandidate$1;
         return service
       default:
         throw new Error(`Unknown service name: "${name}"`)
+    }
+  }
+
+  class Bot {
+    constructor (options = {}) {
+      if (typeof window === 'undefined') throw new Error('Bot can be instanciate only in Node\'s environment')
+      this.defaults = {
+        host: '127.0.0.1',
+        port: 8080
+      }
+      this.settings = Object.assign({}, this.defaults, options)
+
+      this.server
+    }
+
+    listen (options = {}) {
+      this.settings = Object.assign({}, this.defaults, options)
+      // let WebSocketServer = require('ws').Server
+      // this.server = new WebSocketServer({host: this.settings.host, port: this.settings.port})
+      //
+      // this.server.on('connection', (socket) => {
+      //   console.log('[CONNECTED] Connection of one client')
+      //
+      //   socket.on('message', (msg) => {
+      //     console.log('[MESSAGE] New message: ', msg)
+      //   })
+      // })
     }
   }
 
@@ -2684,6 +2653,13 @@ let   RTCIceCandidate$1;
   const PONG = 12
 
   /**
+    * Constant used to send a message to the server in order that
+    * he can join the webcahnnel
+    * @type {string}
+    */
+  const ADD_BOT_SERVER = 'addBotServer'
+
+  /**
    * This class represents a door of the *WebChannel* for this peer. If the door
    * is open, then clients can join the *WebChannel* through this peer, otherwise
    * they cannot.
@@ -2830,6 +2806,8 @@ let   RTCIceCandidate$1;
        * @type {external:Map}
        */
       this.connectWithRequests = new Map()
+      /** @private */
+      this.connectMeToRequests = new Map()
 
       /**
        * *WebChannel* topology.
@@ -2914,26 +2892,7 @@ let   RTCIceCandidate$1;
       let cBuilder = provide(settings.connector, settings)
       return cBuilder.open(this.generateKey(), (channel) => {
         this.initChannel(channel, false)
-          .then((channel) => {
-            // console.log('INITIATOR is adding: ' + channel.peerId)
-            let jp = this.addJoiningPeer(channel.peerId, this.myId, channel)
-            this.manager.broadcast(this, msgBuilder.msg(
-              JOIN_NEW_MEMBER, {id: channel.peerId, intermediaryId: this.myId})
-            )
-            channel.send(msgBuilder.msg(JOIN_INIT, {
-              manager: this.settings.topology,
-              id: channel.peerId,
-              intermediaryId: this.myId})
-            )
-            this.manager.add(channel)
-              .then(() => channel.send(msgBuilder.msg(JOIN_FINILIZE)))
-              .catch((msg) => {
-                this.manager.broadcast(this, msgBuilder.msg(
-                  REMOVE_NEW_MEMBER, {id: channel.peerId})
-                )
-                this.removeJoiningPeer(jp.id)
-              })
-          })
+          .then((channel) => this.addChannel(channel))
       }).then((data) => {
         let accessData = {key: data.key, url: data.url}
         this.gate.setOpen(data.socket, accessData)
@@ -2942,7 +2901,93 @@ let   RTCIceCandidate$1;
     }
 
     /**
-     * Prevent clients to join the *WebChannel* even if they possesses a key.
+      * Add a channel to the current peer network according to the topology
+      *
+      * @param {Object} channel - Channel which needs to be add in the topology
+      * @return {Promise} It resolves once the channel is add
+      */
+    addChannel (channel) {
+      let jp = this.addJoiningPeer(channel.peerId, this.myId, channel)
+      this.manager.broadcast(this, msgBuilder.msg(
+        JOIN_NEW_MEMBER, {id: channel.peerId, intermediaryId: this.myId})
+      )
+      channel.send(msgBuilder.msg(JOIN_INIT, {
+        manager: this.settings.topology,
+        wcId: this.id,
+        myId: channel.peerId,
+        intermediaryId: this.myId})
+      )
+      return this.manager.add(channel)
+        .then(() => {
+          channel.send(msgBuilder.msg(JOIN_FINILIZE))
+          // console.log('[DEBUG] Resolved manager.add(channel)')
+        })
+        .catch((msg) => {
+          // console.log('[DEBUG] Catched manager.add(channel): ', msg)
+          this.manager.broadcast(this, msgBuilder.msg(
+            REMOVE_NEW_MEMBER, {id: channel.peerId})
+          )
+          this.removeJoiningPeer(jp.id)
+        })
+    }
+
+    /**
+      * Add a bot server to the network with his hostname and port
+      *
+      * @param {string} host - The hotname or the ip of the bot server to be add
+      * @param {number} port - The port of the bot server to be add
+      * @return {Promise} It resolves once the bot server joined the network
+      */
+    addBotServer (host, port) {
+      return new Promise((resolve, reject) => {
+        if (typeof window !== 'undefined') {
+          let socket
+          try {
+            socket = new window.WebSocket('ws://' + host + ':' + port)
+          } catch (err) {
+            reject(err.message)
+          }
+          socket.onopen = () => {
+            /*
+              After opening the WebSocket with the server, a message is sent
+              to him in order that it can join the webchannel
+            */
+            socket.send(JSON.stringify({code: ADD_BOT_SERVER, sender: this.myId}))
+            this.initChannel(socket, false).then((channel) => {
+              // console.log('[DEBUG] Resolved initChannel addBotServer')
+              this.addChannel(channel).then(() => {
+                // console.log('[RESOLVED] Resolved addChannel in addBotServer')
+                resolve()
+              })
+            })
+          }
+          socket.onclose = () => {
+            reject('Connection with the WebSocket server closed')
+          }
+        } else reject('Only browser client can add a bot server')
+      })
+    }
+
+    /**
+      * Allow a bot server to join the network by creating a connection
+      * with the peer who asked his coming
+      *
+      * @param {Object} channel - The channel between the server and the pair
+      * who requested the add
+      * @param {number} id - The id of the peer who requested the add
+      * @return {Promise} It resolves once the the server has joined the network
+      */
+    joinAsBot (channel, id) {
+      return new Promise((resolve, reject) => {
+        this.onJoin = () => resolve(this)
+        this.initChannel(channel, true, id)// .then((channel) => {
+          // console.log('[DEBUG] Resolved initChannel by server')
+        // })
+      })
+    }
+
+    /**
+     * Prevent clients to join the `WebChannel` even if they possesses a key.
      */
     closeForJoining () {
       this.gate.close()
@@ -3056,6 +3101,8 @@ let   RTCIceCandidate$1;
      * @param  {Object} [msg={}] - Message to send.
      */
     sendSrvMsg (serviceName, recepient, msg = {}, channel = null) {
+      // console.log('[DEBUG] sendSrvMsg (serviceName, recepient, msg = {}, channel = null) (',
+      // serviceName, ', ', recepient, ', ', msg, ', ', channel, ')')
       let fullMsg = msgBuilder.msg(
         SERVICE_DATA, {serviceName, recepient, data: Object.assign({}, msg)}
       )
@@ -3098,6 +3145,7 @@ let   RTCIceCandidate$1;
      */
     onChannelMessage (channel, data) {
       let header = msgBuilder.readHeader(data)
+      // console.log('[DEBUG] {onChannelMessage} header: ', header)
       if (header.code === USER_DATA) {
         msgBuilder.readUserMessage(this.id, header.senderId, data, (fullData, isBroadcast) => {
           this.onMessage(header.senderId, fullData, isBroadcast)
@@ -3124,9 +3172,10 @@ let   RTCIceCandidate$1;
             break
           case JOIN_INIT:
             this.topology = msg.manager
-            this.myId = msg.id
+            this.id = msg.wcId
+            this.myId = msg.myId
             channel.peerId = msg.intermediaryId
-            this.addJoiningPeer(msg.id, msg.intermediaryId, channel)
+            this.addJoiningPeer(this.myId, msg.intermediaryId, channel)
             break
           case JOIN_NEW_MEMBER:
             this.addJoiningPeer(msg.id, msg.intermediaryId)
@@ -3212,6 +3261,7 @@ let   RTCIceCandidate$1;
      * @returns {Promise} - Resolved once the channel is initialized on both sides
      */
     initChannel (ch, isInitiator, id = -1) {
+      // console.log('[DEBUG] initChannel (ch, isInitiator, id) (ch, ', isInitiator, ', ', id, ')')
       return new Promise((resolve, reject) => {
         if (id === -1) { id = this.generateId() }
         let channel = new Channel(ch, this, id)
@@ -3219,11 +3269,13 @@ let   RTCIceCandidate$1;
         if (isInitiator) {
           channel.config()
           channel.onPong = () => resolve(channel)
+          // console.log('[DEBUG] send ping')
           ch.send('ping')
         } else {
           ch.onmessage = (msgEvt) => {
             if (msgEvt.data === 'ping') {
               channel.config()
+              // console.log('[DEBUG] send pong')
               channel.send(msgBuilder.msg(INIT_CHANNEL_PONG))
               resolve(channel)
             }
@@ -3378,6 +3430,7 @@ let   RTCIceCandidate$1;
 
   exports.WEBRTC = WEBRTC;
   exports.FULLY_CONNECTED = FULLY_CONNECTED;
+  exports.Bot = Bot;
   exports.WebChannel = WebChannel;
 
   Object.defineProperty(exports, '__esModule', { value: true });

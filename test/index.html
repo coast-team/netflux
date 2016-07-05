@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <link href="main.css" rel="stylesheet" />
+</head>
+
+<body>
+
+  <!-- Chat -->
+  <div class="chat">
+    <table id="chat" class="all-width">
+    </table>
+    <div class="all-width">
+      <span>I'm: </span><span id="my-id"></span>
+    </div>
+    <textarea id="msg" class="all-width" rows="5" onkeypress="sendEnter(event)"></textarea>
+    <button onclick="send()">Send</button>
+  </div>
+
+  <!-- Control -->
+  <div class="control">
+    <div class="all-width">
+      <input id="key-join" class="keys" type="text" />
+      <button id="join" onclick="join()">Join</button>
+      <button id="leave" onclick="leave()">Leave</button>
+    </div>
+    <div class="all-width">
+      <div>key: <span id="key-create" class="keys"></span></div>
+      <button id="create" onclick="create()">Create</button>
+    </div>
+    <div class="all-width">
+      <div>@Host server<input id="host" type="text" /></div>
+      <div>Port server<input id="port" type="text" /></div>
+      <button id="create" onclick="addServer()">Add Bot</button>
+    </div>
+    <ol id="members" class="all-width">
+    </ol>
+  </div>
+
+  <script src="../dist/netflux.js"></script>
+  <script>
+    let webChannel, onJoining, onMessage
+    let signaling = 'ws://127.0.0.1:8000'
+    // let signaling = 'ws://152.81.15.203:8000'
+    function create () {
+      if (typeof webChannel === 'undefined') {
+        webChannel = new netflux.WebChannel({signaling})
+        webChannel.onJoining = onJoining
+        webChannel.onMessage = onMessage
+        webChannel.onLeaving = onLeaving
+      }
+      webChannel.openForJoining()
+        .then((data) => {
+          document.getElementById("key-create").innerHTML = data.key
+          document.getElementById("my-id").innerHTML = webChannel.myId
+        })
+    }
+
+    function addServer () {
+      let host = document.getElementById("host").value
+      let port = document.getElementById("port").value
+
+      if (host !== '' && port !== '') {
+        if (typeof webChannel === 'undefined') {
+          webChannel = new netflux.WebChannel({signaling})
+          webChannel.onJoining = onJoining
+          webChannel.onMessage = onMessage
+          webChannel.onLeaving = onLeaving
+        }
+        webChannel.addBotServer(host, port)
+        .then(function () {
+          webChannel.channels.forEach(function(value) {
+            onJoining(value.peerId)
+          })
+          document.getElementById("my-id").innerHTML = webChannel.myId
+        })
+        .catch((reason) => {
+          console.log('Cannot join: ' + reason)
+        })
+      }
+    }
+
+    function join () {
+      let key = document.getElementById("key-join").value
+
+      if (typeof webChannel === 'undefined') {
+        webChannel = new netflux.WebChannel({signaling})
+        webChannel.onJoining = onJoining
+        webChannel.onMessage = onMessage
+        webChannel.onLeaving = onLeaving
+      }
+      webChannel.join(key)
+        .then(function (wc) {
+          webChannel.channels.forEach(function(value) {
+            onJoining(value.peerId)
+          })
+          document.getElementById("my-id").innerHTML = webChannel.myId
+        })
+        .catch((reason) => {
+          console.log('Cannot join: ' + reason)
+        })
+    }
+
+    function leave () {
+      webChannel.leave()
+      let ol = document.getElementById("members")
+      ol.innerHTML = ''
+    }
+
+    function sendEnter (event) {
+      if (event.keyCode == 13) {
+        event.preventDefault()
+        send()
+      }
+    }
+
+    function send () {
+      let msg = document.getElementById("msg").value
+      webChannel.send(msg)
+      onMessage(webChannel.myId, msg)
+      document.getElementById("msg").value = ""
+    }
+
+    onJoining = function (id) {
+      // console.log('[DEBUG] onJoining -> ', id)
+      let ol = document.getElementById("members")
+      let li = document.createElement("li")
+      let find = false
+      for (let i in ol.childNodes) if (ol.childNodes[i].innerHTML == id) find = true
+      if (!find) {
+        li.appendChild(document.createTextNode(id))
+        ol.appendChild(li)
+      }
+    }
+
+    onLeaving = function (id) {
+      let ol = document.getElementById("members")
+      for (let i in ol.childNodes) {
+        if (ol.childNodes[i].innerHTML == id) {
+          ol.removeChild(ol.childNodes[i])
+          break
+        }
+      }
+    }
+
+    onMessage = function (id, msg) {
+      let chat = document.getElementById("chat")
+      let msgTag = document.createElement("tr")
+      let idTD = document.createElement("td")
+      idTD.appendChild(document.createTextNode(id))
+      let msgTD = document.createElement("td")
+      msgTD.appendChild(document.createTextNode(msg))
+      msgTag.appendChild(idTD)
+      msgTag.appendChild(msgTD)
+      chat.appendChild(msgTag)
+      chat.scrollTop = chat.scrollHeight
+    }
+  </script>
+</body>
+
+</html>

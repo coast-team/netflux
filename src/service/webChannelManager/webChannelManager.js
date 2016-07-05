@@ -1,5 +1,5 @@
 import {ServiceInterface} from '../service'
-import {provide} from '../../serviceProvider'
+import {provide, CHANNEL_BUILDER} from '../../serviceProvider'
 
 /**
  * Web Channel Manager module is a submodule of {@link module:service} and the
@@ -38,7 +38,7 @@ class WebChannelManagerInterface extends ServiceInterface {
   }
 
   onMessage (wc, channel, msg) {
-    let cBuilder = provide(wc.settings.connector, wc.settings)
+    // console.log('[DEBUG] {webChannelManager} onMessage: ', msg)
     switch (msg.code) {
       case CONNECT_WITH:
         if (wc.isJoining()) {
@@ -57,6 +57,7 @@ class WebChannelManagerInterface extends ServiceInterface {
         } else {
           // console.log('Me ' + wc.myId + ' should connect to ----> ' + msg.peerIds + '--reUseIntermediaryChannelIfPossible')
           let counter = 0
+          let cBuilder = provide(CHANNEL_BUILDER)
           msg.peerIds.forEach((id) => {
             cBuilder.connectMeTo(wc, id)
               .then((channel) => {

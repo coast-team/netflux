@@ -30,6 +30,12 @@ class MessageBuilderService extends ServiceInterface {
 
   constructor () {
     super()
+    this.TextEncoder
+    this.TextDecoder
+    if (typeof window === 'undefined') this.TextEncoder = require('text-encoding').TextEncoder
+    else this.TextEncoder = window.TextEncoder
+    if (typeof window === 'undefined') this.TextDecoder = require('text-encoding').TextDecoder
+    else this.TextDecoder = window.TextDecoder
   }
 
   handleUserMessage (data, senderId, recipientId, action, isBroadcast = true) {
@@ -77,7 +83,7 @@ class MessageBuilderService extends ServiceInterface {
   }
 
   msg (code, data = {}) {
-    let msgEncoded = (new TextEncoder()).encode(JSON.stringify(data))
+    let msgEncoded = (new this.TextEncoder()).encode(JSON.stringify(data))
     let msgSize = msgEncoded.byteLength + HEADER_OFFSET
     let dataView = this.writeHeader(code, null, null, msgSize)
     let fullMsg = new Uint8Array(dataView.buffer)
@@ -116,7 +122,7 @@ class MessageBuilderService extends ServiceInterface {
 
   readInternalMessage (data) {
     let uInt8Array = new Uint8Array(data)
-    return JSON.parse((new TextDecoder())
+    return JSON.parse((new this.TextDecoder())
       .decode(uInt8Array.subarray(HEADER_OFFSET, uInt8Array.byteLength))
     )
   }
@@ -145,7 +151,7 @@ class MessageBuilderService extends ServiceInterface {
       case U_INT_8_ARRAY_TYPE:
         return new Uint8Array(buffer)
       case STRING_TYPE:
-        return new TextDecoder().decode(new Uint8Array(buffer))
+        return new this.TextDecoder().decode(new Uint8Array(buffer))
       case INT_8_ARRAY_TYPE:
         return new Int8Array(buffer)
       case U_INT_8_CLAMPED_ARRAY_TYPE:
@@ -177,7 +183,7 @@ class MessageBuilderService extends ServiceInterface {
       result.content = data
     } else if (typeof data === 'string' || data instanceof String) {
       result.type = STRING_TYPE
-      result.content = new TextEncoder().encode(data)
+      result.content = new this.TextEncoder().encode(data)
     } else {
       result.content = new Uint8Array(data.buffer)
       if (data instanceof Int8Array) {

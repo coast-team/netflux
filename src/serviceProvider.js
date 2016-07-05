@@ -1,6 +1,8 @@
 import FullyConnectedService from './service/webChannelManager/FullyConnectedService'
 import WebRTCService from './service/channelBuilder/WebRTCService'
-import {MessageBuilderService} from './service/messageBuilder'
+import WebSocketService from './service/channelBuilder/WebSocketService'
+import ChannelBuilderService from './service/channelBuilder/ChannelBuilderService'
+import {MessageBuilderService} from './service/MessageBuilderService'
 /**
  * Service Provider module is a helper module for {@link module:service}. It is
  * responsible to instantiate all services. This module must be used to get
@@ -15,8 +17,15 @@ import {MessageBuilderService} from './service/messageBuilder'
 const WEBRTC = 'WebRTCService'
 
 /**
- * Constant used to get an instance of {@link FullyConnectedService}. It is a
- * singleton service.
+ * Constant used to get an instance of {@link WebSocketService}.
+ * @type {string}
+ */
+const WEBSOCKET = 'WebSocketService'
+
+const CHANNEL_BUILDER = 'ChannelBuilderService'
+
+/**
+ * Constant used to get an instance of {@link FullyConnectedService}.
  * @type {string}
  */
 const FULLY_CONNECTED = 'FullyConnectedService'
@@ -39,6 +48,7 @@ const services = new Map()
  *
  * @param  {(module:serviceProvider.MESSAGE_BUILDER|
  *          module:serviceProvider.WEBRTC|
+            module:serviceProvider.WEBSOCKET|
  *          module:serviceProvider.FULLY_CONNECTED)} name - The service name.
  * @param  {Object} [options] - Any options that the service accepts.
  * @return {module:service~ServiceInterface} - Service instance.
@@ -52,6 +62,10 @@ let provide = function (name, options = {}) {
   switch (name) {
     case WEBRTC:
       return new WebRTCService(options)
+    case WEBSOCKET:
+      return new WebSocketService(options)
+    case CHANNEL_BUILDER:
+      return new ChannelBuilderService(options)
     case FULLY_CONNECTED:
       service = new FullyConnectedService()
       services.set(name, service)
@@ -65,4 +79,4 @@ let provide = function (name, options = {}) {
   }
 }
 
-export {WEBRTC, FULLY_CONNECTED, MESSAGE_BUILDER, provide}
+export {WEBRTC, WEBSOCKET, CHANNEL_BUILDER, FULLY_CONNECTED, MESSAGE_BUILDER, provide}

@@ -8,7 +8,8 @@
     "prebuild": "rm -rf coverage dist",
     "build": "rollup -c & rollup -i src/index.js -o dist/netflux.es2015.js",
     "signalling-up": "kill `cat /tmp/sigver.pid`; node ./node_modules/sigver/server.js & echo \"$!\" > /tmp/sigver.pid",
-    "pretest": "npm run build && npm run signalling-up",
+    "botserver": "kill `cat /tmp/botserver.pid`; node ./test/BotServer.js & echo \"$!\" > /tmp/botserver.pid",
+    "pretest": "npm run build && npm run signalling-up && npm run botserver",
     "test": "karma start",
     "testin": "npm run test -- --browsers",
     "test-coverage": "npm run test -- karma.conf.coverage.js",
@@ -49,8 +50,10 @@
     }
   },
   "dependencies": {
+    "wrtc": "^0.0.60",
+    "text-encoding": "^0.6.0",
     "webrtc-adapter": "^1.1.0",
-    "wrtc": "^0.0.60"
+    "ws": "^1.1.1"
   },
   "devDependencies": {
     "commitizen": "^2.4.6",
