@@ -1,5 +1,5 @@
 var host = '127.0.0.1'
-var port = 9000
+var port = 9001
 let netflux = require('../dist/netflux.es2015.umd.js')
 
 const DEBUG_PING = 'DEBUG_PING'

@@ -1,24 +1,24 @@
 import {ChannelBuilderInterface} from './channelBuilder'
-
 let WebSocket,
     WebRTC
-try {
-  WebRTC = require('wrtc')
-  WebSocket = require('ws')
-} catch(e) {
-  console.log('require not done')
-}
+// try {
+//   WebRTC = require('wrtc')
+//   WebSocket = require('ws')
+// } catch(e) {
+//   console.log('require not done')
+// }
 
 let RTCPeerConnection,
     RTCIceCandidate
-if (WebRTC) {
-  RTCPeerConnection = WebRTC.RTCPeerConnection
-  RTCIceCandidate = WebRTC.RTCIceCandidate
-} else {
-  RTCPeerConnection = window.RTCPeerConnection
-  RTCIceCandidate = window.RTCIceCandidate
-  WebSocket = window.WebSocket
-}
+
+// if (WebRTC) {
+  // RTCPeerConnection = WebRTC.RTCPeerConnection
+  // RTCIceCandidate = WebRTC.RTCIceCandidate
+// } else {
+  // RTCPeerConnection = window.RTCPeerConnection
+  // RTCIceCandidate = window.RTCIceCandidate
+  // WebSocket = window.WebSocket
+// }
 
 /**
  * Ice candidate event handler.
@@ -152,42 +152,49 @@ class WebRTCService extends ChannelBuilderInterface {
   }
 
   open (key, onChannel, options = {}) {
+
+    RTCPeerConnection = window.RTCPeerConnection
+    RTCIceCandidate = window.RTCIceCandidate
+    WebSocket = window.WebSocket
+
     let settings = Object.assign({}, this.settings, options)
     return new Promise((resolve, reject) => {
       let connections = new RTCPendingConnections()
       let socket
-
       try {
-        socket = new WebSocket(settings.signaling)
+          socket = new WebSocket(settings.signaling, {protocolVersion: 8})
 
-        // Timeout for node (otherwise it will loop forever if incorrect address)
-        if (socket.readyState === WebSocket.CONNECTING) {
-          setTimeout(() => {
-            if (socket.readyState === WebSocket.CONNECTING 
-              // ||
-              //   socket.readyState === WebSocket.CLOSING ||
-              //   socket.readyState === WebSocket.CLOSED
-                ) {
-              reject('Node Timeout reached')
-            }
-          }, 500)
-        } else if (socket.readyState === WebSocket.CLOSING ||
-              socket.readyState === WebSocket.CLOSED) {
-          reject('Socked closed on open')
-        }
+          // Timeout for node (otherwise it will loop forever if incorrect address)
+          if (socket.readyState === WebSocket.CONNECTING) {
+            setTimeout(() => {
+              if (socket.readyState === WebSocket.CONNECTING 
+                // ||
+                //   socket.readyState === WebSocket.CLOSING ||
+                //   socket.readyState === WebSocket.CLOSED
+                  ) {
+                reject('Node Timeout reached')
+              }
+            }, 3000)
+          } else if (socket.readyState === WebSocket.CLOSING ||
+                socket.readyState === WebSocket.CLOSED) {
+            reject('Socked closed on open')
+          }
       } catch (err) {
         reject(err.message)
       }
-
       // Send a message to signaling server: ready to receive offer
       socket.onopen = () => {
         try {
-          socket.send(JSON.stringify({key}))
+          // if (WebRTC) {
+          //   socket.send(JSON.stringify({key}), (error) => {reject()})
+          // } else {
+            socket.send(JSON.stringify({key}))
+          // }
         } catch (err) {
           reject(err.message)
         }
         // TODO: find a better solution than setTimeout. This is for the case when the key already exists and thus the server will close the socket, but it will close it after this function resolves the Promise.
-        setTimeout(resolve, 100, {key, url: settings.signaling, socket})
+        setTimeout(resolve, 1000, {key, url: settings.signaling, socket})
       }
       socket.onmessage = (evt) => {
         let msg = JSON.parse(evt.data)
@@ -210,6 +217,9 @@ class WebRTCService extends ChannelBuilderInterface {
         } else if ('candidate' in msg.data) {
           connections.addIceCandidate(msg.id, new RTCIceCandidate(msg.data.candidate))
             .catch((err) => {
+              console.log(msg.data.candidate.candidate)
+              console.log(msg.data.candidate.sdpMLineIndex)
+              console.log(msg.data.candidate.sdpMid)
               console.error(`Adding ice candidate failed: ${err.message}`)
             })
         }
@@ -227,30 +237,23 @@ class WebRTCService extends ChannelBuilderInterface {
     let settings = Object.assign({}, this.settings, options)
     return new Promise((resolve, reject) => {
       let pc
-      let socket
       // Connect to the signaling server
-      try {
-        socket = new WebSocket(settings.signaling)
-
-        // Timeout for node (otherwise it will loop forever if incorrect address)
-        if (socket.readyState === WebSocket.CONNECTING) {
-          setTimeout(() => {
-            if (socket.readyState === WebSocket.CONNECTING 
-              // ||
-              //   socket.readyState === WebSocket.CLOSING ||
-              //   socket.readyState === WebSocket.CLOSED
-                ) {
-              reject('Node Timeout reached')
-            }
-          }, 500)
-        } else if (socket.readyState === WebSocket.CLOSING ||
-          socket.readyState === WebSocket.CLOSED) {
-          reject('Socked closed on open')
-        }
-      } catch(err) {
-        reject(err.message)
+      let socket = new WebSocket(settings.signaling)
+      // Timeout for node (otherwise it will loop forever if incorrect address)
+      if (socket.readyState === WebSocket.CONNECTING) {
+        setTimeout(() => {
+          if (socket.readyState === WebSocket.CONNECTING 
+            // ||
+            //   socket.readyState === WebSocket.CLOSING ||
+            //   socket.readyState === WebSocket.CLOSED
+              ) {
+            reject('Node Timeout reached')
+          }
+        }, 3000)
+      } else if (socket.readyState === WebSocket.CLOSING ||
+        socket.readyState === WebSocket.CLOSED) {
+        reject('Socked closed on open')
       }
-
       socket.onopen = () => {
         // Prepare and send offer
         this.createPeerConnectionAndOffer(
@@ -319,6 +322,11 @@ class WebRTCService extends ChannelBuilderInterface {
   }
 
   onMessage (wc, channel, msg) {
+
+    RTCPeerConnection = window.RTCPeerConnection
+    RTCIceCandidate = window.RTCIceCandidate
+    WebSocket = window.WebSocket
+
     let connections = this.getPendingConnections(wc)
     connections.add(msg.sender)
     if ('offer' in msg) {
@@ -366,9 +374,16 @@ class WebRTCService extends ChannelBuilderInterface {
     return pc.createOffer()
       .then((offer) => pc.setLocalDescription(offer))
       .then(() => {
-        let description = JSON.parse(JSON.stringify(pc.localDescription))
-        // sendOffer(pc.localDescription.toJSON())
-        sendOffer(description)
+        let test = {type: pc.localDescription.type, sdp: pc.localDescription.sdp}
+        let anothertest = JSON.parse(JSON.stringify(pc.localDescription))
+        // console.log(pc.localDescription.toJSON())
+        // console.log(pc.localDescription)
+        // console.log('-------')
+        // console.log('stringified')
+        // console.log(anothertest)
+        // console.log('-------')
+        sendOffer(anothertest)
+        // sendOffer(pc.localdescription.toJSON())
         return pc
       })
   }
@@ -394,13 +409,26 @@ class WebRTCService extends ChannelBuilderInterface {
       }
       dc.onopen = (evt) => onChannel(dc)
     }
+    // console.log('offer')
+    // console.log(offer)
+    // console.log('-------')
+    // console.log('offer')
+    // console.log(offer.sdp)
+    // console.log('-------')
     return pc.setRemoteDescription(offer)
       .then(() => pc.createAnswer())
       .then((answer) => pc.setLocalDescription(answer))
       .then(() => {
+        let test = {type: pc.localDescription.type, sdp: pc.localDescription.sdp}
+        let anothertest = JSON.parse(JSON.stringify(pc.localDescription))
+        // console.log('answer : test')
+        // console.log(test)
+        // console.log('-------')
+        // console.log('answer : test')
+        // console.log(test.sdp)
+        // console.log('-------')
         // sendAnswer(pc.localDescription.toJSON())
-        let description = JSON.parse(JSON.stringify(pc.localDescription))
-        sendAnswer(description)
+        sendAnswer(anothertest)
         return pc
       })
       .catch((err) => {
@@ -417,6 +445,11 @@ class WebRTCService extends ChannelBuilderInterface {
    * @return {external:RTCPeerConnection} - Peer connection.
    */
   createPeerConnection (onCandidate) {
+
+    RTCPeerConnection = window.RTCPeerConnection
+    RTCIceCandidate = window.RTCIceCandidate
+    WebSocket = window.WebSocket
+
     let pc = new RTCPeerConnection({iceServers: this.settings.iceServers})
     pc.onicecandidate = (evt) => {
       if (evt.candidate !== null) {
@@ -432,6 +465,11 @@ class WebRTCService extends ChannelBuilderInterface {
   }
 
   getPendingConnections (wc) {
+
+    RTCPeerConnection = window.RTCPeerConnection
+    RTCIceCandidate = window.RTCIceCandidate
+    WebSocket = window.WebSocket
+
     if (connectionsByWC.has(wc.id)) {
       return connectionsByWC.get(wc.id)
     } else {

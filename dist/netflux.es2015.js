@@ -1616,38 +1616,38 @@ class WebRTCService extends ChannelBuilderInterface {
     return new Promise((resolve, reject) => {
       let connections = new RTCPendingConnections()
       let socket
-      try {
-          socket = new WebSocket(settings.signaling)
 
-          // Timeout for node (otherwise it will loop forever if incorrect address)
-          if (socket.readyState === WebSocket.CONNECTING) {
-            setTimeout(() => {
-              if (socket.readyState === WebSocket.CONNECTING ||
-                  socket.readyState === WebSocket.CLOSING ||
-                  socket.readyState === WebSocket.CLOSED) {
-                reject('Node Timeout reached')
-              }
-            }, 3000)
-          } else if (socket.readyState === WebSocket.CLOSING ||
-            socket.readyState === WebSocket.CLOSED) {
-            reject('Socked closed on open')
-          }
+      try {
+        socket = new WebSocket(settings.signaling)
+
+        // Timeout for node (otherwise it will loop forever if incorrect address)
+        if (socket.readyState === WebSocket.CONNECTING) {
+          setTimeout(() => {
+            if (socket.readyState === WebSocket.CONNECTING 
+              // ||
+              //   socket.readyState === WebSocket.CLOSING ||
+              //   socket.readyState === WebSocket.CLOSED
+                ) {
+              reject('Node Timeout reached')
+            }
+          }, 500)
+        } else if (socket.readyState === WebSocket.CLOSING ||
+              socket.readyState === WebSocket.CLOSED) {
+          reject('Socked closed on open')
+        }
       } catch (err) {
         reject(err.message)
       }
+
       // Send a message to signaling server: ready to receive offer
       socket.onopen = () => {
         try {
-          // if (WebRTC) {
-          //   socket.send(JSON.stringify({key}), (error) => {reject()})
-          // } else {
-            socket.send(JSON.stringify({key}))
-          // }
+          socket.send(JSON.stringify({key}))
         } catch (err) {
           reject(err.message)
         }
         // TODO: find a better solution than setTimeout. This is for the case when the key already exists and thus the server will close the socket, but it will close it after this function resolves the Promise.
-        setTimeout(resolve, 1000, {key, url: settings.signaling, socket})
+        setTimeout(resolve, 100, {key, url: settings.signaling, socket})
       }
       socket.onmessage = (evt) => {
         let msg = JSON.parse(evt.data)
@@ -1670,9 +1670,6 @@ class WebRTCService extends ChannelBuilderInterface {
         } else if ('candidate' in msg.data) {
           connections.addIceCandidate(msg.id, new RTCIceCandidate$1(msg.data.candidate))
             .catch((err) => {
-              console.log(msg.data.candidate.candidate)
-              console.log(msg.data.candidate.sdpMLineIndex)
-              console.log(msg.data.candidate.sdpMid)
               console.error(`Adding ice candidate failed: ${err.message}`)
             })
         }
@@ -1690,21 +1687,30 @@ class WebRTCService extends ChannelBuilderInterface {
     let settings = Object.assign({}, this.settings, options)
     return new Promise((resolve, reject) => {
       let pc
+      let socket
       // Connect to the signaling server
-      let socket = new WebSocket(settings.signaling)
-      // Timeout for node (otherwise it will loop forever if incorrect address)
-      if (socket.readyState === WebSocket.CONNECTING) {
-        setTimeout(() => {
-          if (socket.readyState === WebSocket.CONNECTING ||
-              socket.readyState === WebSocket.CLOSING ||
-              socket.readyState === WebSocket.CLOSED) {
-            reject('Node Timeout reached')
-          }
-        }, 3000)
-      } else if (socket.readyState === WebSocket.CLOSING ||
-        socket.readyState === WebSocket.CLOSED) {
-        reject('Socked closed on open')
+      try {
+        socket = new WebSocket(settings.signaling)
+
+        // Timeout for node (otherwise it will loop forever if incorrect address)
+        if (socket.readyState === WebSocket.CONNECTING) {
+          setTimeout(() => {
+            if (socket.readyState === WebSocket.CONNECTING 
+              // ||
+              //   socket.readyState === WebSocket.CLOSING ||
+              //   socket.readyState === WebSocket.CLOSED
+                ) {
+              reject('Node Timeout reached')
+            }
+          }, 500)
+        } else if (socket.readyState === WebSocket.CLOSING ||
+          socket.readyState === WebSocket.CLOSED) {
+          reject('Socked closed on open')
+        }
+      } catch(err) {
+        reject(err.message)
       }
+
       socket.onopen = () => {
         // Prepare and send offer
         this.createPeerConnectionAndOffer(
@@ -1748,7 +1754,6 @@ class WebRTCService extends ChannelBuilderInterface {
         reject('WebSocket with signaling server error: ' + evt.message)
       }
       socket.onclose = (closeEvt) => {
-        console.log(closeEvt.code)
         if (closeEvt.code !== 1000) {
           reject(`Socket with signaling server ${settings.signaling} has been closed with code ${closeEvt.code}: ${closeEvt.reason}`)
         }
@@ -1821,15 +1826,9 @@ class WebRTCService extends ChannelBuilderInterface {
     return pc.createOffer()
       .then((offer) => pc.setLocalDescription(offer))
       .then(() => {
-        let test = {type: pc.localDescription.type, sdp: pc.localDescription.sdp}
-        let anothertest = JSON.parse(JSON.stringify(pc.localDescription))
-        // console.log(pc.localDescription.toJSON())
-        // console.log(pc.localDescription)
-        // console.log('-------')
-        // console.log('stringified')
-        // console.log(anothertest)
-        // console.log('-------')
-        sendOffer(anothertest)
+        let description = JSON.parse(JSON.stringify(pc.localDescription))
+        // sendOffer(pc.localDescription.toJSON())
+        sendOffer(description)
         return pc
       })
   }
@@ -1855,26 +1854,13 @@ class WebRTCService extends ChannelBuilderInterface {
       }
       dc.onopen = (evt) => onChannel(dc)
     }
-    // console.log('offer')
-    // console.log(offer)
-    // console.log('-------')
-    // console.log('offer')
-    // console.log(offer.sdp)
-    // console.log('-------')
     return pc.setRemoteDescription(offer)
       .then(() => pc.createAnswer())
       .then((answer) => pc.setLocalDescription(answer))
       .then(() => {
-        let test = {type: pc.localDescription.type, sdp: pc.localDescription.sdp}
-        let anothertest = JSON.parse(JSON.stringify(pc.localDescription))
-        // console.log('answer : test')
-        // console.log(test)
-        // console.log('-------')
-        // console.log('answer : test')
-        // console.log(test.sdp)
-        // console.log('-------')
         // sendAnswer(pc.localDescription.toJSON())
-        sendAnswer(anothertest)
+        let description = JSON.parse(JSON.stringify(pc.localDescription))
+        sendAnswer(description)
         return pc
       })
       .catch((err) => {
@@ -1917,6 +1903,13 @@ class WebRTCService extends ChannelBuilderInterface {
 }
 
 const CONNECT_TIMEOUT$1 = 2000
+
+/**
+  * Constant used to send a message to the server in order that
+  * he can join the webcahnnel
+  * @type {string}
+  */
+const ADD_BOT_SERVER = 'addBotServer'
 const NEW_CHANNEL = 'newChannel'
 
 class WebSocketService extends ChannelBuilderInterface {
@@ -1929,7 +1922,8 @@ class WebSocketService extends ChannelBuilderInterface {
         {urls: 'stun:23.21.150.121'},
         {urls: 'stun:stun.l.google.com:19302'},
         {urls: 'turn:numb.viagenie.ca', credential: 'webrtcdemo', username: 'louis%40mozilla.com'}
-      ]
+      ],
+      addBotServer: false
     }
     this.settings = Object.assign({}, this.defaults, options)
     this.toConnect = false
@@ -1974,19 +1968,34 @@ class WebSocketService extends ChannelBuilderInterface {
    * @return {Promise} - Resolved once the connection has been established, rejected otherwise.
    */
   connectMeTo (wc, id) {
-    // console.log('[DEBUG] connectMeTo (wc, id) (wc, ', id, ')')
     return new Promise((resolve, reject) => {
       let socket
+      let WebSocket
+      if (typeof window === 'undefined') WebSocket = require('ws')
+      else WebSocket = window.WebSocket
       try {
-        socket = new window.WebSocket('ws://' +
+        socket = new WebSocket('ws://' +
           this.settings.host + ':' + this.settings.port)
       } catch (err) {
         reject(err.message)
       }
       socket.onopen = () => {
-        socket.send(JSON.stringify({code: NEW_CHANNEL, sender: wc.myId, wcId: wc.id,
-          which_connector_asked: this.settings.which_connector_asked}))
-        resolve(socket)
+        if (!this.settings.addBotServer) {
+          socket.send(JSON.stringify({code: NEW_CHANNEL, sender: wc.myId, wcId: wc.id,
+            which_connector_asked: this.settings.which_connector_asked}))
+          resolve(socket)
+        } else {
+          /*
+            After opening the WebSocket with the server, a message is sent
+            to him in order that it can join the webchannel
+          */
+          socket.send(JSON.stringify({code: ADD_BOT_SERVER, sender: wc.myId}))
+          wc.initChannel(socket, false).then((channel) => {
+            wc.addChannel(channel).then(() => {
+              resolve()
+            })
+          })
+        }
       }
       socket.onclose = () => {
         reject('Connection with the WebSocket server closed')
@@ -2024,9 +2033,10 @@ class ChannelBuilderService extends ServiceInterface {
         }
       })
       if (typeof window !== 'undefined') wc.sendSrvMsg(this.name, id, {code: WHICH_CONNECTOR, sender: wc.myId})
-      else wc.sendSrvMsg(this.name, id,
-        {code: CONNECTOR, connectors: [WEBSOCKET], sender: wc.myId,
-        host: wc.settings.host, port: wc.settings.port, which_connector_asked: false})
+      else {
+        wc.sendSrvMsg(this.name, id, {code: CONNECTOR, connectors: [WEBSOCKET], sender: wc.myId,
+          host: wc.settings.host, port: wc.settings.port, which_connector_asked: false})
+      }
     })
   }
 
@@ -2388,33 +2398,6 @@ let provide = function (name, options = {}) {
   }
 }
 
-class Bot {
-  constructor (options = {}) {
-    if (typeof window === 'undefined') throw new Error('Bot can be instanciate only in Node\'s environment')
-    this.defaults = {
-      host: '127.0.0.1',
-      port: 8080
-    }
-    this.settings = Object.assign({}, this.defaults, options)
-
-    this.server
-  }
-
-  listen (options = {}) {
-    this.settings = Object.assign({}, this.defaults, options)
-    // let WebSocketServer = require('ws').Server
-    // this.server = new WebSocketServer({host: this.settings.host, port: this.settings.port})
-    //
-    // this.server.on('connection', (socket) => {
-    //   console.log('[CONNECTED] Connection of one client')
-    //
-    //   socket.on('message', (msg) => {
-    //     console.log('[MESSAGE] New message: ', msg)
-    //   })
-    // })
-  }
-}
-
 /**
  * Wrapper class for {@link external:RTCDataChannel} and
  * {@link external:WebSocket}.
@@ -2645,13 +2628,6 @@ const PING = 11
  * @type {number}
  */
 const PONG = 12
-
-/**
-  * Constant used to send a message to the server in order that
-  * he can join the webcahnnel
-  * @type {string}
-  */
-const ADD_BOT_SERVER = 'addBotServer'
 
 /**
  * This class represents a door of the *WebChannel* for this peer. If the door
@@ -2935,29 +2911,12 @@ class WebChannel {
   addBotServer (host, port) {
     return new Promise((resolve, reject) => {
       if (typeof window !== 'undefined') {
-        let socket
-        try {
-          socket = new window.WebSocket('ws://' + host + ':' + port)
-        } catch (err) {
-          reject(err.message)
-        }
-        socket.onopen = () => {
-          /*
-            After opening the WebSocket with the server, a message is sent
-            to him in order that it can join the webchannel
-          */
-          socket.send(JSON.stringify({code: ADD_BOT_SERVER, sender: this.myId}))
-          this.initChannel(socket, false).then((channel) => {
-            // console.log('[DEBUG] Resolved initChannel addBotServer')
-            this.addChannel(channel).then(() => {
-              // console.log('[RESOLVED] Resolved addChannel in addBotServer')
-              resolve()
-            })
-          })
-        }
-        socket.onclose = () => {
-          reject('Connection with the WebSocket server closed')
-        }
+        let cBuilder = provide(WEBSOCKET, {host, port, addBotServer: true})
+        cBuilder.connectMeTo(this, -1).then(() => {
+          resolve()
+        }).catch((reason) => {
+          reject(reason)
+        })
       } else reject('Only browser client can add a bot server')
     })
   }
@@ -3419,6 +3378,87 @@ class WebChannel {
       break
     } while (true)
     return id
+  }
+}
+
+const ADD_BOT_SERVER$1 = 'addBotServer'
+const NEW_CHANNEL$1 = 'newChannel'
+
+class Bot {
+  constructor (options = {}) {
+    if (typeof window !== 'undefined') throw new Error('Bot can be instanciate only in Node\'s environment')
+    this.defaults = {
+      host: '127.0.0.1',
+      port: 9000,
+      log: false
+    }
+    this.settings = Object.assign({}, this.defaults, options)
+    this.webChannels = []
+    this.onWebChannel = (wc) => {}
+    this.server
+  }
+
+  listen (options = {}) {
+    this.settings = Object.assign({}, this.settings, options)
+    let WebSocketServer = require('ws').Server
+    this.server = new WebSocketServer({host: this.settings.host, port: this.settings.port}, () => {
+      this.log('WebSocketServer', 'Server runs on: ws://' + this.settings.host + ':' + this.settings.port)
+    })
+
+    this.server.on('connection', (socket) => {
+      this.log('connected', 'Connection of one client')
+
+      socket.on('message', (msg) => {
+        var data = {code: ''}
+        try {
+          data = JSON.parse(msg)
+        } catch (e) {}
+        switch (data.code) {
+          case ADD_BOT_SERVER$1:
+            this.log('add', 'Add request received')
+            let webChannel
+
+            webChannel = new WebChannel({'connector': 'WebSocket',
+              host: this.settings.host, port: this.settings.port})
+
+            webChannel.joinAsBot(socket, data.sender).then(() => {
+              this.onWebChannel(webChannel)
+              this.log('connected', 'Connected to the network')
+              this.log('id', webChannel.myId)
+            })
+
+            this.webChannels.push(webChannel)
+            break
+          case NEW_CHANNEL$1:
+            this.log('new_channel', 'New channel request received')
+            for (var wc of this.webChannels) {
+              if (data.wcId === wc.id) {
+                if (!data.which_connector_asked) wc.connectMeToRequests.get(data.sender)(true, socket)
+                else wc.initChannel(socket, false, data.sender)
+              }
+            }
+            break
+          default:
+            this.log('error', 'Unknown code message')
+        }
+      })
+    })
+  }
+
+  getWebChannels () {
+    return this.webChannels
+  }
+
+  getServer () {
+    return this.server
+  }
+
+  log (label, msg) {
+    if (this.settings.log) {
+      var d = new Date()
+      let datetime = '' + d.toLocaleTimeString() + ' ' + d.toLocaleDateString()
+      console.log('[', label.toUpperCase(), '] [', datetime, ']', msg)
+    }
   }
 }
 

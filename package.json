@@ -9,11 +9,12 @@
     "build": "rollup -c & rollup -i src/index.js -o dist/netflux.es2015.js",
     "signalling-up": "kill `cat /tmp/sigver.pid`; node ./node_modules/sigver/server.js & echo \"$!\" > /tmp/sigver.pid",
     "botserver": "kill `cat /tmp/botserver.pid`; node ./test/BotServer.js & echo \"$!\" > /tmp/botserver.pid",
-    "pretest": "npm run build && npm run signalling-up && npm run botserver",
+    "botserver2": "kill `cat /tmp/botserver2.pid`; node ./test/BotServer2.js & echo \"$!\" > /tmp/botserver2.pid",
+    "pretest": "npm run build && npm run signalling-up && npm run botserver && npm run botserver2",
     "test": "karma start",
     "testin": "npm run test -- --browsers",
     "test-coverage": "npm run test -- karma.conf.coverage.js",
-    "nodetest": "rollup -i test/service/channelBuilder/webRTCService.test.js -o spec/service/channelBuilder/webRTCServiceSpec.js",
+    "nodetest": "rm -rf spec && jasmine init && rollup -i test/service/channelBuilder/webRTCService.test.js -o spec/service/channelBuilder/webRTCServiceSpec.js",
     "doc": "jsdoc -d doc -c jsdoc.json -t ./node_modules/ink-docstrap/template -R README.md -r src",
     "postdoc": "mkdir -p doc/doc && cp -f doc/uml.png doc/doc/",
     "docdev": "jsdoc -d doc -p -c jsdoc.json -t ./node_modules/ink-docstrap/template -R README.md -r src",
@@ -50,9 +51,9 @@
     }
   },
   "dependencies": {
-    "wrtc": "^0.0.60",
     "text-encoding": "^0.6.0",
     "webrtc-adapter": "^1.1.0",
+    "wrtc": "0.0.60",
     "ws": "^1.1.1"
   },
   "devDependencies": {
@@ -62,6 +63,7 @@
     "ghooks": "^1.0.1",
     "ink-docstrap": "^1.1.2",
     "istanbul": "^0.4.3",
+    "jasmine": "^2.4.1",
     "jasmine-core": "^2.4.1",
     "jsdoc": "^3.4.0",
     "json": "^9.0.3",
@@ -73,8 +75,8 @@
     "karma-jasmine": "^1.0.2",
     "karma-rollup-preprocessor": "^2.0.2",
     "rollup": "^0.33.0",
-    "rollup-plugin-istanbul": "^1.0.0",
     "rollup-plugin-filesize": "^0.4.4",
+    "rollup-plugin-istanbul": "^1.0.0",
     "rollup-plugin-string": "^2.0.0",
     "semantic-release": "^4.3.5",
     "sigver": "^7.1.0",
