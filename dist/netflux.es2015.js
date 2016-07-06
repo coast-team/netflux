@@ -1895,6 +1895,30 @@ class WebSocketService extends ChannelBuilderInterface {
   }
 
   /**
+   * Creates WebSocket with server.
+   * @param {string} url - Server url
+   * @return {Promise} It is resolved once the WebSocket has been created and rejected otherwise
+   */
+  connect (url) {
+    return new Promise((resolve, reject) => {
+      try {
+        let ws = new window.WebSocket(url)
+        ws.onopen = () => resolve(ws)
+        ws.onerror = (evt) => {
+          console.error(`WebSocket with ${url}: ${evt.type}`)
+          reject(evt.type)
+        }
+        ws.onclose = (closeEvt) => {
+          if (closeEvt.code !== 1000) {
+            console.error(`WebSocket with ${url} has closed. ${closeEvt.code}: ${closeEvt.reason}`)
+            reject(closeEvt.reason)
+          }
+        }
+      } catch (err) { reject(err.message) }
+    })
+  }
+
+  /**
    * Establish a connection between you and another peer (including joining peer) via web channel.
    *
    * @abstract
@@ -1903,7 +1927,6 @@ class WebSocketService extends ChannelBuilderInterface {
    * @return {Promise} - Resolved once the connection has been established, rejected otherwise.
    */
   connectMeTo (wc, id) {
-    // console.log('[DEBUG] connectMeTo, this.settings: ', this.settings)
     return new Promise((resolve, reject) => {
       let socket
       let WebSocket

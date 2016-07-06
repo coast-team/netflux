@@ -15,12 +15,6 @@ class WebSocketService extends ChannelBuilderInterface {
   constructor (options = {}) {
     super()
     this.defaults = {
-      signaling: 'ws://localhost:8000',
-      iceServers: [
-        {urls: 'stun:23.21.150.121'},
-        {urls: 'stun:stun.l.google.com:19302'},
-        {urls: 'turn:numb.viagenie.ca', credential: 'webrtcdemo', username: 'louis%40mozilla.com'}
-      ],
       addBotServer: false
     }
     this.settings = Object.assign({}, this.defaults, options)
@@ -55,6 +49,30 @@ class WebSocketService extends ChannelBuilderInterface {
    */
   join (key, options) {
     throw new Error('[TODO] {WebSocketService} join (key, options)')
+  }
+
+  /**
+   * Creates WebSocket with server.
+   * @param {string} url - Server url
+   * @return {Promise} It is resolved once the WebSocket has been created and rejected otherwise
+   */
+  connect (url) {
+    return new Promise((resolve, reject) => {
+      try {
+        let ws = new window.WebSocket(url)
+        ws.onopen = () => resolve(ws)
+        ws.onerror = (evt) => {
+          console.error(`WebSocket with ${url}: ${evt.type}`)
+          reject(evt.type)
+        }
+        ws.onclose = (closeEvt) => {
+          if (closeEvt.code !== 1000) {
+            console.error(`WebSocket with ${url} has closed. ${closeEvt.code}: ${closeEvt.reason}`)
+            reject(closeEvt.reason)
+          }
+        }
+      } catch (err) { reject(err.message) }
+    })
   }
 
   /**
