@@ -1903,6 +1903,7 @@ class WebSocketService extends ChannelBuilderInterface {
    * @return {Promise} - Resolved once the connection has been established, rejected otherwise.
    */
   connectMeTo (wc, id) {
+    // console.log('[DEBUG] connectMeTo, this.settings: ', this.settings)
     return new Promise((resolve, reject) => {
       let socket
       let WebSocket
@@ -2914,10 +2915,11 @@ class WebChannel {
     if (this.channels.size !== 0) {
       this.manager.broadcast(this, msgBuilder.msg(LEAVE, {id: this.myId}))
       this.topology = this.settings.topology
-      this.channels.forEach((c) => {
-        c.close()
-      })
+      // this.channels.forEach((c) => {
+      //   c.close()
+      // })
       this.channels.clear()
+      // this.joiningPeers.clear()
       this.gate.close()
     }
   }
@@ -3049,7 +3051,7 @@ class WebChannel {
             }
           }
           this.peerNb--
-          this.onLeaving(msg.id)
+          // this.onLeaving(msg.id)
           break
         case SERVICE_DATA:
           if (this.myId === msg.recepient) {
@@ -3128,7 +3130,7 @@ class WebChannel {
     }
     this.peerNb--
     this.onLeaving(peerId)
-    console.info(`Channel with ${peerId} has been closed: ${closeEvt.type}`)
+    // console.info(`Channel with ${peerId} has been closed: ${closeEvt.type}`)
   }
 
   set topology (name) {
@@ -3184,7 +3186,7 @@ class WebChannel {
       this.channels.add(c)
     })
     // TODO: handle channels which should be closed & removed
-    // this.joiningPeers.delete(jp)
+    this.joiningPeers.delete(jp)
   }
 
   /**
@@ -3328,20 +3330,45 @@ class Bot {
       log: false
     }
     this.settings = Object.assign({}, this.defaults, options)
-    this.webChannels = []
-    this.onWebChannel = (wc) => {}
+
     this.server
+    this.webChannels = []
+
+    this.onWebChannel = (wc) => {
+      // this.log('connected', 'Connected to the network')
+      // this.log('id', wc.myId)
+    }
+
+    this.onLaunch = () => {
+      // this.log('WebSocketServer', 'Server runs on: ws://' + this.settings.host + ':' + this.settings.port)
+    }
+
+    this.onConnection = () => {
+      // this.log('connected', 'Connection of one client')
+    }
+
+    this.onAddRequest = () => {
+      // this.log('add', 'Add request received')
+    }
+
+    this.onNewChannelRequest = () => {
+      // this.log('new_channel', 'New channel request received')
+    }
+
+    this.onCodeError = () => {
+      // this.log('error', 'Unknown code message')
+    }
   }
 
   listen (options = {}) {
     this.settings = Object.assign({}, this.settings, options)
     let WebSocketServer = require('ws').Server
     this.server = new WebSocketServer({host: this.settings.host, port: this.settings.port}, () => {
-      this.log('WebSocketServer', 'Server runs on: ws://' + this.settings.host + ':' + this.settings.port)
+      this.onLaunch()
     })
 
     this.server.on('connection', (socket) => {
-      this.log('connected', 'Connection of one client')
+      this.onConnection()
 
       socket.on('message', (msg) => {
         var data = {code: ''}
@@ -3350,7 +3377,7 @@ class Bot {
         } catch (e) {}
         switch (data.code) {
           case ADD_BOT_SERVER$1:
-            this.log('add', 'Add request received')
+            this.onAddRequest()
             let webChannel
 
             webChannel = new WebChannel({'connector': 'WebSocket',
@@ -3358,14 +3385,12 @@ class Bot {
 
             webChannel.joinAsBot(socket, data.sender).then(() => {
               this.onWebChannel(webChannel)
-              this.log('connected', 'Connected to the network')
-              this.log('id', webChannel.myId)
             })
 
             this.webChannels.push(webChannel)
             break
           case NEW_CHANNEL$1:
-            this.log('new_channel', 'New channel request received')
+            this.onNewChannelRequest()
             for (var wc of this.webChannels) {
               if (data.wcId === wc.id) {
                 if (!data.which_connector_asked) wc.connectMeToRequests.get(data.sender)(true, socket)
@@ -3374,10 +3399,21 @@ class Bot {
             }
             break
           default:
-            this.log('error', 'Unknown code message')
+            this.onCodeError()
         }
       })
     })
+  }
+
+  leave (WebChannel) {
+    let index = -1
+    for (let i = 0; i < this.webChannels.length; i++) {
+      if (WebChannel.id === this.webChannels[i].id) {
+        index = i
+        break
+      }
+    }
+    this.webChannels.splice(index, 1)[0].leave()
   }
 
   getWebChannels () {

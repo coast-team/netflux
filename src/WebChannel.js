@@ -440,10 +440,11 @@ class WebChannel {
     if (this.channels.size !== 0) {
       this.manager.broadcast(this, msgBuilder.msg(LEAVE, {id: this.myId}))
       this.topology = this.settings.topology
-      this.channels.forEach((c) => {
-        c.close()
-      })
+      // this.channels.forEach((c) => {
+      //   c.close()
+      // })
       this.channels.clear()
+      // this.joiningPeers.clear()
       this.gate.close()
     }
   }
@@ -575,7 +576,7 @@ class WebChannel {
             }
           }
           this.peerNb--
-          this.onLeaving(msg.id)
+          // this.onLeaving(msg.id)
           break
         case SERVICE_DATA:
           if (this.myId === msg.recepient) {
@@ -654,7 +655,7 @@ class WebChannel {
     }
     this.peerNb--
     this.onLeaving(peerId)
-    console.info(`Channel with ${peerId} has been closed: ${closeEvt.type}`)
+    // console.info(`Channel with ${peerId} has been closed: ${closeEvt.type}`)
   }
 
   set topology (name) {
@@ -710,7 +711,7 @@ class WebChannel {
       this.channels.add(c)
     })
     // TODO: handle channels which should be closed & removed
-    // this.joiningPeers.delete(jp)
+    this.joiningPeers.delete(jp)
   }
 
   /**

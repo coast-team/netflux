@@ -44,8 +44,7 @@ describe('1 bot -> ', () => {
             if (typeof idBotServer === 'undefined') {
               idBotServer = msg.id
               nbPong++
-            }
-            else if (msg.id === idBotServer) nbPong++
+            } else if (msg.id === idBotServer) nbPong++
           }
         }
         expect(nbPong).toBe(2)
@@ -68,7 +67,7 @@ describe('1 bot -> ', () => {
     }).catch(done.fail)
   })
 
-  it('Should connect to an existing peer network of 2 peers', (done) => {
+  it('Should connect to an existing peer network of 2 peers by the one who open the gate', (done) => {
     wc1 = new WebChannel({signaling})
     wc2 = new WebChannel({signaling})
 
@@ -85,6 +84,27 @@ describe('1 bot -> ', () => {
     wc1.openForJoining().then((data) => {
       wc2.join(data.key).then(() => {
         wc1.addBotServer(host, port).then(() => {}).catch(done.fail)
+      }).catch(done.fail)
+    }).catch(done.fail)
+  })
+
+  xit('Should connect to an existing peer network of 2 peers by the one who join', (done) => {
+    wc1 = new WebChannel({signaling})
+    wc2 = new WebChannel({signaling})
+
+    let joiningPeers = []
+    wc1.onJoining = (id) => {
+      joiningPeers.push(id)
+      if (joiningPeers.length === 2) {
+        wc1.leave()
+        wc2.leave()
+        done()
+      }
+    }
+
+    wc1.openForJoining().then((data) => {
+      wc2.join(data.key).then(() => {
+        wc2.addBotServer(host, port).then(() => {}).catch(done.fail)
       }).catch(done.fail)
     }).catch(done.fail)
   })
