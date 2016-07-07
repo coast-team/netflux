@@ -51,7 +51,7 @@
         webChannel.onMessage = onMessage
         webChannel.onLeaving = onLeaving
       }
-      webChannel.openForJoining()
+      webChannel.open()
         .then((data) => {
           document.getElementById("key-create").innerHTML = data.key
           document.getElementById("my-id").innerHTML = webChannel.myId

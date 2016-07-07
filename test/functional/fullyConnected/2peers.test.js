@@ -14,7 +14,7 @@ describe('2 peers -> ', () => {
       wc2.leave()
       done()
     }
-    wc1.openForJoining()
+    wc1.open()
       .then((data) => {
         wc2.join(data.key)
           .catch(done.fail)
@@ -24,9 +24,9 @@ describe('2 peers -> ', () => {
 
   it('Should get WebChannel access data after open', (done) => {
     let wc1 = new WebChannel({signaling})
-    wc1.openForJoining().then((data) => {
+    wc1.open().then((data) => {
       expect(wc1.getAccess()).toBe(data)
-      wc1.closeForJoining()
+      wc1.close()
       done()
     }).catch(done.fail)
   })
@@ -38,8 +38,8 @@ describe('2 peers -> ', () => {
       wc1.leave()
       done()
     }
-    wc1.openForJoining().then((data) => {
-      wc1.closeForJoining()
+    wc1.open().then((data) => {
+      wc1.close()
     }).catch(done.fail)
   })
 
@@ -48,8 +48,8 @@ describe('2 peers -> ', () => {
     let wc2 = new WebChannel({signaling})
 
     // Peer #1
-    wc1.openForJoining().then((data) => {
-      wc1.closeForJoining()
+    wc1.open().then((data) => {
+      wc1.close()
       // Peer #2
       wc2.join(data.key).then(done.fail)
         .catch(() => {
@@ -66,7 +66,7 @@ describe('2 peers -> ', () => {
     beforeAll((done) => {
       // Peer #1
       wc1 = new WebChannel({signaling})
-      wc1.openForJoining().then((data) => {
+      wc1.open().then((data) => {
         // Peer #2
         wc2 = new WebChannel({signaling})
         wc2.join(data.key).then(() => {
@@ -139,7 +139,7 @@ describe('2 peers -> ', () => {
         done()
       }
 
-      wc1.openForJoining().then((data) => {
+      wc1.open().then((data) => {
         wc2.join(data.key).catch(done.fail)
       }).catch(done.fail)
       wc2.send(message)
@@ -160,7 +160,7 @@ describe('2 peers -> ', () => {
       let wc2 = new WebChannel({signaling})
       wc2.onMessage = done.fail
 
-      wc1.openForJoining().then((data) => {
+      wc1.open().then((data) => {
         // Peer #2
         wc2.join(data.key).then(() => wc2.leave())
           .catch(done.fail)

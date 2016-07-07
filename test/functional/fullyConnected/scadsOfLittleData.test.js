@@ -28,7 +28,7 @@ it('Should send/receive STRING messages', (done) => {
     }
   }
 
-  wc1.openForJoining().then((data) => {
+  wc1.open().then((data) => {
     // Peer #2
     let wc2 = new WebChannel({signaling})
     wc2.onMessage = (id, msg) => {

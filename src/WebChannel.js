@@ -1,6 +1,7 @@
 import {provide, FULLY_CONNECTED, WEBRTC, WEBSOCKET, MESSAGE_BUILDER} from './serviceProvider'
 import Channel from './Channel'
 import JoiningPeer from './JoiningPeer'
+import WebChannelGate from './WebChannelGate'
 
 const msgBuilder = provide(MESSAGE_BUILDER)
 
@@ -91,84 +92,11 @@ const PING = 11
 const PONG = 12
 
 /**
- * This class represents a door of the *WebChannel* for this peer. If the door
- * is open, then clients can join the *WebChannel* through this peer, otherwise
- * they cannot.
+ * Constant used to send a message to the server in order that
+ * he can join the webcahnnel
+ * @type {string}
  */
-class WebChannelGate {
-
-  /**
-   * @typedef {Object} WebChannelGate~AccessData
-   * @property {string} key - The unique key to join the *WebChannel*
-   * @property {string} url - Signaling server url
-   */
-
-  /**
-   * @param {WebChannelGate~onClose} onClose - close event handler
-   */
-  constructor (onCloseHandler) {
-    /**
-     * Web socket which holds the connection with the signaling server.
-     * @private
-     * @type {external:WebSocket}
-     */
-    this.door = null
-
-    /**
-     * Web socket which holds the connection with the signaling server.
-     * @private
-     * @type {WebChannel~AccessData}
-     */
-    this.accessData = null
-
-    /**
-     * Close event handler.
-     * @private
-     * @type {WebChannelGate~onClose}
-     */
-    this.onCloseHandler = onCloseHandler
-  }
-
-  /**
-   * Get access data.
-   * @returns {WebChannel~AccessData|null} - Returns access data if the door
-   * is opened and *null* if it closed
-   */
-  getAccessData () {
-    return this.accessData
-  }
-
-  /**
-   * Check if the door is opened or closed.
-   * @returns {boolean} - Returns true if the door is opened and false if it is
-   * closed
-   */
-  isOpen () {
-    return this.door !== null
-  }
-
-  /**
-   * Open the door.
-   * @param {external:WebSocket} door - Web socket to signalign server
-   * @param {WebChannel~AccessData} accessData - Access data to join the
-   * *WebChannel
-   */
-  setOpen (door, accessData) {
-    this.door = door
-    this.door.onclose = this.onCloseHandler
-    this.accessData = accessData
-  }
-
-  /**
-   * Close the door if it is open and do nothing if it is closed already.
-   */
-  close () {
-    if (this.isOpen()) {
-      this.door.close()
-      this.door = null
-    }
-  }
-}
+const ADD_BOT_SERVER = 'addBotServer'
 
 /**
  * This class is an API starting point. It represents a group of collaborators
@@ -201,7 +129,8 @@ class WebChannel {
   constructor (options = {}) {
     this.defaults = {
       connector: WEBRTC,
-      topology: FULLY_CONNECTED
+      topology: FULLY_CONNECTED,
+      signaling: 'ws://sigver-coastteam.rhcloud.com:8000'
     }
     this.settings = Object.assign({}, this.defaults, options)
 
@@ -317,18 +246,12 @@ class WebChannel {
    * @returns {Promise} It is resolved once the *WebChannel* is open. The
    * callback function take a parameter of type {@link WebChannel~AccessData}.
    */
-  openForJoining (options = {}) {
+  open (options = {}) {
     let settings = Object.assign({}, this.settings, options)
-
-    let cBuilder = provide(settings.connector, settings)
-    return cBuilder.open(this.generateKey(), (channel) => {
+    return this.gate.open((channel) => {
       this.initChannel(channel, false)
         .then((channel) => this.addChannel(channel))
-    }).then((data) => {
-      let accessData = {key: data.key, url: data.url}
-      this.gate.setOpen(data.socket, accessData)
-      return accessData
-    })
+    }, settings.signaling)
   }
 
   /**
@@ -345,16 +268,13 @@ class WebChannel {
     channel.send(msgBuilder.msg(JOIN_INIT, {
       manager: this.settings.topology,
       wcId: this.id,
-      myId: channel.peerId,
+      id: channel.peerId,
       intermediaryId: this.myId})
     )
     return this.manager.add(channel)
-      .then(() => {
-        channel.send(msgBuilder.msg(JOIN_FINILIZE))
-        // console.log('[DEBUG] Resolved manager.add(channel)')
-      })
+      .then(() => channel.send(msgBuilder.msg(JOIN_FINILIZE)))
       .catch((msg) => {
-        // console.log('[DEBUG] Catched manager.add(channel): ', msg)
+        console.log('CATCH addChannel')
         this.manager.broadcast(this, msgBuilder.msg(
           REMOVE_NEW_MEMBER, {id: channel.peerId})
         )
@@ -373,8 +293,18 @@ class WebChannel {
     return new Promise((resolve, reject) => {
       if (typeof window !== 'undefined') {
         let cBuilder = provide(WEBSOCKET, {host, port, addBotServer: true})
-        cBuilder.connectMeTo(this, -1).then(() => {
-          resolve()
+        let url = 'ws://' + host + ':' + port
+        cBuilder.connect(url).then((socket) => {
+          /*
+            Once the connection open a message is sent to the server in order
+            that he can join initiate the channel
+          */
+          socket.send(JSON.stringify({code: ADD_BOT_SERVER, sender: this.myId}))
+          this.initChannel(socket, false).then((channel) => {
+            this.addChannel(channel).then(() => {
+              resolve()
+            })
+          })
         }).catch((reason) => {
           reject(reason)
         })
@@ -403,7 +333,7 @@ class WebChannel {
   /**
    * Prevent clients to join the `WebChannel` even if they possesses a key.
    */
-  closeForJoining () {
+  close () {
     this.gate.close()
   }
 
@@ -417,6 +347,17 @@ class WebChannel {
   }
 
   /**
+   * Get the data which should be provided to all clients who must join
+   * the *WebChannel*. It is the same data which
+   * {@link WebChannel#openForJoining} callback function provides.
+   * @returns {WebChannel~AccessData|null} - Data to join the *WebChannel*
+   * or null is the *WebChannel* is closed
+   */
+  getAccess () {
+    return this.gate.getAccessData()
+  }
+
+  /**
    * Join the *WebChannel*.
    * @param  {string} key - The key provided by one of the *WebChannel* members.
    * @param  {type} [options] - Any available connection service options.
@@ -424,12 +365,24 @@ class WebChannel {
    */
   join (key, options = {}) {
     let settings = Object.assign({}, this.settings, options)
-    let cBuilder = provide(settings.connector, settings)
+    let cBuilder = provide(this.settings.connector)
     return new Promise((resolve, reject) => {
       this.onJoin = () => resolve(this)
-      cBuilder.join(key)
-        .then((channel) => this.initChannel(channel, true))
-        .catch(reject)
+      let socket = new window.WebSocket(settings.signaling)
+      socket.onopen = () => {
+        cBuilder.connectOverSignaling(socket, key)
+          .then((channel) => this.initChannel(channel, true))
+          .catch(reject)
+      }
+      socket.onerror = (evt) => {
+        console.error(`Error occured on WebChannel gate to ${settings.signaling}. ${evt.type}`)
+      }
+      socket.onclose = (closeEvt) => {
+        if (closeEvt.code !== 1000) {
+          console.error(`WebChannel gate to ${settings.signaling} has closed. ${closeEvt.code}: ${closeEvt.reason}`)
+          reject(closeEvt.reason)
+        }
+      }
     })
   }
 
@@ -440,10 +393,11 @@ class WebChannel {
     if (this.channels.size !== 0) {
       this.manager.broadcast(this, msgBuilder.msg(LEAVE, {id: this.myId}))
       this.topology = this.settings.topology
-      this.channels.forEach((c) => {
-        c.close()
-      })
+      // this.channels.forEach((c) => {
+      //   c.close()
+      // })
       this.channels.clear()
+      // this.joiningPeers.clear()
       this.gate.close()
     }
   }
@@ -471,17 +425,6 @@ class WebChannel {
         this.manager.sendTo(id, this, dataChunk)
       }, false)
     }
-  }
-
-  /**
-   * Get the data which should be provided to all clients who must join
-   * the *WebChannel*. It is the same data which
-   * {@link WebChannel#openForJoining} callback function provides.
-   * @returns {WebChannel~AccessData|null} - Data to join the *WebChannel*
-   * or null is the *WebChannel* is closed
-   */
-  getAccess () {
-    return this.gate.getAccessData()
   }
 
   /**
@@ -575,7 +518,7 @@ class WebChannel {
             }
           }
           this.peerNb--
-          this.onLeaving(msg.id)
+          // this.onLeaving(msg.id)
           break
         case SERVICE_DATA:
           if (this.myId === msg.recepient) {
@@ -586,10 +529,10 @@ class WebChannel {
           break
         case JOIN_INIT:
           this.topology = msg.manager
+          this.myId = msg.id
           this.id = msg.wcId
-          this.myId = msg.myId
           channel.peerId = msg.intermediaryId
-          this.addJoiningPeer(this.myId, msg.intermediaryId, channel)
+          this.addJoiningPeer(msg.id, msg.intermediaryId, channel)
           break
         case JOIN_NEW_MEMBER:
           this.addJoiningPeer(msg.id, msg.intermediaryId)
@@ -654,7 +597,7 @@ class WebChannel {
     }
     this.peerNb--
     this.onLeaving(peerId)
-    console.info(`Channel with ${peerId} has been closed: ${closeEvt.type}`)
+    // console.info(`Channel with ${peerId} has been closed: ${closeEvt.type}`)
   }
 
   set topology (name) {
@@ -710,7 +653,7 @@ class WebChannel {
       this.channels.add(c)
     })
     // TODO: handle channels which should be closed & removed
-    // this.joiningPeers.delete(jp)
+    this.joiningPeers.delete(jp)
   }
 
   /**
@@ -803,25 +746,6 @@ class WebChannel {
     }
     return false
   }
-
-  /**
-   * Generate random key which will be used to join the *WebChannel*.
-   * @private
-   * @returns {string} - Generated key
-   */
-  generateKey () {
-    const MIN_LENGTH = 5
-    const DELTA_LENGTH = 0
-    const MASK = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-    let result = ''
-    const length = MIN_LENGTH + Math.round(Math.random() * DELTA_LENGTH)
-
-    for (let i = 0; i < length; i++) {
-      result += MASK[Math.round(Math.random() * (MASK.length - 1))]
-    }
-    return result
-  }
-
   /**
    * Generate random id for a *WebChannel* or a new peer.
    * @private

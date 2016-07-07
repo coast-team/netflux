@@ -43,7 +43,7 @@ describe('Many peers -> ', () => {
           expect(found).toBeTruthy()
         }
       }
-      wcArray[0].openForJoining().then((data) => {
+      wcArray[0].open().then((data) => {
         for (let i = 1; i < NB_PEERS; i++) {
           wcArray[i].join(data.key)
             .catch(done.fail)
