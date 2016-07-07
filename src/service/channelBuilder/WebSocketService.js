@@ -1,4 +1,4 @@
-const CONNECT_TIMEOUT = 2000
+const CONNECT_TIMEOUT = 500
 
 class WebSocketService {
 
@@ -32,6 +32,17 @@ class WebSocketService {
             console.error(`WebSocket with ${url} has closed. ${closeEvt.code}: ${closeEvt.reason}`)
             reject(closeEvt.reason)
           }
+        }
+        // Timeout for node (otherwise it will loop forever if incorrect address)
+        if (ws.readyState === WebSocket.CONNECTING) {
+          setTimeout(() => {
+            if (ws.readyState === WebSocket.CONNECTING) {
+              reject('Node Timeout reached')
+            }
+          }, CONNECT_TIMEOUT)
+        } else if (ws.readyState === WebSocket.CLOSING ||
+              ws.readyState === WebSocket.CLOSED) {
+          reject('Socked closed on open')
         }
       } catch (err) { reject(err.message) }
     })

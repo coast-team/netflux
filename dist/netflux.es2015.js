@@ -1591,7 +1591,7 @@ class WebRTCService extends ChannelBuilderInterface {
    * WebRTCService constructor.
    *
    * @param  {Object} [options] - This service options.
-   * @param  {Object} [options.signaling='wws://sigver-coastteam.rhcloud.com:8000'] -
+   * @param  {Object} [options.signaling='ws://sigver-coastteam.rhcloud.com:8000'] -
    * Signaling server URL.
    * @param  {Object[]} [options.iceServers=[{urls: 'stun:23.21.150.121'},{urls: 'stun:stun.l.google.com:19302'},{urls: 'turn:numb.viagenie.ca', credential: 'webrtcdemo', username: 'louis%40mozilla.com'}]] - WebRTC options to setup which STUN
    * and TURN servers to be used.
@@ -1634,6 +1634,7 @@ class WebRTCService extends ChannelBuilderInterface {
     }
   }
 
+  // Equivalent connectMeTo(wc, id)
   connectOverWebChannel (wc, id) {
     return new Promise((resolve, reject) => {
       let sender = wc.myId
@@ -1651,28 +1652,10 @@ class WebRTCService extends ChannelBuilderInterface {
     })
   }
 
+  // Equivalent à open
   listenFromSignaling (ws, onChannel) {
     let connections = new RTCPendingConnections()
 
-    try {
-      // Timeout for node (otherwise it will loop forever if incorrect address)
-      if (ws.readyState === WebSocket$1.CONNECTING) {
-        setTimeout(() => {
-          if (ws.readyState === WebSocket$1.CONNECTING
-            // ||
-            //   ws.readyState === WebSocket.CLOSING ||
-            //   ws.readyState === WebSocket.CLOSED
-              ) {
-            reject('Node Timeout reached')
-          }
-        }, 500)
-      } else if (ws.readyState === WebSocket$1.CLOSING ||
-            ws.readyState === WebSocket$1.CLOSED) {
-        reject('Socked closed on open')
-      }
-    } catch (err) {
-      reject(err.message)
-    }
     ws.onmessage = (evt) => {
       let msg = JSON.parse(evt.data)
       if (!('id' in msg) || !('data' in msg)) {
@@ -1703,20 +1686,7 @@ class WebRTCService extends ChannelBuilderInterface {
   connectOverSignaling (ws, key, options = {}) {
     return new Promise((resolve, reject) => {
       let pc
-      if (ws.readyState === WebSocket$1.CONNECTING) {
-        setTimeout(() => {
-          if (ws.readyState === WebSocket$1.CONNECTING
-            // ||
-            //   ws.readyState === WebSocket.CLOSING ||
-            //   ws.readyState === WebSocket.CLOSED
-              ) {
-            reject('Node Timeout reached')
-          }
-        }, 500)
-      } else if (ws.readyState === WebSocket$1.CLOSING ||
-        ws.readyState === WebSocket$1.CLOSED) {
-        reject('Socked closed on open')
-      }
+      
       ws.onmessage = (evt) => {
         try {
           let msg = JSON.parse(evt.data)
@@ -1853,6 +1823,8 @@ class WebRTCService extends ChannelBuilderInterface {
   }
 }
 
+const CONNECT_TIMEOUT$1 = 500
+
 class WebSocketService {
 
   constructor (options = {}) {
@@ -1885,6 +1857,17 @@ class WebSocketService {
             console.error(`WebSocket with ${url} has closed. ${closeEvt.code}: ${closeEvt.reason}`)
             reject(closeEvt.reason)
           }
+        }
+        // Timeout for node (otherwise it will loop forever if incorrect address)
+        if (ws.readyState === WebSocket.CONNECTING) {
+          setTimeout(() => {
+            if (ws.readyState === WebSocket.CONNECTING) {
+              reject('Node Timeout reached')
+            }
+          }, CONNECT_TIMEOUT$1)
+        } else if (ws.readyState === WebSocket.CLOSING ||
+              ws.readyState === WebSocket.CLOSED) {
+          reject('Socked closed on open')
         }
       } catch (err) { reject(err.message) }
     })
