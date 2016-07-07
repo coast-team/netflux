@@ -299,7 +299,7 @@ class WebChannel {
             Once the connection open a message is sent to the server in order
             that he can join initiate the channel
           */
-          socket.send(JSON.stringify({code: ADD_BOT_SERVER, sender: this.myId}))
+          socket.send(JSON.stringify({code: ADD_BOT_SERVER, sender: this.myId, wcId: this.id}))
           this.initChannel(socket, false).then((channel) => {
             this.addChannel(channel).then(() => {
               resolve()

@@ -62,4 +62,16 @@ describe('1 peer -> ', () => {
     }
     wc.addBotServer(host, port).then(() => {}).catch(done.fail)
   })
+
+  it('Should have a unique connection with a bot even if addBotServer has been called twice', (done) => {
+    wc = new WebChannel({signaling})
+
+    wc.onJoining = (id) => {
+      done()
+    }
+
+    wc.addBotServer(host, port).then(() => {
+      wc.addBotServer(host, port).then(() => {}).catch(done.fail)
+    }).catch(done.fail)
+  })
 })

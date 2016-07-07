@@ -72,17 +72,24 @@ class Bot {
   }
 
   addBotServer (socket, data) {
-    this.onAddRequest()
-    let webChannel
-
-    webChannel = new WebChannel({'connector': 'WebSocket',
-      host: this.settings.host, port: this.settings.port})
-
-    webChannel.joinAsBot(socket, data.sender).then(() => {
-      this.onWebChannel(webChannel)
+    let alreadyPresent = false
+    this.webChannels.forEach((wc, index) => {
+      if (data.wcId === wc.id) alreadyPresent = true
     })
 
-    this.webChannels.push(webChannel)
+    if (!alreadyPresent) {
+      this.onAddRequest()
+      let webChannel
+
+      webChannel = new WebChannel({'connector': 'WebSocket',
+      host: this.settings.host, port: this.settings.port})
+
+      webChannel.joinAsBot(socket, data.sender).then(() => {
+        this.onWebChannel(webChannel)
+      })
+
+      this.webChannels.push(webChannel)
+    }
   }
 
   newChannel (socket, data) {

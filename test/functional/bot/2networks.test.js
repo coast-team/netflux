@@ -3,302 +3,296 @@ import {WebChannel} from '../../../src/WebChannel'
 
 let host = '127.0.0.1'
 let port = 9000
-let wc1, wc2, wc3, wc4
+let wcA, wcB, wcC, wcD
 
 describe('2 networks -> ', () => {
   it('Should add the same bot server (A - B then Bot then C - Bot then D)', (done) => {
-    wc1 = new WebChannel({signaling})
-    wc2 = new WebChannel({signaling})
-    wc3 = new WebChannel({signaling})
-    wc4 = new WebChannel({signaling})
+    wcA = new WebChannel({signaling})
+    wcB = new WebChannel({signaling})
+    wcC = new WebChannel({signaling})
+    wcD = new WebChannel({signaling})
 
     let joiningPeers = []
-    wc1.onJoining = (id) => {
+    wcA.onJoining = (id) => {
       joiningPeers.push(id)
     }
 
-    wc3.onJoining = (id) => {
+    wcC.onJoining = (id) => {
       joiningPeers.push(id)
       if (joiningPeers.length === 4) {
-        wc1.leave()
-        wc2.leave()
-        wc3.leave()
-        wc4.leave()
+        wcA.leave()
+        wcB.leave()
+        wcC.leave()
+        wcD.leave()
         done()
       }
     }
 
     // The first network of 2 peers add the bot
-    wc1.open().then((data1) => {
-      wc2.join(data1.key).then(() => {
-        wc1.addBotServer(host, port).then(() => {
-          // The second network add the same bot and then a peer join
-          wc3.addBotServer(host, port).then(() => {
-            wc3.open().then((data2) => {
-              wc4.join(data2.key).catch(done.fail)
-            }).catch(done.fail) // open
-          }).catch(done.fail) // addBotServer
-        }).catch(done.fail) // addBotServer
-      }).catch(done.fail) // join
-    }).catch(done.fail) // open
+    wcA.open()
+      .then((data1) => wcB.join(data1.key))
+      .then(() => wcA.addBotServer(host, port))
+      // The second network add the same bot and then a peer join
+      .then(() => wcC.addBotServer(host, port))
+      .then(() => wcC.open())
+      .then((data2) => wcD.join(data2.key))
+      .catch(done.fail)
   })
 
   it('Should add the same bot server (A - Bot then B then C - Bot then D)', (done) => {
-    wc1 = new WebChannel({signaling})
-    wc2 = new WebChannel({signaling})
-    wc3 = new WebChannel({signaling})
-    wc4 = new WebChannel({signaling})
+    wcA = new WebChannel({signaling})
+    wcB = new WebChannel({signaling})
+    wcC = new WebChannel({signaling})
+    wcD = new WebChannel({signaling})
 
     let joiningPeers = []
-    wc1.onJoining = (id) => {
+    wcA.onJoining = (id) => {
       joiningPeers.push(id)
     }
 
-    wc3.onJoining = (id) => {
+    wcC.onJoining = (id) => {
       joiningPeers.push(id)
       if (joiningPeers.length === 4) {
-        wc1.leave()
-        wc2.leave()
-        wc3.leave()
-        wc4.leave()
+        wcA.leave()
+        wcB.leave()
+        wcC.leave()
+        wcD.leave()
         done()
       }
     }
 
     // The first network add the bot and then a peer join
-    wc1.open().then((data1) => {
-      wc1.addBotServer(host, port).then(() => {
-        wc2.join(data1.key).then(() => {
-          // The second network add the same bot and then a peer join
-          wc3.addBotServer(host, port).then(() => {
-            wc3.open().then((data2) => {
-              wc4.join(data2.key).catch(done.fail)
-            }).catch(done.fail) // open
-          }).catch(done.fail) // addBotServer
-        }).catch(done.fail) // join
-      }).catch(done.fail) // addBotServer
-    }).catch(done.fail) // open
+    wcA.addBotServer(host, port)
+      .then(() => wcA.open())
+      .then((data1) => wcB.join(data1.key))
+      // The second network add the same bot and then a peer join
+      .then(() => wcC.addBotServer(host, port))
+      .then(() => wcC.open())
+      .then((data2) => wcD.join(data2.key))
+      .catch(done.fail)
   })
 
   it('Should add the same bot server (A - Bot then B then C - D then Bot)', (done) => {
-    wc1 = new WebChannel({signaling})
-    wc2 = new WebChannel({signaling})
-    wc3 = new WebChannel({signaling})
-    wc4 = new WebChannel({signaling})
+    wcA = new WebChannel({signaling})
+    wcB = new WebChannel({signaling})
+    wcC = new WebChannel({signaling})
+    wcD = new WebChannel({signaling})
 
     let joiningPeers = []
-    wc1.onJoining = (id) => {
+    wcA.onJoining = (id) => {
       joiningPeers.push(id)
     }
 
-    wc3.onJoining = (id) => {
+    wcC.onJoining = (id) => {
       joiningPeers.push(id)
       if (joiningPeers.length === 4) {
-        wc1.leave()
-        wc2.leave()
-        wc3.leave()
-        wc4.leave()
+        wcA.leave()
+        wcB.leave()
+        wcC.leave()
+        wcD.leave()
         done()
       }
     }
 
     // The first network add the bot and then a peer join
-    wc1.open().then((data1) => {
-      wc1.addBotServer(host, port).then(() => {
-        wc2.join(data1.key).then(() => {
-          // The second network of 2 peers add the bot
-          wc3.open().then((data2) => {
-            wc4.join(data2.key).then(() => {
-              wc3.addBotServer(host, port).then(() => {}).catch(done.fail)
-            }).catch(done.fail) // join
-          }).catch(done.fail) // open
-        }).catch(done.fail) // join
-      }).catch(done.fail) // addBotServer
-    }).catch(done.fail) // open
+    wcA.addBotServer(host, port)
+      .then(() => wcA.open())
+      .then((data1) => wcB.join(data1.key))
+      // The second network of 2 peers add the bot
+      .then(() => wcC.open())
+      .then((data2) => wcD.join(data2.key))
+      .then(() => wcC.addBotServer(host, port))
+      .catch(done.fail)
   })
 
   it('Should add the same bot server (A - B then Bot then C - D then Bot)', (done) => {
-    wc1 = new WebChannel({signaling})
-    wc2 = new WebChannel({signaling})
-    wc3 = new WebChannel({signaling})
-    wc4 = new WebChannel({signaling})
+    wcA = new WebChannel({signaling})
+    wcB = new WebChannel({signaling})
+    wcC = new WebChannel({signaling})
+    wcD = new WebChannel({signaling})
 
     let joiningPeers = []
-    wc1.onJoining = (id) => {
+    wcA.onJoining = (id) => {
       joiningPeers.push(id)
     }
 
-    wc3.onJoining = (id) => {
+    wcC.onJoining = (id) => {
       joiningPeers.push(id)
       if (joiningPeers.length === 4) {
-        wc1.leave()
-        wc2.leave()
-        wc3.leave()
-        wc4.leave()
+        wcA.leave()
+        wcB.leave()
+        wcC.leave()
+        wcD.leave()
         done()
       }
     }
 
     // The first network of 2 peers add the bot
-    wc1.open().then((data1) => {
-      wc2.join(data1.key).then(() => {
-        wc1.addBotServer(host, port).then(() => {
-          // The second network of 2 peers add the bot
-          wc3.open().then((data2) => {
-            wc4.join(data2.key).then(() => {
-              wc3.addBotServer(host, port).then(() => {}).catch(done.fail)
-            }).catch(done.fail) // join
-          }).catch(done.fail) // open
-        }).catch(done.fail) // addBotServer
-      }).catch(done.fail) // join
-    }).catch(done.fail) // open
+    wcA.open()
+      .then((data1) => wcB.join(data1.key))
+      .then(() => wcA.addBotServer(host, port))
+      // The second network of 2 peers add the bot
+      .then(() => wcC.open())
+      .then((data2) => wcD.join(data2.key))
+      .then(() => wcC.addBotServer(host, port))
+      .catch(done.fail)
   })
 
   it('Should add the same bot server (A - B then C - D then Network1 - Bot then Network2 - Bot)', (done) => {
-    wc1 = new WebChannel({signaling})
-    wc2 = new WebChannel({signaling})
-    wc3 = new WebChannel({signaling})
-    wc4 = new WebChannel({signaling})
+    wcA = new WebChannel({signaling})
+    wcB = new WebChannel({signaling})
+    wcC = new WebChannel({signaling})
+    wcD = new WebChannel({signaling})
 
     let joiningPeers = []
-    wc1.onJoining = (id) => {
+    wcA.onJoining = (id) => {
       joiningPeers.push(id)
     }
 
-    wc3.onJoining = (id) => {
+    wcC.onJoining = (id) => {
       joiningPeers.push(id)
       if (joiningPeers.length === 4) {
-        wc1.leave()
-        wc2.leave()
-        wc3.leave()
-        wc4.leave()
+        wcA.leave()
+        wcB.leave()
+        wcC.leave()
+        wcD.leave()
         done()
       }
     }
 
     // The first network of 2 peers add the bot after the second network is created
-    wc1.open().then((data1) => {
-      wc2.join(data1.key).then(() => {
-        // The second network of 2 peers add the bot after the first added
-        wc3.open().then((data2) => {
-          wc4.join(data2.key).then(() => {
-            wc1.addBotServer(host, port).then(() => {
-              wc3.addBotServer(host, port).then(() => {}).catch(done.fail)
-            }).catch(done.fail) // addBotServer
-          }).catch(done.fail) // join
-        }).catch(done.fail) // open
-      }).catch(done.fail) // join
-    }).catch(done.fail) // open
+    wcA.open()
+      .then((data1) => wcB.join(data1.key))
+      // The second network of 2 peers add the bot after the first added
+      .then(() => wcC.open())
+      .then((data2) => wcD.join(data2.key))
+      .then(() => wcA.addBotServer(host, port))
+      .then(() => wcC.addBotServer(host, port))
+      .catch(done.fail)
   })
 
   it('Should add the same bot server (A - Bot then C - D then B then Network2 - Bot)', (done) => {
-    wc1 = new WebChannel({signaling})
-    wc2 = new WebChannel({signaling})
-    wc3 = new WebChannel({signaling})
-    wc4 = new WebChannel({signaling})
+    wcA = new WebChannel({signaling})
+    wcB = new WebChannel({signaling})
+    wcC = new WebChannel({signaling})
+    wcD = new WebChannel({signaling})
 
     let joiningPeers = []
-    wc1.onJoining = (id) => {
+    wcA.onJoining = (id) => {
       joiningPeers.push(id)
     }
 
-    wc3.onJoining = (id) => {
+    wcC.onJoining = (id) => {
       joiningPeers.push(id)
       if (joiningPeers.length === 4) {
-        wc1.leave()
-        wc2.leave()
-        wc3.leave()
-        wc4.leave()
+        wcA.leave()
+        wcB.leave()
+        wcC.leave()
+        wcD.leave()
         done()
       }
     }
 
     // The first network add the bot and then a peer join after the second network is created
-    wc1.open().then((data1) => {
-      wc1.addBotServer(host, port).then(() => {
-        // The second network of 2 peers add the bot after the first is complete
-        wc3.open().then((data2) => {
-          wc4.join(data2.key).then(() => {
-            wc2.join(data1.key).then(() => {
-              wc3.addBotServer(host, port).then(() => {}).catch(done.fail)
-            }).catch(done.fail) // join
-          }).catch(done.fail) // join
-        }).catch(done.fail) // open
-      }).catch(done.fail) // addBotServer
-    }).catch(done.fail) // open
+    wcA.addBotServer(host, port)
+      // The second network of 2 peers add the bot after the first is complete
+      .then(() => wcC.open())
+      .then((data2) => wcD.join(data2.key))
+      .then(() => wcA.open())
+      .then((data1) => wcB.join(data1.key))
+      .then(() => wcC.addBotServer(host, port))
+      .catch(done.fail)
   })
 
   it('Should add the same bot server (A - Bot then C - Bot then B then D)', (done) => {
-    wc1 = new WebChannel({signaling})
-    wc2 = new WebChannel({signaling})
-    wc3 = new WebChannel({signaling})
-    wc4 = new WebChannel({signaling})
+    wcA = new WebChannel({signaling})
+    wcB = new WebChannel({signaling})
+    wcC = new WebChannel({signaling})
+    wcD = new WebChannel({signaling})
 
     let joiningPeers = []
-    wc1.onJoining = (id) => {
+    wcA.onJoining = (id) => {
       joiningPeers.push(id)
     }
 
-    wc3.onJoining = (id) => {
+    wcC.onJoining = (id) => {
       joiningPeers.push(id)
       if (joiningPeers.length === 4) {
-        wc1.leave()
-        wc2.leave()
-        wc3.leave()
-        wc4.leave()
+        wcA.leave()
+        wcB.leave()
+        wcC.leave()
+        wcD.leave()
         done()
       }
     }
 
     // The first network add the bot and then a peer join after the second network added
-    wc1.open().then((data1) => {
-      wc1.addBotServer(host, port).then(() => {
-        // The second network add the bot and then a peer join at the end
-        wc3.addBotServer(host, port).then(() => {
-          wc2.join(data1.key).then(() => {
-            wc3.open().then((data2) => {
-              wc4.join(data2.key).then(() => {}).catch(done.fail)
-            }).catch(done.fail) // open
-          }).catch(done.fail) // join
-        }).catch(done.fail) // addBotServer
-      }).catch(done.fail) // addBotServer
-    }).catch(done.fail) // open
+    wcA.addBotServer(host, port)
+      .then(() => wcC.addBotServer(host, port))
+      // The second network add the bot and then a peer join at the end
+      .then(() => wcA.open())
+      .then((data1) => wcB.join(data1.key))
+      .then(() => wcC.open())
+      .then((data2) => wcD.join(data2.key))
+      .catch(done.fail)
   })
 
   it('Should add the same bot server (A - B then C - Bot then Network1 - Bot then D)', (done) => {
-    wc1 = new WebChannel({signaling})
-    wc2 = new WebChannel({signaling})
-    wc3 = new WebChannel({signaling})
-    wc4 = new WebChannel({signaling})
+    wcA = new WebChannel({signaling})
+    wcB = new WebChannel({signaling})
+    wcC = new WebChannel({signaling})
+    wcD = new WebChannel({signaling})
 
     let joiningPeers = []
-    wc1.onJoining = (id) => {
+    wcA.onJoining = (id) => {
       joiningPeers.push(id)
     }
 
-    wc3.onJoining = (id) => {
+    wcC.onJoining = (id) => {
       joiningPeers.push(id)
       if (joiningPeers.length === 4) {
-        wc1.leave()
-        wc2.leave()
-        wc3.leave()
-        wc4.leave()
+        wcA.leave()
+        wcB.leave()
+        wcC.leave()
+        wcD.leave()
         done()
       }
     }
 
     // The first network of 2 peers add the bot after the second network added
-    wc1.open().then((data1) => {
-      wc2.join(data1.key).then(() => {
-        // The second network add the bot and then a peer join at the end
-        wc3.addBotServer(host, port).then(() => {
-          wc1.addBotServer(host, port).then(() => {
-            wc3.open().then((data2) => {
-              wc4.join(data2.key).then(() => {}).catch(done.fail)
-            }).catch(done.fail) // open
-          }).catch(done.fail) // addBotServer
-        }).catch(done.fail) // addBotServer
-      }).catch(done.fail) // join
-    }).catch(done.fail) // open
+    wcA.open()
+      .then((data1) => wcB.join(data1.key))
+      // The second network add the bot and then a peer join at the end
+      .then(() => wcC.addBotServer(host, port))
+      .then(() => wcA.addBotServer(host, port))
+      .then(() => wcC.open())
+      .then((data2) => wcD.join(data2.key))
+      .catch(done.fail)
+  })
+
+  it('Should add the same bot server (A - B then Bot then A - C then Bot)', (done) => {
+    wcA = new WebChannel({signaling})
+    wcB = new WebChannel({signaling})
+    wcC = new WebChannel({signaling})
+
+    let joiningPeers = []
+    wcA.onJoining = (id) => {
+      joiningPeers.push(id)
+      if (joiningPeers.length === 3) {
+        wcA.leave()
+        wcB.leave()
+        wcC.leave()
+        done()
+      }
+    }
+
+    // The first network of 2 peers add the bot after the second network added
+    wcA.open()
+      .then((data1) => wcB.join(data1.key))
+      .then(() => wcA.addBotServer(host, port))
+      .then(() => wcA.open())
+      .then((data2) => wcC.join(data2.key))
+      .then(() => wcA.addBotServer(host, port))
+      .catch(done.fail)
   })
 })
