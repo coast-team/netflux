@@ -3,6 +3,7 @@ import {WEBRTC, WEBSOCKET, provide} from '../../serviceProvider'
 
 const WHICH_CONNECTOR = 1
 const CONNECTOR = 2
+const NEW_CHANNEL = 'newChannel'
 
 class ChannelBuilderService extends ServiceInterface {
   constructor (options = {}) {
@@ -46,10 +47,12 @@ class ChannelBuilderService extends ServiceInterface {
         let connector = WEBSOCKET
         if (typeof window !== 'undefined' && availabled.indexOf(WEBRTC) > -1) connector = WEBRTC
         let settings = Object.assign({}, wc.settings, {connector,
-          host: msg.host, port: msg.port, which_connector_asked: msg.which_connector_asked})
+          host: msg.host, port: msg.port})
         let cBuilder = provide(connector, settings)
         cBuilder.connectMeTo(wc, msg.sender)
           .then((channel) => {
+            channel.send(JSON.stringify({code: NEW_CHANNEL, sender: wc.myId, wcId: wc.id,
+              which_connector_asked: msg.which_connector_asked}))
             if (!msg.which_connector_asked) wc.initChannel(channel, false, msg.sender)
             else wc.connectMeToRequests.get(msg.sender)(true, channel)
           })

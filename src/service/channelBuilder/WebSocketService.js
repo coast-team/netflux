@@ -2,14 +2,6 @@ import {ChannelBuilderInterface} from './channelBuilder'
 
 const CONNECT_TIMEOUT = 2000
 
-/**
-  * Constant used to send a message to the server in order that
-  * he can join the webcahnnel
-  * @type {string}
-  */
-const ADD_BOT_SERVER = 'addBotServer'
-const NEW_CHANNEL = 'newChannel'
-
 class WebSocketService extends ChannelBuilderInterface {
 
   constructor (options = {}) {
@@ -18,7 +10,6 @@ class WebSocketService extends ChannelBuilderInterface {
       addBotServer: false
     }
     this.settings = Object.assign({}, this.defaults, options)
-    this.toConnect = false
   }
 
   /**
@@ -35,7 +26,9 @@ class WebSocketService extends ChannelBuilderInterface {
    * It is rejected if an error occured.
    */
   open (key, onChannel, options) {
-    throw new Error('[TODO] {WebSocketService} open (key, onChannel, options)')
+    return new Promise((resolve, reject) => {
+      reject('[TODO] {WebSocketService} open (key, onChannel, options)')
+    })
   }
 
   /**
@@ -48,7 +41,9 @@ class WebSocketService extends ChannelBuilderInterface {
    * @return {Promise} It is resolved when the connection is established, otherwise it is rejected.
    */
   join (key, options) {
-    throw new Error('[TODO] {WebSocketService} join (key, options)')
+    return new Promise((resolve, reject) => {
+      reject('[TODO] {WebSocketService} join (key, options)')
+    })
   }
 
   /**
@@ -90,28 +85,14 @@ class WebSocketService extends ChannelBuilderInterface {
       if (typeof window === 'undefined') WebSocket = require('ws')
       else WebSocket = window.WebSocket
       try {
+        // Try to connect to the bot server
         socket = new WebSocket('ws://' +
           this.settings.host + ':' + this.settings.port)
       } catch (err) {
         reject(err.message)
       }
       socket.onopen = () => {
-        if (!this.settings.addBotServer) {
-          socket.send(JSON.stringify({code: NEW_CHANNEL, sender: wc.myId, wcId: wc.id,
-            which_connector_asked: this.settings.which_connector_asked}))
-          resolve(socket)
-        } else {
-          /*
-            After opening the WebSocket with the server, a message is sent
-            to him in order that it can join the webchannel
-          */
-          socket.send(JSON.stringify({code: ADD_BOT_SERVER, sender: wc.myId}))
-          wc.initChannel(socket, false).then((channel) => {
-            wc.addChannel(channel).then(() => {
-              resolve()
-            })
-          })
-        }
+        resolve(socket)
       }
       socket.onclose = () => {
         reject('Connection with the WebSocket server closed')

@@ -59,32 +59,40 @@ class Bot {
         } catch (e) {}
         switch (data.code) {
           case ADD_BOT_SERVER:
-            this.onAddRequest()
-            let webChannel
-
-            webChannel = new WebChannel({'connector': 'WebSocket',
-              host: this.settings.host, port: this.settings.port})
-
-            webChannel.joinAsBot(socket, data.sender).then(() => {
-              this.onWebChannel(webChannel)
-            })
-
-            this.webChannels.push(webChannel)
+            this.addBotServer(socket, data)
             break
           case NEW_CHANNEL:
-            this.onNewChannelRequest()
-            for (var wc of this.webChannels) {
-              if (data.wcId === wc.id) {
-                if (!data.which_connector_asked) wc.connectMeToRequests.get(data.sender)(true, socket)
-                else wc.initChannel(socket, false, data.sender)
-              }
-            }
+            this.newChannel(socket, data)
             break
           default:
             this.onCodeError()
         }
       })
     })
+  }
+
+  addBotServer (socket, data) {
+    this.onAddRequest()
+    let webChannel
+
+    webChannel = new WebChannel({'connector': 'WebSocket',
+      host: this.settings.host, port: this.settings.port})
+
+    webChannel.joinAsBot(socket, data.sender).then(() => {
+      this.onWebChannel(webChannel)
+    })
+
+    this.webChannels.push(webChannel)
+  }
+
+  newChannel (socket, data) {
+    this.onNewChannelRequest()
+    for (var wc of this.webChannels) {
+      if (data.wcId === wc.id) {
+        if (!data.which_connector_asked) wc.connectMeToRequests.get(data.sender)(true, socket)
+        else wc.initChannel(socket, false, data.sender)
+      }
+    }
   }
 
   leave (WebChannel) {

@@ -6,7 +6,7 @@ describe('1 bot -> ', () => {
   let port = 9000
   let wcArray = []
 
-  const NB_PEERS = 4
+  const NB_PEERS = 10
 
   xit('Should connect with the asking peer and all peers that connect after', (done) => {
     for (let i = 0; i < NB_PEERS; i++) {
@@ -35,5 +35,5 @@ describe('1 bot -> ', () => {
         addPeer(data, 1)
       }).catch(done.fail)
     }).catch(done.fail)
-  })
+  }, 5000)
 })

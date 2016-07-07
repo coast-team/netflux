@@ -91,6 +91,13 @@ const PING = 11
 const PONG = 12
 
 /**
+  * Constant used to send a message to the server in order that
+  * he can join the webcahnnel
+  * @type {string}
+  */
+const ADD_BOT_SERVER = 'addBotServer'
+
+/**
  * This class represents a door of the *WebChannel* for this peer. If the door
  * is open, then clients can join the *WebChannel* through this peer, otherwise
  * they cannot.
@@ -373,8 +380,17 @@ class WebChannel {
     return new Promise((resolve, reject) => {
       if (typeof window !== 'undefined') {
         let cBuilder = provide(WEBSOCKET, {host, port, addBotServer: true})
-        cBuilder.connectMeTo(this, -1).then(() => {
-          resolve()
+        cBuilder.connectMeTo(this, -1).then((socket) => {
+          /*
+            Once the connection open a message is sent to the server in order
+            that he can join initiate the channel
+          */
+          socket.send(JSON.stringify({code: ADD_BOT_SERVER, sender: this.myId}))
+          this.initChannel(socket, false).then((channel) => {
+            this.addChannel(channel).then(() => {
+              resolve()
+            })
+          })
         }).catch((reason) => {
           reject(reason)
         })
