@@ -365,24 +365,17 @@ class WebChannel {
    */
   join (key, options = {}) {
     let settings = Object.assign({}, this.settings, options)
-    let cBuilder = provide(this.settings.connector)
+    let webSocketService = provide(WEBSOCKET)
+    let webRTCService = provide(this.settings.connector)
     return new Promise((resolve, reject) => {
       this.onJoin = () => resolve(this)
-      let socket = new window.WebSocket(settings.signaling)
-      socket.onopen = () => {
-        cBuilder.connectOverSignaling(socket, key)
-          .then((channel) => this.initChannel(channel, true))
-          .catch(reject)
-      }
-      socket.onerror = (evt) => {
-        console.error(`Error occured on WebChannel gate to ${settings.signaling}. ${evt.type}`)
-      }
-      socket.onclose = (closeEvt) => {
-        if (closeEvt.code !== 1000) {
-          console.error(`WebChannel gate to ${settings.signaling} has closed. ${closeEvt.code}: ${closeEvt.reason}`)
-          reject(closeEvt.reason)
-        }
-      }
+      webSocketService.connect(settings.signaling)
+        .then((ws) => {
+          ws.onclose = (closeEvt) => reject(closeEvt.reason)
+          return webRTCService.connectOverSignaling(ws, key)
+            .then((channel) => this.initChannel(channel, true))
+        })
+        .catch(reject)
     })
   }
 

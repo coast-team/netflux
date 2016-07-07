@@ -1,4 +1,4 @@
-import {provide, WEBRTC} from './serviceProvider'
+import {provide, WEBRTC, WEBSOCKET} from './serviceProvider'
 
 /**
  * This class represents a door of the *WebChannel* for this peer. If the door
@@ -64,36 +64,28 @@ class WebChannelGate {
    */
   open (onChannel, url) {
     return new Promise((resolve, reject) => {
-      let cBuilder = provide(WEBRTC)
+      let webRTCService = provide(WEBRTC)
+      let webSocketService = provide(WEBSOCKET)
       let key = this.generateKey()
-      try {
-        let socket = new window.WebSocket(url)
-        socket.onopen = () => {
-          this.socket = socket
+      webSocketService.connect(url)
+        .then((ws) => {
+          ws.onclose = (closeEvt) => {
+            reject(closeEvt.reason)
+            this.onClose(closeEvt)
+          }
+          this.socket = ws
           this.accessData.key = key
           this.accessData.url = url
           try {
-            socket.send(JSON.stringify({key}))
+            ws.send(JSON.stringify({key}))
+            // TODO: find a better solution than setTimeout. This is for the case when the key already exists and thus the server will close the socket, but it will close it after this function resolves the Promise.
+            setTimeout(() => { resolve(this.accessData) }, 100, {url, key})
           } catch (err) {
             reject(err.message)
           }
-          // TODO: find a better solution than setTimeout. This is for the case when the key already exists and thus the server will close the socket, but it will close it after this function resolves the Promise.
-          setTimeout(() => { resolve(this.accessData) }, 100, {url, key})
-        }
-        socket.onerror = (evt) => {
-          console.error(`Error occured on WebChannel gate to ${url}. ${evt.type}`)
-        }
-        socket.onclose = (closeEvt) => {
-          if (closeEvt.code !== 1000) {
-            console.error(`WebChannel gate to ${url} has closed. ${closeEvt.code}: ${closeEvt.reason}`)
-            reject(closeEvt.reason)
-          }
-          this.onClose(closeEvt)
-        }
-        cBuilder.listenFromSignaling(socket, onChannel)
-      } catch (err) {
-        reject(err.message)
-      }
+          webRTCService.listenFromSignaling(ws, onChannel)
+        })
+        .catch(reject)
     })
   }
 
