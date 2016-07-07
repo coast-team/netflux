@@ -380,7 +380,8 @@ class WebChannel {
     return new Promise((resolve, reject) => {
       if (typeof window !== 'undefined') {
         let cBuilder = provide(WEBSOCKET, {host, port, addBotServer: true})
-        cBuilder.connectMeTo(this, -1).then((socket) => {
+        let url = 'ws://' + host + ':' + port
+        cBuilder.connect(url).then((socket) => {
           /*
             Once the connection open a message is sent to the server in order
             that he can join initiate the channel

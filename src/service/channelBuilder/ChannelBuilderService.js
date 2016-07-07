@@ -33,29 +33,44 @@ class ChannelBuilderService extends ServiceInterface {
     })
   }
 
+  onChannel (wc, channel, which_connector_asked, sender) {
+    if (!which_connector_asked) wc.initChannel(channel, false, sender)
+    else wc.connectMeToRequests.get(sender)(true, channel)
+  }
+
   onMessage (wc, channel, msg) {
     switch (msg.code) {
       case WHICH_CONNECTOR:
         let connectors = [WEBSOCKET]
         if (typeof window !== 'undefined') connectors.push(WEBRTC)
+
         wc.sendSrvMsg(this.name, msg.sender,
           {code: CONNECTOR, connectors, sender: wc.myId,
           host: wc.settings.host || '', port: wc.settings.port || 0, which_connector_asked: true})
         break
       case CONNECTOR:
         let availabled = msg.connectors
+
         let connector = WEBSOCKET
         if (typeof window !== 'undefined' && availabled.indexOf(WEBRTC) > -1) connector = WEBRTC
+
         let settings = Object.assign({}, wc.settings, {connector,
           host: msg.host, port: msg.port})
         let cBuilder = provide(connector, settings)
-        cBuilder.connectMeTo(wc, msg.sender)
-          .then((channel) => {
+
+        if (connector === WEBSOCKET){
+          let url = 'ws://' + msg.host + ':' + msg.port
+          cBuilder.connect(url).then((channel) => {
             channel.send(JSON.stringify({code: NEW_CHANNEL, sender: wc.myId, wcId: wc.id,
               which_connector_asked: msg.which_connector_asked}))
-            if (!msg.which_connector_asked) wc.initChannel(channel, false, msg.sender)
-            else wc.connectMeToRequests.get(msg.sender)(true, channel)
+            this.onChannel(wc, channel, msg.which_connector_asked, msg.sender)
           })
+        } else {
+          cBuilder.connectMeTo(wc, msg.sender)
+          .then((channel) => {
+            this.onChannel(wc, channel, msg.which_connector_asked, msg.sender)
+          })
+        }
         break
     }
   }

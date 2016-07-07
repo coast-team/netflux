@@ -1843,56 +1843,14 @@
     }
   }
 
-  const CONNECT_TIMEOUT$1 = 2000
-
-  class WebSocketService extends ChannelBuilderInterface {
+  class WebSocketService {
 
     constructor (options = {}) {
-      super()
       this.defaults = {
-        signaling: 'ws://localhost:8000',
-        iceServers: [
-          {urls: 'stun:23.21.150.121'},
-          {urls: 'stun:stun.l.google.com:19302'},
-          {urls: 'turn:numb.viagenie.ca', credential: 'webrtcdemo', username: 'louis%40mozilla.com'}
-        ],
-        addBotServer: false
+        host: '127.0.0.1',
+        port: 8080
       }
       this.settings = Object.assign({}, this.defaults, options)
-    }
-
-    /**
-     * Enables other clients to establish a connection with you.
-     *
-     * @abstract
-     * @param {string} key - The unique identifier which has to be passed to the
-     * peers who need to connect to you.
-     * @param {module:channelBuilder~Interface~onChannelCallback} onChannel - Callback
-     * function to execute once the connection has been established.
-     * @param {Object} [options] - Any other options which depend on the service implementation.
-     * @return {Promise} - Once resolved, provide an Object with `key` and `url`
-     * attributes to be passed to {@link module:channelBuilder~Interface#join} function.
-     * It is rejected if an error occured.
-     */
-    open (key, onChannel, options) {
-      return new Promise((resolve, reject) => {
-        reject('[TODO] {WebSocketService} open (key, onChannel, options)')
-      })
-    }
-
-    /**
-     * Connects you with the peer who provided the `key`.
-     *
-     * @abstract
-     * @param  {string} key - A key obtained from the peer who executed
-     * {@link module:channelBuilder~Interface#open} function.
-     * @param  {Object} [options] Any other options which depend on the implementation.
-     * @return {Promise} It is resolved when the connection is established, otherwise it is rejected.
-     */
-    join (key, options) {
-      return new Promise((resolve, reject) => {
-        reject('[TODO] {WebSocketService} join (key, options)')
-      })
     }
 
     /**
@@ -1902,8 +1860,11 @@
      */
     connect (url) {
       return new Promise((resolve, reject) => {
+        let WebSocket
+        if (typeof window === 'undefined') WebSocket = require('ws')
+        else WebSocket = window.WebSocket
         try {
-          let ws = new window.WebSocket(url)
+          let ws = new WebSocket(url)
           ws.onopen = () => resolve(ws)
           ws.onerror = (evt) => {
             console.error(`WebSocket with ${url}: ${evt.type}`)
@@ -1919,40 +1880,6 @@
       })
     }
 
-    /**
-     * Establish a connection between you and another peer (including joining peer) via web channel.
-     *
-     * @abstract
-     * @param  {WebChannel} wc - Web Channel through which the connection will be established.
-     * @param  {string} id - Peer id with whom you will be connected.
-     * @return {Promise} - Resolved once the connection has been established, rejected otherwise.
-     */
-    connectMeTo (wc, id) {
-      return new Promise((resolve, reject) => {
-        let socket
-        let WebSocket
-        if (typeof window === 'undefined') WebSocket = require('ws')
-        else WebSocket = window.WebSocket
-        try {
-          // Try to connect to the bot server
-          socket = new WebSocket('ws://' +
-            this.settings.host + ':' + this.settings.port)
-        } catch (err) {
-          reject(err.message)
-        }
-        socket.onopen = () => {
-          resolve(socket)
-        }
-        socket.onclose = () => {
-          reject('Connection with the WebSocket server closed')
-        }
-        setTimeout(reject, CONNECT_TIMEOUT$1, 'Timeout')
-      })
-    }
-
-    onMessage (wc, channel, msg) {
-      throw new Error('[TODO] {WebSocketService} connectMeTo (wc, id) [Resolves promises]')
-    }
   }
 
   const WHICH_CONNECTOR = 1
@@ -1987,29 +1914,44 @@
       })
     }
 
+    onChannel (wc, channel, which_connector_asked, sender) {
+      if (!which_connector_asked) wc.initChannel(channel, false, sender)
+      else wc.connectMeToRequests.get(sender)(true, channel)
+    }
+
     onMessage (wc, channel, msg) {
       switch (msg.code) {
         case WHICH_CONNECTOR:
           let connectors = [WEBSOCKET]
           if (typeof window !== 'undefined') connectors.push(WEBRTC)
+
           wc.sendSrvMsg(this.name, msg.sender,
             {code: CONNECTOR, connectors, sender: wc.myId,
             host: wc.settings.host || '', port: wc.settings.port || 0, which_connector_asked: true})
           break
         case CONNECTOR:
           let availabled = msg.connectors
+
           let connector = WEBSOCKET
           if (typeof window !== 'undefined' && availabled.indexOf(WEBRTC) > -1) connector = WEBRTC
+
           let settings = Object.assign({}, wc.settings, {connector,
             host: msg.host, port: msg.port})
           let cBuilder = provide(connector, settings)
-          cBuilder.connectMeTo(wc, msg.sender)
-            .then((channel) => {
+
+          if (connector === WEBSOCKET){
+            let url = 'ws://' + msg.host + ':' + msg.port
+            cBuilder.connect(url).then((channel) => {
               channel.send(JSON.stringify({code: NEW_CHANNEL, sender: wc.myId, wcId: wc.id,
                 which_connector_asked: msg.which_connector_asked}))
-              if (!msg.which_connector_asked) wc.initChannel(channel, false, msg.sender)
-              else wc.connectMeToRequests.get(msg.sender)(true, channel)
+              this.onChannel(wc, channel, msg.which_connector_asked, msg.sender)
             })
+          } else {
+            cBuilder.connectMeTo(wc, msg.sender)
+            .then((channel) => {
+              this.onChannel(wc, channel, msg.which_connector_asked, msg.sender)
+            })
+          }
           break
       }
     }
@@ -2868,7 +2810,8 @@
       return new Promise((resolve, reject) => {
         if (typeof window !== 'undefined') {
           let cBuilder = provide(WEBSOCKET, {host, port, addBotServer: true})
-          cBuilder.connectMeTo(this, -1).then((socket) => {
+          let url = 'ws://' + host + ':' + port
+          cBuilder.connect(url).then((socket) => {
             /*
               Once the connection open a message is sent to the server in order
               that he can join initiate the channel
