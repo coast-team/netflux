@@ -19,7 +19,7 @@ describe('3 peers -> ', () => {
         wc1.send(msg1)
       } else done.fail()
     }
-    wc1.openForJoining().then((data) => {
+    wc1.open().then((data) => {
       // Peer #2
       wc2 = new WebChannel({signaling})
       wc2.onMessage = (id, msg) => {

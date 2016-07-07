@@ -31,7 +31,7 @@ describe('1 bot -> ', () => {
     }
 
     wcArray[0].addBotServer(host, port).then(() => {
-      wcArray[0].openForJoining().then((data) => {
+      wcArray[0].open().then((data) => {
         addPeer(data, 1)
       }).catch(done.fail)
     }).catch(done.fail)

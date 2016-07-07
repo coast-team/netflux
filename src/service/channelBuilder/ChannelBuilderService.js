@@ -33,8 +33,8 @@ class ChannelBuilderService extends ServiceInterface {
     })
   }
 
-  onChannel (wc, channel, which_connector_asked, sender) {
-    if (!which_connector_asked) wc.initChannel(channel, false, sender)
+  onChannel (wc, channel, whichConnectorAsked, sender) {
+    if (!whichConnectorAsked) wc.initChannel(channel, false, sender)
     else wc.connectMeToRequests.get(sender)(true, channel)
   }
 
@@ -58,7 +58,7 @@ class ChannelBuilderService extends ServiceInterface {
           host: msg.host, port: msg.port})
         let cBuilder = provide(connector, settings)
 
-        if (connector === WEBSOCKET){
+        if (connector === WEBSOCKET) {
           let url = 'ws://' + msg.host + ':' + msg.port
           cBuilder.connect(url).then((channel) => {
             channel.send(JSON.stringify({code: NEW_CHANNEL, sender: wc.myId, wcId: wc.id,
@@ -66,7 +66,7 @@ class ChannelBuilderService extends ServiceInterface {
             this.onChannel(wc, channel, msg.which_connector_asked, msg.sender)
           })
         } else {
-          cBuilder.connectMeTo(wc, msg.sender)
+          cBuilder.connectOverWebChannel(wc, msg.sender)
           .then((channel) => {
             this.onChannel(wc, channel, msg.which_connector_asked, msg.sender)
           })

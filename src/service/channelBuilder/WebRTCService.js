@@ -131,77 +131,83 @@ class WebRTCService extends ChannelBuilderInterface {
     this.settings = Object.assign({}, this.defaults, options)
   }
 
-  open (key, onChannel, options = {}) {
-    let settings = Object.assign({}, this.settings, options)
+  onMessage (wc, ch, msg) {
+    let connections = this.getPendingConnections(wc)
+    connections.add(msg.sender)
+    if ('offer' in msg) {
+      this.createPeerConnectionAndAnswer(
+        (candidate) => wc.sendSrvMsg(this.name, msg.sender,
+          {sender: wc.myId, candidate}),
+        (answer) => wc.sendSrvMsg(this.name, msg.sender,
+          {sender: wc.myId, answer}),
+        (channel) => {
+          wc.initChannel(channel, false, msg.sender)
+          connections.remove(channel.peerId)
+        },
+        msg.offer
+      ).then((pc) => {
+        connections.setPC(msg.sender, pc)
+      })
+    } if ('answer' in msg) {
+      connections.getPC(msg.sender)
+        .setRemoteDescription(msg.answer)
+        .catch((err) => console.error(`Set answer: ${err.message}`))
+    } else if ('candidate' in msg) {
+      connections.addIceCandidate(msg.sender, new RTCIceCandidate(msg.candidate))
+        .catch((err) => { console.error(`Add ICE candidate: ${err.message}`) })
+    }
+  }
+
+  connectOverWebChannel (wc, id) {
     return new Promise((resolve, reject) => {
-      let connections = new RTCPendingConnections()
-      let socket
-      try {
-        socket = new window.WebSocket(settings.signaling)
-      } catch (err) {
-        reject(err.message)
-      }
-      // Send a message to signaling server: ready to receive offer
-      socket.onopen = () => {
-        try {
-          socket.send(JSON.stringify({key}))
-        } catch (err) {
-          reject(err.message)
+      let sender = wc.myId
+      let connections = this.getPendingConnections(wc)
+      connections.add(id)
+      this.createPeerConnectionAndOffer(
+        (candidate) => wc.sendSrvMsg(this.name, id, {sender, candidate}),
+        (offer) => wc.sendSrvMsg(this.name, id, {sender, offer}),
+        (channel) => {
+          connections.remove(id)
+          resolve(channel)
         }
-        // TODO: find a better solution than setTimeout. This is for the case when the key already exists and thus the server will close the socket, but it will close it after this function resolves the Promise.
-        setTimeout(resolve, 100, {key, url: settings.signaling, socket})
-      }
-      socket.onmessage = (evt) => {
-        let msg = JSON.parse(evt.data)
-        if (!('id' in msg) || !('data' in msg)) {
-          console.error('Unknown message from the signaling server: ' + evt.data)
-          socket.close()
-          return
-        }
-        connections.add(msg.id)
-        if ('offer' in msg.data) {
-          this.createPeerConnectionAndAnswer(
-              (candidate) => socket.send(JSON.stringify({id: msg.id, data: {candidate}})),
-              (answer) => socket.send(JSON.stringify({id: msg.id, data: {answer}})),
-              onChannel,
-              msg.data.offer
-            ).then((pc) => connections.setPC(msg.id, pc))
-            .catch((err) => {
-              console.error(`Answer generation failed: ${err.message}`)
-            })
-        } else if ('candidate' in msg.data) {
-          connections.addIceCandidate(msg.id, new RTCIceCandidate(msg.data.candidate))
-            .catch((err) => {
-              console.error(`Adding ice candidate failed: ${err.message}`)
-            })
-        }
-      }
-      socket.onclose = (closeEvt) => {
-        if (closeEvt.code !== 1000) {
-          console.error(`Socket with signaling server ${settings.signaling} has been closed with code ${closeEvt.code}: ${closeEvt.reason}`)
-          reject(closeEvt.reason)
-        }
-      }
+      ).then((pc) => connections.setPC(id, pc))
+      setTimeout(reject, CONNECT_TIMEOUT, 'connectMeTo timeout')
     })
   }
 
-  join (key, options = {}) {
-    let settings = Object.assign({}, this.settings, options)
+  listenFromSignaling (ws, onChannel) {
+    let connections = new RTCPendingConnections()
+    ws.onmessage = (evt) => {
+      let msg = JSON.parse(evt.data)
+      if (!('id' in msg) || !('data' in msg)) {
+        console.error('Unknown message from the signaling server: ', evt.data)
+        ws.close()
+        return
+      }
+      connections.add(msg.id)
+      if ('offer' in msg.data) {
+        this.createPeerConnectionAndAnswer(
+            (candidate) => ws.send(JSON.stringify({id: msg.id, data: {candidate}})),
+            (answer) => ws.send(JSON.stringify({id: msg.id, data: {answer}})),
+            onChannel,
+            msg.data.offer
+          ).then((pc) => connections.setPC(msg.id, pc))
+          .catch((err) => {
+            console.error(`Answer generation failed: ${err.message}`)
+          })
+      } else if ('candidate' in msg.data) {
+        connections.addIceCandidate(msg.id, new RTCIceCandidate(msg.data.candidate))
+          .catch((err) => {
+            console.error(`Adding ice candidate failed: ${err.message}`)
+          })
+      }
+    }
+  }
+
+  connectOverSignaling (ws, key, options = {}) {
     return new Promise((resolve, reject) => {
       let pc
-      // Connect to the signaling server
-      let socket = new WebSocket(settings.signaling)
-      socket.onopen = () => {
-        // Prepare and send offer
-        this.createPeerConnectionAndOffer(
-            (candidate) => socket.send(JSON.stringify({data: {candidate}})),
-            (offer) => socket.send(JSON.stringify({join: key, data: {offer}})),
-            resolve
-          )
-          .then((peerConnection) => { pc = peerConnection })
-          .catch(reject)
-      }
-      socket.onmessage = (evt) => {
+      ws.onmessage = (evt) => {
         try {
           let msg = JSON.parse(evt.data)
           // Check message format
@@ -230,59 +236,14 @@ class WebRTCService extends ChannelBuilderInterface {
           reject(err.message)
         }
       }
-      socket.onerror = (evt) => {
-        reject('WebSocket with signaling server error: ' + evt.message)
-      }
-      socket.onclose = (closeEvt) => {
-        if (closeEvt.code !== 1000) {
-          reject(`Socket with signaling server ${settings.signaling} has been closed with code ${closeEvt.code}: ${closeEvt.reason}`)
-        }
-      }
-    })
-  }
-
-  connectMeTo (wc, id) {
-    return new Promise((resolve, reject) => {
-      let sender = wc.myId
-      let connections = this.getPendingConnections(wc)
-      connections.add(id)
       this.createPeerConnectionAndOffer(
-        (candidate) => wc.sendSrvMsg(this.name, id, {sender, candidate}),
-        (offer) => wc.sendSrvMsg(this.name, id, {sender, offer}),
-        (channel) => {
-          connections.remove(id)
-          resolve(channel)
-        }
-      ).then((pc) => connections.setPC(id, pc))
-      setTimeout(reject, CONNECT_TIMEOUT, 'connectMeTo timeout')
+          (candidate) => ws.send(JSON.stringify({data: {candidate}})),
+          (offer) => ws.send(JSON.stringify({join: key, data: {offer}})),
+          resolve
+        )
+        .then((peerConnection) => { pc = peerConnection })
+        .catch(reject)
     })
-  }
-
-  onMessage (wc, channel, msg) {
-    let connections = this.getPendingConnections(wc)
-    connections.add(msg.sender)
-    if ('offer' in msg) {
-      this.createPeerConnectionAndAnswer(
-        (candidate) => wc.sendSrvMsg(this.name, msg.sender,
-          {sender: wc.myId, candidate}),
-        (answer) => wc.sendSrvMsg(this.name, msg.sender,
-          {sender: wc.myId, answer}),
-        (channel) => {
-          wc.initChannel(channel, false, msg.sender)
-          connections.remove(channel.peerId)
-        },
-        msg.offer
-      ).then((pc) => {
-        connections.setPC(msg.sender, pc)
-      })
-    } if ('answer' in msg) {
-      connections.getPC(msg.sender)
-        .setRemoteDescription(msg.answer)
-        .catch((err) => console.error(`Set answer: ${err.message}`))
-    } else if ('candidate' in msg) {
-      connections.addIceCandidate(msg.sender, new RTCIceCandidate(msg.candidate))
-        .catch((err) => { console.error(`Add ICE candidate: ${err.message}`) })
-    }
   }
 
   /**

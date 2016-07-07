@@ -1597,77 +1597,83 @@
       this.settings = Object.assign({}, this.defaults, options)
     }
 
-    open (key, onChannel, options = {}) {
-      let settings = Object.assign({}, this.settings, options)
+    onMessage (wc, ch, msg) {
+      let connections = this.getPendingConnections(wc)
+      connections.add(msg.sender)
+      if ('offer' in msg) {
+        this.createPeerConnectionAndAnswer(
+          (candidate) => wc.sendSrvMsg(this.name, msg.sender,
+            {sender: wc.myId, candidate}),
+          (answer) => wc.sendSrvMsg(this.name, msg.sender,
+            {sender: wc.myId, answer}),
+          (channel) => {
+            wc.initChannel(channel, false, msg.sender)
+            connections.remove(channel.peerId)
+          },
+          msg.offer
+        ).then((pc) => {
+          connections.setPC(msg.sender, pc)
+        })
+      } if ('answer' in msg) {
+        connections.getPC(msg.sender)
+          .setRemoteDescription(msg.answer)
+          .catch((err) => console.error(`Set answer: ${err.message}`))
+      } else if ('candidate' in msg) {
+        connections.addIceCandidate(msg.sender, new RTCIceCandidate(msg.candidate))
+          .catch((err) => { console.error(`Add ICE candidate: ${err.message}`) })
+      }
+    }
+
+    connectOverWebChannel (wc, id) {
       return new Promise((resolve, reject) => {
-        let connections = new RTCPendingConnections()
-        let socket
-        try {
-          socket = new window.WebSocket(settings.signaling)
-        } catch (err) {
-          reject(err.message)
-        }
-        // Send a message to signaling server: ready to receive offer
-        socket.onopen = () => {
-          try {
-            socket.send(JSON.stringify({key}))
-          } catch (err) {
-            reject(err.message)
+        let sender = wc.myId
+        let connections = this.getPendingConnections(wc)
+        connections.add(id)
+        this.createPeerConnectionAndOffer(
+          (candidate) => wc.sendSrvMsg(this.name, id, {sender, candidate}),
+          (offer) => wc.sendSrvMsg(this.name, id, {sender, offer}),
+          (channel) => {
+            connections.remove(id)
+            resolve(channel)
           }
-          // TODO: find a better solution than setTimeout. This is for the case when the key already exists and thus the server will close the socket, but it will close it after this function resolves the Promise.
-          setTimeout(resolve, 100, {key, url: settings.signaling, socket})
-        }
-        socket.onmessage = (evt) => {
-          let msg = JSON.parse(evt.data)
-          if (!('id' in msg) || !('data' in msg)) {
-            console.error('Unknown message from the signaling server: ' + evt.data)
-            socket.close()
-            return
-          }
-          connections.add(msg.id)
-          if ('offer' in msg.data) {
-            this.createPeerConnectionAndAnswer(
-                (candidate) => socket.send(JSON.stringify({id: msg.id, data: {candidate}})),
-                (answer) => socket.send(JSON.stringify({id: msg.id, data: {answer}})),
-                onChannel,
-                msg.data.offer
-              ).then((pc) => connections.setPC(msg.id, pc))
-              .catch((err) => {
-                console.error(`Answer generation failed: ${err.message}`)
-              })
-          } else if ('candidate' in msg.data) {
-            connections.addIceCandidate(msg.id, new RTCIceCandidate(msg.data.candidate))
-              .catch((err) => {
-                console.error(`Adding ice candidate failed: ${err.message}`)
-              })
-          }
-        }
-        socket.onclose = (closeEvt) => {
-          if (closeEvt.code !== 1000) {
-            console.error(`Socket with signaling server ${settings.signaling} has been closed with code ${closeEvt.code}: ${closeEvt.reason}`)
-            reject(closeEvt.reason)
-          }
-        }
+        ).then((pc) => connections.setPC(id, pc))
+        setTimeout(reject, CONNECT_TIMEOUT, 'connectMeTo timeout')
       })
     }
 
-    join (key, options = {}) {
-      let settings = Object.assign({}, this.settings, options)
+    listenFromSignaling (ws, onChannel) {
+      let connections = new RTCPendingConnections()
+      ws.onmessage = (evt) => {
+        let msg = JSON.parse(evt.data)
+        if (!('id' in msg) || !('data' in msg)) {
+          console.error('Unknown message from the signaling server: ', evt.data)
+          ws.close()
+          return
+        }
+        connections.add(msg.id)
+        if ('offer' in msg.data) {
+          this.createPeerConnectionAndAnswer(
+              (candidate) => ws.send(JSON.stringify({id: msg.id, data: {candidate}})),
+              (answer) => ws.send(JSON.stringify({id: msg.id, data: {answer}})),
+              onChannel,
+              msg.data.offer
+            ).then((pc) => connections.setPC(msg.id, pc))
+            .catch((err) => {
+              console.error(`Answer generation failed: ${err.message}`)
+            })
+        } else if ('candidate' in msg.data) {
+          connections.addIceCandidate(msg.id, new RTCIceCandidate(msg.data.candidate))
+            .catch((err) => {
+              console.error(`Adding ice candidate failed: ${err.message}`)
+            })
+        }
+      }
+    }
+
+    connectOverSignaling (ws, key, options = {}) {
       return new Promise((resolve, reject) => {
         let pc
-        // Connect to the signaling server
-        let socket = new WebSocket(settings.signaling)
-        socket.onopen = () => {
-          // Prepare and send offer
-          this.createPeerConnectionAndOffer(
-              (candidate) => socket.send(JSON.stringify({data: {candidate}})),
-              (offer) => socket.send(JSON.stringify({join: key, data: {offer}})),
-              resolve
-            )
-            .then((peerConnection) => { pc = peerConnection })
-            .catch(reject)
-        }
-        socket.onmessage = (evt) => {
+        ws.onmessage = (evt) => {
           try {
             let msg = JSON.parse(evt.data)
             // Check message format
@@ -1696,59 +1702,14 @@
             reject(err.message)
           }
         }
-        socket.onerror = (evt) => {
-          reject('WebSocket with signaling server error: ' + evt.message)
-        }
-        socket.onclose = (closeEvt) => {
-          if (closeEvt.code !== 1000) {
-            reject(`Socket with signaling server ${settings.signaling} has been closed with code ${closeEvt.code}: ${closeEvt.reason}`)
-          }
-        }
-      })
-    }
-
-    connectMeTo (wc, id) {
-      return new Promise((resolve, reject) => {
-        let sender = wc.myId
-        let connections = this.getPendingConnections(wc)
-        connections.add(id)
         this.createPeerConnectionAndOffer(
-          (candidate) => wc.sendSrvMsg(this.name, id, {sender, candidate}),
-          (offer) => wc.sendSrvMsg(this.name, id, {sender, offer}),
-          (channel) => {
-            connections.remove(id)
-            resolve(channel)
-          }
-        ).then((pc) => connections.setPC(id, pc))
-        setTimeout(reject, CONNECT_TIMEOUT, 'connectMeTo timeout')
+            (candidate) => ws.send(JSON.stringify({data: {candidate}})),
+            (offer) => ws.send(JSON.stringify({join: key, data: {offer}})),
+            resolve
+          )
+          .then((peerConnection) => { pc = peerConnection })
+          .catch(reject)
       })
-    }
-
-    onMessage (wc, channel, msg) {
-      let connections = this.getPendingConnections(wc)
-      connections.add(msg.sender)
-      if ('offer' in msg) {
-        this.createPeerConnectionAndAnswer(
-          (candidate) => wc.sendSrvMsg(this.name, msg.sender,
-            {sender: wc.myId, candidate}),
-          (answer) => wc.sendSrvMsg(this.name, msg.sender,
-            {sender: wc.myId, answer}),
-          (channel) => {
-            wc.initChannel(channel, false, msg.sender)
-            connections.remove(channel.peerId)
-          },
-          msg.offer
-        ).then((pc) => {
-          connections.setPC(msg.sender, pc)
-        })
-      } if ('answer' in msg) {
-        connections.getPC(msg.sender)
-          .setRemoteDescription(msg.answer)
-          .catch((err) => console.error(`Set answer: ${err.message}`))
-      } else if ('candidate' in msg) {
-        connections.addIceCandidate(msg.sender, new RTCIceCandidate(msg.candidate))
-          .catch((err) => { console.error(`Add ICE candidate: ${err.message}`) })
-      }
     }
 
     /**
@@ -1914,8 +1875,8 @@
       })
     }
 
-    onChannel (wc, channel, which_connector_asked, sender) {
-      if (!which_connector_asked) wc.initChannel(channel, false, sender)
+    onChannel (wc, channel, whichConnectorAsked, sender) {
+      if (!whichConnectorAsked) wc.initChannel(channel, false, sender)
       else wc.connectMeToRequests.get(sender)(true, channel)
     }
 
@@ -1939,7 +1900,7 @@
             host: msg.host, port: msg.port})
           let cBuilder = provide(connector, settings)
 
-          if (connector === WEBSOCKET){
+          if (connector === WEBSOCKET) {
             let url = 'ws://' + msg.host + ':' + msg.port
             cBuilder.connect(url).then((channel) => {
               channel.send(JSON.stringify({code: NEW_CHANNEL, sender: wc.myId, wcId: wc.id,
@@ -1947,7 +1908,7 @@
               this.onChannel(wc, channel, msg.which_connector_asked, msg.sender)
             })
           } else {
-            cBuilder.connectMeTo(wc, msg.sender)
+            cBuilder.connectOverWebChannel(wc, msg.sender)
             .then((channel) => {
               this.onChannel(wc, channel, msg.which_connector_asked, msg.sender)
             })
@@ -2432,6 +2393,141 @@
     }
   }
 
+  /**
+   * This class represents a door of the *WebChannel* for this peer. If the door
+   * is open, then clients can join the *WebChannel* through this peer, otherwise
+   * they cannot.
+   */
+  class WebChannelGate {
+
+    /**
+     * When the *WebChannel* is open, any clients should you this data to join
+     * the *WebChannel*.
+     * @typedef {Object} WebChannelGate~AccessData
+     * @property {string} key - The unique key to join the *WebChannel*
+     * @property {string} url - Signaling server url
+     */
+
+    /**
+     * @typedef {Object} WebChannelGate~AccessData
+     * @property {string} key - The unique key to join the *WebChannel*
+     * @property {string} url - Signaling server url
+     */
+
+    /**
+     * @param {WebChannelGate~onClose} onClose - close event handler
+     */
+    constructor (onClose) {
+      /**
+       * Web socket which holds the connection with the signaling server.
+       * @private
+       * @type {external:WebSocket}
+       */
+      this.socket = null
+
+      /**
+       * // TODO: add doc
+       * @private
+       * @type {WebChannelGate~AccessData}
+       */
+      this.accessData = {}
+
+      /**
+       * Close event handler.
+       * @private
+       * @type {WebChannelGate~onClose}
+       */
+      this.onClose = onClose
+    }
+
+    /**
+     * Get access data.
+     * @returns {WebChannelGate~AccessData|null} - Returns access data if the door
+     * is opened and *null* if it closed
+     */
+    getAccessData () {
+      return this.accessData
+    }
+
+    /**
+     * Open the door.
+     * @param {external:WebSocket} socket - Web socket to signalign server
+     * @param {WebChannelGate~AccessData} accessData - Access data to join the
+     * *WebChannel
+     */
+    open (onChannel, url) {
+      return new Promise((resolve, reject) => {
+        let cBuilder = provide(WEBRTC)
+        let key = this.generateKey()
+        try {
+          let socket = new window.WebSocket(url)
+          socket.onopen = () => {
+            this.socket = socket
+            this.accessData.key = key
+            this.accessData.url = url
+            try {
+              socket.send(JSON.stringify({key}))
+            } catch (err) {
+              reject(err.message)
+            }
+            // TODO: find a better solution than setTimeout. This is for the case when the key already exists and thus the server will close the socket, but it will close it after this function resolves the Promise.
+            setTimeout(() => { resolve(this.accessData) }, 100, {url, key})
+          }
+          socket.onerror = (evt) => {
+            console.error(`Error occured on WebChannel gate to ${url}. ${evt.type}`)
+          }
+          socket.onclose = (closeEvt) => {
+            if (closeEvt.code !== 1000) {
+              console.error(`WebChannel gate to ${url} has closed. ${closeEvt.code}: ${closeEvt.reason}`)
+              reject(closeEvt.reason)
+            }
+            this.onClose(closeEvt)
+          }
+          cBuilder.listenFromSignaling(socket, onChannel)
+        } catch (err) {
+          reject(err.message)
+        }
+      })
+    }
+
+    /**
+     * Check if the door is opened or closed.
+     * @returns {boolean} - Returns true if the door is opened and false if it is
+     * closed
+     */
+    isOpen () {
+      return this.socket !== null && this.socket.readyState === WebSocket.OPEN
+    }
+
+    /**
+     * Close the door if it is open and do nothing if it is closed already.
+     */
+    close () {
+      if (this.isOpen()) {
+        this.socket.close()
+        this.socket = null
+      }
+    }
+
+    /**
+     * Generate random key which will be used to join the *WebChannel*.
+     * @private
+     * @returns {string} - Generated key
+     */
+    generateKey () {
+      const MIN_LENGTH = 5
+      const DELTA_LENGTH = 0
+      const MASK = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+      let result = ''
+      const length = MIN_LENGTH + Math.round(Math.random() * DELTA_LENGTH)
+
+      for (let i = 0; i < length; i++) {
+        result += MASK[Math.round(Math.random() * (MASK.length - 1))]
+      }
+      return result
+    }
+  }
+
   const msgBuilder = provide(MESSAGE_BUILDER)
 
   /**
@@ -2521,91 +2617,11 @@
   const PONG = 12
 
   /**
-    * Constant used to send a message to the server in order that
-    * he can join the webcahnnel
-    * @type {string}
-    */
-  const ADD_BOT_SERVER$1 = 'addBotServer'
-
-  /**
-   * This class represents a door of the *WebChannel* for this peer. If the door
-   * is open, then clients can join the *WebChannel* through this peer, otherwise
-   * they cannot.
+   * Constant used to send a message to the server in order that
+   * he can join the webcahnnel
+   * @type {string}
    */
-  class WebChannelGate {
-
-    /**
-     * @typedef {Object} WebChannelGate~AccessData
-     * @property {string} key - The unique key to join the *WebChannel*
-     * @property {string} url - Signaling server url
-     */
-
-    /**
-     * @param {WebChannelGate~onClose} onClose - close event handler
-     */
-    constructor (onCloseHandler) {
-      /**
-       * Web socket which holds the connection with the signaling server.
-       * @private
-       * @type {external:WebSocket}
-       */
-      this.door = null
-
-      /**
-       * Web socket which holds the connection with the signaling server.
-       * @private
-       * @type {WebChannel~AccessData}
-       */
-      this.accessData = null
-
-      /**
-       * Close event handler.
-       * @private
-       * @type {WebChannelGate~onClose}
-       */
-      this.onCloseHandler = onCloseHandler
-    }
-
-    /**
-     * Get access data.
-     * @returns {WebChannel~AccessData|null} - Returns access data if the door
-     * is opened and *null* if it closed
-     */
-    getAccessData () {
-      return this.accessData
-    }
-
-    /**
-     * Check if the door is opened or closed.
-     * @returns {boolean} - Returns true if the door is opened and false if it is
-     * closed
-     */
-    isOpen () {
-      return this.door !== null
-    }
-
-    /**
-     * Open the door.
-     * @param {external:WebSocket} door - Web socket to signalign server
-     * @param {WebChannel~AccessData} accessData - Access data to join the
-     * *WebChannel
-     */
-    setOpen (door, accessData) {
-      this.door = door
-      this.door.onclose = this.onCloseHandler
-      this.accessData = accessData
-    }
-
-    /**
-     * Close the door if it is open and do nothing if it is closed already.
-     */
-    close () {
-      if (this.isOpen()) {
-        this.door.close()
-        this.door = null
-      }
-    }
-  }
+  const ADD_BOT_SERVER$1 = 'addBotServer'
 
   /**
    * This class is an API starting point. It represents a group of collaborators
@@ -2638,7 +2654,8 @@
     constructor (options = {}) {
       this.defaults = {
         connector: WEBRTC,
-        topology: FULLY_CONNECTED
+        topology: FULLY_CONNECTED,
+        signaling: 'ws://sigver-coastteam.rhcloud.com:8000'
       }
       this.settings = Object.assign({}, this.defaults, options)
 
@@ -2754,18 +2771,12 @@
      * @returns {Promise} It is resolved once the *WebChannel* is open. The
      * callback function take a parameter of type {@link WebChannel~AccessData}.
      */
-    openForJoining (options = {}) {
+    open (options = {}) {
       let settings = Object.assign({}, this.settings, options)
-
-      let cBuilder = provide(settings.connector, settings)
-      return cBuilder.open(this.generateKey(), (channel) => {
+      return this.gate.open((channel) => {
         this.initChannel(channel, false)
           .then((channel) => this.addChannel(channel))
-      }).then((data) => {
-        let accessData = {key: data.key, url: data.url}
-        this.gate.setOpen(data.socket, accessData)
-        return accessData
-      })
+      }, settings.signaling)
     }
 
     /**
@@ -2782,16 +2793,13 @@
       channel.send(msgBuilder.msg(JOIN_INIT, {
         manager: this.settings.topology,
         wcId: this.id,
-        myId: channel.peerId,
+        id: channel.peerId,
         intermediaryId: this.myId})
       )
       return this.manager.add(channel)
-        .then(() => {
-          channel.send(msgBuilder.msg(JOIN_FINILIZE))
-          // console.log('[DEBUG] Resolved manager.add(channel)')
-        })
+        .then(() => channel.send(msgBuilder.msg(JOIN_FINILIZE)))
         .catch((msg) => {
-          // console.log('[DEBUG] Catched manager.add(channel): ', msg)
+          console.log('CATCH addChannel')
           this.manager.broadcast(this, msgBuilder.msg(
             REMOVE_NEW_MEMBER, {id: channel.peerId})
           )
@@ -2850,7 +2858,7 @@
     /**
      * Prevent clients to join the `WebChannel` even if they possesses a key.
      */
-    closeForJoining () {
+    close () {
       this.gate.close()
     }
 
@@ -2864,6 +2872,17 @@
     }
 
     /**
+     * Get the data which should be provided to all clients who must join
+     * the *WebChannel*. It is the same data which
+     * {@link WebChannel#openForJoining} callback function provides.
+     * @returns {WebChannel~AccessData|null} - Data to join the *WebChannel*
+     * or null is the *WebChannel* is closed
+     */
+    getAccess () {
+      return this.gate.getAccessData()
+    }
+
+    /**
      * Join the *WebChannel*.
      * @param  {string} key - The key provided by one of the *WebChannel* members.
      * @param  {type} [options] - Any available connection service options.
@@ -2871,12 +2890,24 @@
      */
     join (key, options = {}) {
       let settings = Object.assign({}, this.settings, options)
-      let cBuilder = provide(settings.connector, settings)
+      let cBuilder = provide(this.settings.connector)
       return new Promise((resolve, reject) => {
         this.onJoin = () => resolve(this)
-        cBuilder.join(key)
-          .then((channel) => this.initChannel(channel, true))
-          .catch(reject)
+        let socket = new window.WebSocket(settings.signaling)
+        socket.onopen = () => {
+          cBuilder.connectOverSignaling(socket, key)
+            .then((channel) => this.initChannel(channel, true))
+            .catch(reject)
+        }
+        socket.onerror = (evt) => {
+          console.error(`Error occured on WebChannel gate to ${settings.signaling}. ${evt.type}`)
+        }
+        socket.onclose = (closeEvt) => {
+          if (closeEvt.code !== 1000) {
+            console.error(`WebChannel gate to ${settings.signaling} has closed. ${closeEvt.code}: ${closeEvt.reason}`)
+            reject(closeEvt.reason)
+          }
+        }
       })
     }
 
@@ -2919,17 +2950,6 @@
           this.manager.sendTo(id, this, dataChunk)
         }, false)
       }
-    }
-
-    /**
-     * Get the data which should be provided to all clients who must join
-     * the *WebChannel*. It is the same data which
-     * {@link WebChannel#openForJoining} callback function provides.
-     * @returns {WebChannel~AccessData|null} - Data to join the *WebChannel*
-     * or null is the *WebChannel* is closed
-     */
-    getAccess () {
-      return this.gate.getAccessData()
     }
 
     /**
@@ -3034,10 +3054,10 @@
             break
           case JOIN_INIT:
             this.topology = msg.manager
+            this.myId = msg.id
             this.id = msg.wcId
-            this.myId = msg.myId
             channel.peerId = msg.intermediaryId
-            this.addJoiningPeer(this.myId, msg.intermediaryId, channel)
+            this.addJoiningPeer(msg.id, msg.intermediaryId, channel)
             break
           case JOIN_NEW_MEMBER:
             this.addJoiningPeer(msg.id, msg.intermediaryId)
@@ -3251,25 +3271,6 @@
       }
       return false
     }
-
-    /**
-     * Generate random key which will be used to join the *WebChannel*.
-     * @private
-     * @returns {string} - Generated key
-     */
-    generateKey () {
-      const MIN_LENGTH = 5
-      const DELTA_LENGTH = 0
-      const MASK = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-      let result = ''
-      const length = MIN_LENGTH + Math.round(Math.random() * DELTA_LENGTH)
-
-      for (let i = 0; i < length; i++) {
-        result += MASK[Math.round(Math.random() * (MASK.length - 1))]
-      }
-      return result
-    }
-
     /**
      * Generate random id for a *WebChannel* or a new peer.
      * @private

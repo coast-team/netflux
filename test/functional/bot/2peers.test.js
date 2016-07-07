@@ -24,7 +24,7 @@ describe('1 bot -> ', () => {
     }
 
     wc1.addBotServer(host, port).then(() => {
-      wc1.openForJoining().then((data) => {
+      wc1.open().then((data) => {
         wc2.join(data.key).catch(done.fail)
       }).catch(done.fail)
     }).catch(done.fail)
@@ -59,7 +59,7 @@ describe('1 bot -> ', () => {
     }
 
     wc1.addBotServer(host, port).then(() => {
-      wc1.openForJoining().then((data) => {
+      wc1.open().then((data) => {
         wc2.join(data.key).then(() => {
           wc2.send(DEBUG_PING)
         }).catch(done.fail)
@@ -81,7 +81,7 @@ describe('1 bot -> ', () => {
       }
     }
 
-    wc1.openForJoining().then((data) => {
+    wc1.open().then((data) => {
       wc2.join(data.key).then(() => {
         wc1.addBotServer(host, port).then(() => {}).catch(done.fail)
       }).catch(done.fail)
@@ -102,7 +102,7 @@ describe('1 bot -> ', () => {
       }
     }
 
-    wc1.openForJoining().then((data) => {
+    wc1.open().then((data) => {
       wc2.join(data.key).then(() => {
         wc2.addBotServer(host, port).then(() => {}).catch(done.fail)
       }).catch(done.fail)

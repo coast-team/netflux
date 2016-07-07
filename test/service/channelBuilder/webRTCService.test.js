@@ -16,7 +16,7 @@ function randKey () {
   return result
 }
 
-describe('WebRTCService ->', () => {
+xdescribe('WebRTCService ->', () => {
   let webRTCService = new WebRTCService({signaling})
 
   it('Open: should succeed and return the provided key', (done) => {

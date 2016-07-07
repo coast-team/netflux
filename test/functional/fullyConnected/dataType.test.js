@@ -17,7 +17,7 @@ describe('Should send & receive (between 2 peers) -> ', () => {
     str = randString()
     // Peer #1
     wc1 = new WebChannel({signaling})
-    wc1.openForJoining().then((data) => {
+    wc1.open().then((data) => {
       // Peer #2
       wc2 = new WebChannel({signaling})
       wc2.join(data.key).then(() => {
