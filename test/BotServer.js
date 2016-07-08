@@ -1,15 +1,16 @@
 var host = '127.0.0.1'
-var port = 9000
+var port1 = 9000
+var port2 = 9001
 let netflux = require('../dist/netflux.es2015.umd.js')
 
 const DEBUG_PING = 'DEBUG_PING'
 const DEBUG_PONG = 'DEBUG_PONG'
 const DEBUG_KICK = 'DEBUG_KICK'
 
-let bot = new netflux.Bot()
-bot.listen({host, port, log: true})
+let bot1 = new netflux.Bot()
+bot1.listen({host, port: port1, log: true})
 
-bot.onWebChannel = (wc) => {
+bot1.onWebChannel = (wc) => {
   // bot.log('connected', 'Connected to the network')
   // bot.log('id', wc.myId)
 
@@ -24,26 +25,28 @@ bot.onWebChannel = (wc) => {
   wc.onMessage = (id, msg) => {
     // bot.log('message', '[From ' + id + '] ' + msg)
     if (msg === DEBUG_PING) wc.send(DEBUG_PONG)
-    if (msg === DEBUG_KICK) bot.leave(wc)
+    if (msg === DEBUG_KICK) bot1.leave(wc)
   }
 }
 
-bot.onLaunch = () => {
-  // bot.log('WebSocketServer', 'Server runs on: ws://' + host + ':' + port)
-}
+let bot2 = new netflux.Bot()
+bot2.listen({host, port: port2, log: true})
 
-bot.onConnection = () => {
-  // bot.log('connection', 'Connection of one client')
-}
+bot2.onWebChannel = (wc) => {
+  // bot.log('connected', 'Connected to the network')
+  // bot.log('id', wc.myId)
 
-bot.onAddRequest = () => {
-  // bot.log('add', 'Add request received')
-}
+  wc.onJoining = (id) => {
+    // bot.log('joining', 'Joinning of a new client [' + id + ']')
+  }
 
-bot.onNewChannelRequest = () => {
-  // bot.log('new_channel', 'New channel request received')
-}
+  wc.onLeaving = (id) => {
+    // bot.log('leaving', 'Leaving of client [' + id + ']')
+  }
 
-bot.onCodeError = () => {
-  // bot.log('error', 'Unknown code message')
+  wc.onMessage = (id, msg) => {
+    // bot.log('message', '[From ' + id + '] ' + msg)
+    if (msg === DEBUG_PING) wc.send(DEBUG_PONG)
+    if (msg === DEBUG_KICK) bot2.leave(wc)
+  }
 }

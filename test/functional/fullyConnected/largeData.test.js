@@ -37,7 +37,7 @@ describe('Large data -> ', () => {
       }
       startTime = Date.now()
       wc2.send(bigStr)
-    })
+    }, 10000)
   })
 
   function isEqual (buffer1, buffer2) {
