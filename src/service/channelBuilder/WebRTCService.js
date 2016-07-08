@@ -1,19 +1,20 @@
 import {ChannelBuilderInterface} from './channelBuilder'
 
-let WebSocket = {}
 let WebRTC = {}
 try {
   WebRTC = require('wrtc')
-  WebSocket = require('ws')
-} catch(e) {
+} catch (e) {
   console.log('require not done')
 }
 
-let RTCPeerConnection = WebRTC.RTCPeerConnection || window.RTCPeerConnection
-let RTCIceCandidate = WebRTC.RTCIceCandidate || window.RTCIceCandidate
-
-if (!WebRTC) {
-  WebSocket = window.WebSocket
+let RTCPeerConnection
+let RTCIceCandidate
+if (typeof window !== 'undefined') {
+  RTCPeerConnection = window.RTCPeerConnection
+  RTCIceCandidate = window.RTCIceCandidate
+} else {
+  RTCPeerConnection = WebRTC.RTCPeerConnection
+  RTCIceCandidate = WebRTC.RTCIceCandidate
 }
 
 /**
@@ -232,7 +233,7 @@ class WebRTCService extends ChannelBuilderInterface {
   connectOverSignaling (ws, key, options = {}) {
     return new Promise((resolve, reject) => {
       let pc
-      
+
       ws.onmessage = (evt) => {
         try {
           let msg = JSON.parse(evt.data)
