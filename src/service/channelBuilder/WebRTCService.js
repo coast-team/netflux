@@ -9,6 +9,12 @@ try {
   console.log('require not done')
 }
 
+let RTCPeerConnection = WebRTC.RTCPeerConnection || window.RTCPeerConnection
+let RTCIceCandidate = WebRTC.RTCIceCandidate || window.RTCIceCandidate
+
+if (!WebRTC) {
+  WebSocket = window.WebSocket
+}
 
 /**
  * Ice candidate event handler.
@@ -39,11 +45,11 @@ class RTCPendingConnections {
   constructor () {
     this.connections = new Map()
 
-    this.RTCPeerConnection = WebRTC.RTCPeerConnection || window.RTCPeerConnection
-    this.RTCIceCandidate = WebRTC.RTCIceCandidate || window.RTCIceCandidate
-    if (WebSocket === {}) {
-      WebSocket = window.WebSocket
-    }
+    // this.RTCPeerConnection = WebRTC.RTCPeerConnection || window.RTCPeerConnection
+    // this.RTCIceCandidate = WebRTC.RTCIceCandidate || window.RTCIceCandidate
+    // if (WebSocket === {}) {
+    //   WebSocket = window.WebSocket
+    // }
   }
 
   /**
@@ -338,6 +344,9 @@ class WebRTCService extends ChannelBuilderInterface {
    * @return {external:RTCPeerConnection} - Peer connection.
    */
   createPeerConnection (onCandidate) {
+    // let RTCPeerConnection = WebRTC.RTCPeerConnection || window.RTCPeerConnection
+    // let RTCIceCandidate = WebRTC.RTCIceCandidate || window.RTCIceCandidate
+
     let pc = new RTCPeerConnection({iceServers: this.settings.iceServers})
     pc.onicecandidate = (evt) => {
       if (evt.candidate !== null) {

@@ -1469,6 +1469,12 @@ try {
   console.log('require not done')
 }
 
+let RTCPeerConnection$1 = WebRTC.RTCPeerConnection || window.RTCPeerConnection
+let RTCIceCandidate$1 = WebRTC.RTCIceCandidate || window.RTCIceCandidate
+
+if (!WebRTC) {
+  WebSocket$1 = window.WebSocket
+}
 
 /**
  * Ice candidate event handler.
@@ -1499,11 +1505,11 @@ class RTCPendingConnections {
   constructor () {
     this.connections = new Map()
 
-    this.RTCPeerConnection = WebRTC.RTCPeerConnection || window.RTCPeerConnection
-    this.RTCIceCandidate = WebRTC.RTCIceCandidate || window.RTCIceCandidate
-    if (WebSocket$1 === {}) {
-      WebSocket$1 = window.WebSocket
-    }
+    // this.RTCPeerConnection = WebRTC.RTCPeerConnection || window.RTCPeerConnection
+    // this.RTCIceCandidate = WebRTC.RTCIceCandidate || window.RTCIceCandidate
+    // if (WebSocket === {}) {
+    //   WebSocket = window.WebSocket
+    // }
   }
 
   /**
@@ -1629,7 +1635,7 @@ class WebRTCService extends ChannelBuilderInterface {
         .setRemoteDescription(msg.answer)
         .catch((err) => console.error(`Set answer: ${err.message}`))
     } else if ('candidate' in msg) {
-      connections.addIceCandidate(msg.sender, new RTCIceCandidate(msg.candidate))
+      connections.addIceCandidate(msg.sender, new RTCIceCandidate$1(msg.candidate))
         .catch((err) => { console.error(`Add ICE candidate: ${err.message}`) })
     }
   }
@@ -1675,7 +1681,7 @@ class WebRTCService extends ChannelBuilderInterface {
             console.error(`Answer generation failed: ${err.message}`)
           })
       } else if ('candidate' in msg.data) {
-        connections.addIceCandidate(msg.id, new RTCIceCandidate(msg.data.candidate))
+        connections.addIceCandidate(msg.id, new RTCIceCandidate$1(msg.data.candidate))
           .catch((err) => {
             console.error(`Adding ice candidate failed: ${err.message}`)
           })
@@ -1702,7 +1708,7 @@ class WebRTCService extends ChannelBuilderInterface {
                 reject(err)
               })
           } else if ('candidate' in msg.data) {
-            pc.addIceCandidate(new RTCIceCandidate(msg.data.candidate))
+            pc.addIceCandidate(new RTCIceCandidate$1(msg.data.candidate))
               .catch((evt) => {
                 // This exception does not reject the current Promise, because
                 // still the connection may be established even without one or
@@ -1798,7 +1804,10 @@ class WebRTCService extends ChannelBuilderInterface {
    * @return {external:RTCPeerConnection} - Peer connection.
    */
   createPeerConnection (onCandidate) {
-    let pc = new RTCPeerConnection({iceServers: this.settings.iceServers})
+    // let RTCPeerConnection = WebRTC.RTCPeerConnection || window.RTCPeerConnection
+    // let RTCIceCandidate = WebRTC.RTCIceCandidate || window.RTCIceCandidate
+
+    let pc = new RTCPeerConnection$1({iceServers: this.settings.iceServers})
     pc.onicecandidate = (evt) => {
       if (evt.candidate !== null) {
         let candidate = {
