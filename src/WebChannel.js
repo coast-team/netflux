@@ -3,7 +3,7 @@ import Channel from './Channel'
 import JoiningPeer from './JoiningPeer'
 import WebChannelGate from './WebChannelGate'
 
-const msgBuilder = provide(MESSAGE_BUILDER)
+const msgBld = provide(MESSAGE_BUILDER)
 
 /**
  * Maximum identifier number for {@link WebChannel#generateId} function.
@@ -252,20 +252,17 @@ class WebChannel {
     */
   addChannel (channel) {
     let jp = this.addJoiningPeer(channel.peerId, this.myId, channel)
-    this.manager.broadcast(this, msgBuilder.msg(
-      JOIN_NEW_MEMBER, {id: channel.peerId, intermediaryId: this.myId})
-    )
-    channel.send(msgBuilder.msg(JOIN_INIT, {
-      manager: this.settings.topology,
-      wcId: this.id,
-      id: channel.peerId,
-      intermediaryId: this.myId})
+    this.manager.broadcast(this, msgBld.msg(JOIN_NEW_MEMBER, {newId: channel.peerId}))
+    channel.send(msgBld.msg(JOIN_INIT, {
+        manager: this.settings.topology,
+        wcId: this.id
+      }, channel.peerId)
     )
     return this.manager.add(channel)
-      .then(() => channel.send(msgBuilder.msg(JOIN_FINILIZE)))
+      .then(() => channel.send(msgBld.msg(JOIN_FINILIZE)))
       .catch((msg) => {
         console.log('CATCH addChannel')
-        this.manager.broadcast(this, msgBuilder.msg(
+        this.manager.broadcast(this, msgBld.msg(
           REMOVE_NEW_MEMBER, {id: channel.peerId})
         )
         this.removeJoiningPeer(jp.id)
@@ -374,7 +371,7 @@ class WebChannel {
    */
   leave () {
     if (this.channels.size !== 0) {
-      this.manager.broadcast(this, msgBuilder.msg(LEAVE, {id: this.myId}))
+      this.manager.broadcast(this, msgBld.msg(LEAVE))
       this.topology = this.settings.topology
       // this.channels.forEach((c) => {
       //   c.close()
@@ -391,7 +388,7 @@ class WebChannel {
    */
   send (data) {
     if (this.channels.size !== 0) {
-      msgBuilder.handleUserMessage(data, this.myId, null, (dataChunk) => {
+      msgBld.handleUserMessage(data, null, (dataChunk) => {
         this.manager.broadcast(this, dataChunk)
       })
     }
@@ -404,7 +401,7 @@ class WebChannel {
    */
   sendTo (id, data) {
     if (this.channels.size !== 0) {
-      msgBuilder.handleUserMessage(data, this.myId, id, (dataChunk) => {
+      msgBld.handleUserMessage(data, id, (dataChunk) => {
         this.manager.sendTo(id, this, dataChunk)
       }, false)
     }
@@ -422,7 +419,7 @@ class WebChannel {
         this.maxTime = 0
         this.pongNb = 0
         this.pingFinish = (delay) => { resolve(delay) }
-        this.manager.broadcast(this, msgBuilder.msg(PING, {senderId: this.myId}))
+        this.manager.broadcast(this, msgBld.msg(PING))
         setTimeout(() => { resolve(PING_TIMEOUT) }, PING_TIMEOUT)
       }
     })
@@ -443,8 +440,9 @@ class WebChannel {
   sendSrvMsg (serviceName, recepient, msg = {}, channel = null) {
     // console.log('[DEBUG] sendSrvMsg (serviceName, recepient, msg = {}, channel = null) (',
     // serviceName, ', ', recepient, ', ', msg, ', ', channel, ')')
-    let fullMsg = msgBuilder.msg(
-      SERVICE_DATA, {serviceName, recepient, data: Object.assign({}, msg)}
+    let fullMsg = msgBld.msg(
+      SERVICE_DATA, {serviceName, data: Object.assign({}, msg)},
+      recepient
     )
     if (channel !== null) {
       channel.send(fullMsg)
@@ -484,18 +482,19 @@ class WebChannel {
    * @param {external:ArrayBuffer} data - Message
    */
   onChannelMessage (channel, data) {
-    let header = msgBuilder.readHeader(data)
+    let header = msgBld.readHeader(data)
+    //console.log('ON CHANNEL MESSAGE:\n - code=' + header.code + '\n - sender=' + header.senderId + '\n - recepient=' + header.recepientId)
     // console.log('[DEBUG] {onChannelMessage} header: ', header)
     if (header.code === USER_DATA) {
-      msgBuilder.readUserMessage(this.id, header.senderId, data, (fullData, isBroadcast) => {
+      msgBld.readUserMessage(this.id, header.senderId, data, (fullData, isBroadcast) => {
         this.onMessage(header.senderId, fullData, isBroadcast)
       })
     } else {
-      let msg = msgBuilder.readInternalMessage(data)
+      let msg = msgBld.readInternalMessage(data)
       switch (header.code) {
         case LEAVE:
           for (let c of this.channels) {
-            if (c.peerId === msg.id) {
+            if (c.peerId === header.senderId) {
               c.close()
               this.channels.delete(c)
             }
@@ -504,43 +503,41 @@ class WebChannel {
           // this.onLeaving(msg.id)
           break
         case SERVICE_DATA:
-          if (this.myId === msg.recepient) {
+          if (this.myId === header.recepientId) {
             provide(msg.serviceName, this.settings).onMessage(this, channel, msg.data)
           } else {
-            this.sendSrvMsg(msg.serviceName, msg.recepient, msg.data)
+            this.sendSrvMsg(msg.serviceName, header.recepientId, msg.data)
           }
           break
         case JOIN_INIT:
           this.topology = msg.manager
-          this.myId = msg.id
+          this.myId = header.recepientId
           this.id = msg.wcId
-          channel.peerId = msg.intermediaryId
-          this.addJoiningPeer(msg.id, msg.intermediaryId, channel)
+          channel.peerId = header.senderId
+          this.addJoiningPeer(this.myId, header.senderId, channel)
           break
         case JOIN_NEW_MEMBER:
-          this.addJoiningPeer(msg.id, msg.intermediaryId)
+          this.addJoiningPeer(msg.newId, header.senderId)
           break
         case REMOVE_NEW_MEMBER:
           this.removeJoiningPeer(msg.id)
           break
         case JOIN_FINILIZE:
           this.joinSuccess(this.myId)
-          // console.log(this.myId + ' JOINED SUCCESSFULLY')
-          this.manager.broadcast(this, msgBuilder.msg(JOIN_SUCCESS, {id: this.myId}))
+          this.manager.broadcast(this, msgBld.msg(JOIN_SUCCESS))
           this.onJoin()
           break
         case JOIN_SUCCESS:
-          // console.log(this.myId + ' JOIN_SUCCESS from ' + msg.id)
-          this.joinSuccess(msg.id)
+          this.joinSuccess(header.senderId)
           this.peerNb++
-          this.onJoining(msg.id)
+          this.onJoining(header.senderId)
           break
         case INIT_CHANNEL_PONG:
           channel.onPong()
           delete channel.onPong
           break
         case PING:
-          this.manager.sendTo(msg.senderId, this, msgBuilder.msg(PONG))
+          this.manager.sendTo(header.senderId, this, msgBld.msg(PONG))
           break
         case PONG:
           let now = Date.now()
@@ -615,8 +612,7 @@ class WebChannel {
         ch.onmessage = (msgEvt) => {
           if (msgEvt.data === 'ping') {
             channel.config()
-            // console.log('[DEBUG] send pong')
-            channel.send(msgBuilder.msg(INIT_CHANNEL_PONG))
+            channel.send(msgBld.msg(INIT_CHANNEL_PONG))
             resolve(channel)
           }
         }

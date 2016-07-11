@@ -1,32 +1,147 @@
+/**
+ * Message builder module is responsible to build messages to send them over the
+ * *WebChannel* and treat messages received by the *WebChannel*. It also manage
+ * big messages (more then 16ko) sent by users. Internal messages are always less
+ * 16ko.
+ *
+ * @module messageBuilder
+ */
 import {ServiceInterface} from './service'
 
-// Max message size sent on Channel: 16kb
+/**
+ * Maximum message size sent over *Channel*.
+ * @type {number}
+ */
 const MAX_MSG_SIZE = 16384
 
+/**
+ * Maximum user message size sent over *Channel*. Is meant without metadata.
+ * @type {number}
+ */
 const MAX_USER_MSG_SIZE = 16365
 
+/**
+ * User message offset in the array buffer. All data before are metadata.
+ * @type {number}
+ */
 const USER_MSG_OFFSET = 19
 
+/**
+ * First index in the array buffer after header (which is the part of metadata).
+ * @type {number}
+ */
 const HEADER_OFFSET = 9
 
+/**
+ * Maximum message id number.
+ * @type {number}
+ */
 const MAX_MSG_ID_SIZE = 65535
 
+/**
+ * User allowed message type: {@link external:ArrayBuffer}
+ * @type {number}
+ */
 const ARRAY_BUFFER_TYPE = 1
+
+/**
+ * User allowed message type: {@link external:Uint8Array}
+ * @type {number}
+ */
 const U_INT_8_ARRAY_TYPE = 2
+
+/**
+ * User allowed message type: {@link external:String}
+ * @type {number}
+ */
 const STRING_TYPE = 3
+
+/**
+ * User allowed message type: {@link external:Int8Array}
+ * @type {number}
+ */
 const INT_8_ARRAY_TYPE = 4
+
+/**
+ * User allowed message type: {@link external:Uint8ClampedArray}
+ * @type {number}
+ */
 const U_INT_8_CLAMPED_ARRAY_TYPE = 5
+
+/**
+ * User allowed message type: {@link external:Int16Array}
+ * @type {number}
+ */
 const INT_16_ARRAY_TYPE = 6
+
+/**
+ * User allowed message type: {@link external:Uint16Array}
+ * @type {number}
+ */
 const U_INT_16_ARRAY_TYPE = 7
+
+/**
+ * User allowed message type: {@link external:Int32Array}
+ * @type {number}
+ */
 const INT_32_ARRAY_TYPE = 8
+
+/**
+ * User allowed message type: {@link external:Uint32Array}
+ * @type {number}
+ */
 const U_INT_32_ARRAY_TYPE = 9
+
+/**
+ * User allowed message type: {@link external:Float32Array}
+ * @type {number}
+ */
 const FLOAT_32_ARRAY_TYPE = 10
+
+/**
+ * User allowed message type: {@link external:Float64Array}
+ * @type {number}
+ */
 const FLOAT_64_ARRAY_TYPE = 11
+
+/**
+ * User allowed message type: {@link external:DataView}
+ * @type {number}
+ */
 const DATA_VIEW_TYPE = 12
 
+/**
+ * Buffer for big user messages.
+ */
 const buffers = new Map()
 
+/**
+ * Message builder service class.
+ */
 class MessageBuilderService extends ServiceInterface {
+
+  /**
+   * @callback MessageBuilderService~Send
+   * @param {external:ArrayBuffer} dataChunk - If the message is too big this
+   * action would be executed for each data chunk until send whole message
+   */
+
+  /**
+   * @callback MessageBuilderService~Receive
+   * @param {external:ArrayBuffer|external:Uint8Array|external:String|
+   * external:Int8Array|external:Uint8ClampedArray|external:Int16Array|
+   * external:Uint16Array|external:Int32Array|external:Uint32Array|
+   * external:Float32Array|external:Float64Array|external:DataView} data - Message.
+   * Its type depends on what other
+   */
+
+  /**
+   * Header of the metadata of the messages sent/received over the *WebChannel*.
+   * @typedef {Object} MessageBuilderService~Header
+   * @property {number} code - Message type code
+   * @property {number} senderId - Id of the sender peer
+   * @property {number} recipientId - Id of the recipient peer
+   */
 
   constructor () {
     super()
@@ -38,11 +153,25 @@ class MessageBuilderService extends ServiceInterface {
     else this.TextDecoder = window.TextDecoder
   }
 
-  handleUserMessage (data, senderId, recipientId, action, isBroadcast = true) {
+  /**
+   * Prepare user message to be sent over the *WebChannel*
+   * @param {external:ArrayBuffer|external:Uint8Array|external:String|
+   * external:Int8Array|external:Uint8ClampedArray|external:Int16Array|
+   * external:Uint16Array|external:Int32Array|external:Uint32Array|
+   * external:Float32Array|external:Float64Array|external:DataView} data -
+   * Message to be sent
+   * @param {number} senderId - Id of the peer who sends this message
+   * @param {number} recipientId - Id of the recipient peer
+   * @param {MessageBuilderService~Send} action - Send callback executed for each
+   * data chunk if the message is too big
+   * @param {boolean} isBroadcast - Equals to true if this message would be
+   * sent to all *WebChannel* members and false if only to one member
+   */
+  handleUserMessage (data, recipientId, action, isBroadcast = true) {
     let workingData = this.userDataToType(data)
     let dataUint8Array = workingData.content
     if (dataUint8Array.byteLength <= MAX_USER_MSG_SIZE) {
-      let dataView = this.writeHeader(1, senderId, recipientId,
+      let dataView = this.initHeader(1, recipientId,
         dataUint8Array.byteLength + USER_MSG_OFFSET
       )
       dataView.setUint32(HEADER_OFFSET, dataUint8Array.byteLength)
@@ -59,9 +188,8 @@ class MessageBuilderService extends ServiceInterface {
           MAX_USER_MSG_SIZE,
           dataUint8Array.byteLength - MAX_USER_MSG_SIZE * chunkNb
         )
-        let dataView = this.writeHeader(
+        let dataView = this.initHeader(
           1,
-          senderId,
           recipientId,
           USER_MSG_OFFSET + currentChunkMsgByteLength
         )
@@ -82,15 +210,31 @@ class MessageBuilderService extends ServiceInterface {
     }
   }
 
-  msg (code, data = {}) {
+  /**
+   * Build a message which can be then sent trough the *Channel*.
+   * @param {number} code - One of the internal message type code (e.g. {@link
+   * USER_DATA})
+   * @param {Object} [data={}] - Message. Could be empty if the code is enough
+   * @returns {external:ArrayBuffer} - Built message
+   */
+  msg (code, data = {}, recepientId = null) {
     let msgEncoded = (new this.TextEncoder()).encode(JSON.stringify(data))
     let msgSize = msgEncoded.byteLength + HEADER_OFFSET
-    let dataView = this.writeHeader(code, null, null, msgSize)
+    let dataView = this.initHeader(code, recepientId, msgSize)
     let fullMsg = new Uint8Array(dataView.buffer)
     fullMsg.set(msgEncoded, HEADER_OFFSET)
-    return fullMsg
+    return fullMsg.buffer
   }
 
+  /**
+   * Read user message which was prepared by another peer with
+   * {@link MessageBuilderService#handleUserMessage} and sent.
+   * @param {number} wcId - *WebChannel* identifier
+   * @param {number} senderId - Id of the peer who sent this message
+   * @param {external:ArrayBuffer} data - Message
+   * @param {MessageBuilderService~Receive} action - Callback when the message is
+   * ready
+   */
   readUserMessage (wcId, senderId, data, action) {
     let dataView = new DataView(data)
     let msgSize = dataView.getUint32(HEADER_OFFSET)
@@ -120,6 +264,11 @@ class MessageBuilderService extends ServiceInterface {
     }
   }
 
+  /**
+   * Read internal Netflux message.
+   * @param {external:ArrayBuffer} data - Message
+   * @returns {Object}
+   */
   readInternalMessage (data) {
     let uInt8Array = new Uint8Array(data)
     return JSON.parse((new this.TextDecoder())
@@ -127,6 +276,13 @@ class MessageBuilderService extends ServiceInterface {
     )
   }
 
+  /**
+   * Extract header from the message. Each user message has a header which is
+   * a part of the message metadata.
+   * TODO: add header also to the internal messages.
+   * @param {external:ArrayBuffer} data - Whole message
+   * @returns {MessageBuilderService~Header}
+   */
   readHeader (data) {
     let dataView = new DataView(data)
     return {
@@ -136,14 +292,44 @@ class MessageBuilderService extends ServiceInterface {
     }
   }
 
-  writeHeader (code, senderId, recipientId, dataSize) {
+  /**
+   * Complete header of the message to be sent by setting sender peer id.
+   * @param  {external.ArrayBuffer} buffer - Message to be sent
+   * @param  {number} senderId - Id of the sender peer
+   */
+  completeHeader (buffer, senderId) {
+    new DataView(buffer).setInt32(1, senderId)
+  }
+
+  /**
+   * Create an *ArrayBuffer* and fill in the header.
+   * @private
+   * @param {number} code - Message type code
+   * @param {number} senderId - Sender peer id
+   * @param {number} recipientId - Recipient peer id
+   * @param {number} dataSize - Message size in bytes
+   * @return {external:DataView} - Data view with initialized header
+   */
+  initHeader (code, recipientId, dataSize) {
     let dataView = new DataView(new ArrayBuffer(dataSize))
     dataView.setUint8(0, code)
-    dataView.setUint32(1, senderId)
+    //dataView.setUint32(1, senderId)
     dataView.setUint32(5, recipientId)
     return dataView
   }
 
+  /**
+   * Netflux sends data in *ArrayBuffer*, but the user can send data in different
+   * types. This function retrieve the inital message sent by the user.
+   * @private
+   * @param {external:ArrayBuffer} - Message as it was received by the *WebChannel*
+   * @param {number} - Message type as it was defined by the user
+   * @returns {external:ArrayBuffer|external:Uint8Array|external:String|
+   * external:Int8Array|external:Uint8ClampedArray|external:Int16Array|
+   * external:Uint16Array|external:Int32Array|external:Uint32Array|
+   * external:Float32Array|external:Float64Array|external:DataView} - Initial
+   * user message
+   */
   extractUserData (buffer, type) {
     switch (type) {
       case ARRAY_BUFFER_TYPE:
@@ -173,6 +359,15 @@ class MessageBuilderService extends ServiceInterface {
     }
   }
 
+  /**
+   * Identify the user message type.
+   * @private
+   * @param {external:ArrayBuffer|external:Uint8Array|external:String|
+   * external:Int8Array|external:Uint8ClampedArray|external:Int16Array|
+   * external:Uint16Array|external:Int32Array|external:Uint32Array|
+   * external:Float32Array|external:Float64Array|external:DataView} - User message
+   * @returns {number} - User message type
+   */
   userDataToType (data) {
     let result = {}
     if (data instanceof ArrayBuffer) {
@@ -211,6 +406,15 @@ class MessageBuilderService extends ServiceInterface {
     return result
   }
 
+  /**
+   * Get the buffer.
+   * @private
+   * @param {number} wcId - *WebChannel* id
+   * @param {number} peerId - Peer id
+   * @param {number} msgId - Message id
+   * @returns {Buffer|undefined} - Returns buffer if it was found and undefined
+   * if not
+   */
   getBuffer (wcId, peerId, msgId) {
     let wcBuffer = buffers.get(wcId)
     if (wcBuffer !== undefined) {
@@ -222,6 +426,14 @@ class MessageBuilderService extends ServiceInterface {
     return undefined
   }
 
+  /**
+   * Add a new buffer to the buffer array.
+   * @private
+   * @param {number} wcId - *WebChannel* id
+   * @param {number} peerId - Peer id
+   * @param {number} msgId - Message id
+   * @param {Buffer} - buffer
+   */
   setBuffer (wcId, peerId, msgId, buffer) {
     let wcBuffer = buffers.get(wcId)
     if (wcBuffer === undefined) {
@@ -237,7 +449,26 @@ class MessageBuilderService extends ServiceInterface {
   }
 }
 
+/**
+ * Buffer class used when the user message exceeds the message size limit which
+ * may be sent over a *Channel*. Each buffer is identified by *WebChannel* id,
+ * peer id (who sends the big message) and message id (in case if the peer sends
+ * more then 1 big message at a time).
+ */
 class Buffer {
+
+  /**
+   * @callback Buffer~onFullMessage
+   * @param {external:ArrayBuffer} - The full message as it was initially sent
+   * by user
+   */
+
+  /**
+   * @param {number} fullDataSize - The total user message size
+   * @param {external:ArrayBuffer} - The first chunk of the user message
+   * @param {Buffer~onFullMessage} action - Callback to be executed when all
+   * message chunks are received and thus the message is ready
+   */
   constructor (fullDataSize, data, chunkNb, action) {
     this.fullData = new Uint8Array(fullDataSize)
     this.currentSize = 0
@@ -245,6 +476,11 @@ class Buffer {
     this.add(data, chunkNb)
   }
 
+  /**
+   * Add a chunk of message to the buffer.
+   * @param {external:ArrayBuffer} data - Message chunk
+   * @param {number} chunkNb - Number of the chunk
+   */
   add (data, chunkNb) {
     let dataChunk = new Uint8Array(data)
     let dataChunkSize = data.byteLength
@@ -259,4 +495,4 @@ class Buffer {
   }
 }
 
-export {MessageBuilderService, MAX_MSG_SIZE, MAX_USER_MSG_SIZE, USER_MSG_OFFSET, HEADER_OFFSET}
+export default MessageBuilderService

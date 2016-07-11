@@ -1996,30 +1996,134 @@ class ChannelBuilderService extends ServiceInterface {
   }
 }
 
+/**
+ * Maximum user message size sent over *Channel*. Is meant without metadata.
+ * @type {number}
+ */
 const MAX_USER_MSG_SIZE = 16365
 
+/**
+ * User message offset in the array buffer. All data before are metadata.
+ * @type {number}
+ */
 const USER_MSG_OFFSET = 19
 
+/**
+ * First index in the array buffer after header (which is the part of metadata).
+ * @type {number}
+ */
 const HEADER_OFFSET = 9
 
+/**
+ * Maximum message id number.
+ * @type {number}
+ */
 const MAX_MSG_ID_SIZE = 65535
 
+/**
+ * User allowed message type: {@link external:ArrayBuffer}
+ * @type {number}
+ */
 const ARRAY_BUFFER_TYPE = 1
+
+/**
+ * User allowed message type: {@link external:Uint8Array}
+ * @type {number}
+ */
 const U_INT_8_ARRAY_TYPE = 2
+
+/**
+ * User allowed message type: {@link external:String}
+ * @type {number}
+ */
 const STRING_TYPE = 3
+
+/**
+ * User allowed message type: {@link external:Int8Array}
+ * @type {number}
+ */
 const INT_8_ARRAY_TYPE = 4
+
+/**
+ * User allowed message type: {@link external:Uint8ClampedArray}
+ * @type {number}
+ */
 const U_INT_8_CLAMPED_ARRAY_TYPE = 5
+
+/**
+ * User allowed message type: {@link external:Int16Array}
+ * @type {number}
+ */
 const INT_16_ARRAY_TYPE = 6
+
+/**
+ * User allowed message type: {@link external:Uint16Array}
+ * @type {number}
+ */
 const U_INT_16_ARRAY_TYPE = 7
+
+/**
+ * User allowed message type: {@link external:Int32Array}
+ * @type {number}
+ */
 const INT_32_ARRAY_TYPE = 8
+
+/**
+ * User allowed message type: {@link external:Uint32Array}
+ * @type {number}
+ */
 const U_INT_32_ARRAY_TYPE = 9
+
+/**
+ * User allowed message type: {@link external:Float32Array}
+ * @type {number}
+ */
 const FLOAT_32_ARRAY_TYPE = 10
+
+/**
+ * User allowed message type: {@link external:Float64Array}
+ * @type {number}
+ */
 const FLOAT_64_ARRAY_TYPE = 11
+
+/**
+ * User allowed message type: {@link external:DataView}
+ * @type {number}
+ */
 const DATA_VIEW_TYPE = 12
 
+/**
+ * Buffer for big user messages.
+ */
 const buffers = new Map()
 
+/**
+ * Message builder service class.
+ */
 class MessageBuilderService extends ServiceInterface {
+
+  /**
+   * @callback MessageBuilderService~Send
+   * @param {external:ArrayBuffer} dataChunk - If the message is too big this
+   * action would be executed for each data chunk until send whole message
+   */
+
+  /**
+   * @callback MessageBuilderService~Receive
+   * @param {external:ArrayBuffer|external:Uint8Array|external:String|
+   * external:Int8Array|external:Uint8ClampedArray|external:Int16Array|
+   * external:Uint16Array|external:Int32Array|external:Uint32Array|
+   * external:Float32Array|external:Float64Array|external:DataView} data - Message.
+   * Its type depends on what other
+   */
+
+  /**
+   * Header of the metadata of the messages sent/received over the *WebChannel*.
+   * @typedef {Object} MessageBuilderService~Header
+   * @property {number} code - Message type code
+   * @property {number} senderId - Id of the sender peer
+   * @property {number} recipientId - Id of the recipient peer
+   */
 
   constructor () {
     super()
@@ -2031,11 +2135,25 @@ class MessageBuilderService extends ServiceInterface {
     else this.TextDecoder = window.TextDecoder
   }
 
-  handleUserMessage (data, senderId, recipientId, action, isBroadcast = true) {
+  /**
+   * Prepare user message to be sent over the *WebChannel*
+   * @param {external:ArrayBuffer|external:Uint8Array|external:String|
+   * external:Int8Array|external:Uint8ClampedArray|external:Int16Array|
+   * external:Uint16Array|external:Int32Array|external:Uint32Array|
+   * external:Float32Array|external:Float64Array|external:DataView} data -
+   * Message to be sent
+   * @param {number} senderId - Id of the peer who sends this message
+   * @param {number} recipientId - Id of the recipient peer
+   * @param {MessageBuilderService~Send} action - Send callback executed for each
+   * data chunk if the message is too big
+   * @param {boolean} isBroadcast - Equals to true if this message would be
+   * sent to all *WebChannel* members and false if only to one member
+   */
+  handleUserMessage (data, recipientId, action, isBroadcast = true) {
     let workingData = this.userDataToType(data)
     let dataUint8Array = workingData.content
     if (dataUint8Array.byteLength <= MAX_USER_MSG_SIZE) {
-      let dataView = this.writeHeader(1, senderId, recipientId,
+      let dataView = this.initHeader(1, recipientId,
         dataUint8Array.byteLength + USER_MSG_OFFSET
       )
       dataView.setUint32(HEADER_OFFSET, dataUint8Array.byteLength)
@@ -2052,9 +2170,8 @@ class MessageBuilderService extends ServiceInterface {
           MAX_USER_MSG_SIZE,
           dataUint8Array.byteLength - MAX_USER_MSG_SIZE * chunkNb
         )
-        let dataView = this.writeHeader(
+        let dataView = this.initHeader(
           1,
-          senderId,
           recipientId,
           USER_MSG_OFFSET + currentChunkMsgByteLength
         )
@@ -2075,15 +2192,31 @@ class MessageBuilderService extends ServiceInterface {
     }
   }
 
-  msg (code, data = {}) {
+  /**
+   * Build a message which can be then sent trough the *Channel*.
+   * @param {number} code - One of the internal message type code (e.g. {@link
+   * USER_DATA})
+   * @param {Object} [data={}] - Message. Could be empty if the code is enough
+   * @returns {external:ArrayBuffer} - Built message
+   */
+  msg (code, data = {}, recepientId = null) {
     let msgEncoded = (new this.TextEncoder()).encode(JSON.stringify(data))
     let msgSize = msgEncoded.byteLength + HEADER_OFFSET
-    let dataView = this.writeHeader(code, null, null, msgSize)
+    let dataView = this.initHeader(code, recepientId, msgSize)
     let fullMsg = new Uint8Array(dataView.buffer)
     fullMsg.set(msgEncoded, HEADER_OFFSET)
-    return fullMsg
+    return fullMsg.buffer
   }
 
+  /**
+   * Read user message which was prepared by another peer with
+   * {@link MessageBuilderService#handleUserMessage} and sent.
+   * @param {number} wcId - *WebChannel* identifier
+   * @param {number} senderId - Id of the peer who sent this message
+   * @param {external:ArrayBuffer} data - Message
+   * @param {MessageBuilderService~Receive} action - Callback when the message is
+   * ready
+   */
   readUserMessage (wcId, senderId, data, action) {
     let dataView = new DataView(data)
     let msgSize = dataView.getUint32(HEADER_OFFSET)
@@ -2113,6 +2246,11 @@ class MessageBuilderService extends ServiceInterface {
     }
   }
 
+  /**
+   * Read internal Netflux message.
+   * @param {external:ArrayBuffer} data - Message
+   * @returns {Object}
+   */
   readInternalMessage (data) {
     let uInt8Array = new Uint8Array(data)
     return JSON.parse((new this.TextDecoder())
@@ -2120,6 +2258,13 @@ class MessageBuilderService extends ServiceInterface {
     )
   }
 
+  /**
+   * Extract header from the message. Each user message has a header which is
+   * a part of the message metadata.
+   * TODO: add header also to the internal messages.
+   * @param {external:ArrayBuffer} data - Whole message
+   * @returns {MessageBuilderService~Header}
+   */
   readHeader (data) {
     let dataView = new DataView(data)
     return {
@@ -2129,14 +2274,44 @@ class MessageBuilderService extends ServiceInterface {
     }
   }
 
-  writeHeader (code, senderId, recipientId, dataSize) {
+  /**
+   * Complete header of the message to be sent by setting sender peer id.
+   * @param  {external.ArrayBuffer} buffer - Message to be sent
+   * @param  {number} senderId - Id of the sender peer
+   */
+  completeHeader (buffer, senderId) {
+    new DataView(buffer).setInt32(1, senderId)
+  }
+
+  /**
+   * Create an *ArrayBuffer* and fill in the header.
+   * @private
+   * @param {number} code - Message type code
+   * @param {number} senderId - Sender peer id
+   * @param {number} recipientId - Recipient peer id
+   * @param {number} dataSize - Message size in bytes
+   * @return {external:DataView} - Data view with initialized header
+   */
+  initHeader (code, recipientId, dataSize) {
     let dataView = new DataView(new ArrayBuffer(dataSize))
     dataView.setUint8(0, code)
-    dataView.setUint32(1, senderId)
+    //dataView.setUint32(1, senderId)
     dataView.setUint32(5, recipientId)
     return dataView
   }
 
+  /**
+   * Netflux sends data in *ArrayBuffer*, but the user can send data in different
+   * types. This function retrieve the inital message sent by the user.
+   * @private
+   * @param {external:ArrayBuffer} - Message as it was received by the *WebChannel*
+   * @param {number} - Message type as it was defined by the user
+   * @returns {external:ArrayBuffer|external:Uint8Array|external:String|
+   * external:Int8Array|external:Uint8ClampedArray|external:Int16Array|
+   * external:Uint16Array|external:Int32Array|external:Uint32Array|
+   * external:Float32Array|external:Float64Array|external:DataView} - Initial
+   * user message
+   */
   extractUserData (buffer, type) {
     switch (type) {
       case ARRAY_BUFFER_TYPE:
@@ -2166,6 +2341,15 @@ class MessageBuilderService extends ServiceInterface {
     }
   }
 
+  /**
+   * Identify the user message type.
+   * @private
+   * @param {external:ArrayBuffer|external:Uint8Array|external:String|
+   * external:Int8Array|external:Uint8ClampedArray|external:Int16Array|
+   * external:Uint16Array|external:Int32Array|external:Uint32Array|
+   * external:Float32Array|external:Float64Array|external:DataView} - User message
+   * @returns {number} - User message type
+   */
   userDataToType (data) {
     let result = {}
     if (data instanceof ArrayBuffer) {
@@ -2204,6 +2388,15 @@ class MessageBuilderService extends ServiceInterface {
     return result
   }
 
+  /**
+   * Get the buffer.
+   * @private
+   * @param {number} wcId - *WebChannel* id
+   * @param {number} peerId - Peer id
+   * @param {number} msgId - Message id
+   * @returns {Buffer|undefined} - Returns buffer if it was found and undefined
+   * if not
+   */
   getBuffer (wcId, peerId, msgId) {
     let wcBuffer = buffers.get(wcId)
     if (wcBuffer !== undefined) {
@@ -2215,6 +2408,14 @@ class MessageBuilderService extends ServiceInterface {
     return undefined
   }
 
+  /**
+   * Add a new buffer to the buffer array.
+   * @private
+   * @param {number} wcId - *WebChannel* id
+   * @param {number} peerId - Peer id
+   * @param {number} msgId - Message id
+   * @param {Buffer} - buffer
+   */
   setBuffer (wcId, peerId, msgId, buffer) {
     let wcBuffer = buffers.get(wcId)
     if (wcBuffer === undefined) {
@@ -2230,7 +2431,26 @@ class MessageBuilderService extends ServiceInterface {
   }
 }
 
+/**
+ * Buffer class used when the user message exceeds the message size limit which
+ * may be sent over a *Channel*. Each buffer is identified by *WebChannel* id,
+ * peer id (who sends the big message) and message id (in case if the peer sends
+ * more then 1 big message at a time).
+ */
 class Buffer {
+
+  /**
+   * @callback Buffer~onFullMessage
+   * @param {external:ArrayBuffer} - The full message as it was initially sent
+   * by user
+   */
+
+  /**
+   * @param {number} fullDataSize - The total user message size
+   * @param {external:ArrayBuffer} - The first chunk of the user message
+   * @param {Buffer~onFullMessage} action - Callback to be executed when all
+   * message chunks are received and thus the message is ready
+   */
   constructor (fullDataSize, data, chunkNb, action) {
     this.fullData = new Uint8Array(fullDataSize)
     this.currentSize = 0
@@ -2238,6 +2458,11 @@ class Buffer {
     this.add(data, chunkNb)
   }
 
+  /**
+   * Add a chunk of message to the buffer.
+   * @param {external:ArrayBuffer} data - Message chunk
+   * @param {number} chunkNb - Number of the chunk
+   */
   add (data, chunkNb) {
     let dataChunk = new Uint8Array(data)
     let dataChunkSize = data.byteLength
@@ -2328,6 +2553,8 @@ let provide = function (name, options = {}) {
   }
 }
 
+const msgBld$1 = provide(MESSAGE_BUILDER)
+
 /**
  * Wrapper class for {@link external:RTCDataChannel} and
  * {@link external:WebSocket}.
@@ -2385,6 +2612,7 @@ class Channel {
   send (data) {
     if (this.channel.readyState !== 'closed') {
       try {
+        msgBld$1.completeHeader(data, this.webChannel.myId)
         this.channel.send(data)
       } catch (err) {
         console.error(`Channel send: ${err.message}`)
@@ -2598,7 +2826,7 @@ class WebChannelGate {
   }
 }
 
-const msgBuilder = provide(MESSAGE_BUILDER)
+const msgBld = provide(MESSAGE_BUILDER)
 
 /**
  * Maximum identifier number for {@link WebChannel#generateId} function.
@@ -2847,20 +3075,17 @@ class WebChannel {
     */
   addChannel (channel) {
     let jp = this.addJoiningPeer(channel.peerId, this.myId, channel)
-    this.manager.broadcast(this, msgBuilder.msg(
-      JOIN_NEW_MEMBER, {id: channel.peerId, intermediaryId: this.myId})
-    )
-    channel.send(msgBuilder.msg(JOIN_INIT, {
-      manager: this.settings.topology,
-      wcId: this.id,
-      id: channel.peerId,
-      intermediaryId: this.myId})
+    this.manager.broadcast(this, msgBld.msg(JOIN_NEW_MEMBER, {newId: channel.peerId}))
+    channel.send(msgBld.msg(JOIN_INIT, {
+        manager: this.settings.topology,
+        wcId: this.id
+      }, channel.peerId)
     )
     return this.manager.add(channel)
-      .then(() => channel.send(msgBuilder.msg(JOIN_FINILIZE)))
+      .then(() => channel.send(msgBld.msg(JOIN_FINILIZE)))
       .catch((msg) => {
         console.log('CATCH addChannel')
-        this.manager.broadcast(this, msgBuilder.msg(
+        this.manager.broadcast(this, msgBld.msg(
           REMOVE_NEW_MEMBER, {id: channel.peerId})
         )
         this.removeJoiningPeer(jp.id)
@@ -2969,7 +3194,7 @@ class WebChannel {
    */
   leave () {
     if (this.channels.size !== 0) {
-      this.manager.broadcast(this, msgBuilder.msg(LEAVE, {id: this.myId}))
+      this.manager.broadcast(this, msgBld.msg(LEAVE))
       this.topology = this.settings.topology
       // this.channels.forEach((c) => {
       //   c.close()
@@ -2986,7 +3211,7 @@ class WebChannel {
    */
   send (data) {
     if (this.channels.size !== 0) {
-      msgBuilder.handleUserMessage(data, this.myId, null, (dataChunk) => {
+      msgBld.handleUserMessage(data, null, (dataChunk) => {
         this.manager.broadcast(this, dataChunk)
       })
     }
@@ -2999,7 +3224,7 @@ class WebChannel {
    */
   sendTo (id, data) {
     if (this.channels.size !== 0) {
-      msgBuilder.handleUserMessage(data, this.myId, id, (dataChunk) => {
+      msgBld.handleUserMessage(data, id, (dataChunk) => {
         this.manager.sendTo(id, this, dataChunk)
       }, false)
     }
@@ -3017,7 +3242,7 @@ class WebChannel {
         this.maxTime = 0
         this.pongNb = 0
         this.pingFinish = (delay) => { resolve(delay) }
-        this.manager.broadcast(this, msgBuilder.msg(PING, {senderId: this.myId}))
+        this.manager.broadcast(this, msgBld.msg(PING))
         setTimeout(() => { resolve(PING_TIMEOUT) }, PING_TIMEOUT)
       }
     })
@@ -3038,8 +3263,9 @@ class WebChannel {
   sendSrvMsg (serviceName, recepient, msg = {}, channel = null) {
     // console.log('[DEBUG] sendSrvMsg (serviceName, recepient, msg = {}, channel = null) (',
     // serviceName, ', ', recepient, ', ', msg, ', ', channel, ')')
-    let fullMsg = msgBuilder.msg(
-      SERVICE_DATA, {serviceName, recepient, data: Object.assign({}, msg)}
+    let fullMsg = msgBld.msg(
+      SERVICE_DATA, {serviceName, data: Object.assign({}, msg)},
+      recepient
     )
     if (channel !== null) {
       channel.send(fullMsg)
@@ -3079,18 +3305,19 @@ class WebChannel {
    * @param {external:ArrayBuffer} data - Message
    */
   onChannelMessage (channel, data) {
-    let header = msgBuilder.readHeader(data)
+    let header = msgBld.readHeader(data)
+    //console.log('ON CHANNEL MESSAGE:\n - code=' + header.code + '\n - sender=' + header.senderId + '\n - recepient=' + header.recepientId)
     // console.log('[DEBUG] {onChannelMessage} header: ', header)
     if (header.code === USER_DATA) {
-      msgBuilder.readUserMessage(this.id, header.senderId, data, (fullData, isBroadcast) => {
+      msgBld.readUserMessage(this.id, header.senderId, data, (fullData, isBroadcast) => {
         this.onMessage(header.senderId, fullData, isBroadcast)
       })
     } else {
-      let msg = msgBuilder.readInternalMessage(data)
+      let msg = msgBld.readInternalMessage(data)
       switch (header.code) {
         case LEAVE:
           for (let c of this.channels) {
-            if (c.peerId === msg.id) {
+            if (c.peerId === header.senderId) {
               c.close()
               this.channels.delete(c)
             }
@@ -3099,43 +3326,41 @@ class WebChannel {
           // this.onLeaving(msg.id)
           break
         case SERVICE_DATA:
-          if (this.myId === msg.recepient) {
+          if (this.myId === header.recepientId) {
             provide(msg.serviceName, this.settings).onMessage(this, channel, msg.data)
           } else {
-            this.sendSrvMsg(msg.serviceName, msg.recepient, msg.data)
+            this.sendSrvMsg(msg.serviceName, header.recepientId, msg.data)
           }
           break
         case JOIN_INIT:
           this.topology = msg.manager
-          this.myId = msg.id
+          this.myId = header.recepientId
           this.id = msg.wcId
-          channel.peerId = msg.intermediaryId
-          this.addJoiningPeer(msg.id, msg.intermediaryId, channel)
+          channel.peerId = header.senderId
+          this.addJoiningPeer(this.myId, header.senderId, channel)
           break
         case JOIN_NEW_MEMBER:
-          this.addJoiningPeer(msg.id, msg.intermediaryId)
+          this.addJoiningPeer(msg.newId, header.senderId)
           break
         case REMOVE_NEW_MEMBER:
           this.removeJoiningPeer(msg.id)
           break
         case JOIN_FINILIZE:
           this.joinSuccess(this.myId)
-          // console.log(this.myId + ' JOINED SUCCESSFULLY')
-          this.manager.broadcast(this, msgBuilder.msg(JOIN_SUCCESS, {id: this.myId}))
+          this.manager.broadcast(this, msgBld.msg(JOIN_SUCCESS))
           this.onJoin()
           break
         case JOIN_SUCCESS:
-          // console.log(this.myId + ' JOIN_SUCCESS from ' + msg.id)
-          this.joinSuccess(msg.id)
+          this.joinSuccess(header.senderId)
           this.peerNb++
-          this.onJoining(msg.id)
+          this.onJoining(header.senderId)
           break
         case INIT_CHANNEL_PONG:
           channel.onPong()
           delete channel.onPong
           break
         case PING:
-          this.manager.sendTo(msg.senderId, this, msgBuilder.msg(PONG))
+          this.manager.sendTo(header.senderId, this, msgBld.msg(PONG))
           break
         case PONG:
           let now = Date.now()
@@ -3210,8 +3435,7 @@ class WebChannel {
         ch.onmessage = (msgEvt) => {
           if (msgEvt.data === 'ping') {
             channel.config()
-            // console.log('[DEBUG] send pong')
-            channel.send(msgBuilder.msg(INIT_CHANNEL_PONG))
+            channel.send(msgBld.msg(INIT_CHANNEL_PONG))
             resolve(channel)
           }
         }

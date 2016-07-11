@@ -1,3 +1,7 @@
+import {provide, MESSAGE_BUILDER} from './serviceProvider'
+
+const msgBld = provide(MESSAGE_BUILDER)
+
 /**
  * Wrapper class for {@link external:RTCDataChannel} and
  * {@link external:WebSocket}.
@@ -55,6 +59,7 @@ class Channel {
   send (data) {
     if (this.channel.readyState !== 'closed') {
       try {
+        msgBld.completeHeader(data, this.webChannel.myId)
         this.channel.send(data)
       } catch (err) {
         console.error(`Channel send: ${err.message}`)
