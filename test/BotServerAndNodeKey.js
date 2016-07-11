@@ -31,7 +31,7 @@ bot1.onWebChannel = (wc) => {
   }
 
   wc.onMessage = (id, msg) => {
-    // bot.log('message', '[From ' + id + '] ' + msg)
+    // bot1.log('message bot1', '[From ' + id + '] ' + msg)
     if (msg === DEBUG_PING) wc.send(DEBUG_PONG)
     if (msg === DEBUG_KICK) bot1.leave(wc)
   }
@@ -53,7 +53,7 @@ bot2.onWebChannel = (wc) => {
   }
 
   wc.onMessage = (id, msg) => {
-    // bot.log('message', '[From ' + id + '] ' + msg)
+    // bot2.log('message bot2', '[From ' + id + '] ' + msg)
     if (msg === DEBUG_PING) wc.send(DEBUG_PONG)
     if (msg === DEBUG_KICK) bot2.leave(wc)
   }
@@ -71,7 +71,11 @@ webSocketService.connect(signaling)
           channel.close()
         }
       }
-      channel.onerror = (error) => {console.error(error)}
-      })
+      channel.onerror = (error) => {
+        console.error(error)
+      }
+    })
   })
-  .catch(() => {console.log('error in opening websocket')})
+  .catch(() => {
+    console.log('error in opening websocket')
+  })
