@@ -1,4 +1,5 @@
 import {WebChannel} from './WebChannel'
+import {CHANNEL_BUILDER, provide} from './serviceProvider'
 
 const ADD_BOT_SERVER = 'addBotServer'
 const NEW_CHANNEL = 'newChannel'
@@ -93,11 +94,12 @@ class Bot {
   }
 
   newChannel (socket, data) {
+    let channelBuilderService = provide(CHANNEL_BUILDER)
     this.onNewChannelRequest()
     for (var wc of this.webChannels) {
       if (data.wcId === wc.id) {
-        if (!data.which_connector_asked) wc.connectMeToRequests.get(data.sender)(true, socket)
-        else wc.initChannel(socket, false, data.sender)
+        channelBuilderService.onChannel(wc, socket, !data.which_connector_asked, data.sender)
+        break
       }
     }
   }

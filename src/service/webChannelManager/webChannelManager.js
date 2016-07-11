@@ -94,7 +94,7 @@ class WebChannelManagerInterface extends ServiceInterface {
         }
         break
       case CONNECT_WITH_FEEDBACK:
-        wc.connectWithRequests.get(msg.id)(true)
+        this.getPendingRequest(wc, msg.id).resolve()
         break
       case THIS_CHANNEL_TO_JOINING_PEER:
         let jp
@@ -138,16 +138,10 @@ class WebChannelManagerInterface extends ServiceInterface {
       {code: CONNECT_WITH, jpId: jpId, sender: wc.myId, peerIds, joiningPeers}
     )
     return new Promise((resolve, reject) => {
-      wc.connectWithRequests.set(id, (isDone) => {
-        if (isDone) {
-          resolve()
-        } else {
-          reject()
-        }
-      })
-      setTimeout(() => {
-        reject('CONNECT_WITH_TIMEOUT')
-      }, this.calculateConnectWithTimeout(peerIds.length))
+      let timeout = this.calculateConnectWithTimeout(peerIds.length)
+      this.addPendingRequest(wc, id, {resolve, reject}, timeout,
+        () => reject(`CONNECT_WITH_TIMEOUT (${timeout}ms)`)
+      )
     })
   }
 

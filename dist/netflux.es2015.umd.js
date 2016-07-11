@@ -1096,10 +1096,35 @@
    */
 
   /**
+   * Default timeout for any pending request.
+   * @type {number}
+   */
+  const DEFAULT_REQUEST_TIMEOUT = 5000
+
+  /**
+   * Pending request map. Pending request is when a service uses a Promise
+   * which will be fulfilled or rejected somewhere else in code. For exemple when
+   * a peer is waiting for a feedback from another peer before Promise has completed.
+   * @type {external:Map}
+   */
+  const pendingRequests = new Map()
+
+  /**
    * Each service must implement this interface.
    * @interface
    */
   class ServiceInterface {
+
+    /**
+     * Timeout event handler
+     * @callback ServiceInterface~onTimeout
+     */
+
+    constructor () {
+      if (!pendingRequests.has(this.name)) {
+        pendingRequests.set(this.name, new WeakMap())
+      }
+    }
 
     /**
      * Service name which corresponds to its class name.
@@ -1107,6 +1132,38 @@
      */
     get name () {
       return this.constructor.name
+    }
+
+    /**
+     * Add new pending request.
+     * @param {WebChannel} wc - Web channel to which this request corresponds
+     * @param {number} id - Identifer to which this request corresponds
+     * @param {Object} data - Data to be available when getPendingRequest is called
+     * @param {number} [timeout=DEFAULT_REQUEST_TIMEOUT] - Timeout in milliseconds
+     * @param {ServiceInterface~onTimeout} [onTimeout=() => {}] - Timeout event handler
+     */
+    addPendingRequest (wc, id, data, timeout = DEFAULT_REQUEST_TIMEOUT, onTimeout = () => {}) {
+      let requests = pendingRequests.get(this.name)
+      let idMap
+      if (requests.has(wc)) {
+        idMap = requests.get(wc)
+      } else {
+        idMap = new Map()
+        requests.set(wc, idMap)
+      }
+      idMap.set(id, data)
+      setTimeout(onTimeout, timeout)
+    }
+
+    /**
+     * Get pending request corresponding to the specific WebChannel and identifier.
+     * @param  {WebChannel} wc - Web channel
+     * @param  {number} id - Identifier
+     * @return {Object} - Javascript object corresponding to the one provided in
+     * addPendingRequest function
+     */
+    getPendingRequest (wc, id) {
+      return pendingRequests.get(this.name).get(wc).get(id)
     }
   }
 
@@ -1203,7 +1260,7 @@
           }
           break
         case CONNECT_WITH_FEEDBACK:
-          wc.connectWithRequests.get(msg.id)(true)
+          this.getPendingRequest(wc, msg.id).resolve()
           break
         case THIS_CHANNEL_TO_JOINING_PEER:
           let jp
@@ -1247,16 +1304,10 @@
         {code: CONNECT_WITH, jpId: jpId, sender: wc.myId, peerIds, joiningPeers}
       )
       return new Promise((resolve, reject) => {
-        wc.connectWithRequests.set(id, (isDone) => {
-          if (isDone) {
-            resolve()
-          } else {
-            reject()
-          }
-        })
-        setTimeout(() => {
-          reject('CONNECT_WITH_TIMEOUT')
-        }, this.calculateConnectWithTimeout(peerIds.length))
+        let timeout = this.calculateConnectWithTimeout(peerIds.length)
+        this.addPendingRequest(wc, id, {resolve, reject}, timeout,
+          () => reject(`CONNECT_WITH_TIMEOUT (${timeout}ms)`)
+        )
       })
     }
 
@@ -1899,13 +1950,7 @@
 
     connectMeTo (wc, id) {
       return new Promise((resolve, reject) => {
-        wc.connectMeToRequests.set(id, (isDone, channel) => {
-          if (isDone) {
-            resolve(channel)
-          } else {
-            reject(channel)
-          }
-        })
+        this.addPendingRequest(wc, id, {resolve, reject})
         if (typeof window !== 'undefined') wc.sendSrvMsg(this.name, id, {code: WHICH_CONNECTOR, sender: wc.myId})
         else {
           wc.sendSrvMsg(this.name, id, {code: CONNECTOR, connectors: [WEBSOCKET], sender: wc.myId,
@@ -1916,7 +1961,7 @@
 
     onChannel (wc, channel, whichConnectorAsked, sender) {
       if (!whichConnectorAsked) wc.initChannel(channel, false, sender)
-      else wc.connectMeToRequests.get(sender)(true, channel)
+      else this.getPendingRequest(wc, sender).resolve(channel)
     }
 
     onMessage (wc, channel, msg) {
@@ -2716,16 +2761,6 @@
       this.joiningPeers = new Set()
 
       /**
-       * Map of requests which is used to resolve *Promise* during joining peer
-       * process.
-       * @private
-       * @type {external:Map}
-       */
-      this.connectWithRequests = new Map()
-      /** @private */
-      this.connectMeToRequests = new Map()
-
-      /**
        * *WebChannel* topology.
        * @private
        * @type {string}
@@ -3408,11 +3443,12 @@
     }
 
     newChannel (socket, data) {
+      let channelBuilderService = provide(CHANNEL_BUILDER)
       this.onNewChannelRequest()
       for (var wc of this.webChannels) {
         if (data.wcId === wc.id) {
-          if (!data.which_connector_asked) wc.connectMeToRequests.get(data.sender)(true, socket)
-          else wc.initChannel(socket, false, data.sender)
+          channelBuilderService.onChannel(wc, socket, !data.which_connector_asked, data.sender)
+          break
         }
       }
     }

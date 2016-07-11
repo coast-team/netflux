@@ -160,16 +160,6 @@ class WebChannel {
     this.joiningPeers = new Set()
 
     /**
-     * Map of requests which is used to resolve *Promise* during joining peer
-     * process.
-     * @private
-     * @type {external:Map}
-     */
-    this.connectWithRequests = new Map()
-    /** @private */
-    this.connectMeToRequests = new Map()
-
-    /**
      * *WebChannel* topology.
      * @private
      * @type {string}

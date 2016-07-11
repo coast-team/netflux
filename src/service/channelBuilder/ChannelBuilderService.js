@@ -18,13 +18,7 @@ class ChannelBuilderService extends ServiceInterface {
 
   connectMeTo (wc, id) {
     return new Promise((resolve, reject) => {
-      wc.connectMeToRequests.set(id, (isDone, channel) => {
-        if (isDone) {
-          resolve(channel)
-        } else {
-          reject(channel)
-        }
-      })
+      this.addPendingRequest(wc, id, {resolve, reject})
       if (typeof window !== 'undefined') wc.sendSrvMsg(this.name, id, {code: WHICH_CONNECTOR, sender: wc.myId})
       else {
         wc.sendSrvMsg(this.name, id, {code: CONNECTOR, connectors: [WEBSOCKET], sender: wc.myId,
@@ -35,7 +29,7 @@ class ChannelBuilderService extends ServiceInterface {
 
   onChannel (wc, channel, whichConnectorAsked, sender) {
     if (!whichConnectorAsked) wc.initChannel(channel, false, sender)
-    else wc.connectMeToRequests.get(sender)(true, channel)
+    else this.getPendingRequest(wc, sender).resolve(channel)
   }
 
   onMessage (wc, channel, msg) {
