@@ -287,7 +287,9 @@ class WebRTCService extends ChannelBuilderInterface {
     let dc = pc.createDataChannel(null)
     pc.oniceconnectionstatechange = () => {
       if (pc.iceConnectionState === 'disconnected') {
-        dc.onclose(new CloseEvent(pc.iceConnectionState))
+        if (typeof window !== 'undefined') {
+          dc.onclose(new CloseEvent(pc.iceConnectionState))
+        }
       }
     }
     dc.onopen = (evt) => onChannel(dc)
@@ -317,7 +319,9 @@ class WebRTCService extends ChannelBuilderInterface {
       let dc = dcEvt.channel
       pc.oniceconnectionstatechange = () => {
         if (pc.iceConnectionState === 'disconnected') {
-          dc.onclose(new CloseEvent(pc.iceConnectionState))
+          if (typeof window !== 'undefined') {
+            dc.onclose(new CloseEvent(pc.iceConnectionState))
+          }
         }
       }
       dc.onopen = (evt) => onChannel(dc)

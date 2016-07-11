@@ -1753,7 +1753,9 @@
       let dc = pc.createDataChannel(null)
       pc.oniceconnectionstatechange = () => {
         if (pc.iceConnectionState === 'disconnected') {
-          dc.onclose(new CloseEvent(pc.iceConnectionState))
+          if (typeof window !== 'undefined') {
+            dc.onclose(new CloseEvent(pc.iceConnectionState))
+          }
         }
       }
       dc.onopen = (evt) => onChannel(dc)
@@ -1783,7 +1785,9 @@
         let dc = dcEvt.channel
         pc.oniceconnectionstatechange = () => {
           if (pc.iceConnectionState === 'disconnected') {
-            dc.onclose(new CloseEvent(pc.iceConnectionState))
+            if (typeof window !== 'undefined') {
+              dc.onclose(new CloseEvent(pc.iceConnectionState))
+            }
           }
         }
         dc.onopen = (evt) => onChannel(dc)

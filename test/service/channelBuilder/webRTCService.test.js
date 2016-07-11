@@ -45,15 +45,13 @@ describe('WebRTCService ->', () => {
         ws1.send(JSON.stringify({key}))
         webRTCService.listenFromSignaling(ws1, () => {})
 
-        setTimeout(() => {
-          webSocketService.connect(signaling)
-            .then((ws2) => {
-              webRTCService.connectOverSignaling(ws2, key)
-                .then(done)
-                .catch(done.fail)
-            })
-            .catch(done.fail)
-        }, 500)
+        webSocketService.connect(signaling)
+          .then((ws2) => {
+            webRTCService.connectOverSignaling(ws2, key)
+              .then(done)
+              .catch(done.fail)
+          })
+          .catch(done.fail)
       })
       .catch(done.fail)
   })
@@ -81,7 +79,7 @@ describe('WebRTCService ->', () => {
   //     .catch((reason) => {done.fail(reason)})
   // })
 
-  // Fail because the 2nd socket is closed with code 1000 instead of code 4002.
+  // Fail because the 2nd socket is closed with code 1000 instead of code 4002
   // it('Listen from signaling: should fail the provided because key is already opened', (done) => {
   //   webSocketService.connect(signaling)
   //     .then((ws1) => {
@@ -214,5 +212,21 @@ describe('WebRTCService ->', () => {
           })
       })
       .catch(done.fail)
+  })
+
+  it('Connect to node: should exchange a ping-pong', (done) => {
+    webSocketService.connect(signaling)
+      .then((ws) => {
+        webRTCService.connectOverSignaling(ws, '12345')
+          .then((channel) => {
+            channel.onmessage = (event) => {
+              expect(event.data).toEqual('pong')
+              done()
+            }
+            channel.onerror = done.fail
+            channel.send('ping')
+          })
+          .catch(done.fail)
+      })
   })
 })

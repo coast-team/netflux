@@ -1,3 +1,11 @@
+import {signaling} from './config'
+import WebRTCService from '../src/service/channelBuilder/WebRTCService'
+import WebSocketService from '../src/service/channelBuilder/WebSocketService'
+
+let webRTCService = new WebRTCService()
+let webSocketService = new WebSocketService()
+let key = '12345'
+
 var host = '127.0.0.1'
 var port1 = 9000
 var port2 = 9001
@@ -50,3 +58,20 @@ bot2.onWebChannel = (wc) => {
     if (msg === DEBUG_KICK) bot2.leave(wc)
   }
 }
+
+// Create a key for connection between node and browser
+webSocketService.connect(signaling)
+  .then((ws) => {
+    ws.send(JSON.stringify({key}))
+    webRTCService.listenFromSignaling(ws, (channel) => {
+      channel.onmessage = (event) => {
+        if (event.data === 'ping') {
+          channel.send('pong')
+        } else {
+          channel.close()
+        }
+      }
+      channel.onerror = (error) => {console.error(error)}
+      })
+  })
+  .catch(() => {console.log('error in opening websocket')})
