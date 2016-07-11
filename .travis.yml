@@ -8,14 +8,18 @@ addons:
   apt:
     sources:
       - google-chrome
+      - ubuntu-toolchain-r-test
     packages:
       - google-chrome-stable
+      - libstdc++6
 node_js:
   - "6"
 before_install:
   - export CHROME_BIN=/usr/bin/google-chrome
   - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start
+  - sudo apt-get install python2.7 git-all pkg-config libncurses5-dev libssl-dev libnss3-dev libexpat-dev -y
+  - npm config set python python2
   - sudo apt-get update -qq
   - npm update -g
   - npm install -g codeclimate-test-reporter

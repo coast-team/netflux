@@ -1467,11 +1467,6 @@
   }
 
   let WebRTC = {}
-  try {
-    WebRTC = require('wrtc')
-  } catch (e) {
-    console.log('require not done')
-  }
 
   let RTCPeerConnection$1
   let RTCIceCandidate$1
@@ -1479,6 +1474,7 @@
     RTCPeerConnection$1 = window.RTCPeerConnection
     RTCIceCandidate$1 = window.RTCIceCandidate
   } else {
+    WebRTC = require('wrtc')
     RTCPeerConnection$1 = WebRTC.RTCPeerConnection
     RTCIceCandidate$1 = WebRTC.RTCIceCandidate
   }
@@ -1511,12 +1507,6 @@
   class RTCPendingConnections {
     constructor () {
       this.connections = new Map()
-
-      // this.RTCPeerConnection = WebRTC.RTCPeerConnection || window.RTCPeerConnection
-      // this.RTCIceCandidate = WebRTC.RTCIceCandidate || window.RTCIceCandidate
-      // if (WebSocket === {}) {
-      //   WebSocket = window.WebSocket
-      // }
     }
 
     /**
@@ -1815,9 +1805,6 @@
      * @return {external:RTCPeerConnection} - Peer connection.
      */
     createPeerConnection (onCandidate) {
-      // let RTCPeerConnection = WebRTC.RTCPeerConnection || window.RTCPeerConnection
-      // let RTCIceCandidate = WebRTC.RTCIceCandidate || window.RTCIceCandidate
-
       let pc = new RTCPeerConnection$1({iceServers: this.settings.iceServers})
       pc.onicecandidate = (evt) => {
         if (evt.candidate !== null) {

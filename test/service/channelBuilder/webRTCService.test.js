@@ -34,7 +34,9 @@ describe('WebRTCService ->', () => {
           done.fail(e)
         }
       })
-      .catch((reason) => {done.fail(reason)})
+      .catch((reason) => {
+        done.fail(reason)
+      })
   })
 
   it('Connect over signaling: dataChannel should open', (done) => {
@@ -130,11 +132,17 @@ describe('WebRTCService ->', () => {
                 channel.onclose = done
                 channel.onerror = done.fail
               })
-              .catch((reason) => {done.fail(reason)})
+              .catch((reason) => {
+                done.fail(reason)
+              })
           })
-          .catch((reason) => {done.fail(reason)})
+          .catch((reason) => {
+            done.fail(reason)
+          })
       })
-      .catch((reason) => {done.fail(reason)})
+      .catch((reason) => {
+        done.fail(reason)
+      })
   })
 
   it('Listen and Connect: should detect disconnected peer', (done) => {

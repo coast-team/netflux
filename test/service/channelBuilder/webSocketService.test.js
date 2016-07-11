@@ -11,7 +11,7 @@ describe('WebSocketService ->', () => {
 			.catch((reason) => {
 				console.log('Error: ' + reason)
 				done.fail(reason)
-			}) 
+			})
 	})
 
 	it('Should open a socket with the online signaling server', (done) => {
@@ -21,13 +21,13 @@ describe('WebSocketService ->', () => {
 			.catch((reason) => {
 				console.log('Error: ' + reason)
 				done.fail(reason)
-			}) 
-	})
+			})
+	}, 10000)
 
 	it('Should fail to open a socket because of wrong URL', (done) => {
 		let webSocketService = new WebSocketService({signaling: 'https://github.com:8100/coast-team/netflux'})
 		webSocketService.connect(webSocketService.settings.signaling)
 			.then((data) => {done.fail()})
-			.catch(done) 
-	})
+			.catch(done)
+})
 })

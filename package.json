@@ -13,7 +13,7 @@
     "test": "karma start",
     "testin": "npm run test -- --browsers",
     "test-coverage": "npm run test -- karma.conf.coverage.js",
-    "nodetest": "npm run botserverandnodekey && rm -rf spec && jasmine init && rollup -i test/service/channelBuilder/webRTCService.test.js -o spec/service/channelBuilder/webRTCServiceSpec.js && jasmine",
+    "nodetest": "npm run signalling-up && npm run botserverandnodekey && rm -rf spec && jasmine init && rollup -i test/service/channelBuilder/webRTCService.test.js -o spec/service/channelBuilder/webRTCServiceSpec.js && jasmine",
     "doc": "jsdoc -d doc -c jsdoc.json -t ./node_modules/ink-docstrap/template -R README.md -r src",
     "postdoc": "mkdir -p doc/doc && cp -f doc/uml.png doc/doc/",
     "docdev": "jsdoc -d doc -p -c jsdoc.json -t ./node_modules/ink-docstrap/template -R README.md -r src",
