@@ -1,6 +1,6 @@
 const signaling = 'ws://localhost:8000'
-// 'ws://sigver-coastteam.rhcloud.com:8000'
-const MSG_NUMBER = 100
+// const signaling = 'wss://sigver-coastteam.rhcloud.com:443'
+const MSG_NUMBER = 10
 
 function randString () {
   const MIN_LENGTH = 1

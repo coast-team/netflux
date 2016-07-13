@@ -59,7 +59,7 @@ describe('WebRTCService ->', () => {
   })
 
   // Fail because ws throw a new error which is not handle (even if using a try catch or a .catch)
-  // it('Connect over signaling: should fail to connect (bad key)', (done) => {
+  // xit('Connect over signaling: should fail to connect (bad key)', (done) => {
   //   webSocketService.connect(signaling)
   //     .then((ws1) => {
   //       let key = randKey()
@@ -82,7 +82,7 @@ describe('WebRTCService ->', () => {
   // })
 
   // Fail because the 2nd socket is closed with code 1000 instead of code 4002
-  // it('Listen from signaling: should fail the provided because key is already opened', (done) => {
+  // xit('Listen from signaling: should fail the provided because key is already opened', (done) => {
   //   webSocketService.connect(signaling)
   //     .then((ws1) => {
   //       let key = randKey()

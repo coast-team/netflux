@@ -54,10 +54,10 @@ class Channel {
    * Send message over this channel. The message should be prepared beforhand by
    * the {@link MessageBuilderService}
    * @see {@link MessageBuilderService#msg}, {@link MessageBuilderService#handleUserMessage}
-   * @param {extternal:ArrayBuffer} data - Message
+   * @param {external:ArrayBuffer} data - Message
    */
   send (data) {
-    if (this.channel.readyState !== 'closed') {
+    if (this.channel.readyState !== 'closed' && new Int8Array(data).length !== 0) {
       try {
         msgBld.completeHeader(data, this.webChannel.myId)
         this.channel.send(data)

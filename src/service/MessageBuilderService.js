@@ -223,6 +223,7 @@ class MessageBuilderService extends ServiceInterface {
     let dataView = this.initHeader(code, recepientId, msgSize)
     let fullMsg = new Uint8Array(dataView.buffer)
     fullMsg.set(msgEncoded, HEADER_OFFSET)
+    // console.log('fullMsg.byteLength', fullMsg.byteLength)
     return fullMsg.buffer
   }
 
@@ -312,6 +313,7 @@ class MessageBuilderService extends ServiceInterface {
    */
   initHeader (code, recipientId, dataSize) {
     let dataView = new DataView(new ArrayBuffer(dataSize))
+    // console.log('truc avant: ', dataView.byteLength)
     dataView.setUint8(0, code)
     //dataView.setUint32(1, senderId)
     dataView.setUint32(5, recipientId)

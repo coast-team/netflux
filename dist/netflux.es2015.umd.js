@@ -1955,24 +1955,27 @@
     connectMeTo (wc, id) {
       return new Promise((resolve, reject) => {
         this.addPendingRequest(wc, id, {resolve, reject})
-        if (typeof window !== 'undefined') wc.sendSrvMsg(this.name, id, {code: WHICH_CONNECTOR, sender: wc.myId})
-        else {
-          wc.sendSrvMsg(this.name, id, {code: CONNECTOR, connectors: [WEBSOCKET], sender: wc.myId,
-            host: wc.settings.host, port: wc.settings.port, which_connector_asked: false})
-        }
+        // if (typeof window !== 'undefined')
+        wc.sendSrvMsg(this.name, id, {code: WHICH_CONNECTOR, sender: wc.myId})
+        // else {
+        //   wc.sendSrvMsg(this.name, id, {code: CONNECTOR, connectors: [WEBSOCKET, WEBRTC], sender: wc.myId,
+        //     host: wc.settings.host, port: wc.settings.port, which_connector_asked: false})
+        // }
       })
     }
 
     onChannel (wc, channel, whichConnectorAsked, sender) {
+      console.log('[DEBUG] whichConnectorAsked: ', whichConnectorAsked)
       if (!whichConnectorAsked) wc.initChannel(channel, false, sender)
       else this.getPendingRequest(wc, sender).resolve(channel)
     }
 
     onMessage (wc, channel, msg) {
+      console.log('[DEBUG] myId: ', wc.myId, ', msg: ', msg)
       switch (msg.code) {
         case WHICH_CONNECTOR:
-          let connectors = [WEBSOCKET]
-          if (typeof window !== 'undefined') connectors.push(WEBRTC)
+          let connectors = [WEBSOCKET, WEBRTC]
+          // if (typeof window !== 'undefined') connectors.push(WEBRTC)
 
           wc.sendSrvMsg(this.name, msg.sender,
             {code: CONNECTOR, connectors, sender: wc.myId,
@@ -1982,25 +1985,33 @@
           let availabled = msg.connectors
 
           let connector = WEBSOCKET
-          if (typeof window !== 'undefined' && availabled.indexOf(WEBRTC) > -1) connector = WEBRTC
+          // if (typeof window !== 'undefined' && availabled.indexOf(WEBRTC) > -1) connector = WEBRTC
 
           let settings = Object.assign({}, wc.settings, {connector,
             host: msg.host, port: msg.port})
           let cBuilder = provide(connector, settings)
 
-          if (connector === WEBSOCKET) {
-            let url = 'ws://' + msg.host + ':' + msg.port
-            cBuilder.connect(url).then((channel) => {
+          // if (connector === WEBSOCKET) {
+          let url = 'ws://' + msg.host + ':' + msg.port
+          cBuilder.connect(url)
+            .then((channel) => {
               channel.send(JSON.stringify({code: NEW_CHANNEL, sender: wc.myId, wcId: wc.id,
                 which_connector_asked: msg.which_connector_asked}))
               this.onChannel(wc, channel, msg.which_connector_asked, msg.sender)
             })
-          } else {
-            cBuilder.connectOverWebChannel(wc, msg.sender)
-            .then((channel) => {
-              this.onChannel(wc, channel, msg.which_connector_asked, msg.sender)
+            .catch(() => {
+              cBuilder = provide(WEBRTC)
+              cBuilder.connectOverWebChannel(wc, msg.sender)
+                .then((channel) => {
+                  this.onChannel(wc, channel, msg.which_connector_asked, msg.sender)
+                })
             })
-          }
+          // } else {
+          //   cBuilder.connectOverWebChannel(wc, msg.sender)
+          //   .then((channel) => {
+          //     this.onChannel(wc, channel, msg.which_connector_asked, msg.sender)
+          //   })
+          // }
           break
       }
     }
@@ -2215,6 +2226,7 @@
       let dataView = this.initHeader(code, recepientId, msgSize)
       let fullMsg = new Uint8Array(dataView.buffer)
       fullMsg.set(msgEncoded, HEADER_OFFSET)
+      // console.log('fullMsg.byteLength', fullMsg.byteLength)
       return fullMsg.buffer
     }
 
@@ -2304,6 +2316,7 @@
      */
     initHeader (code, recipientId, dataSize) {
       let dataView = new DataView(new ArrayBuffer(dataSize))
+      // console.log('truc avant: ', dataView.byteLength)
       dataView.setUint8(0, code)
       //dataView.setUint32(1, senderId)
       dataView.setUint32(5, recipientId)
@@ -2617,10 +2630,10 @@
      * Send message over this channel. The message should be prepared beforhand by
      * the {@link MessageBuilderService}
      * @see {@link MessageBuilderService#msg}, {@link MessageBuilderService#handleUserMessage}
-     * @param {extternal:ArrayBuffer} data - Message
+     * @param {external:ArrayBuffer} data - Message
      */
     send (data) {
-      if (this.channel.readyState !== 'closed') {
+      if (this.channel.readyState !== 'closed' && new Int8Array(data).length !== 0) {
         try {
           msgBld$1.completeHeader(data, this.webChannel.myId)
           this.channel.send(data)
@@ -3431,7 +3444,7 @@
      * @returns {Promise} - Resolved once the channel is initialized on both sides
      */
     initChannel (ch, isInitiator, id = -1) {
-      // console.log('[DEBUG] initChannel (ch, isInitiator, id) (ch, ', isInitiator, ', ', id, ')')
+      console.log('[DEBUG] initChannel (ch, isInitiator, id) (ch, ', isInitiator, ', ', id, ')')
       return new Promise((resolve, reject) => {
         if (id === -1) { id = this.generateId() }
         let channel = new Channel(ch, this, id)
@@ -3439,12 +3452,14 @@
         if (isInitiator) {
           channel.config()
           channel.onPong = () => resolve(channel)
-          // console.log('[DEBUG] send ping')
+          console.log('[DEBUG] send ping')
           ch.send('ping')
         } else {
           ch.onmessage = (msgEvt) => {
+            console.log('[DEBUG] received ', msgEvt)
             if (msgEvt.data === 'ping') {
               channel.config()
+              console.log('send pong')
               channel.send(msgBld.msg(INIT_CHANNEL_PONG))
               resolve(channel)
             }

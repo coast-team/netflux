@@ -598,7 +598,7 @@ class WebChannel {
    * @returns {Promise} - Resolved once the channel is initialized on both sides
    */
   initChannel (ch, isInitiator, id = -1) {
-    // console.log('[DEBUG] initChannel (ch, isInitiator, id) (ch, ', isInitiator, ', ', id, ')')
+    console.log('[DEBUG] initChannel (ch, isInitiator, id) (ch, ', isInitiator, ', ', id, ')')
     return new Promise((resolve, reject) => {
       if (id === -1) { id = this.generateId() }
       let channel = new Channel(ch, this, id)
@@ -606,12 +606,14 @@ class WebChannel {
       if (isInitiator) {
         channel.config()
         channel.onPong = () => resolve(channel)
-        // console.log('[DEBUG] send ping')
+        console.log('[DEBUG] send ping')
         ch.send('ping')
       } else {
         ch.onmessage = (msgEvt) => {
+          console.log('[DEBUG] received ', msgEvt)
           if (msgEvt.data === 'ping') {
             channel.config()
+            console.log('send pong')
             channel.send(msgBld.msg(INIT_CHANNEL_PONG))
             resolve(channel)
           }
