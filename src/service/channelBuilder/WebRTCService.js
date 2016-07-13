@@ -1,4 +1,5 @@
 import {ChannelBuilderInterface} from './channelBuilder'
+import {CHANNEL_BUILDER, provide} from './../../serviceProvider'
 
 let WebRTC = {}
 
@@ -154,7 +155,8 @@ class WebRTCService extends ChannelBuilderInterface {
         (answer) => wc.sendSrvMsg(this.name, msg.sender,
           {sender: wc.myId, answer}),
         (channel) => {
-          wc.initChannel(channel, false, msg.sender)
+          let channelBuilderService = provide(CHANNEL_BUILDER)
+          channelBuilderService.onChannel(wc, channel, true, msg.sender)
           connections.remove(channel.peerId)
         },
         msg.offer

@@ -261,7 +261,6 @@ class WebChannel {
     return this.manager.add(channel)
       .then(() => channel.send(msgBld.msg(JOIN_FINILIZE)))
       .catch((msg) => {
-        console.log('CATCH addChannel')
         this.manager.broadcast(this, msgBld.msg(
           REMOVE_NEW_MEMBER, {id: channel.peerId})
         )

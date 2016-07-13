@@ -23,11 +23,11 @@ bot1.onWebChannel = (wc) => {
   // bot.log('id', wc.myId)
 
   wc.onJoining = (id) => {
-    // bot.log('joining', 'Joinning of a new client [' + id + ']')
+    // bot1.log('joining', 'Joinning of a new client [' + id + ']')
   }
 
   wc.onLeaving = (id) => {
-    // bot.log('leaving', 'Leaving of client [' + id + ']')
+    // bot1.log('leaving', 'Leaving of client [' + id + ']')
   }
 
   wc.onMessage = (id, msg) => {
@@ -45,11 +45,11 @@ bot2.onWebChannel = (wc) => {
   // bot.log('id', wc.myId)
 
   wc.onJoining = (id) => {
-    // bot.log('joining', 'Joinning of a new client [' + id + ']')
+    // bot2.log('joining bot2', 'Joinning of a new client [' + id + ']')
   }
 
   wc.onLeaving = (id) => {
-    // bot.log('leaving', 'Leaving of client [' + id + ']')
+    // bot2.log('leaving bot2', 'Leaving of client [' + id + ']')
   }
 
   wc.onMessage = (id, msg) => {

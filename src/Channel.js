@@ -63,8 +63,6 @@ class Channel {
         msgBld.completeHeader(data, this.webChannel.myId)
         this.channel.send(data)
       } catch (err) {
-        var stack = err.stack
-        console.log( stack )
         console.error(`Channel send: ${err.message}`)
       }
     }

@@ -35,7 +35,6 @@ describe('2 peers -> ', () => {
     if (typeof window !== 'undefined') {
       let wc1 = new WebChannel({signaling})
       wc1.onClose = (evt) => {
-        console.log('hello')
         expect(evt instanceof Event).toBeTruthy()
         wc1.leave()
         done()

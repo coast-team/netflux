@@ -1673,7 +1673,8 @@
           (answer) => wc.sendSrvMsg(this.name, msg.sender,
             {sender: wc.myId, answer}),
           (channel) => {
-            wc.initChannel(channel, false, msg.sender)
+            let channelBuilderService = provide(CHANNEL_BUILDER)
+            channelBuilderService.onChannel(wc, channel, true, msg.sender)
             connections.remove(channel.peerId)
           },
           msg.offer
@@ -1939,15 +1940,13 @@
 
   }
 
-  const WHICH_CONNECTOR = 1
-  const CONNECTOR = 2
   const NEW_CHANNEL = 'newChannel'
 
   class ChannelBuilderService extends ServiceInterface {
     constructor (options = {}) {
       super()
       this.default = {
-        connector: WEBRTC,
+        connectors: [WEBRTC],
         host: '',
         port: 0
       }
@@ -1957,62 +1956,57 @@
     connectMeTo (wc, id) {
       return new Promise((resolve, reject) => {
         this.addPendingRequest(wc, id, {resolve, reject})
-        // if (typeof window !== 'undefined')
-        wc.sendSrvMsg(this.name, id, {code: WHICH_CONNECTOR, sender: wc.myId})
-        // else {
-        //   wc.sendSrvMsg(this.name, id, {code: CONNECTOR, connectors: [WEBSOCKET, WEBRTC], sender: wc.myId,
-        //     host: wc.settings.host, port: wc.settings.port, which_connector_asked: false})
-        // }
+        let connectors = [WEBRTC]
+        if (typeof window === 'undefined') connectors.push(WEBSOCKET)
+        let host = wc.settings.host
+        let port = wc.settings.port
+        wc.sendSrvMsg(this.name, id, {connectors, sender: wc.myId, host, port, oneMsg: true})
       })
     }
 
-    onChannel (wc, channel, whichConnectorAsked, sender) {
-      if (!whichConnectorAsked) wc.initChannel(channel, false, sender)
+    onChannel (wc, channel, oneMsg, sender) {
+      if (!oneMsg) wc.initChannel(channel, false, sender)
       else this.getPendingRequest(wc, sender).resolve(channel)
     }
 
     onMessage (wc, channel, msg) {
-      switch (msg.code) {
-        case WHICH_CONNECTOR:
-          let connectors = [WEBSOCKET, WEBRTC]
-          // if (typeof window !== 'undefined') connectors.push(WEBRTC)
+      let availabled = msg.connectors
+      let host = msg.host
+      let port = msg.port
+      let settings = Object.assign({}, wc.settings, {host, port})
 
-          wc.sendSrvMsg(this.name, msg.sender,
-            {code: CONNECTOR, connectors, sender: wc.myId,
-            host: wc.settings.host || '', port: wc.settings.port || 0, which_connector_asked: true})
-          break
-        case CONNECTOR:
-          let availabled = msg.connectors
+      if (availabled.indexOf(WEBSOCKET) > -1) {
+        // A Bot server send the message
+        let cBuilder = provide(WEBSOCKET, settings)
 
-          let connector = WEBSOCKET
-          // if (typeof window !== 'undefined' && availabled.indexOf(WEBRTC) > -1) connector = WEBRTC
-
-          let settings = Object.assign({}, wc.settings, {connector,
-            host: msg.host, port: msg.port})
-          let cBuilder = provide(connector, settings)
-
-          // if (connector === WEBSOCKET) {
-          let url = 'ws://' + msg.host + ':' + msg.port
-          cBuilder.connect(url)
-            .then((channel) => {
-              channel.send(JSON.stringify({code: NEW_CHANNEL, sender: wc.myId, wcId: wc.id,
-                which_connector_asked: msg.which_connector_asked}))
-              this.onChannel(wc, channel, msg.which_connector_asked, msg.sender)
-            })
-            .catch(() => {
-              cBuilder = provide(WEBRTC)
-              cBuilder.connectOverWebChannel(wc, msg.sender)
-                .then((channel) => {
-                  this.onChannel(wc, channel, msg.which_connector_asked, msg.sender)
-                })
-            })
-          // } else {
-          //   cBuilder.connectOverWebChannel(wc, msg.sender)
-          //   .then((channel) => {
-          //     this.onChannel(wc, channel, msg.which_connector_asked, msg.sender)
-          //   })
-          // }
-          break
+        let url = 'ws://' + host + ':' + port
+        // Try to connect in WebSocket
+        cBuilder.connect(url)
+          .then((channel) => {
+            channel.send(JSON.stringify({code: NEW_CHANNEL, sender: wc.myId,
+              wcId: wc.id, oneMsg: msg.oneMsg}))
+            this.onChannel(wc, channel, !msg.oneMsg, msg.sender)
+          })
+          .catch(() => {
+            cBuilder = provide(WEBRTC)
+            cBuilder.connectOverWebChannel(wc, msg.sender)
+              .then((channel) => {
+                this.onChannel(wc, channel, !msg.oneMsg, msg.sender)
+              })
+          })
+      } else if (typeof window !== 'undefined') {
+        // The peer who send the message isn't a bot and i'm not a bot too
+        let cBuilder = provide(WEBRTC)
+        cBuilder.connectOverWebChannel(wc, msg.sender)
+          .then((channel) => {
+            this.onChannel(wc, channel, !msg.oneMsg, msg.sender)
+          })
+      } else {
+        // The peer who send the message isn't a bot and i'm bot
+        host = wc.settings.host
+        port = wc.settings.port
+        wc.sendSrvMsg(this.name, msg.sender, {connectors: [WEBRTC, WEBSOCKET],
+          sender: wc.myId, host, port, oneMsg: false})
       }
     }
   }
@@ -2638,8 +2632,6 @@
           msgBld$1.completeHeader(data, this.webChannel.myId)
           this.channel.send(data)
         } catch (err) {
-          var stack = err.stack
-          console.log( stack )
           console.error(`Channel send: ${err.message}`)
         }
       }
@@ -3109,7 +3101,6 @@
       return this.manager.add(channel)
         .then(() => channel.send(msgBld.msg(JOIN_FINILIZE)))
         .catch((msg) => {
-          console.log('CATCH addChannel')
           this.manager.broadcast(this, msgBld.msg(
             REMOVE_NEW_MEMBER, {id: channel.peerId})
           )
@@ -3689,7 +3680,7 @@
       this.onNewChannelRequest()
       for (var wc of this.webChannels) {
         if (data.wcId === wc.id) {
-          channelBuilderService.onChannel(wc, socket, !data.which_connector_asked, data.sender)
+          channelBuilderService.onChannel(wc, socket, data.oneMsg, data.sender)
           break
         }
       }

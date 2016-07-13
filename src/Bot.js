@@ -98,7 +98,7 @@ class Bot {
     this.onNewChannelRequest()
     for (var wc of this.webChannels) {
       if (data.wcId === wc.id) {
-        channelBuilderService.onChannel(wc, socket, !data.which_connector_asked, data.sender)
+        channelBuilderService.onChannel(wc, socket, data.oneMsg, data.sender)
         break
       }
     }
