@@ -8,7 +8,7 @@
     "prebuild": "rm -rf coverage dist",
     "build": "rollup -c & rollup -i src/index.js -o dist/netflux.es2015.js",
     "signalling-up": "kill `cat /tmp/sigver.pid`; node ./node_modules/sigver/server.js & echo \"$!\" > /tmp/sigver.pid",
-    "botserverandnodekey": "rollup -i test/BotServerAndNodeKey.js -o test/Rollupped_node_browser.js & kill `cat /tmp/nodekey.pid`; node ./test/Rollupped_node_browser.js & echo \"$!\" > /tmp/nodekey.pid",
+    "botserverandnodekey": "rollup -i test/BotServerAndNodeKey.js -o test/Rollupped_node_browser.js && kill `cat /tmp/nodekey.pid`; node ./test/Rollupped_node_browser.js & echo \"$!\" > /tmp/nodekey.pid",
     "pretest": "npm run build && npm run signalling-up && npm run botserverandnodekey",
     "test": "karma start",
     "testin": "npm run test -- --browsers",
