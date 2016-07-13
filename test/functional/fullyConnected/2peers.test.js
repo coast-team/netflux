@@ -32,32 +32,18 @@ describe('2 peers -> ', () => {
   })
 
   it('Should catch onClose WebChannel event', (done) => {
-    let wc1 = new WebChannel({signaling})
-    wc1.onClose = (evt) => {
-      expect(evt instanceof Event).toBeTruthy()
-      wc1.leave()
-      done()
-    }
-    wc1.open().then((data) => {
-      wc1.close()
-    }).catch(done.fail)
-  })
-
-  it('Should not enable to join the WebChannel after it has been closed', (done) => {
-    let wc1 = new WebChannel({signaling})
-    let wc2 = new WebChannel({signaling})
-
-    // Peer #1
-    wc1.open().then((data) => {
-      wc1.close()
-      // Peer #2
-      wc2.join(data.key).then(done.fail)
-        .catch(() => {
-          wc1.leave()
-          wc2.leave()
-          done()
-        })
-    }).catch(done.fail)
+    if (typeof window !== 'undefined') {
+      let wc1 = new WebChannel({signaling})
+      wc1.onClose = (evt) => {
+        console.log('hello')
+        expect(evt instanceof Event).toBeTruthy()
+        wc1.leave()
+        done()
+      }
+      wc1.open().then((data) => {
+        wc1.close()
+      }).catch(done.fail)
+    } else { done() }
   })
 
   describe('Should send/receive messages -> ', () => {
@@ -168,5 +154,22 @@ describe('2 peers -> ', () => {
       wc2.send(message)
       wc2.sendTo(wc1.myId, message)
     })
+  })
+
+  it('Should not enable to join the WebChannel after it has been closed', (done) => {
+    let wc1 = new WebChannel({signaling})
+    let wc2 = new WebChannel({signaling})
+
+    // Peer #1
+    wc1.open().then((data) => {
+      wc1.close()
+      // Peer #2
+      wc2.join(data.key).then(done.fail)
+        .catch(() => {
+          wc1.leave()
+          wc2.leave()
+          done()
+        })
+    }).catch(done.fail)
   })
 })

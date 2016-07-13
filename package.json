@@ -13,7 +13,7 @@
     "test": "karma start",
     "testin": "npm run test -- --browsers",
     "test-coverage": "npm run test -- karma.conf.coverage.js",
-    "nodetest": "npm run signalling-up && npm run botserverandnodekey && rm -rf spec && jasmine init && rollup -i test/service/channelBuilder/webRTCService.test.js -o spec/service/channelBuilder/webRTCServiceSpec.js && jasmine",
+    "nodetest": "rm -rf spec && jasmine init && npm run signalling-up && npm run botserverandnodekey && rollup -i test/service/channelBuilder/webRTCService.test.js -o spec/service/channelBuilder/webRTCServiceSpec.js && rollup -i test/service/channelBuilder/channelBuilder.test.js -o spec/service/channelBuilder/channelBuilderSpec.js && rollup -i test/service/channelBuilder/webSocketService.test.js -o spec/service/channelBuilder/webSocketServiceSpec.js && rollup -i test/service/service.test.js -o spec/service/serviceSpec.js && rollup -i test/functional/fullyConnected/dataType.test.js -o spec/functional/fullyConnected/dataTypeSpec.js && rollup -i test/functional/fullyConnected/manyPeers.test.js -o spec/functional/fullyConnected/manyPeersSpec.js && rollup -i test/functional/fullyConnected/scadsOfLittleData.test.js -o spec/functional/fullyConnected/scadsOfLittleDataSpec.js && rollup -c node.rollup.config.js -i test/functional/fullyConnected/largeData.test.js -o spec/functional/fullyConnected/largeDataSpec.js && rollup -i test/functional/fullyConnected/2peers.test.js -o spec/zfunctional/fullyConnected/2peersSpec.js && jasmine",
     "doc": "jsdoc -d doc -c jsdoc.json -t ./node_modules/ink-docstrap/template -R README.md -r src",
     "postdoc": "mkdir -p doc/doc && cp -f doc/uml.png doc/doc/",
     "docdev": "jsdoc -d doc -p -c jsdoc.json -t ./node_modules/ink-docstrap/template -R README.md -r src",
@@ -76,7 +76,7 @@
     "rollup": "^0.33.0",
     "rollup-plugin-filesize": "^0.4.4",
     "rollup-plugin-istanbul": "^1.0.0",
-    "rollup-plugin-string": "^2.0.0",
+    "rollup-plugin-string": "^2.0.2",
     "semantic-release": "^4.3.5",
     "sigver": "^7.1.0",
     "standard": "^7.0.1"

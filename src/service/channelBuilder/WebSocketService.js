@@ -1,5 +1,12 @@
 const CONNECT_TIMEOUT = 500
 
+let WebSocket
+if (typeof window === 'undefined') WebSocket = require('ws')
+else WebSocket = window.WebSocket
+
+const OPEN = WebSocket.OPEN
+let CloseEvent = WebSocket.CloseEvent
+
 class WebSocketService {
 
   constructor (options = {}) {
@@ -17,9 +24,6 @@ class WebSocketService {
    */
   connect (url) {
     return new Promise((resolve, reject) => {
-      let WebSocket
-      if (typeof window === 'undefined') WebSocket = require('ws')
-      else WebSocket = window.WebSocket
       try {
         let ws = new WebSocket(url)
         ws.onopen = () => resolve(ws)
@@ -51,3 +55,4 @@ class WebSocketService {
 }
 
 export default WebSocketService
+export {OPEN, CloseEvent}

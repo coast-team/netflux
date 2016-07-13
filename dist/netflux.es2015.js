@@ -1877,6 +1877,13 @@ class WebRTCService extends ChannelBuilderInterface {
 
 const CONNECT_TIMEOUT$1 = 500
 
+let WebSocket
+if (typeof window === 'undefined') WebSocket = require('ws')
+else WebSocket = window.WebSocket
+
+const OPEN = WebSocket.OPEN
+let CloseEvent$1 = WebSocket.CloseEvent
+
 class WebSocketService {
 
   constructor (options = {}) {
@@ -1894,9 +1901,6 @@ class WebSocketService {
    */
   connect (url) {
     return new Promise((resolve, reject) => {
-      let WebSocket
-      if (typeof window === 'undefined') WebSocket = require('ws')
-      else WebSocket = window.WebSocket
       try {
         let ws = new WebSocket(url)
         ws.onopen = () => resolve(ws)
@@ -2794,7 +2798,7 @@ class WebChannelGate {
    * closed
    */
   isOpen () {
-    return this.socket !== null && this.socket.readyState === WebSocket.OPEN
+    return this.socket !== null && this.socket.readyState === OPEN
   }
 
   /**

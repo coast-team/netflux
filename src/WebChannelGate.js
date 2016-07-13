@@ -1,4 +1,5 @@
 import {provide, WEBRTC, WEBSOCKET} from './serviceProvider'
+import {OPEN, CloseEvent} from './service/channelBuilder/WebSocketService'
 
 /**
  * This class represents a door of the *WebChannel* for this peer. If the door
@@ -95,7 +96,7 @@ class WebChannelGate {
    * closed
    */
   isOpen () {
-    return this.socket !== null && this.socket.readyState === WebSocket.OPEN
+    return this.socket !== null && this.socket.readyState === OPEN
   }
 
   /**
