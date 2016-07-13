@@ -313,7 +313,6 @@ class MessageBuilderService extends ServiceInterface {
    */
   initHeader (code, recipientId, dataSize) {
     let dataView = new DataView(new ArrayBuffer(dataSize))
-    // console.log('truc avant: ', dataView.byteLength)
     dataView.setUint8(0, code)
     //dataView.setUint32(1, senderId)
     dataView.setUint32(5, recipientId)

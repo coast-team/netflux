@@ -11,7 +11,6 @@ describe('3 peers -> ', () => {
     // Peer #1
     wc1 = new WebChannel({signaling})
     wc1.onMessage = (id, msg) => {
-      console.log('[A RECEIVED FROM', id, '] ', msg)
       if (id === wc3.myId) {
         expect(msg).toEqual(msg3)
       } else if (id === wc2.myId) {
@@ -23,7 +22,6 @@ describe('3 peers -> ', () => {
       // Peer #2
       wc2 = new WebChannel({signaling})
       wc2.onMessage = (id, msg) => {
-        console.log('[B RECEIVED FROM', id, '] ', msg)
         if (id === wc3.myId) {
           expect(msg).toEqual(msg3)
           wc2.send(msg2)
@@ -34,7 +32,6 @@ describe('3 peers -> ', () => {
       }
 
       wc2.join(data.key).then(() => {
-        console.log('[B joined]')
         // Peer #3
         wc3 = new WebChannel({signaling})
         wc3.onMessage = (id, msg) => {
@@ -47,7 +44,6 @@ describe('3 peers -> ', () => {
         }
         wc3.join(data.key)
           .then(() => {
-            console.log('[C joined]')
             wc3.send(msg3)
           })
           .catch(done.fail)

@@ -26,8 +26,10 @@ class FullyConnectedService extends WebChannelManagerInterface {
   }
 
   broadcast (webChannel, data) {
+    let d
     for (let c of webChannel.channels) {
-      c.send(data)
+      d = (typeof window === 'undefined') ? data.slice(0) : data
+      c.send(d)
     }
   }
 

@@ -57,11 +57,14 @@ class Channel {
    * @param {external:ArrayBuffer} data - Message
    */
   send (data) {
-    if (this.channel.readyState !== 'closed' && new Int8Array(data).length !== 0) {
+    // if (this.channel.readyState !== 'closed' && new Int8Array(data).length !== 0) {
+    if (this.channel.readyState !== 'closed') {
       try {
         msgBld.completeHeader(data, this.webChannel.myId)
         this.channel.send(data)
       } catch (err) {
+        var stack = err.stack
+        console.log( stack )
         console.error(`Channel send: ${err.message}`)
       }
     }

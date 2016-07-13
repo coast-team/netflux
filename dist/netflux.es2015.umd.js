@@ -1420,8 +1420,10 @@
     }
 
     broadcast (webChannel, data) {
+      let d
       for (let c of webChannel.channels) {
-        c.send(data)
+        d = (typeof window === 'undefined') ? data.slice(0) : data
+        c.send(d)
       }
     }
 
@@ -1965,13 +1967,11 @@
     }
 
     onChannel (wc, channel, whichConnectorAsked, sender) {
-      console.log('[DEBUG] whichConnectorAsked: ', whichConnectorAsked)
       if (!whichConnectorAsked) wc.initChannel(channel, false, sender)
       else this.getPendingRequest(wc, sender).resolve(channel)
     }
 
     onMessage (wc, channel, msg) {
-      console.log('[DEBUG] myId: ', wc.myId, ', msg: ', msg)
       switch (msg.code) {
         case WHICH_CONNECTOR:
           let connectors = [WEBSOCKET, WEBRTC]
@@ -2316,7 +2316,6 @@
      */
     initHeader (code, recipientId, dataSize) {
       let dataView = new DataView(new ArrayBuffer(dataSize))
-      // console.log('truc avant: ', dataView.byteLength)
       dataView.setUint8(0, code)
       //dataView.setUint32(1, senderId)
       dataView.setUint32(5, recipientId)
@@ -2633,11 +2632,14 @@
      * @param {external:ArrayBuffer} data - Message
      */
     send (data) {
-      if (this.channel.readyState !== 'closed' && new Int8Array(data).length !== 0) {
+      // if (this.channel.readyState !== 'closed' && new Int8Array(data).length !== 0) {
+      if (this.channel.readyState !== 'closed') {
         try {
           msgBld$1.completeHeader(data, this.webChannel.myId)
           this.channel.send(data)
         } catch (err) {
+          var stack = err.stack
+          console.log( stack )
           console.error(`Channel send: ${err.message}`)
         }
       }
@@ -3444,7 +3446,7 @@
      * @returns {Promise} - Resolved once the channel is initialized on both sides
      */
     initChannel (ch, isInitiator, id = -1) {
-      console.log('[DEBUG] initChannel (ch, isInitiator, id) (ch, ', isInitiator, ', ', id, ')')
+      // console.log('[DEBUG] initChannel (ch, isInitiator, id) (ch, ', isInitiator, ', ', id, ')')
       return new Promise((resolve, reject) => {
         if (id === -1) { id = this.generateId() }
         let channel = new Channel(ch, this, id)
@@ -3452,14 +3454,11 @@
         if (isInitiator) {
           channel.config()
           channel.onPong = () => resolve(channel)
-          console.log('[DEBUG] send ping')
           ch.send('ping')
         } else {
           ch.onmessage = (msgEvt) => {
-            console.log('[DEBUG] received ', msgEvt)
             if (msgEvt.data === 'ping') {
               channel.config()
-              console.log('send pong')
               channel.send(msgBld.msg(INIT_CHANNEL_PONG))
               resolve(channel)
             }

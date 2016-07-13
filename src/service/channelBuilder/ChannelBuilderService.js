@@ -29,13 +29,11 @@ class ChannelBuilderService extends ServiceInterface {
   }
 
   onChannel (wc, channel, whichConnectorAsked, sender) {
-    console.log('[DEBUG] whichConnectorAsked: ', whichConnectorAsked)
     if (!whichConnectorAsked) wc.initChannel(channel, false, sender)
     else this.getPendingRequest(wc, sender).resolve(channel)
   }
 
   onMessage (wc, channel, msg) {
-    console.log('[DEBUG] myId: ', wc.myId, ', msg: ', msg)
     switch (msg.code) {
       case WHICH_CONNECTOR:
         let connectors = [WEBSOCKET, WEBRTC]
