@@ -29,5 +29,5 @@ describe('WebSocketService ->', () => {
 		webSocketService.connect(webSocketService.settings.signaling)
 			.then((data) => {done.fail()})
 			.catch(done)
-})
+	})
 })

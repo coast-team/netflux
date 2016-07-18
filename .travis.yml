@@ -4,6 +4,9 @@ language: node_js
 notifications:
   email: false
 addons:
+  sauce_connect:
+    username: "thlesa"
+    access_key: "08df49f2-1097-4035-8303-b0da0351ab29"
   firefox: "latest"
   apt:
     sources:
@@ -25,6 +28,7 @@ before_install:
   - npm install -g codeclimate-test-reporter
 script:
   - npm test -- karma.conf.travis.js
+  - npm test -- karma.conf-ci.js
 after_success:
   - codeclimate-test-reporter < ./coverage/lcov.info
   - npm run semantic-release

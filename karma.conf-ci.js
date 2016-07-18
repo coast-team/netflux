@@ -57,9 +57,7 @@ module.exports = function(config) {
     files: [
       'node_modules/webrtc-adapter/out/adapter_no_edge_no_global.js',
       'dist/netflux.es2015.umd.js',
-      // 'test/**/*.test.js'
-      // 'test/service/**/*.test.js'
-      'test/dist/netflux.test.js'
+      'test/**/*.test.js'
     ],
 
     // list of files to exclude
@@ -81,6 +79,7 @@ module.exports = function(config) {
     logLevel: config.LOG_INFO,
 
     sauceLabs: {
+      startConnect: true,
       testName: 'Netflux on Chrome & Firefox'
     },
     captureTimeout: 600000,

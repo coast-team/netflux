@@ -79,7 +79,6 @@
     "rollup-plugin-filesize": "^0.4.4",
     "rollup-plugin-istanbul": "^1.0.0",
     "rollup-plugin-string": "^2.0.2",
-    "sauce-connect": "^0.1.1",
     "semantic-release": "^4.3.5",
     "sigver": "^7.1.0",
     "standard": "^7.0.1"
