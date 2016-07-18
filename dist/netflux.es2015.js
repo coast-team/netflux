@@ -3111,24 +3111,22 @@ class WebChannel {
     */
   addBotServer (host, port) {
     return new Promise((resolve, reject) => {
-      if (typeof window !== 'undefined') {
-        let cBuilder = provide(WEBSOCKET, {host, port, addBotServer: true})
-        let url = 'ws://' + host + ':' + port
-        cBuilder.connect(url).then((socket) => {
-          /*
-            Once the connection open a message is sent to the server in order
-            that he can join initiate the channel
-          */
-          socket.send(JSON.stringify({code: ADD_BOT_SERVER$1, sender: this.myId, wcId: this.id}))
-          this.initChannel(socket, false).then((channel) => {
-            this.addChannel(channel).then(() => {
-              resolve()
-            })
+      let cBuilder = provide(WEBSOCKET, {host, port, addBotServer: true})
+      let url = 'ws://' + host + ':' + port
+      cBuilder.connect(url).then((socket) => {
+        /*
+          Once the connection open a message is sent to the server in order
+          that he can join initiate the channel
+        */
+        socket.send(JSON.stringify({code: ADD_BOT_SERVER$1, sender: this.myId, wcId: this.id}))
+        this.initChannel(socket, false).then((channel) => {
+          this.addChannel(channel).then(() => {
+            resolve()
           })
-        }).catch((reason) => {
-          reject(reason)
         })
-      } else reject('Only browser client can add a bot server')
+      }).catch((reason) => {
+        reject(reason)
+      })
     })
   }
 
@@ -3620,30 +3618,37 @@ class Bot {
   }
 
   listen (options = {}) {
-    this.settings = Object.assign({}, this.settings, options)
-    let WebSocketServer = require('ws').Server
-    this.server = new WebSocketServer({host: this.settings.host, port: this.settings.port}, () => {
-      this.onLaunch()
-    })
+    return new Promise((resolve, reject) => {
+      this.settings = Object.assign({}, this.settings, options)
+      let WebSocketServer = require('ws').Server
+      this.server = new WebSocketServer({host: this.settings.host, port: this.settings.port}, () => {
+        this.onLaunch()
+        resolve()
+      })
 
-    this.server.on('connection', (socket) => {
-      this.onConnection()
+      this.server.on('error', (err) =>  {
+        reject('WebSocketServerError with ws://' + this.settings.host + ':' + this.settings.port)
+      })
 
-      socket.on('message', (msg) => {
-        var data = {code: ''}
-        try {
-          data = JSON.parse(msg)
-        } catch (e) {}
-        switch (data.code) {
-          case ADD_BOT_SERVER:
+      this.server.on('connection', (socket) => {
+        this.onConnection()
+
+        socket.on('message', (msg) => {
+          var data = {code: ''}
+          try {
+            data = JSON.parse(msg)
+          } catch (e) {}
+          switch (data.code) {
+            case ADD_BOT_SERVER:
             this.addBotServer(socket, data)
             break
-          case NEW_CHANNEL$1:
+            case NEW_CHANNEL$1:
             this.newChannel(socket, data)
             break
-          default:
+            default:
             this.onCodeError()
-        }
+          }
+        })
       })
     })
   }
@@ -3659,7 +3664,7 @@ class Bot {
       let webChannel
 
       webChannel = new WebChannel({'connector': 'WebSocket',
-      host: this.settings.host, port: this.settings.port})
+        host: this.settings.host, port: this.settings.port})
 
       webChannel.joinAsBot(socket, data.sender).then(() => {
         this.onWebChannel(webChannel)

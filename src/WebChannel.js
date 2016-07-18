@@ -277,24 +277,22 @@ class WebChannel {
     */
   addBotServer (host, port) {
     return new Promise((resolve, reject) => {
-      if (typeof window !== 'undefined') {
-        let cBuilder = provide(WEBSOCKET, {host, port, addBotServer: true})
-        let url = 'ws://' + host + ':' + port
-        cBuilder.connect(url).then((socket) => {
-          /*
-            Once the connection open a message is sent to the server in order
-            that he can join initiate the channel
-          */
-          socket.send(JSON.stringify({code: ADD_BOT_SERVER, sender: this.myId, wcId: this.id}))
-          this.initChannel(socket, false).then((channel) => {
-            this.addChannel(channel).then(() => {
-              resolve()
-            })
+      let cBuilder = provide(WEBSOCKET, {host, port, addBotServer: true})
+      let url = 'ws://' + host + ':' + port
+      cBuilder.connect(url).then((socket) => {
+        /*
+          Once the connection open a message is sent to the server in order
+          that he can join initiate the channel
+        */
+        socket.send(JSON.stringify({code: ADD_BOT_SERVER, sender: this.myId, wcId: this.id}))
+        this.initChannel(socket, false).then((channel) => {
+          this.addChannel(channel).then(() => {
+            resolve()
           })
-        }).catch((reason) => {
-          reject(reason)
         })
-      } else reject('Only browser client can add a bot server')
+      }).catch((reason) => {
+        reject(reason)
+      })
     })
   }
 

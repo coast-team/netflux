@@ -236,5 +236,5 @@ describe('WebRTCService ->', () => {
           })
           .catch(done.fail)
       })
-  }, 10000)
+  }, 15000)
 })

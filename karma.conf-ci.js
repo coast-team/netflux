@@ -57,7 +57,8 @@ module.exports = function(config) {
     files: [
       'node_modules/webrtc-adapter/out/adapter_no_edge_no_global.js',
       'dist/netflux.es2015.umd.js',
-      'test/**/*.test.js'
+      // 'test/**/*.test.js'
+      'test/functional/bot/1peer.test.js'
     ],
 
     // list of files to exclude
@@ -79,8 +80,12 @@ module.exports = function(config) {
     logLevel: config.LOG_INFO,
 
     sauceLabs: {
-      startConnect: true,
-      testName: 'Netflux on Chrome & Firefox'
+      testName: 'Netflux on Chrome & Firefox',
+      recordScreenshots: false,
+      connectOptions: {
+        port: 5757,
+        logfile: 'sauce_connect.log'
+      }
     },
     captureTimeout: 600000,
     browserNoActivityTimeout: 600000,
