@@ -58,6 +58,7 @@
     "ws": "^1.1.1"
   },
   "devDependencies": {
+    "babel-eslint": "^6.1.2",
     "commitizen": "^2.4.6",
     "cz-conventional-changelog": "^1.1.5",
     "eslint": "^2.13.1",
