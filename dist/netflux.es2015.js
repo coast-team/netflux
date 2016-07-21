@@ -1934,7 +1934,7 @@ class WebSocketService {
 
 }
 
-const NEW_CHANNEL = 'newChannel'
+const NEW_CHANNEL$1 = 'newChannel'
 
 class ChannelBuilderService extends ServiceInterface {
   constructor (options = {}) {
@@ -1977,7 +1977,7 @@ class ChannelBuilderService extends ServiceInterface {
       // Try to connect in WebSocket
       cBuilder.connect(url)
         .then((channel) => {
-          channel.send(JSON.stringify({code: NEW_CHANNEL, sender: wc.myId,
+          channel.send(JSON.stringify({code: NEW_CHANNEL$1, sender: wc.myId,
             wcId: wc.id, oneMsg: msg.oneMsg}))
           this.onChannel(wc, channel, !msg.oneMsg, msg.sender)
         })
@@ -3576,7 +3576,7 @@ class WebChannel {
 }
 
 const ADD_BOT_SERVER = 'addBotServer'
-const NEW_CHANNEL$1 = 'newChannel'
+const NEW_CHANNEL = 'newChannel'
 
 class Bot {
   constructor (options = {}) {
@@ -3642,7 +3642,7 @@ class Bot {
             case ADD_BOT_SERVER:
             this.addBotServer(socket, data)
             break
-            case NEW_CHANNEL$1:
+            case NEW_CHANNEL:
             this.newChannel(socket, data)
             break
             default:
@@ -3713,4 +3713,4 @@ class Bot {
   }
 }
 
-export { WEBRTC, FULLY_CONNECTED, Bot, WebChannel };
+export { Bot, WebChannel };

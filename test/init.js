@@ -1,6 +1,7 @@
 import {signaling} from './config'
 import WebRTCService from '../src/service/channelBuilder/WebRTCService'
 import WebSocketService from '../src/service/channelBuilder/WebSocketService'
+import {Bot} from '../src/Bot'
 
 let webRTCService = new WebRTCService()
 let webSocketService = new WebSocketService()
@@ -9,13 +10,12 @@ let key = '12345'
 var host = '127.0.0.1'
 var port1 = 9000
 var port2 = 9001
-let netflux = require('../dist/netflux.es2015.umd.js')
 
 const DEBUG_PING = 'DEBUG_PING'
 const DEBUG_PONG = 'DEBUG_PONG'
 const DEBUG_KICK = 'DEBUG_KICK'
 
-let bot1 = new netflux.Bot()
+let bot1 = new Bot()
 bot1.listen({host, port: port1, log: true})
 
 bot1.onWebChannel = (wc) => {
@@ -37,7 +37,7 @@ bot1.onWebChannel = (wc) => {
   }
 }
 
-let bot2 = new netflux.Bot()
+let bot2 = new Bot()
 bot2.listen({host, port: port2, log: true})
 
 bot2.onWebChannel = (wc) => {

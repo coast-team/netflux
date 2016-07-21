@@ -1,5 +1,4 @@
 import '../node_modules/webrtc-adapter/out/adapter_no_edge_no_global'
-export { WEBRTC, FULLY_CONNECTED } from './serviceProvider'
 export { Bot } from './Bot'
 export { WebChannel } from './WebChannel'
 

@@ -1,12 +1,9 @@
 node_modules
-jspm_packages
 npm-debug*
 rollupfull.txt
-spec
-/test/Pretest_node_browser.js
-/test/Rollupped_node_browser.js
+/tmp
 
-# Coverage
+# Code coverage
 coverage
 
 # Documentation
