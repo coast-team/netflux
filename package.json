@@ -6,12 +6,12 @@
   "version": "0.0.0-semrelease",
   "scripts": {
     "prebuild": "rm -rf coverage dist",
-    "build": "rollup -c & rollup -i src/index.js -o dist/netflux.es2015.js",
+    "build": "node rollup.config.js",
     "prefortest:all": "rm -rf ./tmp && mkdir ./tmp",
-    "prefortest:init": "rollup -c rollup.config.node.js -i test/init.js -o tmp/test/init.js",
+    "prefortest:init": "node rollup.config.js -t test/init.js tmp/test/init.js",
     "fortest:init": "node tmp/test/init.js & echo \"$!\" >> tmp/pids",
     "fortest:kill": "cat tmp/pids | xargs kill",
-    "fortest:rollup-node": "find test -name '*test.js' | xargs -i rollup -c rollup.config.node.js -i '{}' -o tmp/'{}'",
+    "fortest:rollup-node": "find test -name '*test.js' | xargs -i node rollup.config.js -t '{}' tmp/'{}'",
     "fortest:signaling": "node ./node_modules/sigver/server.js & echo \"$!\" >> tmp/pids",
     "fortest:all": "npm run build && npm run fortest:signaling && npm run fortest:init",
     "pretest": "npm run fortest:all && npm run fortest:rollup-node",
@@ -20,12 +20,12 @@
     "pretest:firefox": "npm run pretest:browsers",
     "pretest:node": "npm run pretest",
     "pretest:coverage": "npm run pretest",
-    "test": "node jasmine.conf.node.js; karma start; npm run fortest:kill",
+    "test": "node jasmine.conf.js; karma start; npm run fortest:kill",
     "test:browsers": "karma start; npm run fortest:kill",
     "test:chrome": "karma start --browsers Chrome; npm run fortest:kill",
     "test:firefox": "karma start --browsers Firefox; npm run fortest:kill",
-    "test:node": "node jasmine.conf.node.js; npm run fortest:kill",
-    "test:coverage": "karma start karma.conf.coverage.js; npm run fortest:kill",
+    "test:node": "node jasmine.conf.js; npm run fortest:kill",
+    "test:coverage": "node jasmine.conf.js; karma start karma.conf.coverage.js; npm run fortest:kill",
     "predoc:deploy": "json -I -f jsdoc.json -e \"this.templates.systemName=\\\"Netflux `git describe --abbrev=0 --tags`\\\"\" && npm run docdev",
     "doc": "jsdoc -d doc -c jsdoc.json -t ./node_modules/ink-docstrap/template -R README.md -r src",
     "doc:dev": "jsdoc -d doc -p -c jsdoc.json -t ./node_modules/ink-docstrap/template -R README.md -r src",
@@ -88,6 +88,7 @@
     "karma-sauce-launcher": "^1.0.0",
     "rollup": "^0.33.0",
     "rollup-plugin-filesize": "^0.4.4",
+    "rollup-plugin-includepaths": "^0.1.5",
     "rollup-plugin-istanbul": "^1.0.0",
     "rollup-plugin-string": "^2.0.2",
     "semantic-release": "^4.3.5",
@@ -99,6 +100,7 @@
     "parser": "babel-eslint",
     "globals": [
       "netflux",
+      "jasmine",
       "describe",
       "xdescribe",
       "it",
@@ -121,8 +123,7 @@
     ],
     "ignore": [
       "dist/*",
-      "karma*.js",
-      "*config.js"
+      "karma*.js"
     ]
   }
 }

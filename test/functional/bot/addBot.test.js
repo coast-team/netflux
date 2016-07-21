@@ -1,4 +1,4 @@
-import {Bot} from '../../../src/Bot'
+import {Bot} from 'src/Bot'
 
 describe('1 browser -> ', () => {
   it('Should not be able to instanciate a bot ', (done) => {

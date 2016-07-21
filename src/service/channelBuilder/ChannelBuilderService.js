@@ -1,5 +1,5 @@
-import {ServiceInterface} from '../service'
-import {WEBRTC, WEBSOCKET, provide} from '../../serviceProvider'
+import {ServiceInterface} from 'service/service'
+import {WEBRTC, WEBSOCKET, provide} from 'serviceProvider'
 
 const NEW_CHANNEL = 'newChannel'
 

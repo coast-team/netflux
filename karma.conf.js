@@ -34,6 +34,12 @@ module.exports = (config) => {
         plugins: [
           require('rollup-plugin-string')({
             include: 'test/*.txt'
+          }),
+          require('rollup-plugin-includepaths')({
+            include: {},
+            paths: ['', 'src/', 'test/'],
+            external: [],
+            extensions: ['.js', '.txt']
           })
         ]
       },

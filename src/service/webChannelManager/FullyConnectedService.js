@@ -1,4 +1,4 @@
-import {WebChannelManagerInterface} from './webChannelManager'
+import {WebChannelManagerInterface} from 'service/webChannelManager/webChannelManager'
 
 /**
  * Fully connected web channel manager. Implements fully connected topology

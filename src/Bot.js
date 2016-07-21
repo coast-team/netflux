@@ -1,5 +1,5 @@
-import {WebChannel} from './WebChannel'
-import {CHANNEL_BUILDER, provide} from './serviceProvider'
+import {WebChannel} from 'WebChannel'
+import {CHANNEL_BUILDER, provide} from 'serviceProvider'
 
 const ADD_BOT_SERVER = 'addBotServer'
 const NEW_CHANNEL = 'newChannel'

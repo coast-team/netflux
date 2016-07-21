@@ -8,11 +8,18 @@ module.exports = (config) => {
           require('rollup-plugin-string')({
             include: 'test/*.txt'
           }),
+          require('rollup-plugin-includepaths')({
+            include: {},
+            paths: ['', 'src/', 'test/'],
+            external: [],
+            extensions: ['.js', '.txt']
+          }),
           require('rollup-plugin-istanbul')({
             exclude: [
               'test/**/*.js',
               'test/*.js',
-              'test/*.txt'
+              'test/*.txt',
+              'dist/*.js'
             ]
           })
         ]

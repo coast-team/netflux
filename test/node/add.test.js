@@ -1,6 +1,6 @@
-import {Bot} from '../../src/Bot'
-import {WebChannel} from '../../src/WebChannel'
-import {signaling} from '../config'
+import {Bot} from 'src/Bot'
+import {WebChannel} from 'src/WebChannel'
+import {signaling} from 'config'
 
 const PING = 'ping'
 const PONG = 'pong'

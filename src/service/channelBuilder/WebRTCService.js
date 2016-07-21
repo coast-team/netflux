@@ -1,8 +1,7 @@
-import {ChannelBuilderInterface} from './channelBuilder'
-import {CHANNEL_BUILDER, provide} from './../../serviceProvider'
+import {ChannelBuilderInterface} from 'service/channelBuilder/channelBuilder'
+import {CHANNEL_BUILDER, provide} from 'serviceProvider'
 
 let WebRTC = {}
-
 let RTCPeerConnection
 let RTCIceCandidate
 if (typeof window !== 'undefined') {

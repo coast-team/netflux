@@ -1,7 +1,7 @@
-import {provide, FULLY_CONNECTED, WEBRTC, WEBSOCKET, MESSAGE_BUILDER} from './serviceProvider'
-import Channel from './Channel'
-import JoiningPeer from './JoiningPeer'
-import WebChannelGate from './WebChannelGate'
+import {provide, FULLY_CONNECTED, WEBRTC, WEBSOCKET, MESSAGE_BUILDER} from 'serviceProvider'
+import Channel from 'Channel'
+import JoiningPeer from 'JoiningPeer'
+import WebChannelGate from 'WebChannelGate'
 
 const msgBld = provide(MESSAGE_BUILDER)
 

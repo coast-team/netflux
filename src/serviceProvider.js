@@ -1,8 +1,8 @@
-import FullyConnectedService from './service/webChannelManager/FullyConnectedService'
-import WebRTCService from './service/channelBuilder/WebRTCService'
-import WebSocketService from './service/channelBuilder/WebSocketService'
-import ChannelBuilderService from './service/channelBuilder/ChannelBuilderService'
-import MessageBuilderService from './service/MessageBuilderService'
+import FullyConnectedService from 'service/webChannelManager/FullyConnectedService'
+import WebRTCService from 'service/channelBuilder/WebRTCService'
+import WebSocketService from 'service/channelBuilder/WebSocketService'
+import ChannelBuilderService from 'service/channelBuilder/ChannelBuilderService'
+import MessageBuilderService from 'service/MessageBuilderService'
 /**
  * Service Provider module is a helper module for {@link module:service}. It is
  * responsible to instantiate all services. This module must be used to get

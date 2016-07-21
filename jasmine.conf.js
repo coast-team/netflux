@@ -1,3 +1,4 @@
+// Configuration for running tests in NodeJS
 let Jasmine = require('jasmine')
 let SpecReporter = require('jasmine-spec-reporter')
 let config = {

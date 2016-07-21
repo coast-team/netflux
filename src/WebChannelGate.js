@@ -1,5 +1,5 @@
-import {provide, WEBRTC, WEBSOCKET} from './serviceProvider'
-import {OPEN, CloseEvent} from './service/channelBuilder/WebSocketService'
+import {provide, WEBRTC, WEBSOCKET} from 'serviceProvider'
+import {OPEN, CloseEvent} from 'service/channelBuilder/WebSocketService'
 
 /**
  * This class represents a door of the *WebChannel* for this peer. If the door

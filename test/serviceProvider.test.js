@@ -1,4 +1,4 @@
-import {provide, FULLY_CONNECTED, WEBRTC} from '../src/serviceProvider'
+import {provide, FULLY_CONNECTED, WEBRTC} from 'src/serviceProvider'
 
 describe('Service Provider', () => {
   it('service constant names should be exported', () => {

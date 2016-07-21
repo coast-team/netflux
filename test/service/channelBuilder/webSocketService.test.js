@@ -1,4 +1,4 @@
-import WebSocketService from '../../../src/service/channelBuilder/WebSocketService'
+import WebSocketService from 'src/service/channelBuilder/WebSocketService'
 
 describe('WebSocketService ->', () => {
 	const onlineSignaling = 'ws://sigver-coastteam.rhcloud.com:8000'

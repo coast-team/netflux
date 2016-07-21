@@ -1,5 +1,5 @@
-import {ServiceInterface} from '../service'
-import {provide, CHANNEL_BUILDER} from '../../serviceProvider'
+import {ServiceInterface} from 'service/service'
+import {provide, CHANNEL_BUILDER} from 'serviceProvider'
 
 /**
  * Web Channel Manager module is a submodule of {@link module:service} and the

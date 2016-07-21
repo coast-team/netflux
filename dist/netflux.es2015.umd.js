@@ -1520,7 +1520,6 @@
   }
 
   let WebRTC = {}
-
   let RTCPeerConnection$1
   let RTCIceCandidate$1
   if (typeof window !== 'undefined') {

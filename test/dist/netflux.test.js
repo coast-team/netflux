@@ -1,5 +1,5 @@
-import {WebChannel, Bot} from '../../dist/netflux.es2015'
-import {isBrowser} from '../../src/helper.js'
+import {WebChannel, Bot} from 'dist/netflux.es2015'
+import {isBrowser} from 'src/helper.js'
 
 describe('Distributions-> ', () => {
   it('API must exports defined objects', () => {

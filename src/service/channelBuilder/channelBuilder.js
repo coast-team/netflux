@@ -1,4 +1,4 @@
-import {ServiceInterface} from '../service'
+import {ServiceInterface} from 'service/service'
 /**
  * Channel Builder module is responsible to create a connection between two
  * peers.

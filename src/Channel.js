@@ -1,4 +1,4 @@
-import {provide, MESSAGE_BUILDER} from './serviceProvider'
+import {provide, MESSAGE_BUILDER} from 'serviceProvider'
 
 const msgBld = provide(MESSAGE_BUILDER)
 

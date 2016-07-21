@@ -1,6 +1,6 @@
-import {Bot} from '../../src/Bot'
-import {WebChannel} from '../../src/WebChannel'
-import {signaling} from '../config'
+import {Bot} from 'src/Bot'
+import {WebChannel} from 'src/WebChannel'
+import {signaling} from 'config'
 
 describe('Node -> ', () => {
   it('Should be able to leave a webChannel', (done) => {

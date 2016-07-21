@@ -1,5 +1,5 @@
-import {signaling} from '../../config'
-import {WebChannel} from '../../../src/WebChannel'
+import {signaling} from 'config'
+import {WebChannel} from 'src/WebChannel'
 
 describe('3 peers -> ', () => {
   let wc1, wc2, wc3
