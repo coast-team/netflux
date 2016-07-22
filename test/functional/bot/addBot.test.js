@@ -1,13 +1,9 @@
+import {isBrowser} from 'src/helper'
 import {Bot} from 'src/Bot'
 
-describe('1 browser -> ', () => {
-  it('Should not be able to instanciate a bot ', (done) => {
-    try {
-      let bot = new Bot()
-      bot.getServer()
-      done.fail('Bot can be instanciate only in Node\'s environment')
-    } catch (err) {
-      done()
-    }
+describe('Bot instanciation -> ', () => {
+  it('in browser should throw an exception ', () => {
+    if (isBrowser()) expect(Bot).toThrow()
+    else expect(Bot).not.toThrow()
   })
 })

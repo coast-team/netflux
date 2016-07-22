@@ -1,6 +1,6 @@
 import {signaling} from 'config'
-import WebRTCService from 'src/service/channelBuilder/WebRTCService'
-import WebSocketService from 'src/service/channelBuilder/WebSocketService'
+import WebRTCService from 'src/service/WebRTCService'
+import WebSocketService from 'src/service/WebSocketService'
 import {Bot} from 'src/Bot'
 
 let webRTCService = new WebRTCService()

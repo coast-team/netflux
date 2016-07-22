@@ -1,4 +1,4 @@
-import {ServiceInterface} from 'service/service'
+import ServiceInterface from 'service/ServiceInterface'
 import {provide, CHANNEL_BUILDER} from 'serviceProvider'
 
 /**
@@ -31,7 +31,7 @@ const CONNECT_WITH_TIMEOUT = 5000
  * @interface
  * @extends module:service~ServiceInterface
  */
-class WebChannelManagerInterface extends ServiceInterface {
+class ManagerInterface extends ServiceInterface {
 
   constructor () {
     super()
@@ -228,7 +228,4 @@ class WebChannelManagerInterface extends ServiceInterface {
   }
 }
 
-export {
-  /** @see module:webChannelManager~WebChannelManagerInterface */
-  WebChannelManagerInterface
-}
+export default ManagerInterface

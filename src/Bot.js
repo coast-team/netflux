@@ -1,3 +1,4 @@
+import {isBrowser} from 'helper'
 import {WebChannel} from 'WebChannel'
 import {CHANNEL_BUILDER, provide} from 'serviceProvider'
 
@@ -6,7 +7,7 @@ const NEW_CHANNEL = 'newChannel'
 
 class Bot {
   constructor (options = {}) {
-    if (typeof window !== 'undefined') throw new Error('Bot can be instanciate only in Node\'s environment')
+    if (isBrowser()) throw new Error('Bot can be instanciated only in Node\'s environment')
     this.defaults = {
       host: '127.0.0.1',
       port: 9000,

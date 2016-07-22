@@ -87,7 +87,7 @@
     "karma-jasmine": "^1.0.2",
     "karma-rollup-preprocessor": "^2.0.2",
     "karma-sauce-launcher": "^1.0.0",
-    "rollup": "^0.33.0",
+    "rollup": "^0.34.0",
     "rollup-plugin-filesize": "^0.4.4",
     "rollup-plugin-includepaths": "^0.1.5",
     "rollup-plugin-istanbul": "^1.0.0",

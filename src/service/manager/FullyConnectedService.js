@@ -1,4 +1,4 @@
-import {WebChannelManagerInterface} from 'service/webChannelManager/webChannelManager'
+import ManagerInterface from 'service/manager/ManagerInterface'
 
 /**
  * Fully connected web channel manager. Implements fully connected topology
@@ -6,7 +6,7 @@ import {WebChannelManagerInterface} from 'service/webChannelManager/webChannelMa
  *
  * @extends module:webChannelManager~WebChannelManagerInterface
  */
-class FullyConnectedService extends WebChannelManagerInterface {
+class FullyConnectedService extends ManagerInterface {
 
   constructor () {
     super()

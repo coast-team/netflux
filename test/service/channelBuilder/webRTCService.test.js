@@ -1,6 +1,6 @@
 import {signaling} from 'config'
-import WebRTCService from 'src/service/channelBuilder/WebRTCService'
-import WebSocketService from 'src/service/channelBuilder/WebSocketService'
+import WebRTCService from 'src/service/WebRTCService'
+import WebSocketService from 'src/service/WebSocketService'
 
 // const signaling = 'ws://sigver-coastteam.rhcloud.com:8000'
 

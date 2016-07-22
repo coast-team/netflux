@@ -83,7 +83,4 @@ class ServiceInterface {
   }
 }
 
-export {
-  /** @see module:service~ServiceInterface */
-  ServiceInterface
-}
+export default ServiceInterface

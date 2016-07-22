@@ -6,7 +6,7 @@
  *
  * @module messageBuilder
  */
-import {ServiceInterface} from 'service/service'
+import ServiceInterface from 'service/ServiceInterface'
 
 /**
  * Maximum message size sent over *Channel*.

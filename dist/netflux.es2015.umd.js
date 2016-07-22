@@ -1082,6 +1082,13 @@
 
   },{}]},{},[2]);
 
+  function isBrowser () {
+    if (typeof window === 'undefined' || (typeof process !== 'undefined' && process.title === 'node')) {
+      return false
+    }
+    return true
+  }
+
   /**
    * Service module includes {@link module:channelBuilder},
    * {@link module:webChannelManager} and {@link module:messageBuilder}.
@@ -1197,7 +1204,7 @@
    * @interface
    * @extends module:service~ServiceInterface
    */
-  class WebChannelManagerInterface extends ServiceInterface {
+  class ManagerInterface extends ServiceInterface {
 
     constructor () {
       super()
@@ -1400,7 +1407,7 @@
    *
    * @extends module:webChannelManager~WebChannelManagerInterface
    */
-  class FullyConnectedService extends WebChannelManagerInterface {
+  class FullyConnectedService extends ManagerInterface {
 
     constructor () {
       super()
@@ -1439,96 +1446,30 @@
     leave (webChannel) {}
   }
 
-  /**
-   * Channel Builder module is responsible to create a connection between two
-   * peers.
-   * @module channelBuilder
-   * @see Channel
-   */
+  const message = new WeakMap()
 
-  /**
-   * On channel callback for {@link module:channelBuilder~ChannelBuilderInterface#open}
-   * function.
-   *
-   * @callback module:channelBuilder~onChannelCallback
-   * @param {Channel} channel - A new channel.
-   */
-
-  /**
-   * Call back to initialize the channel. It should be executed on both peer
-   * sides during connection establishment to assure that both channels would be
-   * ready to be used in the web channel.
-   *
-   * @callback module:channelBuilder~initChannel
-   * @param {Channel} ch - Channel.
-   * @param {string} id - Unique channel identifier.
-   */
-
-  /**
-   * Interface to be implemented by each connection service.
-   *
-   * @interface
-   * @extends module:service~ServiceInterface
-   */
-  class ChannelBuilderInterface extends ServiceInterface {
-
-    constructor () {
-      super()
+  class CloseEvent {
+    constructor (msg) {
+      message.set(this, msg)
     }
 
-    /**
-     * Enables other clients to establish a connection with you.
-     *
-     * @abstract
-     * @param {string} key - The unique identifier which has to be passed to the
-     * peers who need to connect to you.
-     * @param {module:channelBuilder~ChannelBuilderInterface~onChannelCallback} onChannel - Callback
-     * function to execute once the connection has been established.
-     * @param {Object} [options] - Any other options which depend on the service implementation.
-     * @return {Promise} - Once resolved, provide an Object with `key` and `url`
-     * attributes to be passed to {@link module:channelBuilder~ChannelBuilderInterface#join} function.
-     * It is rejected if an error occured.
-     */
-    open (key, onChannel, options) {
-      throw new Error('Must be implemented by subclass!')
-    }
-
-    /**
-     * Connects you with the peer who provided the `key`.
-     *
-     * @abstract
-     * @param  {string} key - A key obtained from the peer who executed
-     * {@link module:channelBuilder~ChannelBuilderInterface#open} function.
-     * @param  {Object} [options] Any other options which depend on the implementation.
-     * @return {Promise} It is resolved when the connection is established, otherwise it is rejected.
-     */
-    join (key, options) {
-      throw new Error('Must be implemented by subclass!')
-    }
-
-    /**
-     * Establish a connection between you and another peer (including joining peer) via web channel.
-     *
-     * @abstract
-     * @param  {WebChannel} wc - Web Channel through which the connection will be established.
-     * @param  {string} id - Peer id with whom you will be connected.
-     * @return {Promise} - Resolved once the connection has been established, rejected otherwise.
-     */
-    connectMeTo (wc, id) {
-      throw new Error('Must be implemented by subclass!')
+    get message () {
+      return message.get(this)
     }
   }
 
-  let WebRTC = {}
+  const CONNECT_TIMEOUT = 2000
+  const connectionsByWC = new Map()
   let RTCPeerConnection$1
   let RTCIceCandidate$1
-  if (typeof window !== 'undefined') {
+  let RTCPendingConnections
+  if (isBrowser()) {
     RTCPeerConnection$1 = window.RTCPeerConnection
     RTCIceCandidate$1 = window.RTCIceCandidate
   } else {
-    WebRTC = require('wrtc')
-    RTCPeerConnection$1 = WebRTC.RTCPeerConnection
-    RTCIceCandidate$1 = WebRTC.RTCIceCandidate
+    let wrtc = require('wrtc')
+    RTCPeerConnection$1 = wrtc.RTCPeerConnection
+    RTCIceCandidate$1 = wrtc.RTCIceCandidate
   }
 
   /**
@@ -1553,94 +1494,13 @@
    */
 
   /**
-   * The goal of this class is to prevent the error when adding an ice candidate
-   * before the remote description has been set.
-   */
-  class RTCPendingConnections {
-    constructor () {
-      this.connections = new Map()
-    }
-
-    /**
-     * Prepares pending connection for the specified peer only if it has not been added already.
-     *
-     * @param  {string} id - Peer id
-     */
-    add (id) {
-      if (!this.connections.has(id)) {
-        let pc = null
-        let obj = {promise: null}
-        obj.promise = new Promise((resolve, reject) => {
-          Object.defineProperty(obj, 'pc', {
-            get: () => pc,
-            set: (value) => {
-              pc = value
-              resolve()
-            }
-          })
-          setTimeout(reject, CONNECT_TIMEOUT, 'timeout')
-        })
-        this.connections.set(id, obj)
-      }
-    }
-
-    /**
-     * Remove a pending connection from the Map. Usually when the connection has already
-     * been established and there is now interest to hold this reference.
-     *
-     * @param  {string} id - Peer id.
-     */
-    remove (id) {
-      this.connections.delete(id)
-    }
-
-    /**
-     * Returns RTCPeerConnection object for the provided peer id.
-     *
-     * @param  {string} id - Peer id.
-     * @return {external:RTCPeerConnection} - Peer connection.
-     */
-    getPC (id) {
-      return this.connections.get(id).pc
-    }
-
-    /**
-     * Updates RTCPeerConnection reference for the provided peer id.
-     *
-     * @param  {string} id - Peer id.
-     * @param  {external:RTCPeerConnection} pc - Peer connection.
-     */
-    setPC (id, pc) {
-      this.connections.get(id).pc = pc
-    }
-
-    /**
-     * When the remote description is set, it will add the ice candidate to the
-     * peer connection of the specified peer.
-     *
-     * @param  {string} id - Peer id.
-     * @param  {external:RTCIceCandidate} candidate - Ice candidate.
-     * @return {Promise} - Resolved once the ice candidate has been succesfully added.
-     */
-    addIceCandidate (id, candidate) {
-      let obj = this.connections.get(id)
-      return obj.promise.then(() => {
-        return obj.pc.addIceCandidate(candidate)
-      })
-    }
-  }
-
-  const CONNECT_TIMEOUT = 2000
-  const connectionsByWC = new Map()
-
-  /**
    * Service class responsible to establish connections between peers via
    * `RTCDataChannel`.
    *
    * @see {@link external:RTCPeerConnection}
    * @extends module:channelBuilder~ChannelBuilderInterface
    */
-  class WebRTCService extends ChannelBuilderInterface {
+  class WebRTCService extends ServiceInterface {
 
     /**
      * WebRTCService constructor.
@@ -1883,24 +1743,89 @@
     }
   }
 
-  const CONNECT_TIMEOUT$1 = 500
-
-  let WebSocket
-  if (typeof window === 'undefined') WebSocket = require('ws')
-  else WebSocket = window.WebSocket
-
-  const OPEN = WebSocket.OPEN
-  let CloseEvent$1 = WebSocket.CloseEvent
-
-  class WebSocketService {
-
-    constructor (options = {}) {
-      this.defaults = {
-        host: '127.0.0.1',
-        port: 8080
-      }
-      this.settings = Object.assign({}, this.defaults, options)
+  /**
+   * The goal of this class is to prevent the error when adding an ice candidate
+   * before the remote description has been set.
+   */
+  RTCPendingConnections = class RTCPendingConnections {
+    constructor () {
+      this.connections = new Map()
     }
+
+    /**
+     * Prepares pending connection for the specified peer only if it has not been added already.
+     *
+     * @param  {string} id - Peer id
+     */
+    add (id) {
+      if (!this.connections.has(id)) {
+        let pc = null
+        let obj = {promise: null}
+        obj.promise = new Promise((resolve, reject) => {
+          Object.defineProperty(obj, 'pc', {
+            get: () => pc,
+            set: (value) => {
+              pc = value
+              resolve()
+            }
+          })
+          setTimeout(reject, CONNECT_TIMEOUT, 'timeout')
+        })
+        this.connections.set(id, obj)
+      }
+    }
+
+    /**
+     * Remove a pending connection from the Map. Usually when the connection has already
+     * been established and there is now interest to hold this reference.
+     *
+     * @param  {string} id - Peer id.
+     */
+    remove (id) {
+      this.connections.delete(id)
+    }
+
+    /**
+     * Returns RTCPeerConnection object for the provided peer id.
+     *
+     * @param  {string} id - Peer id.
+     * @return {external:RTCPeerConnection} - Peer connection.
+     */
+    getPC (id) {
+      return this.connections.get(id).pc
+    }
+
+    /**
+     * Updates RTCPeerConnection reference for the provided peer id.
+     *
+     * @param  {string} id - Peer id.
+     * @param  {external:RTCPeerConnection} pc - Peer connection.
+     */
+    setPC (id, pc) {
+      this.connections.get(id).pc = pc
+    }
+
+    /**
+     * When the remote description is set, it will add the ice candidate to the
+     * peer connection of the specified peer.
+     *
+     * @param  {string} id - Peer id.
+     * @param  {external:RTCIceCandidate} candidate - Ice candidate.
+     * @return {Promise} - Resolved once the ice candidate has been succesfully added.
+     */
+    addIceCandidate (id, candidate) {
+      let obj = this.connections.get(id)
+      return obj.promise.then(() => {
+        return obj.pc.addIceCandidate(candidate)
+      })
+    }
+  }
+
+  const CONNECT_TIMEOUT$1 = 500
+  const WebSocket = isBrowser() ? window.WebSocket : require('ws')
+  const OPEN = WebSocket.OPEN
+
+  class WebSocketService extends ServiceInterface {
 
     /**
      * Creates WebSocket with server.
@@ -1918,21 +1843,16 @@
           }
           ws.onclose = (closeEvt) => {
             if (closeEvt.code !== 1000) {
-              console.error(`WebSocket with ${url} has closed. ${closeEvt.code}: ${closeEvt.reason}`)
+              console.error(`WebSocket with ${url} closed. ${closeEvt.code}: ${closeEvt.reason}`)
               reject(closeEvt.reason)
             }
           }
           // Timeout for node (otherwise it will loop forever if incorrect address)
-          if (ws.readyState === WebSocket.CONNECTING) {
-            setTimeout(() => {
-              if (ws.readyState === WebSocket.CONNECTING) {
-                reject('Node Timeout reached')
-              }
-            }, CONNECT_TIMEOUT$1)
-          } else if (ws.readyState === WebSocket.CLOSING ||
-                ws.readyState === WebSocket.CLOSED) {
-            reject('Socked closed on open')
-          }
+          setTimeout(() => {
+            if (ws.readyState !== WebSocket.OPEN) {
+              reject(`WebSocket connection timeout with ${url}`)
+            }
+          }, CONNECT_TIMEOUT$1)
         } catch (err) { reject(err.message) }
       })
     }
@@ -3585,7 +3505,7 @@
 
   class Bot {
     constructor (options = {}) {
-      if (typeof window !== 'undefined') throw new Error('Bot can be instanciate only in Node\'s environment')
+      if (isBrowser()) throw new Error('Bot can be instanciated only in Node\'s environment')
       this.defaults = {
         host: '127.0.0.1',
         port: 9000,

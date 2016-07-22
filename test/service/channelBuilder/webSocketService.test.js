@@ -1,33 +1,25 @@
-import WebSocketService from 'src/service/channelBuilder/WebSocketService'
+import WebSocketService from 'src/service/WebSocketService'
 
 describe('WebSocketService ->', () => {
-	const onlineSignaling = 'ws://sigver-coastteam.rhcloud.com:8000'
-	const localSignaling = 'ws://localhost:8000'
+  const ONLINE_WSSERVER = 'ws://sigver-coastteam.rhcloud.com:8000'
+  const LOCAL_WSSERVER = 'ws://localhost:8000'
+  const WRONG_URL = 'https://github.com:8100/coast-team/netflux'
 
-	it('Should open a socket with the local signaling server', (done) => {
-		let webSocketService = new WebSocketService({signaling: localSignaling})
-		webSocketService.connect(webSocketService.settings.signaling)
-			.then(done)
-			.catch((reason) => {
-				console.log('Error: ' + reason)
-				done.fail(reason)
-			})
-	})
+  it(`Should open a socket with ${LOCAL_WSSERVER}`, (done) => {
+    new WebSocketService().connect(LOCAL_WSSERVER)
+    .then(done)
+    .catch(done.fail)
+  })
 
-	it('Should open a socket with the online signaling server', (done) => {
-		let webSocketService = new WebSocketService({signaling: onlineSignaling})
-		webSocketService.connect(webSocketService.settings.signaling)
-			.then(done)
-			.catch((reason) => {
-				console.log('Error: ' + reason)
-				done.fail(reason)
-			})
-	}, 10000)
+  it(`Should open a socket with ${ONLINE_WSSERVER}`, (done) => {
+    new WebSocketService().connect(ONLINE_WSSERVER)
+      .then(done)
+      .catch(done.fail)
+  }, 10000)
 
-	it('Should fail to open a socket because of wrong URL', (done) => {
-		let webSocketService = new WebSocketService({signaling: 'https://github.com:8100/coast-team/netflux'})
-		webSocketService.connect(webSocketService.settings.signaling)
-			.then((data) => {done.fail()})
+  it(`Should fail to open a socket with: ${WRONG_URL}`, (done) => {
+    new WebSocketService().connect(WRONG_URL)
+			.then((data) => done.fail('Connection succeed'))
 			.catch(done)
-	})
+  })
 })
