@@ -64,7 +64,7 @@
   "dependencies": {
     "text-encoding": "^0.6.0",
     "webrtc-adapter": "^1.1.0",
-    "wrtc": "0.0.60",
+    "wrtc": "~0.0.60",
     "ws": "^1.1.1"
   },
   "devDependencies": {
@@ -76,6 +76,7 @@
     "istanbul": "^0.4.3",
     "jasmine": "^2.4.1",
     "jasmine-core": "^2.4.1",
+    "jasmine-spec-reporter": "^2.5.0",
     "jsdoc": "^3.4.0",
     "json": "^9.0.3",
     "karma": "^1.1.0",
