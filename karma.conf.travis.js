@@ -19,6 +19,6 @@ module.exports = (config) => {
     },
     autoWatch: false,
     singleRun: true,
-    browserNoActivityTimeout: 60000
+    browserNoActivityTimeout: 20000
   })
 }
