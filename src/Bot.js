@@ -1,5 +1,5 @@
 import {isBrowser} from 'helper'
-import {WebChannel} from 'WebChannel'
+import WebChannel from 'WebChannel'
 import {CHANNEL_BUILDER, provide} from 'serviceProvider'
 
 const ADD_BOT_SERVER = 'addBotServer'
@@ -67,13 +67,13 @@ class Bot {
           } catch (e) {}
           switch (data.code) {
             case ADD_BOT_SERVER:
-            this.addBotServer(socket, data)
-            break
+              this.addBotServer(socket, data)
+              break
             case NEW_CHANNEL:
-            this.newChannel(socket, data)
-            break
+              this.newChannel(socket, data)
+              break
             default:
-            this.onCodeError()
+              this.onCodeError()
           }
         })
       })
@@ -140,4 +140,4 @@ class Bot {
   }
 }
 
-export { Bot }
+export default Bot

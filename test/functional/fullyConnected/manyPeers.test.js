@@ -1,5 +1,5 @@
 import {signaling} from 'config'
-import {WebChannel} from 'src/WebChannel'
+import WebChannel from 'src/WebChannel'
 
 describe('Many peers -> ', () => {
   const NB_PEERS = 4

@@ -1429,7 +1429,7 @@
     broadcast (webChannel, data) {
       let d
       for (let c of webChannel.channels) {
-        d = (typeof window === 'undefined') ? data.slice(0) : data
+        d = !isBrowser() ? data.slice(0) : data
         c.send(d)
       }
     }
@@ -1460,17 +1460,11 @@
 
   const CONNECT_TIMEOUT = 2000
   const connectionsByWC = new Map()
-  let RTCPeerConnection$1
-  let RTCIceCandidate$1
   let RTCPendingConnections
-  if (isBrowser()) {
-    RTCPeerConnection$1 = window.RTCPeerConnection
-    RTCIceCandidate$1 = window.RTCIceCandidate
-  } else {
-    let wrtc = require('wrtc')
-    RTCPeerConnection$1 = wrtc.RTCPeerConnection
-    RTCIceCandidate$1 = wrtc.RTCIceCandidate
-  }
+
+  let src = isBrowser() ? window : require('wrtc')
+  const RTCPeerConnection$1 = src.RTCPeerConnection
+  const RTCIceCandidate$1 = src.RTCIceCandidate
 
   /**
    * Ice candidate event handler.
@@ -1859,7 +1853,7 @@
 
   }
 
-  const NEW_CHANNEL$1 = 'newChannel'
+  const NEW_CHANNEL = 'newChannel'
 
   class ChannelBuilderService extends ServiceInterface {
     constructor (options = {}) {
@@ -1876,7 +1870,7 @@
       return new Promise((resolve, reject) => {
         this.addPendingRequest(wc, id, {resolve, reject})
         let connectors = [WEBRTC]
-        if (typeof window === 'undefined') connectors.push(WEBSOCKET)
+        if (!isBrowser()) connectors.push(WEBSOCKET)
         let host = wc.settings.host
         let port = wc.settings.port
         wc.sendSrvMsg(this.name, id, {connectors, sender: wc.myId, host, port, oneMsg: true})
@@ -1902,7 +1896,7 @@
         // Try to connect in WebSocket
         cBuilder.connect(url)
           .then((channel) => {
-            channel.send(JSON.stringify({code: NEW_CHANNEL$1, sender: wc.myId,
+            channel.send(JSON.stringify({code: NEW_CHANNEL, sender: wc.myId,
               wcId: wc.id, oneMsg: msg.oneMsg}))
             this.onChannel(wc, channel, !msg.oneMsg, msg.sender)
           })
@@ -1913,7 +1907,7 @@
                 this.onChannel(wc, channel, !msg.oneMsg, msg.sender)
               })
           })
-      } else if (typeof window !== 'undefined') {
+      } else if (isBrowser()) {
         // The peer who send the message isn't a bot and i'm not a bot too
         let cBuilder = provide(WEBRTC)
         cBuilder.connectOverWebChannel(wc, msg.sender)
@@ -1930,8 +1924,12 @@
     }
   }
 
+  let src$1 = isBrowser() ? window : require('text-encoding')
+  const TextEncoder = src$1.TextEncoder
+  const TextDecoder = src$1.TextDecoder
+
   /**
-   * Maximum user message size sent over *Channel*. Is meant without metadata.
+   * Maximum size of the user message sent over *Channel*. Is meant without metadata.
    * @type {number}
    */
   const MAX_USER_MSG_SIZE = 16365
@@ -2061,12 +2059,6 @@
 
     constructor () {
       super()
-      this.TextEncoder
-      this.TextDecoder
-      if (typeof window === 'undefined') this.TextEncoder = require('text-encoding').TextEncoder
-      else this.TextEncoder = window.TextEncoder
-      if (typeof window === 'undefined') this.TextDecoder = require('text-encoding').TextDecoder
-      else this.TextDecoder = window.TextDecoder
     }
 
     /**
@@ -2134,7 +2126,7 @@
      * @returns {external:ArrayBuffer} - Built message
      */
     msg (code, data = {}, recepientId = null) {
-      let msgEncoded = (new this.TextEncoder()).encode(JSON.stringify(data))
+      let msgEncoded = (new TextEncoder()).encode(JSON.stringify(data))
       let msgSize = msgEncoded.byteLength + HEADER_OFFSET
       let dataView = this.initHeader(code, recepientId, msgSize)
       let fullMsg = new Uint8Array(dataView.buffer)
@@ -2188,7 +2180,7 @@
      */
     readInternalMessage (data) {
       let uInt8Array = new Uint8Array(data)
-      return JSON.parse((new this.TextDecoder())
+      return JSON.parse((new TextDecoder())
         .decode(uInt8Array.subarray(HEADER_OFFSET, uInt8Array.byteLength))
       )
     }
@@ -2254,7 +2246,7 @@
         case U_INT_8_ARRAY_TYPE:
           return new Uint8Array(buffer)
         case STRING_TYPE:
-          return new this.TextDecoder().decode(new Uint8Array(buffer))
+          return new TextDecoder().decode(new Uint8Array(buffer))
         case INT_8_ARRAY_TYPE:
           return new Int8Array(buffer)
         case U_INT_8_CLAMPED_ARRAY_TYPE:
@@ -2295,7 +2287,7 @@
         result.content = data
       } else if (typeof data === 'string' || data instanceof String) {
         result.type = STRING_TYPE
-        result.content = new this.TextEncoder().encode(data)
+        result.content = new TextEncoder().encode(data)
       } else {
         result.content = new Uint8Array(data.buffer)
         if (data instanceof Int8Array) {
@@ -2855,7 +2847,7 @@
    * he can join the webcahnnel
    * @type {string}
    */
-  const ADD_BOT_SERVER$1 = 'addBotServer'
+  const ADD_BOT_SERVER = 'addBotServer'
 
   /**
    * This class is an API starting point. It represents a group of collaborators
@@ -3013,10 +3005,9 @@
       let jp = this.addJoiningPeer(channel.peerId, this.myId, channel)
       this.manager.broadcast(this, msgBld.msg(JOIN_NEW_MEMBER, {newId: channel.peerId}))
       channel.send(msgBld.msg(JOIN_INIT, {
-          manager: this.settings.topology,
-          wcId: this.id
-        }, channel.peerId)
-      )
+        manager: this.settings.topology,
+        wcId: this.id
+      }, channel.peerId))
       return this.manager.add(channel)
         .then(() => channel.send(msgBld.msg(JOIN_FINILIZE)))
         .catch((msg) => {
@@ -3043,7 +3034,7 @@
             Once the connection open a message is sent to the server in order
             that he can join initiate the channel
           */
-          socket.send(JSON.stringify({code: ADD_BOT_SERVER$1, sender: this.myId, wcId: this.id}))
+          socket.send(JSON.stringify({code: ADD_BOT_SERVER, sender: this.myId, wcId: this.id}))
           this.initChannel(socket, false).then((channel) => {
             this.addChannel(channel).then(() => {
               resolve()
@@ -3500,8 +3491,8 @@
     }
   }
 
-  const ADD_BOT_SERVER = 'addBotServer'
-  const NEW_CHANNEL = 'newChannel'
+  const ADD_BOT_SERVER$1 = 'addBotServer'
+  const NEW_CHANNEL$1 = 'newChannel'
 
   class Bot {
     constructor (options = {}) {
@@ -3564,14 +3555,14 @@
               data = JSON.parse(msg)
             } catch (e) {}
             switch (data.code) {
-              case ADD_BOT_SERVER:
-              this.addBotServer(socket, data)
-              break
-              case NEW_CHANNEL:
-              this.newChannel(socket, data)
-              break
+              case ADD_BOT_SERVER$1:
+                this.addBotServer(socket, data)
+                break
+              case NEW_CHANNEL$1:
+                this.newChannel(socket, data)
+                break
               default:
-              this.onCodeError()
+                this.onCodeError()
             }
           })
         })
@@ -3638,8 +3629,8 @@
     }
   }
 
-  exports.Bot = Bot;
   exports.WebChannel = WebChannel;
+  exports.Bot = Bot;
 
   Object.defineProperty(exports, '__esModule', { value: true });
 

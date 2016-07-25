@@ -6,16 +6,21 @@
  *
  * @module messageBuilder
  */
+import {isBrowser} from 'helper'
 import ServiceInterface from 'service/ServiceInterface'
 
+let src = isBrowser() ? window : require('text-encoding')
+const TextEncoder = src.TextEncoder
+const TextDecoder = src.TextDecoder
+
 /**
- * Maximum message size sent over *Channel*.
+ * Maximum size of the message sent over *Channel*.
  * @type {number}
  */
 const MAX_MSG_SIZE = 16384
 
 /**
- * Maximum user message size sent over *Channel*. Is meant without metadata.
+ * Maximum size of the user message sent over *Channel*. Is meant without metadata.
  * @type {number}
  */
 const MAX_USER_MSG_SIZE = 16365
@@ -145,12 +150,6 @@ class MessageBuilderService extends ServiceInterface {
 
   constructor () {
     super()
-    this.TextEncoder
-    this.TextDecoder
-    if (typeof window === 'undefined') this.TextEncoder = require('text-encoding').TextEncoder
-    else this.TextEncoder = window.TextEncoder
-    if (typeof window === 'undefined') this.TextDecoder = require('text-encoding').TextDecoder
-    else this.TextDecoder = window.TextDecoder
   }
 
   /**
@@ -218,7 +217,7 @@ class MessageBuilderService extends ServiceInterface {
    * @returns {external:ArrayBuffer} - Built message
    */
   msg (code, data = {}, recepientId = null) {
-    let msgEncoded = (new this.TextEncoder()).encode(JSON.stringify(data))
+    let msgEncoded = (new TextEncoder()).encode(JSON.stringify(data))
     let msgSize = msgEncoded.byteLength + HEADER_OFFSET
     let dataView = this.initHeader(code, recepientId, msgSize)
     let fullMsg = new Uint8Array(dataView.buffer)
@@ -272,7 +271,7 @@ class MessageBuilderService extends ServiceInterface {
    */
   readInternalMessage (data) {
     let uInt8Array = new Uint8Array(data)
-    return JSON.parse((new this.TextDecoder())
+    return JSON.parse((new TextDecoder())
       .decode(uInt8Array.subarray(HEADER_OFFSET, uInt8Array.byteLength))
     )
   }
@@ -338,7 +337,7 @@ class MessageBuilderService extends ServiceInterface {
       case U_INT_8_ARRAY_TYPE:
         return new Uint8Array(buffer)
       case STRING_TYPE:
-        return new this.TextDecoder().decode(new Uint8Array(buffer))
+        return new TextDecoder().decode(new Uint8Array(buffer))
       case INT_8_ARRAY_TYPE:
         return new Int8Array(buffer)
       case U_INT_8_CLAMPED_ARRAY_TYPE:
@@ -379,7 +378,7 @@ class MessageBuilderService extends ServiceInterface {
       result.content = data
     } else if (typeof data === 'string' || data instanceof String) {
       result.type = STRING_TYPE
-      result.content = new this.TextEncoder().encode(data)
+      result.content = new TextEncoder().encode(data)
     } else {
       result.content = new Uint8Array(data.buffer)
       if (data instanceof Int8Array) {

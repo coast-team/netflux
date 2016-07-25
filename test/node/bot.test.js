@@ -1,4 +1,4 @@
-import {Bot} from 'src/Bot'
+import Bot from 'src/Bot'
 
 describe('Node -> ', () => {
   it('Should be able to instanciate a bot ', (done) => {

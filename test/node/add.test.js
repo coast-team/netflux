@@ -1,5 +1,5 @@
-import {Bot} from 'src/Bot'
-import {WebChannel} from 'src/WebChannel'
+import Bot from 'src/Bot'
+import WebChannel from 'src/WebChannel'
 import {signaling} from 'config'
 
 const PING = 'ping'

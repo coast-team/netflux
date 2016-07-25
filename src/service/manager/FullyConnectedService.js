@@ -1,3 +1,4 @@
+import {isBrowser} from 'helper'
 import ManagerInterface from 'service/manager/ManagerInterface'
 
 /**
@@ -28,7 +29,7 @@ class FullyConnectedService extends ManagerInterface {
   broadcast (webChannel, data) {
     let d
     for (let c of webChannel.channels) {
-      d = (typeof window === 'undefined') ? data.slice(0) : data
+      d = !isBrowser() ? data.slice(0) : data
       c.send(d)
     }
   }

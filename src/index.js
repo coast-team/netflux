@@ -1,6 +1,7 @@
 import 'node_modules/webrtc-adapter/out/adapter_no_edge_no_global'
-export { Bot } from 'Bot'
-export { WebChannel } from 'WebChannel'
+import WebChannel from 'WebChannel'
+import Bot from 'Bot'
+export {WebChannel, Bot}
 
 /**
  * @external JSON

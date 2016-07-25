@@ -1,5 +1,5 @@
 import {signaling} from 'config'
-import {WebChannel} from 'src/WebChannel'
+import WebChannel from 'src/WebChannel'
 
 let host = '127.0.0.1'
 let port = 9000

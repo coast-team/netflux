@@ -1,5 +1,5 @@
 import {signaling, MSG_NUMBER, randString} from 'config'
-import {WebChannel} from 'src/WebChannel'
+import WebChannel from 'src/WebChannel'
 
 it('Should send/receive STRING messages', (done) => {
   let msg1Array = []

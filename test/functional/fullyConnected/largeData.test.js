@@ -1,5 +1,5 @@
 import {signaling, randArrayBuffer} from 'config'
-import {WebChannel} from 'src/WebChannel'
+import WebChannel from 'src/WebChannel'
 import smallStr from '17kb.txt'
 import bigStr from '8mb.txt'
 

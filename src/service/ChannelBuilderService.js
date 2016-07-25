@@ -1,3 +1,4 @@
+import {isBrowser} from 'helper'
 import ServiceInterface from 'service/ServiceInterface'
 import {WEBRTC, WEBSOCKET, provide} from 'serviceProvider'
 
@@ -18,7 +19,7 @@ class ChannelBuilderService extends ServiceInterface {
     return new Promise((resolve, reject) => {
       this.addPendingRequest(wc, id, {resolve, reject})
       let connectors = [WEBRTC]
-      if (typeof window === 'undefined') connectors.push(WEBSOCKET)
+      if (!isBrowser()) connectors.push(WEBSOCKET)
       let host = wc.settings.host
       let port = wc.settings.port
       wc.sendSrvMsg(this.name, id, {connectors, sender: wc.myId, host, port, oneMsg: true})
@@ -55,7 +56,7 @@ class ChannelBuilderService extends ServiceInterface {
               this.onChannel(wc, channel, !msg.oneMsg, msg.sender)
             })
         })
-    } else if (typeof window !== 'undefined') {
+    } else if (isBrowser()) {
       // The peer who send the message isn't a bot and i'm not a bot too
       let cBuilder = provide(WEBRTC)
       cBuilder.connectOverWebChannel(wc, msg.sender)

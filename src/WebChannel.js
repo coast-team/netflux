@@ -254,10 +254,9 @@ class WebChannel {
     let jp = this.addJoiningPeer(channel.peerId, this.myId, channel)
     this.manager.broadcast(this, msgBld.msg(JOIN_NEW_MEMBER, {newId: channel.peerId}))
     channel.send(msgBld.msg(JOIN_INIT, {
-        manager: this.settings.topology,
-        wcId: this.id
-      }, channel.peerId)
-    )
+      manager: this.settings.topology,
+      wcId: this.id
+    }, channel.peerId))
     return this.manager.add(channel)
       .then(() => channel.send(msgBld.msg(JOIN_FINILIZE)))
       .catch((msg) => {
@@ -741,4 +740,4 @@ class WebChannel {
   }
 }
 
-export {WebChannel}
+export default WebChannel

@@ -1,5 +1,5 @@
 import {signaling, randArrayBuffer, randString} from 'config'
-import {WebChannel} from 'src/WebChannel'
+import WebChannel from 'src/WebChannel'
 
 describe('Should send & receive (between 2 peers) -> ', () => {
   let wc1, wc2

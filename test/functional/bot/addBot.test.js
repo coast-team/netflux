@@ -1,5 +1,5 @@
 import {isBrowser} from 'src/helper'
-import {Bot} from 'src/Bot'
+import Bot from 'src/Bot'
 
 describe('Bot instanciation -> ', () => {
   it('in browser should throw an exception ', () => {

@@ -5,17 +5,11 @@ import CloseEvent from 'CloseEvent'
 
 const CONNECT_TIMEOUT = 2000
 const connectionsByWC = new Map()
-let RTCPeerConnection
-let RTCIceCandidate
 let RTCPendingConnections
-if (isBrowser()) {
-  RTCPeerConnection = window.RTCPeerConnection
-  RTCIceCandidate = window.RTCIceCandidate
-} else {
-  let wrtc = require('wrtc')
-  RTCPeerConnection = wrtc.RTCPeerConnection
-  RTCIceCandidate = wrtc.RTCIceCandidate
-}
+
+let src = isBrowser() ? window : require('wrtc')
+const RTCPeerConnection = src.RTCPeerConnection
+const RTCIceCandidate = src.RTCIceCandidate
 
 /**
  * Ice candidate event handler.
