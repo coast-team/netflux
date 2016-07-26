@@ -61,9 +61,6 @@ class ManagerInterface extends ServiceInterface {
           msg.peerIds.forEach((id) => {
             cBuilder.connectMeTo(wc, id)
               .then((channel) => {
-                return wc.initChannel(channel, true, id)
-              })
-              .then((channel) => {
                 // console.log('PEER ' + wc.myId + ' CONNECTED TO ' + channel.peerId)
                 counter++
                 let jp = wc.getJoiningPeer(msg.jpId)

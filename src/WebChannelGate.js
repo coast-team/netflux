@@ -71,9 +71,10 @@ class WebChannelGate {
       webSocketService.connect(url)
         .then((ws) => {
           ws.onclose = (closeEvt) => {
-            reject(closeEvt.reason)
             this.onClose(closeEvt)
+            reject(closeEvt.reason)
           }
+          ws.onerror = (error) => reject(error.reason)
           this.socket = ws
           this.accessData.key = key
           this.accessData.url = url

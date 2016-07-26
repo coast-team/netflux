@@ -1,5 +1,6 @@
 import {isBrowser} from 'helper'
 import ServiceInterface from 'service/ServiceInterface'
+import WebRTCService from 'service/WebRTCService'
 import {WEBRTC, WEBSOCKET, provide} from 'serviceProvider'
 
 const NEW_CHANNEL = 'newChannel'
@@ -8,7 +9,6 @@ class ChannelBuilderService extends ServiceInterface {
   constructor (options = {}) {
     super()
     this.default = {
-      connectors: [WEBRTC],
       host: '',
       port: 0
     }
@@ -18,17 +18,30 @@ class ChannelBuilderService extends ServiceInterface {
   connectMeTo (wc, id) {
     return new Promise((resolve, reject) => {
       this.addPendingRequest(wc, id, {resolve, reject})
-      let connectors = [WEBRTC]
-      if (!isBrowser()) connectors.push(WEBSOCKET)
-      let host = wc.settings.host
-      let port = wc.settings.port
+      let data = this.availableConnectors(wc)
+      let connectors = data.connectors
+      let host = data.host
+      let port = data.port
       wc.sendSrvMsg(this.name, id, {connectors, sender: wc.myId, host, port, oneMsg: true})
     })
   }
 
+  availableConnectors (wc) {
+    let data = {}
+    let connectors = []
+    if (WebRTCService.isAvailabled()) connectors.push(WEBRTC)
+    let host = wc.settings.host
+    let port = wc.settings.port
+    if (!isBrowser() && host !== undefined && port !== undefined) connectors.push(WEBSOCKET)
+    data = {connectors, host, port}
+    return data
+  }
+
   onChannel (wc, channel, oneMsg, sender) {
-    if (!oneMsg) wc.initChannel(channel, false, sender)
-    else this.getPendingRequest(wc, sender).resolve(channel)
+    wc.initChannel(channel, sender)
+      .then((channel) => {
+        if (oneMsg) this.getPendingRequest(wc, sender).resolve(channel)
+      })
   }
 
   onMessage (wc, channel, msg) {
@@ -36,11 +49,9 @@ class ChannelBuilderService extends ServiceInterface {
     let host = msg.host
     let port = msg.port
     let settings = Object.assign({}, wc.settings, {host, port})
-
     if (availabled.indexOf(WEBSOCKET) > -1) {
       // A Bot server send the message
       let cBuilder = provide(WEBSOCKET, settings)
-
       let url = 'ws://' + host + ':' + port
       // Try to connect in WebSocket
       cBuilder.connect(url)
@@ -56,19 +67,21 @@ class ChannelBuilderService extends ServiceInterface {
               this.onChannel(wc, channel, !msg.oneMsg, msg.sender)
             })
         })
-    } else if (isBrowser()) {
-      // The peer who send the message isn't a bot and i'm not a bot too
-      let cBuilder = provide(WEBRTC)
-      cBuilder.connectOverWebChannel(wc, msg.sender)
-        .then((channel) => {
-          this.onChannel(wc, channel, !msg.oneMsg, msg.sender)
-        })
     } else {
-      // The peer who send the message isn't a bot and i'm bot
-      host = wc.settings.host
-      port = wc.settings.port
-      wc.sendSrvMsg(this.name, msg.sender, {connectors: [WEBRTC, WEBSOCKET],
-        sender: wc.myId, host, port, oneMsg: false})
+      let data = this.availableConnectors(wc)
+      let connectors = data.connectors
+      let host = data.host
+      let port = data.port
+      if (connectors.indexOf(WEBSOCKET) > -1) {
+        // The peer who send the message doesn't listen in WebSocket and i'm bot
+        wc.sendSrvMsg(this.name, msg.sender, {connectors: [WEBRTC, WEBSOCKET],
+          sender: wc.myId, host, port, oneMsg: false})
+      } else {
+        // The peer who send the message doesn't listen in WebSocket and doesn't listen too
+        let cBuilder = provide(WEBRTC)
+        cBuilder.connectOverWebChannel(wc, msg.sender)
+          .then((channel) => this.onChannel(wc, channel, !msg.oneMsg, msg.sender))
+      }
     }
   }
 }

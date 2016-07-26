@@ -5,9 +5,16 @@ import CloseEvent from 'CloseEvent'
 
 const CONNECT_TIMEOUT = 2000
 const connectionsByWC = new Map()
-let RTCPendingConnections
-
-let src = isBrowser() ? window : require('wrtc')
+let RTCPendingConnections, src
+let availableService = true
+if (isBrowser()) src = window
+else {
+  try {
+    src = require('wrtc')
+  } catch (err) {
+    availableService = false
+  }
+}
 const RTCPeerConnection = src.RTCPeerConnection
 const RTCIceCandidate = src.RTCIceCandidate
 
@@ -40,6 +47,10 @@ const RTCIceCandidate = src.RTCIceCandidate
  * @extends module:channelBuilder~ChannelBuilderInterface
  */
 class WebRTCService extends ServiceInterface {
+
+  static isAvailabled () {
+    return availableService
+  }
 
   /**
    * WebRTCService constructor.
@@ -168,11 +179,14 @@ class WebRTCService extends ServiceInterface {
             reject(`Unknown message from the signaling server: ${evt.data}`)
           }
         } catch (err) {
+          console.log('CATCH: ', err.message)
           reject(err.message)
         }
       }
       this.createPeerConnectionAndOffer(
-          (candidate) => ws.send(JSON.stringify({data: {candidate}})),
+          (candidate) => {
+            if (ws.readyState === 1) ws.send(JSON.stringify({data: {candidate}}))
+          },
           (offer) => ws.send(JSON.stringify({join: key, data: {offer}})),
           resolve
         )

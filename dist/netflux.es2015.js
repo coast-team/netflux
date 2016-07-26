@@ -1123,7 +1123,7 @@ class ServiceInterface {
 
   constructor () {
     if (!pendingRequests.has(this.name)) {
-      pendingRequests.set(this.name, new WeakMap())
+      pendingRequests.set(this.name, new Map())
     }
   }
 
@@ -1227,9 +1227,6 @@ class ManagerInterface extends ServiceInterface {
           let cBuilder = provide(CHANNEL_BUILDER)
           msg.peerIds.forEach((id) => {
             cBuilder.connectMeTo(wc, id)
-              .then((channel) => {
-                return wc.initChannel(channel, true, id)
-              })
               .then((channel) => {
                 // console.log('PEER ' + wc.myId + ' CONNECTED TO ' + channel.peerId)
                 counter++
@@ -1454,9 +1451,17 @@ class CloseEvent {
 
 const CONNECT_TIMEOUT = 2000
 const connectionsByWC = new Map()
-let RTCPendingConnections
-
-let src = isBrowser() ? window : require('wrtc')
+let RTCPendingConnections;
+let src;
+let availableService = true
+if (isBrowser()) src = window
+else {
+  try {
+    src = require('wrtc')
+  } catch (err) {
+    availableService = false
+  }
+}
 const RTCPeerConnection$1 = src.RTCPeerConnection
 const RTCIceCandidate$1 = src.RTCIceCandidate
 
@@ -1489,6 +1494,10 @@ const RTCIceCandidate$1 = src.RTCIceCandidate
  * @extends module:channelBuilder~ChannelBuilderInterface
  */
 class WebRTCService extends ServiceInterface {
+
+  static isAvailabled () {
+    return availableService
+  }
 
   /**
    * WebRTCService constructor.
@@ -1617,11 +1626,14 @@ class WebRTCService extends ServiceInterface {
             reject(`Unknown message from the signaling server: ${evt.data}`)
           }
         } catch (err) {
+          console.log('CATCH: ', err.message)
           reject(err.message)
         }
       }
       this.createPeerConnectionAndOffer(
-          (candidate) => ws.send(JSON.stringify({data: {candidate}})),
+          (candidate) => {
+            if (ws.readyState === 1) ws.send(JSON.stringify({data: {candidate}}))
+          },
           (offer) => ws.send(JSON.stringify({join: key, data: {offer}})),
           resolve
         )
@@ -1853,7 +1865,6 @@ class ChannelBuilderService extends ServiceInterface {
   constructor (options = {}) {
     super()
     this.default = {
-      connectors: [WEBRTC],
       host: '',
       port: 0
     }
@@ -1863,17 +1874,30 @@ class ChannelBuilderService extends ServiceInterface {
   connectMeTo (wc, id) {
     return new Promise((resolve, reject) => {
       this.addPendingRequest(wc, id, {resolve, reject})
-      let connectors = [WEBRTC]
-      if (!isBrowser()) connectors.push(WEBSOCKET)
-      let host = wc.settings.host
-      let port = wc.settings.port
+      let data = this.availableConnectors(wc)
+      let connectors = data.connectors
+      let host = data.host
+      let port = data.port
       wc.sendSrvMsg(this.name, id, {connectors, sender: wc.myId, host, port, oneMsg: true})
     })
   }
 
+  availableConnectors (wc) {
+    let data = {}
+    let connectors = []
+    if (WebRTCService.isAvailabled()) connectors.push(WEBRTC)
+    let host = wc.settings.host
+    let port = wc.settings.port
+    if (!isBrowser() && host !== undefined && port !== undefined) connectors.push(WEBSOCKET)
+    data = {connectors, host, port}
+    return data
+  }
+
   onChannel (wc, channel, oneMsg, sender) {
-    if (!oneMsg) wc.initChannel(channel, false, sender)
-    else this.getPendingRequest(wc, sender).resolve(channel)
+    wc.initChannel(channel, sender)
+      .then((channel) => {
+        if (oneMsg) this.getPendingRequest(wc, sender).resolve(channel)
+      })
   }
 
   onMessage (wc, channel, msg) {
@@ -1881,11 +1905,9 @@ class ChannelBuilderService extends ServiceInterface {
     let host = msg.host
     let port = msg.port
     let settings = Object.assign({}, wc.settings, {host, port})
-
     if (availabled.indexOf(WEBSOCKET) > -1) {
       // A Bot server send the message
       let cBuilder = provide(WEBSOCKET, settings)
-
       let url = 'ws://' + host + ':' + port
       // Try to connect in WebSocket
       cBuilder.connect(url)
@@ -1901,19 +1923,21 @@ class ChannelBuilderService extends ServiceInterface {
               this.onChannel(wc, channel, !msg.oneMsg, msg.sender)
             })
         })
-    } else if (isBrowser()) {
-      // The peer who send the message isn't a bot and i'm not a bot too
-      let cBuilder = provide(WEBRTC)
-      cBuilder.connectOverWebChannel(wc, msg.sender)
-        .then((channel) => {
-          this.onChannel(wc, channel, !msg.oneMsg, msg.sender)
-        })
     } else {
-      // The peer who send the message isn't a bot and i'm bot
-      host = wc.settings.host
-      port = wc.settings.port
-      wc.sendSrvMsg(this.name, msg.sender, {connectors: [WEBRTC, WEBSOCKET],
-        sender: wc.myId, host, port, oneMsg: false})
+      let data = this.availableConnectors(wc)
+      let connectors = data.connectors
+      let host = data.host
+      let port = data.port
+      if (connectors.indexOf(WEBSOCKET) > -1) {
+        // The peer who send the message doesn't listen in WebSocket and i'm bot
+        wc.sendSrvMsg(this.name, msg.sender, {connectors: [WEBRTC, WEBSOCKET],
+          sender: wc.myId, host, port, oneMsg: false})
+      } else {
+        // The peer who send the message doesn't listen in WebSocket and doesn't listen too
+        let cBuilder = provide(WEBRTC)
+        cBuilder.connectOverWebChannel(wc, msg.sender)
+          .then((channel) => this.onChannel(wc, channel, !msg.oneMsg, msg.sender))
+      }
     }
   }
 }
@@ -2691,9 +2715,10 @@ class WebChannelGate {
       webSocketService.connect(url)
         .then((ws) => {
           ws.onclose = (closeEvt) => {
-            reject(closeEvt.reason)
             this.onClose(closeEvt)
+            reject(closeEvt.reason)
           }
+          ws.onerror = (error) => reject(error.reason)
           this.socket = ws
           this.accessData.key = key
           this.accessData.url = url
@@ -2816,13 +2841,15 @@ const JOIN_FINILIZE = 7
  */
 const JOIN_SUCCESS = 8
 
-/**
- * One of the internal message type. This message is sent during Initialization
- * of a channel.
- * @see {@link WebChannel#initChannel}
- * @type {number}
- */
-const INIT_CHANNEL_PONG = 10
+// /**
+//  * One of the internal message type. This message is sent during Initialization
+//  * of a channel.
+//  * @see {@link WebChannel#initChannel}
+//  * @type {number}
+//  */
+// const INIT_CHANNEL_PONG = 10
+
+const INIT_OK = 10
 
 /**
  * One of the internal message type. Ping message.
@@ -2984,7 +3011,7 @@ class WebChannel {
   open (options = {}) {
     let settings = Object.assign({}, this.settings, options)
     return this.gate.open((channel) => {
-      this.initChannel(channel, false)
+      this.initChannel(channel)
         .then((channel) => this.addChannel(channel))
     }, settings.signaling)
   }
@@ -3029,11 +3056,9 @@ class WebChannel {
           that he can join initiate the channel
         */
         socket.send(JSON.stringify({code: ADD_BOT_SERVER, sender: this.myId, wcId: this.id}))
-        this.initChannel(socket, false).then((channel) => {
-          this.addChannel(channel).then(() => {
-            resolve()
-          })
-        })
+        this.initChannel(socket)
+          .then((channel) => this.addChannel(channel))
+          .then(() => resolve())
       }).catch((reason) => {
         reject(reason)
       })
@@ -3052,7 +3077,7 @@ class WebChannel {
   joinAsBot (channel, id) {
     return new Promise((resolve, reject) => {
       this.onJoin = () => resolve(this)
-      this.initChannel(channel, true, id)// .then((channel) => {
+      this.initChannel(channel, id)// .then((channel) => {
         // console.log('[DEBUG] Resolved initChannel by server')
       // })
     })
@@ -3100,8 +3125,9 @@ class WebChannel {
       webSocketService.connect(settings.signaling)
         .then((ws) => {
           ws.onclose = (closeEvt) => reject(closeEvt.reason)
+          ws.onerror = (error) => reject(error.reason)
           return webRTCService.connectOverSignaling(ws, key)
-            .then((channel) => this.initChannel(channel, true))
+            .then((channel) => this.initChannel(channel))
         })
         .catch(reject)
     })
@@ -3224,7 +3250,7 @@ class WebChannel {
    */
   onChannelMessage (channel, data) {
     let header = msgBld.readHeader(data)
-    //console.log('ON CHANNEL MESSAGE:\n - code=' + header.code + '\n - sender=' + header.senderId + '\n - recepient=' + header.recepientId)
+    // console.log('ON CHANNEL MESSAGE:\n - code=' + header.code + '\n - sender=' + header.senderId + '\n - recepient=' + header.recepientId)
     // console.log('[DEBUG] {onChannelMessage} header: ', header)
     if (header.code === USER_DATA) {
       msgBld.readUserMessage(this.id, header.senderId, data, (fullData, isBroadcast) => {
@@ -3273,9 +3299,13 @@ class WebChannel {
           this.peerNb++
           this.onJoining(header.senderId)
           break
-        case INIT_CHANNEL_PONG:
-          channel.onPong()
-          delete channel.onPong
+        // case INIT_CHANNEL_PONG:
+        //   channel.onPong()
+        //   delete channel.onPong
+        //   break
+        case INIT_OK:
+          channel.onOk()
+          delete channel.onOk
           break
         case PING:
           this.manager.sendTo(header.senderId, this, msgBld.msg(PONG))
@@ -3332,29 +3362,23 @@ class WebChannel {
    * @private
    * @param {external:WebSocket|external:RTCDataChannel} ch - Channel to
    * initialize
-   * @param {boolean} isInitiator - Equals to true if this peer is an initiator
-   * in the channel establishment, false otherwise
    * @param {number} [id] - Assign an id to this channel. It would be generated
    * if not provided
    * @returns {Promise} - Resolved once the channel is initialized on both sides
    */
-  initChannel (ch, isInitiator, id = -1) {
-    // console.log('[DEBUG] initChannel (ch, isInitiator, id) (ch, ', isInitiator, ', ', id, ')')
+  initChannel (ch, id = -1) {
     return new Promise((resolve, reject) => {
       if (id === -1) { id = this.generateId() }
       let channel = new Channel(ch, this, id)
       // TODO: treat the case when the 'ping' or 'pong' message has not been received
-      if (isInitiator) {
-        channel.config()
-        channel.onPong = () => resolve(channel)
-        ch.send('ping')
-      } else {
-        ch.onmessage = (msgEvt) => {
-          if (msgEvt.data === 'ping') {
-            channel.config()
-            channel.send(msgBld.msg(INIT_CHANNEL_PONG))
-            resolve(channel)
-          }
+      channel.config()
+      channel.onOk = () => resolve(channel)
+      ch.send('ok')
+      ch.onmessage = (msgEvt) => {
+        if (msgEvt.data === 'ok') {
+          channel.config()
+          channel.send(msgBld.msg(INIT_OK))
+          resolve(channel)
         }
       }
     })
@@ -3536,7 +3560,7 @@ class Bot {
         resolve()
       })
 
-      this.server.on('error', (err) =>  {
+      this.server.on('error', () => {
         reject('WebSocketServerError with ws://' + this.settings.host + ':' + this.settings.port)
       })
 

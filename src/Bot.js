@@ -53,7 +53,7 @@ class Bot {
         resolve()
       })
 
-      this.server.on('error', (err) =>  {
+      this.server.on('error', () => {
         reject('WebSocketServerError with ws://' + this.settings.host + ':' + this.settings.port)
       })
 
