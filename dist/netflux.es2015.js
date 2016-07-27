@@ -2707,11 +2707,13 @@ class WebChannelGate {
    * @param {WebChannelGate~AccessData} accessData - Access data to join the
    * *WebChannel
    */
-  open (onChannel, url) {
+  open (onChannel, options) {
+    let url = options.signaling
+
     return new Promise((resolve, reject) => {
       let webRTCService = provide(WEBRTC)
       let webSocketService = provide(WEBSOCKET)
-      let key = this.generateKey()
+      let key = 'key' in options ? options.key : this.generateKey()
       webSocketService.connect(url)
         .then((ws) => {
           ws.onclose = (closeEvt) => {
@@ -3013,7 +3015,7 @@ class WebChannel {
     return this.gate.open((channel) => {
       this.initChannel(channel)
         .then((channel) => this.addChannel(channel))
-    }, settings.signaling)
+    }, settings)
   }
 
   /**

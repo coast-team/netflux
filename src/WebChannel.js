@@ -243,7 +243,7 @@ class WebChannel {
     return this.gate.open((channel) => {
       this.initChannel(channel)
         .then((channel) => this.addChannel(channel))
-    }, settings.signaling)
+    }, settings)
   }
 
   /**
