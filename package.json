@@ -3,7 +3,7 @@
   "description": "Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done.",
   "main": "dist/netflux.es2015.umd.js",
   "jsnext:main": "dist/netflux.es2015.js",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "scripts": {
     "prebuild": "rm -rf coverage dist",
     "build": "node rollup.config.js",
