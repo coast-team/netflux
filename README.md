@@ -28,6 +28,10 @@ Abstract peer to peer transport API for client and server. Implementation based 
 npm install netflux
 ```
 
+**Remark**: Might be a problem with `wrtc` package installation on some OS. This package is mandatory for using WebRTC in NodeJS (connect a peer machine via RTCDataChannel). Without this you can still use Netflux and connect via WebSocket, but if you need this package and you have trouble with its installation then:
+- For Ubuntu 16.04 execute: `sudo apt-get install libexpat1-dev`
+- For other systems take a look at package repository: https://github.com/js-platform/node-webrtc
+
 ## Usage
 There are two builds in `dist` folder.
 
