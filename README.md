@@ -13,34 +13,47 @@
 [![Test Coverage](https://codeclimate.com/github/coast-team/netflux/badges/coverage.svg)](https://codeclimate.com/github/coast-team/netflux/coverage)&nbsp;
 [![Inline docs](http://inch-ci.org/github/coast-team/netflux.svg?branch=master&style=flat-square)](http://inch-ci.org/github/coast-team/netflux)
 
-Abstract peer to peer client transport API. Implementations based on WebRTC and WebSocket to be done.
+Abstract peer to peer transport API for client and server. Implementation based on WebRTC and WebSocket. Only raw data, no video or audio.
 
 **Documentation:** https://coast-team.github.io/netflux
 
-## Remark
+## Browsers & NodeJS support <sub><sup><sub><sub>made by @godban</sub></sub></sup></sub>
 
-When using API, it may not work from the first attempt. This is because WebRTC uses `ws://sigver-coastteam.rhcloud.com:8000` signaling server by default. Due to the rhcloud application hosting specification, following a period of inactivity, the server will be available after a while. Try it again a few seconds later.
+| [<img src="https://raw.githubusercontent.com/godban/browsers-support-badges/master/src/images/firefox.png" alt="Firefox" width="24px" height="24px" />](http://godban.github.io/browsers-support-badges/)</br>Firefox | [<img src="https://raw.githubusercontent.com/godban/browsers-support-badges/master/src/images/chrome.png" alt="Chrome" width="24px" height="24px" />](http://godban.github.io/browsers-support-badges/)</br>Chrome | [<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Node.js_logo.svg/32px-Node.js_logo.svg.png" alt="NodeJS" width="32px" height="20px" />](http://godban.github.io/browsers-support-badges/)</br>NodeJS |
+| --------- | --------- | --------- |
+| last 2 versions| last 2 versions| 6 and above
 
-## Supported browsers
+## Install
+```shell
+npm install netflux
+```
 
-*Chrome* 49 and above
+## Usage
+There are two builds in `dist` folder.
 
-*Firefox* 45 and above
+### ES2015 module (*package.json->jsnext:main*)
+```shell
+dist/netflux.es2015.js
+```
 
-## API specification (*warning*: alpha state)
+### UMD module (*package.json->jsnext:main*)
+```shell
+dist/netflux.es2015.umd.js
+```
+ **CDN** (learn more [here](https://rawgit.com)): https://cdn.rawgit.com/coast-team/netflux/master/dist/netflux.es2015.umd.js
 
-### Remarks
-Perhaps `WebChannel.openForJoining` and `WebChannel.closeForJoining` could be used in case of *WebRTC* and *WebSocket*. Maybe leave the possibility to the API user to decide either is an invite-only `WebChannel` or not. Lets implement and see.
 
-___
-### WebChannel
- See http://coast-team.github.io/netflux/WebChannel.html
 
-  ## UML
-  The Green and green/red parts (`Facade`, `WebChannel` and `Peer`) is what we consider to expose to the API user).
+## Signaling server
+We use our own signaling server: [Sigver](https://github.com/coast-team/sigver). It may also be used for production, but was initially developed for testing.
 
-  The Gray parts represent some of internal elements of the API.
+By default: `ws://sigver-coastteam.rhcloud.com:8000`
 
-  The White parts are not yet implemented.
+Also available: `wss://sigver-coastteam.rhcloud.com:8443`
 
-  ![Netflux UML class diagram](doc/uml.png)
+**Remark**: Due to the rhcloud application hosting specification, following a period of inactivity, the server will be available after a while. Try it again a few seconds later.
+
+## STUN/TURN servers
+STUN by default: `stun:turn01.uswest.xirsys.com`
+
+Unfortunately free TURN server is no longer available in the internet. So there is no one by default in Netflux. Some companies like [Xirsys](http://xirsys.com) provide such services.
