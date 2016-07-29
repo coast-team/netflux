@@ -1821,11 +1821,13 @@ RTCPendingConnections = class RTCPendingConnections {
   }
 }
 
-const CONNECT_TIMEOUT$1 = 500
+const CONNECT_TIMEOUT$1 = 5000
 const WebSocket = isBrowser() ? window.WebSocket : require('ws')
 const OPEN = WebSocket.OPEN
 
 class WebSocketService extends ServiceInterface {
+
+  constructor() { super() }
 
   /**
    * Creates WebSocket with server.
@@ -2675,11 +2677,10 @@ class WebChannelGate {
      * @private
      * @type {external:WebSocket}
      */
-    this.socket = null
+    this.ws = null
 
     /**
      * // TODO: add doc
-     * @private
      * @type {WebChannelGate~AccessData}
      */
     this.accessData = {}
@@ -2690,15 +2691,6 @@ class WebChannelGate {
      * @type {WebChannelGate~onClose}
      */
     this.onClose = onClose
-  }
-
-  /**
-   * Get access data.
-   * @returns {WebChannelGate~AccessData|null} - Returns access data if the door
-   * is opened and *null* if it closed
-   */
-  getAccessData () {
-    return this.accessData
   }
 
   /**
@@ -2716,12 +2708,9 @@ class WebChannelGate {
       let key = 'key' in options ? options.key : this.generateKey()
       webSocketService.connect(url)
         .then((ws) => {
-          ws.onclose = (closeEvt) => {
-            this.onClose(closeEvt)
-            reject(closeEvt.reason)
-          }
+          ws.onclose = this.onClose
           ws.onerror = (error) => reject(error.reason)
-          this.socket = ws
+          this.ws = ws
           this.accessData.key = key
           this.accessData.url = url
           try {
@@ -2743,7 +2732,7 @@ class WebChannelGate {
    * closed
    */
   isOpen () {
-    return this.socket !== null && this.socket.readyState === OPEN
+    return this.ws !== null && this.ws.readyState === OPEN
   }
 
   /**
@@ -2751,8 +2740,9 @@ class WebChannelGate {
    */
   close () {
     if (this.isOpen()) {
-      this.socket.close()
-      this.socket = null
+      this.ws.close()
+      this.accessData = {}
+      this.ws = null
     }
   }
 
@@ -3109,7 +3099,7 @@ class WebChannel {
    * or null is the *WebChannel* is closed
    */
   getAccess () {
-    return this.gate.getAccessData()
+    return this.gate.accessData
   }
 
   /**

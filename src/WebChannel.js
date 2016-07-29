@@ -337,7 +337,7 @@ class WebChannel {
    * or null is the *WebChannel* is closed
    */
   getAccess () {
-    return this.gate.getAccessData()
+    return this.gate.accessData
   }
 
   /**

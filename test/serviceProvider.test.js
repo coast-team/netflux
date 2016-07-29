@@ -1,24 +1,24 @@
-import {provide, FULLY_CONNECTED, WEBRTC} from 'src/serviceProvider'
+import {provide, CHANNEL_BUILDER, FULLY_CONNECTED, MESSAGE_BUILDER, WEBRTC, WEBSOCKET} from 'src/serviceProvider'
 
 describe('Service Provider', () => {
-  it('service constant names should be exported', () => {
-    expect(WEBRTC).toBeDefined()
-    expect(FULLY_CONNECTED).toBeDefined()
-  })
 
-  it('should provide a service', () => {
+  it('Should provide a service', () => {
     expect(provide(WEBRTC).name).toEqual('WebRTCService')
     expect(provide(FULLY_CONNECTED).name).toEqual('FullyConnectedService')
+    expect(provide(WEBSOCKET).name).toEqual('WebSocketService')
+    expect(provide(MESSAGE_BUILDER).name).toEqual('MessageBuilderService')
+    expect(provide(CHANNEL_BUILDER).name).toEqual('ChannelBuilderService')
   })
 
-  it('FullyConnectedService should be a singleton', () => {
-    let fullyConnected1 = provide(FULLY_CONNECTED)
-    let fullyConnected2 = provide(FULLY_CONNECTED)
-    expect(fullyConnected1).toBe(fullyConnected2)
+  it('Should be a singleton', () => {
+    expect(provide(FULLY_CONNECTED)).toBe(provide(FULLY_CONNECTED))
+    expect(provide(MESSAGE_BUILDER)).toBe(provide(MESSAGE_BUILDER))
   })
 
-  it('WebRTCService should NOT be a singleton', () => {
+  it('Should NOT be a singleton', () => {
     expect(provide(WEBRTC)).not.toBe(provide(WEBRTC))
+    expect(provide(WEBSOCKET)).not.toBe(provide(WEBSOCKET))
+    expect(provide(CHANNEL_BUILDER)).not.toBe(provide(CHANNEL_BUILDER))
   })
 
   it('Should throw an exception', () => {
