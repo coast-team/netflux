@@ -2715,7 +2715,7 @@
         webSocketService.connect(url)
           .then((ws) => {
             ws.onclose = (closeEvt) => {
-              if (closeEvt.code !== 1000) { reject(closeEvt.reason) }
+              reject(closeEvt.reason)
               this.onClose(closeEvt)
             }
             ws.onerror = (err) => reject(err.message)
@@ -2725,7 +2725,7 @@
             try {
               ws.send(JSON.stringify({key}))
               // FIXME: find a better solution than setTimeout. This is for the case when the key already exists and thus the server will close the socket, but it will close it after this function resolves the Promise.
-              setTimeout(() => { resolve(this.accessData) }, 300, {url, key})
+              setTimeout(() => { resolve(this.accessData) }, 700, {url, key})
             } catch (err) {
               reject(err.message)
             }

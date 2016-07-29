@@ -1,5 +1,5 @@
 export const signaling = 'ws://localhost:8000'
-// const signaling = 'wss://sigver-coastteam.rhcloud.com:443'
+// const signaling = 'wss://sigver-coastteam.rhcloud.com:8443'
 // const signaling = 'ws://sigver-coastteam.rhcloud.com:8000'
 export const MSG_NUMBER = 10
 

@@ -98,9 +98,41 @@ describe('WebChannelGate', () => {
     let wcg2 = new WebChannelGate()
     wcg1.open(() => {}, {signaling, key}).then(() => {
       wcg2.open(() => {}, {signaling, key}).then(() => {
-        console.log('CONNECTED')
         done.fail()
-      }).catch(done)
+      }).catch(() => {
+        wcg1.close()
+        done()
+      })
+    }).catch(done.fail)
+  })
+
+  it('Not Secure', (done) => {
+    let key = webChannelGate.generateKey()
+    let wcg1 = new WebChannelGate()
+    let wcg2 = new WebChannelGate()
+    let signaling = 'ws://sigver-coastteam.rhcloud.com:8000'
+    wcg1.open(() => {}, {signaling, key}).then(() => {
+      wcg2.open(() => {}, {signaling, key}).then(() => {
+        done.fail()
+      }).catch(() => {
+        wcg1.close()
+        done()
+      })
+    }).catch(done.fail)
+  })
+
+  it('Secure', (done) => {
+    let key = webChannelGate.generateKey()
+    let wcg1 = new WebChannelGate()
+    let wcg2 = new WebChannelGate()
+    let signaling = 'wss://sigver-coastteam.rhcloud.com:8443'
+    wcg1.open(() => {}, {signaling, key}).then(() => {
+      wcg2.open(() => {}, {signaling, key}).then(() => {
+        done.fail()
+      }).catch(() => {
+        wcg1.close()
+        done()
+      })
     }).catch(done.fail)
   })
 })
