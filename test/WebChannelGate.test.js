@@ -2,8 +2,7 @@ import {signaling} from 'config'
 import WebChannelGate from 'src/WebChannelGate'
 
 describe('WebChannelGate', () => {
-  const WRONG_URL = 'https://github.com:8100/coast-team/netflux'
-  let webChannelGate = new WebChannelGate()
+  let webChannelGate
 
   it('Gate should be closed after construction', () => {
     webChannelGate = new WebChannelGate()
@@ -18,8 +17,7 @@ describe('WebChannelGate', () => {
   })
 
   describe('Open with auto generated key', () => {
-    let onCloseCalled = false
-    let webChannelGate = new WebChannelGate(() => { onCloseCalled = true })
+    let webChannelGate = new WebChannelGate()
     let accessData
 
     it('Should open the gate', (done) => {
@@ -48,10 +46,14 @@ describe('WebChannelGate', () => {
       expect(webChannelGate.ws).toBeNull()
       expect(webChannelGate.accessData).toEqual({})
     })
+
+    it('onClose should be called', (done) => {
+      let wcg = new WebChannelGate(done)
+      wcg.open(() => {}, {signaling}).then(() => { wcg.close() }).catch(done.fail)
+    })
   })
 
   describe('Open with the specified key', () => {
-    let onCloseCalled = false
     let webChannelGate = new WebChannelGate()
     let accessData
 
@@ -82,9 +84,23 @@ describe('WebChannelGate', () => {
       expect(webChannelGate.ws).toBeNull()
       expect(webChannelGate.accessData).toEqual({})
     })
+
+    it('onClose should be called', (done) => {
+      let key = webChannelGate.generateKey()
+      let wcg = new WebChannelGate(done)
+      wcg.open(() => {}, {signaling, key}).then(() => { wcg.close() }).catch(done.fail)
+    })
   })
 
-  describe('Open with the specified key', () => {
-
+  it('Should fail to open the gate with the key used by another gate', (done) => {
+    let key = webChannelGate.generateKey()
+    let wcg1 = new WebChannelGate()
+    let wcg2 = new WebChannelGate()
+    wcg1.open(() => {}, {signaling, key}).then(() => {
+      wcg2.open(() => {}, {signaling, key}).then(() => {
+        console.log('CONNECTED')
+        done.fail()
+      }).catch(done)
+    }).catch(done.fail)
   })
 })

@@ -25,7 +25,7 @@ class WebChannelGate {
   /**
    * @param {WebChannelGate~onClose} onClose - close event handler
    */
-  constructor (onClose) {
+  constructor (onClose = () => {}) {
     /**
      * Web socket which holds the connection with the signaling server.
      * @private
@@ -62,15 +62,18 @@ class WebChannelGate {
       let key = 'key' in options ? options.key : this.generateKey()
       webSocketService.connect(url)
         .then((ws) => {
-          ws.onclose = this.onClose
-          ws.onerror = (error) => reject(error.reason)
+          ws.onclose = (closeEvt) => {
+            if (closeEvt.code !== 1000) { reject(closeEvt.reason) }
+            this.onClose(closeEvt)
+          }
+          ws.onerror = (err) => reject(err.message)
           this.ws = ws
           this.accessData.key = key
           this.accessData.url = url
           try {
             ws.send(JSON.stringify({key}))
-            // TODO: find a better solution than setTimeout. This is for the case when the key already exists and thus the server will close the socket, but it will close it after this function resolves the Promise.
-            setTimeout(() => { resolve(this.accessData) }, 100, {url, key})
+            // FIXME: find a better solution than setTimeout. This is for the case when the key already exists and thus the server will close the socket, but it will close it after this function resolves the Promise.
+            setTimeout(() => { resolve(this.accessData) }, 300, {url, key})
           } catch (err) {
             reject(err.message)
           }
