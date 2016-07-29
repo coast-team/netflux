@@ -2903,7 +2903,7 @@
       this.defaults = {
         connector: WEBRTC,
         topology: FULLY_CONNECTED,
-        signaling: 'ws://sigver-coastteam.rhcloud.com:8000'
+        signaling: 'wss://sigver-coastteam.rhcloud.com:8443'
       }
       this.settings = Object.assign({}, this.defaults, options)
 
