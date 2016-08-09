@@ -331,14 +331,6 @@
             });
       }
 
-      // support for addIceCandidate(null)
-      var nativeAddIceCandidate =
-          RTCPeerConnection.prototype.addIceCandidate;
-      RTCPeerConnection.prototype.addIceCandidate = function() {
-        return arguments[0] === null ? Promise.resolve()
-            : nativeAddIceCandidate.apply(this, arguments);
-      };
-
       // shim implicit creation of RTCSessionDescription/RTCIceCandidate
       ['setLocalDescription', 'setRemoteDescription', 'addIceCandidate']
           .forEach(function(method) {
@@ -349,27 +341,14 @@
               return nativeMethod.apply(this, arguments);
             };
           });
-    },
 
-    // Attach a media stream to an element.
-    attachMediaStream: function(element, stream) {
-      logging('DEPRECATED, attachMediaStream will soon be removed.');
-      if (browserDetails.version >= 43) {
-        element.srcObject = stream;
-      } else if (typeof element.src !== 'undefined') {
-        element.src = URL.createObjectURL(stream);
-      } else {
-        logging('Error attaching stream to element.');
-      }
-    },
-
-    reattachMediaStream: function(to, from) {
-      logging('DEPRECATED, reattachMediaStream will soon be removed.');
-      if (browserDetails.version >= 43) {
-        to.srcObject = from.srcObject;
-      } else {
-        to.src = from.src;
-      }
+      // support for addIceCandidate(null)
+      var nativeAddIceCandidate =
+          RTCPeerConnection.prototype.addIceCandidate;
+      RTCPeerConnection.prototype.addIceCandidate = function() {
+        return arguments[0] === null ? Promise.resolve()
+            : nativeAddIceCandidate.apply(this, arguments);
+      };
     }
   };
 
@@ -380,9 +359,7 @@
     shimOnTrack: chromeShim.shimOnTrack,
     shimSourceObject: chromeShim.shimSourceObject,
     shimPeerConnection: chromeShim.shimPeerConnection,
-    shimGetUserMedia: require('./getusermedia'),
-    attachMediaStream: chromeShim.attachMediaStream,
-    reattachMediaStream: chromeShim.reattachMediaStream
+    shimGetUserMedia: require('./getusermedia')
   };
 
   },{"../utils.js":8,"./getusermedia":4}],4:[function(require,module,exports){
@@ -587,7 +564,6 @@
    /* eslint-env node */
   'use strict';
 
-  var logging = require('../utils').log;
   var browserDetails = require('../utils').browserDetails;
 
   var firefoxShim = {
@@ -723,17 +699,6 @@
           })
           .then(onSucc, onErr);
       };
-    },
-
-    // Attach a media stream to an element.
-    attachMediaStream: function(element, stream) {
-      logging('DEPRECATED, attachMediaStream will soon be removed.');
-      element.srcObject = stream;
-    },
-
-    reattachMediaStream: function(to, from) {
-      logging('DEPRECATED, reattachMediaStream will soon be removed.');
-      to.srcObject = from.srcObject;
     }
   };
 
@@ -742,9 +707,7 @@
     shimOnTrack: firefoxShim.shimOnTrack,
     shimSourceObject: firefoxShim.shimSourceObject,
     shimPeerConnection: firefoxShim.shimPeerConnection,
-    shimGetUserMedia: require('./getusermedia'),
-    attachMediaStream: firefoxShim.attachMediaStream,
-    reattachMediaStream: firefoxShim.reattachMediaStream
+    shimGetUserMedia: require('./getusermedia')
   };
 
   },{"../utils":8,"./getusermedia":6}],6:[function(require,module,exports){
@@ -912,10 +875,6 @@
     // TODO: DrAlex, should be here, double check against LayoutTests
     // shimOnTrack: function() { },
 
-    // TODO: DrAlex
-    // attachMediaStream: function(element, stream) { },
-    // reattachMediaStream: function(to, from) { },
-
     // TODO: once the back-end for the mac port is done, add.
     // TODO: check for webkitGTK+
     // shimPeerConnection: function() { },
@@ -930,9 +889,7 @@
     shimGetUserMedia: safariShim.shimGetUserMedia
     // TODO
     // shimOnTrack: safariShim.shimOnTrack,
-    // shimPeerConnection: safariShim.shimPeerConnection,
-    // attachMediaStream: safariShim.attachMediaStream,
-    // reattachMediaStream: safariShim.reattachMediaStream
+    // shimPeerConnection: safariShim.shimPeerConnection
   };
 
   },{}],8:[function(require,module,exports){
@@ -987,7 +944,7 @@
     /**
      * Browser detector.
      *
-     * @return {object} result containing browser, version and minVersion
+     * @return {object} result containing browser and version
      *     properties.
      */
     detectBrowser: function() {
@@ -995,7 +952,6 @@
       var result = {};
       result.browser = null;
       result.version = null;
-      result.minVersion = null;
 
       // Fail early if it's not a browser
       if (typeof window === 'undefined' || !window.navigator) {
@@ -1008,7 +964,6 @@
         result.browser = 'firefox';
         result.version = this.extractVersion(navigator.userAgent,
             /Firefox\/([0-9]+)\./, 1);
-        result.minVersion = 31;
 
       // all webkit-based browsers
       } else if (navigator.webkitGetUserMedia) {
@@ -1017,7 +972,6 @@
           result.browser = 'chrome';
           result.version = this.extractVersion(navigator.userAgent,
             /Chrom(e|ium)\/([0-9]+)\./, 2);
-          result.minVersion = 38;
 
         // Safari or unknown webkit-based
         // for the time being Safari has support for MediaStreams but not webRTC
@@ -1037,7 +991,6 @@
             result.browser = 'safari';
             result.version = this.extractVersion(navigator.userAgent,
               /AppleWebKit\/([0-9]+)\./, 1);
-            result.minVersion = 602;
 
           // unknown webkit-based browser
           } else {
@@ -1053,19 +1006,11 @@
         result.browser = 'edge';
         result.version = this.extractVersion(navigator.userAgent,
             /Edge\/(\d+).(\d+)$/, 2);
-        result.minVersion = 10547;
 
       // Default fallthrough: not supported.
       } else {
         result.browser = 'Not a supported browser.';
         return result;
-      }
-
-      // Warn if version is less than minVersion.
-      if (result.version < result.minVersion) {
-        utils.log('Browser: ' + result.browser + ' Version: ' + result.version +
-            ' < minimum supported version: ' + result.minVersion +
-            '\n some things might not work!');
       }
 
       return result;
@@ -1457,8 +1402,8 @@
 
   const CONNECT_TIMEOUT = 2000
   const connectionsByWC = new Map()
-  let RTCPendingConnections;
-  let src;
+  let RTCPendingConnections
+  let src
   let availableService = true
   if (isBrowser()) src = window
   else {

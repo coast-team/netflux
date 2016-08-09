@@ -5,7 +5,8 @@ import CloseEvent from 'CloseEvent'
 
 const CONNECT_TIMEOUT = 2000
 const connectionsByWC = new Map()
-let RTCPendingConnections, src
+let RTCPendingConnections
+let src
 let availableService = true
 if (isBrowser()) src = window
 else {
