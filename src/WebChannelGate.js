@@ -67,17 +67,29 @@ class WebChannelGate {
             this.onClose(closeEvt)
           }
           ws.onerror = (err) => reject(err.message)
+          ws.onmessage = (evt) => {
+            let msg
+            try {
+              msg = JSON.parse(evt.data)
+            } catch (err) {
+              reject('Server responce is not a JSON string: ' + err.message)
+            }
+            if ('isKeyOk' in msg) {
+              if (msg.isKeyOk) {
+                webRTCService.listenFromSignaling(ws, onChannel)
+
+                resolve(this.accessData)
+              } else {
+                reject(`The key: ${key} is not suitable`)
+              }
+            } else {
+              reject(`Unknown server message: ${evt.data}`)
+            }
+          }
           this.ws = ws
           this.accessData.key = key
           this.accessData.url = url
-          try {
-            ws.send(JSON.stringify({key}))
-            // FIXME: find a better solution than setTimeout. This is for the case when the key already exists and thus the server will close the socket, but it will close it after this function resolves the Promise.
-            setTimeout(() => { resolve(this.accessData) }, 700, {url, key})
-          } catch (err) {
-            reject(err.message)
-          }
-          webRTCService.listenFromSignaling(ws, onChannel)
+          ws.send(JSON.stringify({key}))
         })
         .catch(reject)
     })

@@ -1,54 +1,54 @@
-import {signaling} from 'config'
+import {signaling, allMessagesAreSentAndReceived, randString} from 'config'
 import WebChannel from 'src/WebChannel'
 
-describe('Many peers -> ', () => {
-  const NB_PEERS = 4
-  let wcArray = []
+describe('Fully connected: many peers', () => {
+  const NB_PEERS = 10
 
-  describe('One door -> ', () => {
-    xit('Peers should join the same WebChannel', (done) => {
-      let counter = 0
+  let wcs = []
+  let msgs = []
+  for (let i = 0; i < NB_PEERS; i++) {
+    msgs[i] = randString()
+  }
+
+  describe('Should establish a connection', () => {
+    it('one by one', (done) => {
+      let joined = new Map()
+      let joinPromises = []
       for (let i = 0; i < NB_PEERS; i++) {
-        wcArray[i] = new WebChannel({signaling})
-      }
-      wcArray[0].onJoining = (id) => {
-        counter++
-        console.log('[DEBUG] counter: ', counter)
-        let found = false
-        for (let wc of wcArray) {
-          if (wc.myId === id) {
-            found = true
-            break
-          }
-        }
-        expect(found).toBeTruthy()
-        if (counter === NB_PEERS - 1) {
-          setTimeout(() => {
-            wcArray[0].ping().then((delay) => {
-              console.log('WebChannel PING for ' + NB_PEERS + ' peers: ' + delay + ' ms')
-              done()
-            })
-          }, 1500)
-        }
-      }
-      for (let i = 1; i < NB_PEERS; i++) {
-        wcArray[i].onJoining = (id) => {
-          let found = false
-          for (let wc of wcArray) {
-            if (wc.myId === id) {
-              found = true
-              break
+        wcs[i] = new WebChannel({signaling})
+        joined.set(i, [])
+        if (i !== NB_PEERS - 1) {
+          joinPromises.push(new Promise((resolve, reject) => {
+            wcs[i].onJoining = (id) => {
+              let joinedTab = joined.get(i)
+              expect(joinedTab.indexOf(id)).toEqual(-1)
+              joinedTab.push(id)
+              if (joinedTab.length === NB_PEERS - i - 1) resolve()
             }
-          }
-          expect(found).toBeTruthy()
+          }))
         }
       }
-      wcArray[0].open().then((data) => {
-        for (let i = 1; i < NB_PEERS; i++) {
-          wcArray[i].join(data.key)
-            .catch(done.fail)
-        }
-      }).catch(done.fail)
-    }, 10000)
+
+      Promise.all(joinPromises)
+        .then(done)
+        .catch(done.fail)
+
+      let joinOneByOne = function (prom, index, key) {
+        let i = index
+        if (index === NB_PEERS) return prom
+        return joinOneByOne(prom.then(() => wcs[i].join(key)), ++index, key)
+      }
+      wcs[0].open()
+        .then((data) => joinOneByOne(Promise.resolve(), 1, data.key))
+        .catch(done.fail)
+    }, 45000)
+  })
+
+  describe('Should send/receive', () => {
+    it('broadcast string message', (done) => {
+      allMessagesAreSentAndReceived(wcs, msgs, String)
+        .then(done).catch(done.fail)
+      for (let i in wcs) wcs[i].send(msgs[i])
+    })
   })
 })

@@ -1,8 +1,8 @@
 import {isBrowser} from 'helper'
 import ServiceInterface from 'service/ServiceInterface'
-
-const CONNECT_TIMEOUT = 5000
 const WebSocket = isBrowser() ? window.WebSocket : require('ws')
+
+const CONNECT_TIMEOUT = 4000
 const OPEN = WebSocket.OPEN
 
 class WebSocketService extends ServiceInterface {
@@ -19,19 +19,9 @@ class WebSocketService extends ServiceInterface {
       try {
         let ws = new WebSocket(url)
         ws.onopen = () => resolve(ws)
-        ws.onerror = (evt) => {
-          console.error(`WebSocket with ${url}: ${evt.type}`)
-          reject(evt.type)
-        }
-        ws.onclose = (closeEvt) => {
-          if (closeEvt.code !== 1000) {
-            console.error(`WebSocket with ${url} closed. ${closeEvt.code}: ${closeEvt.reason}`)
-            reject(closeEvt.reason)
-          }
-        }
         // Timeout for node (otherwise it will loop forever if incorrect address)
         setTimeout(() => {
-          if (ws.readyState !== WebSocket.OPEN) {
+          if (ws.readyState !== OPEN) {
             reject(`WebSocket connection timeout with ${url}`)
           }
         }, CONNECT_TIMEOUT)

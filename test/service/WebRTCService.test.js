@@ -1,225 +1,75 @@
 import {signaling, randKey} from 'config'
 import WebRTCService from 'src/service/WebRTCService'
 import WebSocketService from 'src/service/WebSocketService'
+import WebChannelGate from 'src/WebChannelGate'
 
-describe('WebRTCService ->', () => {
-  let webRTCService = new WebRTCService()
-  let webSocketService = new WebSocketService()
+describe('WebRTCService', () => {
+  let webRTCService
+  let webSocketService
+  let socket
 
-  it('Listen from signaling: should succeed', (done) => {
-    let key = randKey()
+  beforeEach(() => {
+    webRTCService = new WebRTCService()
+    webSocketService = new WebSocketService()
+  })
 
-    webSocketService.connect(signaling)
-      .then((ws) => {
-        try {
-          ws.send(JSON.stringify({key}))
-          webRTCService.listenFromSignaling(ws, () => {})
-          done()
-        } catch (e) {
-          done.fail(e)
+  describe('connectOverSignaling', () => {
+    it('Should open a data channel', (done) => {
+      const key = randKey()
+      const gate = new WebChannelGate()
+
+      gate.open((channel) => {
+        channel.onmessage = (msgEvt) => {
+          expect(msgEvt.data).toEqual('ping')
+          channel.send('pong')
         }
-      })
-      .catch((reason) => {
-        done.fail(reason)
-      })
-  })
-
-  it('Connect over signaling: dataChannel should open', (done) => {
-    let key = randKey()
-
-    webSocketService.connect(signaling)
-      .then((ws1) => {
-        ws1.send(JSON.stringify({key}))
-        webRTCService.listenFromSignaling(ws1, () => {})
-
-        webSocketService.connect(signaling)
-          .then((ws2) => {
-            webRTCService.connectOverSignaling(ws2, key)
-              .then(done)
-              .catch(done.fail)
-          })
-          .catch(done.fail)
-      })
-      .catch(done.fail)
-  })
-
-  // Fail because ws throw a new error which is not handle (even if using a try catch or a .catch)
-  // xit('Connect over signaling: should fail to connect (bad key)', (done) => {
-  //   webSocketService.connect(signaling)
-  //     .then((ws1) => {
-  //       let key = randKey()
-  //       ws1.send(JSON.stringify({key}))
-  //       webRTCService.listenFromSignaling(ws1, () => {})
-  //       webSocketService.connect(signaling)
-  //         .then((ws2) => {
-  //           try {
-  //             webRTCService.connectOverSignaling(ws2, randKey())
-  //               .then((reason) => {done.fail(reason)})
-  //               .catch(done)
-  //             }
-  //           catch (e) {
-  //             done()
-  //           }
-  //         })
-  //         .catch((reason) => {done.fail(reason)})
-  //     })
-  //     .catch((reason) => {done.fail(reason)})
-  // })
-
-  // Fail because the 2nd socket is closed with code 1000 instead of code 4002
-  // xit('Listen from signaling: should fail the provided because key is already opened', (done) => {
-  //   webSocketService.connect(signaling)
-  //     .then((ws1) => {
-  //       let key = randKey()
-  //       ws1.send(JSON.stringify({key}))
-  //       webRTCService.listenFromSignaling(ws1, () => {})
-  //       webSocketService.connect(signaling)
-  //         .then((ws2) => {
-              // get rid of the try catch, but useless to do so before the closing code issue is solved
-  //           try {
-  //             ws2.send(JSON.stringify({key}))
-  //             webRTCService.listenFromSignaling(ws2, () => {})
-  //             setTimeout(done.fail, 1000)
-  //           } catch (e) {
-  //             done()
-  //           }
-  //         })
-  //         .catch((reason) => {done.fail(reason)})
-  //     })
-  //     .catch((reason) => {done.fail(reason)})
-  // })
-
-  it('Listen and Connect: should open 1 dataChannel and exchange messages between 2 peers', (done) => {
-    const masterPeerMsg = 'Hello! Here is master'
-    const peerMsg = 'Hi, I am a peer'
-    let key = randKey()
-
-    webSocketService.connect(signaling)
-      .then((ws1) => {
-        ws1.send(JSON.stringify({key}))
-        webRTCService.listenFromSignaling(ws1, (channel) => {
-          channel.onmessage = (event) => {
-            expect(event.data).toEqual(peerMsg)
+      }, {signaling, key})
+        .then(() => webSocketService.connect(signaling))
+        .then((ws) => {
+          socket = ws
+          return webRTCService.connectOverSignaling(ws, key)
+        })
+        .then((channel) => {
+          channel.onmessage = (msgEvt) => {
+            expect(msgEvt.data).toEqual('pong')
             channel.close()
+            gate.close()
+            socket.close()
+            done()
           }
-          channel.onerror = done.fail
-          channel.send(masterPeerMsg)
+          channel.send('ping')
         })
+        .catch(done.fail)
+    })
 
-        webSocketService.connect(signaling)
-          .then((ws2) => {
-            webRTCService.connectOverSignaling(ws2, key)
-              .then((channel) => {
-                channel.onmessage = (event) => {
-                  expect(event.data).toEqual(masterPeerMsg)
-                  channel.send(peerMsg)
-                }
-                channel.onclose = done
-                channel.onerror = done.fail
-              })
-              .catch((reason) => {
-                done.fail(reason)
-              })
-          })
-          .catch((reason) => {
-            done.fail(reason)
-          })
-      })
-      .catch((reason) => {
-        done.fail(reason)
-      })
-  })
-
-  it('Listen and Connect: should detect disconnected peer', (done) => {
-    let key = randKey()
-
-    webSocketService.connect(signaling)
-      .then((ws1) => {
-        ws1.send(JSON.stringify({key}))
-        webRTCService.listenFromSignaling(ws1, (channel) => {
-          channel.onclose = (closeEvt) => done()
-          channel.onerror = done.fail
+    it('Should open a data channel with Node (init.js)', (done) => {
+      webSocketService.connect(signaling)
+        .then((ws) => {
+          socket = ws
+          return webRTCService.connectOverSignaling(ws, '12345')
         })
-
-        webSocketService.connect(signaling)
-          .then((ws2) => {
-            webRTCService.connectOverSignaling(ws2, key)
-              .then((channel) => {
-                channel.onerror = done.fail
-                setTimeout(() => { channel.close() }, 500)
-              })
-              .catch(done.fail)
-          })
-          .catch(done.fail)
-      })
-  })
-
-  it('Listen and Connect: should open 2 dataChannels and exchange messages between 3 peers', (done) => {
-    const masterPeerMsg = 'Do or do not, there is no try'
-    const peerMsg1 = 'Hi, I am a peer #1'
-    const peerMsg2 = 'Hi, I am a peer #2'
-    let limit = 0
-    let key = randKey()
-
-    // PEER MASTER
-    webSocketService.connect(signaling)
-      .then((ws1) => {
-        ws1.send(JSON.stringify({key}))
-
-        webRTCService.listenFromSignaling(ws1, (channel) => {
-          channel.onmessage = (event) => {
-            expect(event.data).toMatch(/Hi, I am a peer #/)
+        .then((channel) => {
+          channel.onmessage = (msgEvt) => {
+            expect(msgEvt.data).toEqual('pong')
             channel.close()
-            if (++limit === 2) { done() }
+            socket.close()
+            done()
           }
-          channel.onerror = done.fail
-          channel.send(masterPeerMsg)
+          channel.send('ping')
         })
-
-        // PEER #1
-        webSocketService.connect(signaling)
-          .then((ws2) => {
-            webRTCService.connectOverSignaling(ws2, key)
-              .then((channel) => {
-                channel.onmessage = (event) => {
-                  expect(event.data).toEqual(masterPeerMsg)
-                  channel.send(peerMsg1)
-                }
-                channel.onerror = done.fail
-              })
-              .catch(done.fail)
-          })
-
-        // PEER #2
-        webSocketService.connect(signaling)
-          .then((ws3) => {
-            webRTCService.connectOverSignaling(ws3, key)
-              .then((channel) => {
-                channel.onmessage = (event) => {
-                  expect(event.data).toEqual(masterPeerMsg)
-                  channel.send(peerMsg2)
-                }
-                channel.onerror = done.fail
-              })
-              .catch(done.fail)
-          })
-      })
-      .catch(done.fail)
+    })
   })
 
-  it('Connect to node: should exchange a ping-pong', (done) => {
+  it('Should fail to open a data channel because of a wrong key', (done) => {
     webSocketService.connect(signaling)
       .then((ws) => {
-        webRTCService.connectOverSignaling(ws, '12345')
-          .then((channel) => {
-            channel.onmessage = (event) => {
-              expect(event.data).toEqual('pong')
-              done()
-            }
-            channel.onerror = done.fail
-            channel.send('ping')
-          })
-          .catch(done.fail)
+        socket = ws
+        return webRTCService.connectOverSignaling(ws, randKey())
       })
-  }, 15000)
+      .then(done.fail)
+      .catch(() => {
+        socket.close()
+        done()
+      })
+  })
 })

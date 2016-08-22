@@ -23,7 +23,7 @@ const DEFAULT_REQUEST_TIMEOUT = 5000
  * a peer is waiting for a feedback from another peer before Promise has completed.
  * @type {external:Map}
  */
-const pendingRequests = new Map()
+const temp = new Map()
 
 /**
  * Each service must implement this interface.
@@ -37,8 +37,8 @@ class ServiceInterface {
    */
 
   constructor () {
-    if (!pendingRequests.has(this.name)) {
-      pendingRequests.set(this.name, new Map())
+    if (!temp.has(this.name)) {
+      temp.set(this.name, new WeakMap())
     }
   }
 
@@ -59,15 +59,7 @@ class ServiceInterface {
    * @param {ServiceInterface~onTimeout} [onTimeout=() => {}] - Timeout event handler
    */
   addPendingRequest (wc, id, data, timeout = DEFAULT_REQUEST_TIMEOUT, onTimeout = () => {}) {
-    let requests = pendingRequests.get(this.name)
-    let idMap
-    if (requests.has(wc)) {
-      idMap = requests.get(wc)
-    } else {
-      idMap = new Map()
-      requests.set(wc, idMap)
-    }
-    idMap.set(id, data)
+    this.addTemp(wc, id, data)
     setTimeout(onTimeout, timeout)
   }
 
@@ -79,7 +71,30 @@ class ServiceInterface {
    * addPendingRequest function
    */
   getPendingRequest (wc, id) {
-    return pendingRequests.get(this.name).get(wc).get(id)
+    return this.getTemp(wc, id)
+  }
+
+  addTemp (wc, id, data) {
+    let currentServiceTemp = temp.get(this.name)
+    let idMap
+    if (currentServiceTemp.has(wc)) {
+      idMap = currentServiceTemp.get(wc)
+    } else {
+      idMap = new Map()
+      currentServiceTemp.set(wc, idMap)
+    }
+    idMap.set(id, data)
+  }
+
+  getTemp (wc, id) {
+    return temp.get(this.name).get(wc).get(id)
+  }
+
+  deleteTemp (wc, id) {
+    let currentServiceTemp = temp.get(this.name)
+    let idMap = currentServiceTemp.get(wc)
+    currentServiceTemp.get(wc).delete(id)
+    if (idMap.size === 0) currentServiceTemp.delete(wc)
   }
 }
 

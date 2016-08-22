@@ -100,7 +100,7 @@ describe('1 bot -> ', () => {
       .catch(done.fail)
   })
 
-  it('Should be able to reconnect to a network after being kicked', (done) => {
+  xit('Should be able to reconnect to a network after being kicked', (done) => {
     wc1 = new WebChannel({signaling})
     wc2 = new WebChannel({signaling})
 

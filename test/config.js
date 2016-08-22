@@ -1,7 +1,9 @@
+// Main signaling server for all tests
 export const signaling = 'ws://localhost:8000'
 // const signaling = 'wss://sigver-coastteam.rhcloud.com:8443'
 // const signaling = 'ws://sigver-coastteam.rhcloud.com:8000'
-export const MSG_NUMBER = 10
+// Used to test send/receive a lot of messages
+export const MSG_NUMBER = 100
 
 export function randString () {
   const MIN_LENGTH = 1
@@ -38,4 +40,37 @@ export function randKey () {
     result += MASK[Math.round(Math.random() * (MASK.length - 1))]
   }
   return result
+}
+
+export function isEqual (ta1, ta2) {
+  let t1 = (ta1 instanceof ArrayBuffer) ? new Uint8Array(ta1) : ta1
+  let t2 = (ta2 instanceof ArrayBuffer) ? new Uint8Array(ta2) : ta2
+  t1 = (ta1 instanceof DataView) ? new Uint8Array(ta1.buffer) : ta1
+  t2 = (ta2 instanceof DataView) ? new Uint8Array(ta1.buffer) : ta2
+
+  // this is necessary for NodeJS, as there is a bug in NodeJS when treating string as an array
+  if (typeof ta1 === 'string' && typeof ta2 === 'string') {
+    return ta1 === ta2
+  } else {
+    for (let i in t1) if (t1[i] !== t2[i]) return false
+    return true
+  }
+}
+
+export function allMessagesAreSentAndReceived (wcs, msgs, instance, isBroadcast = true) {
+  return Promise.all(wcs.map(
+    wc => new Promise((resolve, reject) => {
+      let tab = new Map()
+      for (let i in wcs) if (wcs[i].myId !== wc.myId) tab.set(wcs[i].myId, msgs[i])
+      wc.onMessage = (id, msg, isBroadcast) => {
+        expect(isBroadcast).toEqual(isBroadcast)
+        if (typeof msg === 'string') expect(instance).toEqual(String)
+        else expect(msg instanceof instance).toBeTruthy()
+        expect(tab.has(id)).toBeTruthy()
+        expect(isEqual(msg, tab.get(id))).toBeTruthy()
+        tab.delete(id)
+        if (tab.size === 0) resolve()
+      }
+    })
+  ))
 }

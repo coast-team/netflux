@@ -93,6 +93,8 @@ const PING = 11
  */
 const PONG = 12
 
+const MEMBERS = 13
+
 /**
  * Constant used to send a message to the server in order that
  * he can join the webcahnnel
@@ -173,7 +175,7 @@ class WebChannel {
      * @private
      * @type {number}
      */
-    this.peerNb = 0
+    this.members = []
 
     /**
      * @private
@@ -249,6 +251,7 @@ class WebChannel {
   /**
     * Add a channel to the current peer network according to the topology
     *
+    * @private
     * @param {Object} channel - Channel which needs to be add in the topology
     * @return {Promise} It resolves once the channel is add
     */
@@ -349,15 +352,19 @@ class WebChannel {
   join (key, options = {}) {
     let settings = Object.assign({}, this.settings, options)
     let webSocketService = provide(WEBSOCKET)
+    let wsWithSignaling
     let webRTCService = provide(this.settings.connector)
     return new Promise((resolve, reject) => {
       this.onJoin = () => resolve(this)
       webSocketService.connect(settings.signaling)
         .then((ws) => {
-          ws.onclose = (closeEvt) => reject(closeEvt.reason)
-          ws.onerror = (error) => reject(error.reason)
+          wsWithSignaling = ws
           return webRTCService.connectOverSignaling(ws, key)
-            .then((channel) => this.initChannel(channel))
+        })
+        .then((channel) => {
+          wsWithSignaling.onclose = null
+          wsWithSignaling.close()
+          return this.initChannel(channel)
         })
         .catch(reject)
     })
@@ -367,12 +374,15 @@ class WebChannel {
    * Leave the *WebChannel*. No longer can receive and send messages to the group.
    */
   leave () {
+    // FIXME: refactore this
     if (this.channels.size !== 0) {
-      this.manager.broadcast(this, msgBld.msg(LEAVE))
       this.topology = this.settings.topology
-      // this.channels.forEach((c) => {
-      //   c.close()
-      // })
+      this.channels.forEach((c) => {
+        c.channel.onmessage = () => {}
+        c.channel.onclose = () => {}
+        c.channel.onerror = () => {}
+      })
+      this.manager.broadcast(this, msgBld.msg(LEAVE))
       this.channels.clear()
       // this.joiningPeers.clear()
       this.gate.close()
@@ -410,16 +420,20 @@ class WebChannel {
    * @returns {Promise}
    */
   ping () {
-    return new Promise((resolve, reject) => {
-      if (this.pingTime === 0) {
-        this.pingTime = Date.now()
-        this.maxTime = 0
-        this.pongNb = 0
-        this.pingFinish = (delay) => { resolve(delay) }
-        this.manager.broadcast(this, msgBld.msg(PING))
-        setTimeout(() => { resolve(PING_TIMEOUT) }, PING_TIMEOUT)
-      }
-    })
+    if (this.channels.size !== 0) {
+      return new Promise((resolve, reject) => {
+        if (this.pingTime === 0) {
+          this.pingTime = Date.now()
+          this.maxTime = 0
+          this.pongNb = 0
+          this.pingFinish = (delay) => { resolve(delay) }
+          this.manager.broadcast(this, msgBld.msg(PING))
+          setTimeout(() => { resolve(PING_TIMEOUT) }, PING_TIMEOUT)
+        }
+      })
+    } else {
+      return Promise.resolve(0)
+    }
   }
 
   get topology () {
@@ -496,7 +510,7 @@ class WebChannel {
               this.channels.delete(c)
             }
           }
-          this.peerNb--
+          this.members.splice(this.members.indexOf(msg.id), 1)
           // this.onLeaving(msg.id)
           break
         case SERVICE_DATA:
@@ -526,13 +540,15 @@ class WebChannel {
           break
         case JOIN_SUCCESS:
           this.joinSuccess(header.senderId)
-          this.peerNb++
+          this.members.push(header.senderId)
           this.onJoining(header.senderId)
+          this.manager.sendTo(header.senderId, this, msgBld.msg(MEMBERS, {
+            members: this.members
+          }))
           break
-        // case INIT_CHANNEL_PONG:
-        //   channel.onPong()
-        //   delete channel.onPong
-        //   break
+        case MEMBERS:
+          this.members = msg.members
+          break
         case INIT_OK:
           channel.onOk()
           delete channel.onOk
@@ -544,7 +560,7 @@ class WebChannel {
           let now = Date.now()
           this.pongNb++
           this.maxTime = Math.max(this.maxTime, now - this.pingTime)
-          if (this.pongNb === this.peerNb) {
+          if (this.pongNb === this.members.length) {
             this.pingFinish(this.maxTime)
             this.pingTime = 0
           }
@@ -570,13 +586,11 @@ class WebChannel {
    * @param {external:CloseEvent} closeEvt - Close event
    */
   onChannelClose (closeEvt, peerId) {
+    // FIXME: refactore this
     for (let c of this.channels) {
-      if (c.peerId === peerId) {
-        c.close()
-        this.channels.delete(c)
-      }
+      if (c.peerId === peerId) this.channels.delete(c)
     }
-    this.peerNb--
+    this.members.splice(this.members.indexOf(peerId), 1)
     this.onLeaving(peerId)
     // console.info(`Channel with ${peerId} has been closed: ${closeEvt.type}`)
   }

@@ -1,7 +1,6 @@
 import {provide, CHANNEL_BUILDER, FULLY_CONNECTED, MESSAGE_BUILDER, WEBRTC, WEBSOCKET} from 'src/serviceProvider'
 
 describe('Service Provider', () => {
-
   it('Should provide a service', () => {
     expect(provide(WEBRTC).name).toEqual('WebRTCService')
     expect(provide(FULLY_CONNECTED).name).toEqual('FullyConnectedService')

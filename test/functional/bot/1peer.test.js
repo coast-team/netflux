@@ -54,7 +54,7 @@ describe('1 peer -> ', () => {
     wc.addBotServer(host, port).catch(done.fail)
   })
 
-  it('Should kick the bot server and try to reconnect with him after', (done) => {
+  xit('Should kick the bot server and try to reconnect with him after', (done) => {
     wc = new WebChannel({signaling})
 
     let first = true

@@ -12,7 +12,7 @@
     "fortest:init": "node tmp/test/init.js & echo \"$!\" >> tmp/pids",
     "fortest:kill": "cat tmp/pids | xargs kill",
     "fortest:rollup-node": "find test -name '*test.js' | xargs -i node rollup.config.js -t '{}' tmp/'{}'",
-    "fortest:signaling": "node ./node_modules/sigver/server.js & echo \"$!\" >> tmp/pids",
+    "fortest:signaling": "sigver & echo \"$!\" >> tmp/pids",
     "fortest:all": "npm run build && npm run fortest:signaling && npm run fortest:init",
     "pretest": "npm run fortest:all && npm run fortest:rollup-node",
     "pretest:browsers": "npm run fortest:all",
@@ -66,7 +66,7 @@
   "dependencies": {
     "text-encoding": "^0.6.0",
     "webrtc-adapter": "^2.0.2",
-    "wrtc": "~0.0.60",
+    "wrtc": "0.0.60",
     "ws": "^1.1.1"
   },
   "devDependencies": {
@@ -82,13 +82,13 @@
     "jsdoc": "^3.4.0",
     "json": "^9.0.3",
     "karma": "^1.1.0",
-    "karma-chrome-launcher": "^1.0.1",
+    "karma-chrome-launcher": "^2.0.0",
     "karma-coverage": "^1.0.0",
     "karma-coverage-es6": "^0.2.7",
     "karma-firefox-launcher": "^1.0.0",
     "karma-jasmine": "^1.0.2",
     "karma-rollup-preprocessor": "^2.0.2",
-    "karma-sauce-launcher": "^1.0.0",
+    "karma-spec-reporter": "0.0.26",
     "rollup": "^0.34.0",
     "rollup-plugin-filesize": "^0.4.4",
     "rollup-plugin-includepaths": "^0.1.5",

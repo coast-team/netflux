@@ -1,6 +1,6 @@
 const message = new WeakMap()
 
-class CloseEvent {
+class NodeCloseEvent {
   constructor (msg) {
     message.set(this, msg)
   }
@@ -10,4 +10,4 @@ class CloseEvent {
   }
 }
 
-export default CloseEvent
+export default NodeCloseEvent

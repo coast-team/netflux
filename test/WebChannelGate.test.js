@@ -6,6 +6,7 @@ describe('WebChannelGate', () => {
 
   it('Gate should be closed after construction', () => {
     webChannelGate = new WebChannelGate()
+    expect(webChannelGate.isOpen()).toBeFalsy()
     expect(webChannelGate.ws).toBeNull()
     expect(webChannelGate.accessData).toEqual({})
   })
@@ -14,6 +15,20 @@ describe('WebChannelGate', () => {
     let key1 = webChannelGate.generateKey()
     let key2 = webChannelGate.generateKey()
     expect(key1).not.toEqual(key2)
+  })
+
+  it('Should fail to open the gate with the key used by another gate', (done) => {
+    let key = webChannelGate.generateKey()
+    let wcg1 = new WebChannelGate()
+    let wcg2 = new WebChannelGate()
+    wcg1.open(() => {}, {signaling, key}).then(() => {
+      wcg2.open(() => {}, {signaling, key}).then(() => {
+        done.fail()
+      }).catch(() => {
+        wcg1.close()
+        done()
+      })
+    }).catch(done.fail)
   })
 
   describe('Open with auto generated key', () => {
@@ -90,19 +105,5 @@ describe('WebChannelGate', () => {
       let wcg = new WebChannelGate(done)
       wcg.open(() => {}, {signaling, key}).then(() => { wcg.close() }).catch(done.fail)
     })
-  })
-
-  it('Should fail to open the gate with the key used by another gate', (done) => {
-    let key = webChannelGate.generateKey()
-    let wcg1 = new WebChannelGate()
-    let wcg2 = new WebChannelGate()
-    wcg1.open(() => {}, {signaling, key}).then(() => {
-      wcg2.open(() => {}, {signaling, key}).then(() => {
-        done.fail()
-      }).catch(() => {
-        wcg1.close()
-        done()
-      })
-    }).catch(done.fail)
   })
 })

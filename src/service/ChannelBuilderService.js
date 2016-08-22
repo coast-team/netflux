@@ -1,6 +1,6 @@
 import {isBrowser} from 'helper'
 import ServiceInterface from 'service/ServiceInterface'
-import WebRTCService from 'service/WebRTCService'
+import {webRTCAvailable} from 'service/WebRTCService'
 import {WEBRTC, WEBSOCKET, provide} from 'serviceProvider'
 
 const NEW_CHANNEL = 'newChannel'
@@ -29,7 +29,7 @@ class ChannelBuilderService extends ServiceInterface {
   availableConnectors (wc) {
     let data = {}
     let connectors = []
-    if (WebRTCService.isAvailabled()) connectors.push(WEBRTC)
+    if (webRTCAvailable) connectors.push(WEBRTC)
     let host = wc.settings.host
     let port = wc.settings.port
     if (!isBrowser() && host !== undefined && port !== undefined) connectors.push(WEBSOCKET)
