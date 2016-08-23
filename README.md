@@ -5,7 +5,7 @@
 
 [![bitHound Dependencies](https://www.bithound.io/github/coast-team/netflux/badges/dependencies.svg)](https://www.bithound.io/github/coast-team/netflux/master/dependencies/npm)&nbsp;
 [![Dependency Status](https://david-dm.org/coast-team/netflux.svg?style=flat-square)](https://david-dm.org/coast-team/netflux)&nbsp;
-[![devDependency Status](https://david-dm.org/coast-team/netflux/dev-status.svg?style=flat-square)](https://david-dm.org/coast-team/netflux#info=devDependencies)&nbsp;
+[![devDependency Status](https://david-dm.org/coast-team/netflux/dev-status.svg?style=flat-square)](https://david-dm.org/coast-team/netflux?type=dev)&nbsp;
 
 [![Build Status](https://travis-ci.org/coast-team/netflux.svg?branch=master)](https://travis-ci.org/coast-team/netflux)&nbsp;
 [![bitHound Overall Score](https://www.bithound.io/github/coast-team/netflux/badges/score.svg)](https://www.bithound.io/github/coast-team/netflux)&nbsp;
