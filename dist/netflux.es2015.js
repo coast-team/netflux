@@ -1913,7 +1913,7 @@ const DATA_VIEW_TYPE = 12
 /**
  * Buffer for big user messages.
  */
-const buffers = new Map()
+const buffers = new WeakMap()
 
 /**
  * Message builder service class.
@@ -2017,20 +2017,19 @@ class MessageBuilderService extends ServiceInterface {
     let dataView = this.initHeader(code, recepientId, msgSize)
     let fullMsg = new Uint8Array(dataView.buffer)
     fullMsg.set(msgEncoded, HEADER_OFFSET)
-    // console.log('fullMsg.byteLength', fullMsg.byteLength)
     return fullMsg.buffer
   }
 
   /**
    * Read user message which was prepared by another peer with
    * {@link MessageBuilderService#handleUserMessage} and sent.
-   * @param {number} wcId - *WebChannel* identifier
+   * @param {WebChannel} wc - WebChannel
    * @param {number} senderId - Id of the peer who sent this message
    * @param {external:ArrayBuffer} data - Message
    * @param {MessageBuilderService~Receive} action - Callback when the message is
    * ready
    */
-  readUserMessage (wcId, senderId, data, action) {
+  readUserMessage (wc, senderId, data, action) {
     let dataView = new DataView(data)
     let msgSize = dataView.getUint32(HEADER_OFFSET)
     let dataType = dataView.getUint8(13)
@@ -2038,9 +2037,9 @@ class MessageBuilderService extends ServiceInterface {
     if (msgSize > MAX_USER_MSG_SIZE) {
       let msgId = dataView.getUint16(15)
       let chunk = dataView.getUint16(17)
-      let buffer = this.getBuffer(wcId, senderId, msgId)
+      let buffer = this.getBuffer(wc, senderId, msgId)
       if (buffer === undefined) {
-        this.setBuffer(wcId, senderId, msgId,
+        this.setBuffer(wc, senderId, msgId,
           new Buffer(msgSize, data, chunk, (fullData) => {
             action(this.extractUserData(fullData, dataType), isBroadcast)
           })
@@ -2108,7 +2107,7 @@ class MessageBuilderService extends ServiceInterface {
   initHeader (code, recipientId, dataSize) {
     let dataView = new DataView(new ArrayBuffer(dataSize))
     dataView.setUint8(0, code)
-    //dataView.setUint32(1, senderId)
+    // dataView.setUint32(1, senderId)
     dataView.setUint32(5, recipientId)
     return dataView
   }
@@ -2204,14 +2203,14 @@ class MessageBuilderService extends ServiceInterface {
   /**
    * Get the buffer.
    * @private
-   * @param {number} wcId - *WebChannel* id
+   * @param {WebChannel} wc - WebChannel
    * @param {number} peerId - Peer id
    * @param {number} msgId - Message id
    * @returns {Buffer|undefined} - Returns buffer if it was found and undefined
    * if not
    */
-  getBuffer (wcId, peerId, msgId) {
-    let wcBuffer = buffers.get(wcId)
+  getBuffer (wc, peerId, msgId) {
+    let wcBuffer = buffers.get(wc)
     if (wcBuffer !== undefined) {
       let peerBuffer = wcBuffer.get(peerId)
       if (peerBuffer !== undefined) {
@@ -2224,16 +2223,16 @@ class MessageBuilderService extends ServiceInterface {
   /**
    * Add a new buffer to the buffer array.
    * @private
-   * @param {number} wcId - *WebChannel* id
+   * @param {WebChannel} wc - WebChannel
    * @param {number} peerId - Peer id
    * @param {number} msgId - Message id
    * @param {Buffer} - buffer
    */
-  setBuffer (wcId, peerId, msgId, buffer) {
-    let wcBuffer = buffers.get(wcId)
+  setBuffer (wc, peerId, msgId, buffer) {
+    let wcBuffer = buffers.get(wc)
     if (wcBuffer === undefined) {
       wcBuffer = new Map()
-      buffers.set(wcId, wcBuffer)
+      buffers.set(wc, wcBuffer)
     }
     let peerBuffer = wcBuffer.get(peerId)
     if (peerBuffer === undefined) {
@@ -3140,7 +3139,7 @@ class WebChannel {
     // console.log('ON CHANNEL MESSAGE:\n - code=' + header.code + '\n - sender=' + header.senderId + '\n - recepient=' + header.recepientId)
     // console.log('[DEBUG] {onChannelMessage} header: ', header)
     if (header.code === USER_DATA) {
-      msgBld.readUserMessage(this.id, header.senderId, data, (fullData, isBroadcast) => {
+      msgBld.readUserMessage(this, header.senderId, data, (fullData, isBroadcast) => {
         this.onMessage(header.senderId, fullData, isBroadcast)
       })
     } else {

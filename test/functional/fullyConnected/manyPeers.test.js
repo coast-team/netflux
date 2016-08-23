@@ -1,14 +1,9 @@
-import {signaling, allMessagesAreSentAndReceived, randString} from 'config'
+import {signaling, allMessagesAreSentAndReceived, randString, TestGroup} from 'config'
 import WebChannel from 'src/WebChannel'
+const NB_PEERS = 10
 
-describe('Fully connected: many peers', () => {
-  const NB_PEERS = 10
-
+describe(`Fully connected: many peers (${NB_PEERS})`, () => {
   let wcs = []
-  let msgs = []
-  for (let i = 0; i < NB_PEERS; i++) {
-    msgs[i] = randString()
-  }
 
   describe('Should establish a connection', () => {
     it('one by one', (done) => {
@@ -46,9 +41,13 @@ describe('Fully connected: many peers', () => {
 
   describe('Should send/receive', () => {
     it('broadcast string message', (done) => {
-      allMessagesAreSentAndReceived(wcs, msgs, String)
+      let groupsStr = []
+      for (let i = 0; i < NB_PEERS; i++) {
+        groupsStr[i] = new TestGroup(wcs[i], randString())
+      }
+      allMessagesAreSentAndReceived(groupsStr, String)
         .then(done).catch(done.fail)
-      for (let i in wcs) wcs[i].send(msgs[i])
+      for (let g of groupsStr) g.wc.send(g.msg)
     })
   })
 })

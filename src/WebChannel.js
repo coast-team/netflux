@@ -497,7 +497,7 @@ class WebChannel {
     // console.log('ON CHANNEL MESSAGE:\n - code=' + header.code + '\n - sender=' + header.senderId + '\n - recepient=' + header.recepientId)
     // console.log('[DEBUG] {onChannelMessage} header: ', header)
     if (header.code === USER_DATA) {
-      msgBld.readUserMessage(this.id, header.senderId, data, (fullData, isBroadcast) => {
+      msgBld.readUserMessage(this, header.senderId, data, (fullData, isBroadcast) => {
         this.onMessage(header.senderId, fullData, isBroadcast)
       })
     } else {

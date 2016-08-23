@@ -52,17 +52,18 @@ export function isEqual (ta1, ta2) {
   if (typeof ta1 === 'string' && typeof ta2 === 'string') {
     return ta1 === ta2
   } else {
+    if (t1.size !== t2.size) return false
     for (let i in t1) if (t1[i] !== t2[i]) return false
     return true
   }
 }
 
-export function allMessagesAreSentAndReceived (wcs, msgs, instance, isBroadcast = true) {
-  return Promise.all(wcs.map(
-    wc => new Promise((resolve, reject) => {
+export function allMessagesAreSentAndReceived (groups, instance, isBroadcast = true) {
+  return Promise.all(groups.map(
+    group => new Promise((resolve, reject) => {
       let tab = new Map()
-      for (let i in wcs) if (wcs[i].myId !== wc.myId) tab.set(wcs[i].myId, msgs[i])
-      wc.onMessage = (id, msg, isBroadcast) => {
+      for (let g of groups) if (g.wc.myId !== group.wc.myId) tab.set(g.wc.myId, g.msg)
+      group.wc.onMessage = (id, msg, isBroadcast) => {
         expect(isBroadcast).toEqual(isBroadcast)
         if (typeof msg === 'string') expect(instance).toEqual(String)
         else expect(msg instanceof instance).toBeTruthy()
@@ -73,4 +74,11 @@ export function allMessagesAreSentAndReceived (wcs, msgs, instance, isBroadcast 
       }
     })
   ))
+}
+
+export class TestGroup {
+  constructor (wc, msg) {
+    this.wc = wc
+    this.msg = msg
+  }
 }

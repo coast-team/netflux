@@ -1,5 +1,6 @@
-import {signaling, randArrayBuffer, randString, MSG_NUMBER, allMessagesAreSentAndReceived} from 'config'
+import {signaling, randArrayBuffer, randString, MSG_NUMBER, allMessagesAreSentAndReceived, TestGroup} from 'config'
 import WebChannel from 'src/WebChannel'
+import {isBrowser} from 'src/helper'
 import smallStr from '200kb.txt'
 import bigStr from '4mb.txt'
 
@@ -94,194 +95,193 @@ describe('Fully connected: 3 peers', () => {
   })
 
   describe('Should send/receive', () => {
-    const msgs = [
-      'What does not kill us makes us stronger',
-      'Do or do not there is no try',
-      'Easier said than done'
-    ]
-    const buffers = [
-      randArrayBuffer(8, 200),
-      randArrayBuffer(8, 200),
-      randArrayBuffer(8, 200)
-    ]
+    let groupsStr
+    let groupsBuf
+
+    beforeAll(() => {
+      groupsStr = []
+      groupsBuf = []
+      for (let i = 0; i < 3; i++) {
+        groupsStr[i] = new TestGroup(wcs[i], randString())
+        groupsBuf[i] = new TestGroup(wcs[i], randArrayBuffer(8, 200))
+      }
+    })
 
     it('private string message', (done) => {
-      allMessagesAreSentAndReceived(wcs, msgs, String, false)
+      allMessagesAreSentAndReceived(groupsStr, String, false)
         .then(done).catch(done.fail)
-      wcs[0].sendTo(wcs[1].myId, msgs[0])
-      wcs[0].sendTo(wcs[2].myId, msgs[0])
-      wcs[1].sendTo(wcs[0].myId, msgs[1])
-      wcs[1].sendTo(wcs[2].myId, msgs[1])
-      wcs[2].sendTo(wcs[0].myId, msgs[2])
-      wcs[2].sendTo(wcs[1].myId, msgs[2])
+      groupsStr[0].wc.sendTo(groupsStr[1].wc.myId, groupsStr[0].msg)
+      groupsStr[0].wc.sendTo(groupsStr[2].wc.myId, groupsStr[0].msg)
+      groupsStr[1].wc.sendTo(groupsStr[0].wc.myId, groupsStr[1].msg)
+      groupsStr[1].wc.sendTo(groupsStr[2].wc.myId, groupsStr[1].msg)
+      groupsStr[2].wc.sendTo(groupsStr[0].wc.myId, groupsStr[2].msg)
+      groupsStr[2].wc.sendTo(groupsStr[1].wc.myId, groupsStr[2].msg)
     })
 
     it('broadcast string message', (done) => {
-      allMessagesAreSentAndReceived(wcs, msgs, String)
+      allMessagesAreSentAndReceived(groupsStr, String)
         .then(done).catch(done.fail)
-      for (let i in wcs) wcs[i].send(msgs[i])
+      for (let g of groupsStr) g.wc.send(g.msg)
     })
 
     it('ArrayBuffer', (done) => {
-      allMessagesAreSentAndReceived(wcs, buffers, ArrayBuffer)
+      allMessagesAreSentAndReceived(groupsBuf, ArrayBuffer)
         .then(done).catch(done.fail)
-      for (let i in wcs) wcs[i].send(buffers[i])
+      for (let g of groupsBuf) g.wc.send(g.msg)
     })
 
     it('Uint8Array', (done) => {
-      let original = buffers.map(v => new Uint8Array(v))
-      allMessagesAreSentAndReceived(wcs, original, Uint8Array)
+      for (let g of groupsBuf) g.msg = new Uint8Array(g.msg)
+      allMessagesAreSentAndReceived(groupsBuf, Uint8Array)
         .then(done).catch(done.fail)
-      for (let i in wcs) wcs[i].send(original[i])
+      for (let g of groupsBuf) g.wc.send(g.msg)
     })
 
     it('Int8Array', (done) => {
-      let original = buffers.map(v => new Int8Array(v))
-      allMessagesAreSentAndReceived(wcs, original, Int8Array)
+      for (let g of groupsBuf) g.msg = new Int8Array(g.msg.buffer)
+      allMessagesAreSentAndReceived(groupsBuf, Int8Array)
         .then(done).catch(done.fail)
-      for (let i in wcs) wcs[i].send(original[i])
+      for (let g of groupsBuf) g.wc.send(g.msg)
     })
 
     it('Uint8ClampedArray', (done) => {
-      let original = buffers.map(v => new Uint8ClampedArray(v))
-      allMessagesAreSentAndReceived(wcs, original, Uint8ClampedArray)
+      for (let g of groupsBuf) g.msg = new Uint8ClampedArray(g.msg.buffer)
+      allMessagesAreSentAndReceived(groupsBuf, Uint8ClampedArray)
         .then(done).catch(done.fail)
-      for (let i in wcs) wcs[i].send(original[i])
+      for (let g of groupsBuf) g.wc.send(g.msg)
     })
 
     it('Int16Array', (done) => {
-      let original = buffers.map(v => new Int16Array(v))
-      allMessagesAreSentAndReceived(wcs, original, Int16Array)
+      for (let g of groupsBuf) g.msg = new Int16Array(g.msg.buffer)
+      allMessagesAreSentAndReceived(groupsBuf, Int16Array)
         .then(done).catch(done.fail)
-      for (let i in wcs) wcs[i].send(original[i])
+      for (let g of groupsBuf) g.wc.send(g.msg)
     })
 
     it('Uint16Array', (done) => {
-      let original = buffers.map(v => new Uint16Array(v))
-      allMessagesAreSentAndReceived(wcs, original, Uint16Array)
+      for (let g of groupsBuf) g.msg = new Uint16Array(g.msg.buffer)
+      allMessagesAreSentAndReceived(groupsBuf, Uint16Array)
         .then(done).catch(done.fail)
-      for (let i in wcs) wcs[i].send(original[i])
+      for (let g of groupsBuf) g.wc.send(g.msg)
     })
 
     it('Int32Array', (done) => {
-      let original = buffers.map(v => new Int32Array(v))
-      allMessagesAreSentAndReceived(wcs, original, Int32Array)
+      for (let g of groupsBuf) g.msg = new Int32Array(g.msg.buffer)
+      allMessagesAreSentAndReceived(groupsBuf, Int32Array)
         .then(done).catch(done.fail)
-      for (let i in wcs) wcs[i].send(original[i])
+      for (let g of groupsBuf) g.wc.send(g.msg)
     })
 
     it('Uint32Array', (done) => {
-      let original = buffers.map(v => new Uint32Array(v))
-      allMessagesAreSentAndReceived(wcs, original, Uint32Array)
+      for (let g of groupsBuf) g.msg = new Uint32Array(g.msg.buffer)
+      allMessagesAreSentAndReceived(groupsBuf, Uint32Array)
         .then(done).catch(done.fail)
-      for (let i in wcs) wcs[i].send(original[i])
+      for (let g of groupsBuf) g.wc.send(g.msg)
     })
 
     xit('Float32Array', (done) => {
       // FIXME: sometimes it does not pass
-      let original = buffers.map(v => new Float32Array(v))
-      allMessagesAreSentAndReceived(wcs, original, Float32Array)
+      for (let g of groupsBuf) g.msg = new Float32Array(g.msg.buffer)
+      allMessagesAreSentAndReceived(groupsBuf, Float32Array)
         .then(done).catch(done.fail)
-      for (let i in wcs) wcs[i].send(original[i])
+      for (let g of groupsBuf) g.wc.send(g.msg)
     })
 
     xit('Float64Array', (done) => {
       // FIXME: sometimes it does not pass
-      let original = buffers.map(v => new Float64Array(v))
-      allMessagesAreSentAndReceived(wcs, original, Float64Array)
+      for (let g of groupsBuf) g.msg = new Float64Array(g.msg.buffer)
+      allMessagesAreSentAndReceived(groupsBuf, Float64Array)
         .then(done).catch(done.fail)
-      for (let i in wcs) wcs[i].send(original[i])
+      for (let g of groupsBuf) g.wc.send(g.msg)
     })
 
     it('DataView', (done) => {
-      let original = buffers.map(v => new DataView(v))
-      allMessagesAreSentAndReceived(wcs, original, DataView)
+      for (let g of groupsBuf) g.msg = new DataView(g.msg.buffer)
+      allMessagesAreSentAndReceived(groupsBuf, DataView)
         .then(done).catch(done.fail)
-      for (let i in wcs) wcs[i].send(original[i])
+      for (let g of groupsBuf) g.wc.send(g.msg)
     })
 
-    xit('~200 KB string', (done) => {
-      let original = ['a' + smallStr, 'b' + smallStr, 'c' + smallStr]
-      allMessagesAreSentAndReceived(wcs, original, String)
-        .then(done).catch(done.fail)
-      for (let i in wcs) wcs[i].send(original[i])
-    })
+    if (isBrowser()) {
+      it('~200 KB string', (done) => {
+        let groups = []
+        for (let i = 0; i < 3; i++) {
+          groups[i] = new TestGroup(wcs[i], smallStr + i)
+        }
+        allMessagesAreSentAndReceived(groups, String)
+          .then(done).catch(done.fail)
+        for (let g of groups) g.wc.send(g.msg)
+      })
 
-    xit('~4 MB string', (done) => {
-      let indexes = [0, 1, 2]
-      let index1 = Math.round(2 * Math.random())
-      indexes.splice(index1, 1)
-      let index2 = indexes[Math.round(Math.random())]
-      wcs[index1].onMessage = (id, msg) => {
-        expect(id).toEqual(wcs[index2].myId)
-        expect(msg).toEqual(bigStr)
-        done()
-      }
-      wcs[index2].send(bigStr)
-    }, 4000)
+      it('~4 MB string', (done) => {
+        let indexes = [0, 1, 2]
+        let index1 = Math.round(2 * Math.random())
+        indexes.splice(index1, 1)
+        let index2 = indexes[Math.round(Math.random())]
+        wcs[index1].onMessage = (id, msg) => {
+          expect(id).toEqual(wcs[index2].myId)
+          expect(msg === bigStr).toBeTruthy()
+          done()
+        }
+        wcs[index2].sendTo(wcs[index1].myId, bigStr)
+      }, 4000)
+    }
 
     it(`${MSG_NUMBER} small messages`, (done) => {
-      let msgArray0 = []
-      let msgArray1 = []
-      let msgArray2 = []
-      let msgArrays = [msgArray0, msgArray1, msgArray2]
-      for (let i = 0; i < MSG_NUMBER / 3; i++) {
-        msgArray0[i] = randString()
-        msgArray1[i] = randString()
-        msgArray2[i] = randString()
+      let msgs = []
+      for (let i = 0; i < 3; i++) msgs[i] = []
+      let nb = Math.floor(MSG_NUMBER / 3)
+      for (let i = 0; i < nb; i++) {
+        msgs[0][i] = randString()
+        msgs[1][i] = randString()
+        msgs[2][i] = randString()
       }
       let startSend = (index) => new Promise((resolve, reject) => {
-        for (let e of msgArrays[index]) wcs[index].send(e)
+        for (let msg of msgs[index]) wcs[index].send(msg)
         resolve()
       })
-      Promise.all([
-        new Promise((resolve, reject) => {
+      let allMessagesReceived = (index) => {
+        return new Promise((resolve, reject) => {
           let counter1 = 0
           let counter2 = 0
-          wcs[0].onMessage = (id, msg) => {
-            if (id === wcs[1].myId) {
-              expect(msgArray1.indexOf(msg)).not.toEqual(-1)
-              counter1++
-            } else {
-              expect(msgArray2.indexOf(msg)).not.toEqual(-1)
-              counter2++
-            }
-            if (counter1 === msgArray1.length && counter2 === msgArray2.length) resolve()
+          let i1
+          let i2
+          switch (index) {
+            case 0:
+              i1 = 1
+              i2 = 2
+              break
+            case 1:
+              i1 = 0
+              i2 = 2
+              break
+            case 2:
+              i1 = 0
+              i2 = 1
+              break
           }
-        }),
-        new Promise((resolve, reject) => {
-          let counter1 = 0
-          let counter2 = 0
-          wcs[1].onMessage = (id, msg) => {
-            if (id === wcs[0].myId) {
-              expect(msgArray0.indexOf(msg)).not.toEqual(-1)
+          wcs[index].onMessage = (id, msg) => {
+            if (id === wcs[i1].myId) {
+              expect(msgs[i1].indexOf(msg)).not.toEqual(-1)
               counter1++
             } else {
-              expect(msgArray2.indexOf(msg)).not.toEqual(-1)
+              expect(id).toEqual(wcs[i2].myId)
+              expect(msgs[i2].indexOf(msg)).not.toEqual(-1)
               counter2++
             }
-            if (counter1 === msgArray0.length && counter2 === msgArray2.length) resolve()
-          }
-        }),
-        new Promise((resolve, reject) => {
-          let counter1 = 0
-          let counter2 = 0
-          wcs[2].onMessage = (id, msg) => {
-            if (id === wcs[0].myId) {
-              expect(msgArray0.indexOf(msg)).not.toEqual(-1)
-              counter1++
-            } else {
-              expect(msgArray1.indexOf(msg)).not.toEqual(-1)
-              counter2++
-            }
-            if (counter1 === msgArray0.length && counter2 === msgArray1.length) resolve()
+            if (counter1 === nb && counter2 === nb) resolve()
           }
         })
+      }
+      Promise.all([
+        startSend(0),
+        startSend(1),
+        startSend(2),
+        allMessagesReceived(0),
+        allMessagesReceived(1),
+        allMessagesReceived(2)
       ]).then(done).catch(done.fail)
-      startSend(0)
-      startSend(1)
-      startSend(2)
-    }, 10000)
+    }, 15000)
   })
 
   it('should ping', (done) => {
@@ -359,7 +359,7 @@ describe('Fully connected: 3 peers', () => {
           .then(() => {
             wcs[1].onMessage = done.fail
             wcs[1].onLeaving = done.fail
-            //wcs[1].onJoining = done.fail
+            // wcs[1].onJoining = done.fail
             wcs[0].onMessage = (id, msg) => expect(id).toEqual(wcs[2].myId)
             wcs[2].onMessage = (id, msg) => expect(id).toEqual(wcs[0].myId)
             Promise.all([
@@ -413,7 +413,6 @@ describe('Fully connected: 3 peers', () => {
       wcs[0] = new WebChannel({signaling})
       wcs[1] = new WebChannel({signaling})
       wcs[2] = new WebChannel({signaling})
-      let counter = 0
       let left1 = false
       let left2 = false
       // wcs[1].leave()
