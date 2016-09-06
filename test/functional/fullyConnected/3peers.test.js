@@ -1,86 +1,75 @@
-import {signaling, randArrayBuffer, randString, MSG_NUMBER, allMessagesAreSentAndReceived, TestGroup} from 'config'
+import {
+  SIGNALING,
+  MSG_NUMBER,
+  TestGroup,
+  allMessagesAreSentAndReceived,
+  INSTANCES,
+  randStr,
+  checkMembers
+} from 'testhelper'
 import WebChannel from 'src/WebChannel'
 import {isBrowser} from 'src/helper'
 import smallStr from '200kb.txt'
 import bigStr from '4mb.txt'
 
 describe('Fully connected: 3 peers', () => {
+  let signaling = SIGNALING
   let wcs = []
   afterAll(() => {
-    wcs[0].close()
-    wcs[1].close()
-    wcs[2].close()
     wcs[0].leave()
     wcs[1].leave()
     wcs[2].leave()
   })
 
   describe('Should establish a connection', () => {
-    it('one by one', (done) => {
+    function* checkJoining (resolve, wc) {
+      let id1 = yield
+      let id2 = yield
+      expect(id1).not.toEqual(id2)
+      for (let e of wcs) {
+        if (e.myId !== wc.myId) {
+          expect(e.myId === id1 || e.myId === id2).toBeTruthy()
+        }
+      }
+      resolve()
+    }
+    let allJoiningDetectedBy = wc => new Promise((resolve, reject) => {
+      let gen = checkJoining(resolve, wc)
+      gen.next()
+      wc.onJoining = id => gen.next(id)
+    })
+
+    it('one by one', done => {
       wcs[0] = new WebChannel({signaling})
       wcs[1] = new WebChannel({signaling})
       wcs[2] = new WebChannel({signaling})
       Promise.all([
-        new Promise((resolve, reject) => {
-          let gen = (function * (resolve) {
-            expect(yield).toEqual(wcs[1].myId)
-            expect(yield).toEqual(wcs[2].myId)
-            resolve()
-          })(resolve)
-          gen.next()
-          wcs[0].onJoining = (id) => gen.next(id)
-        }),
-        new Promise((resolve, reject) => {
-          wcs[1].onJoining = (id) => {
-            expect(id).toEqual(wcs[2].myId)
-            resolve()
-          }
-        }),
+        allJoiningDetectedBy(wcs[0]),
+        allJoiningDetectedBy(wcs[1]),
+        allJoiningDetectedBy(wcs[2]),
         wcs[0].open()
-          .then((data) => wcs[1].join(data.key))
+          .then(data => wcs[1].join(data.key))
           .then(() => wcs[2].join(wcs[0].getAccess().key))
       ])
         .then(() => {
           expect(wcs[0].id).toEqual(wcs[1].id)
           expect(wcs[0].id).toEqual(wcs[2].id)
+          checkMembers(wcs)
           done()
         })
         .catch(done.fail)
     })
 
-    xit('simultaneously', (done) => {
-      wcs[0].close()
-      wcs[1].leave()
-      wcs[2].leave()
+    it('simultaneously', done => {
+      wcs[0] = new WebChannel({signaling})
+      wcs[1] = new WebChannel({signaling})
+      wcs[2] = new WebChannel({signaling})
       Promise.all([
-        new Promise((resolve, reject) => {
-          let gen = (function * (resolve) {
-            let id1 = yield
-            let id2 = yield
-            expect(id1).not.toEqual(id2)
-            expect(id1 === wcs[1].myId || id1 === wcs[2].myId).toBeTruthy()
-            expect(id2 === wcs[1].myId || id2 === wcs[2].myId).toBeTruthy()
-            resolve()
-          })(resolve)
-          gen.next()
-          wcs[0].onJoining = (id) => gen.next(id)
-        }),
-        Promise.race([
-          new Promise((resolve, reject) => {
-            wcs[1].onJoining = (id) => {
-              expect(id).toEqual(wcs[2].myId)
-              resolve()
-            }
-          }),
-          new Promise((resolve, reject) => {
-            wcs[2].onJoining = (id) => {
-              expect(id).toEqual(wcs[1].myId)
-              resolve()
-            }
-          })
-        ]),
+        allJoiningDetectedBy(wcs[0]),
+        allJoiningDetectedBy(wcs[1]),
+        allJoiningDetectedBy(wcs[2]),
         wcs[0].open()
-          .then((data) => Promise.all([
+          .then(data => Promise.all([
             wcs[1].join(data.key),
             wcs[2].join(data.key)
           ]))
@@ -88,6 +77,7 @@ describe('Fully connected: 3 peers', () => {
         .then(() => {
           expect(wcs[0].id).toEqual(wcs[1].id)
           expect(wcs[0].id).toEqual(wcs[2].id)
+          checkMembers(wcs)
           done()
         })
         .catch(done.fail)
@@ -95,125 +85,51 @@ describe('Fully connected: 3 peers', () => {
   })
 
   describe('Should send/receive', () => {
-    let groupsStr
-    let groupsBuf
+    let groups
 
     beforeAll(() => {
-      groupsStr = []
-      groupsBuf = []
-      for (let i = 0; i < 3; i++) {
-        groupsStr[i] = new TestGroup(wcs[i], randString())
-        groupsBuf[i] = new TestGroup(wcs[i], randArrayBuffer(8, 200))
-      }
+      groups = []
+      for (let i = 0; i < 3; i++) groups[i] = new TestGroup(wcs[i])
     })
 
-    it('private string message', (done) => {
-      allMessagesAreSentAndReceived(groupsStr, String, false)
+    it('private string message', done => {
+      allMessagesAreSentAndReceived(groups, String, false)
         .then(done).catch(done.fail)
-      groupsStr[0].wc.sendTo(groupsStr[1].wc.myId, groupsStr[0].msg)
-      groupsStr[0].wc.sendTo(groupsStr[2].wc.myId, groupsStr[0].msg)
-      groupsStr[1].wc.sendTo(groupsStr[0].wc.myId, groupsStr[1].msg)
-      groupsStr[1].wc.sendTo(groupsStr[2].wc.myId, groupsStr[1].msg)
-      groupsStr[2].wc.sendTo(groupsStr[0].wc.myId, groupsStr[2].msg)
-      groupsStr[2].wc.sendTo(groupsStr[1].wc.myId, groupsStr[2].msg)
+      groups[0].wc.sendTo(groups[1].wc.myId, groups[0].get(String))
+      groups[0].wc.sendTo(groups[2].wc.myId, groups[0].get(String))
+      groups[1].wc.sendTo(groups[0].wc.myId, groups[1].get(String))
+      groups[1].wc.sendTo(groups[2].wc.myId, groups[1].get(String))
+      groups[2].wc.sendTo(groups[0].wc.myId, groups[2].get(String))
+      groups[2].wc.sendTo(groups[1].wc.myId, groups[2].get(String))
     })
 
-    it('broadcast string message', (done) => {
-      allMessagesAreSentAndReceived(groupsStr, String)
+    it('broadcast string message', done => {
+      allMessagesAreSentAndReceived(groups, String)
         .then(done).catch(done.fail)
-      for (let g of groupsStr) g.wc.send(g.msg)
+      for (let g of groups) g.wc.send(g.get(String))
     })
 
-    it('ArrayBuffer', (done) => {
-      allMessagesAreSentAndReceived(groupsBuf, ArrayBuffer)
-        .then(done).catch(done.fail)
-      for (let g of groupsBuf) g.wc.send(g.msg)
-    })
-
-    it('Uint8Array', (done) => {
-      for (let g of groupsBuf) g.msg = new Uint8Array(g.msg)
-      allMessagesAreSentAndReceived(groupsBuf, Uint8Array)
-        .then(done).catch(done.fail)
-      for (let g of groupsBuf) g.wc.send(g.msg)
-    })
-
-    it('Int8Array', (done) => {
-      for (let g of groupsBuf) g.msg = new Int8Array(g.msg.buffer)
-      allMessagesAreSentAndReceived(groupsBuf, Int8Array)
-        .then(done).catch(done.fail)
-      for (let g of groupsBuf) g.wc.send(g.msg)
-    })
-
-    it('Uint8ClampedArray', (done) => {
-      for (let g of groupsBuf) g.msg = new Uint8ClampedArray(g.msg.buffer)
-      allMessagesAreSentAndReceived(groupsBuf, Uint8ClampedArray)
-        .then(done).catch(done.fail)
-      for (let g of groupsBuf) g.wc.send(g.msg)
-    })
-
-    it('Int16Array', (done) => {
-      for (let g of groupsBuf) g.msg = new Int16Array(g.msg.buffer)
-      allMessagesAreSentAndReceived(groupsBuf, Int16Array)
-        .then(done).catch(done.fail)
-      for (let g of groupsBuf) g.wc.send(g.msg)
-    })
-
-    it('Uint16Array', (done) => {
-      for (let g of groupsBuf) g.msg = new Uint16Array(g.msg.buffer)
-      allMessagesAreSentAndReceived(groupsBuf, Uint16Array)
-        .then(done).catch(done.fail)
-      for (let g of groupsBuf) g.wc.send(g.msg)
-    })
-
-    it('Int32Array', (done) => {
-      for (let g of groupsBuf) g.msg = new Int32Array(g.msg.buffer)
-      allMessagesAreSentAndReceived(groupsBuf, Int32Array)
-        .then(done).catch(done.fail)
-      for (let g of groupsBuf) g.wc.send(g.msg)
-    })
-
-    it('Uint32Array', (done) => {
-      for (let g of groupsBuf) g.msg = new Uint32Array(g.msg.buffer)
-      allMessagesAreSentAndReceived(groupsBuf, Uint32Array)
-        .then(done).catch(done.fail)
-      for (let g of groupsBuf) g.wc.send(g.msg)
-    })
-
-    xit('Float32Array', (done) => {
-      // FIXME: sometimes it does not pass
-      for (let g of groupsBuf) g.msg = new Float32Array(g.msg.buffer)
-      allMessagesAreSentAndReceived(groupsBuf, Float32Array)
-        .then(done).catch(done.fail)
-      for (let g of groupsBuf) g.wc.send(g.msg)
-    })
-
-    xit('Float64Array', (done) => {
-      // FIXME: sometimes it does not pass
-      for (let g of groupsBuf) g.msg = new Float64Array(g.msg.buffer)
-      allMessagesAreSentAndReceived(groupsBuf, Float64Array)
-        .then(done).catch(done.fail)
-      for (let g of groupsBuf) g.wc.send(g.msg)
-    })
-
-    it('DataView', (done) => {
-      for (let g of groupsBuf) g.msg = new DataView(g.msg.buffer)
-      allMessagesAreSentAndReceived(groupsBuf, DataView)
-        .then(done).catch(done.fail)
-      for (let g of groupsBuf) g.wc.send(g.msg)
-    })
+    for (let i of INSTANCES) {
+      it(i.prototype.constructor.name, done => {
+        allMessagesAreSentAndReceived(groups, i)
+          .then(done).catch(done.fail)
+        for (let g of groups) g.wc.send(g.get(i))
+      })
+    }
 
     if (isBrowser()) {
-      it('~200 KB string', (done) => {
+      it('~200 KB string', done => {
         let groups = []
         for (let i = 0; i < 3; i++) {
-          groups[i] = new TestGroup(wcs[i], smallStr + i)
+          groups[i] = new TestGroup(wcs[i], null)
+          groups[i].set(String, smallStr + i)
         }
         allMessagesAreSentAndReceived(groups, String)
           .then(done).catch(done.fail)
-        for (let g of groups) g.wc.send(g.msg)
+        for (let g of groups) g.wc.send(g.get(String))
       })
 
-      it('~4 MB string', (done) => {
+      it('~4 MB string', done => {
         let indexes = [0, 1, 2]
         let index1 = Math.round(2 * Math.random())
         indexes.splice(index1, 1)
@@ -227,20 +143,20 @@ describe('Fully connected: 3 peers', () => {
       }, 4000)
     }
 
-    it(`${MSG_NUMBER} small messages`, (done) => {
+    it(`${MSG_NUMBER} small messages`, done => {
       let msgs = []
       for (let i = 0; i < 3; i++) msgs[i] = []
       let nb = Math.floor(MSG_NUMBER / 3)
       for (let i = 0; i < nb; i++) {
-        msgs[0][i] = randString()
-        msgs[1][i] = randString()
-        msgs[2][i] = randString()
+        msgs[0][i] = randStr()
+        msgs[1][i] = randStr()
+        msgs[2][i] = randStr()
       }
-      let startSend = (index) => new Promise((resolve, reject) => {
+      let startSend = index => new Promise((resolve, reject) => {
         for (let msg of msgs[index]) wcs[index].send(msg)
         resolve()
       })
-      let allMessagesReceived = (index) => {
+      let allMessagesReceived = index => {
         return new Promise((resolve, reject) => {
           let counter1 = 0
           let counter2 = 0
@@ -262,11 +178,11 @@ describe('Fully connected: 3 peers', () => {
           }
           wcs[index].onMessage = (id, msg) => {
             if (id === wcs[i1].myId) {
-              expect(msgs[i1].indexOf(msg)).not.toEqual(-1)
+              expect(msgs[i1].includes(msg)).toBeTruthy()
               counter1++
             } else {
               expect(id).toEqual(wcs[i2].myId)
-              expect(msgs[i2].indexOf(msg)).not.toEqual(-1)
+              expect(msgs[i2].includes(msg)).toBeTruthy()
               counter2++
             }
             if (counter1 === nb && counter2 === nb) resolve()
@@ -284,14 +200,14 @@ describe('Fully connected: 3 peers', () => {
     }, 15000)
   })
 
-  it('should ping', (done) => {
+  it('should ping', done => {
     Promise.all([
       wcs[0].ping()
-        .then((p) => expect(p).toBeLessThan(300)),
+        .then(p => expect(p).toBeLessThan(300)),
       wcs[1].ping()
-        .then((p) => expect(p).toBeLessThan(300)),
+        .then(p => expect(p).toBeLessThan(300)),
       wcs[2].ping()
-        .then((p) => expect(p).toBeLessThan(300))
+        .then(p => expect(p).toBeLessThan(300))
     ]).then(done).catch(done.fail)
   }, 10000)
 
@@ -299,7 +215,7 @@ describe('Fully connected: 3 peers', () => {
     const message = 'Hi world!'
 
     describe('One by one', () => {
-      it('first the peer who opened the WebChannel', (done) => {
+      it('first the peer who opened the WebChannel', done => {
         wcs[0].onMessage = done.fail
         wcs[0].onLeaving = done.fail
         wcs[0].onJoining = done.fail
@@ -311,7 +227,7 @@ describe('Fully connected: 3 peers', () => {
         }
         Promise.all([
           new Promise((resolve, reject) => {
-            wcs[1].onLeaving = (id) => {
+            wcs[1].onLeaving = id => {
               expect(id).toBe(wcs[0].myId)
               wcs[0].send(message)
               wcs[0].sendTo(wcs[1].myId, message)
@@ -321,7 +237,7 @@ describe('Fully connected: 3 peers', () => {
             }
           }),
           new Promise((resolve, reject) => {
-            wcs[2].onLeaving = (id) => {
+            wcs[2].onLeaving = id => {
               expect(id).toBe(wcs[0].myId)
               wcs[0].send(message)
               wcs[0].sendTo(wcs[2].myId, message)
@@ -331,16 +247,24 @@ describe('Fully connected: 3 peers', () => {
             }
           })
         ]).then(() => {
+          expect(wcs[0].members.length).toEqual(0)
+          expect(wcs[1].members.length).toEqual(1)
+          expect(wcs[1].members[0]).toEqual(wcs[2].myId)
+          expect(wcs[2].members.length).toEqual(1)
+          expect(wcs[2].members[0]).toEqual(wcs[1].myId)
           wcs[1].onMessage = done.fail
           wcs[1].onLeaving = done.fail
           wcs[1].onJoining = done.fail
           wcs[2].onMessage = done.fail
-          wcs[2].onLeaving = (id) => {
+          wcs[2].onLeaving = id => {
             expect(id).toBe(wcs[1].myId)
             wcs[1].send(message)
             wcs[1].sendTo(wcs[2].myId, message)
             wcs[2].send(message)
             wcs[2].sendTo(wcs[1].myId, message)
+            expect(wcs[0].members.length).toEqual(0)
+            expect(wcs[1].members.length).toEqual(0)
+            expect(wcs[2].members.length).toEqual(0)
             setTimeout(done, 100)
           }
           wcs[1].leave()
@@ -348,13 +272,12 @@ describe('Fully connected: 3 peers', () => {
         wcs[0].leave()
       })
 
-      xit('first one of the joined peer', (done) => {
-        // FIXME
+      it('first one of the joined peer', done => {
         wcs[0] = new WebChannel({signaling})
         wcs[1] = new WebChannel({signaling})
         wcs[2] = new WebChannel({signaling})
         wcs[0].open()
-          .then((data) => wcs[1].join(data.key))
+          .then(data => wcs[1].join(data.key))
           .then(() => wcs[2].join(wcs[0].getAccess().key))
           .then(() => {
             wcs[1].onMessage = done.fail
@@ -364,51 +287,48 @@ describe('Fully connected: 3 peers', () => {
             wcs[2].onMessage = (id, msg) => expect(id).toEqual(wcs[0].myId)
             Promise.all([
               new Promise((resolve, reject) => {
-                wcs[0].onLeaving = (id) => {
-                  console.log('1')
+                wcs[0].onLeaving = id => {
                   expect(id).toBe(wcs[1].myId)
-                  wcs[1].send(message)
                   wcs[1].sendTo(wcs[0].myId, message)
-                  wcs[0].send(message)
                   wcs[0].sendTo(wcs[1].myId, message)
                   setTimeout(resolve, 100)
                 }
               }),
               new Promise((resolve, reject) => {
-                wcs[2].onLeaving = (id) => {
-                  console.log('2')
+                wcs[2].onLeaving = id => {
                   expect(id).toBe(wcs[1].myId)
-                  wcs[1].send(message)
-                  console.log(('SENDING: ' + wcs[1].myId))
                   wcs[1].sendTo(wcs[2].myId, message)
-                  wcs[2].send(message)
                   wcs[2].sendTo(wcs[1].myId, message)
                   setTimeout(resolve, 100)
                 }
               })
             ]).then(() => {
-              console.log('herer')
+              expect(wcs[1].members.length).toEqual(0)
+              expect(wcs[0].members.length).toEqual(1)
+              expect(wcs[0].members[0]).toEqual(wcs[2].myId)
+              expect(wcs[2].members.length).toEqual(1)
+              expect(wcs[2].members[0]).toEqual(wcs[0].myId)
               wcs[0].onMessage = done.fail
               wcs[0].onLeaving = done.fail
               wcs[0].onJoining = done.fail
               wcs[2].onMessage = done.fail
-              wcs[2].onLeaving = (id) => {
+              wcs[2].onLeaving = id => {
                 expect(id).toBe(wcs[0].myId)
-                wcs[0].send(message)
                 wcs[0].sendTo(wcs[2].myId, message)
-                wcs[2].send(message)
                 wcs[2].sendTo(wcs[0].myId, message)
+                expect(wcs[0].members.length).toEqual(0)
+                expect(wcs[1].members.length).toEqual(0)
+                expect(wcs[2].members.length).toEqual(0)
                 setTimeout(done, 100)
               }
               wcs[0].leave()
             }).catch(done.fail)
-            console.log('leaving')
-            wcs[1].leave()
+            setTimeout(() => wcs[1].leave(), 100)
           }).catch(done.fail)
       })
     })
 
-    xit('simultaneously', (done) => {
+    it('simultaneously', done => {
       // FIXME
       wcs[0] = new WebChannel({signaling})
       wcs[1] = new WebChannel({signaling})
@@ -421,10 +341,10 @@ describe('Fully connected: 3 peers', () => {
       wcs[1].onMessage = done.fail
       wcs[2].onMessage = done.fail
       wcs[0].open()
-        .then((data) => wcs[1].join(data.key))
+        .then(data => wcs[1].join(data.key))
         .then(() => wcs[2].join(wcs[0].getAccess().key))
         .then(() => {
-          wcs[0].onLeaving = (id) => {
+          wcs[0].onLeaving = id => {
             if (!left1 && id === wcs[1].myId) {
               wcs[0].sendTo(wcs[1].myId, message)
               wcs[1].sendTo(wcs[0].myId, message)
@@ -435,18 +355,25 @@ describe('Fully connected: 3 peers', () => {
               wcs[2].sendTo(wcs[0].myId, message)
               left2 = true
             }
-            if (left1 && left2) setTimeout(done, 100)
+            if (left1 && left2) {
+              expect(wcs[0].members.length).toEqual(0)
+              expect(wcs[1].members.length).toEqual(0)
+              expect(wcs[2].members.length).toEqual(0)
+              setTimeout(done, 100)
+            }
           }
-          wcs[1].leave()
-          wcs[2].leave()
+          setTimeout(() => {
+            wcs[1].leave()
+            wcs[2].leave()
+          }, 100)
         })
     })
   })
 
-  // it('Should not be able to join the WebChannel after it has been closed', (done) => {
-  //   expect(wcs[0].isOpen()).toBeTruthy()
-  //   wcs[1].join(wcs[0].getAccess().key).then(done.fail)
-  //     .catch(done)
-  //   wcs[0].close()
-  // })
+  it('Should not be able to join the WebChannel after it has been closed', done => {
+    expect(wcs[0].isOpen()).toBeTruthy()
+    wcs[1].join(wcs[0].getAccess().key).then(done.fail)
+      .catch(done)
+    wcs[0].close()
+  })
 })

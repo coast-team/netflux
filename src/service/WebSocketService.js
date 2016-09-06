@@ -1,13 +1,11 @@
 import {isBrowser} from 'helper'
 import ServiceInterface from 'service/ServiceInterface'
-const WebSocket = isBrowser() ? window.WebSocket : require('ws')
 
-const CONNECT_TIMEOUT = 4000
+const WebSocket = isBrowser() ? window.WebSocket : require('ws')
+const CONNECT_TIMEOUT = 7000
 const OPEN = WebSocket.OPEN
 
 class WebSocketService extends ServiceInterface {
-
-  constructor() { super() }
 
   /**
    * Creates WebSocket with server.

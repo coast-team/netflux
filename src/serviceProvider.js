@@ -14,28 +14,28 @@ import MessageBuilderService from 'service/MessageBuilderService'
  * Constant used to get an instance of {@link WebRTCService}.
  * @type {string}
  */
-const WEBRTC = 'WebRTCService'
+const WEBRTC = 0
 
 /**
  * Constant used to get an instance of {@link WebSocketService}.
  * @type {string}
  */
-const WEBSOCKET = 'WebSocketService'
+const WEBSOCKET = 1
 
-const CHANNEL_BUILDER = 'ChannelBuilderService'
+const CHANNEL_BUILDER = 2
 
 /**
  * Constant used to get an instance of {@link FullyConnectedService}.
  * @type {string}
  */
-const FULLY_CONNECTED = 'FullyConnectedService'
+const FULLY_CONNECTED = 3
 
 /**
  * Constant used to get an instance of {@link MessageBuilderService}. It is a
  * singleton service.
  * @type {string}
  */
-const MESSAGE_BUILDER = 'MessageBuilderService'
+const MESSAGE_BUILDER = 4
 
 /**
  * Contains services who are singletons.
@@ -44,38 +44,39 @@ const MESSAGE_BUILDER = 'MessageBuilderService'
 const services = new Map()
 
 /**
- * Provides the service instance specified by `name`.
+ * Provides the service instance specified by `id`.
  *
  * @param  {(module:serviceProvider.MESSAGE_BUILDER|
  *          module:serviceProvider.WEBRTC|
             module:serviceProvider.WEBSOCKET|
- *          module:serviceProvider.FULLY_CONNECTED)} name - The service name.
+ *          module:serviceProvider.FULLY_CONNECTED)} id - The service id.
  * @param  {Object} [options] - Any options that the service accepts.
  * @return {module:service~ServiceInterface} - Service instance.
- * @throws An error if the service name is unknown
+ * @throws An error if the service id is unknown
  */
-let provide = function (name, options = {}) {
-  if (services.has(name)) {
-    return services.get(name)
+let provide = function (id, options = {}) {
+  if (services.has(id)) {
+    return services.get(id)
   }
   let service
-  switch (name) {
+  switch (id) {
     case WEBRTC:
-      return new WebRTCService(options)
+      return new WebRTCService(WEBRTC, options)
     case WEBSOCKET:
-      return new WebSocketService(options)
+      return new WebSocketService(WEBSOCKET)
     case CHANNEL_BUILDER:
-      return new ChannelBuilderService(options)
+      return new ChannelBuilderService(CHANNEL_BUILDER)
     case FULLY_CONNECTED:
-      service = new FullyConnectedService()
-      services.set(name, service)
+      service = new FullyConnectedService(FULLY_CONNECTED)
+      services.set(id, service)
       return service
     case MESSAGE_BUILDER:
-      service = new MessageBuilderService()
-      services.set(name, service)
+      service = new MessageBuilderService(MESSAGE_BUILDER)
+      services.set(id, service)
       return service
     default:
-      throw new Error(`Unknown service name: "${name}"`)
+      console.trace()
+      throw new Error(`Unknown service id: "${id}"`)
   }
 }
 

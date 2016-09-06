@@ -1,8 +1,9 @@
-import {signaling} from 'config'
 import WebChannelGate from 'src/WebChannelGate'
+import {SIGNALING} from 'testhelper'
 
 describe('WebChannelGate', () => {
   let webChannelGate
+  let signaling = SIGNALING
 
   it('Gate should be closed after construction', () => {
     webChannelGate = new WebChannelGate()
@@ -17,7 +18,7 @@ describe('WebChannelGate', () => {
     expect(key1).not.toEqual(key2)
   })
 
-  it('Should fail to open the gate with the key used by another gate', (done) => {
+  it('Should fail to open the gate with the key used by another gate', done => {
     let key = webChannelGate.generateKey()
     let wcg1 = new WebChannelGate()
     let wcg2 = new WebChannelGate()
@@ -35,9 +36,9 @@ describe('WebChannelGate', () => {
     let webChannelGate = new WebChannelGate()
     let accessData
 
-    it('Should open the gate', (done) => {
+    it('Should open the gate', done => {
       webChannelGate.open(() => {}, {signaling})
-        .then((data) => {
+        .then(data => {
           accessData = data
           expect(data.key).toBeDefined()
           expect(data.url).toBeDefined()
@@ -62,7 +63,7 @@ describe('WebChannelGate', () => {
       expect(webChannelGate.accessData).toEqual({})
     })
 
-    it('onClose should be called', (done) => {
+    it('onClose should be called', done => {
       let wcg = new WebChannelGate(done)
       wcg.open(() => {}, {signaling}).then(() => { wcg.close() }).catch(done.fail)
     })
@@ -72,10 +73,10 @@ describe('WebChannelGate', () => {
     let webChannelGate = new WebChannelGate()
     let accessData
 
-    it('Should open the gate', (done) => {
+    it('Should open the gate', done => {
       let key = webChannelGate.generateKey()
       webChannelGate.open(() => {}, {signaling, key})
-        .then((data) => {
+        .then(data => {
           accessData = data
           expect(data.key).toBeDefined()
           expect(data.url).toBeDefined()
@@ -100,7 +101,7 @@ describe('WebChannelGate', () => {
       expect(webChannelGate.accessData).toEqual({})
     })
 
-    it('onClose should be called', (done) => {
+    it('onClose should be called', done => {
       let key = webChannelGate.generateKey()
       let wcg = new WebChannelGate(done)
       wcg.open(() => {}, {signaling, key}).then(() => { wcg.close() }).catch(done.fail)

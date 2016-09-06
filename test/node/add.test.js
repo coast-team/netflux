@@ -1,19 +1,20 @@
+import {SIGNALING} from 'testhelper'
 import Bot from 'src/Bot'
 import WebChannel from 'src/WebChannel'
-import {signaling} from 'config'
 
 const PING = 'ping'
 const PONG = 'pong'
 
 describe('Node -> ', () => {
-  it('Should use addBotServer function when added in a Webchannel of 1 peer', (done) => {
+  let signaling = SIGNALING
+  it('Should use addBotServer function when added in a Webchannel of 1 peer', done => {
     let wc = new WebChannel({signaling})
     let host = '127.0.0.1'
     let port = 9090
     let bot = new Bot({host, port})
     let addBotServer = false
 
-    bot.onAddRequest = () => addBotServer = true
+    bot.onAddRequest = () => { addBotServer = true }
 
     bot.listen()
       .then(() => wc.addBotServer(host, port))
@@ -22,10 +23,10 @@ describe('Node -> ', () => {
         if (addBotServer) done()
         else done.fail()
       })
-      .catch((reason) => done.fail(reason))
+      .catch(reason => done.fail(reason))
   })
 
-  it('Should use addBotServer and newChannel functions when added in a Webchannel of 2 peers', (done) => {
+  it('Should use addBotServer and newChannel functions when added in a Webchannel of 2 peers', done => {
     let wc1 = new WebChannel({signaling})
     let wc2 = new WebChannel({signaling})
     let host = '127.0.0.1'
@@ -39,17 +40,17 @@ describe('Node -> ', () => {
 
     bot.listen()
       .then(() => wc1.open())
-      .then((data) => wc2.join(data.key))
+      .then(data => wc2.join(data.key))
       .then(() => wc1.addBotServer(host, port))
       .then(() => {
         bot.getServer().close()
         if (cpt === 2) done()
         else done.fail()
       })
-      .catch((reason) => done.fail(reason))
+      .catch(reason => done.fail(reason))
   })
 
-  it('Should have 2 distincts WebChannels when added in 2 differents WebChannels', (done) => {
+  it('Should have 2 distincts WebChannels when added in 2 differents WebChannels', done => {
     let wc1 = new WebChannel({signaling})
     let wc2 = new WebChannel({signaling})
     let host = '127.0.0.1'
@@ -60,21 +61,21 @@ describe('Node -> ', () => {
       .then(() => wc1.addBotServer(host, port))
       .then(() => wc2.addBotServer(host, port))
       .then(() => {
-        let nbWc = bot.getWebChannels().length
+        let nbWc = bot.webChannels.length
         bot.getServer().close()
         if (nbWc === 2) done()
         else done.fail()
       })
-      .catch((reason) => done.fail(reason))
+      .catch(reason => done.fail(reason))
   })
 
-  it('Should be able to redefined functions when added in a WebChannel', (done) => {
+  it('Should be able to redefined functions when added in a WebChannel', done => {
     let wc = new WebChannel({signaling})
     let host = '127.0.0.1'
     let port = 9090
     let bot = new Bot({host, port})
 
-    bot.onWebChannel = (webChannel) => {
+    bot.onWebChannel = webChannel => {
       webChannel.onMessage = (id, message) => {
         if (message === PING) webChannel.send(PONG)
       }
@@ -90,6 +91,6 @@ describe('Node -> ', () => {
     bot.listen()
       .then(() => wc.addBotServer(host, port))
       .then(() => setTimeout(() => wc.send(PING), 1000))
-      .catch((reason) => done.fail(reason))
+      .catch(reason => done.fail(reason))
   })
 })

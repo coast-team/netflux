@@ -1,4 +1,4 @@
-import {signaling} from 'config'
+import {SIGNALING} from 'testhelper'
 import WebChannel from 'src/WebChannel'
 
 let host = '127.0.0.1'
@@ -9,11 +9,12 @@ const DEBUG_PING = 'DEBUG_PING'
 const DEBUG_PONG = 'DEBUG_PONG'
 const DEBUG_KICK = 'DEBUG_KICK'
 
-describe('1 peer -> ', () => {
-  it('Should add the bot server ws://' + host + ':' + port, (done) => {
+xdescribe('1 peer -> ', () => {
+  let signaling = SIGNALING
+  it('Should add the bot server ws://' + host + ':' + port, done => {
     wc = new WebChannel({signaling})
 
-    wc.onJoining = (id) => {
+    wc.onJoining = id => {
       wc.leave()
       done()
     }
@@ -21,10 +22,10 @@ describe('1 peer -> ', () => {
     wc.addBotServer(host, port).catch(done.fail)
   })
 
-  it('Should send message PING to bot server and receive PONG', (done) => {
+  it('Should send message PING to bot server and receive PONG', done => {
     wc = new WebChannel({signaling})
 
-    wc.onJoining = (id) => {
+    wc.onJoining = id => {
       wc.send(DEBUG_PING)
     }
 
@@ -36,14 +37,14 @@ describe('1 peer -> ', () => {
     wc.addBotServer(host, port).catch(done.fail)
   })
 
-  it('Should kick the bot server', (done) => {
+  it('Should kick the bot server', done => {
     wc = new WebChannel({signaling})
 
-    wc.onJoining = (id) => {
+    wc.onJoining = id => {
       wc.send(DEBUG_KICK)
     }
 
-    wc.onLeaving = (id) => {
+    wc.onLeaving = id => {
       done()
     }
 
@@ -54,17 +55,17 @@ describe('1 peer -> ', () => {
     wc.addBotServer(host, port).catch(done.fail)
   })
 
-  xit('Should kick the bot server and try to reconnect with him after', (done) => {
+  xit('Should kick the bot server and try to reconnect with him after', done => {
     wc = new WebChannel({signaling})
 
     let first = true
-    wc.onJoining = (id) => {
+    wc.onJoining = id => {
       if (first) wc.send(DEBUG_KICK)
       else wc.send(DEBUG_PING)
       first = false
     }
 
-    wc.onLeaving = (id) => {
+    wc.onLeaving = id => {
       wc.addBotServer(host, port).catch(done.fail)
     }
 
@@ -76,10 +77,10 @@ describe('1 peer -> ', () => {
     wc.addBotServer(host, port).catch(done.fail)
   })
 
-  it('Should have a unique connection with a bot even if addBotServer has been called twice', (done) => {
+  it('Should have a unique connection with a bot even if addBotServer has been called twice', done => {
     wc = new WebChannel({signaling})
 
-    wc.onJoining = (id) => {
+    wc.onJoining = id => {
       done()
     }
 

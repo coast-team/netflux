@@ -5,4 +5,4 @@ engines:
     enabled: true
 ratings:
   paths:
-    "src/*.js"
+    "src/**/*.js"

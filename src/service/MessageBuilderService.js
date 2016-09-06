@@ -104,12 +104,6 @@ const FLOAT_32_ARRAY_TYPE = 10
 const FLOAT_64_ARRAY_TYPE = 11
 
 /**
- * User allowed message type: {@link external:DataView}
- * @type {number}
- */
-const DATA_VIEW_TYPE = 12
-
-/**
  * Buffer for big user messages.
  */
 const buffers = new WeakMap()
@@ -142,10 +136,6 @@ class MessageBuilderService extends ServiceInterface {
    * @property {number} recipientId - Id of the recipient peer
    */
 
-  constructor () {
-    super()
-  }
-
   /**
    * Prepare user message to be sent over the *WebChannel*
    * @param {external:ArrayBuffer|external:Uint8Array|external:String|
@@ -160,11 +150,11 @@ class MessageBuilderService extends ServiceInterface {
    * @param {boolean} isBroadcast - Equals to true if this message would be
    * sent to all *WebChannel* members and false if only to one member
    */
-  handleUserMessage (data, recipientId, action, isBroadcast = true) {
+  handleUserMessage (data, senderId, recipientId, action, isBroadcast = true) {
     let workingData = this.userDataToType(data)
     let dataUint8Array = workingData.content
     if (dataUint8Array.byteLength <= MAX_USER_MSG_SIZE) {
-      let dataView = this.initHeader(1, recipientId,
+      let dataView = this.initHeader(1, senderId, recipientId,
         dataUint8Array.byteLength + USER_MSG_OFFSET
       )
       dataView.setUint32(HEADER_OFFSET, dataUint8Array.byteLength)
@@ -183,6 +173,7 @@ class MessageBuilderService extends ServiceInterface {
         )
         let dataView = this.initHeader(
           1,
+          senderId,
           recipientId,
           USER_MSG_OFFSET + currentChunkMsgByteLength
         )
@@ -210,10 +201,10 @@ class MessageBuilderService extends ServiceInterface {
    * @param {Object} [data={}] - Message. Could be empty if the code is enough
    * @returns {external:ArrayBuffer} - Built message
    */
-  msg (code, data = {}, recepientId = null) {
+  msg (code, senderId = null, recepientId = null, data = {}) {
     let msgEncoded = (new TextEncoder()).encode(JSON.stringify(data))
     let msgSize = msgEncoded.byteLength + HEADER_OFFSET
-    let dataView = this.initHeader(code, recepientId, msgSize)
+    let dataView = this.initHeader(code, senderId, recepientId, msgSize)
     let fullMsg = new Uint8Array(dataView.buffer)
     fullMsg.set(msgEncoded, HEADER_OFFSET)
     return fullMsg.buffer
@@ -286,15 +277,6 @@ class MessageBuilderService extends ServiceInterface {
   }
 
   /**
-   * Complete header of the message to be sent by setting sender peer id.
-   * @param  {external.ArrayBuffer} buffer - Message to be sent
-   * @param  {number} senderId - Id of the sender peer
-   */
-  completeHeader (buffer, senderId) {
-    new DataView(buffer).setInt32(1, senderId)
-  }
-
-  /**
    * Create an *ArrayBuffer* and fill in the header.
    * @private
    * @param {number} code - Message type code
@@ -303,10 +285,10 @@ class MessageBuilderService extends ServiceInterface {
    * @param {number} dataSize - Message size in bytes
    * @return {external:DataView} - Data view with initialized header
    */
-  initHeader (code, recipientId, dataSize) {
+  initHeader (code, senderId, recipientId, dataSize) {
     let dataView = new DataView(new ArrayBuffer(dataSize))
     dataView.setUint8(0, code)
-    // dataView.setUint32(1, senderId)
+    dataView.setUint32(1, senderId)
     dataView.setUint32(5, recipientId)
     return dataView
   }
@@ -347,8 +329,6 @@ class MessageBuilderService extends ServiceInterface {
         return new Float32Array(buffer)
       case FLOAT_64_ARRAY_TYPE:
         return new Float64Array(buffer)
-      case DATA_VIEW_TYPE:
-        return new DataView(buffer)
     }
   }
 
@@ -390,8 +370,6 @@ class MessageBuilderService extends ServiceInterface {
         result.type = FLOAT_32_ARRAY_TYPE
       } else if (data instanceof Float64Array) {
         result.type = FLOAT_64_ARRAY_TYPE
-      } else if (data instanceof DataView) {
-        result.type = DATA_VIEW_TYPE
       } else {
         throw new Error('Unknown data object')
       }

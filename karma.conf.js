@@ -93,6 +93,6 @@ module.exports = (config) => {
     // how many browser should be started simultanous
     concurrency: Infinity,
 
-    browserNoActivityTimeout: 20000
+    browserNoActivityTimeout: 200000
   })
 }

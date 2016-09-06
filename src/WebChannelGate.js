@@ -61,13 +61,13 @@ class WebChannelGate {
       let webSocketService = provide(WEBSOCKET)
       let key = 'key' in options ? options.key : this.generateKey()
       webSocketService.connect(url)
-        .then((ws) => {
-          ws.onclose = (closeEvt) => {
+        .then(ws => {
+          ws.onclose = closeEvt => {
             reject(closeEvt.reason)
             this.onClose(closeEvt)
           }
-          ws.onerror = (err) => reject(err.message)
-          ws.onmessage = (evt) => {
+          ws.onerror = err => reject(err.message)
+          ws.onmessage = evt => {
             let msg
             try {
               msg = JSON.parse(evt.data)

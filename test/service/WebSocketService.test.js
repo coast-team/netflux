@@ -12,36 +12,36 @@ describe('WebSocketService', () => {
     if ('readyState' in socket && socket.readyState === OPEN) socket.close()
   })
 
-  it(`Should open a socket with ${LOCAL_SERVER}`, (done) => {
+  it(`Should open a socket with ${LOCAL_SERVER}`, done => {
     webSocketService.connect(LOCAL_SERVER)
-      .then((ws) => {
+      .then(ws => {
         socket = ws
         done()
       })
       .catch(done.fail)
   })
 
-  it(`Should open a socket with ${ONLINE_SERVER}`, (done) => {
+  it(`Should open a socket with ${ONLINE_SERVER}`, done => {
     webSocketService.connect(ONLINE_SERVER)
-      .then((ws) => {
+      .then(ws => {
         socket = ws
         done()
       })
       .catch(done.fail)
   }, 10000)
 
-  it(`Should open a socket with ${ONLINE_SECURE_SERVER}`, (done) => {
+  it(`Should open a socket with ${ONLINE_SECURE_SERVER}`, done => {
     webSocketService.connect(ONLINE_SECURE_SERVER)
-      .then((ws) => {
+      .then(ws => {
         socket = ws
         done()
       })
       .catch(done.fail)
   }, 10000)
 
-  it(`Should fail to open a socket with: ${WRONG_URL}`, (done) => {
+  it(`Should fail to open a socket with: ${WRONG_URL}`, done => {
     webSocketService.connect(WRONG_URL)
-      .then((data) => done.fail('Connection succeed'))
+      .then(data => done.fail('Connection succeed'))
       .catch(done)
   }, 10000)
 })

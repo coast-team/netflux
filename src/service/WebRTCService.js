@@ -1,9 +1,8 @@
-import {isBrowser} from 'helper'
+import {isBrowser, NodeCloseEvent} from 'helper'
 import ServiceInterface from 'service/ServiceInterface'
 import {CHANNEL_BUILDER, provide} from 'serviceProvider'
-import NodeCloseEvent from 'CloseEvent'
 
-const CONNECT_TIMEOUT = 4000
+const CONNECT_TIMEOUT = 15000
 let src
 let webRTCAvailable = true
 if (isBrowser()) src = window
@@ -58,8 +57,8 @@ class WebRTCService extends ServiceInterface {
    * @param  {Object[]} [options.iceServers=[{urls: 'stun:23.21.150.121'},{urls: 'stun:stun.l.google.com:19302'},{urls: 'turn:numb.viagenie.ca', credential: 'webrtcdemo', username: 'louis%40mozilla.com'}]] - WebRTC options to setup which STUN
    * and TURN servers to be used.
    */
-  constructor (options = {}) {
-    super()
+  constructor (id, options = {}) {
+    super(id)
     this.defaults = {
       signaling: 'ws://sigver-coastteam.rhcloud.com:8000',
       iceServers: [
@@ -69,95 +68,97 @@ class WebRTCService extends ServiceInterface {
     this.settings = Object.assign({}, this.defaults, options)
   }
 
-  onMessage (wc, ch, msg) {
+  onMessage (channel, senderId, recepientId, msg) {
+    let wc = channel.webChannel
+    let item = super.getItem(wc, senderId)
+    if (!item) {
+      item = new CandidatesBuffer()
+      super.setItem(wc, senderId, item)
+    }
     if ('offer' in msg) {
-      let pc = this.createPeerConnection((candidate) => {
-        wc.sendSrvMsg(this.name, msg.sender, {sender: wc.myId, candidate})
+      item.pc = this.createPeerConnection(candidate => {
+        wc.sendInnerTo(senderId, this.id, {candidate})
       })
-      this.addTemp(wc, msg.sender, pc)
       Promise.all([
-        this.createDataChannel(pc, false)
-          .then((channel) => {
+        this.createDataChannel(item.pc, false)
+          .then(channel => {
             let channelBuilderService = provide(CHANNEL_BUILDER)
-            channelBuilderService.onChannel(wc, channel, true, msg.sender)
-            this.deleteTemp(wc, msg.sender)
+            channelBuilderService.onChannel(wc, channel, true, senderId)
+            this.removeItem(wc, senderId)
           }),
-        this.createAnswer(pc, msg.offer)
-          .then((answer) => wc.sendSrvMsg(this.name, msg.sender, {sender: wc.myId, answer}))
-      ]).catch((err) => console.error(`Establish data channel (webChannel): ${err.message}`))
+        this.createAnswer(item.pc, msg.offer, item.candidates)
+          .then(answer => wc.sendInnerTo(senderId, this.id, {answer}))
+      ]).catch(err => console.error(`Establish data channel (webChannel): ${err.message}`))
     } if ('answer' in msg) {
-      let pc = this.getTemp(wc, msg.sender)
-      pc.setRemoteDescription(msg.answer)
-        .then(() => pc.addReceivedCandidates())
-        .catch((err) => console.error(`Set answer (webChannel): ${err.message}`))
+      item.pc.setRemoteDescription(msg.answer)
+        .then(() => item.pc.addReceivedCandidates(item.candidates))
+        .catch(err => console.error(`Set answer (webChannel): ${err.message}`))
     } else if ('candidate' in msg) {
-      this.addIceCandidate(this.getTemp(wc, msg.sender), msg.candidate)
+      this.addIceCandidate(item, msg.candidate)
     }
   }
 
-  // Equivalent connectMeTo(wc, id)
   connectOverWebChannel (wc, id) {
+    let item = new CandidatesBuffer(this.createPeerConnection(candidate => {
+      wc.sendInnerTo(id, this.id, {candidate})
+    }))
+    super.setItem(wc, id, item)
     return new Promise((resolve, reject) => {
-      setTimeout(reject, CONNECT_TIMEOUT, 'connectMeTo timeout')
-      let sender = wc.myId
-      let pc = this.createPeerConnection((candidate) => {
-        wc.sendSrvMsg(this.name, id, {sender, candidate})
-      })
-      this.addTemp(wc, id, pc)
-      this.createDataChannel(pc, true)
-        .then((channel) => {
-          this.deleteTemp(wc, id)
+      setTimeout(reject, CONNECT_TIMEOUT, 'WebRTC connect timeout')
+      this.createDataChannel(item.pc, true)
+        .then(channel => {
+          this.removeItem(wc, id)
           resolve(channel)
         })
         .catch(reject)
-      this.createOffer(pc)
-        .then((offer) => wc.sendSrvMsg(this.name, id, {sender, offer}))
+      this.createOffer(item.pc)
+        .then(offer => wc.sendInnerTo(id, this.id, {offer}))
         .catch(reject)
     })
   }
 
   // Equivalent à open
   listenFromSignaling (ws, onChannel) {
-    let connections = new Map()
-
-    ws.onmessage = (evt) => {
+    ws.onmessage = evt => {
       let msg = JSON.parse(evt.data)
 
       if ('id' in msg && 'data' in msg) {
-        let pc
-        if (connections.has(msg.id)) pc = connections.get(msg.id)
-        else {
-          pc = this.createPeerConnection((candidate) => {
+        let item = super.getItem(ws, msg.id)
+        if (!item) {
+          item = new CandidatesBuffer(this.createPeerConnection(candidate => {
             if (ws.readyState === 1) ws.send(JSON.stringify({id: msg.id, data: {candidate}}))
-          })
-          connections.set(msg.id, pc)
+          }))
+          super.setItem(ws, msg.id, item)
         }
         if ('offer' in msg.data) {
           Promise.all([
-            this.createDataChannel(pc, false).then((channel) => {
-              connections.delete(msg.id)
+            this.createDataChannel(item.pc, false).then(channel => {
+              super.removeItem(ws, msg.id)
               onChannel(channel)
             }),
-            this.createAnswer(pc, msg.data.offer)
-              .then((answer) => ws.send(JSON.stringify({id: msg.id, data: {answer}})))
-          ]).catch((err) => {
+            this.createAnswer(item.pc, msg.data.offer, item.candidates)
+              .then(answer => {
+                ws.send(JSON.stringify({id: msg.id, data: {answer}}))
+              })
+          ]).catch(err => {
             console.error(`Establish data channel through signaling: ${err.message}`)
           })
         } else if ('candidate' in msg.data) {
-          this.addIceCandidate(pc, msg.data.candidate)
+          this.addIceCandidate(item, msg.data.candidate)
         }
       }
     }
   }
 
   connectOverSignaling (ws, key, options = {}) {
-    let pc = this.createPeerConnection((candidate) => {
+    let item = new CandidatesBuffer(this.createPeerConnection(candidate => {
       if (ws.readyState === 1) ws.send(JSON.stringify({data: {candidate}}))
-    })
+    }))
+    super.setItem(ws, key, item)
     return Promise.race([
       new Promise((resolve, reject) => {
-        ws.onclose = (closeEvt) => reject(closeEvt.reason)
-        ws.onmessage = (evt) => {
+        ws.onclose = closeEvt => reject(closeEvt.reason)
+        ws.onmessage = evt => {
           let msg
           try {
             msg = JSON.parse(evt.data)
@@ -167,18 +168,18 @@ class WebRTCService extends ServiceInterface {
 
           if ('data' in msg) {
             if ('answer' in msg.data) {
-              pc.setRemoteDescription(msg.data.answer)
-                .then(() => pc.addReceivedCandidates())
-                .catch((err) => {
+              item.pc.setRemoteDescription(msg.data.answer)
+                .then(() => item.pc.addReceivedCandidates(item.candidates))
+                .catch(err => {
                   console.error(`Set answer (signaling): ${err.message}`)
                   reject(err)
                 })
             } else if ('candidate' in msg.data) {
-              this.addIceCandidate(pc, msg.data.candidate)
+              this.addIceCandidate(super.getItem(ws, key), msg.data.candidate)
             }
           } else if ('isKeyOk' in msg) {
             if (msg.isKeyOk) {
-              this.createOffer(pc)
+              this.createOffer(item.pc)
                 .then(offer => ws.send(JSON.stringify({data: {offer}})))
                 .catch(reject)
             } else reject('Provided key is not available')
@@ -186,7 +187,11 @@ class WebRTCService extends ServiceInterface {
         }
         ws.send(JSON.stringify({join: key}))
       }),
-      this.createDataChannel(pc, true)
+      this.createDataChannel(item.pc, true)
+        .then((channel) => {
+          super.removeItem(ws, key)
+          return channel
+        })
     ])
   }
 
@@ -201,7 +206,7 @@ class WebRTCService extends ServiceInterface {
    */
   createOffer (pc) {
     return pc.createOffer()
-      .then((offer) => pc.setLocalDescription(offer))
+      .then(offer => pc.setLocalDescription(offer))
       .then(() => JSON.parse(JSON.stringify(pc.localDescription)))
   }
 
@@ -215,13 +220,13 @@ class WebRTCService extends ServiceInterface {
    * @return {Promise} - Resolved when the offer has been succesfully created,
    * set as local description and sent to the peer.
    */
-  createAnswer (pc, offer) {
+  createAnswer (pc, offer, candidates) {
     return pc.setRemoteDescription(offer)
       .then(() => {
-        pc.addReceivedCandidates()
+        pc.addReceivedCandidates(candidates)
         return pc.createAnswer()
       })
-      .then((answer) => pc.setLocalDescription(answer))
+      .then(answer => pc.setLocalDescription(answer))
       .then(() => JSON.parse(JSON.stringify(pc.localDescription)))
   }
 
@@ -236,12 +241,11 @@ class WebRTCService extends ServiceInterface {
   createPeerConnection (onCandidate) {
     let pc = new RTCPeerConnection({iceServers: this.settings.iceServers})
     pc.isRemoteDescriptionSet = false
-    pc.candidates = []
-    pc.addReceivedCandidates = () => {
+    pc.addReceivedCandidates = candidates => {
       pc.isRemoteDescriptionSet = true
-      for (let c of pc.candidates) this.addIceCandidate(pc, c)
+      for (let c of candidates) this.addIceCandidate({pc}, c)
     }
-    pc.onicecandidate = (evt) => {
+    pc.onicecandidate = evt => {
       if (evt.candidate !== null) {
         let candidate = {
           candidate: evt.candidate.candidate,
@@ -259,11 +263,11 @@ class WebRTCService extends ServiceInterface {
       let dc
       if (isInitiator) {
         dc = pc.createDataChannel(null)
-        dc.onopen = (evt) => resolve(dc)
+        dc.onopen = evt => resolve(dc)
       } else {
-        pc.ondatachannel = (dcEvt) => {
+        pc.ondatachannel = dcEvt => {
           dc = dcEvt.channel
-          dcEvt.channel.onopen = (evt) => resolve(dc)
+          dcEvt.channel.onopen = evt => resolve(dc)
         }
       }
       pc.oniceconnectionstatechange = () => {
@@ -274,11 +278,18 @@ class WebRTCService extends ServiceInterface {
     })
   }
 
-  addIceCandidate (pc, candidate) {
-    if (pc.isRemoteDescriptionSet) {
-      pc.addIceCandidate(new RTCIceCandidate(candidate))
-        .catch((evt) => console.error(`Add ICE candidate: ${evt.message}`))
-    } else pc.candidates.push(candidate)
+  addIceCandidate (obj, candidate) {
+    if (obj.pc && obj.pc.isRemoteDescriptionSet) {
+      obj.pc.addIceCandidate(new RTCIceCandidate(candidate))
+        .catch(evt => console.error(`Add ICE candidate: ${evt.message}`))
+    } else obj.candidates[obj.candidates.length] = candidate
+  }
+}
+
+class CandidatesBuffer {
+  constructor (pc = null, candidates = []) {
+    this.pc = pc
+    this.candidates = candidates
   }
 }
 

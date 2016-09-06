@@ -1,8 +1,8 @@
-import {signaling} from 'config'
+import {SIGNALING} from 'testhelper'
 import WebChannel from 'src/WebChannel'
 
-describe('1 peer', () => {
-  let wc = new WebChannel({signaling})
+describe('🙂', () => {
+  let wc = new WebChannel({signaling: SIGNALING})
   it('Should construct a WebChannel', () => {
     expect(wc.id).not.toBeNull()
     expect(wc.id).not.toBeUndefined()
@@ -14,15 +14,15 @@ describe('1 peer', () => {
     expect(() => wc.sendTo('test')).not.toThrow()
   })
 
-  it('Ping should be 0', (done) => {
-    wc.ping().then((ping) => {
+  it('Ping should be 0', done => {
+    wc.ping().then(ping => {
       expect(ping).toEqual(0)
       done()
     })
   })
 
-  it('Should open the WebChannel', (done) => {
-    wc.open().then((data) => {
+  it('Should open the WebChannel', done => {
+    wc.open().then(data => {
       expect(wc.getAccess()).toBe(data)
       expect(wc.isOpen()).toBeTruthy()
       wc.close()
@@ -30,8 +30,8 @@ describe('1 peer', () => {
     }).catch(done.fail)
   })
 
-  it('Should close the WebChannel', (done) => {
+  it('Should close the WebChannel', done => {
     wc.onClose = done
-    wc.open().then((data) => wc.close()).catch(done.fail)
+    wc.open().then(data => wc.close()).catch(done.fail)
   })
 })

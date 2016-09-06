@@ -1,6 +1,5 @@
 import {provide, FULLY_CONNECTED, WEBRTC, WEBSOCKET, MESSAGE_BUILDER} from 'serviceProvider'
 import Channel from 'Channel'
-import JoiningPeer from 'JoiningPeer'
 import WebChannelGate from 'WebChannelGate'
 
 const msgBld = provide(MESSAGE_BUILDER)
@@ -17,6 +16,8 @@ const MAX_ID = 4294967295
  */
 const PING_TIMEOUT = 5000
 
+const ID_TIMEOUT = 10000
+
 /**
  * One of the internal message type. It's a peer message.
  * @type {number}
@@ -28,72 +29,21 @@ const USER_DATA = 1
  * specific service class.
  * @type {number}
  */
-const SERVICE_DATA = 2
+const INNER_DATA = 2
 
-/**
- * One of the internal message type. Means a peer has left the *WebChannel*.
- * @type {number}
- */
-const LEAVE = 3
-
-/**
- * One of the internal message type. Initialization message for the joining peer.
- * @type {number}
- */
-
-const JOIN_INIT = 4
-
-/**
- * One of the internal message type. The message is intended for the *WebChannel*
- * members to notify them about the joining peer.
- * @type {number}
- */
-const JOIN_NEW_MEMBER = 5
-
-/**
- * One of the internal message type. The message is intended for the *WebChannel*
- * members to notify them that the joining peer has not succeed.
- * @type {number}
- */
-const REMOVE_NEW_MEMBER = 6
-
-/**
- * One of the internal message type. The message is intended for the joining peer
- * to notify him that everything is ready and he may join the *WebChannel*.
- * @type {number}
- */
-const JOIN_FINILIZE = 7
-
-/**
- * One of the internal message type. The message sent by the joining peer to
- * notify all *WebChannel* members about his arrivel.
- * @type {number}
- */
-const JOIN_SUCCESS = 8
-
-// /**
-//  * One of the internal message type. This message is sent during Initialization
-//  * of a channel.
-//  * @see {@link WebChannel#initChannel}
-//  * @type {number}
-//  */
-// const INIT_CHANNEL_PONG = 10
-
-const INIT_OK = 10
+const INITIALIZATION = 3
 
 /**
  * One of the internal message type. Ping message.
  * @type {number}
  */
-const PING = 11
+const PING = 4
 
 /**
  * One of the internal message type. Pong message, response to the ping message.
  * @type {number}
  */
-const PONG = 12
-
-const MEMBERS = 13
+const PONG = 5
 
 /**
  * Constant used to send a message to the server in order that
@@ -157,13 +107,6 @@ class WebChannel {
     this.onJoin
 
     /**
-     * Set of joining peers.
-     * @private
-     * @type {external:Set}
-     */
-    this.joiningPeers = new Set()
-
-    /**
      * *WebChannel* topology.
      * @private
      * @type {string}
@@ -171,11 +114,13 @@ class WebChannel {
     this.topology = this.settings.topology
 
     /**
-     * Total peer number in the *WebChannel*.
+     * An array of all peer ids except this.
      * @private
-     * @type {number}
+     * @type {Array}
      */
     this.members = []
+
+    this.generatedIds = new Set()
 
     /**
      * @private
@@ -188,7 +133,7 @@ class WebChannel {
      * @private
      * @type {WebChannelGate}
      */
-    this.gate = new WebChannelGate((closeEvt) => this.onClose(closeEvt))
+    this.gate = new WebChannelGate(closeEvt => this.onClose(closeEvt))
 
     /**
      * Unique identifier of this *WebChannel*. The same for all peers.
@@ -208,7 +153,7 @@ class WebChannel {
      * Is the event handler called when a new peer has  joined the *WebChannel*.
      * @param {number} id - Id of the joined peer
      */
-    this.onJoining = (id) => {}
+    this.onJoining = id => {}
 
     /**
      * Is the event handler called when a message is available on the *WebChannel*.
@@ -224,13 +169,13 @@ class WebChannel {
      * Is the event handler called when a peer hes left the *WebChannel*.
      * @param {number} id - Id of the peer who has left
      */
-    this.onLeaving = (id) => {}
+    this.onLeaving = id => {}
 
     /**
      * Is the event handler called when the *WebChannel* has been closed.
      * @param {external:CloseEvent} id - Close event object
      */
-    this.onClose = (closeEvt) => {}
+    this.onClose = closeEvt => {}
   }
 
   /**
@@ -242,34 +187,19 @@ class WebChannel {
    */
   open (options = {}) {
     let settings = Object.assign({}, this.settings, options)
-    return this.gate.open((channel) => {
+    return this.gate.open(channel => {
       this.initChannel(channel)
-        .then((channel) => this.addChannel(channel))
+        .then(channel => this.addChannel(channel))
     }, settings)
   }
 
-  /**
-    * Add a channel to the current peer network according to the topology
-    *
-    * @private
-    * @param {Object} channel - Channel which needs to be add in the topology
-    * @return {Promise} It resolves once the channel is add
-    */
   addChannel (channel) {
-    let jp = this.addJoiningPeer(channel.peerId, this.myId, channel)
-    this.manager.broadcast(this, msgBld.msg(JOIN_NEW_MEMBER, {newId: channel.peerId}))
-    channel.send(msgBld.msg(JOIN_INIT, {
-      manager: this.settings.topology,
+    let msg = msgBld.msg(INITIALIZATION, this.myId, channel.peerId, {
+      manager: this.manager.id,
       wcId: this.id
-    }, channel.peerId))
+    })
+    channel.send(msg)
     return this.manager.add(channel)
-      .then(() => channel.send(msgBld.msg(JOIN_FINILIZE)))
-      .catch((msg) => {
-        this.manager.broadcast(this, msgBld.msg(
-          REMOVE_NEW_MEMBER, {id: channel.peerId})
-        )
-        this.removeJoiningPeer(jp.id)
-      })
   }
 
   /**
@@ -280,22 +210,18 @@ class WebChannel {
     * @return {Promise} It resolves once the bot server joined the network
     */
   addBotServer (host, port) {
-    return new Promise((resolve, reject) => {
-      let cBuilder = provide(WEBSOCKET, {host, port, addBotServer: true})
-      let url = 'ws://' + host + ':' + port
-      cBuilder.connect(url).then((socket) => {
+    let cBuilder = provide(WEBSOCKET, {host, port, addBotServer: true})
+    let url = 'ws://' + host + ':' + port
+    return cBuilder.connect(url)
+      .then(socket => {
         /*
           Once the connection open a message is sent to the server in order
           that he can join initiate the channel
         */
         socket.send(JSON.stringify({code: ADD_BOT_SERVER, sender: this.myId, wcId: this.id}))
-        this.initChannel(socket)
-          .then((channel) => this.addChannel(channel))
-          .then(() => resolve())
-      }).catch((reason) => {
-        reject(reason)
+        return this.initChannel(socket)
       })
-    })
+      .then(channel => this.addChannel(channel))
   }
 
   /**
@@ -310,7 +236,7 @@ class WebChannel {
   joinAsBot (channel, id) {
     return new Promise((resolve, reject) => {
       this.onJoin = () => resolve(this)
-      this.initChannel(channel, id)// .then((channel) => {
+      this.initChannel(channel, id)// .then(channel => {
         // console.log('[DEBUG] Resolved initChannel by server')
       // })
     })
@@ -357,11 +283,11 @@ class WebChannel {
     return new Promise((resolve, reject) => {
       this.onJoin = () => resolve(this)
       webSocketService.connect(settings.signaling)
-        .then((ws) => {
+        .then(ws => {
           wsWithSignaling = ws
           return webRTCService.connectOverSignaling(ws, key)
         })
-        .then((channel) => {
+        .then(channel => {
           wsWithSignaling.onclose = null
           wsWithSignaling.close()
           return this.initChannel(channel)
@@ -374,18 +300,12 @@ class WebChannel {
    * Leave the *WebChannel*. No longer can receive and send messages to the group.
    */
   leave () {
-    // FIXME: refactore this
     if (this.channels.size !== 0) {
       this.topology = this.settings.topology
-      this.channels.forEach((c) => {
-        c.channel.onmessage = () => {}
-        c.channel.onclose = () => {}
-        c.channel.onerror = () => {}
-      })
-      this.manager.broadcast(this, msgBld.msg(LEAVE))
-      this.channels.clear()
-      // this.joiningPeers.clear()
+      this.members = []
+      this.pingTime = 0
       this.gate.close()
+      this.manager.leave(this)
     }
   }
 
@@ -395,7 +315,7 @@ class WebChannel {
    */
   send (data) {
     if (this.channels.size !== 0) {
-      msgBld.handleUserMessage(data, null, (dataChunk) => {
+      msgBld.handleUserMessage(data, this.myId, null, dataChunk => {
         this.manager.broadcast(this, dataChunk)
       })
     }
@@ -408,7 +328,7 @@ class WebChannel {
    */
   sendTo (id, data) {
     if (this.channels.size !== 0) {
-      msgBld.handleUserMessage(data, id, (dataChunk) => {
+      msgBld.handleUserMessage(data, this.myId, id, dataChunk => {
         this.manager.sendTo(id, this, dataChunk)
       }, false)
     }
@@ -420,70 +340,62 @@ class WebChannel {
    * @returns {Promise}
    */
   ping () {
-    if (this.channels.size !== 0) {
+    if (this.members.length !== 0 && this.pingTime === 0) {
       return new Promise((resolve, reject) => {
         if (this.pingTime === 0) {
           this.pingTime = Date.now()
           this.maxTime = 0
           this.pongNb = 0
-          this.pingFinish = (delay) => { resolve(delay) }
-          this.manager.broadcast(this, msgBld.msg(PING))
-          setTimeout(() => { resolve(PING_TIMEOUT) }, PING_TIMEOUT)
+          this.pingFinish = delay => resolve(delay)
+          this.manager.broadcast(this, msgBld.msg(PING, this.myId))
+          setTimeout(() => resolve(PING_TIMEOUT), PING_TIMEOUT)
         }
       })
-    } else {
-      return Promise.resolve(0)
-    }
+    } else return Promise.resolve(0)
   }
 
   get topology () {
     return this.settings.topology
   }
 
+  set topology (name) {
+    this.settings.topology = name
+    this.manager = provide(this.settings.topology)
+  }
+
+  onJoining$ (peerId) {
+    this.members[this.members.length] = peerId
+    this.onJoining(peerId)
+  }
+
+  onLeaving$ (peerId) {
+    this.members.splice(this.members.indexOf(peerId), 1)
+    this.onLeaving(peerId)
+  }
+
   /**
    * Send a message to a service of the same peer, joining peer or any peer in
    * the *WebChannel*.
    * @private
-   * @param  {string} serviceName - Service name.
-   * @param  {string} recepient - Identifier of recepient peer id.
-   * @param  {Object} [msg={}] - Message to send.
+   * @param  {string} serviceId - Service id
+   * @param  {string} recepient - Identifier of recepient peer id
+   * @param  {Object} [msg={}] - Message to send
    */
-  sendSrvMsg (serviceName, recepient, msg = {}, channel = null) {
-    // console.log('[DEBUG] sendSrvMsg (serviceName, recepient, msg = {}, channel = null) (',
-    // serviceName, ', ', recepient, ', ', msg, ', ', channel, ')')
-    let fullMsg = msgBld.msg(
-      SERVICE_DATA, {serviceName, data: Object.assign({}, msg)},
-      recepient
-    )
-    if (channel !== null) {
-      channel.send(fullMsg)
-      return
-    }
-    if (recepient === this.myId) {
-      this.onChannelMessage(null, fullMsg)
+  sendInnerTo (recepient, serviceId, data, forward = false) {
+    if (forward) {
+      this.manager.sendInnerTo(recepient, this, data)
     } else {
-      // If this function caller is a peer who is joining
-      if (this.isJoining()) {
-        this.getJoiningPeer(this.myId)
-          .intermediaryChannel
-          .send(fullMsg)
+      if (Number.isInteger(recepient)) {
+        let msg = msgBld.msg(INNER_DATA, this.myId, recepient, {serviceId, data})
+        this.manager.sendInnerTo(recepient, this, msg)
       } else {
-        // If the recepient is a joining peer
-        if (this.hasJoiningPeer(recepient)) {
-          let jp = this.getJoiningPeer(recepient)
-          // If I am an intermediary peer for recepient
-          if (jp.intermediaryId === this.myId) {
-            jp.intermediaryChannel.send(fullMsg)
-          // If not, then send this message to the recepient's intermediary peer
-          } else {
-            this.manager.sendTo(jp.intermediaryId, this, fullMsg)
-          }
-        // If the recepient is a member of webChannel
-        } else {
-          this.manager.sendTo(recepient, this, fullMsg)
-        }
+        recepient.send(msgBld.msg(INNER_DATA, this.myId, recepient.peerId, {serviceId, data}))
       }
     }
+  }
+
+  sendInner (serviceId, data) {
+    this.manager.broadcast(this, msgBld.msg(INNER_DATA, this.myId, null, {serviceId, data}))
   }
 
   /**
@@ -494,8 +406,6 @@ class WebChannel {
    */
   onChannelMessage (channel, data) {
     let header = msgBld.readHeader(data)
-    // console.log('ON CHANNEL MESSAGE:\n - code=' + header.code + '\n - sender=' + header.senderId + '\n - recepient=' + header.recepientId)
-    // console.log('[DEBUG] {onChannelMessage} header: ', header)
     if (header.code === USER_DATA) {
       msgBld.readUserMessage(this, header.senderId, data, (fullData, isBroadcast) => {
         this.onMessage(header.senderId, fullData, isBroadcast)
@@ -503,58 +413,19 @@ class WebChannel {
     } else {
       let msg = msgBld.readInternalMessage(data)
       switch (header.code) {
-        case LEAVE:
-          for (let c of this.channels) {
-            if (c.peerId === header.senderId) {
-              c.close()
-              this.channels.delete(c)
-            }
-          }
-          this.members.splice(this.members.indexOf(msg.id), 1)
-          // this.onLeaving(msg.id)
-          break
-        case SERVICE_DATA:
-          if (this.myId === header.recepientId) {
-            provide(msg.serviceName, this.settings).onMessage(this, channel, msg.data)
-          } else {
-            this.sendSrvMsg(msg.serviceName, header.recepientId, msg.data)
-          }
-          break
-        case JOIN_INIT:
+        case INITIALIZATION:
           this.topology = msg.manager
           this.myId = header.recepientId
           this.id = msg.wcId
           channel.peerId = header.senderId
-          this.addJoiningPeer(this.myId, header.senderId, channel)
           break
-        case JOIN_NEW_MEMBER:
-          this.addJoiningPeer(msg.newId, header.senderId)
-          break
-        case REMOVE_NEW_MEMBER:
-          this.removeJoiningPeer(msg.id)
-          break
-        case JOIN_FINILIZE:
-          this.joinSuccess(this.myId)
-          this.manager.broadcast(this, msgBld.msg(JOIN_SUCCESS))
-          this.onJoin()
-          break
-        case JOIN_SUCCESS:
-          this.joinSuccess(header.senderId)
-          this.members.push(header.senderId)
-          this.onJoining(header.senderId)
-          this.manager.sendTo(header.senderId, this, msgBld.msg(MEMBERS, {
-            members: this.members
-          }))
-          break
-        case MEMBERS:
-          this.members = msg.members
-          break
-        case INIT_OK:
-          channel.onOk()
-          delete channel.onOk
+        case INNER_DATA:
+          if (header.recepientId === 0 || this.myId === header.recepientId) {
+            provide(msg.serviceId).onMessage(channel, header.senderId, header.recepientId, msg.data)
+          } else this.sendInnerTo(header.recepientId, null, data, true)
           break
         case PING:
-          this.manager.sendTo(header.senderId, this, msgBld.msg(PONG))
+          this.manager.sendTo(header.senderId, this, msgBld.msg(PONG, this.myId))
           break
         case PONG:
           let now = Date.now()
@@ -572,35 +443,6 @@ class WebChannel {
   }
 
   /**
-   * Error event handler for each *Channel* in the *WebChannel*.
-   * @private
-   * @param {external:Event} evt - Event
-   */
-  onChannelError (evt) {
-    console.error(`RTCDataChannel: ${evt.message}`)
-  }
-
-  /**
-   * Close event handler for each *Channel* in the *WebChannel*.
-   * @private
-   * @param {external:CloseEvent} closeEvt - Close event
-   */
-  onChannelClose (closeEvt, peerId) {
-    // FIXME: refactore this
-    for (let c of this.channels) {
-      if (c.peerId === peerId) this.channels.delete(c)
-    }
-    this.members.splice(this.members.indexOf(peerId), 1)
-    this.onLeaving(peerId)
-    // console.info(`Channel with ${peerId} has been closed: ${closeEvt.type}`)
-  }
-
-  set topology (name) {
-    this.settings.topology = name
-    this.manager = provide(this.settings.topology)
-  }
-
-  /**
    * Initialize channel. The *Channel* object is a facade for *WebSocket* and
    * *RTCDataChannel*.
    * @private
@@ -611,145 +453,27 @@ class WebChannel {
    * @returns {Promise} - Resolved once the channel is initialized on both sides
    */
   initChannel (ch, id = -1) {
-    return new Promise((resolve, reject) => {
-      if (id === -1) { id = this.generateId() }
-      let channel = new Channel(ch, this, id)
-      // TODO: treat the case when the 'ping' or 'pong' message has not been received
-      channel.config()
-      channel.onOk = () => resolve(channel)
-      ch.send('ok')
-      ch.onmessage = (msgEvt) => {
-        if (msgEvt.data === 'ok') {
-          channel.config()
-          channel.send(msgBld.msg(INIT_OK))
-          resolve(channel)
-        }
-      }
-    })
+    if (id === -1) id = this.generateId()
+    let channel = new Channel(ch, this, id)
+    channel.config()
+    return Promise.resolve(channel)
   }
 
-  /**
-   * Function to be executed on each peer once the joining peer has joined the
-   * *WebChannel*
-   * @private
-   * @param  {number} id Identifier of the recently joined peer
-   */
-  joinSuccess (id) {
-    let jp = this.getJoiningPeer(id)
-    jp.channelsToAdd.forEach((c) => {
-      this.channels.add(c)
-    })
-    // TODO: handle channels which should be closed & removed
-    this.joiningPeers.delete(jp)
-  }
-
-  /**
-   * Get joining peer by his id.
-   * @private
-   * @throws Will throws an error if the peer could not be found
-   * @param  {number} id Peer id
-   */
-  getJoiningPeer (id) {
-    // if (this.myId !== id) {
-    //   console.log('Me ' + this.myId + ' is looking for ' + id)
-    // }
-    for (let jp of this.joiningPeers) {
-      if (jp.id === id) {
-        return jp
-      }
-    }
-    throw new Error('Peer ' + this.myId + ' could not find the joining peer ' + id)
-  }
-
-  /**
-   * Get all joining peers.
-   * @private
-   * @returns {external:Set} - Joining peers
-   */
-  getJoiningPeers () {
-    return this.joiningPeers
-  }
-
-  /**
-   * Add joining peer.
-   * @private
-   * @param  {number} jpId - Joining peer id
-   * @param  {number} intermediaryId - The id of the peer through whom the
-   * joining peer joins the *WebChannel*
-   * @param  {Channel} [intermediaryChannel] - Intermediary channel bitween the
-   * joining peer and his intermediary peer
-   * @returns {JoiningPeer} - Just added joining peer
-   */
-  addJoiningPeer (jpId, intermediaryId, intermediaryChannel = null) {
-    // if (this.myId !== jpId) {
-    //   console.log('Me ' + this.myId + ' is adding: ' + jpId + ' where intermediaryId is ' + intermediaryId + ' and the channel is ' + (intermediaryChannel !== null))
-    // }
-    let jp = new JoiningPeer(jpId, intermediaryId, intermediaryChannel)
-    if (this.hasJoiningPeer(jpId)) {
-      throw new Error('Joining peer already exists!')
-    }
-    this.joiningPeers.add(jp)
-    return jp
-  }
-
-  /**
-   * Remove joining peer from the joining peer list if he exists. It is done when the joining
-   * peer finished the joining process succesfully or not.
-   * @private
-   * @param  {number} jpId - Joining peer id
-   */
-  removeJoiningPeer (jpId) {
-    if (this.hasJoiningPeer(jpId)) {
-      this.joiningPeers.delete(this.getJoiningPeer(jpId))
-    }
-  }
-
-  /**
-   * Check whether this peer is about to join the *WebChannel*.
-   * @private
-   * @returns {boolean} - True if this peer is joining the *WebChannel* and false
-   * otherwise
-   */
-  isJoining () {
-    for (let jp of this.joiningPeers) {
-      if (jp.id === this.myId) {
-        return true
-      }
-    }
-    return false
-  }
-
-  /**
-   * Verify if this peer knows about specific joining peer.
-   * @private
-   * @param  {number} jpId - Joining peer id
-   * @returns {boolean} - True if the peer is present, false if not.
-   */
-  hasJoiningPeer (jpId) {
-    for (let jp of this.joiningPeers) {
-      if (jp.id === jpId) {
-        return true
-      }
-    }
-    return false
-  }
   /**
    * Generate random id for a *WebChannel* or a new peer.
    * @private
    * @returns {number} - Generated id
    */
   generateId () {
-    let id
     do {
-      id = Math.ceil(Math.random() * MAX_ID)
-      for (let c of this.channels) {
-        if (id === c.peerId) continue
-      }
-      if (this.hasJoiningPeer(id)) continue
+      let id = Math.ceil(Math.random() * MAX_ID)
       if (id === this.myId) continue
-      break
+      if (this.members.includes(id)) continue
+      if (this.generatedIds.has(id)) continue
+      this.generatedIds.add(id)
+      setTimeout(() => this.generatedIds.delete(id), ID_TIMEOUT)
+      return id
     } while (true)
-    return id
   }
 }
 

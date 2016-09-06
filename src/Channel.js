@@ -1,6 +1,4 @@
-import {provide, MESSAGE_BUILDER} from 'serviceProvider'
-
-const msgBld = provide(MESSAGE_BUILDER)
+import {isBrowser} from 'helper'
 
 /**
  * Wrapper class for {@link external:RTCDataChannel} and
@@ -18,7 +16,6 @@ class Channel {
    * this channel
    */
   constructor (channel, webChannel, peerId) {
-    // FIXME:this does not work for WebSocket
     channel.binaryType = 'arraybuffer'
 
     /**
@@ -39,15 +36,22 @@ class Channel {
      * @type {WebChannel}
      */
     this.peerId = peerId
+
+    this.send = isBrowser() ? this.sendBrowser : this.sendNode
   }
 
   /**
    * Configure this channel. Set up message, error and close event handlers.
    */
   config () {
-    this.channel.onmessage = (msgEvt) => { this.webChannel.onChannelMessage(this, msgEvt.data) }
-    this.channel.onerror = (evt) => { this.webChannel.onChannelError(evt) }
-    this.channel.onclose = (evt) => { this.webChannel.onChannelClose(evt, this.peerId) }
+    this.channel.onmessage = msgEvt => this.webChannel.onChannelMessage(this, msgEvt.data)
+    this.channel.onerror = evt => this.webChannel.manager.onChannelError(evt, this)
+    this.channel.onclose = evt => {
+      if (this.webChannel.manager.onChannelClose(evt, this)) {
+        this.webChannel.members.splice(this.webChannel.members.indexOf(this.peerId), 1)
+        this.webChannel.onLeaving(this.peerId)
+      }
+    }
   }
 
   /**
@@ -56,16 +60,36 @@ class Channel {
    * @see {@link MessageBuilderService#msg}, {@link MessageBuilderService#handleUserMessage}
    * @param {external:ArrayBuffer} data - Message
    */
-  send (data) {
+  sendBrowser (data) {
     // if (this.channel.readyState !== 'closed' && new Int8Array(data).length !== 0) {
-    if (this.channel.readyState !== 'closed') {
+    if (this.isOpen()) {
       try {
-        msgBld.completeHeader(data, this.webChannel.myId)
         this.channel.send(data)
       } catch (err) {
         console.error(`Channel send: ${err.message}`)
       }
     }
+  }
+
+  sendNode (data) {
+    this.sendBrowser(data.slice(0))
+  }
+
+  set onMessage (msgEvtHandler) {
+    this.channel.onmessage = msgEvt => msgEvtHandler(this, msgEvt.data)
+  }
+
+  set onClose (closeEvtHandler) {
+    this.channel.onclose = closeEvtHandler
+  }
+
+  set onError (errEvtHandler) {
+    this.channel.onerror = evt => errEvtHandler(evt, this.peerId)
+  }
+
+  isOpen () {
+    let state = this.channel.readyState
+    return state === 1 || state === 'open'
   }
 
   /**

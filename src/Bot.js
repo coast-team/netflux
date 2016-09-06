@@ -18,29 +18,9 @@ class Bot {
     this.server
     this.webChannels = []
 
-    this.onWebChannel = (wc) => {
+    this.onWebChannel = wc => {
       // this.log('connected', 'Connected to the network')
       // this.log('id', wc.myId)
-    }
-
-    this.onLaunch = () => {
-      // this.log('WebSocketServer', 'Server runs on: ws://' + this.settings.host + ':' + this.settings.port)
-    }
-
-    this.onConnection = () => {
-      // this.log('connected', 'Connection of one client')
-    }
-
-    this.onAddRequest = () => {
-      // this.log('add', 'Add request received')
-    }
-
-    this.onNewChannelRequest = () => {
-      // this.log('new_channel', 'New channel request received')
-    }
-
-    this.onCodeError = () => {
-      // this.log('error', 'Unknown code message')
     }
   }
 
@@ -48,20 +28,18 @@ class Bot {
     return new Promise((resolve, reject) => {
       this.settings = Object.assign({}, this.settings, options)
       let WebSocketServer = require('ws').Server
-      this.server = new WebSocketServer({host: this.settings.host, port: this.settings.port}, () => {
-        this.onLaunch()
-        resolve()
-      })
+      this.server = new WebSocketServer({
+        host: this.settings.host,
+        port: this.settings.port
+      }, () => resolve())
 
       this.server.on('error', () => {
         reject('WebSocketServerError with ws://' + this.settings.host + ':' + this.settings.port)
       })
 
-      this.server.on('connection', (socket) => {
-        this.onConnection()
-
-        socket.on('message', (msg) => {
-          var data = {code: ''}
+      this.server.on('connection', socket => {
+        socket.on('message', msg => {
+          let data = {code: ''}
           try {
             data = JSON.parse(msg)
           } catch (e) {}
@@ -73,7 +51,7 @@ class Bot {
               this.newChannel(socket, data)
               break
             default:
-              this.onCodeError()
+              socket.close()
           }
         })
       })
@@ -87,11 +65,12 @@ class Bot {
     })
 
     if (!alreadyPresent) {
-      this.onAddRequest()
       let webChannel
 
-      webChannel = new WebChannel({'connector': 'WebSocket',
-        host: this.settings.host, port: this.settings.port})
+      webChannel = new WebChannel({
+        connector: 'WebSocket',
+        host: this.settings.host,
+        port: this.settings.port})
 
       webChannel.joinAsBot(socket, data.sender).then(() => {
         this.onWebChannel(webChannel)
@@ -103,7 +82,6 @@ class Bot {
 
   newChannel (socket, data) {
     let channelBuilderService = provide(CHANNEL_BUILDER)
-    this.onNewChannelRequest()
     for (var wc of this.webChannels) {
       if (data.wcId === wc.id) {
         channelBuilderService.onChannel(wc, socket, data.oneMsg, data.sender)
@@ -123,12 +101,8 @@ class Bot {
     this.webChannels.splice(index, 1)[0].leave()
   }
 
-  getWebChannels () {
-    return this.webChannels
-  }
-
-  getServer () {
-    return this.server
+  stopListen () {
+    return this.server.close()
   }
 
   log (label, msg) {

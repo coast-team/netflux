@@ -2,7 +2,7 @@
  * Service module includes {@link module:channelBuilder},
  * {@link module:webChannelManager} and {@link module:messageBuilder}.
  * Services are substitutable stateless objects. Each service is identified by
- * its class name and some of them can receive messages via `WebChannel` sent
+ * the id provided during construction and some of them can receive messages via `WebChannel` sent
  * by another service.
  *
  * @module service
@@ -15,7 +15,7 @@
  * Default timeout for any pending request.
  * @type {number}
  */
-const DEFAULT_REQUEST_TIMEOUT = 5000
+const DEFAULT_REQUEST_TIMEOUT = 27000
 
 /**
  * Pending request map. Pending request is when a service uses a Promise
@@ -23,7 +23,8 @@ const DEFAULT_REQUEST_TIMEOUT = 5000
  * a peer is waiting for a feedback from another peer before Promise has completed.
  * @type {external:Map}
  */
-const temp = new Map()
+const itemsStorage = new Map()
+const requestsStorage = new Map()
 
 /**
  * Each service must implement this interface.
@@ -36,18 +37,10 @@ class ServiceInterface {
    * @callback ServiceInterface~onTimeout
    */
 
-  constructor () {
-    if (!temp.has(this.name)) {
-      temp.set(this.name, new WeakMap())
-    }
-  }
-
-  /**
-   * Service name which corresponds to its class name.
-   * @return {string} - Name
-   */
-  get name () {
-    return this.constructor.name
+  constructor (id) {
+    this.id = id
+    if (!itemsStorage.has(this.id)) itemsStorage.set(this.id, new WeakMap())
+    if (!requestsStorage.has(this.id)) requestsStorage.set(this.id, new WeakMap())
   }
 
   /**
@@ -58,9 +51,9 @@ class ServiceInterface {
    * @param {number} [timeout=DEFAULT_REQUEST_TIMEOUT] - Timeout in milliseconds
    * @param {ServiceInterface~onTimeout} [onTimeout=() => {}] - Timeout event handler
    */
-  addPendingRequest (wc, id, data, timeout = DEFAULT_REQUEST_TIMEOUT, onTimeout = () => {}) {
-    this.addTemp(wc, id, data)
-    setTimeout(onTimeout, timeout)
+  setPendingRequest (wc, id, data, timeout = DEFAULT_REQUEST_TIMEOUT) {
+    this.setTo(requestsStorage, wc, id, data)
+    setTimeout(() => { data.reject('Pending request timeout') }, timeout)
   }
 
   /**
@@ -68,14 +61,35 @@ class ServiceInterface {
    * @param  {WebChannel} wc - Web channel
    * @param  {number} id - Identifier
    * @return {Object} - Javascript object corresponding to the one provided in
-   * addPendingRequest function
+   * setPendingRequest function
    */
   getPendingRequest (wc, id) {
-    return this.getTemp(wc, id)
+    return this.getFrom(requestsStorage, wc, id)
   }
 
-  addTemp (wc, id, data) {
-    let currentServiceTemp = temp.get(this.name)
+  setItem (wc, id, data) {
+    this.setTo(itemsStorage, wc, id, data)
+  }
+
+  getItem (wc, id) {
+    return this.getFrom(itemsStorage, wc, id)
+  }
+
+  getItems (wc) {
+    let items = itemsStorage.get(this.id).get(wc)
+    if (items) return items
+    else return new Map()
+  }
+
+  removeItem (wc, id) {
+    let currentServiceTemp = itemsStorage.get(this.id)
+    let idMap = currentServiceTemp.get(wc)
+    currentServiceTemp.get(wc).delete(id)
+    if (idMap.size === 0) currentServiceTemp.delete(wc)
+  }
+
+  setTo (storage, wc, id, data) {
+    let currentServiceTemp = storage.get(this.id)
     let idMap
     if (currentServiceTemp.has(wc)) {
       idMap = currentServiceTemp.get(wc)
@@ -83,18 +97,16 @@ class ServiceInterface {
       idMap = new Map()
       currentServiceTemp.set(wc, idMap)
     }
-    idMap.set(id, data)
+    if (!idMap.has(id)) idMap.set(id, data)
   }
 
-  getTemp (wc, id) {
-    return temp.get(this.name).get(wc).get(id)
-  }
-
-  deleteTemp (wc, id) {
-    let currentServiceTemp = temp.get(this.name)
-    let idMap = currentServiceTemp.get(wc)
-    currentServiceTemp.get(wc).delete(id)
-    if (idMap.size === 0) currentServiceTemp.delete(wc)
+  getFrom (storage, wc, id) {
+    let idMap = storage.get(this.id).get(wc)
+    if (idMap !== undefined) {
+      let item = idMap.get(id)
+      if (item !== undefined) return item
+    }
+    return null
   }
 }
 

@@ -1,4 +1,4 @@
-import {signaling} from 'config'
+import {SIGNALING} from 'testhelper'
 import WebChannel from 'src/WebChannel'
 
 let host = '127.0.0.1'
@@ -9,13 +9,14 @@ const DEBUG_PING = 'DEBUG_PING'
 const DEBUG_PONG = 'DEBUG_PONG'
 const DEBUG_KICK = 'DEBUG_KICK'
 
-describe('1 bot -> ', () => {
-  it('Should connect with the asking peer and then an other peer should connect to the network', (done) => {
+xdescribe('1 bot -> ', () => {
+  let signaling = SIGNALING
+  it('Should connect with the asking peer and then an other peer should connect to the network', done => {
     wc1 = new WebChannel({signaling})
     wc2 = new WebChannel({signaling})
 
     let joiningPeers = []
-    wc1.onJoining = (id) => {
+    wc1.onJoining = id => {
       joiningPeers.push(id)
       if (joiningPeers.length === 2) {
         wc1.leave()
@@ -26,11 +27,11 @@ describe('1 bot -> ', () => {
 
     wc1.addBotServer(host, port)
       .then(() => wc1.open())
-      .then((data) => wc2.join(data.key))
+      .then(data => wc2.join(data.key))
       .catch(done.fail)
   })
 
-  it('Should send message PONG to all peer on the network', (done) => {
+  it('Should send message PONG to all peer on the network', done => {
     wc1 = new WebChannel({signaling})
     wc2 = new WebChannel({signaling})
 
@@ -52,7 +53,7 @@ describe('1 bot -> ', () => {
 
     wc1.addBotServer(host, port)
       .then(() => wc1.open())
-      .then((data) => {
+      .then(data => {
         wc1.send(DEBUG_PING)
         return wc2.join(data.key)
       })
@@ -60,12 +61,12 @@ describe('1 bot -> ', () => {
       .catch(done.fail)
   })
 
-  it('Should connect to an existing peer network of 2 peers by the one who open the gate', (done) => {
+  it('Should connect to an existing peer network of 2 peers by the one who open the gate', done => {
     wc1 = new WebChannel({signaling})
     wc2 = new WebChannel({signaling})
 
     let joiningPeers = []
-    wc1.onJoining = (id) => {
+    wc1.onJoining = id => {
       joiningPeers.push(id)
       if (joiningPeers.length === 2) {
         wc1.leave()
@@ -75,17 +76,17 @@ describe('1 bot -> ', () => {
     }
 
     wc1.open()
-      .then((data) => wc2.join(data.key))
+      .then(data => wc2.join(data.key))
       .then(() => wc1.addBotServer(host, port))
       .catch(done.fail)
   })
 
-  it('Should connect to an existing peer network of 2 peers by the one who join', (done) => {
+  it('Should connect to an existing peer network of 2 peers by the one who join', done => {
     wc1 = new WebChannel({signaling})
     wc2 = new WebChannel({signaling})
 
     let joiningPeers = []
-    wc1.onJoining = (id) => {
+    wc1.onJoining = id => {
       joiningPeers.push(id)
       if (joiningPeers.length === 2) {
         wc1.leave()
@@ -95,18 +96,18 @@ describe('1 bot -> ', () => {
     }
 
     wc1.open()
-      .then((data) => wc2.join(data.key))
+      .then(data => wc2.join(data.key))
       .then(() => wc2.addBotServer(host, port))
       .catch(done.fail)
   })
 
-  xit('Should be able to reconnect to a network after being kicked', (done) => {
+  xit('Should be able to reconnect to a network after being kicked', done => {
     wc1 = new WebChannel({signaling})
     wc2 = new WebChannel({signaling})
 
     let joiningPeers = []
     let first = true
-    wc1.onJoining = (id) => {
+    wc1.onJoining = id => {
       joiningPeers.push(id)
       if (joiningPeers.length === 2) {
         if (first) wc1.send(DEBUG_KICK)
@@ -115,7 +116,7 @@ describe('1 bot -> ', () => {
       }
     }
 
-    wc1.onLeaving = (id) => {
+    wc1.onLeaving = id => {
       let index = joiningPeers.indexOf(id)
       joiningPeers.splice(index, 1)
       wc1.addBotServer(host, port).catch(done.fail)
@@ -127,7 +128,7 @@ describe('1 bot -> ', () => {
     }
 
     wc1.open()
-      .then((data) => wc2.join(data.key))
+      .then(data => wc2.join(data.key))
       .then(() => wc1.addBotServer(host, port))
       .catch(done.fail)
   })

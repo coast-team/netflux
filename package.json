@@ -96,7 +96,7 @@
     "rollup-plugin-string": "^2.0.2",
     "semantic-release": "^4.3.5",
     "sigver": "^7.1.0",
-    "standard": "^7.0.1"
+    "standard": "^8.0.0"
   },
   "standard": {
     "parser": "babel-eslint",
@@ -112,6 +112,7 @@
       "afterEach",
       "beforeAll",
       "afterAll",
+      "spyOn",
       "DOMException",
       "RTCPeerConnection",
       "RTCSessionDescription",
