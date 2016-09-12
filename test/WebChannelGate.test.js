@@ -1,5 +1,5 @@
 import WebChannelGate from 'src/WebChannelGate'
-import {SIGNALING} from 'testhelper'
+import {SIGNALING} from 'utils/helper'
 
 describe('WebChannelGate', () => {
   let webChannelGate

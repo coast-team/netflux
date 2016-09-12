@@ -1,11 +1,16 @@
-import {isBrowser} from './../src/helper'
+import {isBrowser} from 'src/helper'
 
 // Main signaling server for all tests
 const SIGNALING = 'ws://localhost:8000'
+const BOT = 'ws://localhost:9000'
+const CHROME_WC_ID = 11111
+const FIREFOX_WC_ID = 11111
 // const signaling = 'wss://sigver-coastteam.rhcloud.com:8443'
 // const signaling = 'ws://sigver-coastteam.rhcloud.com:8000'
 // Used to test send/receive a lot of messages
 const MSG_NUMBER = 100
+
+const LEAVE_CODE = 1
 
 const INSTANCES = [
   String,
@@ -158,14 +163,63 @@ function xitNode (shouldSkip, ...args) {
   } else Reflect.apply(xit, undefined, args)
 }
 
+function getEnvironment () {
+  if (isBrowser()) {
+    let sUsrAg = navigator.userAgent
+    if (sUsrAg.indexOf('Chrome') > -1) {
+      return 'chrome'
+    } else if (sUsrAg.indexOf('Firefox') > -1) {
+      return 'firefox'
+    }
+  }
+  return 'node'
+}
+
+function sendReceive (wc, data, done, id) {
+  wc.onMessage = (id, msg, isBroadcast) => {
+    if (typeof data === 'string') expect(typeof msg).toEqual('string')
+    else {
+      expect(Reflect.getPrototypeOf(msg)).toEqual(Reflect.getPrototypeOf(data))
+    }
+    expect(id).toEqual(wc.members[0])
+    expect(msg).toEqual(data)
+    expect(isBroadcast).toEqual(isBroadcast)
+    done()
+  }
+  if (id) wc.sendTo(id, data)
+  else wc.send(data)
+}
+
+function onMessageForBot (wc, id, msg, isBroadcast) {
+  try {
+    let data = JSON.parse(msg)
+    switch (data.code) {
+      case LEAVE_CODE:
+        wc.leave()
+        break
+    }
+  } catch (err) {
+    if (isBroadcast) wc.send(msg)
+    else wc.sendTo(id, msg)
+  }
+}
+
 export {
   SIGNALING,
+  BOT,
   MSG_NUMBER,
   INSTANCES,
+  LEAVE_CODE,
+  CHROME_WC_ID,
+  FIREFOX_WC_ID,
   randKey,
   randStr,
+  randData,
+  sendReceive,
+  getEnvironment,
   allMessagesAreSentAndReceived,
   checkMembers,
+  onMessageForBot,
   TestGroup,
   itBrowser,
   xitBrowser,

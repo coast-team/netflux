@@ -5,12 +5,13 @@ import {
   allMessagesAreSentAndReceived,
   INSTANCES,
   randStr,
-  checkMembers
-} from 'testhelper'
+  checkMembers,
+  itBrowser
+} from 'utils/helper'
 import WebChannel from 'src/WebChannel'
 import {isBrowser} from 'src/helper'
-import smallStr from '200kb.txt'
-import bigStr from '4mb.txt'
+import smallStr from 'utils/200kb.txt'
+import bigStr from 'utils/4mb.txt'
 
 describe('Fully connected: 3 peers', () => {
   let signaling = SIGNALING
@@ -117,31 +118,29 @@ describe('Fully connected: 3 peers', () => {
       })
     }
 
-    if (isBrowser()) {
-      it('~200 KB string', done => {
-        let groups = []
-        for (let i = 0; i < 3; i++) {
-          groups[i] = new TestGroup(wcs[i], null)
-          groups[i].set(String, smallStr + i)
-        }
-        allMessagesAreSentAndReceived(groups, String)
-          .then(done).catch(done.fail)
-        for (let g of groups) g.wc.send(g.get(String))
-      })
+    itBrowser(true, '~200 KB string', done => {
+      let groups = []
+      for (let i = 0; i < 3; i++) {
+        groups[i] = new TestGroup(wcs[i], null)
+        groups[i].set(String, smallStr + i)
+      }
+      allMessagesAreSentAndReceived(groups, String)
+        .then(done).catch(done.fail)
+      for (let g of groups) g.wc.send(g.get(String))
+    })
 
-      it('~4 MB string', done => {
-        let indexes = [0, 1, 2]
-        let index1 = Math.round(2 * Math.random())
-        indexes.splice(index1, 1)
-        let index2 = indexes[Math.round(Math.random())]
-        wcs[index1].onMessage = (id, msg) => {
-          expect(id).toEqual(wcs[index2].myId)
-          expect(msg === bigStr).toBeTruthy()
-          done()
-        }
-        wcs[index2].sendTo(wcs[index1].myId, bigStr)
-      }, 4000)
-    }
+    itBrowser(true, '~4 MB string', done => {
+      let indexes = [0, 1, 2]
+      let index1 = Math.round(2 * Math.random())
+      indexes.splice(index1, 1)
+      let index2 = indexes[Math.round(Math.random())]
+      wcs[index1].onMessage = (id, msg) => {
+        expect(id).toEqual(wcs[index2].myId)
+        expect(msg === bigStr).toBeTruthy()
+        done()
+      }
+      wcs[index2].sendTo(wcs[index1].myId, bigStr)
+    }, 4000)
 
     it(`${MSG_NUMBER} small messages`, done => {
       let msgs = []

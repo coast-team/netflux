@@ -1299,9 +1299,7 @@ class FullyConnectedService extends ManagerInterface {
 
   leave (wc) {
     for (let c of wc.channels) {
-      c.onMessage = () => {}
-      c.onClose = () => {}
-      c.onError = () => {}
+      c.clearHandlers()
       c.close()
     }
     wc.channels.clear()
@@ -1440,6 +1438,10 @@ function isBrowser () {
   return true
 }
 
+function isSocket (channel) {
+  return channel.constructor.name === 'WebSocket'
+}
+
 const CONNECT_TIMEOUT = 15000
 let src
 let webRTCAvailable = true
@@ -1559,7 +1561,6 @@ class WebRTCService extends ServiceInterface {
   listenFromSignaling (ws, onChannel) {
     ws.onmessage = evt => {
       let msg = JSON.parse(evt.data)
-
       if ('id' in msg && 'data' in msg) {
         let item = super.getItem(ws, msg.id)
         if (!item) {
@@ -1734,6 +1735,10 @@ class CandidatesBuffer {
 const WebSocket = isBrowser() ? window.WebSocket : require('ws')
 const CONNECT_TIMEOUT$1 = 7000
 const OPEN = WebSocket.OPEN
+let listenOnWebSocket = false
+let setListenOnWebSocket = (value) => {
+  listenOnWebSocket = value
+}
 
 class WebSocketService extends ServiceInterface {
 
@@ -1757,94 +1762,6 @@ class WebSocketService extends ServiceInterface {
     })
   }
 
-}
-
-const NEW_CHANNEL = 'newChannel'
-
-class ChannelBuilderService extends ServiceInterface {
-  constructor (id) {
-    super(id)
-    this.default = {
-      host: '',
-      port: 0
-    }
-  }
-
-  connectTo (wc, id) {
-    return new Promise((resolve, reject) => {
-      this.setPendingRequest(wc, id, {resolve, reject})
-      let data = this.availableConnectors(wc)
-      let connectors = data.connectors
-      let host = data.host
-      let port = data.port
-      wc.sendInnerTo(id, this.id, {connectors, sender: wc.myId, host, port, oneMsg: true})
-    })
-  }
-
-  availableConnectors (wc) {
-    let data = {}
-    let connectors = []
-    if (webRTCAvailable) connectors.push(WEBRTC)
-    let host = wc.settings.host
-    let port = wc.settings.port
-    if (!isBrowser() && host !== undefined && port !== undefined) connectors.push(WEBSOCKET)
-    data = {connectors, host, port}
-    return data
-  }
-
-  onChannel (wc, channel, oneMsg, sender) {
-    wc.initChannel(channel, sender)
-      .then(channel => {
-        if (oneMsg) this.getPendingRequest(wc, sender).resolve(channel)
-      })
-  }
-
-  onMessage (channel, senderId, recepientId, msg) {
-    let wc = channel.webChannel
-    let host = msg.host
-    let port = msg.port
-    let settings = Object.assign({}, wc.settings, {host, port})
-    if (msg.connectors.includes(WEBSOCKET)) {
-      // A Bot server send the message
-      let cBuilder = provide(WEBSOCKET, settings)
-      let url = 'ws://' + host + ':' + port
-      // Try to connect in WebSocket
-      cBuilder.connect(url)
-        .then(channel => {
-          channel.send(JSON.stringify({
-            code: NEW_CHANNEL,
-            sender: wc.myId,
-            wcId: wc.id,
-            oneMsg: msg.oneMsg}))
-          this.onChannel(wc, channel, !msg.oneMsg, msg.sender)
-        })
-        .catch(() => {
-          cBuilder = provide(WEBRTC)
-          cBuilder.connectOverWebChannel(wc, msg.sender)
-            .then(channel => {
-              this.onChannel(wc, channel, !msg.oneMsg, msg.sender)
-            })
-        })
-    } else {
-      let data = this.availableConnectors(wc)
-      let host = data.host
-      let port = data.port
-      if (data.connectors.includes(WEBSOCKET)) {
-        // The peer who send the message doesn't listen in WebSocket and i'm bot
-        wc.sendInnerTo(msg.sender, this.id, {
-          connectors: [WEBRTC, WEBSOCKET],
-          sender: wc.myId,
-          host,
-          port,
-          oneMsg: false})
-      } else {
-        // The peer who send the message doesn't listen in WebSocket and doesn't listen too
-        let cBuilder = provide(WEBRTC)
-        cBuilder.connectOverWebChannel(wc, msg.sender)
-          .then(channel => this.onChannel(wc, channel, !msg.oneMsg, msg.sender))
-      }
-    }
-  }
 }
 
 /**
@@ -1948,6 +1865,9 @@ const FLOAT_32_ARRAY_TYPE = 10
  * @type {number}
  */
 const FLOAT_64_ARRAY_TYPE = 11
+
+const JOIN = 1
+const NEW_CHANNEL = 2
 
 /**
  * Buffer for big user messages.
@@ -2312,6 +2232,79 @@ class Buffer {
   }
 }
 
+class ChannelBuilderService extends ServiceInterface {
+  connectTo (wc, id) {
+    return new Promise((resolve, reject) => {
+      this.setPendingRequest(wc, id, {resolve, reject})
+      let connectors = this.availableConnectors(wc)
+      wc.sendInnerTo(id, this.id, {
+        connectors,
+        sender: wc.myId,
+        botUrl: wc.settings.bot,
+        oneMsg: true
+      })
+    })
+  }
+
+  availableConnectors (wc) {
+    let connectors = []
+    if (webRTCAvailable) connectors[connectors.length] = WEBRTC
+    if (listenOnWebSocket) connectors[connectors.length] = WEBSOCKET
+    let forground = wc.settings.connector
+    if (connectors.length !== 1 && connectors[0] !== forground) {
+      let tmp = connectors[0]
+      connectors[0] = connectors[1]
+      connectors[1] = tmp
+    }
+    return connectors
+  }
+
+  onChannel (wc, channel, oneMsg, sender) {
+    wc.initChannel(channel, sender)
+      .then(channel => {
+        if (oneMsg) this.getPendingRequest(wc, sender).resolve(channel)
+      })
+  }
+
+  onMessage (channel, senderId, recepientId, msg) {
+    let wc = channel.webChannel
+    if (msg.connectors.includes(WEBSOCKET)) {
+      // A Bot server send the message
+      // Try to connect in WebSocket
+      provide(WEBSOCKET).connect(msg.botUrl)
+        .then(channel => {
+          let msgBld = provide(MESSAGE_BUILDER)
+          channel.send(msgBld.msg(JOIN, wc.myId, null, {
+            wcId: this.id,
+            oneMsg: msg.oneMsg
+          }))
+          this.onChannel(wc, channel, !msg.oneMsg, msg.sender)
+        })
+        .catch(() => {
+          provide(WEBRTC).connectOverWebChannel(wc, msg.sender)
+            .then(channel => {
+              this.onChannel(wc, channel, !msg.oneMsg, msg.sender)
+            })
+        })
+    } else {
+      let connectors = this.availableConnectors(wc)
+      if (connectors.includes(WEBSOCKET)) {
+        // The peer who send the message doesn't listen in WebSocket and i'm bot
+        wc.sendInnerTo(msg.sender, this.id, {
+          connectors,
+          sender: wc.myId,
+          botUrl: wc.settings.bot,
+          oneMsg: false
+        })
+      } else {
+        // The peer who send the message doesn't listen in WebSocket and doesn't listen too
+        provide(WEBRTC).connectOverWebChannel(wc, msg.sender)
+          .then(channel => this.onChannel(wc, channel, !msg.oneMsg, msg.sender))
+      }
+    }
+  }
+}
+
 /**
  * Service Provider module is a helper module for {@link module:service}. It is
  * responsible to instantiate all services. This module must be used to get
@@ -2384,7 +2377,6 @@ let provide = function (id, options = {}) {
       services.set(id, service)
       return service
     default:
-      console.trace()
       throw new Error(`Unknown service id: "${id}"`)
   }
 }
@@ -2394,7 +2386,6 @@ let provide = function (id, options = {}) {
  * {@link external:WebSocket}.
  */
 class Channel {
-
   /**
    * Creates *Channel* instance from existing data channel or web socket, assigns
    * it to the specified *WebChannel* and gives him an identifier.
@@ -2404,9 +2395,7 @@ class Channel {
    * @param {number} peerId - Identifier of the peer who is at the other end of
    * this channel
    */
-  constructor (channel, webChannel, peerId) {
-    channel.binaryType = 'arraybuffer'
-
+  constructor (channel) {
     /**
      * Data channel or web socket.
      * @private
@@ -2418,28 +2407,22 @@ class Channel {
      * The *WebChannel* which this channel belongs to.
      * @type {WebChannel}
      */
-    this.webChannel = webChannel
+    this.webChannel = null
 
     /**
      * Identifier of the peer who is at the other end of this channel
      * @type {WebChannel}
      */
-    this.peerId = peerId
+    this.peerId = -1
 
-    this.send = isBrowser() ? this.sendBrowser : this.sendNode
-  }
-
-  /**
-   * Configure this channel. Set up message, error and close event handlers.
-   */
-  config () {
-    this.channel.onmessage = msgEvt => this.webChannel.onChannelMessage(this, msgEvt.data)
-    this.channel.onerror = evt => this.webChannel.manager.onChannelError(evt, this)
-    this.channel.onclose = evt => {
-      if (this.webChannel.manager.onChannelClose(evt, this)) {
-        this.webChannel.members.splice(this.webChannel.members.indexOf(this.peerId), 1)
-        this.webChannel.onLeaving(this.peerId)
-      }
+    if (isBrowser()) {
+      channel.binaryType = 'arraybuffer'
+      this.send = this.sendBrowser
+    } else if (isSocket(channel)) {
+      this.send = this.sendInNodeThroughSocket
+    } else {
+      channel.binaryType = 'arraybuffer'
+      this.send = this.sendInNodeThroughDataChannel
     }
   }
 
@@ -2460,20 +2443,50 @@ class Channel {
     }
   }
 
-  sendNode (data) {
+  sendInNodeThroughSocket (data) {
+    if (this.isOpen()) {
+      try {
+        this.channel.send(data, {binary: true})
+      } catch (err) {
+        console.error(`Channel send: ${err.message}`)
+      }
+    }
+  }
+
+  sendInNodeThroughDataChannel (data) {
     this.sendBrowser(data.slice(0))
   }
 
-  set onMessage (msgEvtHandler) {
-    this.channel.onmessage = msgEvt => msgEvtHandler(this, msgEvt.data)
+  set onMessage (handler) {
+    if (!isBrowser() && isSocket(this.channel)) {
+      this.channel.onmessage = msgEvt => {
+        let ab = new ArrayBuffer(msgEvt.data.length)
+        let view = new Uint8Array(ab)
+        for (let i = 0; i < msgEvt.data.length; i++) {
+          view[i] = msgEvt.data[i]
+        }
+        handler(ab)
+      }
+    } else this.channel.onmessage = msgEvt => handler(msgEvt.data)
   }
 
-  set onClose (closeEvtHandler) {
-    this.channel.onclose = closeEvtHandler
+  set onClose (handler) {
+    this.channel.onclose = closeEvt => {
+      if (this.webChannel !== null && handler(closeEvt)) {
+        this.webChannel.members.splice(this.webChannel.members.indexOf(this.peerId), 1)
+        this.webChannel.onLeaving(this.peerId)
+      } else handler(closeEvt)
+    }
   }
 
-  set onError (errEvtHandler) {
-    this.channel.onerror = evt => errEvtHandler(evt, this.peerId)
+  set onError (handler) {
+    this.channel.onerror = evt => handler(evt)
+  }
+
+  clearHandlers () {
+    this.onmessage = () => {}
+    this.onclose = () => {}
+    this.onerror = () => {}
   }
 
   isOpen () {
@@ -2551,10 +2564,13 @@ class WebChannelGate {
       webSocketService.connect(url)
         .then(ws => {
           ws.onclose = closeEvt => {
-            reject(closeEvt.reason)
             this.onClose(closeEvt)
+            reject(closeEvt.reason)
           }
-          ws.onerror = err => reject(err.message)
+          ws.onerror = err => {
+            console.log('ERROR: ', err)
+            reject(err.message)
+          }
           ws.onmessage = evt => {
             let msg
             try {
@@ -2666,13 +2682,6 @@ const PING = 4
 const PONG = 5
 
 /**
- * Constant used to send a message to the server in order that
- * he can join the webcahnnel
- * @type {string}
- */
-const ADD_BOT_SERVER = 'addBotServer'
-
-/**
  * This class is an API starting point. It represents a group of collaborators
  * also called peers. Each peer can send/receive broadcast as well as personal
  * messages. Every peer in the *WebChannel* can invite another person to join
@@ -2693,18 +2702,19 @@ class WebChannel {
    * *WebChannel* constructor. *WebChannel* can be parameterized in terms of
    * network topology and connector technology (WebRTC or WebSocket. Currently
    * WebRTC is only available).
-   * @param  {Object} [options] *WebChannel* configuration.
+   * @param  {Object} [options] *WebChannel* configuration
    * @param  {string} [options.topology=FULLY_CONNECTED] Defines the network
-   *            topology.
-   * @param  {string} [options.connector=WEBRTC] Determines the connection
-   *            technology to use for build *WebChannel*.
+   *            topology
+   * @param  {string} [options.connector=WEBRTC] Prioritizes this connection
+   *            technology
    * @returns {WebChannel} Empty *WebChannel* without any connection.
    */
   constructor (options = {}) {
     this.defaults = {
       connector: WEBRTC,
       topology: FULLY_CONNECTED,
-      signaling: 'wss://sigver-coastteam.rhcloud.com:8443'
+      signaling: 'wss://sigver-coastteam.rhcloud.com:8443',
+      bot: 'ws://localhost:9000'
     }
     this.settings = Object.assign({}, this.defaults, options)
 
@@ -2807,19 +2817,19 @@ class WebChannel {
    */
   open (options = {}) {
     let settings = Object.assign({}, this.settings, options)
-    return this.gate.open(channel => {
-      this.initChannel(channel)
-        .then(channel => this.addChannel(channel))
-    }, settings)
+    return this.gate.open(channel => this.addChannel(channel), settings)
   }
 
   addChannel (channel) {
-    let msg = msgBld.msg(INITIALIZATION, this.myId, channel.peerId, {
-      manager: this.manager.id,
-      wcId: this.id
-    })
-    channel.send(msg)
-    return this.manager.add(channel)
+    return this.initChannel(channel)
+      .then(channel => {
+        let msg = msgBld.msg(INITIALIZATION, this.myId, channel.peerId, {
+          manager: this.manager.id,
+          wcId: this.id
+        })
+        channel.send(msg)
+        return this.manager.add(channel)
+      })
   }
 
   /**
@@ -2829,37 +2839,16 @@ class WebChannel {
     * @param {number} port - The port of the bot server to be add
     * @return {Promise} It resolves once the bot server joined the network
     */
-  addBotServer (host, port) {
-    let cBuilder = provide(WEBSOCKET, {host, port, addBotServer: true})
-    let url = 'ws://' + host + ':' + port
-    return cBuilder.connect(url)
+  addBotServer (url) {
+    return provide(WEBSOCKET).connect(url)
       .then(socket => {
         /*
           Once the connection open a message is sent to the server in order
           that he can join initiate the channel
         */
-        socket.send(JSON.stringify({code: ADD_BOT_SERVER, sender: this.myId, wcId: this.id}))
-        return this.initChannel(socket)
+        socket.send(msgBld.msg(JOIN, this.myId, null, {wcId: this.id}))
+        return this.addChannel(socket)
       })
-      .then(channel => this.addChannel(channel))
-  }
-
-  /**
-    * Allow a bot server to join the network by creating a connection
-    * with the peer who asked his coming
-    *
-    * @param {Object} channel - The channel between the server and the pair
-    * who requested the add
-    * @param {number} id - The id of the peer who requested the add
-    * @return {Promise} It resolves once the the server has joined the network
-    */
-  joinAsBot (channel, id) {
-    return new Promise((resolve, reject) => {
-      this.onJoin = () => resolve(this)
-      this.initChannel(channel, id)// .then(channel => {
-        // console.log('[DEBUG] Resolved initChannel by server')
-      // })
-    })
   }
 
   /**
@@ -2899,7 +2888,7 @@ class WebChannel {
     let settings = Object.assign({}, this.settings, options)
     let webSocketService = provide(WEBSOCKET)
     let wsWithSignaling
-    let webRTCService = provide(this.settings.connector)
+    let webRTCService = provide(WEBRTC)
     return new Promise((resolve, reject) => {
       this.onJoin = () => resolve(this)
       webSocketService.connect(settings.signaling)
@@ -2917,6 +2906,41 @@ class WebChannel {
   }
 
   /**
+    * Allow a bot server to join the network by creating a connection
+    * with the peer who asked his coming
+    *
+    * @param {Object} channel - The channel between the server and the pair
+    * who requested the add
+    * @return {Promise} It resolves once the the server has joined the network
+    */
+  joinAsBot (channel) {
+    return new Promise((resolve, reject) => {
+      this.onJoin = resolve
+      this.initChannel(channel)
+    })
+  }
+
+  // joinViaBot (key, url) {
+  //   let webSocketService = provide(WEBSOCKET)
+  //   let wsWithSignaling
+  //   let webRTCService = provide(this.settings.connector)
+  //   return new Promise((resolve, reject) => {
+  //     this.onJoin = () => resolve(this)
+  //     webSocketService.connect(settings.signaling)
+  //       .then(ws => {
+  //         wsWithSignaling = ws
+  //         return webRTCService.connectOverSignaling(ws, key)
+  //       })
+  //       .then(channel => {
+  //         wsWithSignaling.onclose = null
+  //         wsWithSignaling.close()
+  //         return this.initChannel(channel)
+  //       })
+  //       .catch(reject)
+  //   })
+  // }
+
+  /**
    * Leave the *WebChannel*. No longer can receive and send messages to the group.
    */
   leave () {
@@ -2924,7 +2948,7 @@ class WebChannel {
       this.topology = this.settings.topology
       this.members = []
       this.pingTime = 0
-      this.gate.close()
+      // this.gate.close()
       this.manager.leave(this)
     }
   }
@@ -3074,8 +3098,12 @@ class WebChannel {
    */
   initChannel (ch, id = -1) {
     if (id === -1) id = this.generateId()
-    let channel = new Channel(ch, this, id)
-    channel.config()
+    let channel = new Channel(ch)
+    channel.peerId = id
+    channel.webChannel = this
+    channel.onMessage = data => this.onChannelMessage(channel, data)
+    channel.onClose = closeEvt => this.manager.onChannelClose(closeEvt, channel)
+    channel.onError = evt => this.manager.onChannelError(evt, channel)
     return Promise.resolve(channel)
   }
 
@@ -3096,9 +3124,6 @@ class WebChannel {
     } while (true)
   }
 }
-
-const ADD_BOT_SERVER$1 = 'addBotServer'
-const NEW_CHANNEL$1 = 'newChannel'
 
 class Bot {
   constructor (options = {}) {
@@ -3133,56 +3158,48 @@ class Bot {
       })
 
       this.server.on('connection', socket => {
-        socket.on('message', msg => {
-          let data = {code: ''}
-          try {
-            data = JSON.parse(msg)
-          } catch (e) {}
-          switch (data.code) {
-            case ADD_BOT_SERVER$1:
-              this.addBotServer(socket, data)
+        let channel = new Channel(socket)
+        let msgBld = provide(MESSAGE_BUILDER)
+        channel.onMessage = data => {
+          let header = msgBld.readHeader(data)
+          let msg = msgBld.readInternalMessage(data)
+          let wc = this.findWebChannel(msg.wcId)
+          switch (header.code) {
+            case JOIN:
+              if (wc === null) {
+                wc = new WebChannel({connector: WEBSOCKET})
+                wc.joinAsBot(channel.channel).then(() => this.onWebChannel(wc))
+              } else wc.addChannel(channel.channel)
               break
-            case NEW_CHANNEL$1:
-              this.newChannel(socket, data)
+            case NEW_CHANNEL:
+              if (wc !== null) {
+                provide(CHANNEL_BUILDER).onChannel(wc, channel.channel, msg.oneMsg, header.senderId)
+              }
               break
             default:
-              socket.close()
+              channel.close()
           }
-        })
+        }
       })
     })
   }
 
-  addBotServer (socket, data) {
-    let alreadyPresent = false
+  addWebChannel (wc) {
+    this.webChannels[this.webChannels.length] = wc
+  }
+
+  stopListen () {
+    return this.server.close()
+  }
+
+  findWebChannel (id) {
     this.webChannels.forEach((wc, index) => {
-      if (data.wcId === wc.id) alreadyPresent = true
-    })
-
-    if (!alreadyPresent) {
-      let webChannel
-
-      webChannel = new WebChannel({
-        connector: 'WebSocket',
-        host: this.settings.host,
-        port: this.settings.port})
-
-      webChannel.joinAsBot(socket, data.sender).then(() => {
-        this.onWebChannel(webChannel)
-      })
-
-      this.webChannels.push(webChannel)
-    }
-  }
-
-  newChannel (socket, data) {
-    let channelBuilderService = provide(CHANNEL_BUILDER)
-    for (var wc of this.webChannels) {
-      if (data.wcId === wc.id) {
-        channelBuilderService.onChannel(wc, socket, data.oneMsg, data.sender)
-        break
+      if (id === wc.id) {
+        if (wc.members.length === 0) this.webChannels.splice(index, 1)
+        else return wc
       }
-    }
+    })
+    return null
   }
 
   leave (WebChannel) {
@@ -3194,10 +3211,6 @@ class Bot {
       }
     }
     this.webChannels.splice(index, 1)[0].leave()
-  }
-
-  stopListen () {
-    return this.server.close()
   }
 
   log (label, msg) {

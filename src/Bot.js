@@ -1,9 +1,8 @@
 import {isBrowser} from 'helper'
 import WebChannel from 'WebChannel'
-import {CHANNEL_BUILDER, provide} from 'serviceProvider'
-
-const ADD_BOT_SERVER = 'addBotServer'
-const NEW_CHANNEL = 'newChannel'
+import Channel from 'Channel'
+import {CHANNEL_BUILDER, MESSAGE_BUILDER, WEBSOCKET, provide} from 'serviceProvider'
+import {JOIN, NEW_CHANNEL} from 'service/MessageBuilderService'
 
 class Bot {
   constructor (options = {}) {
@@ -38,56 +37,48 @@ class Bot {
       })
 
       this.server.on('connection', socket => {
-        socket.on('message', msg => {
-          let data = {code: ''}
-          try {
-            data = JSON.parse(msg)
-          } catch (e) {}
-          switch (data.code) {
-            case ADD_BOT_SERVER:
-              this.addBotServer(socket, data)
+        let channel = new Channel(socket)
+        let msgBld = provide(MESSAGE_BUILDER)
+        channel.onMessage = data => {
+          let header = msgBld.readHeader(data)
+          let msg = msgBld.readInternalMessage(data)
+          let wc = this.findWebChannel(msg.wcId)
+          switch (header.code) {
+            case JOIN:
+              if (wc === null) {
+                wc = new WebChannel({connector: WEBSOCKET})
+                wc.joinAsBot(channel.channel).then(() => this.onWebChannel(wc))
+              } else wc.addChannel(channel.channel)
               break
             case NEW_CHANNEL:
-              this.newChannel(socket, data)
+              if (wc !== null) {
+                provide(CHANNEL_BUILDER).onChannel(wc, channel.channel, msg.oneMsg, header.senderId)
+              }
               break
             default:
-              socket.close()
+              channel.close()
           }
-        })
+        }
       })
     })
   }
 
-  addBotServer (socket, data) {
-    let alreadyPresent = false
+  addWebChannel (wc) {
+    this.webChannels[this.webChannels.length] = wc
+  }
+
+  stopListen () {
+    return this.server.close()
+  }
+
+  findWebChannel (id) {
     this.webChannels.forEach((wc, index) => {
-      if (data.wcId === wc.id) alreadyPresent = true
-    })
-
-    if (!alreadyPresent) {
-      let webChannel
-
-      webChannel = new WebChannel({
-        connector: 'WebSocket',
-        host: this.settings.host,
-        port: this.settings.port})
-
-      webChannel.joinAsBot(socket, data.sender).then(() => {
-        this.onWebChannel(webChannel)
-      })
-
-      this.webChannels.push(webChannel)
-    }
-  }
-
-  newChannel (socket, data) {
-    let channelBuilderService = provide(CHANNEL_BUILDER)
-    for (var wc of this.webChannels) {
-      if (data.wcId === wc.id) {
-        channelBuilderService.onChannel(wc, socket, data.oneMsg, data.sender)
-        break
+      if (id === wc.id) {
+        if (wc.members.length === 0) this.webChannels.splice(index, 1)
+        else return wc
       }
-    }
+    })
+    return null
   }
 
   leave (WebChannel) {
@@ -99,10 +90,6 @@ class Bot {
       }
     }
     this.webChannels.splice(index, 1)[0].leave()
-  }
-
-  stopListen () {
-    return this.server.close()
   }
 
   log (label, msg) {

@@ -1,4 +1,5 @@
 import {provide, FULLY_CONNECTED, WEBRTC, WEBSOCKET, MESSAGE_BUILDER} from 'serviceProvider'
+import {JOIN} from 'service/MessageBuilderService'
 import Channel from 'Channel'
 import WebChannelGate from 'WebChannelGate'
 
@@ -46,13 +47,6 @@ const PING = 4
 const PONG = 5
 
 /**
- * Constant used to send a message to the server in order that
- * he can join the webcahnnel
- * @type {string}
- */
-const ADD_BOT_SERVER = 'addBotServer'
-
-/**
  * This class is an API starting point. It represents a group of collaborators
  * also called peers. Each peer can send/receive broadcast as well as personal
  * messages. Every peer in the *WebChannel* can invite another person to join
@@ -73,18 +67,19 @@ class WebChannel {
    * *WebChannel* constructor. *WebChannel* can be parameterized in terms of
    * network topology and connector technology (WebRTC or WebSocket. Currently
    * WebRTC is only available).
-   * @param  {Object} [options] *WebChannel* configuration.
+   * @param  {Object} [options] *WebChannel* configuration
    * @param  {string} [options.topology=FULLY_CONNECTED] Defines the network
-   *            topology.
-   * @param  {string} [options.connector=WEBRTC] Determines the connection
-   *            technology to use for build *WebChannel*.
+   *            topology
+   * @param  {string} [options.connector=WEBRTC] Prioritizes this connection
+   *            technology
    * @returns {WebChannel} Empty *WebChannel* without any connection.
    */
   constructor (options = {}) {
     this.defaults = {
       connector: WEBRTC,
       topology: FULLY_CONNECTED,
-      signaling: 'wss://sigver-coastteam.rhcloud.com:8443'
+      signaling: 'wss://sigver-coastteam.rhcloud.com:8443',
+      bot: 'ws://localhost:9000'
     }
     this.settings = Object.assign({}, this.defaults, options)
 
@@ -187,19 +182,19 @@ class WebChannel {
    */
   open (options = {}) {
     let settings = Object.assign({}, this.settings, options)
-    return this.gate.open(channel => {
-      this.initChannel(channel)
-        .then(channel => this.addChannel(channel))
-    }, settings)
+    return this.gate.open(channel => this.addChannel(channel), settings)
   }
 
   addChannel (channel) {
-    let msg = msgBld.msg(INITIALIZATION, this.myId, channel.peerId, {
-      manager: this.manager.id,
-      wcId: this.id
-    })
-    channel.send(msg)
-    return this.manager.add(channel)
+    return this.initChannel(channel)
+      .then(channel => {
+        let msg = msgBld.msg(INITIALIZATION, this.myId, channel.peerId, {
+          manager: this.manager.id,
+          wcId: this.id
+        })
+        channel.send(msg)
+        return this.manager.add(channel)
+      })
   }
 
   /**
@@ -209,37 +204,16 @@ class WebChannel {
     * @param {number} port - The port of the bot server to be add
     * @return {Promise} It resolves once the bot server joined the network
     */
-  addBotServer (host, port) {
-    let cBuilder = provide(WEBSOCKET, {host, port, addBotServer: true})
-    let url = 'ws://' + host + ':' + port
-    return cBuilder.connect(url)
+  addBotServer (url) {
+    return provide(WEBSOCKET).connect(url)
       .then(socket => {
         /*
           Once the connection open a message is sent to the server in order
           that he can join initiate the channel
         */
-        socket.send(JSON.stringify({code: ADD_BOT_SERVER, sender: this.myId, wcId: this.id}))
-        return this.initChannel(socket)
+        socket.send(msgBld.msg(JOIN, this.myId, null, {wcId: this.id}))
+        return this.addChannel(socket)
       })
-      .then(channel => this.addChannel(channel))
-  }
-
-  /**
-    * Allow a bot server to join the network by creating a connection
-    * with the peer who asked his coming
-    *
-    * @param {Object} channel - The channel between the server and the pair
-    * who requested the add
-    * @param {number} id - The id of the peer who requested the add
-    * @return {Promise} It resolves once the the server has joined the network
-    */
-  joinAsBot (channel, id) {
-    return new Promise((resolve, reject) => {
-      this.onJoin = () => resolve(this)
-      this.initChannel(channel, id)// .then(channel => {
-        // console.log('[DEBUG] Resolved initChannel by server')
-      // })
-    })
   }
 
   /**
@@ -279,7 +253,7 @@ class WebChannel {
     let settings = Object.assign({}, this.settings, options)
     let webSocketService = provide(WEBSOCKET)
     let wsWithSignaling
-    let webRTCService = provide(this.settings.connector)
+    let webRTCService = provide(WEBRTC)
     return new Promise((resolve, reject) => {
       this.onJoin = () => resolve(this)
       webSocketService.connect(settings.signaling)
@@ -297,6 +271,41 @@ class WebChannel {
   }
 
   /**
+    * Allow a bot server to join the network by creating a connection
+    * with the peer who asked his coming
+    *
+    * @param {Object} channel - The channel between the server and the pair
+    * who requested the add
+    * @return {Promise} It resolves once the the server has joined the network
+    */
+  joinAsBot (channel) {
+    return new Promise((resolve, reject) => {
+      this.onJoin = resolve
+      this.initChannel(channel)
+    })
+  }
+
+  // joinViaBot (key, url) {
+  //   let webSocketService = provide(WEBSOCKET)
+  //   let wsWithSignaling
+  //   let webRTCService = provide(this.settings.connector)
+  //   return new Promise((resolve, reject) => {
+  //     this.onJoin = () => resolve(this)
+  //     webSocketService.connect(settings.signaling)
+  //       .then(ws => {
+  //         wsWithSignaling = ws
+  //         return webRTCService.connectOverSignaling(ws, key)
+  //       })
+  //       .then(channel => {
+  //         wsWithSignaling.onclose = null
+  //         wsWithSignaling.close()
+  //         return this.initChannel(channel)
+  //       })
+  //       .catch(reject)
+  //   })
+  // }
+
+  /**
    * Leave the *WebChannel*. No longer can receive and send messages to the group.
    */
   leave () {
@@ -304,7 +313,7 @@ class WebChannel {
       this.topology = this.settings.topology
       this.members = []
       this.pingTime = 0
-      this.gate.close()
+      // this.gate.close()
       this.manager.leave(this)
     }
   }
@@ -454,8 +463,12 @@ class WebChannel {
    */
   initChannel (ch, id = -1) {
     if (id === -1) id = this.generateId()
-    let channel = new Channel(ch, this, id)
-    channel.config()
+    let channel = new Channel(ch)
+    channel.peerId = id
+    channel.webChannel = this
+    channel.onMessage = data => this.onChannelMessage(channel, data)
+    channel.onClose = closeEvt => this.manager.onChannelClose(closeEvt, channel)
+    channel.onError = evt => this.manager.onChannelError(evt, channel)
     return Promise.resolve(channel)
   }
 

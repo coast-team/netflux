@@ -1,8 +1,8 @@
-import {SIGNALING} from 'testhelper'
+import {SIGNALING} from 'utils/helper'
 import Bot from 'src/Bot'
 import WebChannel from 'src/WebChannel'
 
-describe('Node -> ', () => {
+xdescribe('Node -> ', () => {
   let signaling = SIGNALING
   it('Should be able to leave a webChannel', done => {
     let wc = new WebChannel({signaling})

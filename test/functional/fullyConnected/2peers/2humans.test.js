@@ -6,10 +6,10 @@ import {
   INSTANCES,
   itBrowser,
   randStr
-} from 'testhelper'
+} from 'utils/helper'
 import WebChannel from 'src/WebChannel'
-import smallStr from '200kb.txt'
-import bigStr from '4mb.txt'
+import smallStr from 'utils/200kb.txt'
+import bigStr from 'utils/4mb.txt'
 
 describe('🙂 🙂  fully connected', () => {
   let signaling = SIGNALING

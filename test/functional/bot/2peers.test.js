@@ -1,4 +1,4 @@
-import {SIGNALING} from 'testhelper'
+import {SIGNALING} from 'utils/helper'
 import WebChannel from 'src/WebChannel'
 
 let host = '127.0.0.1'

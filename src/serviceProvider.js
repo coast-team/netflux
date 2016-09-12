@@ -75,7 +75,6 @@ let provide = function (id, options = {}) {
       services.set(id, service)
       return service
     default:
-      console.trace()
       throw new Error(`Unknown service id: "${id}"`)
   }
 }

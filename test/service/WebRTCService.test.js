@@ -1,4 +1,4 @@
-import {SIGNALING, randKey} from 'testhelper'
+import {SIGNALING, randKey} from 'utils/helper'
 import WebRTCService from 'src/service/WebRTCService'
 import WebSocketService from 'src/service/WebSocketService'
 import WebChannelGate from 'src/WebChannelGate'

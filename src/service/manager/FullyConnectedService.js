@@ -71,9 +71,7 @@ class FullyConnectedService extends ManagerInterface {
 
   leave (wc) {
     for (let c of wc.channels) {
-      c.onMessage = () => {}
-      c.onClose = () => {}
-      c.onError = () => {}
+      c.clearHandlers()
       c.close()
     }
     wc.channels.clear()

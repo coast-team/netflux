@@ -1,4 +1,4 @@
-import {SIGNALING} from 'testhelper'
+import {SIGNALING} from 'utils/helper'
 import WebChannel from 'src/WebChannel'
 
 describe('🙂', () => {

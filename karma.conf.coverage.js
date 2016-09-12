@@ -6,12 +6,10 @@ module.exports = (config) => {
       rollup: {
         plugins: [
           require('rollup-plugin-string')({
-            include: 'test/*.txt'
+            include: 'test/**/*.txt'
           }),
           require('rollup-plugin-includepaths')({
-            include: {},
             paths: ['', 'src/', 'test/'],
-            external: [],
             extensions: ['.js', '.txt']
           }),
           require('rollup-plugin-istanbul')({
@@ -29,7 +27,7 @@ module.exports = (config) => {
       }
     },
 
-    reporters: ['progress', 'coverage'],
+    reporters: ['spec', 'coverage'],
 
     coverageReporter: {
       dir: 'coverage',

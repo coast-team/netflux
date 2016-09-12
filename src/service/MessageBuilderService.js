@@ -103,6 +103,9 @@ const FLOAT_32_ARRAY_TYPE = 10
  */
 const FLOAT_64_ARRAY_TYPE = 11
 
+const JOIN = 1
+const NEW_CHANNEL = 2
+
 /**
  * Buffer for big user messages.
  */
@@ -467,3 +470,4 @@ class Buffer {
 }
 
 export default MessageBuilderService
+export {JOIN, NEW_CHANNEL}

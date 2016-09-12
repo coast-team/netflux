@@ -1,5 +1,5 @@
 import {WebChannel, Bot} from 'dist/netflux.es2015'
-import {itBrowser, itNode} from 'testhelper'
+import {itBrowser, itNode} from 'utils/helper'
 
 describe('Distributions-> ', () => {
   it('API must exports defined objects', () => {
@@ -14,7 +14,7 @@ describe('Distributions-> ', () => {
   })
 
   itNode(false, 'netflux must be defined as a global variable', () => {
-    let netflux = require('../../../dist/netflux.es2015.umd.js')
+    let netflux = require('../../dist/netflux.es2015.umd.js')
     expect(netflux).toBeDefined()
     expect(netflux.WebChannel).toBeDefined()
     expect(netflux.Bot).toBeDefined()

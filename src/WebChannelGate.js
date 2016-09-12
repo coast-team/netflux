@@ -63,10 +63,13 @@ class WebChannelGate {
       webSocketService.connect(url)
         .then(ws => {
           ws.onclose = closeEvt => {
-            reject(closeEvt.reason)
             this.onClose(closeEvt)
+            reject(closeEvt.reason)
           }
-          ws.onerror = err => reject(err.message)
+          ws.onerror = err => {
+            console.log('ERROR: ', err)
+            reject(err.message)
+          }
           ws.onmessage = evt => {
             let msg
             try {

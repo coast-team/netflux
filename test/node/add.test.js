@@ -1,11 +1,11 @@
-import {SIGNALING} from 'testhelper'
+import {SIGNALING} from 'utils/helper'
 import Bot from 'src/Bot'
 import WebChannel from 'src/WebChannel'
 
 const PING = 'ping'
 const PONG = 'pong'
 
-describe('Node -> ', () => {
+xdescribe('Node -> ', () => {
   let signaling = SIGNALING
   it('Should use addBotServer function when added in a Webchannel of 1 peer', done => {
     let wc = new WebChannel({signaling})

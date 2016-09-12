@@ -1,4 +1,4 @@
-import {itNode} from 'testhelper'
+import {itNode} from 'utils/helper'
 import Bot from 'src/Bot'
 
 describe('🤖', () => {

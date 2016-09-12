@@ -1,9 +1,10 @@
 import {
   SIGNALING,
   TestGroup,
+  itBrowser,
   allMessagesAreSentAndReceived,
   checkMembers
-} from 'testhelper'
+} from 'utils/helper'
 import WebChannel from 'src/WebChannel'
 const NB_PEERS = 12
 
@@ -32,7 +33,7 @@ describe(`Fully connected: many peers (${NB_PEERS})`, () => {
       return Promise.all(joinPromises)
     }
 
-    it('one by one', done => {
+    itBrowser(false, 'one by one', done => {
       allJoiningDetectedByAll()
         .then(() => {
           setTimeout(() => {
@@ -50,9 +51,9 @@ describe(`Fully connected: many peers (${NB_PEERS})`, () => {
       wcs[0].open()
         .then(data => joinOneByOne(Promise.resolve(), 1, data.key))
         .catch(done.fail)
-    }, 200000)
+    }, 120000)
 
-    it('simultaneously', done => {
+    itBrowser(false, 'simultaneously', done => {
       allJoiningDetectedByAll()
         .then(() => {
           setTimeout(() => {
@@ -70,7 +71,7 @@ describe(`Fully connected: many peers (${NB_PEERS})`, () => {
   })
 
   describe('Should send/receive', () => {
-    it('broadcast string message', done => {
+    itBrowser(false, 'broadcast string message', done => {
       let groups = []
       for (let i = 0; i < NB_PEERS; i++) {
         groups[i] = new TestGroup(wcs[i], [String])

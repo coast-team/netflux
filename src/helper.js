@@ -16,3 +16,7 @@ export function isBrowser () {
   }
   return true
 }
+
+export function isSocket (channel) {
+  return channel.constructor.name === 'WebSocket'
+}

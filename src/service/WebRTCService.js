@@ -121,7 +121,6 @@ class WebRTCService extends ServiceInterface {
   listenFromSignaling (ws, onChannel) {
     ws.onmessage = evt => {
       let msg = JSON.parse(evt.data)
-
       if ('id' in msg && 'data' in msg) {
         let item = super.getItem(ws, msg.id)
         if (!item) {
