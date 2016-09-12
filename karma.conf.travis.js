@@ -2,7 +2,7 @@ module.exports = (config) => {
   require('./karma.conf.coverage.js')(config)
   config.set({
 
-    browsers: ['Firefox', 'Chrome_travis_ci'],
+    browsers: ['Chrome_travis_ci'],
 
     customLaunchers: {
       Chrome_travis_ci: {
