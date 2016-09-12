@@ -6,7 +6,7 @@ import {
   checkMembers
 } from 'utils/helper'
 import WebChannel from 'src/WebChannel'
-const NB_PEERS = 12
+const NB_PEERS = 10
 
 describe(`Fully connected: many peers (${NB_PEERS})`, () => {
   let signaling = SIGNALING
@@ -67,7 +67,7 @@ describe(`Fully connected: many peers (${NB_PEERS})`, () => {
           for (let i = 1; i < wcs.length; i++) wcs[i].join(data.key)
         })
         .catch(done.fail)
-    }, 60000)
+    }, 120000)
   })
 
   describe('Should send/receive', () => {

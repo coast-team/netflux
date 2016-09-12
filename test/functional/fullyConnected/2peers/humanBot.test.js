@@ -29,7 +29,7 @@ describe('🙂 🤖  fully connected', () => {
   })
 
   describe('Should send/receive', () => {
-    
+
     it('Private string message', done => {
       let data = randData(String)
       sendReceive(wc, data, done, wc.members[0])
@@ -68,7 +68,7 @@ describe('🙂 🤖  fully connected', () => {
   })
 
   it('Should ping', done => {
-    wc.ping().then(p => expect(p).toBeLessThan(300)).then(done).catch(done.fail)
+    wc.ping().then(p => expect(Number.isInteger(p)).toBeTruthy()).then(done).catch(done.fail)
   })
 
   describe('Should leave', () => {

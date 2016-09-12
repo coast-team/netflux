@@ -59,7 +59,7 @@ describe('Fully connected: 3 peers', () => {
           done()
         })
         .catch(done.fail)
-    })
+    }, 15000)
 
     it('simultaneously', done => {
       wcs[0] = new WebChannel({signaling})
@@ -82,7 +82,7 @@ describe('Fully connected: 3 peers', () => {
           done()
         })
         .catch(done.fail)
-    })
+    }, 15000)
   })
 
   describe('Should send/receive', () => {
