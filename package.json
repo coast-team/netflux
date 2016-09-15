@@ -57,8 +57,10 @@
   "dependencies": {
     "text-encoding": "^0.6.0",
     "webrtc-adapter": "^2.0.2",
-    "wrtc": "0.0.60",
     "ws": "^1.1.1"
+  },
+  "optionalDependencies": {
+    "wrtc": "0.0.60"
   },
   "devDependencies": {
     "babel-eslint": "^6.1.2",
