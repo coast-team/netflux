@@ -1436,13 +1436,18 @@ function isSocket (channel) {
   return channel.constructor.name === 'WebSocket'
 }
 
-const CONNECT_TIMEOUT = 15000
+const CONNECT_TIMEOUT = 30000
+const REMOVE_ITEM_TIMEOUT = 5000
 let src
 let webRTCAvailable = true
 if (isBrowser()) src = window
 else {
   try {
     src = require('wrtc')
+    if (!src) {
+      webRTCAvailable = false
+      src = {}
+    }
     src.CloseEvent = NodeCloseEvent
   } catch (err) {
     webRTCAvailable = false
@@ -1621,8 +1626,8 @@ class WebRTCService extends ServiceInterface {
         ws.send(JSON.stringify({join: key}))
       }),
       this.createDataChannel(item.pc, true)
-        .then((channel) => {
-          super.removeItem(ws, key)
+        .then(channel => {
+          setTimeout(() => super.removeItem(ws, key), REMOVE_ITEM_TIMEOUT)
           return channel
         })
     ])
@@ -1712,7 +1717,7 @@ class WebRTCService extends ServiceInterface {
   }
 
   addIceCandidate (obj, candidate) {
-    if (obj.pc && obj.pc.isRemoteDescriptionSet) {
+    if (obj !== null && obj.pc && obj.pc.isRemoteDescriptionSet) {
       obj.pc.addIceCandidate(new RTCIceCandidate$1(candidate))
         .catch(evt => console.error(`Add ICE candidate: ${evt.message}`))
     } else obj.candidates[obj.candidates.length] = candidate
