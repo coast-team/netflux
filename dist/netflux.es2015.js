@@ -1444,12 +1444,9 @@ if (isBrowser()) src = window
 else {
   try {
     src = require('wrtc')
-    if (!src) {
-      webRTCAvailable = false
-      src = {}
-    }
     src.CloseEvent = NodeCloseEvent
   } catch (err) {
+    src = {}
     webRTCAvailable = false
   }
 }

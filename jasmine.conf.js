@@ -4,7 +4,7 @@ let SpecReporter = require('jasmine-spec-reporter')
 
 let config = {
   spec_dir: 'tmp',
-  spec_files: ['**/*.test.js'],
+  spec_files: ['service/*.test.js'],
   stopSpecOnExpectationFailure: false,
   random: false
 }

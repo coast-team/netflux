@@ -6,7 +6,7 @@ import {
   checkMembers
 } from 'utils/helper'
 import WebChannel from 'src/WebChannel'
-const NB_PEERS = 10
+const NB_PEERS = 8
 
 describe(`Fully connected: many peers (${NB_PEERS})`, () => {
   let signaling = SIGNALING
