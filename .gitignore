@@ -1,7 +1,8 @@
 node_modules
 npm-debug*
-rollupfull.txt
-/tmp
+
+# Rollup output folders
+.rolledup*
 
 # Code coverage
 coverage

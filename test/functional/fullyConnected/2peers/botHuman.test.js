@@ -17,7 +17,10 @@ describe('🤖 🙂  fully connected', () => {
 
   it('Should establish a connection through data channel', done => {
     wc = new WebChannel({signaling})
-    wc.onJoining = id => expect(id).toEqual(wc.members[0])
+    wc.onJoining = id => {
+      console.log('NATURE: ' + wc.channels.values().next().value.channel.constructor.name)
+      expect(id).toEqual(wc.members[0])
+    }
     spyOn(wc, 'onJoining')
     wc.join(getEnvironment())
       .then(() => {
@@ -29,7 +32,6 @@ describe('🤖 🙂  fully connected', () => {
   })
 
   describe('Should send/receive', () => {
-
     it('Private string message', done => {
       let data = randData(String)
       sendReceive(wc, data, done, wc.members[0])
@@ -55,6 +57,7 @@ describe('🤖 🙂  fully connected', () => {
       let dataReceived = Array(MSG_NUMBER)
       for (let i = 0; i < MSG_NUMBER; i++) data[i] = randData(String)
       dataReceived.fill(0)
+      let counter = 0
       wc.onMessage = (id, msg, isBroadcast) => {
         expect(typeof msg).toEqual('string')
         let index = data.indexOf(msg)

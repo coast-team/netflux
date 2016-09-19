@@ -1,6 +1,6 @@
 apps:
   - script: node_modules/.bin/sigver
-  - script: tmp/utils/init.js
-  - script: tmp/utils/botForFirefox.js
-  - script: tmp/utils/botForChrome.js
-  - script: tmp/utils/botForNode.js
+  - script: .rolledupScript/init.js
+  - script: .rolledupScript/botForFirefox.js
+  - script: .rolledupScript/botForChrome.js
+  - script: .rolledupScript/botForNode.js

@@ -2,20 +2,20 @@ let rollup = require('rollup')
 let includePaths = require('rollup-plugin-includepaths')
 
 let entries = [
-  'test/utils/init.js',
-  'test/utils/botForFirefox.js',
-  'test/utils/botForChrome.js',
-  'test/utils/botForNode.js'
+  'script/init.js',
+  'script/botForFirefox.js',
+  'script/botForChrome.js',
+  'script/botForNode.js'
 ]
 
 for (let entry of entries) {
-  let dest = entry.replace(/^test/, 'tmp')
+  let dest = entry.replace(/^script/, '.rolledupScript')
   rollup.rollup({
     entry,
     plugins: [
       includePaths({
-        paths: ['', 'test/', 'src/'],
-        extensions: ['.js']
+        paths: ['', 'src', 'test'],
+        extensions: ['.js', '.txt']
       })
     ]
   }).then(bundle => bundle.write({format: 'cjs', dest}))
