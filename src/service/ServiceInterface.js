@@ -15,7 +15,7 @@
  * Default timeout for any pending request.
  * @type {number}
  */
-const DEFAULT_REQUEST_TIMEOUT = 27000
+const DEFAULT_REQUEST_TIMEOUT = 60000
 
 /**
  * Pending request map. Pending request is when a service uses a Promise

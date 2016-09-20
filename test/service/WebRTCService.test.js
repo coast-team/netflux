@@ -1,7 +1,7 @@
 import {SIGNALING, randKey} from 'utils/helper'
 import WebRTCService from 'src/service/WebRTCService'
 import WebSocketService from 'src/service/WebSocketService'
-import WebChannelGate from 'src/WebChannelGate'
+import SignalingGate from 'src/SignalingGate'
 
 describe('WebRTCService', () => {
   let signaling = SIGNALING
@@ -17,7 +17,7 @@ describe('WebRTCService', () => {
   describe('connectOverSignaling', () => {
     it('Should open a data channel', done => {
       const key = randKey()
-      const gate = new WebChannelGate()
+      const gate = new SignalingGate()
 
       gate.open(channel => {
         channel.onmessage = msgEvt => {

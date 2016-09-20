@@ -1,12 +1,12 @@
-import WebChannelGate from 'src/WebChannelGate'
+import SignalingGate from 'src/SignalingGate'
 import {SIGNALING} from 'utils/helper'
 
-describe('WebChannelGate', () => {
+describe('SignalingGate', () => {
   let webChannelGate
   let signaling = SIGNALING
 
   it('Gate should be closed after construction', () => {
-    webChannelGate = new WebChannelGate()
+    webChannelGate = new SignalingGate()
     expect(webChannelGate.isOpen()).toBeFalsy()
     expect(webChannelGate.ws).toBeNull()
     expect(webChannelGate.accessData).toEqual({})
@@ -20,8 +20,8 @@ describe('WebChannelGate', () => {
 
   it('Should fail to open the gate with the key used by another gate', done => {
     let key = webChannelGate.generateKey()
-    let wcg1 = new WebChannelGate()
-    let wcg2 = new WebChannelGate()
+    let wcg1 = new SignalingGate()
+    let wcg2 = new SignalingGate()
     wcg1.open(() => {}, {signaling, key}).then(() => {
       wcg2.open(() => {}, {signaling, key}).then(() => {
         done.fail()
@@ -33,7 +33,7 @@ describe('WebChannelGate', () => {
   })
 
   describe('Open with auto generated key', () => {
-    let webChannelGate = new WebChannelGate()
+    let webChannelGate = new SignalingGate()
     let accessData
 
     it('Should open the gate', done => {
@@ -64,13 +64,13 @@ describe('WebChannelGate', () => {
     })
 
     it('onClose should be called', done => {
-      let wcg = new WebChannelGate(done)
+      let wcg = new SignalingGate(done)
       wcg.open(() => {}, {signaling}).then(() => { wcg.close() }).catch(done.fail)
     })
   })
 
   describe('Open with the specified key', () => {
-    let webChannelGate = new WebChannelGate()
+    let webChannelGate = new SignalingGate()
     let accessData
 
     it('Should open the gate', done => {
@@ -103,7 +103,7 @@ describe('WebChannelGate', () => {
 
     it('onClose should be called', done => {
       let key = webChannelGate.generateKey()
-      let wcg = new WebChannelGate(done)
+      let wcg = new SignalingGate(done)
       wcg.open(() => {}, {signaling, key}).then(() => { wcg.close() }).catch(done.fail)
     })
   })

@@ -19,7 +19,7 @@ describe('WebSocketService', () => {
         done()
       })
       .catch(done.fail)
-  })
+  }, 30000)
 
   it(`Should open a socket with ${ONLINE_SERVER}`, done => {
     webSocketService.connect(ONLINE_SERVER)
@@ -28,7 +28,7 @@ describe('WebSocketService', () => {
         done()
       })
       .catch(done.fail)
-  }, 10000)
+  }, 30000)
 
   it(`Should open a socket with ${ONLINE_SECURE_SERVER}`, done => {
     webSocketService.connect(ONLINE_SECURE_SERVER)
@@ -37,11 +37,11 @@ describe('WebSocketService', () => {
         done()
       })
       .catch(done.fail)
-  }, 10000)
+  }, 30000)
 
   it(`Should fail to open a socket with: ${WRONG_URL}`, done => {
     webSocketService.connect(WRONG_URL)
       .then(data => done.fail('Connection succeed'))
       .catch(done)
-  }, 10000)
+  }, 30000)
 })

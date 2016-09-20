@@ -2,6 +2,7 @@ import {
   SIGNALING,
   TestGroup,
   itBrowser,
+  xitBrowser,
   allMessagesAreSentAndReceived,
   checkMembers
 } from 'utils/helper'
@@ -53,7 +54,7 @@ describe(`Fully connected: many peers (${NB_PEERS})`, () => {
         .catch(done.fail)
     }, 120000)
 
-    itBrowser(false, 'simultaneously', done => {
+    xitBrowser(false, 'simultaneously', done => {
       allJoiningDetectedByAll()
         .then(() => {
           setTimeout(() => {

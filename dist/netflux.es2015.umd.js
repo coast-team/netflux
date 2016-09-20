@@ -1044,7 +1044,7 @@ module.exports = {
  * Default timeout for any pending request.
  * @type {number}
  */
-const DEFAULT_REQUEST_TIMEOUT = 27000
+const DEFAULT_REQUEST_TIMEOUT = 60000
 
 /**
  * Pending request map. Pending request is when a service uses a Promise
@@ -1735,7 +1735,7 @@ class CandidatesBuffer {
 }
 
 const WebSocket = isBrowser() ? window.WebSocket : require('ws')
-const CONNECT_TIMEOUT$1 = 7000
+const CONNECT_TIMEOUT$1 = 10000
 const OPEN = WebSocket.OPEN
 let listenOnWebSocket = false
 class WebSocketService extends ServiceInterface {
@@ -1994,7 +1994,7 @@ class MessageBuilderService extends ServiceInterface {
       let buffer = this.getBuffer(wc, senderId, msgId)
       if (buffer === undefined) {
         this.setBuffer(wc, senderId, msgId,
-          new Buffer(msgSize, data, chunk, (fullData) => {
+          new Buffer(msgSize, data, chunk, fullData => {
             action(this.extractUserData(fullData, dataType), isBroadcast)
           })
         )
@@ -2005,7 +2005,7 @@ class MessageBuilderService extends ServiceInterface {
       let dataArray = new Uint8Array(data)
       let userData = new Uint8Array(data.byteLength - USER_MSG_OFFSET)
       let j = USER_MSG_OFFSET
-      for (let i in userData) {
+      for (let i = 0; i < userData.byteLength; i++) {
         userData[i] = dataArray[j++]
       }
       action(this.extractUserData(userData.buffer, dataType), isBroadcast)
@@ -2505,52 +2505,45 @@ class Channel {
  * is open, then clients can join the *WebChannel* through this peer, otherwise
  * they cannot.
  */
-class WebChannelGate {
+class SignalingGate {
 
   /**
-   * When the *WebChannel* is open, any clients should you this data to join
-   * the *WebChannel*.
-   * @typedef {Object} WebChannelGate~AccessData
-   * @property {string} key - The unique key to join the *WebChannel*
+   * Necessary data to join the *WebChannel*.
+   * @typedef {Object} SignalingGate~AccessData
    * @property {string} url - Signaling server url
+   * @property {string} key - The unique key to join the *WebChannel*
    */
 
   /**
-   * @typedef {Object} WebChannelGate~AccessData
-   * @property {string} key - The unique key to join the *WebChannel*
-   * @property {string} url - Signaling server url
-   */
-
-  /**
-   * @param {WebChannelGate~onClose} onClose - close event handler
+   * @param {closeEventListener} onClose - close event handler
    */
   constructor (onClose = () => {}) {
     /**
-     * Web socket which holds the connection with the signaling server.
+     * Web socket with the signaling server.
      * @private
-     * @type {external:WebSocket}
+     * @type {external:WebSocket|external:ws/WebSocket}
      */
     this.ws = null
 
     /**
-     * // TODO: add doc
-     * @type {WebChannelGate~AccessData}
+     * Access data. When the gate is open this object is not empty.
+     * @type {SignalingGate~AccessData}
      */
     this.accessData = {}
 
     /**
      * Close event handler.
      * @private
-     * @type {WebChannelGate~onClose}
+     * @type {CloseEventHandler}
      */
     this.onClose = onClose
   }
 
   /**
-   * Open the door.
-   * @param {external:WebSocket} socket - Web socket to signalign server
-   * @param {WebChannelGate~AccessData} accessData - Access data to join the
-   * *WebChannel
+   * Open the gate.
+   * @param {channelEventHandler} onChannel Channel event handler
+   * @param {SignalingGate~AccessData} accessData - Access data
+   * @return {Promise}
    */
   open (onChannel, options) {
     let url = options.signaling
@@ -2759,9 +2752,9 @@ class WebChannel {
     /**
      * The *WebChannel* gate.
      * @private
-     * @type {WebChannelGate}
+     * @type {SignalingGate}
      */
-    this.gate = new WebChannelGate(closeEvt => this.onClose(closeEvt))
+    this.gate = new SignalingGate(closeEvt => this.onClose(closeEvt))
 
     /**
      * Unique identifier of this *WebChannel*. The same for all peers.
@@ -2828,6 +2821,7 @@ class WebChannel {
         channel.send(msg)
         return this.manager.add(channel)
       })
+      .then(() => channel.peerId)
   }
 
   /**
@@ -2868,7 +2862,7 @@ class WebChannel {
   /**
    * Get the data which should be provided to all clients who must join
    * the *WebChannel*. It is the same data which
-   * {@link WebChannel#openForJoining} callback function provides.
+   * {@link WebChannel#open} callback function provides.
    * @returns {WebChannel~AccessData|null} - Data to join the *WebChannel*
    * or null is the *WebChannel* is closed
    */
@@ -3221,6 +3215,10 @@ class Bot {
 }
 
 /**
+* @external ws/WebSocket
+* @see {@link https://github.com/websockets/ws/blob/master/doc/ws.md#user-content-class-wswebsocket}
+*/
+/**
  * @external JSON
  * @see {@link https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/JSON}
  */
@@ -3316,6 +3314,18 @@ class Bot {
  * @external DataView
  * @see {@link https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/DataView}
  */
+
+/**
+ * An event handler to be called when the *close* event is received either by the *WebSocket* or by the *RTCDataChannel*.
+ * @callback closeEventHandler
+ * @param {external:CloseEvent} evt Close event object
+ */
+
+ /**
+  * An event handler to be called when a *Channel* has been established.
+  * @callback channelEventHandler
+  * @param {Channel} channel Netflux channel
+  */
 
 exports.WebChannel = WebChannel;
 exports.Bot = Bot;

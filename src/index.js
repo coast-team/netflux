@@ -4,6 +4,10 @@ import Bot from 'Bot'
 export {WebChannel, Bot}
 
 /**
+* @external ws/WebSocket
+* @see {@link https://github.com/websockets/ws/blob/master/doc/ws.md#user-content-class-wswebsocket}
+*/
+/**
  * @external JSON
  * @see {@link https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/JSON}
  */
@@ -99,3 +103,15 @@ export {WebChannel, Bot}
  * @external DataView
  * @see {@link https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/DataView}
  */
+
+/**
+ * An event handler to be called when the *close* event is received either by the *WebSocket* or by the *RTCDataChannel*.
+ * @callback closeEventHandler
+ * @param {external:CloseEvent} evt Close event object
+ */
+
+ /**
+  * An event handler to be called when a *Channel* has been established.
+  * @callback channelEventHandler
+  * @param {Channel} channel Netflux channel
+  */

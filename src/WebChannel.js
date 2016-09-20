@@ -1,7 +1,7 @@
 import {provide, FULLY_CONNECTED, WEBRTC, WEBSOCKET, MESSAGE_BUILDER} from 'serviceProvider'
 import {JOIN} from 'service/MessageBuilderService'
 import Channel from 'Channel'
-import WebChannelGate from 'WebChannelGate'
+import SignalingGate from 'SignalingGate'
 
 const msgBld = provide(MESSAGE_BUILDER)
 
@@ -126,9 +126,9 @@ class WebChannel {
     /**
      * The *WebChannel* gate.
      * @private
-     * @type {WebChannelGate}
+     * @type {SignalingGate}
      */
-    this.gate = new WebChannelGate(closeEvt => this.onClose(closeEvt))
+    this.gate = new SignalingGate(closeEvt => this.onClose(closeEvt))
 
     /**
      * Unique identifier of this *WebChannel*. The same for all peers.
@@ -195,6 +195,7 @@ class WebChannel {
         channel.send(msg)
         return this.manager.add(channel)
       })
+      .then(() => channel.peerId)
   }
 
   /**
@@ -235,7 +236,7 @@ class WebChannel {
   /**
    * Get the data which should be provided to all clients who must join
    * the *WebChannel*. It is the same data which
-   * {@link WebChannel#openForJoining} callback function provides.
+   * {@link WebChannel#open} callback function provides.
    * @returns {WebChannel~AccessData|null} - Data to join the *WebChannel*
    * or null is the *WebChannel* is closed
    */

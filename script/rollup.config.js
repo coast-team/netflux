@@ -15,7 +15,7 @@ for (let entry of entries) {
     plugins: [
       includePaths({
         paths: ['', 'src', 'test'],
-        extensions: ['.js', '.txt']
+        extensions: ['.js']
       })
     ]
   }).then(bundle => bundle.write({format: 'cjs', dest}))

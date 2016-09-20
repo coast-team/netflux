@@ -233,7 +233,7 @@ class MessageBuilderService extends ServiceInterface {
       let buffer = this.getBuffer(wc, senderId, msgId)
       if (buffer === undefined) {
         this.setBuffer(wc, senderId, msgId,
-          new Buffer(msgSize, data, chunk, (fullData) => {
+          new Buffer(msgSize, data, chunk, fullData => {
             action(this.extractUserData(fullData, dataType), isBroadcast)
           })
         )
@@ -244,7 +244,7 @@ class MessageBuilderService extends ServiceInterface {
       let dataArray = new Uint8Array(data)
       let userData = new Uint8Array(data.byteLength - USER_MSG_OFFSET)
       let j = USER_MSG_OFFSET
-      for (let i in userData) {
+      for (let i = 0; i < userData.byteLength; i++) {
         userData[i] = dataArray[j++]
       }
       action(this.extractUserData(userData.buffer, dataType), isBroadcast)

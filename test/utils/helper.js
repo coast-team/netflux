@@ -5,7 +5,7 @@ const SIGNALING = 'ws://localhost:8000'
 const BOT = 'ws://localhost:9000'
 const CHROME_WC_ID = 11111
 const FIREFOX_WC_ID = 11111
-// const signaling = 'wss://sigver-coastteam.rhcloud.com:8443'
+// const SIGNALING = 'wss://sigver-coastteam.rhcloud.com:8443'
 // const signaling = 'ws://sigver-coastteam.rhcloud.com:8000'
 // Used to test send/receive a lot of messages
 const MSG_NUMBER = 100

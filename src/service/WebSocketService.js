@@ -2,10 +2,10 @@ import {isBrowser} from 'helper'
 import ServiceInterface from 'service/ServiceInterface'
 
 const WebSocket = isBrowser() ? window.WebSocket : require('ws')
-const CONNECT_TIMEOUT = 7000
+const CONNECT_TIMEOUT = 10000
 const OPEN = WebSocket.OPEN
 let listenOnWebSocket = false
-let setListenOnWebSocket = (value) => {
+let setListenOnWebSocket = value => {
   listenOnWebSocket = value
 }
 

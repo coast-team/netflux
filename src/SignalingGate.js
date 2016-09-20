@@ -6,52 +6,45 @@ import {OPEN} from 'service/WebSocketService'
  * is open, then clients can join the *WebChannel* through this peer, otherwise
  * they cannot.
  */
-class WebChannelGate {
+class SignalingGate {
 
   /**
-   * When the *WebChannel* is open, any clients should you this data to join
-   * the *WebChannel*.
-   * @typedef {Object} WebChannelGate~AccessData
-   * @property {string} key - The unique key to join the *WebChannel*
+   * Necessary data to join the *WebChannel*.
+   * @typedef {Object} SignalingGate~AccessData
    * @property {string} url - Signaling server url
+   * @property {string} key - The unique key to join the *WebChannel*
    */
 
   /**
-   * @typedef {Object} WebChannelGate~AccessData
-   * @property {string} key - The unique key to join the *WebChannel*
-   * @property {string} url - Signaling server url
-   */
-
-  /**
-   * @param {WebChannelGate~onClose} onClose - close event handler
+   * @param {closeEventListener} onClose - close event handler
    */
   constructor (onClose = () => {}) {
     /**
-     * Web socket which holds the connection with the signaling server.
+     * Web socket with the signaling server.
      * @private
-     * @type {external:WebSocket}
+     * @type {external:WebSocket|external:ws/WebSocket}
      */
     this.ws = null
 
     /**
-     * // TODO: add doc
-     * @type {WebChannelGate~AccessData}
+     * Access data. When the gate is open this object is not empty.
+     * @type {SignalingGate~AccessData}
      */
     this.accessData = {}
 
     /**
      * Close event handler.
      * @private
-     * @type {WebChannelGate~onClose}
+     * @type {CloseEventHandler}
      */
     this.onClose = onClose
   }
 
   /**
-   * Open the door.
-   * @param {external:WebSocket} socket - Web socket to signalign server
-   * @param {WebChannelGate~AccessData} accessData - Access data to join the
-   * *WebChannel
+   * Open the gate.
+   * @param {channelEventHandler} onChannel Channel event handler
+   * @param {SignalingGate~AccessData} accessData - Access data
+   * @return {Promise}
    */
   open (onChannel, options) {
     let url = options.signaling
@@ -137,4 +130,4 @@ class WebChannelGate {
   }
 }
 
-export default WebChannelGate
+export default SignalingGate

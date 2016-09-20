@@ -4,7 +4,7 @@
   ],
   "templates": {
     "cleverLinks": true,
-    "outputSourceFiles": true,
+    "outputSourceFiles": false,
     "systemName": "Netflux",
     "copyright": "© 2016 Loria, <a href=\"https: //team.inria.fr/coast/\" target=\"_blank\">COAST team</a>",
     "theme": "sandstone",
