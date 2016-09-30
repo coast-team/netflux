@@ -1,7 +1,27 @@
-import 'node_modules/webrtc-adapter/out/adapter_no_edge_no_global'
+import BotServer from 'BotServer'
 import WebChannel from 'WebChannel'
-import Bot from 'Bot'
-export {WebChannel, Bot}
+import {WEBSOCKET, WEBRTC, FULLY_CONNECTED} from 'serviceProvider'
+
+let defaultSettings = {
+  connector: WEBRTC,
+  topology: FULLY_CONNECTED,
+  signalingURL: 'wss://sigver-coastteam.rhcloud.com:8443',
+  iceServers: [
+    {urls: 'stun:turn01.uswest.xirsys.com'}
+  ]
+}
+
+function create (options) {
+  let mySettings = Object.assign({}, defaultSettings, options)
+  return new WebChannel(mySettings)
+}
+
+export {
+  create,
+  BotServer,
+  WEBSOCKET,
+  WEBRTC
+}
 
 /**
 * @external ws/WebSocket

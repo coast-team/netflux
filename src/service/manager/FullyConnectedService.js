@@ -69,6 +69,12 @@ class FullyConnectedService extends ManagerInterface {
     }
   }
 
+  sendInner (wc, data) {
+    let jp = super.getItem(wc, wc.myId)
+    if (jp === null) this.broadcast(wc, data)
+    else jp.channel.send(data)
+  }
+
   leave (wc) {
     for (let c of wc.channels) {
       c.clearHandlers()
@@ -107,34 +113,51 @@ class FullyConnectedService extends ManagerInterface {
    * @param {external:Event} evt - Event
    */
   onChannelError (evt, channel) {
-    console.error(`Channel error with id: ${channel.peerId}`)
+    console.error(`Channel error with id: ${channel.peerId}: `, evt)
   }
 
   onMessage (channel, senderId, recepientId, msg) {
     let wc = channel.webChannel
+    let jpMe
     switch (msg.code) {
       case SHOULD_CONNECT_TO:
-        this.setJP(wc, wc.myId, channel).channels.add(channel)
+        jpMe = this.setJP(wc, wc.myId, channel)
+        jpMe.channels.add(channel)
+        // super.connectTo(wc, msg.peers)
+        //   .then(failed => {
+        //     let msg = {code: PEER_JOINED}
+        //     for (let ch of jpMe.channels) {
+        //       wc.sendInnerTo(ch, this.id, msg)
+        //       wc.channels.add(ch)
+        //       wc.onPeerJoin$(ch.peerId)
+        //     }
+        //     super.removeItem(wc, wc.myId)
+        //     for (let jp of super.getItems(wc)) {
+        //       wc.sendInnerTo(jp.channel, this.id, msg)
+        //     }
+        //     wc.onJoin()
+        //   })
+        // this.setJP(wc, wc.myId, channel).channels.add(channel)
         super.connectTo(wc, msg.peers)
           .then(failed => {
             let msg = {code: PEER_JOINED}
-            for (let c of super.getItem(wc, wc.myId).channels) {
-              wc.channels.add(c)
-              wc.onJoining$(c.peerId)
-            }
+            jpMe.channels.forEach(ch => {
+              wc.sendInnerTo(ch, this.id, msg)
+              wc.channels.add(ch)
+              wc.onPeerJoin$(ch.peerId)
+            })
             super.removeItem(wc, wc.myId)
-            wc.sendInner(this.id, msg)
             super.getItems(wc).forEach(jp => wc.sendInnerTo(jp.channel, this.id, msg))
             wc.onJoin()
           })
         break
       case PEER_JOINED:
-        let jpMe = super.getItem(wc, wc.myId)
+        jpMe = super.getItem(wc, wc.myId)
         super.removeItem(wc, senderId)
         if (jpMe !== null) jpMe.channels.add(channel)
         else {
           wc.channels.add(channel)
-          wc.onJoining$(senderId)
+          wc.onPeerJoin$(senderId)
           let request = super.getPendingRequest(wc, senderId)
           if (request !== null) request.resolve(senderId)
         }
@@ -173,7 +196,7 @@ class FullyConnectedService extends ManagerInterface {
  * regardless of success, these instances will be deleted.
  */
 class JoiningPeer {
-  constructor (channel) {
+  constructor (channel, onJoin) {
     /**
      * The channel between the joining peer and intermediary peer. It is null
      * for every peer, but the joining and intermediary peers.

@@ -2,7 +2,7 @@ let rollup = require('rollup')
 let includePaths = require('rollup-plugin-includepaths')
 
 let entries = [
-  'script/init.js',
+  'script/botServer.js',
   'script/botForFirefox.js',
   'script/botForChrome.js',
   'script/botForNode.js'

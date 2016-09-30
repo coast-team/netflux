@@ -1,8 +1,7 @@
 import ServiceInterface from 'service/ServiceInterface'
 import {webRTCAvailable} from 'service/WebRTCService'
-import {listenOnWebSocket} from 'service/WebSocketService'
-import {WEBRTC, WEBSOCKET, MESSAGE_BUILDER, provide} from 'serviceProvider'
-import {JOIN} from 'service/MessageBuilderService'
+import {listenOnSocket} from 'service/WebSocketService'
+import {WEBRTC, WEBSOCKET, provide} from 'serviceProvider'
 
 class ChannelBuilderService extends ServiceInterface {
   connectTo (wc, id) {
@@ -11,9 +10,7 @@ class ChannelBuilderService extends ServiceInterface {
       let connectors = this.availableConnectors(wc)
       wc.sendInnerTo(id, this.id, {
         connectors,
-        sender: wc.myId,
-        botUrl: wc.settings.bot,
-        oneMsg: true
+        botUrl: wc.settings.bot
       })
     })
   }
@@ -21,7 +18,7 @@ class ChannelBuilderService extends ServiceInterface {
   availableConnectors (wc) {
     let connectors = []
     if (webRTCAvailable) connectors[connectors.length] = WEBRTC
-    if (listenOnWebSocket) connectors[connectors.length] = WEBSOCKET
+    if (listenOnSocket) connectors[connectors.length] = WEBSOCKET
     let forground = wc.settings.connector
     if (connectors.length !== 1 && connectors[0] !== forground) {
       let tmp = connectors[0]
@@ -31,10 +28,11 @@ class ChannelBuilderService extends ServiceInterface {
     return connectors
   }
 
-  onChannel (wc, channel, oneMsg, sender) {
-    wc.initChannel(channel, sender)
+  onChannel (wc, channel, senderId) {
+    wc.initChannel(channel, senderId)
       .then(channel => {
-        if (oneMsg) this.getPendingRequest(wc, sender).resolve(channel)
+        let pendReq = this.getPendingRequest(wc, senderId)
+        if (pendReq !== null) pendReq.resolve(channel)
       })
   }
 
@@ -45,33 +43,27 @@ class ChannelBuilderService extends ServiceInterface {
       // Try to connect in WebSocket
       provide(WEBSOCKET).connect(msg.botUrl)
         .then(channel => {
-          let msgBld = provide(MESSAGE_BUILDER)
-          channel.send(msgBld.msg(JOIN, wc.myId, null, {
-            wcId: this.id,
-            oneMsg: msg.oneMsg
-          }))
-          this.onChannel(wc, channel, !msg.oneMsg, msg.sender)
+          channel.send(JSON.stringify({wcId: wc.id, senderId: wc.myId}))
+          this.onChannel(wc, channel, senderId)
         })
         .catch(() => {
-          provide(WEBRTC).connectOverWebChannel(wc, msg.sender)
+          provide(WEBRTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId)
             .then(channel => {
-              this.onChannel(wc, channel, !msg.oneMsg, msg.sender)
+              this.onChannel(wc, channel, senderId)
             })
         })
     } else {
       let connectors = this.availableConnectors(wc)
       if (connectors.includes(WEBSOCKET)) {
         // The peer who send the message doesn't listen in WebSocket and i'm bot
-        wc.sendInnerTo(msg.sender, this.id, {
+        wc.sendInnerTo(senderId, this.id, {
           connectors,
-          sender: wc.myId,
-          botUrl: wc.settings.bot,
-          oneMsg: false
+          botUrl: wc.settings.bot
         })
       } else {
         // The peer who send the message doesn't listen in WebSocket and doesn't listen too
-        provide(WEBRTC).connectOverWebChannel(wc, msg.sender)
-          .then(channel => this.onChannel(wc, channel, !msg.oneMsg, msg.sender))
+        provide(WEBRTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId)
+          .then(channel => this.onChannel(wc, channel, senderId))
       }
     }
   }

@@ -1,11 +1,11 @@
-import {SIGNALING, LEAVE_CODE, onMessageForBot} from 'test/utils/helper'
-import WebChannel from 'src/WebChannel'
+import {create} from 'dist/netflux.es2015.js'
+import {SIGNALING_URL, LEAVE_CODE, onMessageForBot} from 'test/util/helper'
 
-let wc = new WebChannel({signaling: SIGNALING})
+let wc = create({signalingURL: SIGNALING_URL})
 wc.onMessage = (id, msg, isBroadcast) => onMessageForBot(wc, id, msg, isBroadcast)
 wc.onClose = closeEvt => {
   console.log(`Node bot has disconnected from Signaling server`)
 }
-wc.open({key: 'node'})
+wc.open({key: 'NODE'})
   .then(() => console.log('Bot for Node is ready'))
   .catch(reason => console.error('Node bot WebChannel open error: ' + reason))

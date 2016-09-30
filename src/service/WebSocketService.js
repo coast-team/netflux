@@ -4,9 +4,9 @@ import ServiceInterface from 'service/ServiceInterface'
 const WebSocket = isBrowser() ? window.WebSocket : require('ws')
 const CONNECT_TIMEOUT = 10000
 const OPEN = WebSocket.OPEN
-let listenOnWebSocket = false
-let setListenOnWebSocket = value => {
-  listenOnWebSocket = value
+let listenOnSocket = false
+let setListenOnSocket = value => {
+  listenOnSocket = value
 }
 
 class WebSocketService extends ServiceInterface {
@@ -34,4 +34,4 @@ class WebSocketService extends ServiceInterface {
 }
 
 export default WebSocketService
-export {OPEN, setListenOnWebSocket, listenOnWebSocket}
+export {OPEN, setListenOnSocket, listenOnSocket}

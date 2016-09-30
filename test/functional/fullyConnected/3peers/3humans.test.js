@@ -1,20 +1,10 @@
-import {
-  SIGNALING,
-  MSG_NUMBER,
-  TestGroup,
-  allMessagesAreSentAndReceived,
-  INSTANCES,
-  randStr,
-  checkMembers,
-  itBrowser
-} from 'utils/helper'
-import WebChannel from 'src/WebChannel'
-import {isBrowser} from 'src/helper'
-import smallStr from 'utils/200kb.txt'
-import bigStr from 'utils/4mb.txt'
+import {create} from 'src/index'
+import * as helper from 'util/helper'
+import smallStr from 'util/200kb.txt'
+import bigStr from 'util/4mb.txt'
 
 describe('Fully connected: 3 peers', () => {
-  let signaling = SIGNALING
+  let signalingURL = helper.SIGNALING_URL
   let wcs = []
   afterAll(() => {
     wcs[0].leave()
@@ -37,34 +27,34 @@ describe('Fully connected: 3 peers', () => {
     let allJoiningDetectedBy = wc => new Promise((resolve, reject) => {
       let gen = checkJoining(resolve, wc)
       gen.next()
-      wc.onJoining = id => gen.next(id)
+      wc.onPeerJoin = id => gen.next(id)
     })
 
     it('one by one', done => {
-      wcs[0] = new WebChannel({signaling})
-      wcs[1] = new WebChannel({signaling})
-      wcs[2] = new WebChannel({signaling})
+      wcs[0] = create({signalingURL})
+      wcs[1] = create({signalingURL})
+      wcs[2] = create({signalingURL})
       Promise.all([
         allJoiningDetectedBy(wcs[0]),
         allJoiningDetectedBy(wcs[1]),
         allJoiningDetectedBy(wcs[2]),
         wcs[0].open()
           .then(data => wcs[1].join(data.key))
-          .then(() => wcs[2].join(wcs[0].getAccess().key))
+          .then(() => wcs[2].join(wcs[0].getOpenData().key))
       ])
         .then(() => {
           expect(wcs[0].id).toEqual(wcs[1].id)
           expect(wcs[0].id).toEqual(wcs[2].id)
-          checkMembers(wcs)
+          helper.checkMembers(wcs)
           done()
         })
         .catch(done.fail)
     }, 15000)
 
     it('simultaneously', done => {
-      wcs[0] = new WebChannel({signaling})
-      wcs[1] = new WebChannel({signaling})
-      wcs[2] = new WebChannel({signaling})
+      wcs[0] = create({signalingURL})
+      wcs[1] = create({signalingURL})
+      wcs[2] = create({signalingURL})
       Promise.all([
         allJoiningDetectedBy(wcs[0]),
         allJoiningDetectedBy(wcs[1]),
@@ -78,7 +68,7 @@ describe('Fully connected: 3 peers', () => {
         .then(() => {
           expect(wcs[0].id).toEqual(wcs[1].id)
           expect(wcs[0].id).toEqual(wcs[2].id)
-          checkMembers(wcs)
+          helper.checkMembers(wcs)
           done()
         })
         .catch(done.fail)
@@ -90,11 +80,11 @@ describe('Fully connected: 3 peers', () => {
 
     beforeAll(() => {
       groups = []
-      for (let i = 0; i < 3; i++) groups[i] = new TestGroup(wcs[i])
+      for (let i = 0; i < 3; i++) groups[i] = new helper.TestGroup(wcs[i])
     })
 
     it('private string message', done => {
-      allMessagesAreSentAndReceived(groups, String, false)
+      helper.allMessagesAreSentAndReceived(groups, String, false)
         .then(done).catch(done.fail)
       groups[0].wc.sendTo(groups[1].wc.myId, groups[0].get(String))
       groups[0].wc.sendTo(groups[2].wc.myId, groups[0].get(String))
@@ -105,31 +95,31 @@ describe('Fully connected: 3 peers', () => {
     })
 
     it('broadcast string message', done => {
-      allMessagesAreSentAndReceived(groups, String)
+      helper.allMessagesAreSentAndReceived(groups, String)
         .then(done).catch(done.fail)
       for (let g of groups) g.wc.send(g.get(String))
     })
 
-    for (let i of INSTANCES) {
+    for (let i of helper.INSTANCES) {
       it(i.prototype.constructor.name, done => {
-        allMessagesAreSentAndReceived(groups, i)
+        helper.allMessagesAreSentAndReceived(groups, i)
           .then(done).catch(done.fail)
         for (let g of groups) g.wc.send(g.get(i))
       })
     }
 
-    itBrowser(true, '~200 KB string', done => {
+    helper.itBrowser(true, '~200 KB string', done => {
       let groups = []
       for (let i = 0; i < 3; i++) {
-        groups[i] = new TestGroup(wcs[i], null)
+        groups[i] = new helper.TestGroup(wcs[i], null)
         groups[i].set(String, smallStr + i)
       }
-      allMessagesAreSentAndReceived(groups, String)
+      helper.allMessagesAreSentAndReceived(groups, String)
         .then(done).catch(done.fail)
       for (let g of groups) g.wc.send(g.get(String))
     })
 
-    itBrowser(true, '~4 MB string', done => {
+    helper.itBrowser(true, '~4 MB string', done => {
       let indexes = [0, 1, 2]
       let index1 = Math.round(2 * Math.random())
       indexes.splice(index1, 1)
@@ -142,14 +132,14 @@ describe('Fully connected: 3 peers', () => {
       wcs[index2].sendTo(wcs[index1].myId, bigStr)
     }, 4000)
 
-    it(`${MSG_NUMBER} small messages`, done => {
+    it(`${helper.MSG_NUMBER} small messages`, done => {
       let msgs = []
       for (let i = 0; i < 3; i++) msgs[i] = []
-      let nb = Math.floor(MSG_NUMBER / 3)
+      let nb = Math.floor(helper.MSG_NUMBER / 3)
       for (let i = 0; i < nb; i++) {
-        msgs[0][i] = randStr()
-        msgs[1][i] = randStr()
-        msgs[2][i] = randStr()
+        msgs[0][i] = helper.randStr()
+        msgs[1][i] = helper.randStr()
+        msgs[2][i] = helper.randStr()
       }
       let startSend = index => new Promise((resolve, reject) => {
         for (let msg of msgs[index]) wcs[index].send(msg)
@@ -216,8 +206,8 @@ describe('Fully connected: 3 peers', () => {
     describe('One by one', () => {
       it('first the peer who opened the WebChannel', done => {
         wcs[0].onMessage = done.fail
-        wcs[0].onLeaving = done.fail
-        wcs[0].onJoining = done.fail
+        wcs[0].onPeerLeave = done.fail
+        wcs[0].onPeerJoin = done.fail
         wcs[1].onMessage = (id, msg) => {
           expect(id).toEqual(wcs[2].myId)
         }
@@ -226,7 +216,7 @@ describe('Fully connected: 3 peers', () => {
         }
         Promise.all([
           new Promise((resolve, reject) => {
-            wcs[1].onLeaving = id => {
+            wcs[1].onPeerLeave = id => {
               expect(id).toBe(wcs[0].myId)
               wcs[0].send(message)
               wcs[0].sendTo(wcs[1].myId, message)
@@ -236,7 +226,7 @@ describe('Fully connected: 3 peers', () => {
             }
           }),
           new Promise((resolve, reject) => {
-            wcs[2].onLeaving = id => {
+            wcs[2].onPeerLeave = id => {
               expect(id).toBe(wcs[0].myId)
               wcs[0].send(message)
               wcs[0].sendTo(wcs[2].myId, message)
@@ -252,10 +242,10 @@ describe('Fully connected: 3 peers', () => {
           expect(wcs[2].members.length).toEqual(1)
           expect(wcs[2].members[0]).toEqual(wcs[1].myId)
           wcs[1].onMessage = done.fail
-          wcs[1].onLeaving = done.fail
-          wcs[1].onJoining = done.fail
+          wcs[1].onPeerLeave = done.fail
+          wcs[1].onPeerJoin = done.fail
           wcs[2].onMessage = done.fail
-          wcs[2].onLeaving = id => {
+          wcs[2].onPeerLeave = id => {
             expect(id).toBe(wcs[1].myId)
             wcs[1].send(message)
             wcs[1].sendTo(wcs[2].myId, message)
@@ -272,21 +262,21 @@ describe('Fully connected: 3 peers', () => {
       })
 
       it('first one of the joined peer', done => {
-        wcs[0] = new WebChannel({signaling})
-        wcs[1] = new WebChannel({signaling})
-        wcs[2] = new WebChannel({signaling})
+        wcs[0] = create({signalingURL})
+        wcs[1] = create({signalingURL})
+        wcs[2] = create({signalingURL})
         wcs[0].open()
           .then(data => wcs[1].join(data.key))
-          .then(() => wcs[2].join(wcs[0].getAccess().key))
+          .then(() => wcs[2].join(wcs[0].getOpenData().key))
           .then(() => {
             wcs[1].onMessage = done.fail
-            wcs[1].onLeaving = done.fail
-            // wcs[1].onJoining = done.fail
+            wcs[1].onPeerLeave = done.fail
+            // wcs[1].onPeerJoin = done.fail
             wcs[0].onMessage = (id, msg) => expect(id).toEqual(wcs[2].myId)
             wcs[2].onMessage = (id, msg) => expect(id).toEqual(wcs[0].myId)
             Promise.all([
               new Promise((resolve, reject) => {
-                wcs[0].onLeaving = id => {
+                wcs[0].onPeerLeave = id => {
                   expect(id).toBe(wcs[1].myId)
                   wcs[1].sendTo(wcs[0].myId, message)
                   wcs[0].sendTo(wcs[1].myId, message)
@@ -294,7 +284,7 @@ describe('Fully connected: 3 peers', () => {
                 }
               }),
               new Promise((resolve, reject) => {
-                wcs[2].onLeaving = id => {
+                wcs[2].onPeerLeave = id => {
                   expect(id).toBe(wcs[1].myId)
                   wcs[1].sendTo(wcs[2].myId, message)
                   wcs[2].sendTo(wcs[1].myId, message)
@@ -308,10 +298,10 @@ describe('Fully connected: 3 peers', () => {
               expect(wcs[2].members.length).toEqual(1)
               expect(wcs[2].members[0]).toEqual(wcs[0].myId)
               wcs[0].onMessage = done.fail
-              wcs[0].onLeaving = done.fail
-              wcs[0].onJoining = done.fail
+              wcs[0].onPeerLeave = done.fail
+              wcs[0].onPeerJoin = done.fail
               wcs[2].onMessage = done.fail
-              wcs[2].onLeaving = id => {
+              wcs[2].onPeerLeave = id => {
                 expect(id).toBe(wcs[0].myId)
                 wcs[0].sendTo(wcs[2].myId, message)
                 wcs[2].sendTo(wcs[0].myId, message)
@@ -329,9 +319,9 @@ describe('Fully connected: 3 peers', () => {
 
     it('simultaneously', done => {
       // FIXME
-      wcs[0] = new WebChannel({signaling})
-      wcs[1] = new WebChannel({signaling})
-      wcs[2] = new WebChannel({signaling})
+      wcs[0] = create({signalingURL})
+      wcs[1] = create({signalingURL})
+      wcs[2] = create({signalingURL})
       let left1 = false
       let left2 = false
       // wcs[1].leave()
@@ -341,9 +331,9 @@ describe('Fully connected: 3 peers', () => {
       wcs[2].onMessage = done.fail
       wcs[0].open()
         .then(data => wcs[1].join(data.key))
-        .then(() => wcs[2].join(wcs[0].getAccess().key))
+        .then(() => wcs[2].join(wcs[0].getOpenData().key))
         .then(() => {
-          wcs[0].onLeaving = id => {
+          wcs[0].onPeerLeave = id => {
             if (!left1 && id === wcs[1].myId) {
               wcs[0].sendTo(wcs[1].myId, message)
               wcs[1].sendTo(wcs[0].myId, message)
@@ -371,7 +361,7 @@ describe('Fully connected: 3 peers', () => {
 
   it('Should not be able to join the WebChannel after it has been closed', done => {
     expect(wcs[0].isOpen()).toBeTruthy()
-    wcs[1].join(wcs[0].getAccess().key).then(done.fail)
+    wcs[1].join(wcs[0].getOpenData().key).then(done.fail)
       .catch(done)
     wcs[0].close()
   })

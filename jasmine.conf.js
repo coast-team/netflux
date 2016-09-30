@@ -4,7 +4,11 @@ let SpecReporter = require('jasmine-spec-reporter')
 
 let config = {
   spec_dir: '.rolledupTest',
-  spec_files: ['service/*.test.js'],
+  spec_files: [
+    'unit/**/*.test.js',
+    'functional/fullyConnected/1peer.test.js',
+    'functional/fullyConnected/2peers/**/*.test.js'
+  ],
   stopSpecOnExpectationFailure: false,
   random: false
 }

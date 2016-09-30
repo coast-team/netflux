@@ -1,4 +1,5 @@
-import {isBrowser, NodeCloseEvent} from 'helper'
+import 'webrtc-adapter'
+import {isBrowser, createCloseEvent} from 'helper'
 import ServiceInterface from 'service/ServiceInterface'
 import {CHANNEL_BUILDER, provide} from 'serviceProvider'
 
@@ -6,11 +7,11 @@ const CONNECT_TIMEOUT = 30000
 const REMOVE_ITEM_TIMEOUT = 5000
 let src
 let webRTCAvailable = true
-if (isBrowser()) src = window
-else {
+if (isBrowser()) {
+  src = window
+} else {
   try {
     src = require('wrtc')
-    src.CloseEvent = NodeCloseEvent
   } catch (err) {
     src = {}
     webRTCAvailable = false
@@ -18,7 +19,6 @@ else {
 }
 const RTCPeerConnection = src.RTCPeerConnection
 const RTCIceCandidate = src.RTCIceCandidate
-const CloseEvent = src.CloseEvent
 
 /**
  * Ice candidate event handler.
@@ -59,15 +59,9 @@ class WebRTCService extends ServiceInterface {
    * @param  {Object[]} [options.iceServers=[{urls: 'stun:23.21.150.121'},{urls: 'stun:stun.l.google.com:19302'},{urls: 'turn:numb.viagenie.ca', credential: 'webrtcdemo', username: 'louis%40mozilla.com'}]] - WebRTC options to setup which STUN
    * and TURN servers to be used.
    */
-  constructor (id, options = {}) {
+  constructor (id, iceServers) {
     super(id)
-    this.defaults = {
-      signaling: 'ws://sigver-coastteam.rhcloud.com:8000',
-      iceServers: [
-        {urls: 'stun:turn01.uswest.xirsys.com'}
-      ]
-    }
-    this.settings = Object.assign({}, this.defaults, options)
+    this.iceServers = iceServers
   }
 
   onMessage (channel, senderId, recepientId, msg) {
@@ -81,16 +75,13 @@ class WebRTCService extends ServiceInterface {
       item.pc = this.createPeerConnection(candidate => {
         wc.sendInnerTo(senderId, this.id, {candidate})
       })
-      Promise.all([
-        this.createDataChannel(item.pc, false)
-          .then(channel => {
-            let channelBuilderService = provide(CHANNEL_BUILDER)
-            channelBuilderService.onChannel(wc, channel, true, senderId)
-            this.removeItem(wc, senderId)
-          }),
-        this.createAnswer(item.pc, msg.offer, item.candidates)
-          .then(answer => wc.sendInnerTo(senderId, this.id, {answer}))
-      ]).catch(err => console.error(`Establish data channel (webChannel): ${err.message}`))
+      this.listenOnDataChannel(item.pc, dataCh => {
+        setTimeout(() => super.removeItem(wc, senderId), REMOVE_ITEM_TIMEOUT)
+        provide(CHANNEL_BUILDER).onChannel(wc, dataCh, senderId)
+      })
+      this.createAnswer(item.pc, msg.offer, item.candidates)
+        .then(answer => wc.sendInnerTo(senderId, this.id, {answer}))
+        .catch(err => console.error(`During Establishing dataChannel connection over webChannel: ${err.message}`))
     } if ('answer' in msg) {
       item.pc.setRemoteDescription(msg.answer)
         .then(() => item.pc.addReceivedCandidates(item.candidates))
@@ -107,19 +98,16 @@ class WebRTCService extends ServiceInterface {
     super.setItem(wc, id, item)
     return new Promise((resolve, reject) => {
       setTimeout(reject, CONNECT_TIMEOUT, 'WebRTC connect timeout')
-      this.createDataChannel(item.pc, true)
-        .then(channel => {
-          this.removeItem(wc, id)
-          resolve(channel)
-        })
-        .catch(reject)
+      this.createDataChannel(item.pc, dataCh => {
+        setTimeout(() => super.removeItem(wc, id), REMOVE_ITEM_TIMEOUT)
+        resolve(dataCh)
+      })
       this.createOffer(item.pc)
         .then(offer => wc.sendInnerTo(id, this.id, {offer}))
         .catch(reject)
     })
   }
 
-  // Equivalent à open
   listenFromSignaling (ws, onChannel) {
     ws.onmessage = evt => {
       let msg = JSON.parse(evt.data)
@@ -132,18 +120,17 @@ class WebRTCService extends ServiceInterface {
           super.setItem(ws, msg.id, item)
         }
         if ('offer' in msg.data) {
-          Promise.all([
-            this.createDataChannel(item.pc, false).then(channel => {
-              super.removeItem(ws, msg.id)
-              onChannel(channel)
-            }),
-            this.createAnswer(item.pc, msg.data.offer, item.candidates)
-              .then(answer => {
-                ws.send(JSON.stringify({id: msg.id, data: {answer}}))
-              })
-          ]).catch(err => {
-            console.error(`Establish data channel through signaling: ${err.message}`)
+          this.listenOnDataChannel(item.pc, dataCh => {
+            setTimeout(() => super.removeItem(ws, msg.id), REMOVE_ITEM_TIMEOUT)
+            onChannel(dataCh)
           })
+          this.createAnswer(item.pc, msg.data.offer, item.candidates)
+            .then(answer => {
+              ws.send(JSON.stringify({id: msg.id, data: {answer}}))
+            })
+            .catch(err => {
+              console.error(`During establishing data channel connection through signaling: ${err.message}`)
+            })
         } else if ('candidate' in msg.data) {
           this.addIceCandidate(item, msg.data.candidate)
         }
@@ -151,49 +138,38 @@ class WebRTCService extends ServiceInterface {
     }
   }
 
-  connectOverSignaling (ws, key, options = {}) {
+  connectOverSignaling (ws, key) {
     let item = new CandidatesBuffer(this.createPeerConnection(candidate => {
       if (ws.readyState === 1) ws.send(JSON.stringify({data: {candidate}}))
     }))
     super.setItem(ws, key, item)
-    return Promise.race([
-      new Promise((resolve, reject) => {
-        ws.onclose = closeEvt => reject(closeEvt.reason)
-        ws.onmessage = evt => {
-          let msg
-          try {
-            msg = JSON.parse(evt.data)
-          } catch (err) {
-            console.error(`Unsupported message type from the signaling server: ${evt.data}`)
-          }
-
+    return new Promise((resolve, reject) => {
+      ws.onclose = closeEvt => reject(closeEvt.reason)
+      ws.onmessage = evt => {
+        try {
+          let msg = JSON.parse(evt.data)
           if ('data' in msg) {
             if ('answer' in msg.data) {
               item.pc.setRemoteDescription(msg.data.answer)
                 .then(() => item.pc.addReceivedCandidates(item.candidates))
-                .catch(err => {
-                  console.error(`Set answer (signaling): ${err.message}`)
-                  reject(err)
-                })
+                .catch(err => reject(`Set answer (signaling): ${err.message}`))
             } else if ('candidate' in msg.data) {
               this.addIceCandidate(super.getItem(ws, key), msg.data.candidate)
             }
-          } else if ('isKeyOk' in msg) {
-            if (msg.isKeyOk) {
-              this.createOffer(item.pc)
-                .then(offer => ws.send(JSON.stringify({data: {offer}})))
-                .catch(reject)
-            } else reject('Provided key is not available')
-          } else reject(`Unknown message from the signaling server: ${evt.data}`)
+          }
+        } catch (err) {
+          reject(`Unknown message from the server ${ws.url}: ${evt.data}`)
         }
-        ws.send(JSON.stringify({join: key}))
-      }),
-      this.createDataChannel(item.pc, true)
-        .then(channel => {
-          setTimeout(() => super.removeItem(ws, key), REMOVE_ITEM_TIMEOUT)
-          return channel
-        })
-    ])
+      }
+
+      this.createDataChannel(item.pc, dataCh => {
+        setTimeout(() => super.removeItem(ws, key), REMOVE_ITEM_TIMEOUT)
+        resolve(dataCh)
+      })
+      this.createOffer(item.pc)
+        .then(offer => ws.send(JSON.stringify({data: {offer}})))
+        .catch(reject)
+    })
   }
 
   /**
@@ -240,7 +216,7 @@ class WebRTCService extends ServiceInterface {
    * @return {external:RTCPeerConnection} - Peer connection.
    */
   createPeerConnection (onCandidate) {
-    let pc = new RTCPeerConnection({iceServers: this.settings.iceServers})
+    let pc = new RTCPeerConnection({iceServers: this.iceServers})
     pc.isRemoteDescriptionSet = false
     pc.addReceivedCandidates = candidates => {
       pc.isRemoteDescriptionSet = true
@@ -259,24 +235,25 @@ class WebRTCService extends ServiceInterface {
     return pc
   }
 
-  createDataChannel (pc, isInitiator) {
-    return new Promise((resolve, reject) => {
-      let dc
-      if (isInitiator) {
-        dc = pc.createDataChannel(null)
-        dc.onopen = evt => resolve(dc)
-      } else {
-        pc.ondatachannel = dcEvt => {
-          dc = dcEvt.channel
-          dcEvt.channel.onopen = evt => resolve(dc)
-        }
+  createDataChannel (pc, onOpen) {
+    let dc = pc.createDataChannel(null)
+    dc.onopen = evt => onOpen(dc)
+    this.setUpOnDisconnect(pc, dc)
+  }
+
+  listenOnDataChannel (pc, onOpen) {
+    pc.ondatachannel = dcEvt => {
+      this.setUpOnDisconnect(pc, dcEvt.channel)
+      dcEvt.channel.onopen = evt => onOpen(dcEvt.channel)
+    }
+  }
+
+  setUpOnDisconnect (pc, dataCh) {
+    pc.oniceconnectionstatechange = () => {
+      if (pc.iceConnectionState === 'disconnected') {
+        if (dataCh.onclose) dataCh.onclose(createCloseEvent(4201, 'disconnected', false))
       }
-      pc.oniceconnectionstatechange = () => {
-        if (pc.iceConnectionState === 'disconnected') {
-          if (dc.onclose) dc.onclose(new CloseEvent(pc.iceConnectionState))
-        }
-      }
-    })
+    }
   }
 
   addIceCandidate (obj, candidate) {

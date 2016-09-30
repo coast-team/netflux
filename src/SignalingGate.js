@@ -18,26 +18,16 @@ class SignalingGate {
   /**
    * @param {closeEventListener} onClose - close event handler
    */
-  constructor (onClose = () => {}) {
+  constructor (webChannel) {
+    this.webChannel = webChannel
+    this.url = null
+    this.key = null
     /**
      * Web socket with the signaling server.
      * @private
      * @type {external:WebSocket|external:ws/WebSocket}
      */
     this.ws = null
-
-    /**
-     * Access data. When the gate is open this object is not empty.
-     * @type {SignalingGate~AccessData}
-     */
-    this.accessData = {}
-
-    /**
-     * Close event handler.
-     * @private
-     * @type {CloseEventHandler}
-     */
-    this.onClose = onClose
   }
 
   /**
@@ -46,45 +36,36 @@ class SignalingGate {
    * @param {SignalingGate~AccessData} accessData - Access data
    * @return {Promise}
    */
-  open (onChannel, options) {
-    let url = options.signaling
-
+  open (url, onChannel, key = null) {
     return new Promise((resolve, reject) => {
-      let webRTCService = provide(WEBRTC)
-      let webSocketService = provide(WEBSOCKET)
-      let key = 'key' in options ? options.key : this.generateKey()
-      webSocketService.connect(url)
+      if (key === null) key = this.generateKey()
+      provide(WEBSOCKET).connect(url)
         .then(ws => {
           ws.onclose = closeEvt => {
-            this.onClose(closeEvt)
+            this.key = null
+            this.ws = null
+            this.url = null
+            this.webChannel.onClose(closeEvt)
             reject(closeEvt.reason)
           }
-          ws.onerror = err => {
-            console.log('ERROR: ', err)
-            reject(err.message)
-          }
+          ws.onerror = err => reject(err.message)
           ws.onmessage = evt => {
-            let msg
             try {
-              msg = JSON.parse(evt.data)
+              let msg = JSON.parse(evt.data)
+              if ('isKeyOk' in msg) {
+                if (msg.isKeyOk) {
+                  provide(WEBRTC, this.webChannel.settings.iceServers)
+                    .listenFromSignaling(ws, onChannel)
+                  this.ws = ws
+                  this.key = key
+                  this.url = url
+                  resolve({url, key})
+                } else reject(`The key "${key}" already exists`)
+              } else reject(`Unknown message from ${url}: ${evt.data}`)
             } catch (err) {
               reject('Server responce is not a JSON string: ' + err.message)
             }
-            if ('isKeyOk' in msg) {
-              if (msg.isKeyOk) {
-                webRTCService.listenFromSignaling(ws, onChannel)
-
-                resolve(this.accessData)
-              } else {
-                reject(`The key: ${key} is not suitable`)
-              }
-            } else {
-              reject(`Unknown server message: ${evt.data}`)
-            }
           }
-          this.ws = ws
-          this.accessData.key = key
-          this.accessData.url = url
           ws.send(JSON.stringify({key}))
         })
         .catch(reject)
@@ -100,14 +81,22 @@ class SignalingGate {
     return this.ws !== null && this.ws.readyState === OPEN
   }
 
+  getOpenData () {
+    if (this.isOpen()) {
+      return {
+        url: this.url,
+        key: this.key
+      }
+    }
+    return null
+  }
+
   /**
    * Close the door if it is open and do nothing if it is closed already.
    */
   close () {
     if (this.isOpen()) {
       this.ws.close()
-      this.accessData = {}
-      this.ws = null
     }
   }
 

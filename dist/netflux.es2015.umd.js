@@ -4,1029 +4,6 @@
   (factory((global.netflux = global.netflux || {})));
 }(this, (function (exports) { 'use strict';
 
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-
-},{}],2:[function(require,module,exports){
-/*
- *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
- *
- *  Use of this source code is governed by a BSD-style license
- *  that can be found in the LICENSE file in the root of the source
- *  tree.
- */
- /* eslint-env node */
-
-'use strict';
-
-// Shimming starts here.
-(function() {
-  // Utils.
-  var logging = require('./utils').log;
-  var browserDetails = require('./utils').browserDetails;
-  // Export to the adapter global object visible in the browser.
-  module.exports.browserDetails = browserDetails;
-  module.exports.extractVersion = require('./utils').extractVersion;
-  module.exports.disableLog = require('./utils').disableLog;
-
-  // Uncomment the line below if you want logging to occur, including logging
-  // for the switch statement below. Can also be turned on in the browser via
-  // adapter.disableLog(false), but then logging from the switch statement below
-  // will not appear.
-  // require('./utils').disableLog(false);
-
-  // Browser shims.
-  var chromeShim = require('./chrome/chrome_shim') || null;
-  var edgeShim = require('./edge/edge_shim') || null;
-  var firefoxShim = require('./firefox/firefox_shim') || null;
-  var safariShim = require('./safari/safari_shim') || null;
-
-  // Shim browser if found.
-  switch (browserDetails.browser) {
-    case 'opera': // fallthrough as it uses chrome shims
-    case 'chrome':
-      if (!chromeShim || !chromeShim.shimPeerConnection) {
-        logging('Chrome shim is not included in this adapter release.');
-        return;
-      }
-      logging('adapter.js shimming chrome.');
-      // Export to the adapter global object visible in the browser.
-      module.exports.browserShim = chromeShim;
-
-      chromeShim.shimGetUserMedia();
-      chromeShim.shimMediaStream();
-      chromeShim.shimSourceObject();
-      chromeShim.shimPeerConnection();
-      chromeShim.shimOnTrack();
-      break;
-    case 'firefox':
-      if (!firefoxShim || !firefoxShim.shimPeerConnection) {
-        logging('Firefox shim is not included in this adapter release.');
-        return;
-      }
-      logging('adapter.js shimming firefox.');
-      // Export to the adapter global object visible in the browser.
-      module.exports.browserShim = firefoxShim;
-
-      firefoxShim.shimGetUserMedia();
-      firefoxShim.shimSourceObject();
-      firefoxShim.shimPeerConnection();
-      firefoxShim.shimOnTrack();
-      break;
-    case 'edge':
-      if (!edgeShim || !edgeShim.shimPeerConnection) {
-        logging('MS edge shim is not included in this adapter release.');
-        return;
-      }
-      logging('adapter.js shimming edge.');
-      // Export to the adapter global object visible in the browser.
-      module.exports.browserShim = edgeShim;
-
-      edgeShim.shimGetUserMedia();
-      edgeShim.shimPeerConnection();
-      break;
-    case 'safari':
-      if (!safariShim) {
-        logging('Safari shim is not included in this adapter release.');
-        return;
-      }
-      logging('adapter.js shimming safari.');
-      // Export to the adapter global object visible in the browser.
-      module.exports.browserShim = safariShim;
-
-      safariShim.shimGetUserMedia();
-      break;
-    default:
-      logging('Unsupported browser!');
-  }
-})();
-
-},{"./chrome/chrome_shim":3,"./edge/edge_shim":1,"./firefox/firefox_shim":5,"./safari/safari_shim":7,"./utils":8}],3:[function(require,module,exports){
-
-/*
- *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
- *
- *  Use of this source code is governed by a BSD-style license
- *  that can be found in the LICENSE file in the root of the source
- *  tree.
- */
- /* eslint-env node */
-'use strict';
-var logging = require('../utils.js').log;
-var browserDetails = require('../utils.js').browserDetails;
-
-var chromeShim = {
-  shimMediaStream: function() {
-    window.MediaStream = window.MediaStream || window.webkitMediaStream;
-  },
-
-  shimOnTrack: function() {
-    if (typeof window === 'object' && window.RTCPeerConnection && !('ontrack' in
-        window.RTCPeerConnection.prototype)) {
-      Object.defineProperty(window.RTCPeerConnection.prototype, 'ontrack', {
-        get: function() {
-          return this._ontrack;
-        },
-        set: function(f) {
-          var self = this;
-          if (this._ontrack) {
-            this.removeEventListener('track', this._ontrack);
-            this.removeEventListener('addstream', this._ontrackpoly);
-          }
-          this.addEventListener('track', this._ontrack = f);
-          this.addEventListener('addstream', this._ontrackpoly = function(e) {
-            // onaddstream does not fire when a track is added to an existing
-            // stream. But stream.onaddtrack is implemented so we use that.
-            e.stream.addEventListener('addtrack', function(te) {
-              var event = new Event('track');
-              event.track = te.track;
-              event.receiver = {track: te.track};
-              event.streams = [e.stream];
-              self.dispatchEvent(event);
-            });
-            e.stream.getTracks().forEach(function(track) {
-              var event = new Event('track');
-              event.track = track;
-              event.receiver = {track: track};
-              event.streams = [e.stream];
-              this.dispatchEvent(event);
-            }.bind(this));
-          }.bind(this));
-        }
-      });
-    }
-  },
-
-  shimSourceObject: function() {
-    if (typeof window === 'object') {
-      if (window.HTMLMediaElement &&
-        !('srcObject' in window.HTMLMediaElement.prototype)) {
-        // Shim the srcObject property, once, when HTMLMediaElement is found.
-        Object.defineProperty(window.HTMLMediaElement.prototype, 'srcObject', {
-          get: function() {
-            return this._srcObject;
-          },
-          set: function(stream) {
-            var self = this;
-            // Use _srcObject as a private property for this shim
-            this._srcObject = stream;
-            if (this.src) {
-              URL.revokeObjectURL(this.src);
-            }
-
-            if (!stream) {
-              this.src = '';
-              return;
-            }
-            this.src = URL.createObjectURL(stream);
-            // We need to recreate the blob url when a track is added or
-            // removed. Doing it manually since we want to avoid a recursion.
-            stream.addEventListener('addtrack', function() {
-              if (self.src) {
-                URL.revokeObjectURL(self.src);
-              }
-              self.src = URL.createObjectURL(stream);
-            });
-            stream.addEventListener('removetrack', function() {
-              if (self.src) {
-                URL.revokeObjectURL(self.src);
-              }
-              self.src = URL.createObjectURL(stream);
-            });
-          }
-        });
-      }
-    }
-  },
-
-  shimPeerConnection: function() {
-    // The RTCPeerConnection object.
-    window.RTCPeerConnection = function(pcConfig, pcConstraints) {
-      // Translate iceTransportPolicy to iceTransports,
-      // see https://code.google.com/p/webrtc/issues/detail?id=4869
-      logging('PeerConnection');
-      if (pcConfig && pcConfig.iceTransportPolicy) {
-        pcConfig.iceTransports = pcConfig.iceTransportPolicy;
-      }
-
-      var pc = new webkitRTCPeerConnection(pcConfig, pcConstraints);
-      var origGetStats = pc.getStats.bind(pc);
-      pc.getStats = function(selector, successCallback, errorCallback) {
-        var self = this;
-        var args = arguments;
-
-        // If selector is a function then we are in the old style stats so just
-        // pass back the original getStats format to avoid breaking old users.
-        if (arguments.length > 0 && typeof selector === 'function') {
-          return origGetStats(selector, successCallback);
-        }
-
-        var fixChromeStats_ = function(response) {
-          var standardReport = {};
-          var reports = response.result();
-          reports.forEach(function(report) {
-            var standardStats = {
-              id: report.id,
-              timestamp: report.timestamp,
-              type: report.type
-            };
-            report.names().forEach(function(name) {
-              standardStats[name] = report.stat(name);
-            });
-            standardReport[standardStats.id] = standardStats;
-          });
-
-          return standardReport;
-        };
-
-        // shim getStats with maplike support
-        var makeMapStats = function(stats, legacyStats) {
-          var map = new Map(Object.keys(stats).map(function(key) {
-            return[key, stats[key]];
-          }));
-          legacyStats = legacyStats || stats;
-          Object.keys(legacyStats).forEach(function(key) {
-            map[key] = legacyStats[key];
-          });
-          return map;
-        };
-
-        if (arguments.length >= 2) {
-          var successCallbackWrapper_ = function(response) {
-            args[1](makeMapStats(fixChromeStats_(response)));
-          };
-
-          return origGetStats.apply(this, [successCallbackWrapper_,
-              arguments[0]]);
-        }
-
-        // promise-support
-        return new Promise(function(resolve, reject) {
-          if (args.length === 1 && typeof selector === 'object') {
-            origGetStats.apply(self, [
-              function(response) {
-                resolve(makeMapStats(fixChromeStats_(response)));
-              }, reject]);
-          } else {
-            // Preserve legacy chrome stats only on legacy access of stats obj
-            origGetStats.apply(self, [
-              function(response) {
-                resolve(makeMapStats(fixChromeStats_(response),
-                    response.result()));
-              }, reject]);
-          }
-        }).then(successCallback, errorCallback);
-      };
-
-      return pc;
-    };
-    window.RTCPeerConnection.prototype = webkitRTCPeerConnection.prototype;
-
-    // wrap static methods. Currently just generateCertificate.
-    if (webkitRTCPeerConnection.generateCertificate) {
-      Object.defineProperty(window.RTCPeerConnection, 'generateCertificate', {
-        get: function() {
-          return webkitRTCPeerConnection.generateCertificate;
-        }
-      });
-    }
-
-    ['createOffer', 'createAnswer'].forEach(function(method) {
-      var nativeMethod = webkitRTCPeerConnection.prototype[method];
-      webkitRTCPeerConnection.prototype[method] = function() {
-        var self = this;
-        if (arguments.length < 1 || (arguments.length === 1 &&
-            typeof arguments[0] === 'object')) {
-          var opts = arguments.length === 1 ? arguments[0] : undefined;
-          return new Promise(function(resolve, reject) {
-            nativeMethod.apply(self, [resolve, reject, opts]);
-          });
-        }
-        return nativeMethod.apply(this, arguments);
-      };
-    });
-
-    // add promise support -- natively available in Chrome 51
-    if (browserDetails.version < 51) {
-      ['setLocalDescription', 'setRemoteDescription', 'addIceCandidate']
-          .forEach(function(method) {
-            var nativeMethod = webkitRTCPeerConnection.prototype[method];
-            webkitRTCPeerConnection.prototype[method] = function() {
-              var args = arguments;
-              var self = this;
-              var promise = new Promise(function(resolve, reject) {
-                nativeMethod.apply(self, [args[0], resolve, reject]);
-              });
-              if (args.length < 2) {
-                return promise;
-              }
-              return promise.then(function() {
-                args[1].apply(null, []);
-              },
-              function(err) {
-                if (args.length >= 3) {
-                  args[2].apply(null, [err]);
-                }
-              });
-            };
-          });
-    }
-
-    // shim implicit creation of RTCSessionDescription/RTCIceCandidate
-    ['setLocalDescription', 'setRemoteDescription', 'addIceCandidate']
-        .forEach(function(method) {
-          var nativeMethod = webkitRTCPeerConnection.prototype[method];
-          webkitRTCPeerConnection.prototype[method] = function() {
-            arguments[0] = new ((method === 'addIceCandidate') ?
-                RTCIceCandidate : RTCSessionDescription)(arguments[0]);
-            return nativeMethod.apply(this, arguments);
-          };
-        });
-
-    // support for addIceCandidate(null)
-    var nativeAddIceCandidate =
-        RTCPeerConnection.prototype.addIceCandidate;
-    RTCPeerConnection.prototype.addIceCandidate = function() {
-      return arguments[0] === null ? Promise.resolve()
-          : nativeAddIceCandidate.apply(this, arguments);
-    };
-  }
-};
-
-
-// Expose public methods.
-module.exports = {
-  shimMediaStream: chromeShim.shimMediaStream,
-  shimOnTrack: chromeShim.shimOnTrack,
-  shimSourceObject: chromeShim.shimSourceObject,
-  shimPeerConnection: chromeShim.shimPeerConnection,
-  shimGetUserMedia: require('./getusermedia')
-};
-
-},{"../utils.js":8,"./getusermedia":4}],4:[function(require,module,exports){
-/*
- *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
- *
- *  Use of this source code is governed by a BSD-style license
- *  that can be found in the LICENSE file in the root of the source
- *  tree.
- */
- /* eslint-env node */
-'use strict';
-var logging = require('../utils.js').log;
-
-// Expose public methods.
-module.exports = function() {
-  var constraintsToChrome_ = function(c) {
-    if (typeof c !== 'object' || c.mandatory || c.optional) {
-      return c;
-    }
-    var cc = {};
-    Object.keys(c).forEach(function(key) {
-      if (key === 'require' || key === 'advanced' || key === 'mediaSource') {
-        return;
-      }
-      var r = (typeof c[key] === 'object') ? c[key] : {ideal: c[key]};
-      if (r.exact !== undefined && typeof r.exact === 'number') {
-        r.min = r.max = r.exact;
-      }
-      var oldname_ = function(prefix, name) {
-        if (prefix) {
-          return prefix + name.charAt(0).toUpperCase() + name.slice(1);
-        }
-        return (name === 'deviceId') ? 'sourceId' : name;
-      };
-      if (r.ideal !== undefined) {
-        cc.optional = cc.optional || [];
-        var oc = {};
-        if (typeof r.ideal === 'number') {
-          oc[oldname_('min', key)] = r.ideal;
-          cc.optional.push(oc);
-          oc = {};
-          oc[oldname_('max', key)] = r.ideal;
-          cc.optional.push(oc);
-        } else {
-          oc[oldname_('', key)] = r.ideal;
-          cc.optional.push(oc);
-        }
-      }
-      if (r.exact !== undefined && typeof r.exact !== 'number') {
-        cc.mandatory = cc.mandatory || {};
-        cc.mandatory[oldname_('', key)] = r.exact;
-      } else {
-        ['min', 'max'].forEach(function(mix) {
-          if (r[mix] !== undefined) {
-            cc.mandatory = cc.mandatory || {};
-            cc.mandatory[oldname_(mix, key)] = r[mix];
-          }
-        });
-      }
-    });
-    if (c.advanced) {
-      cc.optional = (cc.optional || []).concat(c.advanced);
-    }
-    return cc;
-  };
-
-  var shimConstraints_ = function(constraints, func) {
-    constraints = JSON.parse(JSON.stringify(constraints));
-    if (constraints && constraints.audio) {
-      constraints.audio = constraintsToChrome_(constraints.audio);
-    }
-    if (constraints && typeof constraints.video === 'object') {
-      // Shim facingMode for mobile, where it defaults to "user".
-      var face = constraints.video.facingMode;
-      face = face && ((typeof face === 'object') ? face : {ideal: face});
-
-      if ((face && (face.exact === 'user' || face.exact === 'environment' ||
-                    face.ideal === 'user' || face.ideal === 'environment')) &&
-          !(navigator.mediaDevices.getSupportedConstraints &&
-            navigator.mediaDevices.getSupportedConstraints().facingMode)) {
-        delete constraints.video.facingMode;
-        if (face.exact === 'environment' || face.ideal === 'environment') {
-          // Look for "back" in label, or use last cam (typically back cam).
-          return navigator.mediaDevices.enumerateDevices()
-          .then(function(devices) {
-            devices = devices.filter(function(d) {
-              return d.kind === 'videoinput';
-            });
-            var back = devices.find(function(d) {
-              return d.label.toLowerCase().indexOf('back') !== -1;
-            }) || (devices.length && devices[devices.length - 1]);
-            if (back) {
-              constraints.video.deviceId = face.exact ? {exact: back.deviceId} :
-                                                        {ideal: back.deviceId};
-            }
-            constraints.video = constraintsToChrome_(constraints.video);
-            logging('chrome: ' + JSON.stringify(constraints));
-            return func(constraints);
-          });
-        }
-      }
-      constraints.video = constraintsToChrome_(constraints.video);
-    }
-    logging('chrome: ' + JSON.stringify(constraints));
-    return func(constraints);
-  };
-
-  var shimError_ = function(e) {
-    return {
-      name: {
-        PermissionDeniedError: 'NotAllowedError',
-        ConstraintNotSatisfiedError: 'OverconstrainedError'
-      }[e.name] || e.name,
-      message: e.message,
-      constraint: e.constraintName,
-      toString: function() {
-        return this.name + (this.message && ': ') + this.message;
-      }
-    };
-  };
-
-  var getUserMedia_ = function(constraints, onSuccess, onError) {
-    shimConstraints_(constraints, function(c) {
-      navigator.webkitGetUserMedia(c, onSuccess, function(e) {
-        onError(shimError_(e));
-      });
-    });
-  };
-
-  navigator.getUserMedia = getUserMedia_;
-
-  // Returns the result of getUserMedia as a Promise.
-  var getUserMediaPromise_ = function(constraints) {
-    return new Promise(function(resolve, reject) {
-      navigator.getUserMedia(constraints, resolve, reject);
-    });
-  };
-
-  if (!navigator.mediaDevices) {
-    navigator.mediaDevices = {
-      getUserMedia: getUserMediaPromise_,
-      enumerateDevices: function() {
-        return new Promise(function(resolve) {
-          var kinds = {audio: 'audioinput', video: 'videoinput'};
-          return MediaStreamTrack.getSources(function(devices) {
-            resolve(devices.map(function(device) {
-              return {label: device.label,
-                      kind: kinds[device.kind],
-                      deviceId: device.id,
-                      groupId: ''};
-            }));
-          });
-        });
-      }
-    };
-  }
-
-  // A shim for getUserMedia method on the mediaDevices object.
-  // TODO(KaptenJansson) remove once implemented in Chrome stable.
-  if (!navigator.mediaDevices.getUserMedia) {
-    navigator.mediaDevices.getUserMedia = function(constraints) {
-      return getUserMediaPromise_(constraints);
-    };
-  } else {
-    // Even though Chrome 45 has navigator.mediaDevices and a getUserMedia
-    // function which returns a Promise, it does not accept spec-style
-    // constraints.
-    var origGetUserMedia = navigator.mediaDevices.getUserMedia.
-        bind(navigator.mediaDevices);
-    navigator.mediaDevices.getUserMedia = function(cs) {
-      return shimConstraints_(cs, function(c) {
-        return origGetUserMedia(c).catch(function(e) {
-          return Promise.reject(shimError_(e));
-        });
-      });
-    };
-  }
-
-  // Dummy devicechange event methods.
-  // TODO(KaptenJansson) remove once implemented in Chrome stable.
-  if (typeof navigator.mediaDevices.addEventListener === 'undefined') {
-    navigator.mediaDevices.addEventListener = function() {
-      logging('Dummy mediaDevices.addEventListener called.');
-    };
-  }
-  if (typeof navigator.mediaDevices.removeEventListener === 'undefined') {
-    navigator.mediaDevices.removeEventListener = function() {
-      logging('Dummy mediaDevices.removeEventListener called.');
-    };
-  }
-};
-
-},{"../utils.js":8}],5:[function(require,module,exports){
-/*
- *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
- *
- *  Use of this source code is governed by a BSD-style license
- *  that can be found in the LICENSE file in the root of the source
- *  tree.
- */
- /* eslint-env node */
-'use strict';
-
-var browserDetails = require('../utils').browserDetails;
-
-var firefoxShim = {
-  shimOnTrack: function() {
-    if (typeof window === 'object' && window.RTCPeerConnection && !('ontrack' in
-        window.RTCPeerConnection.prototype)) {
-      Object.defineProperty(window.RTCPeerConnection.prototype, 'ontrack', {
-        get: function() {
-          return this._ontrack;
-        },
-        set: function(f) {
-          if (this._ontrack) {
-            this.removeEventListener('track', this._ontrack);
-            this.removeEventListener('addstream', this._ontrackpoly);
-          }
-          this.addEventListener('track', this._ontrack = f);
-          this.addEventListener('addstream', this._ontrackpoly = function(e) {
-            e.stream.getTracks().forEach(function(track) {
-              var event = new Event('track');
-              event.track = track;
-              event.receiver = {track: track};
-              event.streams = [e.stream];
-              this.dispatchEvent(event);
-            }.bind(this));
-          }.bind(this));
-        }
-      });
-    }
-  },
-
-  shimSourceObject: function() {
-    // Firefox has supported mozSrcObject since FF22, unprefixed in 42.
-    if (typeof window === 'object') {
-      if (window.HTMLMediaElement &&
-        !('srcObject' in window.HTMLMediaElement.prototype)) {
-        // Shim the srcObject property, once, when HTMLMediaElement is found.
-        Object.defineProperty(window.HTMLMediaElement.prototype, 'srcObject', {
-          get: function() {
-            return this.mozSrcObject;
-          },
-          set: function(stream) {
-            this.mozSrcObject = stream;
-          }
-        });
-      }
-    }
-  },
-
-  shimPeerConnection: function() {
-    if (typeof window !== 'object' || !(window.RTCPeerConnection ||
-        window.mozRTCPeerConnection)) {
-      return; // probably media.peerconnection.enabled=false in about:config
-    }
-    // The RTCPeerConnection object.
-    if (!window.RTCPeerConnection) {
-      window.RTCPeerConnection = function(pcConfig, pcConstraints) {
-        if (browserDetails.version < 38) {
-          // .urls is not supported in FF < 38.
-          // create RTCIceServers with a single url.
-          if (pcConfig && pcConfig.iceServers) {
-            var newIceServers = [];
-            for (var i = 0; i < pcConfig.iceServers.length; i++) {
-              var server = pcConfig.iceServers[i];
-              if (server.hasOwnProperty('urls')) {
-                for (var j = 0; j < server.urls.length; j++) {
-                  var newServer = {
-                    url: server.urls[j]
-                  };
-                  if (server.urls[j].indexOf('turn') === 0) {
-                    newServer.username = server.username;
-                    newServer.credential = server.credential;
-                  }
-                  newIceServers.push(newServer);
-                }
-              } else {
-                newIceServers.push(pcConfig.iceServers[i]);
-              }
-            }
-            pcConfig.iceServers = newIceServers;
-          }
-        }
-        return new mozRTCPeerConnection(pcConfig, pcConstraints);
-      };
-      window.RTCPeerConnection.prototype = mozRTCPeerConnection.prototype;
-
-      // wrap static methods. Currently just generateCertificate.
-      if (mozRTCPeerConnection.generateCertificate) {
-        Object.defineProperty(window.RTCPeerConnection, 'generateCertificate', {
-          get: function() {
-            return mozRTCPeerConnection.generateCertificate;
-          }
-        });
-      }
-
-      window.RTCSessionDescription = mozRTCSessionDescription;
-      window.RTCIceCandidate = mozRTCIceCandidate;
-    }
-
-    // shim away need for obsolete RTCIceCandidate/RTCSessionDescription.
-    ['setLocalDescription', 'setRemoteDescription', 'addIceCandidate']
-        .forEach(function(method) {
-          var nativeMethod = RTCPeerConnection.prototype[method];
-          RTCPeerConnection.prototype[method] = function() {
-            arguments[0] = new ((method === 'addIceCandidate') ?
-                RTCIceCandidate : RTCSessionDescription)(arguments[0]);
-            return nativeMethod.apply(this, arguments);
-          };
-        });
-
-    // support for addIceCandidate(null)
-    var nativeAddIceCandidate =
-        RTCPeerConnection.prototype.addIceCandidate;
-    RTCPeerConnection.prototype.addIceCandidate = function() {
-      return arguments[0] === null ? Promise.resolve()
-          : nativeAddIceCandidate.apply(this, arguments);
-    };
-
-    // shim getStats with maplike support
-    var makeMapStats = function(stats) {
-      var map = new Map();
-      Object.keys(stats).forEach(function(key) {
-        map.set(key, stats[key]);
-        map[key] = stats[key];
-      });
-      return map;
-    };
-
-    var nativeGetStats = RTCPeerConnection.prototype.getStats;
-    RTCPeerConnection.prototype.getStats = function(selector, onSucc, onErr) {
-      return nativeGetStats.apply(this, [selector || null])
-        .then(function(stats) {
-          return makeMapStats(stats);
-        })
-        .then(onSucc, onErr);
-    };
-  }
-};
-
-// Expose public methods.
-module.exports = {
-  shimOnTrack: firefoxShim.shimOnTrack,
-  shimSourceObject: firefoxShim.shimSourceObject,
-  shimPeerConnection: firefoxShim.shimPeerConnection,
-  shimGetUserMedia: require('./getusermedia')
-};
-
-},{"../utils":8,"./getusermedia":6}],6:[function(require,module,exports){
-/*
- *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
- *
- *  Use of this source code is governed by a BSD-style license
- *  that can be found in the LICENSE file in the root of the source
- *  tree.
- */
- /* eslint-env node */
-'use strict';
-
-var logging = require('../utils').log;
-var browserDetails = require('../utils').browserDetails;
-
-// Expose public methods.
-module.exports = function() {
-  var shimError_ = function(e) {
-    return {
-      name: {
-        SecurityError: 'NotAllowedError',
-        PermissionDeniedError: 'NotAllowedError'
-      }[e.name] || e.name,
-      message: {
-        'The operation is insecure.': 'The request is not allowed by the ' +
-        'user agent or the platform in the current context.'
-      }[e.message] || e.message,
-      constraint: e.constraint,
-      toString: function() {
-        return this.name + (this.message && ': ') + this.message;
-      }
-    };
-  };
-
-  // getUserMedia constraints shim.
-  var getUserMedia_ = function(constraints, onSuccess, onError) {
-    var constraintsToFF37_ = function(c) {
-      if (typeof c !== 'object' || c.require) {
-        return c;
-      }
-      var require = [];
-      Object.keys(c).forEach(function(key) {
-        if (key === 'require' || key === 'advanced' || key === 'mediaSource') {
-          return;
-        }
-        var r = c[key] = (typeof c[key] === 'object') ?
-            c[key] : {ideal: c[key]};
-        if (r.min !== undefined ||
-            r.max !== undefined || r.exact !== undefined) {
-          require.push(key);
-        }
-        if (r.exact !== undefined) {
-          if (typeof r.exact === 'number') {
-            r. min = r.max = r.exact;
-          } else {
-            c[key] = r.exact;
-          }
-          delete r.exact;
-        }
-        if (r.ideal !== undefined) {
-          c.advanced = c.advanced || [];
-          var oc = {};
-          if (typeof r.ideal === 'number') {
-            oc[key] = {min: r.ideal, max: r.ideal};
-          } else {
-            oc[key] = r.ideal;
-          }
-          c.advanced.push(oc);
-          delete r.ideal;
-          if (!Object.keys(r).length) {
-            delete c[key];
-          }
-        }
-      });
-      if (require.length) {
-        c.require = require;
-      }
-      return c;
-    };
-    constraints = JSON.parse(JSON.stringify(constraints));
-    if (browserDetails.version < 38) {
-      logging('spec: ' + JSON.stringify(constraints));
-      if (constraints.audio) {
-        constraints.audio = constraintsToFF37_(constraints.audio);
-      }
-      if (constraints.video) {
-        constraints.video = constraintsToFF37_(constraints.video);
-      }
-      logging('ff37: ' + JSON.stringify(constraints));
-    }
-    return navigator.mozGetUserMedia(constraints, onSuccess, function(e) {
-      onError(shimError_(e));
-    });
-  };
-
-  // Returns the result of getUserMedia as a Promise.
-  var getUserMediaPromise_ = function(constraints) {
-    return new Promise(function(resolve, reject) {
-      getUserMedia_(constraints, resolve, reject);
-    });
-  };
-
-  // Shim for mediaDevices on older versions.
-  if (!navigator.mediaDevices) {
-    navigator.mediaDevices = {getUserMedia: getUserMediaPromise_,
-      addEventListener: function() { },
-      removeEventListener: function() { }
-    };
-  }
-  navigator.mediaDevices.enumerateDevices =
-      navigator.mediaDevices.enumerateDevices || function() {
-        return new Promise(function(resolve) {
-          var infos = [
-            {kind: 'audioinput', deviceId: 'default', label: '', groupId: ''},
-            {kind: 'videoinput', deviceId: 'default', label: '', groupId: ''}
-          ];
-          resolve(infos);
-        });
-      };
-
-  if (browserDetails.version < 41) {
-    // Work around http://bugzil.la/1169665
-    var orgEnumerateDevices =
-        navigator.mediaDevices.enumerateDevices.bind(navigator.mediaDevices);
-    navigator.mediaDevices.enumerateDevices = function() {
-      return orgEnumerateDevices().then(undefined, function(e) {
-        if (e.name === 'NotFoundError') {
-          return [];
-        }
-        throw e;
-      });
-    };
-  }
-  if (browserDetails.version < 49) {
-    var origGetUserMedia = navigator.mediaDevices.getUserMedia.
-        bind(navigator.mediaDevices);
-    navigator.mediaDevices.getUserMedia = function(c) {
-      return origGetUserMedia(c).catch(function(e) {
-        return Promise.reject(shimError_(e));
-      });
-    };
-  }
-  navigator.getUserMedia = function(constraints, onSuccess, onError) {
-    if (browserDetails.version < 44) {
-      return getUserMedia_(constraints, onSuccess, onError);
-    }
-    // Replace Firefox 44+'s deprecation warning with unprefixed version.
-    console.warn('navigator.getUserMedia has been replaced by ' +
-                 'navigator.mediaDevices.getUserMedia');
-    navigator.mediaDevices.getUserMedia(constraints).then(onSuccess, onError);
-  };
-};
-
-},{"../utils":8}],7:[function(require,module,exports){
-/*
- *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
- *
- *  Use of this source code is governed by a BSD-style license
- *  that can be found in the LICENSE file in the root of the source
- *  tree.
- */
-'use strict';
-var safariShim = {
-  // TODO: DrAlex, should be here, double check against LayoutTests
-  // shimOnTrack: function() { },
-
-  // TODO: once the back-end for the mac port is done, add.
-  // TODO: check for webkitGTK+
-  // shimPeerConnection: function() { },
-
-  shimGetUserMedia: function() {
-    navigator.getUserMedia = navigator.webkitGetUserMedia;
-  }
-};
-
-// Expose public methods.
-module.exports = {
-  shimGetUserMedia: safariShim.shimGetUserMedia
-  // TODO
-  // shimOnTrack: safariShim.shimOnTrack,
-  // shimPeerConnection: safariShim.shimPeerConnection
-};
-
-},{}],8:[function(require,module,exports){
-/*
- *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
- *
- *  Use of this source code is governed by a BSD-style license
- *  that can be found in the LICENSE file in the root of the source
- *  tree.
- */
- /* eslint-env node */
-'use strict';
-
-var logDisabled_ = true;
-
-// Utility methods.
-var utils = {
-  disableLog: function(bool) {
-    if (typeof bool !== 'boolean') {
-      return new Error('Argument type: ' + typeof bool +
-          '. Please use a boolean.');
-    }
-    logDisabled_ = bool;
-    return (bool) ? 'adapter.js logging disabled' :
-        'adapter.js logging enabled';
-  },
-
-  log: function() {
-    if (typeof window === 'object') {
-      if (logDisabled_) {
-        return;
-      }
-      if (typeof console !== 'undefined' && typeof console.log === 'function') {
-        console.log.apply(console, arguments);
-      }
-    }
-  },
-
-  /**
-   * Extract browser version out of the provided user agent string.
-   *
-   * @param {!string} uastring userAgent string.
-   * @param {!string} expr Regular expression used as match criteria.
-   * @param {!number} pos position in the version string to be returned.
-   * @return {!number} browser version.
-   */
-  extractVersion: function(uastring, expr, pos) {
-    var match = uastring.match(expr);
-    return match && match.length >= pos && parseInt(match[pos], 10);
-  },
-
-  /**
-   * Browser detector.
-   *
-   * @return {object} result containing browser and version
-   *     properties.
-   */
-  detectBrowser: function() {
-    // Returned result object.
-    var result = {};
-    result.browser = null;
-    result.version = null;
-
-    // Fail early if it's not a browser
-    if (typeof window === 'undefined' || !window.navigator) {
-      result.browser = 'Not a browser.';
-      return result;
-    }
-
-    // Firefox.
-    if (navigator.mozGetUserMedia) {
-      result.browser = 'firefox';
-      result.version = this.extractVersion(navigator.userAgent,
-          /Firefox\/([0-9]+)\./, 1);
-
-    // all webkit-based browsers
-    } else if (navigator.webkitGetUserMedia) {
-      // Chrome, Chromium, Webview, Opera, all use the chrome shim for now
-      if (window.webkitRTCPeerConnection) {
-        result.browser = 'chrome';
-        result.version = this.extractVersion(navigator.userAgent,
-          /Chrom(e|ium)\/([0-9]+)\./, 2);
-
-      // Safari or unknown webkit-based
-      // for the time being Safari has support for MediaStreams but not webRTC
-      } else {
-        // Safari UA substrings of interest for reference:
-        // - webkit version:           AppleWebKit/602.1.25 (also used in Op,Cr)
-        // - safari UI version:        Version/9.0.3 (unique to Safari)
-        // - safari UI webkit version: Safari/601.4.4 (also used in Op,Cr)
-        //
-        // if the webkit version and safari UI webkit versions are equals,
-        // ... this is a stable version.
-        //
-        // only the internal webkit version is important today to know if
-        // media streams are supported
-        //
-        if (navigator.userAgent.match(/Version\/(\d+).(\d+)/)) {
-          result.browser = 'safari';
-          result.version = this.extractVersion(navigator.userAgent,
-            /AppleWebKit\/([0-9]+)\./, 1);
-
-        // unknown webkit-based browser
-        } else {
-          result.browser = 'Unsupported webkit-based browser ' +
-              'with GUM support but no WebRTC support.';
-          return result;
-        }
-      }
-
-    // Edge.
-    } else if (navigator.mediaDevices &&
-        navigator.userAgent.match(/Edge\/(\d+).(\d+)$/)) {
-      result.browser = 'edge';
-      result.version = this.extractVersion(navigator.userAgent,
-          /Edge\/(\d+).(\d+)$/, 2);
-
-    // Default fallthrough: not supported.
-    } else {
-      result.browser = 'Not a supported browser.';
-      return result;
-    }
-
-    return result;
-  }
-};
-
-// Export.
-module.exports = {
-  log: utils.log,
-  disableLog: utils.disableLog,
-  browserDetails: utils.detectBrowser(),
-  extractVersion: utils.extractVersion
-};
-
-},{}]},{},[2]);
-
 /**
  * Service module includes {@link module:channelBuilder},
  * {@link module:webChannelManager} and {@link module:messageBuilder}.
@@ -1297,6 +274,12 @@ class FullyConnectedService extends ManagerInterface {
     }
   }
 
+  sendInner (wc, data) {
+    let jp = super.getItem(wc, wc.myId)
+    if (jp === null) this.broadcast(wc, data)
+    else jp.channel.send(data)
+  }
+
   leave (wc) {
     for (let c of wc.channels) {
       c.clearHandlers()
@@ -1335,34 +318,51 @@ class FullyConnectedService extends ManagerInterface {
    * @param {external:Event} evt - Event
    */
   onChannelError (evt, channel) {
-    console.error(`Channel error with id: ${channel.peerId}`)
+    console.error(`Channel error with id: ${channel.peerId}: `, evt)
   }
 
   onMessage (channel, senderId, recepientId, msg) {
     let wc = channel.webChannel
+    let jpMe
     switch (msg.code) {
       case SHOULD_CONNECT_TO:
-        this.setJP(wc, wc.myId, channel).channels.add(channel)
+        jpMe = this.setJP(wc, wc.myId, channel)
+        jpMe.channels.add(channel)
+        // super.connectTo(wc, msg.peers)
+        //   .then(failed => {
+        //     let msg = {code: PEER_JOINED}
+        //     for (let ch of jpMe.channels) {
+        //       wc.sendInnerTo(ch, this.id, msg)
+        //       wc.channels.add(ch)
+        //       wc.onPeerJoin$(ch.peerId)
+        //     }
+        //     super.removeItem(wc, wc.myId)
+        //     for (let jp of super.getItems(wc)) {
+        //       wc.sendInnerTo(jp.channel, this.id, msg)
+        //     }
+        //     wc.onJoin()
+        //   })
+        // this.setJP(wc, wc.myId, channel).channels.add(channel)
         super.connectTo(wc, msg.peers)
           .then(failed => {
             let msg = {code: PEER_JOINED}
-            for (let c of super.getItem(wc, wc.myId).channels) {
-              wc.channels.add(c)
-              wc.onJoining$(c.peerId)
-            }
+            jpMe.channels.forEach(ch => {
+              wc.sendInnerTo(ch, this.id, msg)
+              wc.channels.add(ch)
+              wc.onPeerJoin$(ch.peerId)
+            })
             super.removeItem(wc, wc.myId)
-            wc.sendInner(this.id, msg)
             super.getItems(wc).forEach(jp => wc.sendInnerTo(jp.channel, this.id, msg))
             wc.onJoin()
           })
         break
       case PEER_JOINED:
-        let jpMe = super.getItem(wc, wc.myId)
+        jpMe = super.getItem(wc, wc.myId)
         super.removeItem(wc, senderId)
         if (jpMe !== null) jpMe.channels.add(channel)
         else {
           wc.channels.add(channel)
-          wc.onJoining$(senderId)
+          wc.onPeerJoin$(senderId)
           let request = super.getPendingRequest(wc, senderId)
           if (request !== null) request.resolve(senderId)
         }
@@ -1401,7 +401,7 @@ class FullyConnectedService extends ManagerInterface {
  * regardless of success, these instances will be deleted.
  */
 class JoiningPeer {
-  constructor (channel) {
+  constructor (channel, onJoin) {
     /**
      * The channel between the joining peer and intermediary peer. It is null
      * for every peer, but the joining and intermediary peers.
@@ -1419,15 +419,22 @@ class JoiningPeer {
   }
 }
 
-const message = new WeakMap()
+!function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a="function"==typeof require&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}for(var i="function"==typeof require&&require,o=0;o<r.length;o++)s(r[o]);return s}({1:[function(require,module,exports){},{}],2:[function(require,module,exports){"use strict";!function(){var logging=require("./utils").log,browserDetails=require("./utils").browserDetails;module.exports.browserDetails=browserDetails,module.exports.extractVersion=require("./utils").extractVersion,module.exports.disableLog=require("./utils").disableLog;var chromeShim=require("./chrome/chrome_shim")||null,edgeShim=require("./edge/edge_shim")||null,firefoxShim=require("./firefox/firefox_shim")||null,safariShim=require("./safari/safari_shim")||null;switch(browserDetails.browser){case"opera":case"chrome":if(!chromeShim||!chromeShim.shimPeerConnection)return void logging("Chrome shim is not included in this adapter release.");logging("adapter.js shimming chrome."),module.exports.browserShim=chromeShim,chromeShim.shimGetUserMedia(),chromeShim.shimMediaStream(),chromeShim.shimSourceObject(),chromeShim.shimPeerConnection(),chromeShim.shimOnTrack();break;case"firefox":if(!firefoxShim||!firefoxShim.shimPeerConnection)return void logging("Firefox shim is not included in this adapter release.");logging("adapter.js shimming firefox."),module.exports.browserShim=firefoxShim,firefoxShim.shimGetUserMedia(),firefoxShim.shimSourceObject(),firefoxShim.shimPeerConnection(),firefoxShim.shimOnTrack();break;case"edge":if(!edgeShim||!edgeShim.shimPeerConnection)return void logging("MS edge shim is not included in this adapter release.");logging("adapter.js shimming edge."),module.exports.browserShim=edgeShim,edgeShim.shimGetUserMedia(),edgeShim.shimPeerConnection();break;case"safari":if(!safariShim)return void logging("Safari shim is not included in this adapter release.");logging("adapter.js shimming safari."),module.exports.browserShim=safariShim,safariShim.shimGetUserMedia();break;default:logging("Unsupported browser!")}}()},{"./chrome/chrome_shim":3,"./edge/edge_shim":1,"./firefox/firefox_shim":5,"./safari/safari_shim":7,"./utils":8}],3:[function(require,module,exports){"use strict";var logging=require("../utils.js").log,browserDetails=require("../utils.js").browserDetails,chromeShim={shimMediaStream:function(){window.MediaStream=window.MediaStream||window.webkitMediaStream},shimOnTrack:function(){"object"!=typeof window||!window.RTCPeerConnection||"ontrack"in window.RTCPeerConnection.prototype||Object.defineProperty(window.RTCPeerConnection.prototype,"ontrack",{get:function(){return this._ontrack},set:function(f){var self=this;this._ontrack&&(this.removeEventListener("track",this._ontrack),this.removeEventListener("addstream",this._ontrackpoly)),this.addEventListener("track",this._ontrack=f),this.addEventListener("addstream",this._ontrackpoly=function(e){e.stream.addEventListener("addtrack",function(te){var event=new Event("track");event.track=te.track,event.receiver={track:te.track},event.streams=[e.stream],self.dispatchEvent(event)}),e.stream.getTracks().forEach(function(track){var event=new Event("track");event.track=track,event.receiver={track:track},event.streams=[e.stream],this.dispatchEvent(event)}.bind(this))}.bind(this))}})},shimSourceObject:function(){"object"==typeof window&&(!window.HTMLMediaElement||"srcObject"in window.HTMLMediaElement.prototype||Object.defineProperty(window.HTMLMediaElement.prototype,"srcObject",{get:function(){return this._srcObject},set:function(stream){var self=this;return this._srcObject=stream,this.src&&URL.revokeObjectURL(this.src),stream?(this.src=URL.createObjectURL(stream),stream.addEventListener("addtrack",function(){self.src&&URL.revokeObjectURL(self.src),self.src=URL.createObjectURL(stream)}),void stream.addEventListener("removetrack",function(){self.src&&URL.revokeObjectURL(self.src),self.src=URL.createObjectURL(stream)})):void(this.src="")}}))},shimPeerConnection:function(){window.RTCPeerConnection=function(pcConfig,pcConstraints){logging("PeerConnection"),pcConfig&&pcConfig.iceTransportPolicy&&(pcConfig.iceTransports=pcConfig.iceTransportPolicy);var pc=new webkitRTCPeerConnection(pcConfig,pcConstraints),origGetStats=pc.getStats.bind(pc);return pc.getStats=function(selector,successCallback,errorCallback){var self=this,args=arguments;if(arguments.length>0&&"function"==typeof selector)return origGetStats(selector,successCallback);var fixChromeStats_=function(response){var standardReport={},reports=response.result();return reports.forEach(function(report){var standardStats={id:report.id,timestamp:report.timestamp,type:report.type};report.names().forEach(function(name){standardStats[name]=report.stat(name)}),standardReport[standardStats.id]=standardStats}),standardReport},makeMapStats=function(stats,legacyStats){var map=new Map(Object.keys(stats).map(function(key){return[key,stats[key]]}));return legacyStats=legacyStats||stats,Object.keys(legacyStats).forEach(function(key){map[key]=legacyStats[key]}),map};if(arguments.length>=2){var successCallbackWrapper_=function(response){args[1](makeMapStats(fixChromeStats_(response)))};return origGetStats.apply(this,[successCallbackWrapper_,arguments[0]])}return new Promise(function(resolve,reject){1===args.length&&"object"==typeof selector?origGetStats.apply(self,[function(response){resolve(makeMapStats(fixChromeStats_(response)))},reject]):origGetStats.apply(self,[function(response){resolve(makeMapStats(fixChromeStats_(response),response.result()))},reject])}).then(successCallback,errorCallback)},pc},window.RTCPeerConnection.prototype=webkitRTCPeerConnection.prototype,webkitRTCPeerConnection.generateCertificate&&Object.defineProperty(window.RTCPeerConnection,"generateCertificate",{get:function(){return webkitRTCPeerConnection.generateCertificate}}),["createOffer","createAnswer"].forEach(function(method){var nativeMethod=webkitRTCPeerConnection.prototype[method];webkitRTCPeerConnection.prototype[method]=function(){var self=this;if(arguments.length<1||1===arguments.length&&"object"==typeof arguments[0]){var opts=1===arguments.length?arguments[0]:void 0;return new Promise(function(resolve,reject){nativeMethod.apply(self,[resolve,reject,opts])})}return nativeMethod.apply(this,arguments)}}),browserDetails.version<51&&["setLocalDescription","setRemoteDescription","addIceCandidate"].forEach(function(method){var nativeMethod=webkitRTCPeerConnection.prototype[method];webkitRTCPeerConnection.prototype[method]=function(){var args=arguments,self=this,promise=new Promise(function(resolve,reject){nativeMethod.apply(self,[args[0],resolve,reject])});return args.length<2?promise:promise.then(function(){args[1].apply(null,[])},function(err){args.length>=3&&args[2].apply(null,[err])})}}),["setLocalDescription","setRemoteDescription","addIceCandidate"].forEach(function(method){var nativeMethod=webkitRTCPeerConnection.prototype[method];webkitRTCPeerConnection.prototype[method]=function(){return arguments[0]=new("addIceCandidate"===method?RTCIceCandidate:RTCSessionDescription)(arguments[0]),nativeMethod.apply(this,arguments)}});var nativeAddIceCandidate=RTCPeerConnection.prototype.addIceCandidate;RTCPeerConnection.prototype.addIceCandidate=function(){return null===arguments[0]?Promise.resolve():nativeAddIceCandidate.apply(this,arguments)}}};module.exports={shimMediaStream:chromeShim.shimMediaStream,shimOnTrack:chromeShim.shimOnTrack,shimSourceObject:chromeShim.shimSourceObject,shimPeerConnection:chromeShim.shimPeerConnection,shimGetUserMedia:require("./getusermedia")}},{"../utils.js":8,"./getusermedia":4}],4:[function(require,module,exports){"use strict";var logging=require("../utils.js").log;module.exports=function(){var constraintsToChrome_=function(c){if("object"!=typeof c||c.mandatory||c.optional)return c;var cc={};return Object.keys(c).forEach(function(key){if("require"!==key&&"advanced"!==key&&"mediaSource"!==key){var r="object"==typeof c[key]?c[key]:{ideal:c[key]};void 0!==r.exact&&"number"==typeof r.exact&&(r.min=r.max=r.exact);var oldname_=function(prefix,name){return prefix?prefix+name.charAt(0).toUpperCase()+name.slice(1):"deviceId"===name?"sourceId":name};if(void 0!==r.ideal){cc.optional=cc.optional||[];var oc={};"number"==typeof r.ideal?(oc[oldname_("min",key)]=r.ideal,cc.optional.push(oc),oc={},oc[oldname_("max",key)]=r.ideal,cc.optional.push(oc)):(oc[oldname_("",key)]=r.ideal,cc.optional.push(oc))}void 0!==r.exact&&"number"!=typeof r.exact?(cc.mandatory=cc.mandatory||{},cc.mandatory[oldname_("",key)]=r.exact):["min","max"].forEach(function(mix){void 0!==r[mix]&&(cc.mandatory=cc.mandatory||{},cc.mandatory[oldname_(mix,key)]=r[mix])})}}),c.advanced&&(cc.optional=(cc.optional||[]).concat(c.advanced)),cc},shimConstraints_=function(constraints,func){if(constraints=JSON.parse(JSON.stringify(constraints)),constraints&&constraints.audio&&(constraints.audio=constraintsToChrome_(constraints.audio)),constraints&&"object"==typeof constraints.video){var face=constraints.video.facingMode;if(face=face&&("object"==typeof face?face:{ideal:face}),face&&("user"===face.exact||"environment"===face.exact||"user"===face.ideal||"environment"===face.ideal)&&(!navigator.mediaDevices.getSupportedConstraints||!navigator.mediaDevices.getSupportedConstraints().facingMode)&&(delete constraints.video.facingMode,"environment"===face.exact||"environment"===face.ideal))return navigator.mediaDevices.enumerateDevices().then(function(devices){devices=devices.filter(function(d){return"videoinput"===d.kind});var back=devices.find(function(d){return d.label.toLowerCase().indexOf("back")!==-1})||devices.length&&devices[devices.length-1];return back&&(constraints.video.deviceId=face.exact?{exact:back.deviceId}:{ideal:back.deviceId}),constraints.video=constraintsToChrome_(constraints.video),logging("chrome: "+JSON.stringify(constraints)),func(constraints)});constraints.video=constraintsToChrome_(constraints.video)}return logging("chrome: "+JSON.stringify(constraints)),func(constraints)},shimError_=function(e){return{name:{PermissionDeniedError:"NotAllowedError",ConstraintNotSatisfiedError:"OverconstrainedError"}[e.name]||e.name,message:e.message,constraint:e.constraintName,toString:function(){return this.name+(this.message&&": ")+this.message}}},getUserMedia_=function(constraints,onSuccess,onError){shimConstraints_(constraints,function(c){navigator.webkitGetUserMedia(c,onSuccess,function(e){onError(shimError_(e))})})};navigator.getUserMedia=getUserMedia_;var getUserMediaPromise_=function(constraints){return new Promise(function(resolve,reject){navigator.getUserMedia(constraints,resolve,reject)})};if(navigator.mediaDevices||(navigator.mediaDevices={getUserMedia:getUserMediaPromise_,enumerateDevices:function(){return new Promise(function(resolve){var kinds={audio:"audioinput",video:"videoinput"};return MediaStreamTrack.getSources(function(devices){resolve(devices.map(function(device){return{label:device.label,kind:kinds[device.kind],deviceId:device.id,groupId:""}}))})})}}),navigator.mediaDevices.getUserMedia){var origGetUserMedia=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);navigator.mediaDevices.getUserMedia=function(cs){return shimConstraints_(cs,function(c){return origGetUserMedia(c).catch(function(e){return Promise.reject(shimError_(e))})})}}else navigator.mediaDevices.getUserMedia=function(constraints){return getUserMediaPromise_(constraints)};"undefined"==typeof navigator.mediaDevices.addEventListener&&(navigator.mediaDevices.addEventListener=function(){logging("Dummy mediaDevices.addEventListener called.")}),"undefined"==typeof navigator.mediaDevices.removeEventListener&&(navigator.mediaDevices.removeEventListener=function(){logging("Dummy mediaDevices.removeEventListener called.")})}},{"../utils.js":8}],5:[function(require,module,exports){"use strict";var browserDetails=require("../utils").browserDetails,firefoxShim={shimOnTrack:function(){"object"!=typeof window||!window.RTCPeerConnection||"ontrack"in window.RTCPeerConnection.prototype||Object.defineProperty(window.RTCPeerConnection.prototype,"ontrack",{get:function(){return this._ontrack},set:function(f){this._ontrack&&(this.removeEventListener("track",this._ontrack),this.removeEventListener("addstream",this._ontrackpoly)),this.addEventListener("track",this._ontrack=f),this.addEventListener("addstream",this._ontrackpoly=function(e){e.stream.getTracks().forEach(function(track){var event=new Event("track");event.track=track,event.receiver={track:track},event.streams=[e.stream],this.dispatchEvent(event)}.bind(this))}.bind(this))}})},shimSourceObject:function(){"object"==typeof window&&(!window.HTMLMediaElement||"srcObject"in window.HTMLMediaElement.prototype||Object.defineProperty(window.HTMLMediaElement.prototype,"srcObject",{get:function(){return this.mozSrcObject},set:function(stream){this.mozSrcObject=stream}}))},shimPeerConnection:function(){if("object"==typeof window&&(window.RTCPeerConnection||window.mozRTCPeerConnection)){window.RTCPeerConnection||(window.RTCPeerConnection=function(pcConfig,pcConstraints){if(browserDetails.version<38&&pcConfig&&pcConfig.iceServers){for(var newIceServers=[],i=0;i<pcConfig.iceServers.length;i++){var server=pcConfig.iceServers[i];if(server.hasOwnProperty("urls"))for(var j=0;j<server.urls.length;j++){var newServer={url:server.urls[j]};0===server.urls[j].indexOf("turn")&&(newServer.username=server.username,newServer.credential=server.credential),newIceServers.push(newServer)}else newIceServers.push(pcConfig.iceServers[i])}pcConfig.iceServers=newIceServers}return new mozRTCPeerConnection(pcConfig,pcConstraints)},window.RTCPeerConnection.prototype=mozRTCPeerConnection.prototype,mozRTCPeerConnection.generateCertificate&&Object.defineProperty(window.RTCPeerConnection,"generateCertificate",{get:function(){return mozRTCPeerConnection.generateCertificate}}),window.RTCSessionDescription=mozRTCSessionDescription,window.RTCIceCandidate=mozRTCIceCandidate),["setLocalDescription","setRemoteDescription","addIceCandidate"].forEach(function(method){var nativeMethod=RTCPeerConnection.prototype[method];RTCPeerConnection.prototype[method]=function(){return arguments[0]=new("addIceCandidate"===method?RTCIceCandidate:RTCSessionDescription)(arguments[0]),nativeMethod.apply(this,arguments)}});var nativeAddIceCandidate=RTCPeerConnection.prototype.addIceCandidate;RTCPeerConnection.prototype.addIceCandidate=function(){return null===arguments[0]?Promise.resolve():nativeAddIceCandidate.apply(this,arguments)};var makeMapStats=function(stats){var map=new Map;return Object.keys(stats).forEach(function(key){map.set(key,stats[key]),map[key]=stats[key]}),map},nativeGetStats=RTCPeerConnection.prototype.getStats;RTCPeerConnection.prototype.getStats=function(selector,onSucc,onErr){return nativeGetStats.apply(this,[selector||null]).then(function(stats){return makeMapStats(stats)}).then(onSucc,onErr)}}}};module.exports={shimOnTrack:firefoxShim.shimOnTrack,shimSourceObject:firefoxShim.shimSourceObject,shimPeerConnection:firefoxShim.shimPeerConnection,shimGetUserMedia:require("./getusermedia")}},{"../utils":8,"./getusermedia":6}],6:[function(require,module,exports){"use strict";var logging=require("../utils").log,browserDetails=require("../utils").browserDetails;module.exports=function(){var shimError_=function(e){return{name:{SecurityError:"NotAllowedError",PermissionDeniedError:"NotAllowedError"}[e.name]||e.name,message:{"The operation is insecure.":"The request is not allowed by the user agent or the platform in the current context."}[e.message]||e.message,constraint:e.constraint,toString:function(){return this.name+(this.message&&": ")+this.message}}},getUserMedia_=function(constraints,onSuccess,onError){var constraintsToFF37_=function(c){if("object"!=typeof c||c.require)return c;var require=[];return Object.keys(c).forEach(function(key){if("require"!==key&&"advanced"!==key&&"mediaSource"!==key){var r=c[key]="object"==typeof c[key]?c[key]:{ideal:c[key]};if(void 0===r.min&&void 0===r.max&&void 0===r.exact||require.push(key),void 0!==r.exact&&("number"==typeof r.exact?r.min=r.max=r.exact:c[key]=r.exact,delete r.exact),void 0!==r.ideal){c.advanced=c.advanced||[];var oc={};"number"==typeof r.ideal?oc[key]={min:r.ideal,max:r.ideal}:oc[key]=r.ideal,c.advanced.push(oc),delete r.ideal,Object.keys(r).length||delete c[key]}}}),require.length&&(c.require=require),c};return constraints=JSON.parse(JSON.stringify(constraints)),browserDetails.version<38&&(logging("spec: "+JSON.stringify(constraints)),constraints.audio&&(constraints.audio=constraintsToFF37_(constraints.audio)),constraints.video&&(constraints.video=constraintsToFF37_(constraints.video)),logging("ff37: "+JSON.stringify(constraints))),navigator.mozGetUserMedia(constraints,onSuccess,function(e){onError(shimError_(e))})},getUserMediaPromise_=function(constraints){return new Promise(function(resolve,reject){getUserMedia_(constraints,resolve,reject)})};if(navigator.mediaDevices||(navigator.mediaDevices={getUserMedia:getUserMediaPromise_,addEventListener:function(){},removeEventListener:function(){}}),navigator.mediaDevices.enumerateDevices=navigator.mediaDevices.enumerateDevices||function(){return new Promise(function(resolve){var infos=[{kind:"audioinput",deviceId:"default",label:"",groupId:""},{kind:"videoinput",deviceId:"default",label:"",groupId:""}];resolve(infos)})},browserDetails.version<41){var orgEnumerateDevices=navigator.mediaDevices.enumerateDevices.bind(navigator.mediaDevices);navigator.mediaDevices.enumerateDevices=function(){return orgEnumerateDevices().then(void 0,function(e){if("NotFoundError"===e.name)return[];throw e})}}if(browserDetails.version<49){var origGetUserMedia=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);navigator.mediaDevices.getUserMedia=function(c){return origGetUserMedia(c).catch(function(e){return Promise.reject(shimError_(e))})}}navigator.getUserMedia=function(constraints,onSuccess,onError){return browserDetails.version<44?getUserMedia_(constraints,onSuccess,onError):(console.warn("navigator.getUserMedia has been replaced by navigator.mediaDevices.getUserMedia"),void navigator.mediaDevices.getUserMedia(constraints).then(onSuccess,onError))}}},{"../utils":8}],7:[function(require,module,exports){"use strict";var safariShim={shimGetUserMedia:function(){navigator.getUserMedia=navigator.webkitGetUserMedia}};module.exports={shimGetUserMedia:safariShim.shimGetUserMedia}},{}],8:[function(require,module,exports){"use strict";var logDisabled_=!0,utils={disableLog:function(bool){return"boolean"!=typeof bool?new Error("Argument type: "+typeof bool+". Please use a boolean."):(logDisabled_=bool,bool?"adapter.js logging disabled":"adapter.js logging enabled")},log:function(){if("object"==typeof window){if(logDisabled_)return;"undefined"!=typeof console&&"function"==typeof console.log&&console.log.apply(console,arguments)}},extractVersion:function(uastring,expr,pos){var match=uastring.match(expr);return match&&match.length>=pos&&parseInt(match[pos],10)},detectBrowser:function(){var result={};if(result.browser=null,result.version=null,"undefined"==typeof window||!window.navigator)return result.browser="Not a browser.",result;if(navigator.mozGetUserMedia)result.browser="firefox",result.version=this.extractVersion(navigator.userAgent,/Firefox\/([0-9]+)\./,1);else if(navigator.webkitGetUserMedia)if(window.webkitRTCPeerConnection)result.browser="chrome",result.version=this.extractVersion(navigator.userAgent,/Chrom(e|ium)\/([0-9]+)\./,2);else{if(!navigator.userAgent.match(/Version\/(\d+).(\d+)/))return result.browser="Unsupported webkit-based browser with GUM support but no WebRTC support.",result;result.browser="safari",result.version=this.extractVersion(navigator.userAgent,/AppleWebKit\/([0-9]+)\./,1)}else{if(!navigator.mediaDevices||!navigator.userAgent.match(/Edge\/(\d+).(\d+)$/))return result.browser="Not a supported browser.",result;result.browser="edge",result.version=this.extractVersion(navigator.userAgent,/Edge\/(\d+).(\d+)$/,2)}return result}};module.exports={log:utils.log,disableLog:utils.disableLog,browserDetails:utils.detectBrowser(),extractVersion:utils.extractVersion}},{}]},{},[2]);
 
-class NodeCloseEvent {
-  constructor (msg) {
-    message.set(this, msg)
+let NodeCloseEvent = class CloseEvent {
+  constructor (options = {}) {
+    this.wasClean = options.wasClean
+    this.code = options.code
+    this.reason = options.reason
   }
+}
 
-  get message () {
-    return message.get(this)
+function createCloseEvent (code, reason = '', wasClean = true) {
+  let obj = {wasClean, code, reason}
+  if (isBrowser()) {
+    return new CloseEvent('netfluxClose', obj)
+  } else {
+    return new NodeCloseEvent(obj)
   }
 }
 
@@ -1442,15 +449,52 @@ function isSocket (channel) {
   return channel.constructor.name === 'WebSocket'
 }
 
+function isURL (str) {
+  let regex =
+    '^' +
+    // protocol identifier
+    '(?:(?:wss|ws)://)' +
+    // user:pass authentication
+    '(?:\\S+(?::\\S*)?@)?' +
+    '(?:'
+
+  let tld = '(?:\\.(?:[a-z\\u00a1-\\uffff]{2,}))?'
+
+  regex +=
+      // IP address dotted notation octets
+      // excludes loopback network 0.0.0.0
+      // excludes reserved space >= 224.0.0.0
+      // excludes network & broacast addresses
+      // (first & last IP address of each class)
+      '(?:[1-9]\\d?|1\\d\\d|2[01]\\d|22[0-3])' +
+      '(?:\\.(?:1?\\d{1,2}|2[0-4]\\d|25[0-5])){2}' +
+      '(?:\\.(?:[1-9]\\d?|1\\d\\d|2[0-4]\\d|25[0-4]))' +
+    '|' +
+      // host name
+      '(?:(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)' +
+      // domain name
+      '(?:\\.(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)*' +
+      tld +
+    ')' +
+    // port number
+    '(?::\\d{2,5})?' +
+    // resource path
+    '(?:[/?#]\\S*)?' +
+  '$'
+
+  if (!(new RegExp(regex, 'i')).exec(str)) return false
+  return true
+}
+
 const CONNECT_TIMEOUT = 30000
 const REMOVE_ITEM_TIMEOUT = 5000
 let src
 let webRTCAvailable = true
-if (isBrowser()) src = window
-else {
+if (isBrowser()) {
+  src = window
+} else {
   try {
     src = require('wrtc')
-    src.CloseEvent = NodeCloseEvent
   } catch (err) {
     src = {}
     webRTCAvailable = false
@@ -1458,7 +502,6 @@ else {
 }
 const RTCPeerConnection$1 = src.RTCPeerConnection
 const RTCIceCandidate$1 = src.RTCIceCandidate
-const CloseEvent = src.CloseEvent
 
 /**
  * Ice candidate event handler.
@@ -1499,15 +542,9 @@ class WebRTCService extends ServiceInterface {
    * @param  {Object[]} [options.iceServers=[{urls: 'stun:23.21.150.121'},{urls: 'stun:stun.l.google.com:19302'},{urls: 'turn:numb.viagenie.ca', credential: 'webrtcdemo', username: 'louis%40mozilla.com'}]] - WebRTC options to setup which STUN
    * and TURN servers to be used.
    */
-  constructor (id, options = {}) {
+  constructor (id, iceServers) {
     super(id)
-    this.defaults = {
-      signaling: 'ws://sigver-coastteam.rhcloud.com:8000',
-      iceServers: [
-        {urls: 'stun:turn01.uswest.xirsys.com'}
-      ]
-    }
-    this.settings = Object.assign({}, this.defaults, options)
+    this.iceServers = iceServers
   }
 
   onMessage (channel, senderId, recepientId, msg) {
@@ -1521,16 +558,13 @@ class WebRTCService extends ServiceInterface {
       item.pc = this.createPeerConnection(candidate => {
         wc.sendInnerTo(senderId, this.id, {candidate})
       })
-      Promise.all([
-        this.createDataChannel(item.pc, false)
-          .then(channel => {
-            let channelBuilderService = provide(CHANNEL_BUILDER)
-            channelBuilderService.onChannel(wc, channel, true, senderId)
-            this.removeItem(wc, senderId)
-          }),
-        this.createAnswer(item.pc, msg.offer, item.candidates)
-          .then(answer => wc.sendInnerTo(senderId, this.id, {answer}))
-      ]).catch(err => console.error(`Establish data channel (webChannel): ${err.message}`))
+      this.listenOnDataChannel(item.pc, dataCh => {
+        setTimeout(() => super.removeItem(wc, senderId), REMOVE_ITEM_TIMEOUT)
+        provide(CHANNEL_BUILDER).onChannel(wc, dataCh, senderId)
+      })
+      this.createAnswer(item.pc, msg.offer, item.candidates)
+        .then(answer => wc.sendInnerTo(senderId, this.id, {answer}))
+        .catch(err => console.error(`During Establishing dataChannel connection over webChannel: ${err.message}`))
     } if ('answer' in msg) {
       item.pc.setRemoteDescription(msg.answer)
         .then(() => item.pc.addReceivedCandidates(item.candidates))
@@ -1547,19 +581,16 @@ class WebRTCService extends ServiceInterface {
     super.setItem(wc, id, item)
     return new Promise((resolve, reject) => {
       setTimeout(reject, CONNECT_TIMEOUT, 'WebRTC connect timeout')
-      this.createDataChannel(item.pc, true)
-        .then(channel => {
-          this.removeItem(wc, id)
-          resolve(channel)
-        })
-        .catch(reject)
+      this.createDataChannel(item.pc, dataCh => {
+        setTimeout(() => super.removeItem(wc, id), REMOVE_ITEM_TIMEOUT)
+        resolve(dataCh)
+      })
       this.createOffer(item.pc)
         .then(offer => wc.sendInnerTo(id, this.id, {offer}))
         .catch(reject)
     })
   }
 
-  // Equivalent à open
   listenFromSignaling (ws, onChannel) {
     ws.onmessage = evt => {
       let msg = JSON.parse(evt.data)
@@ -1572,18 +603,17 @@ class WebRTCService extends ServiceInterface {
           super.setItem(ws, msg.id, item)
         }
         if ('offer' in msg.data) {
-          Promise.all([
-            this.createDataChannel(item.pc, false).then(channel => {
-              super.removeItem(ws, msg.id)
-              onChannel(channel)
-            }),
-            this.createAnswer(item.pc, msg.data.offer, item.candidates)
-              .then(answer => {
-                ws.send(JSON.stringify({id: msg.id, data: {answer}}))
-              })
-          ]).catch(err => {
-            console.error(`Establish data channel through signaling: ${err.message}`)
+          this.listenOnDataChannel(item.pc, dataCh => {
+            setTimeout(() => super.removeItem(ws, msg.id), REMOVE_ITEM_TIMEOUT)
+            onChannel(dataCh)
           })
+          this.createAnswer(item.pc, msg.data.offer, item.candidates)
+            .then(answer => {
+              ws.send(JSON.stringify({id: msg.id, data: {answer}}))
+            })
+            .catch(err => {
+              console.error(`During establishing data channel connection through signaling: ${err.message}`)
+            })
         } else if ('candidate' in msg.data) {
           this.addIceCandidate(item, msg.data.candidate)
         }
@@ -1591,49 +621,38 @@ class WebRTCService extends ServiceInterface {
     }
   }
 
-  connectOverSignaling (ws, key, options = {}) {
+  connectOverSignaling (ws, key) {
     let item = new CandidatesBuffer(this.createPeerConnection(candidate => {
       if (ws.readyState === 1) ws.send(JSON.stringify({data: {candidate}}))
     }))
     super.setItem(ws, key, item)
-    return Promise.race([
-      new Promise((resolve, reject) => {
-        ws.onclose = closeEvt => reject(closeEvt.reason)
-        ws.onmessage = evt => {
-          let msg
-          try {
-            msg = JSON.parse(evt.data)
-          } catch (err) {
-            console.error(`Unsupported message type from the signaling server: ${evt.data}`)
-          }
-
+    return new Promise((resolve, reject) => {
+      ws.onclose = closeEvt => reject(closeEvt.reason)
+      ws.onmessage = evt => {
+        try {
+          let msg = JSON.parse(evt.data)
           if ('data' in msg) {
             if ('answer' in msg.data) {
               item.pc.setRemoteDescription(msg.data.answer)
                 .then(() => item.pc.addReceivedCandidates(item.candidates))
-                .catch(err => {
-                  console.error(`Set answer (signaling): ${err.message}`)
-                  reject(err)
-                })
+                .catch(err => reject(`Set answer (signaling): ${err.message}`))
             } else if ('candidate' in msg.data) {
               this.addIceCandidate(super.getItem(ws, key), msg.data.candidate)
             }
-          } else if ('isKeyOk' in msg) {
-            if (msg.isKeyOk) {
-              this.createOffer(item.pc)
-                .then(offer => ws.send(JSON.stringify({data: {offer}})))
-                .catch(reject)
-            } else reject('Provided key is not available')
-          } else reject(`Unknown message from the signaling server: ${evt.data}`)
+          }
+        } catch (err) {
+          reject(`Unknown message from the server ${ws.url}: ${evt.data}`)
         }
-        ws.send(JSON.stringify({join: key}))
-      }),
-      this.createDataChannel(item.pc, true)
-        .then(channel => {
-          setTimeout(() => super.removeItem(ws, key), REMOVE_ITEM_TIMEOUT)
-          return channel
-        })
-    ])
+      }
+
+      this.createDataChannel(item.pc, dataCh => {
+        setTimeout(() => super.removeItem(ws, key), REMOVE_ITEM_TIMEOUT)
+        resolve(dataCh)
+      })
+      this.createOffer(item.pc)
+        .then(offer => ws.send(JSON.stringify({data: {offer}})))
+        .catch(reject)
+    })
   }
 
   /**
@@ -1680,7 +699,7 @@ class WebRTCService extends ServiceInterface {
    * @return {external:RTCPeerConnection} - Peer connection.
    */
   createPeerConnection (onCandidate) {
-    let pc = new RTCPeerConnection$1({iceServers: this.settings.iceServers})
+    let pc = new RTCPeerConnection$1({iceServers: this.iceServers})
     pc.isRemoteDescriptionSet = false
     pc.addReceivedCandidates = candidates => {
       pc.isRemoteDescriptionSet = true
@@ -1699,24 +718,25 @@ class WebRTCService extends ServiceInterface {
     return pc
   }
 
-  createDataChannel (pc, isInitiator) {
-    return new Promise((resolve, reject) => {
-      let dc
-      if (isInitiator) {
-        dc = pc.createDataChannel(null)
-        dc.onopen = evt => resolve(dc)
-      } else {
-        pc.ondatachannel = dcEvt => {
-          dc = dcEvt.channel
-          dcEvt.channel.onopen = evt => resolve(dc)
-        }
+  createDataChannel (pc, onOpen) {
+    let dc = pc.createDataChannel(null)
+    dc.onopen = evt => onOpen(dc)
+    this.setUpOnDisconnect(pc, dc)
+  }
+
+  listenOnDataChannel (pc, onOpen) {
+    pc.ondatachannel = dcEvt => {
+      this.setUpOnDisconnect(pc, dcEvt.channel)
+      dcEvt.channel.onopen = evt => onOpen(dcEvt.channel)
+    }
+  }
+
+  setUpOnDisconnect (pc, dataCh) {
+    pc.oniceconnectionstatechange = () => {
+      if (pc.iceConnectionState === 'disconnected') {
+        if (dataCh.onclose) dataCh.onclose(createCloseEvent(4201, 'disconnected', false))
       }
-      pc.oniceconnectionstatechange = () => {
-        if (pc.iceConnectionState === 'disconnected') {
-          if (dc.onclose) dc.onclose(new CloseEvent(pc.iceConnectionState))
-        }
-      }
-    })
+    }
   }
 
   addIceCandidate (obj, candidate) {
@@ -1737,7 +757,11 @@ class CandidatesBuffer {
 const WebSocket = isBrowser() ? window.WebSocket : require('ws')
 const CONNECT_TIMEOUT$1 = 10000
 const OPEN = WebSocket.OPEN
-let listenOnWebSocket = false
+let listenOnSocket = false
+let setListenOnSocket = value => {
+  listenOnSocket = value
+}
+
 class WebSocketService extends ServiceInterface {
 
   /**
@@ -1760,6 +784,72 @@ class WebSocketService extends ServiceInterface {
     })
   }
 
+}
+
+class ChannelBuilderService extends ServiceInterface {
+  connectTo (wc, id) {
+    return new Promise((resolve, reject) => {
+      this.setPendingRequest(wc, id, {resolve, reject})
+      let connectors = this.availableConnectors(wc)
+      wc.sendInnerTo(id, this.id, {
+        connectors,
+        botUrl: wc.settings.bot
+      })
+    })
+  }
+
+  availableConnectors (wc) {
+    let connectors = []
+    if (webRTCAvailable) connectors[connectors.length] = WEBRTC
+    if (listenOnSocket) connectors[connectors.length] = WEBSOCKET
+    let forground = wc.settings.connector
+    if (connectors.length !== 1 && connectors[0] !== forground) {
+      let tmp = connectors[0]
+      connectors[0] = connectors[1]
+      connectors[1] = tmp
+    }
+    return connectors
+  }
+
+  onChannel (wc, channel, senderId) {
+    wc.initChannel(channel, senderId)
+      .then(channel => {
+        let pendReq = this.getPendingRequest(wc, senderId)
+        if (pendReq !== null) pendReq.resolve(channel)
+      })
+  }
+
+  onMessage (channel, senderId, recepientId, msg) {
+    let wc = channel.webChannel
+    if (msg.connectors.includes(WEBSOCKET)) {
+      // A Bot server send the message
+      // Try to connect in WebSocket
+      provide(WEBSOCKET).connect(msg.botUrl)
+        .then(channel => {
+          channel.send(JSON.stringify({wcId: wc.id, senderId: wc.myId}))
+          this.onChannel(wc, channel, senderId)
+        })
+        .catch(() => {
+          provide(WEBRTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId)
+            .then(channel => {
+              this.onChannel(wc, channel, senderId)
+            })
+        })
+    } else {
+      let connectors = this.availableConnectors(wc)
+      if (connectors.includes(WEBSOCKET)) {
+        // The peer who send the message doesn't listen in WebSocket and i'm bot
+        wc.sendInnerTo(senderId, this.id, {
+          connectors,
+          botUrl: wc.settings.bot
+        })
+      } else {
+        // The peer who send the message doesn't listen in WebSocket and doesn't listen too
+        provide(WEBRTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId)
+          .then(channel => this.onChannel(wc, channel, senderId))
+      }
+    }
+  }
 }
 
 /**
@@ -1863,9 +953,6 @@ const FLOAT_32_ARRAY_TYPE = 10
  * @type {number}
  */
 const FLOAT_64_ARRAY_TYPE = 11
-
-const JOIN = 1
-const NEW_CHANNEL = 2
 
 /**
  * Buffer for big user messages.
@@ -2230,79 +1317,6 @@ class Buffer {
   }
 }
 
-class ChannelBuilderService extends ServiceInterface {
-  connectTo (wc, id) {
-    return new Promise((resolve, reject) => {
-      this.setPendingRequest(wc, id, {resolve, reject})
-      let connectors = this.availableConnectors(wc)
-      wc.sendInnerTo(id, this.id, {
-        connectors,
-        sender: wc.myId,
-        botUrl: wc.settings.bot,
-        oneMsg: true
-      })
-    })
-  }
-
-  availableConnectors (wc) {
-    let connectors = []
-    if (webRTCAvailable) connectors[connectors.length] = WEBRTC
-    if (listenOnWebSocket) connectors[connectors.length] = WEBSOCKET
-    let forground = wc.settings.connector
-    if (connectors.length !== 1 && connectors[0] !== forground) {
-      let tmp = connectors[0]
-      connectors[0] = connectors[1]
-      connectors[1] = tmp
-    }
-    return connectors
-  }
-
-  onChannel (wc, channel, oneMsg, sender) {
-    wc.initChannel(channel, sender)
-      .then(channel => {
-        if (oneMsg) this.getPendingRequest(wc, sender).resolve(channel)
-      })
-  }
-
-  onMessage (channel, senderId, recepientId, msg) {
-    let wc = channel.webChannel
-    if (msg.connectors.includes(WEBSOCKET)) {
-      // A Bot server send the message
-      // Try to connect in WebSocket
-      provide(WEBSOCKET).connect(msg.botUrl)
-        .then(channel => {
-          let msgBld = provide(MESSAGE_BUILDER)
-          channel.send(msgBld.msg(JOIN, wc.myId, null, {
-            wcId: this.id,
-            oneMsg: msg.oneMsg
-          }))
-          this.onChannel(wc, channel, !msg.oneMsg, msg.sender)
-        })
-        .catch(() => {
-          provide(WEBRTC).connectOverWebChannel(wc, msg.sender)
-            .then(channel => {
-              this.onChannel(wc, channel, !msg.oneMsg, msg.sender)
-            })
-        })
-    } else {
-      let connectors = this.availableConnectors(wc)
-      if (connectors.includes(WEBSOCKET)) {
-        // The peer who send the message doesn't listen in WebSocket and i'm bot
-        wc.sendInnerTo(msg.sender, this.id, {
-          connectors,
-          sender: wc.myId,
-          botUrl: wc.settings.bot,
-          oneMsg: false
-        })
-      } else {
-        // The peer who send the message doesn't listen in WebSocket and doesn't listen too
-        provide(WEBRTC).connectOverWebChannel(wc, msg.sender)
-          .then(channel => this.onChannel(wc, channel, !msg.oneMsg, msg.sender))
-      }
-    }
-  }
-}
-
 /**
  * Service Provider module is a helper module for {@link module:service}. It is
  * responsible to instantiate all services. This module must be used to get
@@ -2472,7 +1486,7 @@ class Channel {
     this.channel.onclose = closeEvt => {
       if (this.webChannel !== null && handler(closeEvt)) {
         this.webChannel.members.splice(this.webChannel.members.indexOf(this.peerId), 1)
-        this.webChannel.onLeaving(this.peerId)
+        this.webChannel.onPeerLeave(this.peerId)
       } else handler(closeEvt)
     }
   }
@@ -2517,26 +1531,16 @@ class SignalingGate {
   /**
    * @param {closeEventListener} onClose - close event handler
    */
-  constructor (onClose = () => {}) {
+  constructor (webChannel) {
+    this.webChannel = webChannel
+    this.url = null
+    this.key = null
     /**
      * Web socket with the signaling server.
      * @private
      * @type {external:WebSocket|external:ws/WebSocket}
      */
     this.ws = null
-
-    /**
-     * Access data. When the gate is open this object is not empty.
-     * @type {SignalingGate~AccessData}
-     */
-    this.accessData = {}
-
-    /**
-     * Close event handler.
-     * @private
-     * @type {CloseEventHandler}
-     */
-    this.onClose = onClose
   }
 
   /**
@@ -2545,45 +1549,36 @@ class SignalingGate {
    * @param {SignalingGate~AccessData} accessData - Access data
    * @return {Promise}
    */
-  open (onChannel, options) {
-    let url = options.signaling
-
+  open (url, onChannel, key = null) {
     return new Promise((resolve, reject) => {
-      let webRTCService = provide(WEBRTC)
-      let webSocketService = provide(WEBSOCKET)
-      let key = 'key' in options ? options.key : this.generateKey()
-      webSocketService.connect(url)
+      if (key === null) key = this.generateKey()
+      provide(WEBSOCKET).connect(url)
         .then(ws => {
           ws.onclose = closeEvt => {
-            this.onClose(closeEvt)
+            this.key = null
+            this.ws = null
+            this.url = null
+            this.webChannel.onClose(closeEvt)
             reject(closeEvt.reason)
           }
-          ws.onerror = err => {
-            console.log('ERROR: ', err)
-            reject(err.message)
-          }
+          ws.onerror = err => reject(err.message)
           ws.onmessage = evt => {
-            let msg
             try {
-              msg = JSON.parse(evt.data)
+              let msg = JSON.parse(evt.data)
+              if ('isKeyOk' in msg) {
+                if (msg.isKeyOk) {
+                  provide(WEBRTC, this.webChannel.settings.iceServers)
+                    .listenFromSignaling(ws, onChannel)
+                  this.ws = ws
+                  this.key = key
+                  this.url = url
+                  resolve({url, key})
+                } else reject(`The key "${key}" already exists`)
+              } else reject(`Unknown message from ${url}: ${evt.data}`)
             } catch (err) {
               reject('Server responce is not a JSON string: ' + err.message)
             }
-            if ('isKeyOk' in msg) {
-              if (msg.isKeyOk) {
-                webRTCService.listenFromSignaling(ws, onChannel)
-
-                resolve(this.accessData)
-              } else {
-                reject(`The key: ${key} is not suitable`)
-              }
-            } else {
-              reject(`Unknown server message: ${evt.data}`)
-            }
           }
-          this.ws = ws
-          this.accessData.key = key
-          this.accessData.url = url
           ws.send(JSON.stringify({key}))
         })
         .catch(reject)
@@ -2599,14 +1594,22 @@ class SignalingGate {
     return this.ws !== null && this.ws.readyState === OPEN
   }
 
+  getOpenData () {
+    if (this.isOpen()) {
+      return {
+        url: this.url,
+        key: this.key
+      }
+    }
+    return null
+  }
+
   /**
    * Close the door if it is open and do nothing if it is closed already.
    */
   close () {
     if (this.isOpen()) {
       this.ws.close()
-      this.accessData = {}
-      this.ws = null
     }
   }
 
@@ -2628,8 +1631,6 @@ class SignalingGate {
     return result
   }
 }
-
-const msgBld = provide(MESSAGE_BUILDER)
 
 /**
  * Maximum identifier number for {@link WebChannel#generateId} function.
@@ -2682,14 +1683,6 @@ const PONG = 5
 class WebChannel {
 
   /**
-   * When the *WebChannel* is open, any clients should you this data to join
-   * the *WebChannel*.
-   * @typedef {Object} WebChannel~AccessData
-   * @property {string} key - The unique key to join the *WebChannel*
-   * @property {string} url - Signaling server url
-   */
-
-  /**
    * *WebChannel* constructor. *WebChannel* can be parameterized in terms of
    * network topology and connector technology (WebRTC or WebSocket. Currently
    * WebRTC is only available).
@@ -2700,14 +1693,8 @@ class WebChannel {
    *            technology
    * @returns {WebChannel} Empty *WebChannel* without any connection.
    */
-  constructor (options = {}) {
-    this.defaults = {
-      connector: WEBRTC,
-      topology: FULLY_CONNECTED,
-      signaling: 'wss://sigver-coastteam.rhcloud.com:8443',
-      bot: 'ws://localhost:9000'
-    }
-    this.settings = Object.assign({}, this.defaults, options)
+  constructor (settings) {
+    this.settings = settings
 
     /**
      * Channels through which this peer is connected with other peers. This
@@ -2725,14 +1712,15 @@ class WebChannel {
      * @private
      */
      // TODO: add type to doc
-    this.onJoin
+    this.onJoin = () => {}
 
     /**
      * *WebChannel* topology.
      * @private
      * @type {string}
      */
-    this.topology = this.settings.topology
+    this.manager = provide(this.settings.topology)
+    this.msgBld = provide(MESSAGE_BUILDER)
 
     /**
      * An array of all peer ids except this.
@@ -2754,7 +1742,7 @@ class WebChannel {
      * @private
      * @type {SignalingGate}
      */
-    this.gate = new SignalingGate(closeEvt => this.onClose(closeEvt))
+    this.gate = new SignalingGate(this)
 
     /**
      * Unique identifier of this *WebChannel*. The same for all peers.
@@ -2774,7 +1762,13 @@ class WebChannel {
      * Is the event handler called when a new peer has  joined the *WebChannel*.
      * @param {number} id - Id of the joined peer
      */
-    this.onJoining = id => {}
+    this.onPeerJoin = id => {}
+
+    /**
+     * Is the event handler called when a peer hes left the *WebChannel*.
+     * @param {number} id - Id of the peer who has left
+     */
+    this.onPeerLeave = id => {}
 
     /**
      * Is the event handler called when a message is available on the *WebChannel*.
@@ -2787,12 +1781,6 @@ class WebChannel {
     this.onMessage = (id, msg, isBroadcast) => {}
 
     /**
-     * Is the event handler called when a peer hes left the *WebChannel*.
-     * @param {number} id - Id of the peer who has left
-     */
-    this.onLeaving = id => {}
-
-    /**
      * Is the event handler called when the *WebChannel* has been closed.
      * @param {external:CloseEvent} id - Close event object
      */
@@ -2800,47 +1788,82 @@ class WebChannel {
   }
 
   /**
+   * Join the *WebChannel*.
+   * @param  {string} key - The key provided by one of the *WebChannel* members.
+   * @param  {type} [options] - Any available connection service options.
+   * @returns {Promise} It resolves once you became a *WebChannel* member.
+   */
+  join (keyOrSocket, url = this.settings.signalingURL) {
+    return new Promise((resolve, reject) => {
+      this.onJoin = resolve
+      if (keyOrSocket.constructor.name !== 'WebSocket') {
+        if (isURL(url)) {
+          provide(WEBSOCKET).connect(url)
+            .then(ws => {
+              ws.onclose = closeEvt => reject(closeEvt.reason)
+              ws.onmessage = evt => {
+                try {
+                  let msg = JSON.parse(evt.data)
+                  if ('isKeyOk' in msg) {
+                    if (msg.isKeyOk) {
+                      if ('useThis' in msg && msg.useThis) {
+                        this.initChannel(ws).catch(reject)
+                      } else {
+                        provide(WEBRTC, this.settings.iceServers).connectOverSignaling(ws, keyOrSocket)
+                          .then(channel => {
+                            ws.onclose = null
+                            ws.close()
+                            return this.initChannel(channel)
+                          })
+                          .catch(reject)
+                      }
+                    } else reject(`The key "${keyOrSocket}" was not found`)
+                  } else reject(`Unknown message from the server ${url}: ${evt.data}`)
+                } catch (err) { reject(err.message) }
+              }
+              ws.send(JSON.stringify({join: keyOrSocket}))
+            })
+            .catch(reject)
+        } else reject(`${url} is not a valid URL`)
+      } else {
+        this.initChannel(keyOrSocket).catch(reject)
+      }
+    })
+  }
+
+  invite (keyOrSocket) {
+    if (typeof keyOrSocket === 'string' || keyOrSocket instanceof String) {
+      if (!isURL(keyOrSocket)) {
+        return Promise.reject(`${keyOrSocket} is not a valid URL`)
+      }
+      return provide(WEBSOCKET).connect(keyOrSocket)
+        .then(ws => {
+          ws.send(JSON.stringify({wcId: this.id}))
+          return this.addChannel(ws)
+        })
+    } else if (keyOrSocket.constructor.name === 'WebSocket') {
+      return this.addChannel(keyOrSocket)
+    }
+  }
+
+  /**
    * Enable other peers to join the *WebChannel* with your help as an
    * intermediary peer.
    * @param  {Object} [options] Any available connection service options
    * @returns {Promise} It is resolved once the *WebChannel* is open. The
-   * callback function take a parameter of type {@link WebChannel~AccessData}.
+   * callback function take a parameter of type {@link SignalingGate~AccessData}.
    */
-  open (options = {}) {
-    let settings = Object.assign({}, this.settings, options)
-    return this.gate.open(channel => this.addChannel(channel), settings)
-  }
-
-  addChannel (channel) {
-    return this.initChannel(channel)
-      .then(channel => {
-        let msg = msgBld.msg(INITIALIZATION, this.myId, channel.peerId, {
-          manager: this.manager.id,
-          wcId: this.id
-        })
-        channel.send(msg)
-        return this.manager.add(channel)
-      })
-      .then(() => channel.peerId)
-  }
-
-  /**
-    * Add a bot server to the network with his hostname and port
-    *
-    * @param {string} host - The hotname or the ip of the bot server to be add
-    * @param {number} port - The port of the bot server to be add
-    * @return {Promise} It resolves once the bot server joined the network
-    */
-  addBotServer (url) {
-    return provide(WEBSOCKET).connect(url)
-      .then(socket => {
-        /*
-          Once the connection open a message is sent to the server in order
-          that he can join initiate the channel
-        */
-        socket.send(msgBld.msg(JOIN, this.myId, null, {wcId: this.id}))
-        return this.addChannel(socket)
-      })
+  open (options) {
+    let defaultSettings = {
+      url: this.settings.signalingURL,
+      key: null
+    }
+    let settings = Object.assign({}, defaultSettings, options)
+    if (isURL(settings.url)) {
+      return this.gate.open(settings.url, dataCh => this.addChannel(dataCh), settings.key)
+    } else {
+      return Promise.reject(`${settings.url} is not a valid URL`)
+    }
   }
 
   /**
@@ -2863,74 +1886,12 @@ class WebChannel {
    * Get the data which should be provided to all clients who must join
    * the *WebChannel*. It is the same data which
    * {@link WebChannel#open} callback function provides.
-   * @returns {WebChannel~AccessData|null} - Data to join the *WebChannel*
+   * @returns {SignalingGate~AccessData|null} - Data to join the *WebChannel*
    * or null is the *WebChannel* is closed
    */
-  getAccess () {
-    return this.gate.accessData
+  getOpenData () {
+    return this.gate.getOpenData()
   }
-
-  /**
-   * Join the *WebChannel*.
-   * @param  {string} key - The key provided by one of the *WebChannel* members.
-   * @param  {type} [options] - Any available connection service options.
-   * @returns {Promise} It resolves once you became a *WebChannel* member.
-   */
-  join (key, options = {}) {
-    let settings = Object.assign({}, this.settings, options)
-    let webSocketService = provide(WEBSOCKET)
-    let wsWithSignaling
-    let webRTCService = provide(WEBRTC)
-    return new Promise((resolve, reject) => {
-      this.onJoin = () => resolve(this)
-      webSocketService.connect(settings.signaling)
-        .then(ws => {
-          wsWithSignaling = ws
-          return webRTCService.connectOverSignaling(ws, key)
-        })
-        .then(channel => {
-          wsWithSignaling.onclose = null
-          wsWithSignaling.close()
-          return this.initChannel(channel)
-        })
-        .catch(reject)
-    })
-  }
-
-  /**
-    * Allow a bot server to join the network by creating a connection
-    * with the peer who asked his coming
-    *
-    * @param {Object} channel - The channel between the server and the pair
-    * who requested the add
-    * @return {Promise} It resolves once the the server has joined the network
-    */
-  joinAsBot (channel) {
-    return new Promise((resolve, reject) => {
-      this.onJoin = resolve
-      this.initChannel(channel)
-    })
-  }
-
-  // joinViaBot (key, url) {
-  //   let webSocketService = provide(WEBSOCKET)
-  //   let wsWithSignaling
-  //   let webRTCService = provide(this.settings.connector)
-  //   return new Promise((resolve, reject) => {
-  //     this.onJoin = () => resolve(this)
-  //     webSocketService.connect(settings.signaling)
-  //       .then(ws => {
-  //         wsWithSignaling = ws
-  //         return webRTCService.connectOverSignaling(ws, key)
-  //       })
-  //       .then(channel => {
-  //         wsWithSignaling.onclose = null
-  //         wsWithSignaling.close()
-  //         return this.initChannel(channel)
-  //       })
-  //       .catch(reject)
-  //   })
-  // }
 
   /**
    * Leave the *WebChannel*. No longer can receive and send messages to the group.
@@ -2951,7 +1912,7 @@ class WebChannel {
    */
   send (data) {
     if (this.channels.size !== 0) {
-      msgBld.handleUserMessage(data, this.myId, null, dataChunk => {
+      this.msgBld.handleUserMessage(data, this.myId, null, dataChunk => {
         this.manager.broadcast(this, dataChunk)
       })
     }
@@ -2964,7 +1925,7 @@ class WebChannel {
    */
   sendTo (id, data) {
     if (this.channels.size !== 0) {
-      msgBld.handleUserMessage(data, this.myId, id, dataChunk => {
+      this.msgBld.handleUserMessage(data, this.myId, id, dataChunk => {
         this.manager.sendTo(id, this, dataChunk)
       }, false)
     }
@@ -2983,30 +1944,33 @@ class WebChannel {
           this.maxTime = 0
           this.pongNb = 0
           this.pingFinish = delay => resolve(delay)
-          this.manager.broadcast(this, msgBld.msg(PING, this.myId))
+          this.manager.broadcast(this, this.msgBld.msg(PING, this.myId))
           setTimeout(() => resolve(PING_TIMEOUT), PING_TIMEOUT)
         }
       })
     } else return Promise.resolve(0)
   }
 
-  get topology () {
-    return this.settings.topology
+  addChannel (channel) {
+    return this.initChannel(channel)
+      .then(channel => {
+        let msg = this.msgBld.msg(INITIALIZATION, this.myId, channel.peerId, {
+          manager: this.manager.id,
+          wcId: this.id
+        })
+        channel.send(msg)
+        return this.manager.add(channel)
+      })
   }
 
-  set topology (name) {
-    this.settings.topology = name
-    this.manager = provide(this.settings.topology)
-  }
-
-  onJoining$ (peerId) {
+  onPeerJoin$ (peerId) {
     this.members[this.members.length] = peerId
-    this.onJoining(peerId)
+    this.onPeerJoin(peerId)
   }
 
-  onLeaving$ (peerId) {
+  onPeerLeave$ (peerId) {
     this.members.splice(this.members.indexOf(peerId), 1)
-    this.onLeaving(peerId)
+    this.onPeerLeave(peerId)
   }
 
   /**
@@ -3022,16 +1986,16 @@ class WebChannel {
       this.manager.sendInnerTo(recepient, this, data)
     } else {
       if (Number.isInteger(recepient)) {
-        let msg = msgBld.msg(INNER_DATA, this.myId, recepient, {serviceId, data})
+        let msg = this.msgBld.msg(INNER_DATA, this.myId, recepient, {serviceId, data})
         this.manager.sendInnerTo(recepient, this, msg)
       } else {
-        recepient.send(msgBld.msg(INNER_DATA, this.myId, recepient.peerId, {serviceId, data}))
+        recepient.send(this.msgBld.msg(INNER_DATA, this.myId, recepient.peerId, {serviceId, data}))
       }
     }
   }
 
   sendInner (serviceId, data) {
-    this.manager.broadcast(this, msgBld.msg(INNER_DATA, this.myId, null, {serviceId, data}))
+    this.manager.sendInner(this, this.msgBld.msg(INNER_DATA, this.myId, null, {serviceId, data}))
   }
 
   /**
@@ -3041,13 +2005,13 @@ class WebChannel {
    * @param {external:ArrayBuffer} data - Message
    */
   onChannelMessage (channel, data) {
-    let header = msgBld.readHeader(data)
+    let header = this.msgBld.readHeader(data)
     if (header.code === USER_DATA) {
-      msgBld.readUserMessage(this, header.senderId, data, (fullData, isBroadcast) => {
+      this.msgBld.readUserMessage(this, header.senderId, data, (fullData, isBroadcast) => {
         this.onMessage(header.senderId, fullData, isBroadcast)
       })
     } else {
-      let msg = msgBld.readInternalMessage(data)
+      let msg = this.msgBld.readInternalMessage(data)
       switch (header.code) {
         case INITIALIZATION:
           this.topology = msg.manager
@@ -3057,11 +2021,16 @@ class WebChannel {
           break
         case INNER_DATA:
           if (header.recepientId === 0 || this.myId === header.recepientId) {
-            provide(msg.serviceId).onMessage(channel, header.senderId, header.recepientId, msg.data)
+            this.getService(msg.serviceId).onMessage(
+              channel,
+              header.senderId,
+              header.recepientId,
+              msg.data
+            )
           } else this.sendInnerTo(header.recepientId, null, data, true)
           break
         case PING:
-          this.manager.sendTo(header.senderId, this, msgBld.msg(PONG, this.myId))
+          this.manager.sendTo(header.senderId, this, this.msgBld.msg(PONG, this.myId))
           break
         case PONG:
           let now = Date.now()
@@ -3099,6 +2068,13 @@ class WebChannel {
     return Promise.resolve(channel)
   }
 
+  getService (id) {
+    if (id === WEBRTC) {
+      return provide(WEBRTC, this.settings.iceServers)
+    }
+    return provide(id)
+  }
+
   /**
    * Generate random id for a *WebChannel* or a new peer.
    * @private
@@ -3117,15 +2093,22 @@ class WebChannel {
   }
 }
 
-class Bot {
+const MESSAGE_TYPE_ERROR = 4000
+const MESSAGE_UNKNOWN_ATTRIBUTE = 4001
+
+class BotServer {
   constructor (options = {}) {
-    if (isBrowser()) throw new Error('Bot can be instanciated only in Node\'s environment')
-    this.defaults = {
-      host: '127.0.0.1',
-      port: 9000,
-      log: false
+    this.defaultSettings = {
+      connector: WEBSOCKET,
+      topology: FULLY_CONNECTED,
+      signalingURL: 'wss://sigver-coastteam.rhcloud.com:8443',
+      iceServers: [
+        {urls: 'stun:turn01.uswest.xirsys.com'}
+      ],
+      host: 'localhost',
+      port: 9000
     }
-    this.settings = Object.assign({}, this.defaults, options)
+    this.settings = Object.assign({}, this.defaultSettings, options)
 
     this.server
     this.webChannels = []
@@ -3143,55 +2126,64 @@ class Bot {
       this.server = new WebSocketServer({
         host: this.settings.host,
         port: this.settings.port
-      }, () => resolve())
+      }, () => {
+        setListenOnSocket(true)
+        resolve()
+      })
 
-      this.server.on('error', () => {
+      this.server.on('error', (err) => {
+        console.log('Server error: ', err)
+        setListenOnSocket(false)
         reject('WebSocketServerError with ws://' + this.settings.host + ':' + this.settings.port)
       })
 
-      this.server.on('connection', socket => {
-        let channel = new Channel(socket)
-        let msgBld = provide(MESSAGE_BUILDER)
-        channel.onMessage = data => {
-          let header = msgBld.readHeader(data)
-          let msg = msgBld.readInternalMessage(data)
-          let wc = this.findWebChannel(msg.wcId)
-          switch (header.code) {
-            case JOIN:
+      this.server.on('connection', ws => {
+        ws.onmessage = msgEvt => {
+          try {
+            let msg = JSON.parse(msgEvt.data)
+            if ('join' in msg) {
+              let wc = this.getWebChannel(msg.join)
               if (wc === null) {
-                wc = new WebChannel({connector: WEBSOCKET})
-                wc.joinAsBot(channel.channel).then(() => this.onWebChannel(wc))
-              } else wc.addChannel(channel.channel)
-              break
-            case NEW_CHANNEL:
-              if (wc !== null) {
-                provide(CHANNEL_BUILDER).onChannel(wc, channel.channel, msg.oneMsg, header.senderId)
+                ws.send(JSON.stringify({isKeyOk: false}))
+              } else {
+                ws.send(JSON.stringify({isKeyOk: true, useThis: true}))
+                wc.invite(ws)
               }
-              break
-            default:
-              channel.close()
+            } else if ('wcId' in msg) {
+              let wc = this.getWebChannel(msg.wcId)
+              if (wc === null) {
+                if (wc === null) wc = new WebChannel(this.settings)
+                wc.id = msg.wcId
+                this.addWebChannel(wc)
+                wc.join(ws).then(() => { this.onWebChannel(wc) })
+              } else if ('senderId' in msg) {
+                provide(CHANNEL_BUILDER).onChannel(wc, ws, msg.senderId)
+              } else {
+                ws.close(MESSAGE_UNKNOWN_ATTRIBUTE, 'Unsupported message protocol')
+              }
+            }
+          } catch (err) {
+            ws.close(MESSAGE_TYPE_ERROR, 'msg')
+            console.error(`Unsupported message type: ${err.message}`)
           }
         }
       })
     })
   }
 
-  addWebChannel (wc) {
-    this.webChannels[this.webChannels.length] = wc
-  }
-
   stopListen () {
     return this.server.close()
   }
 
-  findWebChannel (id) {
-    this.webChannels.forEach((wc, index) => {
-      if (id === wc.id) {
-        if (wc.members.length === 0) this.webChannels.splice(index, 1)
-        else return wc
-      }
-    })
+  getWebChannel (id) {
+    for (let wc of this.webChannels) {
+      if (id === wc.id) return wc
+    }
     return null
+  }
+
+  addWebChannel (wc) {
+    this.webChannels[this.webChannels.length] = wc
   }
 
   leave (WebChannel$$1) {
@@ -3204,15 +2196,23 @@ class Bot {
     }
     this.webChannels.splice(index, 1)[0].leave()
   }
-
-  log (label, msg) {
-    if (this.settings.log) {
-      var d = new Date()
-      let datetime = '' + d.toLocaleTimeString() + ' ' + d.toLocaleDateString()
-      console.log('[', label.toUpperCase(), '] [', datetime, ']', msg)
-    }
-  }
 }
+
+let defaultSettings = {
+  connector: WEBRTC,
+  topology: FULLY_CONNECTED,
+  signalingURL: 'wss://sigver-coastteam.rhcloud.com:8443',
+  iceServers: [
+    {urls: 'stun:turn01.uswest.xirsys.com'}
+  ]
+}
+
+function create (options) {
+  let mySettings = Object.assign({}, defaultSettings, options)
+  return new WebChannel(mySettings)
+}
+
+
 
 /**
 * @external ws/WebSocket
@@ -3327,8 +2327,10 @@ class Bot {
   * @param {Channel} channel Netflux channel
   */
 
-exports.WebChannel = WebChannel;
-exports.Bot = Bot;
+exports.create = create;
+exports.BotServer = BotServer;
+exports.WEBSOCKET = WEBSOCKET;
+exports.WEBRTC = WEBRTC;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 

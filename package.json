@@ -1,11 +1,31 @@
 {
   "name": "netflux",
   "description": "Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done.",
+  "version": "1.0.0-rc.1",
+  "license": "AGPL-3.0",
   "main": "dist/netflux.es2015.umd.js",
   "jsnext:main": "dist/netflux.es2015.js",
-  "version": "0.9.1",
+  "homepage": "https://github.com/coast-team/netflux",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/coast-team/netflux.git"
+  },
+  "author": "Philippe Kalitine <philippe.kalitine@gmail.com> (http://philippe.kalitine.name/)",
+  "bugs": {
+    "url": "https://github.com/coast-team/netflux/issues"
+  },
+  "keywords": [
+    "netflux",
+    "webRTC",
+    "p2p",
+    "peer",
+    "network"
+  ],
+  "files": [
+    "dist/"
+  ],
   "scripts": {
-    "build": "rm -rf dist && node rollup.config.js",
+    "build": "rm -rf dist && uglifyjs ./node_modules/webrtc-adapter/out/adapter_no_edge_no_global.js -c -o src/webrtc-adapter.js && node rollup.config.js",
     "start-node-scripts": "rm -rf .rolledupScript && node script/rollup.config.js && pm2 startOrRestart process.yml",
     "rollup-node-tests": "rm -rf .rolledupTest && node test/rollup.config.js",
     "pretest:browsers": "npm run build && npm run start-node-scripts",
@@ -27,31 +47,6 @@
     "commit": "git-cz",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/coast-team/netflux.git"
-  },
-  "keywords": [
-    "netflux",
-    "webRTC",
-    "p2p",
-    "peer",
-    "network"
-  ],
-  "author": "Philippe Kalitine <philippe.kalitine@gmail.com> (http://philippe.kalitine.name/)",
-  "license": "AGPL-3.0",
-  "bugs": {
-    "url": "https://github.com/coast-team/netflux/issues"
-  },
-  "homepage": "https://github.com/coast-team/netflux#readme",
-  "config": {
-    "ghooks": {
-      "pre-commit": "npm run test:coverage"
-    },
-    "commitizen": {
-      "path": "node_modules/cz-conventional-changelog"
-    }
-  },
   "dependencies": {
     "text-encoding": "^0.6.0",
     "webrtc-adapter": "^2.0.2",
@@ -61,7 +56,6 @@
     "wrtc": "0.0.60"
   },
   "devDependencies": {
-    "babel-eslint": "^6.1.2",
     "commitizen": "^2.4.6",
     "cz-conventional-changelog": "^1.1.5",
     "ghooks": "^1.0.1",
@@ -89,10 +83,10 @@
     "rollup-plugin-string": "^2.0.2",
     "semantic-release": "^4.3.5",
     "sigver": "^7.1.0",
-    "standard": "^8.0.0"
+    "standard": "^8.0.0",
+    "uglify-js": "^2.7.3"
   },
   "standard": {
-    "parser": "babel-eslint",
     "globals": [
       "netflux",
       "jasmine",
@@ -121,5 +115,13 @@
       "dist/*",
       "karma*.js"
     ]
+  },
+  "config": {
+    "ghooks": {
+      "pre-commit": "npm run test:coverage"
+    },
+    "commitizen": {
+      "path": "node_modules/cz-conventional-changelog"
+    }
   }
 }

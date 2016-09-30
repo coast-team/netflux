@@ -1,59 +1,50 @@
-import {
-  SIGNALING,
-  BOT,
-  INSTANCES,
-  MSG_NUMBER,
-  LEAVE_CODE,
-  randData,
-  sendReceive
-} from 'utils/helper'
-import smallStr from 'utils/200kb.txt'
-import bigStr from 'utils/4mb.txt'
-import WebChannel from 'src/WebChannel'
+import {create} from 'src/index'
+import * as helper from 'util/helper'
+import smallStr from 'util/200kb.txt'
+import bigStr from 'util/4mb.txt'
 
 describe('🙂 🤖  fully connected', () => {
-  let signaling = SIGNALING
+  let signalingURL = helper.SIGNALING_URL
   let wc
 
   it('Should establish a connection through socket', done => {
-    wc = new WebChannel({signaling})
-    wc.onJoining = id => expect(id).toEqual(wc.members[0])
-    spyOn(wc, 'onJoining')
-    wc.addBotServer(BOT)
+    wc = create({signalingURL})
+    wc.onPeerJoin = id => expect(id).toEqual(wc.members[0])
+    spyOn(wc, 'onPeerJoin')
+    wc.invite(helper.BOT)
       .then(id => {
         expect(wc.members.length).toEqual(1)
-        expect(wc.onJoining).toHaveBeenCalledTimes(1)
+        expect(wc.onPeerJoin).toHaveBeenCalledTimes(1)
         done()
       })
       .catch(done.fail)
   })
 
   describe('Should send/receive', () => {
-
     it('Private string message', done => {
-      let data = randData(String)
-      sendReceive(wc, data, done, wc.members[0])
+      let data = helper.randData(String)
+      helper.sendReceive(wc, data, done, wc.members[0])
     })
 
-    for (let i of INSTANCES) {
+    for (let i of helper.INSTANCES) {
       it('broadcast: ' + i.prototype.constructor.name, done => {
-        let data = randData(i)
-        sendReceive(wc, data, done)
+        let data = helper.randData(i)
+        helper.sendReceive(wc, data, done)
       })
     }
 
     it('broadcast: ~200 KB string', done => {
-      sendReceive(wc, smallStr, done)
+      helper.sendReceive(wc, smallStr, done)
     })
 
     xit('broadcast: ~4 MB string', done => {
-      sendReceive(wc, bigStr, done)
+      helper.sendReceive(wc, bigStr, done)
     }, 10000)
 
-    it(`${MSG_NUMBER} small messages`, done => {
+    it(`${helper.MSG_NUMBER} small messages`, done => {
       let data = []
-      let dataReceived = Array(MSG_NUMBER)
-      for (let i = 0; i < MSG_NUMBER; i++) data[i] = randData(String)
+      let dataReceived = Array(helper.MSG_NUMBER)
+      for (let i = 0; i < helper.MSG_NUMBER; i++) data[i] = helper.randData(String)
       dataReceived.fill(0)
       wc.onMessage = (id, msg, isBroadcast) => {
         expect(typeof msg).toEqual('string')
@@ -72,26 +63,22 @@ describe('🙂 🤖  fully connected', () => {
   })
 
   describe('Should leave', () => {
-    const message = 'Hi world!'
-
     it('🙂', done => {
       wc.onMessage = done.fail
       wc.leave()
       expect(wc.members.length).toEqual(0)
-      wc.send(message)
-      setTimeout(done, 100)
+      done()
     })
 
     it('🤖', done => {
       wc.onMessage = done.fail
-      wc.onLeaving = id => {
+      wc.onPeerLeave = id => {
         expect(wc.members.length).toEqual(0)
-        wc.send(message)
-        setTimeout(done, 100)
+        done()
       }
-      wc.addBotServer(BOT)
+      wc.join(wc.id, helper.BOT)
         .then(() => {
-          wc.sendTo(wc.members[0], JSON.stringify({code: LEAVE_CODE}))
+          wc.sendTo(wc.members[0], JSON.stringify({code: helper.LEAVE_CODE}))
         })
         .catch(done.fail)
     })

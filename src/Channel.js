@@ -93,7 +93,7 @@ class Channel {
     this.channel.onclose = closeEvt => {
       if (this.webChannel !== null && handler(closeEvt)) {
         this.webChannel.members.splice(this.webChannel.members.indexOf(this.peerId), 1)
-        this.webChannel.onLeaving(this.peerId)
+        this.webChannel.onPeerLeave(this.peerId)
       } else handler(closeEvt)
     }
   }

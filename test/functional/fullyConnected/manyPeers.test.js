@@ -1,16 +1,9 @@
-import {
-  SIGNALING,
-  TestGroup,
-  itBrowser,
-  xitBrowser,
-  allMessagesAreSentAndReceived,
-  checkMembers
-} from 'utils/helper'
-import WebChannel from 'src/WebChannel'
-const NB_PEERS = 8
+import {create} from 'src/index'
+import * as helper from 'util/helper'
+const NB_PEERS = 12
 
 describe(`Fully connected: many peers (${NB_PEERS})`, () => {
-  let signaling = SIGNALING
+  let signalingURL = helper.SIGNALING_URL
   let wcs = []
 
   describe('Should establish a connection', () => {
@@ -18,11 +11,11 @@ describe(`Fully connected: many peers (${NB_PEERS})`, () => {
       let joined = new Map()
       let joinPromises = []
       for (let i = 0; i < NB_PEERS; i++) {
-        wcs[i] = new WebChannel({signaling})
+        wcs[i] = create({signalingURL})
         joined.set(i, [])
         if (i !== NB_PEERS - 1) {
           joinPromises.push(new Promise((resolve, reject) => {
-            wcs[i].onJoining = id => {
+            wcs[i].onPeerJoin = id => {
               let joinedTab = joined.get(i)
               expect(joinedTab.includes(id)).toBeFalsy()
               joinedTab.push(id)
@@ -34,11 +27,11 @@ describe(`Fully connected: many peers (${NB_PEERS})`, () => {
       return Promise.all(joinPromises)
     }
 
-    itBrowser(false, 'one by one', done => {
+    helper.itBrowser(false, 'one by one', done => {
       allJoiningDetectedByAll()
         .then(() => {
           setTimeout(() => {
-            checkMembers(wcs)
+            helper.checkMembers(wcs)
             done()
           }, 100)
         })
@@ -54,11 +47,11 @@ describe(`Fully connected: many peers (${NB_PEERS})`, () => {
         .catch(done.fail)
     }, 120000)
 
-    xitBrowser(false, 'simultaneously', done => {
+    helper.itBrowser(false, 'simultaneously', done => {
       allJoiningDetectedByAll()
         .then(() => {
           setTimeout(() => {
-            checkMembers(wcs)
+            helper.checkMembers(wcs)
             done()
           }, 100)
         })
@@ -72,12 +65,12 @@ describe(`Fully connected: many peers (${NB_PEERS})`, () => {
   })
 
   describe('Should send/receive', () => {
-    itBrowser(false, 'broadcast string message', done => {
+    helper.itBrowser(false, 'broadcast string message', done => {
       let groups = []
       for (let i = 0; i < NB_PEERS; i++) {
-        groups[i] = new TestGroup(wcs[i], [String])
+        groups[i] = new helper.TestGroup(wcs[i], [String])
       }
-      allMessagesAreSentAndReceived(groups, String)
+      helper.allMessagesAreSentAndReceived(groups, String)
         .then(done).catch(done.fail)
       for (let g of groups) g.wc.send(g.get(String))
     }, 60000)

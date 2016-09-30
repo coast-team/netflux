@@ -1,13 +1,13 @@
-import {SIGNALING} from 'utils/helper'
-import WebChannel from 'src/WebChannel'
+import {create} from 'src/index'
+import {SIGNALING_URL} from 'util/helper'
 
 describe('🙂', () => {
-  let wc = new WebChannel({signaling: SIGNALING})
+  let wc = create({signalingURL: SIGNALING_URL})
   it('Should construct a WebChannel', () => {
     expect(wc.id).not.toBeNull()
     expect(wc.id).not.toBeUndefined()
     expect(wc.isOpen()).toBeFalsy()
-    expect(wc.getAccess()).toEqual({})
+    expect(wc.getOpenData()).toBeNull()
     expect(() => wc.leave()).not.toThrow()
     expect(() => wc.close()).not.toThrow()
     expect(() => wc.send('test')).not.toThrow()
@@ -23,7 +23,7 @@ describe('🙂', () => {
 
   it('Should open the WebChannel', done => {
     wc.open().then(data => {
-      expect(wc.getAccess()).toBe(data)
+      expect(wc.getOpenData()).toEqual(data)
       expect(wc.isOpen()).toBeTruthy()
       wc.close()
       done()

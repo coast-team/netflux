@@ -14,14 +14,15 @@ module.exports = (config) => {
     // list of files / patterns to load in the browser
     files: [
       'node_modules/webrtc-adapter/out/adapter_no_edge_no_global.js',
-      'dist/netflux.es2015.umd.js',
-      'test/**/*.test.js'
+      'test/unit/**/*.test.js',
+      'test/functional/fullyConnected/1peer.test.js',
+      'test/functional/fullyConnected/2peers/**/*.test.js',
+      'test/functional/fullyConnected/3peers/**/*.test.js',
+      'test/functional/fullyConnected/manyPeers.test.js'
     ],
 
     // list of files to exclude
-    exclude: [
-      'test/node/*'
-    ],
+    exclude: [],
 
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
@@ -36,7 +37,7 @@ module.exports = (config) => {
             include: 'test/**/*.txt'
           }),
           require('rollup-plugin-includepaths')({
-            paths: ['', 'src/', 'test/'],
+            paths: ['', 'src/', 'test/', 'dist/'],
             extensions: ['.js', '.txt']
           })
         ]
