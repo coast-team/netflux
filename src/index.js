@@ -8,7 +8,8 @@ let defaultSettings = {
   signalingURL: 'wss://sigver-coastteam.rhcloud.com:8443',
   iceServers: [
     {urls: 'stun:turn01.uswest.xirsys.com'}
-  ]
+  ],
+  listenOn: ''
 }
 
 function create (options) {

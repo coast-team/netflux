@@ -1,6 +1,5 @@
 import WebChannel from 'WebChannel'
 import {provide, WEBSOCKET, CHANNEL_BUILDER, FULLY_CONNECTED} from 'serviceProvider'
-import {setListenOnSocket} from 'service/WebSocketService'
 
 const MESSAGE_TYPE_ERROR = 4000
 const MESSAGE_UNKNOWN_ATTRIBUTE = 4001
@@ -30,20 +29,18 @@ class BotServer {
 
   listen (options = {}) {
     return new Promise((resolve, reject) => {
-      this.settings = Object.assign({}, this.settings, options)
+      let settings = Object.assign({}, this.settings, options)
+      settings.listenOn = this.getURL(settings.host, settings.port)
       let WebSocketServer = require('ws').Server
       this.server = new WebSocketServer({
-        host: this.settings.host,
-        port: this.settings.port
-      }, () => {
-        setListenOnSocket(true)
-        resolve()
-      })
+        host: settings.host,
+        port: settings.port
+      }, resolve)
 
       this.server.on('error', (err) => {
-        console.log('Server error: ', err)
+        console.error('Server error: ', err)
         setListenOnSocket(false)
-        reject('WebSocketServerError with ws://' + this.settings.host + ':' + this.settings.port)
+        reject('WebSocketServerError with ws://' + settings.host + ':' + settings.port)
       })
 
       this.server.on('connection', ws => {
@@ -61,7 +58,7 @@ class BotServer {
             } else if ('wcId' in msg) {
               let wc = this.getWebChannel(msg.wcId)
               if (wc === null) {
-                if (wc === null) wc = new WebChannel(this.settings)
+                if (wc === null) wc = new WebChannel(settings)
                 wc.id = msg.wcId
                 this.addWebChannel(wc)
                 wc.join(ws).then(() => { this.onWebChannel(wc) })
@@ -104,6 +101,10 @@ class BotServer {
       }
     }
     this.webChannels.splice(index, 1)[0].leave()
+  }
+
+  getURL (host, port) {
+    return `ws://${host}:${port}`
   }
 }
 
