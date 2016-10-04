@@ -15,7 +15,7 @@
 
 Abstract peer to peer transport API for client and server. Implementation based on WebRTC and WebSocket. Only raw data, no video or audio.
 
-**Documentation:** https://coast-team.github.io/netflux
+**Documentation:** https://doc.esdoc.org/github.com/coast-team/netflux/
 
 ## Browsers & NodeJS support <sub><sup><sub><sub>made by @godban</sub></sub></sup></sub>
 
