@@ -10,6 +10,7 @@ coverage
 # Documentation
 doc/*
 !doc/uml.png
+esdoc
 
 # webrtc-adapter
 src/webrtc-adapter.js
