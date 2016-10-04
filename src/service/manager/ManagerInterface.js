@@ -2,8 +2,7 @@ import ServiceInterface from 'service/ServiceInterface'
 import {provide, CHANNEL_BUILDER} from 'serviceProvider'
 
 /**
- * Web Channel Manager module is a submodule of {@link module:service} and the
- * main component of any Web Channel. It is responsible to preserve Web Channel
+ * It is responsible to preserve Web Channel
  * structure intact (i.e. all peers have the same vision of the Web Channel).
  * Among its duties are:
  *
@@ -12,14 +11,8 @@ import {provide, CHANNEL_BUILDER} from 'serviceProvider'
  * - Send a broadcast message.
  * - Send a message to a particular peer.
  *
- * @module webChannelManager
  * @see FullyConnectedService
- */
-
-/**
- * Each Web Channel Manager Service must implement this interface.
  * @interface
- * @extends module:service~ServiceInterface
  */
 class ManagerInterface extends ServiceInterface {
 

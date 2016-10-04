@@ -465,3 +465,4 @@ class WebChannel {
 }
 
 export default WebChannel
+export {USER_DATA}

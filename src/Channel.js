@@ -1,20 +1,17 @@
 import {isBrowser, isSocket} from 'helper'
 
 /**
- * Wrapper class for {@link external:RTCDataChannel} and
- * {@link external:WebSocket}.
+ * Wrapper class for `RTCDataChannel` and `WebSocket`.
  */
 class Channel {
   /**
-   * Creates *Channel* instance from existing data channel or web socket, assigns
-   * it to the specified *WebChannel* and gives him an identifier.
-   * @param {external:WebSocket|external:RTCDataChannel} - Data channel or web
-   * socket
-   * @param {WebChannel} - The *WebChannel* this channel will be part of
-   * @param {number} peerId - Identifier of the peer who is at the other end of
+   * Creates a channel from existing `RTCDataChannel` or `WebSocket`.
+   * @param {WebSocket|RTCDataChannel} channel Data channel or web socket
+   * @param {WebChannel} webChannel The `WebChannel` this channel will be part of
+   * @param {number} peerId Identifier of the peer who is at the other end of
    * this channel
    */
-  constructor (channel) {
+  constructor (channel, webChannel, peerId) {
     /**
      * Data channel or web socket.
      * @private
@@ -23,7 +20,7 @@ class Channel {
     this.channel = channel
 
     /**
-     * The *WebChannel* which this channel belongs to.
+     * The `WebChannel` which this channel belongs to.
      * @type {WebChannel}
      */
     this.webChannel = null
@@ -33,6 +30,12 @@ class Channel {
      * @type {WebChannel}
      */
     this.peerId = -1
+
+    /**
+     * Send message.
+     * @type {function(message: ArrayBuffer)}
+     */
+    this.send = null
 
     if (isBrowser()) {
       channel.binaryType = 'arraybuffer'
@@ -47,9 +50,11 @@ class Channel {
 
   /**
    * Send message over this channel. The message should be prepared beforhand by
-   * the {@link MessageBuilderService}
-   * @see {@link MessageBuilderService#msg}, {@link MessageBuilderService#handleUserMessage}
-   * @param {external:ArrayBuffer} data - Message
+   * the {@link MessageBuilderService} (see{@link MessageBuilderService#msg},
+   * {@link MessageBuilderService#handleUserMessage}).
+   *
+   * @private
+   * @param {ArrayBuffer} data Message
    */
   sendBrowser (data) {
     // if (this.channel.readyState !== 'closed' && new Int8Array(data).length !== 0) {
@@ -62,6 +67,10 @@ class Channel {
     }
   }
 
+  /**
+   * @private
+   * @param {ArrayBuffer} data
+   */
   sendInNodeThroughSocket (data) {
     if (this.isOpen()) {
       try {
@@ -72,10 +81,17 @@ class Channel {
     }
   }
 
+  /**
+   * @private
+   * @param {ArrayBuffer} data
+   */
   sendInNodeThroughDataChannel (data) {
     this.sendBrowser(data.slice(0))
   }
 
+  /**
+   * @type {function(message: ArrayBuffer)}
+   */
   set onMessage (handler) {
     if (!isBrowser() && isSocket(this.channel)) {
       this.channel.onmessage = msgEvt => {
@@ -89,6 +105,9 @@ class Channel {
     } else this.channel.onmessage = msgEvt => handler(msgEvt.data)
   }
 
+  /**
+   * @type {function(message: CloseEvent)}
+   */
   set onClose (handler) {
     this.channel.onclose = closeEvt => {
       if (this.webChannel !== null && handler(closeEvt)) {
@@ -98,16 +117,24 @@ class Channel {
     }
   }
 
+  /**
+   * @type {function(message: Event)}
+   */
   set onError (handler) {
     this.channel.onerror = evt => handler(evt)
   }
 
+  /**
+   */
   clearHandlers () {
-    this.onmessage = () => {}
-    this.onclose = () => {}
-    this.onerror = () => {}
+    this.onMessage = () => {}
+    this.onClose = () => {}
+    this.onError = () => {}
   }
 
+  /**
+   * @returns {boolean}
+   */
   isOpen () {
     let state = this.channel.readyState
     return state === 1 || state === 'open'

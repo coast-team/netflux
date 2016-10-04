@@ -5,12 +5,17 @@ const WebSocket = isBrowser() ? window.WebSocket : require('ws')
 const CONNECT_TIMEOUT = 10000
 const OPEN = WebSocket.OPEN
 
+/**
+ * Service class responsible to establish connections between peers via
+ * `WebSocket`.
+ */
 class WebSocketService extends ServiceInterface {
 
   /**
    * Creates WebSocket with server.
+   *
    * @param {string} url - Server url
-   * @return {Promise} It is resolved once the WebSocket has been created and rejected otherwise
+   * @returns {Promise<WebSocket, string>} It is resolved once the WebSocket has been created and rejected otherwise
    */
   connect (url) {
     return new Promise((resolve, reject) => {

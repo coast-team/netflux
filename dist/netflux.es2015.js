@@ -1,14 +1,13 @@
 /**
- * Service module includes {@link module:channelBuilder},
- * {@link module:webChannelManager} and {@link module:messageBuilder}.
- * Services are substitutable stateless objects. Each service is identified by
- * the id provided during construction and some of them can receive messages via `WebChannel` sent
- * by another service.
- *
- * @module service
- * @see module:channelBuilder
- * @see module:webChannelManager
- * @see module:messageBuilder
+ * @external {WebSocket} https://developer.mozilla.org/en/docs/Web/API/WebSocket
+ */
+
+/**
+ * @external {Promise.resolve} https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Promise/resolve
+ */
+
+/**
+ * @external {Promise.reject} https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Promise/reject
  */
 
 /**
@@ -21,22 +20,15 @@ const DEFAULT_REQUEST_TIMEOUT = 60000
  * Pending request map. Pending request is when a service uses a Promise
  * which will be fulfilled or rejected somewhere else in code. For exemple when
  * a peer is waiting for a feedback from another peer before Promise has completed.
- * @type {external:Map}
+ * @type {Map}
  */
 const itemsStorage = new Map()
 const requestsStorage = new Map()
 
 /**
  * Each service must implement this interface.
- * @interface
  */
 class ServiceInterface {
-
-  /**
-   * Timeout event handler
-   * @callback ServiceInterface~onTimeout
-   */
-
   constructor (id) {
     this.id = id
     if (!itemsStorage.has(this.id)) itemsStorage.set(this.id, new WeakMap())
@@ -44,75 +36,111 @@ class ServiceInterface {
   }
 
   /**
-   * Add new pending request.
-   * @param {WebChannel} wc - Web channel to which this request corresponds
-   * @param {number} id - Identifer to which this request corresponds
-   * @param {Object} data - Data to be available when getPendingRequest is called
-   * @param {number} [timeout=DEFAULT_REQUEST_TIMEOUT] - Timeout in milliseconds
-   * @param {ServiceInterface~onTimeout} [onTimeout=() => {}] - Timeout event handler
+   * Add a new pending request identified by `obj` and `id`.
+   * @param {Object} obj
+   * @param {number} id
+   * @param {{resolve: Promise.resolve, reject:Promise.reject}} data
+   * @param {number} [timeout=DEFAULT_REQUEST_TIMEOUT] Timeout in milliseconds
    */
-  setPendingRequest (wc, id, data, timeout = DEFAULT_REQUEST_TIMEOUT) {
-    this.setTo(requestsStorage, wc, id, data)
+  setPendingRequest (obj, id, data, timeout = DEFAULT_REQUEST_TIMEOUT) {
+    this.setTo(requestsStorage, obj, id, data)
     setTimeout(() => { data.reject('Pending request timeout') }, timeout)
   }
 
   /**
-   * Get pending request corresponding to the specific WebChannel and identifier.
-   * @param  {WebChannel} wc - Web channel
-   * @param  {number} id - Identifier
-   * @return {Object} - Javascript object corresponding to the one provided in
-   * setPendingRequest function
+   * Get pending request identified by `obj` and `id`.
+   *
+   * @param  {Object} obj
+   * @param  {number} id
+   * @returns {{resolve: Promise.resolve, reject:Promise.reject}}
    */
-  getPendingRequest (wc, id) {
-    return this.getFrom(requestsStorage, wc, id)
+  getPendingRequest (obj, id) {
+    return this.getFrom(requestsStorage, obj, id)
   }
 
-  setItem (wc, id, data) {
-    this.setTo(itemsStorage, wc, id, data)
+  /**
+   * @param {Object} obj
+   * @param {number} id
+   * @param {Object} data
+   */
+  setItem (obj, id, data) {
+    this.setTo(itemsStorage, obj, id, data)
   }
 
-  getItem (wc, id) {
-    return this.getFrom(itemsStorage, wc, id)
+  /**
+   * Get item identified by `obj` and `id`.
+   *
+   * @param {Object} obj
+   * @param {number} id
+   *
+   * @returns {Object}
+   */
+  getItem (obj, id) {
+    return this.getFrom(itemsStorage, obj, id)
   }
 
-  getItems (wc) {
-    let items = itemsStorage.get(this.id).get(wc)
+  /**
+   * @param {Object} obj
+   *
+   * @returns {Map}
+   */
+  getItems (obj) {
+    let items = itemsStorage.get(this.id).get(obj)
     if (items) return items
     else return new Map()
   }
 
-  removeItem (wc, id) {
+  /**
+   * @param {Object} obj
+   * @param {number} id
+   */
+  removeItem (obj, id) {
     let currentServiceTemp = itemsStorage.get(this.id)
-    let idMap = currentServiceTemp.get(wc)
-    currentServiceTemp.get(wc).delete(id)
-    if (idMap.size === 0) currentServiceTemp.delete(wc)
+    let idMap = currentServiceTemp.get(obj)
+    currentServiceTemp.get(obj).delete(id)
+    if (idMap.size === 0) currentServiceTemp.delete(obj)
   }
 
-  setTo (storage, wc, id, data) {
-    let currentServiceTemp = storage.get(this.id)
-    let idMap
-    if (currentServiceTemp.has(wc)) {
-      idMap = currentServiceTemp.get(wc)
-    } else {
-      idMap = new Map()
-      currentServiceTemp.set(wc, idMap)
-    }
-    if (!idMap.has(id)) idMap.set(id, data)
-  }
-
-  getFrom (storage, wc, id) {
-    let idMap = storage.get(this.id).get(wc)
+  /**
+   * @private
+   * @param {Map} storage
+   * @param {Object} obj
+   * @param {number} id
+   *
+   * @returns {Object}
+   */
+  getFrom (storage, obj, id) {
+    let idMap = storage.get(this.id).get(obj)
     if (idMap !== undefined) {
       let item = idMap.get(id)
       if (item !== undefined) return item
     }
     return null
   }
+
+  /**
+   * @private
+   * @param {Map} storage
+   * @param {WebChannel} obj
+   * @param {number} id
+   * @param {Object} data
+   *
+   */
+  setTo (storage, obj, id, data) {
+    let currentServiceTemp = storage.get(this.id)
+    let idMap
+    if (currentServiceTemp.has(obj)) {
+      idMap = currentServiceTemp.get(obj)
+    } else {
+      idMap = new Map()
+      currentServiceTemp.set(obj, idMap)
+    }
+    if (!idMap.has(id)) idMap.set(id, data)
+  }
 }
 
 /**
- * Web Channel Manager module is a submodule of {@link module:service} and the
- * main component of any Web Channel. It is responsible to preserve Web Channel
+ * It is responsible to preserve Web Channel
  * structure intact (i.e. all peers have the same vision of the Web Channel).
  * Among its duties are:
  *
@@ -121,14 +149,8 @@ class ServiceInterface {
  * - Send a broadcast message.
  * - Send a message to a particular peer.
  *
- * @module webChannelManager
  * @see FullyConnectedService
- */
-
-/**
- * Each Web Channel Manager Service must implement this interface.
  * @interface
- * @extends module:service~ServiceInterface
  */
 class ManagerInterface extends ServiceInterface {
 
@@ -498,49 +520,47 @@ const RTCPeerConnection$1 = src.RTCPeerConnection
 const RTCIceCandidate$1 = src.RTCIceCandidate
 
 /**
- * Ice candidate event handler.
- *
- * @callback WebRTCService~onCandidate
- * @param {external:RTCPeerConnectionIceEvent} evt - Event.
+ * @external {RTCPeerConnection} https://developer.mozilla.org/en/docs/Web/API/RTCPeerConnection
  */
-
 /**
- * Session description event handler.
- *
- * @callback WebRTCService~onSDP
- * @param {external:RTCPeerConnectionIceEvent} evt - Event.
+ * @external {RTCSessionDescription} https://developer.mozilla.org/en/docs/Web/API/RTCSessionDescription
  */
-
 /**
- * Data channel event handler.
- *
- * @callback WebRTCService~onChannel
- * @param {external:RTCPeerConnectionIceEvent} evt - Event.
+ * @external {RTCDataChannel} https://developer.mozilla.org/en/docs/Web/API/RTCDataChannel
+ */
+/**
+ * @external {RTCIceCandidate} https://developer.mozilla.org/en/docs/Web/API/RTCIceCandidate
+ */
+/**
+ * @external {RTCIceServer} https://developer.mozilla.org/en/docs/Web/API/RTCIceServer
  */
 
 /**
  * Service class responsible to establish connections between peers via
  * `RTCDataChannel`.
  *
- * @see {@link external:RTCPeerConnection}
- * @extends module:channelBuilder~ChannelBuilderInterface
  */
 class WebRTCService extends ServiceInterface {
 
   /**
-   * WebRTCService constructor.
-   *
-   * @param  {Object} [options] - This service options.
-   * @param  {Object} [options.signaling='ws://sigver-coastteam.rhcloud.com:8000'] -
-   * Signaling server URL.
-   * @param  {Object[]} [options.iceServers=[{urls: 'stun:23.21.150.121'},{urls: 'stun:stun.l.google.com:19302'},{urls: 'turn:numb.viagenie.ca', credential: 'webrtcdemo', username: 'louis%40mozilla.com'}]] - WebRTC options to setup which STUN
-   * and TURN servers to be used.
+   * @param  {number} id Service identifier
+   * @param  {RTCIceServer} iceServers WebRTC configuration object
    */
   constructor (id, iceServers) {
     super(id)
+    /**
+     * @private
+     * @type {RTCIceServer}
+     */
     this.iceServers = iceServers
   }
 
+  /**
+   * @param {Channel} channel
+   * @param {number} senderId
+   * @param {number} recepientId
+   * @param {Object} msg
+   */
   onMessage (channel, senderId, recepientId, msg) {
     let wc = channel.webChannel
     let item = super.getItem(wc, senderId)
@@ -568,6 +588,14 @@ class WebRTCService extends ServiceInterface {
     }
   }
 
+  /**
+   * Establishes an `RTCDataChannel` with a peer identified by `id` trough `WebChannel`.
+   *
+   * @param {WebChannel} wc
+   * @param {number} id
+   *
+   * @returns {Promise<RTCDataChannel, string>}
+   */
   connectOverWebChannel (wc, id) {
     let item = new CandidatesBuffer(this.createPeerConnection(candidate => {
       wc.sendInnerTo(id, this.id, {candidate})
@@ -585,6 +613,12 @@ class WebRTCService extends ServiceInterface {
     })
   }
 
+  /**
+   *
+   * @param {WebSocket} ws
+   * @param {function(channel: RTCDataChannel)} onChannel
+   *
+   */
   listenFromSignaling (ws, onChannel) {
     ws.onmessage = evt => {
       let msg = JSON.parse(evt.data)
@@ -615,6 +649,13 @@ class WebRTCService extends ServiceInterface {
     }
   }
 
+  /**
+   *
+   * @param {type} ws
+   * @param {type} key Description
+   *
+   * @returns {type} Description
+   */
   connectOverSignaling (ws, key) {
     let item = new CandidatesBuffer(this.createPeerConnection(candidate => {
       if (ws.readyState === 1) ws.send(JSON.stringify({data: {candidate}}))
@@ -650,28 +691,32 @@ class WebRTCService extends ServiceInterface {
   }
 
   /**
-   * Creates a peer connection and generates an SDP offer.
+   * Creates an SDP offer.
    *
-   * @param  {WebRTCService~onCandidate} onCandidate - Ice candidate event handler.
-   * @param  {WebRTCService~onSDP} sendOffer - Session description event handler.
-   * @param  {WebRTCService~onChannel} onChannel - Handler event when the data channel is ready.
-   * @return {Promise} - Resolved when the offer has been succesfully created,
+   * @private
+   * @param  {RTCPeerConnection} pc
+   * @return {Promise<RTCSessionDescription, string>} - Resolved when the offer has been succesfully created,
    * set as local description and sent to the peer.
    */
   createOffer (pc) {
     return pc.createOffer()
       .then(offer => pc.setLocalDescription(offer))
-      .then(() => JSON.parse(JSON.stringify(pc.localDescription)))
+      .then(() => {
+        return {
+          type: pc.localDescription.type,
+          sdp: pc.localDescription.sdp
+        }
+      })
   }
 
   /**
-   * Creates a peer connection and generates an SDP answer.
+   * Creates an SDP answer.
    *
-   * @param  {WebRTCService~onCandidate} onCandidate - Ice candidate event handler.
-   * @param  {WebRTCService~onSDP} sendOffer - Session description event handler.
-   * @param  {WebRTCService~onChannel} onChannel - Handler event when the data channel is ready.
-   * @param  {Object} offer - Offer received from a peer.
-   * @return {Promise} - Resolved when the offer has been succesfully created,
+   * @private
+   * @param  {RTCPeerConnection} pc
+   * @param  {string} offer
+   * @param  {Array[string]} candidates
+   * @return {Promise<RTCSessionDescription, string>} - Resolved when the offer has been succesfully created,
    * set as local description and sent to the peer.
    */
   createAnswer (pc, offer, candidates) {
@@ -681,16 +726,21 @@ class WebRTCService extends ServiceInterface {
         return pc.createAnswer()
       })
       .then(answer => pc.setLocalDescription(answer))
-      .then(() => JSON.parse(JSON.stringify(pc.localDescription)))
+      .then(() => {
+        return {
+          type: pc.localDescription.type,
+          sdp: pc.localDescription.sdp
+        }
+      })
   }
 
   /**
    * Creates an instance of `RTCPeerConnection` and sets `onicecandidate` event handler.
    *
    * @private
-   * @param  {WebRTCService~onCandidate} onCandidate - Ice
+   * @param  {function(candidate: Object)} onCandidate
    * candidate event handler.
-   * @return {external:RTCPeerConnection} - Peer connection.
+   * @return {RTCPeerConnection}
    */
   createPeerConnection (onCandidate) {
     let pc = new RTCPeerConnection$1({iceServers: this.iceServers})
@@ -712,12 +762,26 @@ class WebRTCService extends ServiceInterface {
     return pc
   }
 
+  /**
+   *
+   * @private
+   * @param {RTCPeerConnection} pc
+   * @param {function(dc: RTCDataChannel)} onOpen
+   *
+   */
   createDataChannel (pc, onOpen) {
     let dc = pc.createDataChannel(null)
     dc.onopen = evt => onOpen(dc)
     this.setUpOnDisconnect(pc, dc)
   }
 
+  /**
+   *
+   * @private
+   * @param {RTCPeerConnection} pc
+   * @param {function(dc: RTCDataChannel)} onOpen
+   *
+   */
   listenOnDataChannel (pc, onOpen) {
     pc.ondatachannel = dcEvt => {
       this.setUpOnDisconnect(pc, dcEvt.channel)
@@ -725,6 +789,13 @@ class WebRTCService extends ServiceInterface {
     }
   }
 
+  /**
+   * @private
+   * @param {RTCPeerConnection} pc
+   * @param {RTCDataChannel} dataCh
+   *
+   * @returns {type} Description
+   */
   setUpOnDisconnect (pc, dataCh) {
     pc.oniceconnectionstatechange = () => {
       if (pc.iceConnectionState === 'disconnected') {
@@ -733,6 +804,13 @@ class WebRTCService extends ServiceInterface {
     }
   }
 
+  /**
+   * @private
+   * @param {CandidatesBuffer|null} obj
+   * @param {string} candidate
+   *
+   * @returns {type} Description
+   */
   addIceCandidate (obj, candidate) {
     if (obj !== null && obj.pc && obj.pc.isRemoteDescriptionSet) {
       obj.pc.addIceCandidate(new RTCIceCandidate$1(candidate))
@@ -741,6 +819,9 @@ class WebRTCService extends ServiceInterface {
   }
 }
 
+/**
+ * @private
+ */
 class CandidatesBuffer {
   constructor (pc = null, candidates = []) {
     this.pc = pc
@@ -752,12 +833,17 @@ const WebSocket = isBrowser() ? window.WebSocket : require('ws')
 const CONNECT_TIMEOUT$1 = 10000
 const OPEN = WebSocket.OPEN
 
+/**
+ * Service class responsible to establish connections between peers via
+ * `WebSocket`.
+ */
 class WebSocketService extends ServiceInterface {
 
   /**
    * Creates WebSocket with server.
+   *
    * @param {string} url - Server url
-   * @return {Promise} It is resolved once the WebSocket has been created and rejected otherwise
+   * @returns {Promise<WebSocket, string>} It is resolved once the WebSocket has been created and rejected otherwise
    */
   connect (url) {
     return new Promise((resolve, reject) => {
@@ -776,6 +862,11 @@ class WebSocketService extends ServiceInterface {
 
 }
 
+/**
+ * It is responsible to build a channel between two peers with a help of `WebSocketService` and `WebRTCService`.
+ * Its algorithm determine which channel (socket or dataChannel) should be created
+ * based on the services availability and peers' preferences.
+ */
 class ChannelBuilderService extends ServiceInterface {
   constructor (id) {
     super(id)
@@ -785,6 +876,14 @@ class ChannelBuilderService extends ServiceInterface {
     this.WR_WS = [WEBRTC, WEBSOCKET]
   }
 
+  /**
+   * Establish a channel with the peer identified by `id`.
+   *
+   * @param {WebChannel} wc
+   * @param {number} id
+   *
+   * @returns {Promise<Channel, string>}
+   */
   connectTo (wc, id) {
     return new Promise((resolve, reject) => {
       super.setPendingRequest(wc, id, {resolve, reject})
@@ -792,6 +891,11 @@ class ChannelBuilderService extends ServiceInterface {
     })
   }
 
+  /**
+   * @param {WebChannel} wc
+   *
+   * @returns {{listenOn: string, connectors: number[]}}
+   */
   availableConnectors (wc) {
     let res = {}
     let connectors = []
@@ -807,6 +911,11 @@ class ChannelBuilderService extends ServiceInterface {
     return res
   }
 
+  /**
+   * @param {WebChannel} wc
+   * @param {WebSocket|RTCDataChannel} channel
+   * @param {number} senderId
+   */
   onChannel (wc, channel, senderId) {
     wc.initChannel(channel, senderId)
       .then(channel => {
@@ -815,6 +924,12 @@ class ChannelBuilderService extends ServiceInterface {
       })
   }
 
+  /**
+   * @param {Channel} channel
+   * @param {number} senderId
+   * @param {number} recepientId
+   * @param {Object} msg
+   */
   onMessage (channel, senderId, recepientId, msg) {
     let wc = channel.webChannel
     let myConnectObj = this.availableConnectors(wc)
@@ -969,6 +1084,13 @@ class ChannelBuilderService extends ServiceInterface {
     }
   }
 
+  /**
+   * @private
+   * @param {WebChannel} wc
+   * @param {number} senderId
+   * @param {string} peerWsURL
+   * @param {string} myWsURL
+   */
   wsWs (wc, senderId, peerWsURL, myWsURL) {
     provide(WEBSOCKET).connect(peerWsURL)
       .then(channel => {
@@ -980,6 +1102,12 @@ class ChannelBuilderService extends ServiceInterface {
       })
   }
 
+  /**
+   * @private
+   * @param {WebChannel} wc
+   * @param {number} senderId
+   * @param {string} peerWsURL
+   */
   ws (wc, senderId, peerWsURL) {
     provide(WEBSOCKET).connect(peerWsURL)
       .then(channel => {
@@ -993,6 +1121,12 @@ class ChannelBuilderService extends ServiceInterface {
       })
   }
 
+  /**
+   * @private
+   * @param {number[]} connectors
+   *
+   * @returns {boolean}
+   */
   isValid (connectors) {
     if (this.isEqual(connectors, this.WS) ||
       this.isEqual(connectors, this.WR) ||
@@ -1002,6 +1136,13 @@ class ChannelBuilderService extends ServiceInterface {
     return false
   }
 
+  /**
+   * @private
+   * @param {number[]} arr1
+   * @param {number[]} arr2
+   *
+   * @returns {type} Description
+   */
   isEqual (arr1, arr2) {
     if (arr1.length !== arr2.length) return false
     for (let i = 0; i < arr1.length; i++) {
@@ -1012,20 +1153,12 @@ class ChannelBuilderService extends ServiceInterface {
 
 }
 
-/**
- * Message builder module is responsible to build messages to send them over the
- * *WebChannel* and treat messages received by the *WebChannel*. It also manage
- * big messages (more then 16ko) sent by users. Internal messages are always less
- * 16ko.
- *
- * @module messageBuilder
- */
 let src$1 = isBrowser() ? window : require('text-encoding')
 const TextEncoder = src$1.TextEncoder
 const TextDecoder = src$1.TextDecoder
 
 /**
- * Maximum size of the user message sent over *Channel*. Is meant without metadata.
+ * Maximum size of the user message sent over `Channel`. Is meant without metadata.
  * @type {number}
  */
 const MAX_USER_MSG_SIZE = 16365
@@ -1049,7 +1182,7 @@ const HEADER_OFFSET = 9
 const MAX_MSG_ID_SIZE = 65535
 
 /**
- * User allowed message type: {@link external:ArrayBuffer}
+ * User allowed message type: {@link ArrayBuffer}
  * @type {number}
  */
 const ARRAY_BUFFER_TYPE = 1
@@ -1120,46 +1253,46 @@ const FLOAT_64_ARRAY_TYPE = 11
 const buffers = new WeakMap()
 
 /**
- * Message builder service class.
+ * Message builder service is responsible to build messages to send them over the
+ * `WebChannel` and treat messages received by the `WebChannel`. It also manage
+ * big messages (more then 16ko) sent by users. Internal messages are always less
+ * 16ko.
  */
 class MessageBuilderService extends ServiceInterface {
 
   /**
    * @callback MessageBuilderService~Send
-   * @param {external:ArrayBuffer} dataChunk - If the message is too big this
+   * @param {ArrayBuffer} dataChunk - If the message is too big this
    * action would be executed for each data chunk until send whole message
    */
 
   /**
-   * @callback MessageBuilderService~Receive
-   * @param {external:ArrayBuffer|external:Uint8Array|external:String|
-   * external:Int8Array|external:Uint8ClampedArray|external:Int16Array|
-   * external:Uint16Array|external:Int32Array|external:Uint32Array|
-   * external:Float32Array|external:Float64Array|external:DataView} data - Message.
-   * Its type depends on what other
+   * Header of the metadata of the messages sent/received over the `WebChannel`.
+   * @typedef {Object} MessageHeader
+   * @property {number} code Message type code
+   * @property {number} senderId Id of the sender peer
+   * @property {number} recipientId Id of the recipient peer
    */
 
-  /**
-   * Header of the metadata of the messages sent/received over the *WebChannel*.
-   * @typedef {Object} MessageBuilderService~Header
-   * @property {number} code - Message type code
-   * @property {number} senderId - Id of the sender peer
-   * @property {number} recipientId - Id of the recipient peer
-   */
+   /**
+    * @typedef {string|ArrayBuffer|TypedArray} UserMessage
+    */
+
+   /**
+    * @private
+    * @typedef {ARRAY_BUFFER_TYPE|U_INT_8_ARRAY_TYPE|STRING_TYPE|INT_8_ARRAY_TYPE|U_INT_8_CLAMPED_ARRAY_TYPE|INT_16_ARRAY_TYPE|U_INT_16_ARRAY_TYPE|INT_32_ARRAY_TYPE|U_INT_32_ARRAY_TYPE|FLOAT_32_ARRAY_TYPE|FLOAT_64_ARRAY_TYPE} MessageTypeEnum
+    */
 
   /**
-   * Prepare user message to be sent over the *WebChannel*
-   * @param {external:ArrayBuffer|external:Uint8Array|external:String|
-   * external:Int8Array|external:Uint8ClampedArray|external:Int16Array|
-   * external:Uint16Array|external:Int32Array|external:Uint32Array|
-   * external:Float32Array|external:Float64Array|external:DataView} data -
-   * Message to be sent
-   * @param {number} senderId - Id of the peer who sends this message
-   * @param {number} recipientId - Id of the recipient peer
-   * @param {MessageBuilderService~Send} action - Send callback executed for each
+   * Prepare user message to be sent over the `WebChannel`.
+   *
+   * @param {UserMessage} data Message to be sent
+   * @param {number} senderId Id of the peer who sends this message
+   * @param {number} recipientId Id of the recipient peer
+   * @param {function(dataChunk: ArrayBuffer)} action Send callback executed for each
    * data chunk if the message is too big
-   * @param {boolean} isBroadcast - Equals to true if this message would be
-   * sent to all *WebChannel* members and false if only to one member
+   * @param {boolean} [isBroadcast=true] Equals to true if this message would be
+   * sent to all `WebChannel` members and false if only to one member
    */
   handleUserMessage (data, senderId, recipientId, action, isBroadcast = true) {
     let workingData = this.userDataToType(data)
@@ -1183,7 +1316,7 @@ class MessageBuilderService extends ServiceInterface {
           dataUint8Array.byteLength - MAX_USER_MSG_SIZE * chunkNb
         )
         let dataView = this.initHeader(
-          1,
+          USER_DATA,
           senderId,
           recipientId,
           USER_MSG_OFFSET + currentChunkMsgByteLength
@@ -1206,11 +1339,14 @@ class MessageBuilderService extends ServiceInterface {
   }
 
   /**
-   * Build a message which can be then sent trough the *Channel*.
-   * @param {number} code - One of the internal message type code (e.g. {@link
+   * Build a message which can be then sent trough the `Channel`.
+   *
+   * @param {number} code One of the internal message type code (e.g. {@link
    * USER_DATA})
-   * @param {Object} [data={}] - Message. Could be empty if the code is enough
-   * @returns {external:ArrayBuffer} - Built message
+   * @param {number} [senderId=null]
+   * @param {number} [recepientId=null]
+   * @param {Object} [data={}] Could be empty if the code is enough
+   * @returns {ArrayBuffer} - Built message
    */
   msg (code, senderId = null, recepientId = null, data = {}) {
     let msgEncoded = (new TextEncoder()).encode(JSON.stringify(data))
@@ -1224,11 +1360,10 @@ class MessageBuilderService extends ServiceInterface {
   /**
    * Read user message which was prepared by another peer with
    * {@link MessageBuilderService#handleUserMessage} and sent.
-   * @param {WebChannel} wc - WebChannel
-   * @param {number} senderId - Id of the peer who sent this message
-   * @param {external:ArrayBuffer} data - Message
-   * @param {MessageBuilderService~Receive} action - Callback when the message is
-   * ready
+   * @param {WebChannel} wc WebChannel
+   * @param {number} senderId Id of the peer who sent this message
+   * @param {ArrayBuffer} data Message
+   * @param {function(msg: UserMessage, isBroadcast: boolean)} action Callback when the message is ready
    */
   readUserMessage (wc, senderId, data, action) {
     let dataView = new DataView(data)
@@ -1261,7 +1396,7 @@ class MessageBuilderService extends ServiceInterface {
 
   /**
    * Read internal Netflux message.
-   * @param {external:ArrayBuffer} data - Message
+   * @param {ArrayBuffer} data Message
    * @returns {Object}
    */
   readInternalMessage (data) {
@@ -1274,9 +1409,8 @@ class MessageBuilderService extends ServiceInterface {
   /**
    * Extract header from the message. Each user message has a header which is
    * a part of the message metadata.
-   * TODO: add header also to the internal messages.
-   * @param {external:ArrayBuffer} data - Whole message
-   * @returns {MessageBuilderService~Header}
+   * @param {ArrayBuffer} data Whole message
+   * @returns {MessageHeader}
    */
   readHeader (data) {
     let dataView = new DataView(data)
@@ -1288,13 +1422,13 @@ class MessageBuilderService extends ServiceInterface {
   }
 
   /**
-   * Create an *ArrayBuffer* and fill in the header.
+   * Create an `ArrayBuffer` and fill in the header.
    * @private
-   * @param {number} code - Message type code
-   * @param {number} senderId - Sender peer id
-   * @param {number} recipientId - Recipient peer id
-   * @param {number} dataSize - Message size in bytes
-   * @return {external:DataView} - Data view with initialized header
+   * @param {number} code Message type code
+   * @param {number} senderId Sender peer id
+   * @param {number} recipientId Recipient peer id
+   * @param {number} dataSize Message size in bytes
+   * @return {DataView} Data view with initialized header
    */
   initHeader (code, senderId, recipientId, dataSize) {
     let dataView = new DataView(new ArrayBuffer(dataSize))
@@ -1305,16 +1439,12 @@ class MessageBuilderService extends ServiceInterface {
   }
 
   /**
-   * Netflux sends data in *ArrayBuffer*, but the user can send data in different
+   * Netflux sends data in `ArrayBuffer`, but the user can send data in different
    * types. This function retrieve the inital message sent by the user.
    * @private
-   * @param {external:ArrayBuffer} - Message as it was received by the *WebChannel*
-   * @param {number} - Message type as it was defined by the user
-   * @returns {external:ArrayBuffer|external:Uint8Array|external:String|
-   * external:Int8Array|external:Uint8ClampedArray|external:Int16Array|
-   * external:Uint16Array|external:Int32Array|external:Uint32Array|
-   * external:Float32Array|external:Float64Array|external:DataView} - Initial
-   * user message
+   * @param {ArrayBuffer} Message as it was received by the `WebChannel`
+   * @param {MessageTypeEnum} type Message type as it was defined by the user
+   * @returns {ArrayBuffer|TypedArray} Initial user message
    */
   extractUserData (buffer, type) {
     switch (type) {
@@ -1345,12 +1475,10 @@ class MessageBuilderService extends ServiceInterface {
 
   /**
    * Identify the user message type.
+   *
    * @private
-   * @param {external:ArrayBuffer|external:Uint8Array|external:String|
-   * external:Int8Array|external:Uint8ClampedArray|external:Int16Array|
-   * external:Uint16Array|external:Int32Array|external:Uint32Array|
-   * external:Float32Array|external:Float64Array|external:DataView} - User message
-   * @returns {number} - User message type
+   * @param {UserMessage} User message
+   * @returns {MessageTypeEnum} User message type
    */
   userDataToType (data) {
     let result = {}
@@ -1391,11 +1519,10 @@ class MessageBuilderService extends ServiceInterface {
   /**
    * Get the buffer.
    * @private
-   * @param {WebChannel} wc - WebChannel
-   * @param {number} peerId - Peer id
-   * @param {number} msgId - Message id
-   * @returns {Buffer|undefined} - Returns buffer if it was found and undefined
-   * if not
+   * @param {WebChannel} wc WebChannel
+   * @param {number} peerId Peer id
+   * @param {number} msgId Message id
+   * @returns {Buffer|undefined} Returns buffer if it was found and undefined if not
    */
   getBuffer (wc, peerId, msgId) {
     let wcBuffer = buffers.get(wc)
@@ -1411,10 +1538,10 @@ class MessageBuilderService extends ServiceInterface {
   /**
    * Add a new buffer to the buffer array.
    * @private
-   * @param {WebChannel} wc - WebChannel
-   * @param {number} peerId - Peer id
-   * @param {number} msgId - Message id
-   * @param {Buffer} - buffer
+   * @param {WebChannel} wc WebChannel
+   * @param {number} peerId Peer id
+   * @param {number} msgId Message id
+   * @param {Buffer} buffer
    */
   setBuffer (wc, peerId, msgId, buffer) {
     let wcBuffer = buffers.get(wc)
@@ -1433,22 +1560,17 @@ class MessageBuilderService extends ServiceInterface {
 
 /**
  * Buffer class used when the user message exceeds the message size limit which
- * may be sent over a *Channel*. Each buffer is identified by *WebChannel* id,
+ * may be sent over a `Channel`. Each buffer is identified by `WebChannel` id,
  * peer id (who sends the big message) and message id (in case if the peer sends
  * more then 1 big message at a time).
+ * @private
  */
 class Buffer {
 
   /**
-   * @callback Buffer~onFullMessage
-   * @param {external:ArrayBuffer} - The full message as it was initially sent
-   * by user
-   */
-
-  /**
-   * @param {number} fullDataSize - The total user message size
-   * @param {external:ArrayBuffer} - The first chunk of the user message
-   * @param {Buffer~onFullMessage} action - Callback to be executed when all
+   * @param {number} fullDataSize The total user message size
+   * @param {ArrayBuffer} The first chunk of the user message
+   * @param {function(buffer: ArrayBuffer)} action Callback to be executed when all
    * message chunks are received and thus the message is ready
    */
   constructor (fullDataSize, data, chunkNb, action) {
@@ -1460,7 +1582,7 @@ class Buffer {
 
   /**
    * Add a chunk of message to the buffer.
-   * @param {external:ArrayBuffer} data - Message chunk
+   * @param {ArrayBuffer} data - Message chunk
    * @param {number} chunkNb - Number of the chunk
    */
   add (data, chunkNb) {
@@ -1554,20 +1676,17 @@ let provide = function (id, options = {}) {
 }
 
 /**
- * Wrapper class for {@link external:RTCDataChannel} and
- * {@link external:WebSocket}.
+ * Wrapper class for `RTCDataChannel` and `WebSocket`.
  */
 class Channel {
   /**
-   * Creates *Channel* instance from existing data channel or web socket, assigns
-   * it to the specified *WebChannel* and gives him an identifier.
-   * @param {external:WebSocket|external:RTCDataChannel} - Data channel or web
-   * socket
-   * @param {WebChannel} - The *WebChannel* this channel will be part of
-   * @param {number} peerId - Identifier of the peer who is at the other end of
+   * Creates a channel from existing `RTCDataChannel` or `WebSocket`.
+   * @param {WebSocket|RTCDataChannel} channel Data channel or web socket
+   * @param {WebChannel} webChannel The `WebChannel` this channel will be part of
+   * @param {number} peerId Identifier of the peer who is at the other end of
    * this channel
    */
-  constructor (channel) {
+  constructor (channel, webChannel, peerId) {
     /**
      * Data channel or web socket.
      * @private
@@ -1576,7 +1695,7 @@ class Channel {
     this.channel = channel
 
     /**
-     * The *WebChannel* which this channel belongs to.
+     * The `WebChannel` which this channel belongs to.
      * @type {WebChannel}
      */
     this.webChannel = null
@@ -1586,6 +1705,12 @@ class Channel {
      * @type {WebChannel}
      */
     this.peerId = -1
+
+    /**
+     * Send message.
+     * @type {function(message: ArrayBuffer)}
+     */
+    this.send = null
 
     if (isBrowser()) {
       channel.binaryType = 'arraybuffer'
@@ -1600,9 +1725,11 @@ class Channel {
 
   /**
    * Send message over this channel. The message should be prepared beforhand by
-   * the {@link MessageBuilderService}
-   * @see {@link MessageBuilderService#msg}, {@link MessageBuilderService#handleUserMessage}
-   * @param {external:ArrayBuffer} data - Message
+   * the {@link MessageBuilderService} (see{@link MessageBuilderService#msg},
+   * {@link MessageBuilderService#handleUserMessage}).
+   *
+   * @private
+   * @param {ArrayBuffer} data Message
    */
   sendBrowser (data) {
     // if (this.channel.readyState !== 'closed' && new Int8Array(data).length !== 0) {
@@ -1615,6 +1742,10 @@ class Channel {
     }
   }
 
+  /**
+   * @private
+   * @param {ArrayBuffer} data
+   */
   sendInNodeThroughSocket (data) {
     if (this.isOpen()) {
       try {
@@ -1625,10 +1756,17 @@ class Channel {
     }
   }
 
+  /**
+   * @private
+   * @param {ArrayBuffer} data
+   */
   sendInNodeThroughDataChannel (data) {
     this.sendBrowser(data.slice(0))
   }
 
+  /**
+   * @type {function(message: ArrayBuffer)}
+   */
   set onMessage (handler) {
     if (!isBrowser() && isSocket(this.channel)) {
       this.channel.onmessage = msgEvt => {
@@ -1642,6 +1780,9 @@ class Channel {
     } else this.channel.onmessage = msgEvt => handler(msgEvt.data)
   }
 
+  /**
+   * @type {function(message: CloseEvent)}
+   */
   set onClose (handler) {
     this.channel.onclose = closeEvt => {
       if (this.webChannel !== null && handler(closeEvt)) {
@@ -1651,16 +1792,24 @@ class Channel {
     }
   }
 
+  /**
+   * @type {function(message: Event)}
+   */
   set onError (handler) {
     this.channel.onerror = evt => handler(evt)
   }
 
+  /**
+   */
   clearHandlers () {
-    this.onmessage = () => {}
-    this.onclose = () => {}
-    this.onerror = () => {}
+    this.onMessage = () => {}
+    this.onClose = () => {}
+    this.onError = () => {}
   }
 
+  /**
+   * @returns {boolean}
+   */
   isOpen () {
     let state = this.channel.readyState
     return state === 1 || state === 'open'
@@ -2376,107 +2525,6 @@ function create (options) {
 }
 
 
-
-/**
-* @external ws/WebSocket
-* @see {@link https://github.com/websockets/ws/blob/master/doc/ws.md#user-content-class-wswebsocket}
-*/
-/**
- * @external JSON
- * @see {@link https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/JSON}
- */
-/**
- * @external Error
- * @see {@link https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Error}
- */
-/**
- * @external RTCPeerConnection
- * @see {@link https://developer.mozilla.org/en/docs/Web/API/RTCPeerConnection}
- */
-/**
- * @external RTCSessionDescription
- * @see {@link https://developer.mozilla.org/en/docs/Web/API/RTCSessionDescription}
- */
-/**
- * @external RTCDataChannel
- * @see {@link https://developer.mozilla.org/en/docs/Web/API/RTCDataChannel}
- */
-/**
- * @external RTCIceCandidate
- * @see {@link https://developer.mozilla.org/en/docs/Web/API/RTCIceCandidate}
- */
-/**
- * @external RTCPeerConnectionIceEvent
- * @see {@link https://developer.mozilla.org/en/docs/Web/API/RTCPeerConnectionIceEvent}
- */
-/**
- * @external CloseEvent
- * @see {@link https://developer.mozilla.org/en/docs/Web/API/CloseEvent/CloseEvent}
- */
-/**
- * @external WebSocket
- * @see {@link https://developer.mozilla.org/en/docs/Web/API/WebSocket}
- */
-/**
- * @external Set
- * @see {@link https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Set}
- */
-/**
- * @external Map
- * @see {@link https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Map}
- */
-/**
- * @external ArrayBufferView
- * @see {@link https://developer.mozilla.org/en/docs/Web/API/ArrayBufferView}
- */
-/**
- * @external ArrayBuffer
- * @see {@link https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer}
- */
-/**
- * @external String
- * @see {@link https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/String}
- */
-/**
- * @external Int8Array
- * @see {@link developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Int8Array}
- */
-/**
- * @external Uint8Array
- * @see {@link developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array}
- */
-/**
- * @external Uint8ClampedArray
- * @see {@link https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8ClampedArray}
- */
-/**
- * @external Int16Array
- * @see {@link https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Int16Array}
- */
-/**
- * @external Uint16Array
- * @see {@link https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint16Array}
- */
-/**
- * @external Int32Array
- * @see {@link https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Int32Array}
- */
-/**
- * @external Uint32Array
- * @see {@link https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint32Array}
- */
-/**
- * @external Float32Array
- * @see {@link https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Float32Array}
- */
-/**
- * @external Float64Array
- * @see {@link https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Float64Array}
- */
-/**
- * @external DataView
- * @see {@link https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/DataView}
- */
 
 /**
  * An event handler to be called when the *close* event is received either by the *WebSocket* or by the *RTCDataChannel*.

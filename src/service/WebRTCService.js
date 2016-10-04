@@ -21,49 +21,47 @@ const RTCPeerConnection = src.RTCPeerConnection
 const RTCIceCandidate = src.RTCIceCandidate
 
 /**
- * Ice candidate event handler.
- *
- * @callback WebRTCService~onCandidate
- * @param {external:RTCPeerConnectionIceEvent} evt - Event.
+ * @external {RTCPeerConnection} https://developer.mozilla.org/en/docs/Web/API/RTCPeerConnection
  */
-
 /**
- * Session description event handler.
- *
- * @callback WebRTCService~onSDP
- * @param {external:RTCPeerConnectionIceEvent} evt - Event.
+ * @external {RTCSessionDescription} https://developer.mozilla.org/en/docs/Web/API/RTCSessionDescription
  */
-
 /**
- * Data channel event handler.
- *
- * @callback WebRTCService~onChannel
- * @param {external:RTCPeerConnectionIceEvent} evt - Event.
+ * @external {RTCDataChannel} https://developer.mozilla.org/en/docs/Web/API/RTCDataChannel
+ */
+/**
+ * @external {RTCIceCandidate} https://developer.mozilla.org/en/docs/Web/API/RTCIceCandidate
+ */
+/**
+ * @external {RTCIceServer} https://developer.mozilla.org/en/docs/Web/API/RTCIceServer
  */
 
 /**
  * Service class responsible to establish connections between peers via
  * `RTCDataChannel`.
  *
- * @see {@link external:RTCPeerConnection}
- * @extends module:channelBuilder~ChannelBuilderInterface
  */
 class WebRTCService extends ServiceInterface {
 
   /**
-   * WebRTCService constructor.
-   *
-   * @param  {Object} [options] - This service options.
-   * @param  {Object} [options.signaling='ws://sigver-coastteam.rhcloud.com:8000'] -
-   * Signaling server URL.
-   * @param  {Object[]} [options.iceServers=[{urls: 'stun:23.21.150.121'},{urls: 'stun:stun.l.google.com:19302'},{urls: 'turn:numb.viagenie.ca', credential: 'webrtcdemo', username: 'louis%40mozilla.com'}]] - WebRTC options to setup which STUN
-   * and TURN servers to be used.
+   * @param  {number} id Service identifier
+   * @param  {RTCIceServer} iceServers WebRTC configuration object
    */
   constructor (id, iceServers) {
     super(id)
+    /**
+     * @private
+     * @type {RTCIceServer}
+     */
     this.iceServers = iceServers
   }
 
+  /**
+   * @param {Channel} channel
+   * @param {number} senderId
+   * @param {number} recepientId
+   * @param {Object} msg
+   */
   onMessage (channel, senderId, recepientId, msg) {
     let wc = channel.webChannel
     let item = super.getItem(wc, senderId)
@@ -91,6 +89,14 @@ class WebRTCService extends ServiceInterface {
     }
   }
 
+  /**
+   * Establishes an `RTCDataChannel` with a peer identified by `id` trough `WebChannel`.
+   *
+   * @param {WebChannel} wc
+   * @param {number} id
+   *
+   * @returns {Promise<RTCDataChannel, string>}
+   */
   connectOverWebChannel (wc, id) {
     let item = new CandidatesBuffer(this.createPeerConnection(candidate => {
       wc.sendInnerTo(id, this.id, {candidate})
@@ -108,6 +114,12 @@ class WebRTCService extends ServiceInterface {
     })
   }
 
+  /**
+   *
+   * @param {WebSocket} ws
+   * @param {function(channel: RTCDataChannel)} onChannel
+   *
+   */
   listenFromSignaling (ws, onChannel) {
     ws.onmessage = evt => {
       let msg = JSON.parse(evt.data)
@@ -138,6 +150,13 @@ class WebRTCService extends ServiceInterface {
     }
   }
 
+  /**
+   *
+   * @param {type} ws
+   * @param {type} key Description
+   *
+   * @returns {type} Description
+   */
   connectOverSignaling (ws, key) {
     let item = new CandidatesBuffer(this.createPeerConnection(candidate => {
       if (ws.readyState === 1) ws.send(JSON.stringify({data: {candidate}}))
@@ -173,28 +192,32 @@ class WebRTCService extends ServiceInterface {
   }
 
   /**
-   * Creates a peer connection and generates an SDP offer.
+   * Creates an SDP offer.
    *
-   * @param  {WebRTCService~onCandidate} onCandidate - Ice candidate event handler.
-   * @param  {WebRTCService~onSDP} sendOffer - Session description event handler.
-   * @param  {WebRTCService~onChannel} onChannel - Handler event when the data channel is ready.
-   * @return {Promise} - Resolved when the offer has been succesfully created,
+   * @private
+   * @param  {RTCPeerConnection} pc
+   * @return {Promise<RTCSessionDescription, string>} - Resolved when the offer has been succesfully created,
    * set as local description and sent to the peer.
    */
   createOffer (pc) {
     return pc.createOffer()
       .then(offer => pc.setLocalDescription(offer))
-      .then(() => JSON.parse(JSON.stringify(pc.localDescription)))
+      .then(() => {
+        return {
+          type: pc.localDescription.type,
+          sdp: pc.localDescription.sdp
+        }
+      })
   }
 
   /**
-   * Creates a peer connection and generates an SDP answer.
+   * Creates an SDP answer.
    *
-   * @param  {WebRTCService~onCandidate} onCandidate - Ice candidate event handler.
-   * @param  {WebRTCService~onSDP} sendOffer - Session description event handler.
-   * @param  {WebRTCService~onChannel} onChannel - Handler event when the data channel is ready.
-   * @param  {Object} offer - Offer received from a peer.
-   * @return {Promise} - Resolved when the offer has been succesfully created,
+   * @private
+   * @param  {RTCPeerConnection} pc
+   * @param  {string} offer
+   * @param  {Array[string]} candidates
+   * @return {Promise<RTCSessionDescription, string>} - Resolved when the offer has been succesfully created,
    * set as local description and sent to the peer.
    */
   createAnswer (pc, offer, candidates) {
@@ -204,16 +227,21 @@ class WebRTCService extends ServiceInterface {
         return pc.createAnswer()
       })
       .then(answer => pc.setLocalDescription(answer))
-      .then(() => JSON.parse(JSON.stringify(pc.localDescription)))
+      .then(() => {
+        return {
+          type: pc.localDescription.type,
+          sdp: pc.localDescription.sdp
+        }
+      })
   }
 
   /**
    * Creates an instance of `RTCPeerConnection` and sets `onicecandidate` event handler.
    *
    * @private
-   * @param  {WebRTCService~onCandidate} onCandidate - Ice
+   * @param  {function(candidate: Object)} onCandidate
    * candidate event handler.
-   * @return {external:RTCPeerConnection} - Peer connection.
+   * @return {RTCPeerConnection}
    */
   createPeerConnection (onCandidate) {
     let pc = new RTCPeerConnection({iceServers: this.iceServers})
@@ -235,12 +263,26 @@ class WebRTCService extends ServiceInterface {
     return pc
   }
 
+  /**
+   *
+   * @private
+   * @param {RTCPeerConnection} pc
+   * @param {function(dc: RTCDataChannel)} onOpen
+   *
+   */
   createDataChannel (pc, onOpen) {
     let dc = pc.createDataChannel(null)
     dc.onopen = evt => onOpen(dc)
     this.setUpOnDisconnect(pc, dc)
   }
 
+  /**
+   *
+   * @private
+   * @param {RTCPeerConnection} pc
+   * @param {function(dc: RTCDataChannel)} onOpen
+   *
+   */
   listenOnDataChannel (pc, onOpen) {
     pc.ondatachannel = dcEvt => {
       this.setUpOnDisconnect(pc, dcEvt.channel)
@@ -248,6 +290,13 @@ class WebRTCService extends ServiceInterface {
     }
   }
 
+  /**
+   * @private
+   * @param {RTCPeerConnection} pc
+   * @param {RTCDataChannel} dataCh
+   *
+   * @returns {type} Description
+   */
   setUpOnDisconnect (pc, dataCh) {
     pc.oniceconnectionstatechange = () => {
       if (pc.iceConnectionState === 'disconnected') {
@@ -256,6 +305,13 @@ class WebRTCService extends ServiceInterface {
     }
   }
 
+  /**
+   * @private
+   * @param {CandidatesBuffer|null} obj
+   * @param {string} candidate
+   *
+   * @returns {type} Description
+   */
   addIceCandidate (obj, candidate) {
     if (obj !== null && obj.pc && obj.pc.isRemoteDescriptionSet) {
       obj.pc.addIceCandidate(new RTCIceCandidate(candidate))
@@ -264,6 +320,9 @@ class WebRTCService extends ServiceInterface {
   }
 }
 
+/**
+ * @private
+ */
 class CandidatesBuffer {
   constructor (pc = null, candidates = []) {
     this.pc = pc
@@ -271,4 +330,5 @@ class CandidatesBuffer {
   }
 }
 
-export {WebRTCService as default, webRTCAvailable}
+export default WebRTCService
+export {webRTCAvailable}

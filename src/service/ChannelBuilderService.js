@@ -2,6 +2,11 @@ import ServiceInterface from 'service/ServiceInterface'
 import {webRTCAvailable} from 'service/WebRTCService'
 import {WEBRTC, WEBSOCKET, provide} from 'serviceProvider'
 
+/**
+ * It is responsible to build a channel between two peers with a help of `WebSocketService` and `WebRTCService`.
+ * Its algorithm determine which channel (socket or dataChannel) should be created
+ * based on the services availability and peers' preferences.
+ */
 class ChannelBuilderService extends ServiceInterface {
   constructor (id) {
     super(id)
@@ -11,6 +16,14 @@ class ChannelBuilderService extends ServiceInterface {
     this.WR_WS = [WEBRTC, WEBSOCKET]
   }
 
+  /**
+   * Establish a channel with the peer identified by `id`.
+   *
+   * @param {WebChannel} wc
+   * @param {number} id
+   *
+   * @returns {Promise<Channel, string>}
+   */
   connectTo (wc, id) {
     return new Promise((resolve, reject) => {
       super.setPendingRequest(wc, id, {resolve, reject})
@@ -18,6 +31,11 @@ class ChannelBuilderService extends ServiceInterface {
     })
   }
 
+  /**
+   * @param {WebChannel} wc
+   *
+   * @returns {{listenOn: string, connectors: number[]}}
+   */
   availableConnectors (wc) {
     let res = {}
     let connectors = []
@@ -33,6 +51,11 @@ class ChannelBuilderService extends ServiceInterface {
     return res
   }
 
+  /**
+   * @param {WebChannel} wc
+   * @param {WebSocket|RTCDataChannel} channel
+   * @param {number} senderId
+   */
   onChannel (wc, channel, senderId) {
     wc.initChannel(channel, senderId)
       .then(channel => {
@@ -41,6 +64,12 @@ class ChannelBuilderService extends ServiceInterface {
       })
   }
 
+  /**
+   * @param {Channel} channel
+   * @param {number} senderId
+   * @param {number} recepientId
+   * @param {Object} msg
+   */
   onMessage (channel, senderId, recepientId, msg) {
     let wc = channel.webChannel
     let myConnectObj = this.availableConnectors(wc)
@@ -195,6 +224,13 @@ class ChannelBuilderService extends ServiceInterface {
     }
   }
 
+  /**
+   * @private
+   * @param {WebChannel} wc
+   * @param {number} senderId
+   * @param {string} peerWsURL
+   * @param {string} myWsURL
+   */
   wsWs (wc, senderId, peerWsURL, myWsURL) {
     provide(WEBSOCKET).connect(peerWsURL)
       .then(channel => {
@@ -206,6 +242,12 @@ class ChannelBuilderService extends ServiceInterface {
       })
   }
 
+  /**
+   * @private
+   * @param {WebChannel} wc
+   * @param {number} senderId
+   * @param {string} peerWsURL
+   */
   ws (wc, senderId, peerWsURL) {
     provide(WEBSOCKET).connect(peerWsURL)
       .then(channel => {
@@ -219,6 +261,12 @@ class ChannelBuilderService extends ServiceInterface {
       })
   }
 
+  /**
+   * @private
+   * @param {number[]} connectors
+   *
+   * @returns {boolean}
+   */
   isValid (connectors) {
     if (this.isEqual(connectors, this.WS) ||
       this.isEqual(connectors, this.WR) ||
@@ -228,6 +276,13 @@ class ChannelBuilderService extends ServiceInterface {
     return false
   }
 
+  /**
+   * @private
+   * @param {number[]} arr1
+   * @param {number[]} arr2
+   *
+   * @returns {type} Description
+   */
   isEqual (arr1, arr2) {
     if (arr1.length !== arr2.length) return false
     for (let i = 0; i < arr1.length; i++) {

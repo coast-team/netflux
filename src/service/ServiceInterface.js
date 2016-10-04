@@ -1,14 +1,13 @@
 /**
- * Service module includes {@link module:channelBuilder},
- * {@link module:webChannelManager} and {@link module:messageBuilder}.
- * Services are substitutable stateless objects. Each service is identified by
- * the id provided during construction and some of them can receive messages via `WebChannel` sent
- * by another service.
- *
- * @module service
- * @see module:channelBuilder
- * @see module:webChannelManager
- * @see module:messageBuilder
+ * @external {WebSocket} https://developer.mozilla.org/en/docs/Web/API/WebSocket
+ */
+
+/**
+ * @external {Promise.resolve} https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Promise/resolve
+ */
+
+/**
+ * @external {Promise.reject} https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Promise/reject
  */
 
 /**
@@ -21,22 +20,15 @@ const DEFAULT_REQUEST_TIMEOUT = 60000
  * Pending request map. Pending request is when a service uses a Promise
  * which will be fulfilled or rejected somewhere else in code. For exemple when
  * a peer is waiting for a feedback from another peer before Promise has completed.
- * @type {external:Map}
+ * @type {Map}
  */
 const itemsStorage = new Map()
 const requestsStorage = new Map()
 
 /**
  * Each service must implement this interface.
- * @interface
  */
 class ServiceInterface {
-
-  /**
-   * Timeout event handler
-   * @callback ServiceInterface~onTimeout
-   */
-
   constructor (id) {
     this.id = id
     if (!itemsStorage.has(this.id)) itemsStorage.set(this.id, new WeakMap())
@@ -44,69 +36,106 @@ class ServiceInterface {
   }
 
   /**
-   * Add new pending request.
-   * @param {WebChannel} wc - Web channel to which this request corresponds
-   * @param {number} id - Identifer to which this request corresponds
-   * @param {Object} data - Data to be available when getPendingRequest is called
-   * @param {number} [timeout=DEFAULT_REQUEST_TIMEOUT] - Timeout in milliseconds
-   * @param {ServiceInterface~onTimeout} [onTimeout=() => {}] - Timeout event handler
+   * Add a new pending request identified by `obj` and `id`.
+   * @param {Object} obj
+   * @param {number} id
+   * @param {{resolve: Promise.resolve, reject:Promise.reject}} data
+   * @param {number} [timeout=DEFAULT_REQUEST_TIMEOUT] Timeout in milliseconds
    */
-  setPendingRequest (wc, id, data, timeout = DEFAULT_REQUEST_TIMEOUT) {
-    this.setTo(requestsStorage, wc, id, data)
+  setPendingRequest (obj, id, data, timeout = DEFAULT_REQUEST_TIMEOUT) {
+    this.setTo(requestsStorage, obj, id, data)
     setTimeout(() => { data.reject('Pending request timeout') }, timeout)
   }
 
   /**
-   * Get pending request corresponding to the specific WebChannel and identifier.
-   * @param  {WebChannel} wc - Web channel
-   * @param  {number} id - Identifier
-   * @return {Object} - Javascript object corresponding to the one provided in
-   * setPendingRequest function
+   * Get pending request identified by `obj` and `id`.
+   *
+   * @param  {Object} obj
+   * @param  {number} id
+   * @returns {{resolve: Promise.resolve, reject:Promise.reject}}
    */
-  getPendingRequest (wc, id) {
-    return this.getFrom(requestsStorage, wc, id)
+  getPendingRequest (obj, id) {
+    return this.getFrom(requestsStorage, obj, id)
   }
 
-  setItem (wc, id, data) {
-    this.setTo(itemsStorage, wc, id, data)
+  /**
+   * @param {Object} obj
+   * @param {number} id
+   * @param {Object} data
+   */
+  setItem (obj, id, data) {
+    this.setTo(itemsStorage, obj, id, data)
   }
 
-  getItem (wc, id) {
-    return this.getFrom(itemsStorage, wc, id)
+  /**
+   * Get item identified by `obj` and `id`.
+   *
+   * @param {Object} obj
+   * @param {number} id
+   *
+   * @returns {Object}
+   */
+  getItem (obj, id) {
+    return this.getFrom(itemsStorage, obj, id)
   }
 
-  getItems (wc) {
-    let items = itemsStorage.get(this.id).get(wc)
+  /**
+   * @param {Object} obj
+   *
+   * @returns {Map}
+   */
+  getItems (obj) {
+    let items = itemsStorage.get(this.id).get(obj)
     if (items) return items
     else return new Map()
   }
 
-  removeItem (wc, id) {
+  /**
+   * @param {Object} obj
+   * @param {number} id
+   */
+  removeItem (obj, id) {
     let currentServiceTemp = itemsStorage.get(this.id)
-    let idMap = currentServiceTemp.get(wc)
-    currentServiceTemp.get(wc).delete(id)
-    if (idMap.size === 0) currentServiceTemp.delete(wc)
+    let idMap = currentServiceTemp.get(obj)
+    currentServiceTemp.get(obj).delete(id)
+    if (idMap.size === 0) currentServiceTemp.delete(obj)
   }
 
-  setTo (storage, wc, id, data) {
-    let currentServiceTemp = storage.get(this.id)
-    let idMap
-    if (currentServiceTemp.has(wc)) {
-      idMap = currentServiceTemp.get(wc)
-    } else {
-      idMap = new Map()
-      currentServiceTemp.set(wc, idMap)
-    }
-    if (!idMap.has(id)) idMap.set(id, data)
-  }
-
-  getFrom (storage, wc, id) {
-    let idMap = storage.get(this.id).get(wc)
+  /**
+   * @private
+   * @param {Map} storage
+   * @param {Object} obj
+   * @param {number} id
+   *
+   * @returns {Object}
+   */
+  getFrom (storage, obj, id) {
+    let idMap = storage.get(this.id).get(obj)
     if (idMap !== undefined) {
       let item = idMap.get(id)
       if (item !== undefined) return item
     }
     return null
+  }
+
+  /**
+   * @private
+   * @param {Map} storage
+   * @param {WebChannel} obj
+   * @param {number} id
+   * @param {Object} data
+   *
+   */
+  setTo (storage, obj, id, data) {
+    let currentServiceTemp = storage.get(this.id)
+    let idMap
+    if (currentServiceTemp.has(obj)) {
+      idMap = currentServiceTemp.get(obj)
+    } else {
+      idMap = new Map()
+      currentServiceTemp.set(obj, idMap)
+    }
+    if (!idMap.has(id)) idMap.set(id, data)
   }
 }
 
