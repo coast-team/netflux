@@ -13,4 +13,4 @@ doc/*
 esdoc
 
 # webrtc-adapter
-src/webrtc-adapter.js
+webrtc-adapter.js

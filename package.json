@@ -25,7 +25,8 @@
     "dist/"
   ],
   "scripts": {
-    "build": "rm -rf dist && uglifyjs ./node_modules/webrtc-adapter/out/adapter_no_edge_no_global.js -c -o src/webrtc-adapter.js && node rollup.config.js",
+    "prebuild": "uglifyjs ./node_modules/webrtc-adapter/out/adapter_no_edge_no_global.js -c -o webrtc-adapter.js",
+    "build": "rm -rf dist && node rollup.config.js",
     "start-node-scripts": "rm -rf .rolledupScript && node script/rollup.config.js && pm2 startOrRestart process.yml",
     "rollup-node-tests": "rm -rf .rolledupTest && node test/rollup.config.js",
     "pretest:browsers": "npm run build && npm run start-node-scripts",
