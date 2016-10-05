@@ -5,7 +5,7 @@
   "license": "AGPL-3.0",
   "main": "dist/netflux.es2015.umd.js",
   "jsnext:main": "dist/netflux.es2015.js",
-  "homepage": "https://github.com/coast-team/netflux",
+  "homepage": "https://doc.esdoc.org/github.com/coast-team/netflux",
   "repository": {
     "type": "git",
     "url": "https://github.com/coast-team/netflux.git"
