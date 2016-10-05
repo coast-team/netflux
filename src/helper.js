@@ -1,4 +1,3 @@
-
 let NodeCloseEvent = class CloseEvent {
   constructor (options = {}) {
     this.wasClean = options.wasClean
@@ -7,6 +6,15 @@ let NodeCloseEvent = class CloseEvent {
   }
 }
 
+/**
+ * Create `CloseEvent`.
+ *
+ * @param {number} code
+ * @param {string} [reason=]
+ * @param {boolean} [wasClean=true]
+ *
+ * @returns {CloseEvent|NodeCloseEvent}
+ */
 export function createCloseEvent (code, reason = '', wasClean = true) {
   let obj = {wasClean, code, reason}
   if (isBrowser()) {
@@ -16,6 +24,11 @@ export function createCloseEvent (code, reason = '', wasClean = true) {
   }
 }
 
+/**
+ * Check execution environment.
+ *
+ * @returns {boolean} Description
+ */
 export function isBrowser () {
   if (typeof window === 'undefined' || (typeof process !== 'undefined' && process.title === 'node')) {
     return false
@@ -23,10 +36,24 @@ export function isBrowser () {
   return true
 }
 
+/**
+ * Check whether the channel is a socket.
+ *
+ * @param {WebSocket|RTCDataChannel} channel
+ *
+ * @returns {boolean}
+ */
 export function isSocket (channel) {
   return channel.constructor.name === 'WebSocket'
 }
 
+/**
+ * Check whether the string is a valid URL.
+ *
+ * @param {string} str
+ *
+ * @returns {type} Description
+ */
 export function isURL (str) {
   let regex =
     '^' +

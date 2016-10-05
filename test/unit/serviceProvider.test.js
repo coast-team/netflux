@@ -1,10 +1,10 @@
-import {provide, CHANNEL_BUILDER, FULLY_CONNECTED, MESSAGE_BUILDER, WEBRTC, WEBSOCKET} from 'src/serviceProvider'
+import {provide, CHANNEL_BUILDER, FULLY_CONNECTED, MESSAGE_BUILDER, WEB_RTC, WEB_SOCKET} from 'src/serviceProvider'
 
 describe('Service Provider', () => {
   it('Should provide a service', () => {
-    expect(provide(WEBRTC).id).toEqual(WEBRTC)
+    expect(provide(WEB_RTC).id).toEqual(WEB_RTC)
     expect(provide(FULLY_CONNECTED).id).toEqual(FULLY_CONNECTED)
-    expect(provide(WEBSOCKET).id).toEqual(WEBSOCKET)
+    expect(provide(WEB_SOCKET).id).toEqual(WEB_SOCKET)
     expect(provide(MESSAGE_BUILDER).id).toEqual(MESSAGE_BUILDER)
     expect(provide(CHANNEL_BUILDER).id).toEqual(CHANNEL_BUILDER)
   })
@@ -15,8 +15,8 @@ describe('Service Provider', () => {
   })
 
   it('Should NOT be a singleton', () => {
-    expect(provide(WEBRTC)).not.toBe(provide(WEBRTC))
-    expect(provide(WEBSOCKET)).not.toBe(provide(WEBSOCKET))
+    expect(provide(WEB_RTC)).not.toBe(provide(WEB_RTC))
+    expect(provide(WEB_SOCKET)).not.toBe(provide(WEB_SOCKET))
     expect(provide(CHANNEL_BUILDER)).not.toBe(provide(CHANNEL_BUILDER))
   })
 

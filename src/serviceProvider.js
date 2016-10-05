@@ -11,48 +11,48 @@ import MessageBuilderService from 'service/MessageBuilderService'
  */
 
 /**
- * Constant used to get an instance of {@link WebRTCService}.
- * @type {string}
+ * {@link WebRTCService} identifier.
+ * @type {number}
  */
-const WEBRTC = 0
+const WEB_RTC = 0
 
 /**
- * Constant used to get an instance of {@link WebSocketService}.
- * @type {string}
+ * {@link WebSocketService} identifier.
+ * @type {number}
  */
-const WEBSOCKET = 1
+const WEB_SOCKET = 1
 
+/**
+ * {@link ChannelBuilderService} identifier.
+ * @type {number}
+ */
 const CHANNEL_BUILDER = 2
 
 /**
- * Constant used to get an instance of {@link FullyConnectedService}.
- * @type {string}
+ * {@link FullyConnectedService} identifier.
+ * @type {number}
  */
 const FULLY_CONNECTED = 3
 
 /**
- * Constant used to get an instance of {@link MessageBuilderService}. It is a
- * singleton service.
- * @type {string}
+ * {@link MessageBuilderService} identifier
+ * @type {number}
  */
 const MESSAGE_BUILDER = 4
 
 /**
- * Contains services who are singletons.
- * @type {string}
+ * Contains singletons services.
+ * @type {Map}
  */
 const services = new Map()
 
 /**
  * Provides the service instance specified by `id`.
  *
- * @param  {(module:serviceProvider.MESSAGE_BUILDER|
- *          module:serviceProvider.WEBRTC|
-            module:serviceProvider.WEBSOCKET|
- *          module:serviceProvider.FULLY_CONNECTED)} id - The service id.
- * @param  {Object} [options] - Any options that the service accepts.
- * @return {module:service~ServiceInterface} - Service instance.
- * @throws An error if the service id is unknown
+ * @throws {Error} If the service `id` is unknown
+ * @param  {MESSAGE_BUILDER|WEB_RTC|WEB_SOCKET|FULLY_CONNECTED|CHANNEL_BUILDER} id The service identifier
+ * @param  {Object} [options] Any options that the service accepts
+ * @returns {Service}
  */
 let provide = function (id, options = {}) {
   if (services.has(id)) {
@@ -60,10 +60,10 @@ let provide = function (id, options = {}) {
   }
   let service
   switch (id) {
-    case WEBRTC:
-      return new WebRTCService(WEBRTC, options)
-    case WEBSOCKET:
-      return new WebSocketService(WEBSOCKET)
+    case WEB_RTC:
+      return new WebRTCService(WEB_RTC, options)
+    case WEB_SOCKET:
+      return new WebSocketService(WEB_SOCKET)
     case CHANNEL_BUILDER:
       return new ChannelBuilderService(CHANNEL_BUILDER)
     case FULLY_CONNECTED:
@@ -75,8 +75,8 @@ let provide = function (id, options = {}) {
       services.set(id, service)
       return service
     default:
-      throw new Error(`Unknown service id: "${id}"`)
+      throw new Error(`${id} is an Unknown service id`)
   }
 }
 
-export {WEBRTC, WEBSOCKET, CHANNEL_BUILDER, FULLY_CONNECTED, MESSAGE_BUILDER, provide}
+export {WEB_RTC, WEB_SOCKET, CHANNEL_BUILDER, FULLY_CONNECTED, MESSAGE_BUILDER, provide}

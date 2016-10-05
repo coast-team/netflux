@@ -1,4 +1,4 @@
-import ServiceInterface from 'service/ServiceInterface'
+import Service from 'service/Service'
 import {provide, CHANNEL_BUILDER} from 'serviceProvider'
 
 /**
@@ -14,7 +14,7 @@ import {provide, CHANNEL_BUILDER} from 'serviceProvider'
  * @see FullyConnectedService
  * @interface
  */
-class ManagerInterface extends ServiceInterface {
+class TopologyInterface extends Service {
 
   connectTo (wc, peerIds) {
     let failed = []
@@ -83,4 +83,4 @@ class ManagerInterface extends ServiceInterface {
   }
 }
 
-export default ManagerInterface
+export default TopologyInterface

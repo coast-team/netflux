@@ -17,19 +17,34 @@
 const DEFAULT_REQUEST_TIMEOUT = 60000
 
 /**
+ * Item storage which is separate for each service. The `Map` key is the service `id`.
+ */
+const itemsStorage = new Map()
+
+/**
  * Pending request map. Pending request is when a service uses a Promise
  * which will be fulfilled or rejected somewhere else in code. For exemple when
  * a peer is waiting for a feedback from another peer before Promise has completed.
  * @type {Map}
  */
-const itemsStorage = new Map()
 const requestsStorage = new Map()
 
 /**
- * Each service must implement this interface.
+ * Abstract class which each service should inherit. Each service is independent
+ * and can store data temporarly in order to accomplish its task(s).
  */
-class ServiceInterface {
+class Service {
+
+  /**
+   * It should be invoked only by calling `super` from the children constructor.
+   *
+   * @param {number} id The service unique identifier
+   */
   constructor (id) {
+    /**
+     * The service unique identifier.
+     * @type {number}
+     */
     this.id = id
     if (!itemsStorage.has(this.id)) itemsStorage.set(this.id, new WeakMap())
     if (!requestsStorage.has(this.id)) requestsStorage.set(this.id, new WeakMap())
@@ -59,6 +74,7 @@ class ServiceInterface {
   }
 
   /**
+   * Add item with `obj` and `ìd` as identifier.
    * @param {Object} obj
    * @param {number} id
    * @param {Object} data
@@ -80,8 +96,9 @@ class ServiceInterface {
   }
 
   /**
-   * @param {Object} obj
+   * Get all items belonging to `obj`.
    *
+   * @param {Object} obj
    * @returns {Map}
    */
   getItems (obj) {
@@ -91,6 +108,8 @@ class ServiceInterface {
   }
 
   /**
+   * Remove item identified by `obj` and `id`.
+   *
    * @param {Object} obj
    * @param {number} id
    */
@@ -139,4 +158,4 @@ class ServiceInterface {
   }
 }
 
-export default ServiceInterface
+export default Service

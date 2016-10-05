@@ -1,18 +1,39 @@
 import BotServer from 'BotServer'
 import WebChannel from 'WebChannel'
-import {WEBSOCKET, WEBRTC, FULLY_CONNECTED} from 'serviceProvider'
+import {WEB_SOCKET, WEB_RTC, FULLY_CONNECTED} from 'serviceProvider'
 
-let defaultSettings = {
-  connector: WEBRTC,
-  topology: FULLY_CONNECTED,
-  signalingURL: 'wss://sigver-coastteam.rhcloud.com:8443',
-  iceServers: [
-    {urls: 'stun:turn01.uswest.xirsys.com'}
-  ],
-  listenOn: ''
-}
+/**
+ * WebChannel settings
+ * @typedef {Object} WebChannelSettings
+ * @property {WEB_RTC|WEB_SOCKET} connector Which connector is preferable during connection establishment
+ * @property {FULLY_CONNECTED} topology Fully connected topology is the only one available for now
+ * @property {string} signalingURL Signaling server url
+ * @property {RTCIceServer} iceServers Set of ice servers for WebRTC
+ * @property {string} listenOn Server url when the peer is listen on web socket
+ */
 
+/**
+ * Create `WebChannel`.
+ *
+ * @param {WebChannelSettings} options
+ * @param {WEB_RTC|WEB_SOCKET} [options.connector=WEB_RTC] Which connector is preferable during connection establishment
+ * @param {FULLY_CONNECTED} [options.topology=FULLY_CONNECTED] Fully connected topology is the only one available for now
+ * @param {string} [options.signalingURL='wss://sigver-coastteam.rhcloud.com:8443'] Signaling server url
+ * @param {RTCIceServer} [options.iceServers=[{urls:'stun:turn01.uswest.xirsys.com'}]] Set of ice servers for WebRTC
+ * @param {string} [options.listenOn=''] Server url when the peer is listen on web socket
+ *
+ * @returns {WebChannel}
+ */
 function create (options) {
+  let defaultSettings = {
+    connector: WEB_RTC,
+    topology: FULLY_CONNECTED,
+    signalingURL: 'wss://sigver-coastteam.rhcloud.com:8443',
+    iceServers: [
+     {urls: 'stun:turn01.uswest.xirsys.com'}
+    ],
+    listenOn: ''
+  }
   let mySettings = Object.assign({}, defaultSettings, options)
   return new WebChannel(mySettings)
 }
@@ -20,8 +41,8 @@ function create (options) {
 export {
   create,
   BotServer,
-  WEBSOCKET,
-  WEBRTC
+  WEB_SOCKET,
+  WEB_RTC
 }
 
 /**

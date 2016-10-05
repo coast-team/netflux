@@ -1,6 +1,6 @@
 import 'webrtc-adapter'
 import {isBrowser, createCloseEvent} from 'helper'
-import ServiceInterface from 'service/ServiceInterface'
+import Service from 'service/Service'
 import {CHANNEL_BUILDER, provide} from 'serviceProvider'
 
 const CONNECT_TIMEOUT = 30000
@@ -41,7 +41,7 @@ const RTCIceCandidate = src.RTCIceCandidate
  * `RTCDataChannel`.
  *
  */
-class WebRTCService extends ServiceInterface {
+class WebRTCService extends Service {
 
   /**
    * @param  {number} id Service identifier

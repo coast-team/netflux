@@ -1,5 +1,5 @@
 import {isBrowser} from 'helper'
-import ServiceInterface from 'service/ServiceInterface'
+import Service from 'service/Service'
 import {USER_DATA} from 'WebChannel'
 
 let src = isBrowser() ? window : require('text-encoding')
@@ -107,7 +107,7 @@ const buffers = new WeakMap()
  * big messages (more then 16ko) sent by users. Internal messages are always less
  * 16ko.
  */
-class MessageBuilderService extends ServiceInterface {
+class MessageBuilderService extends Service {
 
   /**
    * @callback MessageBuilderService~Send

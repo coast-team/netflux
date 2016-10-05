@@ -1,4 +1,5 @@
 {
   "source": "./src",
-  "destination": "./esdoc"
+  "destination": "./esdoc",
+  "excludes": ["webrtc-adapter.js"]
 }

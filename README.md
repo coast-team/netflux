@@ -11,7 +11,7 @@
 [![bitHound Overall Score](https://www.bithound.io/github/coast-team/netflux/badges/score.svg)](https://www.bithound.io/github/coast-team/netflux)&nbsp;
 [![Code Climate](https://codeclimate.com/github/coast-team/netflux/badges/gpa.svg)](https://codeclimate.com/github/coast-team/netflux)&nbsp;
 [![Test Coverage](https://codeclimate.com/github/coast-team/netflux/badges/coverage.svg)](https://codeclimate.com/github/coast-team/netflux/coverage)&nbsp;
-[![Inline docs](http://inch-ci.org/github/coast-team/netflux.svg?branch=master&style=flat-square)](http://inch-ci.org/github/coast-team/netflux)
+[![Documentation](https://doc.esdoc.org/github.com/coast-team/netflux/badge.svg)](https://doc.esdoc.org/github.com/coast-team/netflux)
 
 Abstract peer to peer transport API for client and server. Implementation based on WebRTC and WebSocket. Only raw data, no video or audio.
 

@@ -1,7 +1,7 @@
-import ManagerInterface from 'service/manager/ManagerInterface'
+import TopologyInterface from 'service/manager/TopologyInterface'
 
 /**
- * One of the internal message type. The message is intended for the *WebChannel*
+ * One of the internal message type. The message is intended for the `WebChannel`
  * members to notify them about the joining peer.
  * @type {number}
  */
@@ -13,7 +13,7 @@ const SHOULD_ADD_NEW_JOINING_PEER = 1
 const SHOULD_CONNECT_TO = 2
 /**
  * One of the internal message type. The message sent by the joining peer to
- * notify all *WebChannel* members about his arrivel.
+ * notify all `WebChannel` members about his arrivel.
  * @type {number}
  */
 const PEER_JOINED = 3
@@ -25,10 +25,17 @@ const TOCK = 5
  * Fully connected web channel manager. Implements fully connected topology
  * network, when each peer is connected to each other.
  *
- * @extends module:webChannelManager~WebChannelManagerInterface
+ * @extends module:webChannelManager~WebChannelTopologyInterface
  */
-class FullyConnectedService extends ManagerInterface {
+class FullyConnectedService extends TopologyInterface {
 
+  /**
+   * Add a peer to the `WebChannel`.
+   *
+   * @param {WebSocket|RTCDataChannel} channel
+   *
+   * @returns {Promise<number, string}
+   */
   add (channel) {
     let wc = channel.webChannel
     let peers = wc.members.slice()
@@ -41,6 +48,12 @@ class FullyConnectedService extends ManagerInterface {
     })
   }
 
+  /**
+   * Send message to all `WebChannel` members.
+   *
+   * @param {WebChannel} webChannel
+   * @param {ArrayBuffer} data
+   */
   broadcast (webChannel, data) {
     for (let c of webChannel.channels) c.send(data)
   }
@@ -91,11 +104,14 @@ class FullyConnectedService extends ManagerInterface {
   }
 
   /**
-   * Close event handler for each *Channel* in the *WebChannel*.
-   * @private
-   * @param {external:CloseEvent} closeEvt - Close event
+   * Close event handler for each `Channel` in the `WebChannel`.
+   *
+   * @param {CloseEvent} closeEvt
+   * @param {Channel} channel
+   *
+   * @returns {boolean}
    */
-  onChannelClose (evt, channel) {
+  onChannelClose (closeEvt, channel) {
     // TODO: need to check if this is a peer leaving and thus he closed channels
     // with all WebChannel members or this is abnormal channel closing
     let wc = channel.webChannel
@@ -108,9 +124,10 @@ class FullyConnectedService extends ManagerInterface {
   }
 
   /**
-   * Error event handler for each *Channel* in the *WebChannel*.
-   * @private
-   * @param {external:Event} evt - Event
+   * Error event handler for each `Channel` in the `WebChannel`.
+   *
+   * @param {Event} evt
+   * @param {Channel} channel
    */
   onChannelError (evt, channel) {
     console.error(`Channel error with id: ${channel.peerId}: `, evt)
@@ -123,21 +140,6 @@ class FullyConnectedService extends ManagerInterface {
       case SHOULD_CONNECT_TO:
         jpMe = this.setJP(wc, wc.myId, channel)
         jpMe.channels.add(channel)
-        // super.connectTo(wc, msg.peers)
-        //   .then(failed => {
-        //     let msg = {code: PEER_JOINED}
-        //     for (let ch of jpMe.channels) {
-        //       wc.sendInnerTo(ch, this.id, msg)
-        //       wc.channels.add(ch)
-        //       wc.onPeerJoin$(ch.peerId)
-        //     }
-        //     super.removeItem(wc, wc.myId)
-        //     for (let jp of super.getItems(wc)) {
-        //       wc.sendInnerTo(jp.channel, this.id, msg)
-        //     }
-        //     wc.onJoin()
-        //   })
-        // this.setJP(wc, wc.myId, channel).channels.add(channel)
         super.connectTo(wc, msg.peers)
           .then(failed => {
             let msg = {code: PEER_JOINED}
@@ -178,6 +180,14 @@ class FullyConnectedService extends ManagerInterface {
     }
   }
 
+  /**
+   * @private
+   * @param {WebChannel} wc
+   * @param {number} jpId
+   * @param {WebSocket|RTCDataChannel} channel
+   *
+   * @returns {type} Description
+   */
   setJP (wc, jpId, channel) {
     let jp = super.getItem(wc, jpId)
     if (!jp) {

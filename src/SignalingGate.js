@@ -1,26 +1,39 @@
-import {provide, WEBRTC, WEBSOCKET} from 'serviceProvider'
+import {provide, WEB_RTC, WEB_SOCKET} from 'serviceProvider'
 import {OPEN} from 'service/WebSocketService'
 
 /**
- * This class represents a door of the *WebChannel* for this peer. If the door
- * is open, then clients can join the *WebChannel* through this peer, otherwise
- * they cannot.
+ * This class represents a door of the `WebChannel` for the current peer. If the door
+ * is open, then clients can join the `WebChannel` through this peer. There are as
+ * many doors as peers in the `WebChannel` and each of them can be closed or opened.
  */
 class SignalingGate {
 
   /**
-   * Necessary data to join the *WebChannel*.
-   * @typedef {Object} SignalingGate~AccessData
-   * @property {string} url - Signaling server url
-   * @property {string} key - The unique key to join the *WebChannel*
+   * Necessary data to join the `WebChannel`.
+   * @typedef {Object} OpenData
+   * @property {string} url Signaling server url
+   * @property {string} key The unique key to join the `WebChannel`
    */
 
   /**
-   * @param {closeEventListener} onClose - close event handler
+   * @param {WebChannel} wc
    */
-  constructor (webChannel) {
-    this.webChannel = webChannel
+  constructor (wc) {
+    /**
+     * @type {WebChannel}
+     */
+    this.webChannel = wc
+    /**
+     * Signaling server url.
+     * @private
+     * @type {string}
+     */
     this.url = null
+    /**
+     * Key related to the `url`.
+     * @private
+     * @type {string}
+     */
     this.key = null
     /**
      * Web socket with the signaling server.
@@ -32,14 +45,16 @@ class SignalingGate {
 
   /**
    * Open the gate.
-   * @param {channelEventHandler} onChannel Channel event handler
-   * @param {SignalingGate~AccessData} accessData - Access data
-   * @return {Promise}
+   *
+   * @param {string} url Signaling server url
+   * @param {function(ch: RTCDataChannel)} onChannel
+   * @param {string} key
+   * @returns {Promise<OpenData, string>}
    */
   open (url, onChannel, key = null) {
     return new Promise((resolve, reject) => {
       if (key === null) key = this.generateKey()
-      provide(WEBSOCKET).connect(url)
+      provide(WEB_SOCKET).connect(url)
         .then(ws => {
           ws.onclose = closeEvt => {
             this.key = null
@@ -54,13 +69,13 @@ class SignalingGate {
               let msg = JSON.parse(evt.data)
               if ('isKeyOk' in msg) {
                 if (msg.isKeyOk) {
-                  provide(WEBRTC, this.webChannel.settings.iceServers)
+                  provide(WEB_RTC, this.webChannel.settings.iceServers)
                     .listenFromSignaling(ws, onChannel)
                   this.ws = ws
                   this.key = key
                   this.url = url
                   resolve({url, key})
-                } else reject(`The key "${key}" already exists`)
+                } else reject(`${key} key already exists`)
               } else reject(`Unknown message from ${url}: ${evt.data}`)
             } catch (err) {
               reject('Server responce is not a JSON string: ' + err.message)
@@ -74,6 +89,7 @@ class SignalingGate {
 
   /**
    * Check if the door is opened or closed.
+   *
    * @returns {boolean} - Returns true if the door is opened and false if it is
    * closed
    */
@@ -81,6 +97,11 @@ class SignalingGate {
     return this.ws !== null && this.ws.readyState === OPEN
   }
 
+  /**
+   * Get open data.
+   *
+   * @returns {OpenData|null} Open data if the door is open and null otherwise
+   */
   getOpenData () {
     if (this.isOpen()) {
       return {
@@ -101,7 +122,8 @@ class SignalingGate {
   }
 
   /**
-   * Generate random key which will be used to join the *WebChannel*.
+   * Generate random key which will be used to join the `WebChannel`.
+   *
    * @private
    * @returns {string} - Generated key
    */
