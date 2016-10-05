@@ -37,13 +37,6 @@
     "test:node": "npm run pretest && node jasmine.conf.js",
     "test:coverage": "rm -rf coverage && npm run pretest && node jasmine.conf.js && karma start karma.conf.coverage.js",
     "test:travis": "npm run pretest && node jasmine.conf.js && karma start karma.conf.travis.js",
-    "predoc:deploy": "json -I -f jsdoc.json -e \"this.templates.systemName=\\\"Netflux `git describe --abbrev=0 --tags`\\\"\" && npm run docdev",
-    "doc": "jsdoc -d doc -c jsdoc.json -t ./node_modules/ink-docstrap/template -R README.md -r src",
-    "doc:dev": "jsdoc -d doc -p -c jsdoc.json -t ./node_modules/ink-docstrap/template -R README.md -r src",
-    "doc:deploy": "./jsdoc.deploy.sh",
-    "postdoc": "mkdir -p doc/doc && cp -f doc/uml.png doc/doc/",
-    "postdoc:dev": "mkdir -p doc/doc && cp -f doc/uml.png doc/doc/",
-    "postdoc:deploy": "json -I -f jsdoc.json -e 'this.templates.systemName=\"Netflux\"'",
     "commit": "git-cz",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post"
   },
@@ -60,12 +53,10 @@
     "cz-conventional-changelog": "^1.1.5",
     "esdoc": "^0.4.8",
     "ghooks": "^1.0.1",
-    "ink-docstrap": "^1.1.2",
     "istanbul": "^0.4.3",
     "jasmine": "^2.4.2",
     "jasmine-core": "^2.4.2",
     "jasmine-spec-reporter": "^2.5.0",
-    "jsdoc": "^3.4.0",
     "json": "^9.0.3",
     "karma": "^1.1.0",
     "karma-chrome-launcher": "^2.0.0",
@@ -85,8 +76,7 @@
     "semantic-release": "^4.3.5",
     "sigver": "^7.1.0",
     "standard": "^8.0.0",
-    "uglify-js": "^2.7.3",
-    "uglifyjs": "^2.4.10"
+    "uglify-js": "^2.7.3"
   },
   "standard": {
     "globals": [
