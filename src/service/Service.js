@@ -1,16 +1,4 @@
 /**
- * @external {WebSocket} https://developer.mozilla.org/en/docs/Web/API/WebSocket
- */
-
-/**
- * @external {Promise.resolve} https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Promise/resolve
- */
-
-/**
- * @external {Promise.reject} https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Promise/reject
- */
-
-/**
  * Default timeout for any pending request.
  * @type {number}
  */

@@ -1,16 +1,4 @@
 /**
- * @external {WebSocket} https://developer.mozilla.org/en/docs/Web/API/WebSocket
- */
-
-/**
- * @external {Promise.resolve} https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Promise/resolve
- */
-
-/**
- * @external {Promise.reject} https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Promise/reject
- */
-
-/**
  * Default timeout for any pending request.
  * @type {number}
  */
@@ -179,7 +167,7 @@ class TopologyInterface extends Service {
     else {
       return new Promise((resolve, reject) => {
         let counter = 0
-        let cBuilder = provide(CHANNEL_BUILDER)
+        let cBuilder = ServiceFactory.get(CHANNEL_BUILDER)
         peerIds.forEach(id => {
           cBuilder.connectTo(wc, id)
             .then(channel => this.onChannel(channel))
@@ -474,96 +462,102 @@ let NodeCloseEvent = class CloseEvent {
   }
 }
 
-/**
- * Create `CloseEvent`.
- *
- * @param {number} code
- * @param {string} [reason=]
- * @param {boolean} [wasClean=true]
- *
- * @returns {CloseEvent|NodeCloseEvent}
- */
-function createCloseEvent (code, reason = '', wasClean = true) {
-  let obj = {wasClean, code, reason}
-  if (isBrowser()) {
-    return new CloseEvent('netfluxClose', obj)
-  } else {
-    return new NodeCloseEvent(obj)
+class Util {
+  /**
+   * Create `CloseEvent`.
+   *
+   * @param {number} code
+   * @param {string} [reason=]
+   * @param {boolean} [wasClean=true]
+   *
+   * @returns {CloseEvent|NodeCloseEvent}
+   */
+  static createCloseEvent (code, reason = '', wasClean = true) {
+    let obj = {wasClean, code, reason}
+    if (Util.isBrowser()) {
+      return new CloseEvent('netfluxClose', obj)
+    } else {
+      return new NodeCloseEvent(obj)
+    }
   }
-}
 
-/**
- * Check execution environment.
- *
- * @returns {boolean} Description
- */
-function isBrowser () {
-  if (typeof window === 'undefined' || (typeof process !== 'undefined' && process.title === 'node')) {
-    return false
+  /**
+   * Check execution environment.
+   *
+   * @returns {boolean} Description
+   */
+  static isBrowser () {
+    if (typeof window === 'undefined' || (typeof process !== 'undefined' && process.title === 'node')) {
+      return false
+    }
+    return true
   }
-  return true
-}
 
-/**
- * Check whether the channel is a socket.
- *
- * @param {WebSocket|RTCDataChannel} channel
- *
- * @returns {boolean}
- */
-function isSocket (channel) {
-  return channel.constructor.name === 'WebSocket'
-}
+  /**
+   * Check whether the channel is a socket.
+   *
+   * @param {WebSocket|RTCDataChannel} channel
+   *
+   * @returns {boolean}
+   */
+  static isSocket (channel) {
+    return channel.constructor.name === 'WebSocket'
+  }
 
-/**
- * Check whether the string is a valid URL.
- *
- * @param {string} str
- *
- * @returns {type} Description
- */
-function isURL (str) {
-  let regex =
-    '^' +
-    // protocol identifier
-    '(?:(?:wss|ws)://)' +
-    // user:pass authentication
-    '(?:\\S+(?::\\S*)?@)?' +
-    '(?:'
+  /**
+   * Check whether the string is a valid URL.
+   *
+   * @param {string} str
+   *
+   * @returns {type} Description
+   */
+  static isURL (str) {
+    let regex =
+      '^' +
+      // protocol identifier
+      '(?:(?:wss|ws)://)' +
+      // user:pass authentication
+      '(?:\\S+(?::\\S*)?@)?' +
+      '(?:'
 
-  let tld = '(?:\\.(?:[a-z\\u00a1-\\uffff]{2,}))?'
+    let tld = '(?:\\.(?:[a-z\\u00a1-\\uffff]{2,}))?'
 
-  regex +=
-      // IP address dotted notation octets
-      // excludes loopback network 0.0.0.0
-      // excludes reserved space >= 224.0.0.0
-      // excludes network & broacast addresses
-      // (first & last IP address of each class)
-      '(?:[1-9]\\d?|1\\d\\d|2[01]\\d|22[0-3])' +
-      '(?:\\.(?:1?\\d{1,2}|2[0-4]\\d|25[0-5])){2}' +
-      '(?:\\.(?:[1-9]\\d?|1\\d\\d|2[0-4]\\d|25[0-4]))' +
-    '|' +
-      // host name
-      '(?:(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)' +
-      // domain name
-      '(?:\\.(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)*' +
-      tld +
-    ')' +
-    // port number
-    '(?::\\d{2,5})?' +
-    // resource path
-    '(?:[/?#]\\S*)?' +
-  '$'
+    regex +=
+        // IP address dotted notation octets
+        // excludes loopback network 0.0.0.0
+        // excludes reserved space >= 224.0.0.0
+        // excludes network & broacast addresses
+        // (first & last IP address of each class)
+        '(?:[1-9]\\d?|1\\d\\d|2[01]\\d|22[0-3])' +
+        '(?:\\.(?:1?\\d{1,2}|2[0-4]\\d|25[0-5])){2}' +
+        '(?:\\.(?:[1-9]\\d?|1\\d\\d|2[0-4]\\d|25[0-4]))' +
+      '|' +
+        // host name
+        '(?:(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)' +
+        // domain name
+        '(?:\\.(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)*' +
+        tld +
+      ')' +
+      // port number
+      '(?::\\d{2,5})?' +
+      // resource path
+      '(?:[/?#]\\S*)?' +
+    '$'
 
-  if (!(new RegExp(regex, 'i')).exec(str)) return false
-  return true
+    if (!(new RegExp(regex, 'i')).exec(str)) return false
+    return true
+  }
 }
 
 const CONNECT_TIMEOUT = 30000
 const REMOVE_ITEM_TIMEOUT = 5000
 let src
+/**
+* @ignore
+ * @type {boolean}
+ */
 let webRTCAvailable = true
-if (isBrowser()) {
+if (Util.isBrowser()) {
   src = window
 } else {
   try {
@@ -575,22 +569,6 @@ if (isBrowser()) {
 }
 const RTCPeerConnection$1 = src.RTCPeerConnection
 const RTCIceCandidate$1 = src.RTCIceCandidate
-
-/**
- * @external {RTCPeerConnection} https://developer.mozilla.org/en/docs/Web/API/RTCPeerConnection
- */
-/**
- * @external {RTCSessionDescription} https://developer.mozilla.org/en/docs/Web/API/RTCSessionDescription
- */
-/**
- * @external {RTCDataChannel} https://developer.mozilla.org/en/docs/Web/API/RTCDataChannel
- */
-/**
- * @external {RTCIceCandidate} https://developer.mozilla.org/en/docs/Web/API/RTCIceCandidate
- */
-/**
- * @external {RTCIceServer} https://developer.mozilla.org/en/docs/Web/API/RTCIceServer
- */
 
 /**
  * Service class responsible to establish connections between peers via
@@ -631,7 +609,7 @@ class WebRTCService extends Service {
       })
       this.listenOnDataChannel(item.pc, dataCh => {
         setTimeout(() => super.removeItem(wc, senderId), REMOVE_ITEM_TIMEOUT)
-        provide(CHANNEL_BUILDER).onChannel(wc, dataCh, senderId)
+        ServiceFactory.get(CHANNEL_BUILDER).onChannel(wc, dataCh, senderId)
       })
       this.createAnswer(item.pc, msg.offer, item.candidates)
         .then(answer => wc.sendInnerTo(senderId, this.id, {answer}))
@@ -856,7 +834,7 @@ class WebRTCService extends Service {
   setUpOnDisconnect (pc, dataCh) {
     pc.oniceconnectionstatechange = () => {
       if (pc.iceConnectionState === 'disconnected') {
-        if (dataCh.onclose) dataCh.onclose(createCloseEvent(4201, 'disconnected', false))
+        if (dataCh.onclose) dataCh.onclose(Util.createCloseEvent(4201, 'disconnected', false))
       }
     }
   }
@@ -886,10 +864,12 @@ class CandidatesBuffer {
   }
 }
 
-const WebSocket = isBrowser() ? window.WebSocket : require('ws')
+const WebSocket = Util.isBrowser() ? window.WebSocket : require('ws')
 const CONNECT_TIMEOUT$1 = 10000
 /**
  * One of the web socket state constant.
+ * @ignore
+ * @type {number}
  */
 const OPEN = WebSocket.OPEN
 
@@ -1015,7 +995,7 @@ class ChannelBuilderService extends Service {
       super.getPendingRequest(wc, senderId).reject(msg.failedReason)
     } else if ('shouldConnect' in msg) {
       if (this.isEqual(msg.shouldConnect, this.WS)) {
-        provide(WEB_SOCKET).connect(msg.listenOn)
+        ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn)
           .then(channel => {
             channel.send(JSON.stringify({wcId: wc.id, senderId: wc.myId}))
             this.onChannel(wc, channel, senderId)
@@ -1024,12 +1004,12 @@ class ChannelBuilderService extends Service {
             super.getPendingRequest(wc, senderId).reject(`Failed to establish a socket: ${reason}`)
           })
       } else if (this.isEqual(msg.shouldConnect, this.WS_WR)) {
-        provide(WEB_SOCKET).connect(msg.listenOn)
+        ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn)
           .then(channel => {
             channel.send(JSON.stringify({wcId: wc.id, senderId: wc.myId}))
             this.onChannel(wc, channel, senderId)
           })
-          .catch(reason => provide(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId))
+          .catch(reason => ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId))
           .then(channel => this.onChannel(wc, channel, senderId))
           .catch(reason => {
             if ('feedbackOnFail' in msg && msg.feedbackOnFail === true) {
@@ -1040,7 +1020,7 @@ class ChannelBuilderService extends Service {
           })
       }
     } else if ('tryOn' in msg && this.isEqual(msg.tryOn, this.WS)) {
-      provide(WEB_SOCKET).connect(msg.listenOn)
+      ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn)
         .then(channel => {
           channel.send(JSON.stringify({wcId: wc.id, senderId: wc.myId}))
           this.onChannel(wc, channel, senderId)
@@ -1075,7 +1055,7 @@ class ChannelBuilderService extends Service {
           } else if (this.isEqual(myConnectors, this.WS)) {
             wc.sendInnerTo(senderId, this.id, {shouldConnect: this.WS, listenOn: myConnectObj.listenOn})
           } else if (this.isEqual(myConnectors, this.WR)) {
-            provide(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId)
+            ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId)
               .then(channel => this.onChannel(wc, channel, senderId))
               .catch(reason => {
                 wc.sendInnerTo(senderId, this.id, {failedReason: `Failed establish a data channel: ${reason}`})
@@ -1083,7 +1063,7 @@ class ChannelBuilderService extends Service {
           } else if (this.isEqual(myConnectors, this.WS_WR)) {
             wc.sendInnerTo(senderId, this.id, {shouldConnect: this.WS_WR, listenOn: myConnectObj.listenOn})
           } else if (this.isEqual(myConnectors, this.WR_WS)) {
-            provide(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId)
+            ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId)
               .then(channel => this.onChannel(wc, channel, senderId))
               .catch(reason => {
                 wc.sendInnerTo(senderId, this.id, {shouldConnect: this.WS, listenOn: myConnectObj.listenOn})
@@ -1098,16 +1078,16 @@ class ChannelBuilderService extends Service {
           } else if (this.isEqual(myConnectors, this.WS)) {
             this.wsWs(wc, senderId, msg.listenOn, myConnectObj.listenOn)
           } else if (this.isEqual(myConnectors, this.WR)) {
-            provide(WEB_SOCKET).connect(msg.listenOn)
+            ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn)
               .then(channel => {
                 channel.send(JSON.stringify({wcId: wc.id, senderId: wc.myId}))
                 this.onChannel(wc, channel, senderId)
               })
-              .catch(reason => provide(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId))
+              .catch(reason => ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId))
               .then(channel => this.onChannel(wc, channel, senderId))
               .catch(reason => wc.sendInnerTo(senderId, this.id, {failedReason: `Failed to establish a socket and then a data channel: ${reason}`}))
           } else if (this.isEqual(myConnectors, this.WS_WR)) {
-            provide(WEB_SOCKET).connect(msg.listenOn)
+            ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn)
               .then(channel => {
                 channel.send(JSON.stringify({wcId: wc.id, senderId: wc.myId}))
                 this.onChannel(wc, channel, senderId)
@@ -1115,12 +1095,12 @@ class ChannelBuilderService extends Service {
           } else if (this.isEqual(myConnectors, this.WR_WS)) {
             wc.sendInnerTo(senderId, this.id, {shouldConnect: this.WS_WR, listenOn: myConnectObj.listenOn})
           } else {
-            provide(WEB_SOCKET).connect(msg.listenOn)
+            ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn)
               .then(channel => {
                 channel.send(JSON.stringify({wcId: wc.id, senderId: wc.myId}))
                 this.onChannel(wc, channel, senderId)
               })
-              .catch(reason => provide(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId))
+              .catch(reason => ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId))
               .then(channel => this.onChannel(wc, channel, senderId))
               .catch(reason => wc.sendInnerTo(senderId, this.id, {shouldConnect: this.WS, listenOn: myConnectObj.listenOn}))
           }
@@ -1133,10 +1113,10 @@ class ChannelBuilderService extends Service {
           } else if (this.isEqual(myConnectors, this.WS)) {
             this.wsWs(wc, senderId, msg.listenOn, myConnectObj.listenOn)
           } else if (this.isEqual(myConnectors, this.WR)) {
-            provide(WEB_RTC, wc.settings.iceServers)
+            ServiceFactory.get(WEB_RTC, wc.settings.iceServers)
               .connectOverWebChannel(wc, senderId)
               .then(channel => this.onChannel(wc, channel, senderId))
-              .catch(reason => provide(WEB_SOCKET).connect(msg.listenOn))
+              .catch(reason => ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn))
               .then(channel => {
                 channel.send(JSON.stringify({wcId: wc.id, senderId: wc.myId}))
                 this.onChannel(wc, channel, senderId)
@@ -1145,10 +1125,10 @@ class ChannelBuilderService extends Service {
           } else if (this.isEqual(myConnectors, this.WS_WR)) {
             wc.sendInnerTo(senderId, this.id, {shouldConnect: this.WS_WR, feedbackOnFail: true, listenOn: myConnectObj.listenOn})
           } else if (this.isEqual(myConnectors, this.WR_WS)) {
-            provide(WEB_RTC, wc.settings.iceServers)
+            ServiceFactory.get(WEB_RTC, wc.settings.iceServers)
               .connectOverWebChannel(wc, senderId)
               .then(channel => this.onChannel(wc, channel, senderId))
-              .catch(reason => provide(WEB_SOCKET).connect(msg.listenOn))
+              .catch(reason => ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn))
               .then(channel => {
                 channel.send(JSON.stringify({wcId: wc.id, senderId: wc.myId}))
                 this.onChannel(wc, channel, senderId)
@@ -1168,7 +1148,7 @@ class ChannelBuilderService extends Service {
    * @param {string} myWsURL
    */
   wsWs (wc, senderId, peerWsURL, myWsURL) {
-    provide(WEB_SOCKET).connect(peerWsURL)
+    ServiceFactory.get(WEB_SOCKET).connect(peerWsURL)
       .then(channel => {
         channel.send(JSON.stringify({wcId: wc.id, senderId: wc.myId}))
         this.onChannel(wc, channel, senderId)
@@ -1185,7 +1165,7 @@ class ChannelBuilderService extends Service {
    * @param {string} peerWsURL
    */
   ws (wc, senderId, peerWsURL) {
-    provide(WEB_SOCKET).connect(peerWsURL)
+    ServiceFactory.get(WEB_SOCKET).connect(peerWsURL)
       .then(channel => {
         channel.send(JSON.stringify({wcId: wc.id, senderId: wc.myId}))
         this.onChannel(wc, channel, senderId)
@@ -1229,7 +1209,801 @@ class ChannelBuilderService extends Service {
 
 }
 
-let src$1 = isBrowser() ? window : require('text-encoding')
+/**
+ * Wrapper class for `RTCDataChannel` and `WebSocket`.
+ */
+class Channel {
+  /**
+   * Creates a channel from existing `RTCDataChannel` or `WebSocket`.
+   * @param {WebSocket|RTCDataChannel} channel Data channel or web socket
+   * @param {WebChannel} webChannel The `WebChannel` this channel will be part of
+   * @param {number} peerId Identifier of the peer who is at the other end of
+   * this channel
+   */
+  constructor (channel, webChannel, peerId) {
+    /**
+     * Data channel or web socket.
+     * @private
+     * @type {external:WebSocket|external:RTCDataChannel}
+     */
+    this.channel = channel
+
+    /**
+     * The `WebChannel` which this channel belongs to.
+     * @type {WebChannel}
+     */
+    this.webChannel = null
+
+    /**
+     * Identifier of the peer who is at the other end of this channel
+     * @type {WebChannel}
+     */
+    this.peerId = -1
+
+    /**
+     * Send message.
+     * @type {function(message: ArrayBuffer)}
+     */
+    this.send = null
+
+    if (Util.isBrowser()) {
+      channel.binaryType = 'arraybuffer'
+      this.send = this.sendBrowser
+    } else if (Util.isSocket(channel)) {
+      this.send = this.sendInNodeThroughSocket
+    } else {
+      channel.binaryType = 'arraybuffer'
+      this.send = this.sendInNodeThroughDataChannel
+    }
+  }
+
+  /**
+   * Send message over this channel. The message should be prepared beforhand by
+   * the {@link MessageBuilderService} (see{@link MessageBuilderService#msg},
+   * {@link MessageBuilderService#handleUserMessage}).
+   *
+   * @private
+   * @param {ArrayBuffer} data Message
+   */
+  sendBrowser (data) {
+    // if (this.channel.readyState !== 'closed' && new Int8Array(data).length !== 0) {
+    if (this.isOpen()) {
+      try {
+        this.channel.send(data)
+      } catch (err) {
+        console.error(`Channel send: ${err.message}`)
+      }
+    }
+  }
+
+  /**
+   * @private
+   * @param {ArrayBuffer} data
+   */
+  sendInNodeThroughSocket (data) {
+    if (this.isOpen()) {
+      try {
+        this.channel.send(data, {binary: true})
+      } catch (err) {
+        console.error(`Channel send: ${err.message}`)
+      }
+    }
+  }
+
+  /**
+   * @private
+   * @param {ArrayBuffer} data
+   */
+  sendInNodeThroughDataChannel (data) {
+    this.sendBrowser(data.slice(0))
+  }
+
+  /**
+   * @type {function(message: ArrayBuffer)}
+   */
+  set onMessage (handler) {
+    if (!Util.isBrowser() && Util.isSocket(this.channel)) {
+      this.channel.onmessage = msgEvt => {
+        let ab = new ArrayBuffer(msgEvt.data.length)
+        let view = new Uint8Array(ab)
+        for (let i = 0; i < msgEvt.data.length; i++) {
+          view[i] = msgEvt.data[i]
+        }
+        handler(ab)
+      }
+    } else this.channel.onmessage = msgEvt => handler(msgEvt.data)
+  }
+
+  /**
+   * @type {function(message: CloseEvent)}
+   */
+  set onClose (handler) {
+    this.channel.onclose = closeEvt => {
+      if (this.webChannel !== null && handler(closeEvt)) {
+        this.webChannel.members.splice(this.webChannel.members.indexOf(this.peerId), 1)
+        this.webChannel.onPeerLeave(this.peerId)
+      } else handler(closeEvt)
+    }
+  }
+
+  /**
+   * @type {function(message: Event)}
+   */
+  set onError (handler) {
+    this.channel.onerror = evt => handler(evt)
+  }
+
+  /**
+   */
+  clearHandlers () {
+    this.onMessage = () => {}
+    this.onClose = () => {}
+    this.onError = () => {}
+  }
+
+  /**
+   * @returns {boolean}
+   */
+  isOpen () {
+    let state = this.channel.readyState
+    return state === 1 || state === 'open'
+  }
+
+  /**
+   * Close the channel.
+   */
+  close () {
+    this.channel.close()
+  }
+}
+
+/**
+ * This class represents a door of the `WebChannel` for the current peer. If the door
+ * is open, then clients can join the `WebChannel` through this peer. There are as
+ * many doors as peers in the `WebChannel` and each of them can be closed or opened.
+ */
+class SignalingGate {
+
+  /**
+   * @param {WebChannel} wc
+   */
+  constructor (wc) {
+    /**
+     * @type {WebChannel}
+     */
+    this.webChannel = wc
+    /**
+     * Signaling server url.
+     * @private
+     * @type {string}
+     */
+    this.url = null
+    /**
+     * Key related to the `url`.
+     * @private
+     * @type {string}
+     */
+    this.key = null
+    /**
+     * Web socket with the signaling server.
+     * @private
+     * @type {external:WebSocket|external:ws/WebSocket}
+     */
+    this.ws = null
+  }
+
+  /**
+   * Open the gate.
+   *
+   * @param {string} url Signaling server url
+   * @param {function(ch: RTCDataChannel)} onChannel
+   * @param {string} key
+   * @returns {Promise<OpenData, string>}
+   */
+  open (url, onChannel, key = null) {
+    return new Promise((resolve, reject) => {
+      if (key === null) key = this.generateKey()
+      ServiceFactory.get(WEB_SOCKET).connect(url)
+        .then(ws => {
+          ws.onclose = closeEvt => {
+            this.key = null
+            this.ws = null
+            this.url = null
+            this.webChannel.onClose(closeEvt)
+            reject(closeEvt.reason)
+          }
+          ws.onerror = err => reject(err.message)
+          ws.onmessage = evt => {
+            try {
+              let msg = JSON.parse(evt.data)
+              if ('isKeyOk' in msg) {
+                if (msg.isKeyOk) {
+                  ServiceFactory.get(WEB_RTC, this.webChannel.settings.iceServers)
+                    .listenFromSignaling(ws, onChannel)
+                  this.ws = ws
+                  this.key = key
+                  this.url = url
+                  resolve({url, key})
+                } else reject(`${key} key already exists`)
+              } else reject(`Unknown message from ${url}: ${evt.data}`)
+            } catch (err) {
+              reject('Server responce is not a JSON string: ' + err.message)
+            }
+          }
+          ws.send(JSON.stringify({key}))
+        })
+        .catch(reject)
+    })
+  }
+
+  /**
+   * Check if the door is opened or closed.
+   *
+   * @returns {boolean} - Returns true if the door is opened and false if it is
+   * closed
+   */
+  isOpen () {
+    return this.ws !== null && this.ws.readyState === OPEN
+  }
+
+  /**
+   * Get open data.
+   *
+   * @returns {OpenData|null} Open data if the door is open and null otherwise
+   */
+  getOpenData () {
+    if (this.isOpen()) {
+      return {
+        url: this.url,
+        key: this.key
+      }
+    }
+    return null
+  }
+
+  /**
+   * Close the door if it is open and do nothing if it is closed already.
+   */
+  close () {
+    if (this.isOpen()) {
+      this.ws.close()
+    }
+  }
+
+  /**
+   * Generate random key which will be used to join the `WebChannel`.
+   *
+   * @private
+   * @returns {string} - Generated key
+   */
+  generateKey () {
+    const MIN_LENGTH = 5
+    const DELTA_LENGTH = 0
+    const MASK = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+    let result = ''
+    const length = MIN_LENGTH + Math.round(Math.random() * DELTA_LENGTH)
+
+    for (let i = 0; i < length; i++) {
+      result += MASK[Math.round(Math.random() * (MASK.length - 1))]
+    }
+    return result
+  }
+}
+
+/**
+ * Maximum identifier number for {@link WebChannel#generateId} function.
+ * @type {number}
+ */
+const MAX_ID = 4294967295
+
+/**
+ * Timout for ping `WebChannel` in milliseconds.
+ * @type {number}
+ */
+const PING_TIMEOUT = 5000
+
+const ID_TIMEOUT = 10000
+
+/**
+ * One of the internal message type. It's a peer message.
+ * @ignore
+ * @type {number}
+ */
+const USER_DATA = 1
+
+/**
+ * One of the internal message type. This message should be threated by a
+ * specific service class.
+ * @type {number}
+ */
+const INNER_DATA = 2
+
+const INITIALIZATION = 3
+
+/**
+ * One of the internal message type. Ping message.
+ * @type {number}
+ */
+const PING = 4
+
+/**
+ * One of the internal message type. Pong message, response to the ping message.
+ * @type {number}
+ */
+const PONG = 5
+
+/**
+ * This class is an API starting point. It represents a group of collaborators
+ * also called peers. Each peer can send/receive broadcast as well as personal
+ * messages. Every peer in the `WebChannel` can invite another person to join
+ * the `WebChannel` and he also possess enough information to be able to add it
+ * preserving the current `WebChannel` structure (network topology).
+ */
+class WebChannel {
+
+  /**
+   * @param {WebChannelSettings} settings Web channel settings
+   */
+  constructor (settings) {
+    /**
+     * @private
+     * @type {WebChannelSettings}
+     */
+    this.settings = settings
+
+    /**
+     * Channels through which this peer is connected with other peers. This
+     * attribute depends on the `WebChannel` topology. E. g. in fully connected
+     * `WebChannel` you are connected to each other peer in the group, however
+     * in the star structure this attribute contains only the connection to
+     * the central peer.
+     * @private
+     * @type {external:Set}
+     */
+    this.channels = new Set()
+
+    /**
+     * This event handler is used to resolve *Promise* in {@link WebChannel#join}.
+     * @private
+     */
+    this.onJoin = () => {}
+
+    /**
+     * `WebChannel` topology.
+     * @private
+     * @type {Service}
+     */
+    this.manager = ServiceFactory.get(this.settings.topology)
+
+    /**
+     * Message builder service instance.
+     *
+     * @private
+     * @type {MessageBuilderService}
+     */
+    this.msgBld = ServiceFactory.get(MESSAGE_BUILDER)
+
+    /**
+     * An array of all peer ids except this.
+     * @type {number[]}
+     */
+    this.members = []
+
+    /**
+     * @private
+     * @type {Set<number>}
+     */
+    this.generatedIds = new Set()
+
+    /**
+     * @private
+     * @type {Date}
+     */
+    this.pingTime = 0
+
+    /**
+     * @private
+     * @type {number}
+     */
+    this.maxTime = 0
+
+    /**
+     * @private
+     * @type {function(delay: number)}
+     */
+    this.pingFinish = () => {}
+
+    /**
+     * @private
+     * @type {number}
+     */
+    this.pongNb = 0
+
+    /**
+     * The `WebChannel` gate.
+     * @private
+     * @type {SignalingGate}
+     */
+    this.gate = new SignalingGate(this)
+
+    /**
+     * Unique `WebChannel` identifier. Its value is the same for all `WebChannel` members.
+     * @type {number}
+     */
+    this.id = this.generateId()
+
+    /**
+     * Unique peer identifier of you in this `WebChannel`. After each `join` function call
+     * this id will change, because it is up to the `WebChannel` to assign it when
+     * you join.
+     * @type {number}
+     */
+    this.myId = this.generateId()
+
+    /**
+     * Is the event handler called when a new peer has  joined the `WebChannel`.
+     * @type {function(id: number)}
+     */
+    this.onPeerJoin = id => {}
+
+    /**
+     * Is the event handler called when a peer hes left the `WebChannel`.
+     * @type {function(id: number)}
+     */
+    this.onPeerLeave = id => {}
+
+    /**
+     * Is the event handler called when a message is available on the `WebChannel`.
+     * @type {function(id: number, msg: UserMessage, isBroadcast: boolean)}
+     */
+    this.onMessage = (id, msg, isBroadcast) => {}
+
+    /**
+     * Is the event handler called when the `WebChannel` has been closed.
+     * @type {function(closeEvt: CloseEvent)}
+     */
+    this.onClose = closeEvt => {}
+  }
+
+  /**
+   * Join the `WebChannel`.
+   *
+   * @param  {string|WebSocket} keyOrSocket The key provided by one of the `WebChannel` members or a socket
+   * @param  {string} [url=this.settings.signalingURL] Server URL
+   * @returns {Promise<, string>} It resolves once you became a `WebChannel` member.
+   */
+  join (keyOrSocket, url = this.settings.signalingURL) {
+    return new Promise((resolve, reject) => {
+      this.onJoin = resolve
+      if (keyOrSocket.constructor.name !== 'WebSocket') {
+        if (Util.isURL(url)) {
+          ServiceFactory.get(WEB_SOCKET).connect(url)
+            .then(ws => {
+              ws.onclose = closeEvt => reject(closeEvt.reason)
+              ws.onmessage = evt => {
+                try {
+                  let msg = JSON.parse(evt.data)
+                  if ('isKeyOk' in msg) {
+                    if (msg.isKeyOk) {
+                      if ('useThis' in msg && msg.useThis) {
+                        this.initChannel(ws).catch(reject)
+                      } else {
+                        ServiceFactory.get(WEB_RTC, this.settings.iceServers).connectOverSignaling(ws, keyOrSocket)
+                          .then(channel => {
+                            ws.onclose = null
+                            ws.close()
+                            return this.initChannel(channel)
+                          })
+                          .catch(reject)
+                      }
+                    } else reject(`The key "${keyOrSocket}" was not found`)
+                  } else reject(`Unknown message from the server ${url}: ${evt.data}`)
+                } catch (err) { reject(err.message) }
+              }
+              ws.send(JSON.stringify({join: keyOrSocket}))
+            })
+            .catch(reject)
+        } else reject(`${url} is not a valid URL`)
+      } else {
+        this.initChannel(keyOrSocket).catch(reject)
+      }
+    })
+  }
+
+  /**
+   * Invite a peer to join the `WebChannel`.
+   *
+   * @param {string|WebSocket} keyOrSocket
+   *
+   * @returns {Promise<, string>}
+   */
+  invite (keyOrSocket) {
+    if (typeof keyOrSocket === 'string' || keyOrSocket instanceof String) {
+      if (!Util.isURL(keyOrSocket)) {
+        return Promise.reject(`${keyOrSocket} is not a valid URL`)
+      }
+      return ServiceFactory.get(WEB_SOCKET).connect(keyOrSocket)
+        .then(ws => {
+          ws.send(JSON.stringify({wcId: this.id}))
+          return this.addChannel(ws)
+        })
+    } else if (keyOrSocket.constructor.name === 'WebSocket') {
+      return this.addChannel(keyOrSocket)
+    }
+  }
+
+  /**
+   * Enable other peers to join the `WebChannel` with your help as an
+   * intermediary peer.
+   * @param  {Object} [options] Any available connection service options
+   * @returns {Promise} It is resolved once the `WebChannel` is open. The
+   * callback function take a parameter of type {@link SignalingGate~AccessData}.
+   */
+  open (options) {
+    let defaultSettings = {
+      url: this.settings.signalingURL,
+      key: null
+    }
+    let settings = Object.assign({}, defaultSettings, options)
+    if (Util.isURL(settings.url)) {
+      return this.gate.open(settings.url, dataCh => this.addChannel(dataCh), settings.key)
+    } else {
+      return Promise.reject(`${settings.url} is not a valid URL`)
+    }
+  }
+
+  /**
+   * Prevent clients to join the `WebChannel` even if they possesses a key.
+   */
+  close () {
+    this.gate.close()
+  }
+
+  /**
+   * If the `WebChannel` is open, the clients can join it through you, otherwise
+   * it is not possible.
+   * @returns {boolean} True if the `WebChannel` is open, false otherwise
+   */
+  isOpen () {
+    return this.gate.isOpen()
+  }
+
+  /**
+   * Get the data which should be provided to all clients who must join
+   * the `WebChannel`. It is the same data which
+   * {@link WebChannel#open} callback function provides.
+   * @returns {OpenData|null} - Data to join the `WebChannel` or null is the `WebChannel` is closed
+   */
+  getOpenData () {
+    return this.gate.getOpenData()
+  }
+
+  /**
+   * Leave the `WebChannel`. No longer can receive and send messages to the group.
+   */
+  leave () {
+    if (this.channels.size !== 0) {
+      this.members = []
+      this.pingTime = 0
+      // this.gate.close()
+      this.manager.leave(this)
+    }
+  }
+
+  /**
+   * Send the message to all `WebChannel` members.
+   * @param  {UserMessage} data - Message
+   */
+  send (data) {
+    if (this.channels.size !== 0) {
+      this.msgBld.handleUserMessage(data, this.myId, null, dataChunk => {
+        this.manager.broadcast(this, dataChunk)
+      })
+    }
+  }
+
+  /**
+   * Send the message to a particular peer in the `WebChannel`.
+   * @param  {number} id - Id of the recipient peer
+   * @param  {UserMessage} data - Message
+   */
+  sendTo (id, data) {
+    if (this.channels.size !== 0) {
+      this.msgBld.handleUserMessage(data, this.myId, id, dataChunk => {
+        this.manager.sendTo(id, this, dataChunk)
+      }, false)
+    }
+  }
+
+  /**
+   * Get the ping of the `WebChannel`. It is an amount in milliseconds which
+   * corresponds to the longest ping to each `WebChannel` member.
+   * @returns {Promise}
+   */
+  ping () {
+    if (this.members.length !== 0 && this.pingTime === 0) {
+      return new Promise((resolve, reject) => {
+        if (this.pingTime === 0) {
+          this.pingTime = Date.now()
+          this.maxTime = 0
+          this.pongNb = 0
+          this.pingFinish = delay => resolve(delay)
+          this.manager.broadcast(this, this.msgBld.msg(PING, this.myId))
+          setTimeout(() => resolve(PING_TIMEOUT), PING_TIMEOUT)
+        }
+      })
+    } else return Promise.resolve(0)
+  }
+
+  /**
+   * @private
+   * @param {WebSocket|RTCDataChannel} channel
+   *
+   * @returns {Promise<, string>}
+   */
+  addChannel (channel) {
+    return this.initChannel(channel)
+      .then(channel => {
+        let msg = this.msgBld.msg(INITIALIZATION, this.myId, channel.peerId, {
+          manager: this.manager.id,
+          wcId: this.id
+        })
+        channel.send(msg)
+        return this.manager.add(channel)
+      })
+  }
+
+  /**
+   * @private
+   * @param {number} peerId
+   */
+  onPeerJoin$ (peerId) {
+    this.members[this.members.length] = peerId
+    this.onPeerJoin(peerId)
+  }
+
+  /**
+   * @private
+   * @param {number} peerId
+   */
+  onPeerLeave$ (peerId) {
+    this.members.splice(this.members.indexOf(peerId), 1)
+    this.onPeerLeave(peerId)
+  }
+
+  /**
+   * Send a message to a service of the same peer, joining peer or any peer in
+   * the `WebChannel`.
+   * @private
+   * @param  {string} serviceId - Service id
+   * @param  {string} recepient - Identifier of recepient peer id
+   * @param  {Object} [msg={}] - Message to send
+   */
+  sendInnerTo (recepient, serviceId, data, forward = false) {
+    if (forward) {
+      this.manager.sendInnerTo(recepient, this, data)
+    } else {
+      if (Number.isInteger(recepient)) {
+        let msg = this.msgBld.msg(INNER_DATA, this.myId, recepient, {serviceId, data})
+        this.manager.sendInnerTo(recepient, this, msg)
+      } else {
+        recepient.send(this.msgBld.msg(INNER_DATA, this.myId, recepient.peerId, {serviceId, data}))
+      }
+    }
+  }
+
+  /**
+   * @private
+   * @param {number} serviceId
+   * @param {Object} data
+   */
+  sendInner (serviceId, data) {
+    this.manager.sendInner(this, this.msgBld.msg(INNER_DATA, this.myId, null, {serviceId, data}))
+  }
+
+  /**
+   * Message event handler (`WebChannel` mediator). All messages arrive here first.
+   * @private
+   * @param {Channel} channel - The channel the message came from
+   * @param {external:ArrayBuffer} data - Message
+   */
+  onChannelMessage (channel, data) {
+    let header = this.msgBld.readHeader(data)
+    if (header.code === USER_DATA) {
+      this.msgBld.readUserMessage(this, header.senderId, data, (fullData, isBroadcast) => {
+        this.onMessage(header.senderId, fullData, isBroadcast)
+      })
+    } else {
+      let msg = this.msgBld.readInternalMessage(data)
+      switch (header.code) {
+        case INITIALIZATION:
+          this.settings.topology = msg.manager
+          this.manager = ServiceFactory.get(this.settings.topology)
+          this.myId = header.recepientId
+          this.id = msg.wcId
+          channel.peerId = header.senderId
+          break
+        case INNER_DATA:
+          if (header.recepientId === 0 || this.myId === header.recepientId) {
+            this.getService(msg.serviceId).onMessage(
+              channel,
+              header.senderId,
+              header.recepientId,
+              msg.data
+            )
+          } else this.sendInnerTo(header.recepientId, null, data, true)
+          break
+        case PING:
+          this.manager.sendTo(header.senderId, this, this.msgBld.msg(PONG, this.myId))
+          break
+        case PONG:
+          let now = Date.now()
+          this.pongNb++
+          this.maxTime = Math.max(this.maxTime, now - this.pingTime)
+          if (this.pongNb === this.members.length) {
+            this.pingFinish(this.maxTime)
+            this.pingTime = 0
+          }
+          break
+        default:
+          throw new Error(`Unknown message type code: "${header.code}"`)
+      }
+    }
+  }
+
+  /**
+   * Initialize channel. The *Channel* object is a facade for *WebSocket* and
+   * *RTCDataChannel*.
+   * @private
+   * @param {external:WebSocket|external:RTCDataChannel} ch - Channel to
+   * initialize
+   * @param {number} [id] - Assign an id to this channel. It would be generated
+   * if not provided
+   * @returns {Promise} - Resolved once the channel is initialized on both sides
+   */
+  initChannel (ch, id = -1) {
+    if (id === -1) id = this.generateId()
+    let channel = new Channel(ch)
+    channel.peerId = id
+    channel.webChannel = this
+    channel.onMessage = data => this.onChannelMessage(channel, data)
+    channel.onClose = closeEvt => this.manager.onChannelClose(closeEvt, channel)
+    channel.onError = evt => this.manager.onChannelError(evt, channel)
+    return Promise.resolve(channel)
+  }
+
+  /**
+   * @private
+   * @param {MESSAGE_BUILDER|WEB_RTC|WEB_SOCKET|FULLY_CONNECTED|CHANNEL_BUILDER} id
+   *
+   * @returns {Service}
+   */
+  getService (id) {
+    if (id === WEB_RTC) {
+      return ServiceFactory.get(WEB_RTC, this.settings.iceServers)
+    }
+    return ServiceFactory.get(id)
+  }
+
+  /**
+   * Generate random id for a `WebChannel` or a new peer.
+   * @private
+   * @returns {number} - Generated id
+   */
+  generateId () {
+    do {
+      let id = Math.ceil(Math.random() * MAX_ID)
+      if (id === this.myId) continue
+      if (this.members.includes(id)) continue
+      if (this.generatedIds.has(id)) continue
+      this.generatedIds.add(id)
+      setTimeout(() => this.generatedIds.delete(id), ID_TIMEOUT)
+      return id
+    } while (true)
+  }
+}
+
+let src$1 = Util.isBrowser() ? window : require('text-encoding')
 const TextEncoder = src$1.TextEncoder
 const TextDecoder = src$1.TextDecoder
 
@@ -1341,18 +2115,6 @@ class MessageBuilderService extends Service {
    * @param {ArrayBuffer} dataChunk - If the message is too big this
    * action would be executed for each data chunk until send whole message
    */
-
-  /**
-   * Header of the metadata of the messages sent/received over the `WebChannel`.
-   * @typedef {Object} MessageHeader
-   * @property {number} code Message type code
-   * @property {number} senderId Id of the sender peer
-   * @property {number} recipientId Id of the recipient peer
-   */
-
-   /**
-    * @typedef {string|ArrayBuffer|TypedArray} UserMessage
-    */
 
    /**
     * @private
@@ -1679,35 +2441,40 @@ class Buffer {
  * Service Provider module is a helper module for {@link module:service}. It is
  * responsible to instantiate all services. This module must be used to get
  * any service instance.
- * @module serviceProvider
+ * @module service/Service
  */
 
 /**
  * {@link WebRTCService} identifier.
+ * @ignore
  * @type {number}
  */
 const WEB_RTC = 0
 
 /**
- * {@link WebSocketService} identifier.
- * @type {number}
- */
+* {@link WebSocketService} identifier.
+* @ignore
+* @type {number}
+*/
 const WEB_SOCKET = 1
 
 /**
  * {@link ChannelBuilderService} identifier.
+ * @ignore
  * @type {number}
  */
 const CHANNEL_BUILDER = 2
 
 /**
  * {@link FullyConnectedService} identifier.
+ * @ignore
  * @type {number}
  */
 const FULLY_CONNECTED = 3
 
 /**
  * {@link MessageBuilderService} identifier
+ * @ignore
  * @type {number}
  */
 const MESSAGE_BUILDER = 4
@@ -1718,845 +2485,43 @@ const MESSAGE_BUILDER = 4
  */
 const services = new Map()
 
-/**
- * Provides the service instance specified by `id`.
- *
- * @throws {Error} If the service `id` is unknown
- * @param  {MESSAGE_BUILDER|WEB_RTC|WEB_SOCKET|FULLY_CONNECTED|CHANNEL_BUILDER} id The service identifier
- * @param  {Object} [options] Any options that the service accepts
- * @returns {Service}
- */
-let provide = function (id, options = {}) {
-  if (services.has(id)) {
-    return services.get(id)
-  }
-  let service
-  switch (id) {
-    case WEB_RTC:
-      return new WebRTCService(WEB_RTC, options)
-    case WEB_SOCKET:
-      return new WebSocketService(WEB_SOCKET)
-    case CHANNEL_BUILDER:
-      return new ChannelBuilderService(CHANNEL_BUILDER)
-    case FULLY_CONNECTED:
-      service = new FullyConnectedService(FULLY_CONNECTED)
-      services.set(id, service)
-      return service
-    case MESSAGE_BUILDER:
-      service = new MessageBuilderService(MESSAGE_BUILDER)
-      services.set(id, service)
-      return service
-    default:
-      throw new Error(`${id} is an Unknown service id`)
-  }
-}
-
-/**
- * Wrapper class for `RTCDataChannel` and `WebSocket`.
- */
-class Channel {
+class ServiceFactory {
   /**
-   * Creates a channel from existing `RTCDataChannel` or `WebSocket`.
-   * @param {WebSocket|RTCDataChannel} channel Data channel or web socket
-   * @param {WebChannel} webChannel The `WebChannel` this channel will be part of
-   * @param {number} peerId Identifier of the peer who is at the other end of
-   * this channel
-   */
-  constructor (channel, webChannel, peerId) {
-    /**
-     * Data channel or web socket.
-     * @private
-     * @type {external:WebSocket|external:RTCDataChannel}
-     */
-    this.channel = channel
-
-    /**
-     * The `WebChannel` which this channel belongs to.
-     * @type {WebChannel}
-     */
-    this.webChannel = null
-
-    /**
-     * Identifier of the peer who is at the other end of this channel
-     * @type {WebChannel}
-     */
-    this.peerId = -1
-
-    /**
-     * Send message.
-     * @type {function(message: ArrayBuffer)}
-     */
-    this.send = null
-
-    if (isBrowser()) {
-      channel.binaryType = 'arraybuffer'
-      this.send = this.sendBrowser
-    } else if (isSocket(channel)) {
-      this.send = this.sendInNodeThroughSocket
-    } else {
-      channel.binaryType = 'arraybuffer'
-      this.send = this.sendInNodeThroughDataChannel
-    }
-  }
-
-  /**
-   * Send message over this channel. The message should be prepared beforhand by
-   * the {@link MessageBuilderService} (see{@link MessageBuilderService#msg},
-   * {@link MessageBuilderService#handleUserMessage}).
+   * Provides the service instance specified by `id`.
    *
-   * @private
-   * @param {ArrayBuffer} data Message
-   */
-  sendBrowser (data) {
-    // if (this.channel.readyState !== 'closed' && new Int8Array(data).length !== 0) {
-    if (this.isOpen()) {
-      try {
-        this.channel.send(data)
-      } catch (err) {
-        console.error(`Channel send: ${err.message}`)
-      }
-    }
-  }
-
-  /**
-   * @private
-   * @param {ArrayBuffer} data
-   */
-  sendInNodeThroughSocket (data) {
-    if (this.isOpen()) {
-      try {
-        this.channel.send(data, {binary: true})
-      } catch (err) {
-        console.error(`Channel send: ${err.message}`)
-      }
-    }
-  }
-
-  /**
-   * @private
-   * @param {ArrayBuffer} data
-   */
-  sendInNodeThroughDataChannel (data) {
-    this.sendBrowser(data.slice(0))
-  }
-
-  /**
-   * @type {function(message: ArrayBuffer)}
-   */
-  set onMessage (handler) {
-    if (!isBrowser() && isSocket(this.channel)) {
-      this.channel.onmessage = msgEvt => {
-        let ab = new ArrayBuffer(msgEvt.data.length)
-        let view = new Uint8Array(ab)
-        for (let i = 0; i < msgEvt.data.length; i++) {
-          view[i] = msgEvt.data[i]
-        }
-        handler(ab)
-      }
-    } else this.channel.onmessage = msgEvt => handler(msgEvt.data)
-  }
-
-  /**
-   * @type {function(message: CloseEvent)}
-   */
-  set onClose (handler) {
-    this.channel.onclose = closeEvt => {
-      if (this.webChannel !== null && handler(closeEvt)) {
-        this.webChannel.members.splice(this.webChannel.members.indexOf(this.peerId), 1)
-        this.webChannel.onPeerLeave(this.peerId)
-      } else handler(closeEvt)
-    }
-  }
-
-  /**
-   * @type {function(message: Event)}
-   */
-  set onError (handler) {
-    this.channel.onerror = evt => handler(evt)
-  }
-
-  /**
-   */
-  clearHandlers () {
-    this.onMessage = () => {}
-    this.onClose = () => {}
-    this.onError = () => {}
-  }
-
-  /**
-   * @returns {boolean}
-   */
-  isOpen () {
-    let state = this.channel.readyState
-    return state === 1 || state === 'open'
-  }
-
-  /**
-   * Close the channel.
-   */
-  close () {
-    this.channel.close()
-  }
-}
-
-/**
- * This class represents a door of the `WebChannel` for the current peer. If the door
- * is open, then clients can join the `WebChannel` through this peer. There are as
- * many doors as peers in the `WebChannel` and each of them can be closed or opened.
- */
-class SignalingGate {
-
-  /**
-   * Necessary data to join the `WebChannel`.
-   * @typedef {Object} OpenData
-   * @property {string} url Signaling server url
-   * @property {string} key The unique key to join the `WebChannel`
-   */
-
-  /**
-   * @param {WebChannel} wc
-   */
-  constructor (wc) {
-    /**
-     * @type {WebChannel}
-     */
-    this.webChannel = wc
-    /**
-     * Signaling server url.
-     * @private
-     * @type {string}
-     */
-    this.url = null
-    /**
-     * Key related to the `url`.
-     * @private
-     * @type {string}
-     */
-    this.key = null
-    /**
-     * Web socket with the signaling server.
-     * @private
-     * @type {external:WebSocket|external:ws/WebSocket}
-     */
-    this.ws = null
-  }
-
-  /**
-   * Open the gate.
-   *
-   * @param {string} url Signaling server url
-   * @param {function(ch: RTCDataChannel)} onChannel
-   * @param {string} key
-   * @returns {Promise<OpenData, string>}
-   */
-  open (url, onChannel, key = null) {
-    return new Promise((resolve, reject) => {
-      if (key === null) key = this.generateKey()
-      provide(WEB_SOCKET).connect(url)
-        .then(ws => {
-          ws.onclose = closeEvt => {
-            this.key = null
-            this.ws = null
-            this.url = null
-            this.webChannel.onClose(closeEvt)
-            reject(closeEvt.reason)
-          }
-          ws.onerror = err => reject(err.message)
-          ws.onmessage = evt => {
-            try {
-              let msg = JSON.parse(evt.data)
-              if ('isKeyOk' in msg) {
-                if (msg.isKeyOk) {
-                  provide(WEB_RTC, this.webChannel.settings.iceServers)
-                    .listenFromSignaling(ws, onChannel)
-                  this.ws = ws
-                  this.key = key
-                  this.url = url
-                  resolve({url, key})
-                } else reject(`${key} key already exists`)
-              } else reject(`Unknown message from ${url}: ${evt.data}`)
-            } catch (err) {
-              reject('Server responce is not a JSON string: ' + err.message)
-            }
-          }
-          ws.send(JSON.stringify({key}))
-        })
-        .catch(reject)
-    })
-  }
-
-  /**
-   * Check if the door is opened or closed.
-   *
-   * @returns {boolean} - Returns true if the door is opened and false if it is
-   * closed
-   */
-  isOpen () {
-    return this.ws !== null && this.ws.readyState === OPEN
-  }
-
-  /**
-   * Get open data.
-   *
-   * @returns {OpenData|null} Open data if the door is open and null otherwise
-   */
-  getOpenData () {
-    if (this.isOpen()) {
-      return {
-        url: this.url,
-        key: this.key
-      }
-    }
-    return null
-  }
-
-  /**
-   * Close the door if it is open and do nothing if it is closed already.
-   */
-  close () {
-    if (this.isOpen()) {
-      this.ws.close()
-    }
-  }
-
-  /**
-   * Generate random key which will be used to join the `WebChannel`.
-   *
-   * @private
-   * @returns {string} - Generated key
-   */
-  generateKey () {
-    const MIN_LENGTH = 5
-    const DELTA_LENGTH = 0
-    const MASK = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-    let result = ''
-    const length = MIN_LENGTH + Math.round(Math.random() * DELTA_LENGTH)
-
-    for (let i = 0; i < length; i++) {
-      result += MASK[Math.round(Math.random() * (MASK.length - 1))]
-    }
-    return result
-  }
-}
-
-/**
- * Maximum identifier number for {@link WebChannel#generateId} function.
- * @type {number}
- */
-const MAX_ID = 4294967295
-
-/**
- * Timout for ping `WebChannel` in milliseconds.
- * @type {number}
- */
-const PING_TIMEOUT = 5000
-
-const ID_TIMEOUT = 10000
-
-/**
- * One of the internal message type. It's a peer message.
- * @type {number}
- */
-const USER_DATA = 1
-
-/**
- * One of the internal message type. This message should be threated by a
- * specific service class.
- * @type {number}
- */
-const INNER_DATA = 2
-
-const INITIALIZATION = 3
-
-/**
- * One of the internal message type. Ping message.
- * @type {number}
- */
-const PING = 4
-
-/**
- * One of the internal message type. Pong message, response to the ping message.
- * @type {number}
- */
-const PONG = 5
-
-/**
- * This class is an API starting point. It represents a group of collaborators
- * also called peers. Each peer can send/receive broadcast as well as personal
- * messages. Every peer in the `WebChannel` can invite another person to join
- * the `WebChannel` and he also possess enough information to be able to add it
- * preserving the current `WebChannel` structure (network topology).
- */
-class WebChannel {
-
-  /**
-   * @param {WebChannelSettings} settings Web channel settings
-   */
-  constructor (settings) {
-    /**
-     * @private
-     * @type {WebChannelSettings}
-     */
-    this.settings = settings
-
-    /**
-     * Channels through which this peer is connected with other peers. This
-     * attribute depends on the `WebChannel` topology. E. g. in fully connected
-     * `WebChannel` you are connected to each other peer in the group, however
-     * in the star structure this attribute contains only the connection to
-     * the central peer.
-     * @private
-     * @type {external:Set}
-     */
-    this.channels = new Set()
-
-    /**
-     * This event handler is used to resolve *Promise* in {@link WebChannel#join}.
-     * @private
-     */
-    this.onJoin = () => {}
-
-    /**
-     * `WebChannel` topology.
-     * @private
-     * @type {Service}
-     */
-    this.manager = provide(this.settings.topology)
-
-    /**
-     * Message builder service instance.
-     *
-     * @private
-     * @type {MessageBuilderService}
-     */
-    this.msgBld = provide(MESSAGE_BUILDER)
-
-    /**
-     * An array of all peer ids except this.
-     * @type {number[]}
-     */
-    this.members = []
-
-    /**
-     * @private
-     * @type {Set<number>}
-     */
-    this.generatedIds = new Set()
-
-    /**
-     * @private
-     * @type {Date}
-     */
-    this.pingTime = 0
-
-    /**
-     * @private
-     * @type {number}
-     */
-    this.maxTime = 0
-
-    /**
-     * @private
-     * @type {function(delay: number)}
-     */
-    this.pingFinish = () => {}
-
-    /**
-     * @private
-     * @type {number}
-     */
-    this.pongNb = 0
-
-    /**
-     * The `WebChannel` gate.
-     * @private
-     * @type {SignalingGate}
-     */
-    this.gate = new SignalingGate(this)
-
-    /**
-     * Unique `WebChannel` identifier. Its value is the same for all `WebChannel` members.
-     * @type {number}
-     */
-    this.id = this.generateId()
-
-    /**
-     * Unique peer identifier of you in this `WebChannel`. After each `join` function call
-     * this id will change, because it is up to the `WebChannel` to assign it when
-     * you join.
-     * @type {number}
-     */
-    this.myId = this.generateId()
-
-    /**
-     * Is the event handler called when a new peer has  joined the `WebChannel`.
-     * @type {function(id: number)}
-     */
-    this.onPeerJoin = id => {}
-
-    /**
-     * Is the event handler called when a peer hes left the `WebChannel`.
-     * @type {function(id: number)}
-     */
-    this.onPeerLeave = id => {}
-
-    /**
-     * Is the event handler called when a message is available on the `WebChannel`.
-     * @type {function(id: number, msg: UserMessage, isBroadcast: boolean)}
-     */
-    this.onMessage = (id, msg, isBroadcast) => {}
-
-    /**
-     * Is the event handler called when the `WebChannel` has been closed.
-     * @type {function(closeEvt: CloseEvent)}
-     */
-    this.onClose = closeEvt => {}
-  }
-
-  /**
-   * Join the `WebChannel`.
-   *
-   * @param  {string|WebSocket} keyOrSocket The key provided by one of the `WebChannel` members or a socket
-   * @param  {string} [url=this.settings.signalingURL] Server URL
-   * @returns {Promise<, string>} It resolves once you became a `WebChannel` member.
-   */
-  join (keyOrSocket, url = this.settings.signalingURL) {
-    return new Promise((resolve, reject) => {
-      this.onJoin = resolve
-      if (keyOrSocket.constructor.name !== 'WebSocket') {
-        if (isURL(url)) {
-          provide(WEB_SOCKET).connect(url)
-            .then(ws => {
-              ws.onclose = closeEvt => reject(closeEvt.reason)
-              ws.onmessage = evt => {
-                try {
-                  let msg = JSON.parse(evt.data)
-                  if ('isKeyOk' in msg) {
-                    if (msg.isKeyOk) {
-                      if ('useThis' in msg && msg.useThis) {
-                        this.initChannel(ws).catch(reject)
-                      } else {
-                        provide(WEB_RTC, this.settings.iceServers).connectOverSignaling(ws, keyOrSocket)
-                          .then(channel => {
-                            ws.onclose = null
-                            ws.close()
-                            return this.initChannel(channel)
-                          })
-                          .catch(reject)
-                      }
-                    } else reject(`The key "${keyOrSocket}" was not found`)
-                  } else reject(`Unknown message from the server ${url}: ${evt.data}`)
-                } catch (err) { reject(err.message) }
-              }
-              ws.send(JSON.stringify({join: keyOrSocket}))
-            })
-            .catch(reject)
-        } else reject(`${url} is not a valid URL`)
-      } else {
-        this.initChannel(keyOrSocket).catch(reject)
-      }
-    })
-  }
-
-  /**
-   * Invite a peer to join the `WebChannel`.
-   *
-   * @param {string|WebSocket} keyOrSocket
-   *
-   * @returns {Promise<, string>}
-   */
-  invite (keyOrSocket) {
-    if (typeof keyOrSocket === 'string' || keyOrSocket instanceof String) {
-      if (!isURL(keyOrSocket)) {
-        return Promise.reject(`${keyOrSocket} is not a valid URL`)
-      }
-      return provide(WEB_SOCKET).connect(keyOrSocket)
-        .then(ws => {
-          ws.send(JSON.stringify({wcId: this.id}))
-          return this.addChannel(ws)
-        })
-    } else if (keyOrSocket.constructor.name === 'WebSocket') {
-      return this.addChannel(keyOrSocket)
-    }
-  }
-
-  /**
-   * Enable other peers to join the `WebChannel` with your help as an
-   * intermediary peer.
-   * @param  {Object} [options] Any available connection service options
-   * @returns {Promise} It is resolved once the `WebChannel` is open. The
-   * callback function take a parameter of type {@link SignalingGate~AccessData}.
-   */
-  open (options) {
-    let defaultSettings = {
-      url: this.settings.signalingURL,
-      key: null
-    }
-    let settings = Object.assign({}, defaultSettings, options)
-    if (isURL(settings.url)) {
-      return this.gate.open(settings.url, dataCh => this.addChannel(dataCh), settings.key)
-    } else {
-      return Promise.reject(`${settings.url} is not a valid URL`)
-    }
-  }
-
-  /**
-   * Prevent clients to join the `WebChannel` even if they possesses a key.
-   */
-  close () {
-    this.gate.close()
-  }
-
-  /**
-   * If the `WebChannel` is open, the clients can join it through you, otherwise
-   * it is not possible.
-   * @returns {boolean} True if the `WebChannel` is open, false otherwise
-   */
-  isOpen () {
-    return this.gate.isOpen()
-  }
-
-  /**
-   * Get the data which should be provided to all clients who must join
-   * the `WebChannel`. It is the same data which
-   * {@link WebChannel#open} callback function provides.
-   * @returns {OpenData|null} - Data to join the `WebChannel` or null is the `WebChannel` is closed
-   */
-  getOpenData () {
-    return this.gate.getOpenData()
-  }
-
-  /**
-   * Leave the `WebChannel`. No longer can receive and send messages to the group.
-   */
-  leave () {
-    if (this.channels.size !== 0) {
-      this.members = []
-      this.pingTime = 0
-      // this.gate.close()
-      this.manager.leave(this)
-    }
-  }
-
-  /**
-   * Send the message to all `WebChannel` members.
-   * @param  {UserMessage} data - Message
-   */
-  send (data) {
-    if (this.channels.size !== 0) {
-      this.msgBld.handleUserMessage(data, this.myId, null, dataChunk => {
-        this.manager.broadcast(this, dataChunk)
-      })
-    }
-  }
-
-  /**
-   * Send the message to a particular peer in the `WebChannel`.
-   * @param  {number} id - Id of the recipient peer
-   * @param  {UserMessage} data - Message
-   */
-  sendTo (id, data) {
-    if (this.channels.size !== 0) {
-      this.msgBld.handleUserMessage(data, this.myId, id, dataChunk => {
-        this.manager.sendTo(id, this, dataChunk)
-      }, false)
-    }
-  }
-
-  /**
-   * Get the ping of the `WebChannel`. It is an amount in milliseconds which
-   * corresponds to the longest ping to each `WebChannel` member.
-   * @returns {Promise}
-   */
-  ping () {
-    if (this.members.length !== 0 && this.pingTime === 0) {
-      return new Promise((resolve, reject) => {
-        if (this.pingTime === 0) {
-          this.pingTime = Date.now()
-          this.maxTime = 0
-          this.pongNb = 0
-          this.pingFinish = delay => resolve(delay)
-          this.manager.broadcast(this, this.msgBld.msg(PING, this.myId))
-          setTimeout(() => resolve(PING_TIMEOUT), PING_TIMEOUT)
-        }
-      })
-    } else return Promise.resolve(0)
-  }
-
-  /**
-   * @private
-   * @param {WebSocket|RTCDataChannel} channel
-   *
-   * @returns {Promise<, string>}
-   */
-  addChannel (channel) {
-    return this.initChannel(channel)
-      .then(channel => {
-        let msg = this.msgBld.msg(INITIALIZATION, this.myId, channel.peerId, {
-          manager: this.manager.id,
-          wcId: this.id
-        })
-        channel.send(msg)
-        return this.manager.add(channel)
-      })
-  }
-
-  /**
-   * @private
-   * @param {number} peerId
-   */
-  onPeerJoin$ (peerId) {
-    this.members[this.members.length] = peerId
-    this.onPeerJoin(peerId)
-  }
-
-  /**
-   * @private
-   * @param {number} peerId
-   */
-  onPeerLeave$ (peerId) {
-    this.members.splice(this.members.indexOf(peerId), 1)
-    this.onPeerLeave(peerId)
-  }
-
-  /**
-   * Send a message to a service of the same peer, joining peer or any peer in
-   * the `WebChannel`.
-   * @private
-   * @param  {string} serviceId - Service id
-   * @param  {string} recepient - Identifier of recepient peer id
-   * @param  {Object} [msg={}] - Message to send
-   */
-  sendInnerTo (recepient, serviceId, data, forward = false) {
-    if (forward) {
-      this.manager.sendInnerTo(recepient, this, data)
-    } else {
-      if (Number.isInteger(recepient)) {
-        let msg = this.msgBld.msg(INNER_DATA, this.myId, recepient, {serviceId, data})
-        this.manager.sendInnerTo(recepient, this, msg)
-      } else {
-        recepient.send(this.msgBld.msg(INNER_DATA, this.myId, recepient.peerId, {serviceId, data}))
-      }
-    }
-  }
-
-  /**
-   * @private
-   * @param {number} serviceId
-   * @param {Object} data
-   */
-  sendInner (serviceId, data) {
-    this.manager.sendInner(this, this.msgBld.msg(INNER_DATA, this.myId, null, {serviceId, data}))
-  }
-
-  /**
-   * Message event handler (`WebChannel` mediator). All messages arrive here first.
-   * @private
-   * @param {Channel} channel - The channel the message came from
-   * @param {external:ArrayBuffer} data - Message
-   */
-  onChannelMessage (channel, data) {
-    let header = this.msgBld.readHeader(data)
-    if (header.code === USER_DATA) {
-      this.msgBld.readUserMessage(this, header.senderId, data, (fullData, isBroadcast) => {
-        this.onMessage(header.senderId, fullData, isBroadcast)
-      })
-    } else {
-      let msg = this.msgBld.readInternalMessage(data)
-      switch (header.code) {
-        case INITIALIZATION:
-          this.settings.topology = msg.manager
-          this.manager = provide(this.settings.topology)
-          this.myId = header.recepientId
-          this.id = msg.wcId
-          channel.peerId = header.senderId
-          break
-        case INNER_DATA:
-          if (header.recepientId === 0 || this.myId === header.recepientId) {
-            this.getService(msg.serviceId).onMessage(
-              channel,
-              header.senderId,
-              header.recepientId,
-              msg.data
-            )
-          } else this.sendInnerTo(header.recepientId, null, data, true)
-          break
-        case PING:
-          this.manager.sendTo(header.senderId, this, this.msgBld.msg(PONG, this.myId))
-          break
-        case PONG:
-          let now = Date.now()
-          this.pongNb++
-          this.maxTime = Math.max(this.maxTime, now - this.pingTime)
-          if (this.pongNb === this.members.length) {
-            this.pingFinish(this.maxTime)
-            this.pingTime = 0
-          }
-          break
-        default:
-          throw new Error(`Unknown message type code: "${header.code}"`)
-      }
-    }
-  }
-
-  /**
-   * Initialize channel. The *Channel* object is a facade for *WebSocket* and
-   * *RTCDataChannel*.
-   * @private
-   * @param {external:WebSocket|external:RTCDataChannel} ch - Channel to
-   * initialize
-   * @param {number} [id] - Assign an id to this channel. It would be generated
-   * if not provided
-   * @returns {Promise} - Resolved once the channel is initialized on both sides
-   */
-  initChannel (ch, id = -1) {
-    if (id === -1) id = this.generateId()
-    let channel = new Channel(ch)
-    channel.peerId = id
-    channel.webChannel = this
-    channel.onMessage = data => this.onChannelMessage(channel, data)
-    channel.onClose = closeEvt => this.manager.onChannelClose(closeEvt, channel)
-    channel.onError = evt => this.manager.onChannelError(evt, channel)
-    return Promise.resolve(channel)
-  }
-
-  /**
-   * @private
-   * @param {MESSAGE_BUILDER|WEB_RTC|WEB_SOCKET|FULLY_CONNECTED|CHANNEL_BUILDER} id
-   *
+   * @throws {Error} If the service `id` is unknown
+   * @param  {MESSAGE_BUILDER|WEB_RTC|WEB_SOCKET|FULLY_CONNECTED|CHANNEL_BUILDER} id The service identifier
+   * @param  {Object} [options] Any options that the service accepts
    * @returns {Service}
    */
-  getService (id) {
-    if (id === WEB_RTC) {
-      return provide(WEB_RTC, this.settings.iceServers)
+  static get (id, options = {}) {
+    if (services.has(id)) {
+      return services.get(id)
     }
-    return provide(id)
-  }
-
-  /**
-   * Generate random id for a `WebChannel` or a new peer.
-   * @private
-   * @returns {number} - Generated id
-   */
-  generateId () {
-    do {
-      let id = Math.ceil(Math.random() * MAX_ID)
-      if (id === this.myId) continue
-      if (this.members.includes(id)) continue
-      if (this.generatedIds.has(id)) continue
-      this.generatedIds.add(id)
-      setTimeout(() => this.generatedIds.delete(id), ID_TIMEOUT)
-      return id
-    } while (true)
+    let service
+    switch (id) {
+      case WEB_RTC:
+        return new WebRTCService(WEB_RTC, options)
+      case WEB_SOCKET:
+        return new WebSocketService(WEB_SOCKET)
+      case CHANNEL_BUILDER:
+        return new ChannelBuilderService(CHANNEL_BUILDER)
+      case FULLY_CONNECTED:
+        service = new FullyConnectedService(FULLY_CONNECTED)
+        services.set(id, service)
+        return service
+      case MESSAGE_BUILDER:
+        service = new MessageBuilderService(MESSAGE_BUILDER)
+        services.set(id, service)
+        return service
+      default:
+        throw new Error(`${id} is an Unknown service id`)
+    }
   }
 }
 
 const MESSAGE_TYPE_ERROR = 4000
 const MESSAGE_UNKNOWN_ATTRIBUTE = 4001
-
-/**
- * @external {WebSocketServer} https://github.com/websockets/ws/blob/master/doc/ws.md#class-wsserver
- */
 
 /**
  * BotServer can listen on web socket. A peer can invite bot to join his `WebChannel`.
@@ -2662,7 +2627,7 @@ class BotServer {
                 this.addWebChannel(wc)
                 wc.join(ws).then(() => { this.onWebChannel(wc) })
               } else if ('senderId' in msg) {
-                provide(CHANNEL_BUILDER).onChannel(wc, ws, msg.senderId)
+                ServiceFactory.get(CHANNEL_BUILDER).onChannel(wc, ws, msg.senderId)
               } else {
                 ws.close(MESSAGE_UNKNOWN_ATTRIBUTE, 'Unsupported message protocol')
               }
@@ -2711,16 +2676,6 @@ class BotServer {
     this.webChannels[this.webChannels.length] = wc
   }
 }
-
-/**
- * WebChannel settings
- * @typedef {Object} WebChannelSettings
- * @property {WEB_RTC|WEB_SOCKET} connector Which connector is preferable during connection establishment
- * @property {FULLY_CONNECTED} topology Fully connected topology is the only one available for now
- * @property {string} signalingURL Signaling server url
- * @property {RTCIceServer} iceServers Set of ice servers for WebRTC
- * @property {string} listenOn Server url when the peer is listen on web socket
- */
 
 /**
  * Create `WebChannel`.

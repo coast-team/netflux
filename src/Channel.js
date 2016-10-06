@@ -1,4 +1,4 @@
-import {isBrowser, isSocket} from 'helper'
+import Util from 'Util'
 
 /**
  * Wrapper class for `RTCDataChannel` and `WebSocket`.
@@ -37,10 +37,10 @@ class Channel {
      */
     this.send = null
 
-    if (isBrowser()) {
+    if (Util.isBrowser()) {
       channel.binaryType = 'arraybuffer'
       this.send = this.sendBrowser
-    } else if (isSocket(channel)) {
+    } else if (Util.isSocket(channel)) {
       this.send = this.sendInNodeThroughSocket
     } else {
       channel.binaryType = 'arraybuffer'
@@ -93,7 +93,7 @@ class Channel {
    * @type {function(message: ArrayBuffer)}
    */
   set onMessage (handler) {
-    if (!isBrowser() && isSocket(this.channel)) {
+    if (!Util.isBrowser() && Util.isSocket(this.channel)) {
       this.channel.onmessage = msgEvt => {
         let ab = new ArrayBuffer(msgEvt.data.length)
         let view = new Uint8Array(ab)

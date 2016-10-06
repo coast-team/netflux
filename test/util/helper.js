@@ -1,4 +1,4 @@
-import {isBrowser} from 'src/helper'
+import Util from 'src/Util'
 
 // Main signaling server for all tests
 const SIGNALING_URL = 'ws://localhost:8000'
@@ -142,29 +142,29 @@ function randStr () {
 }
 
 function itBrowser (shouldSkip, ...args) {
-  if (isBrowser()) Reflect.apply(it, undefined, args)
+  if (Util.isBrowser()) Reflect.apply(it, undefined, args)
   else if (shouldSkip) Reflect.apply(xit, undefined, args)
 }
 
 function xitBrowser (shouldSkip, ...args) {
-  if (isBrowser()) Reflect.apply(xit, undefined, args)
+  if (Util.isBrowser()) Reflect.apply(xit, undefined, args)
   else if (shouldSkip) Reflect.apply(xit, undefined, args)
 }
 
 function itNode (shouldSkip, ...args) {
-  if (isBrowser()) {
+  if (Util.isBrowser()) {
     if (shouldSkip) Reflect.apply(xit, undefined, args)
   } else Reflect.apply(it, undefined, args)
 }
 
 function xitNode (shouldSkip, ...args) {
-  if (isBrowser()) {
+  if (Util.isBrowser()) {
     if (shouldSkip) Reflect.apply(xit, undefined, args)
   } else Reflect.apply(xit, undefined, args)
 }
 
 function env () {
-  if (isBrowser()) {
+  if (Util.isBrowser()) {
     let sUsrAg = navigator.userAgent
     if (sUsrAg.indexOf('Chrome') > -1) {
       return 'CHROME'

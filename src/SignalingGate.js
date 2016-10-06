@@ -1,4 +1,4 @@
-import {provide, WEB_RTC, WEB_SOCKET} from 'serviceProvider'
+import ServiceFactory, {WEB_RTC, WEB_SOCKET} from 'ServiceFactory'
 import {OPEN} from 'service/WebSocketService'
 
 /**
@@ -7,13 +7,6 @@ import {OPEN} from 'service/WebSocketService'
  * many doors as peers in the `WebChannel` and each of them can be closed or opened.
  */
 class SignalingGate {
-
-  /**
-   * Necessary data to join the `WebChannel`.
-   * @typedef {Object} OpenData
-   * @property {string} url Signaling server url
-   * @property {string} key The unique key to join the `WebChannel`
-   */
 
   /**
    * @param {WebChannel} wc
@@ -54,7 +47,7 @@ class SignalingGate {
   open (url, onChannel, key = null) {
     return new Promise((resolve, reject) => {
       if (key === null) key = this.generateKey()
-      provide(WEB_SOCKET).connect(url)
+      ServiceFactory.get(WEB_SOCKET).connect(url)
         .then(ws => {
           ws.onclose = closeEvt => {
             this.key = null
@@ -69,7 +62,7 @@ class SignalingGate {
               let msg = JSON.parse(evt.data)
               if ('isKeyOk' in msg) {
                 if (msg.isKeyOk) {
-                  provide(WEB_RTC, this.webChannel.settings.iceServers)
+                  ServiceFactory.get(WEB_RTC, this.webChannel.settings.iceServers)
                     .listenFromSignaling(ws, onChannel)
                   this.ws = ws
                   this.key = key

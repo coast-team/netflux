@@ -1,10 +1,12 @@
-import {isBrowser} from 'helper'
+import Util from 'Util'
 import Service from 'service/Service'
 
-const WebSocket = isBrowser() ? window.WebSocket : require('ws')
+const WebSocket = Util.isBrowser() ? window.WebSocket : require('ws')
 const CONNECT_TIMEOUT = 10000
 /**
  * One of the web socket state constant.
+ * @ignore
+ * @type {number}
  */
 const OPEN = WebSocket.OPEN
 

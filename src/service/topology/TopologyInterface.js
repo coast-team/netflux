@@ -1,5 +1,5 @@
 import Service from 'service/Service'
-import {provide, CHANNEL_BUILDER} from 'serviceProvider'
+import ServiceFactory, {CHANNEL_BUILDER} from 'ServiceFactory'
 
 /**
  * It is responsible to preserve Web Channel
@@ -22,7 +22,7 @@ class TopologyInterface extends Service {
     else {
       return new Promise((resolve, reject) => {
         let counter = 0
-        let cBuilder = provide(CHANNEL_BUILDER)
+        let cBuilder = ServiceFactory.get(CHANNEL_BUILDER)
         peerIds.forEach(id => {
           cBuilder.connectTo(wc, id)
             .then(channel => this.onChannel(channel))

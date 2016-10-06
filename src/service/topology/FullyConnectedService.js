@@ -1,4 +1,4 @@
-import TopologyInterface from 'service/manager/TopologyInterface'
+import TopologyInterface from 'service/topology/TopologyInterface'
 
 /**
  * One of the internal message type. The message is intended for the `WebChannel`

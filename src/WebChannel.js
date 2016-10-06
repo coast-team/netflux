@@ -1,7 +1,7 @@
-import {provide, WEB_RTC, WEB_SOCKET, MESSAGE_BUILDER} from 'serviceProvider'
+import ServiceFactory, {WEB_RTC, WEB_SOCKET, MESSAGE_BUILDER} from 'ServiceFactory'
 import Channel from 'Channel'
 import SignalingGate from 'SignalingGate'
-import {isURL} from 'helper'
+import Util from 'Util'
 
 /**
  * Maximum identifier number for {@link WebChannel#generateId} function.
@@ -19,6 +19,7 @@ const ID_TIMEOUT = 10000
 
 /**
  * One of the internal message type. It's a peer message.
+ * @ignore
  * @type {number}
  */
 const USER_DATA = 1
@@ -85,7 +86,7 @@ class WebChannel {
      * @private
      * @type {Service}
      */
-    this.manager = provide(this.settings.topology)
+    this.manager = ServiceFactory.get(this.settings.topology)
 
     /**
      * Message builder service instance.
@@ -93,7 +94,7 @@ class WebChannel {
      * @private
      * @type {MessageBuilderService}
      */
-    this.msgBld = provide(MESSAGE_BUILDER)
+    this.msgBld = ServiceFactory.get(MESSAGE_BUILDER)
 
     /**
      * An array of all peer ids except this.
@@ -188,8 +189,8 @@ class WebChannel {
     return new Promise((resolve, reject) => {
       this.onJoin = resolve
       if (keyOrSocket.constructor.name !== 'WebSocket') {
-        if (isURL(url)) {
-          provide(WEB_SOCKET).connect(url)
+        if (Util.isURL(url)) {
+          ServiceFactory.get(WEB_SOCKET).connect(url)
             .then(ws => {
               ws.onclose = closeEvt => reject(closeEvt.reason)
               ws.onmessage = evt => {
@@ -200,7 +201,7 @@ class WebChannel {
                       if ('useThis' in msg && msg.useThis) {
                         this.initChannel(ws).catch(reject)
                       } else {
-                        provide(WEB_RTC, this.settings.iceServers).connectOverSignaling(ws, keyOrSocket)
+                        ServiceFactory.get(WEB_RTC, this.settings.iceServers).connectOverSignaling(ws, keyOrSocket)
                           .then(channel => {
                             ws.onclose = null
                             ws.close()
@@ -231,10 +232,10 @@ class WebChannel {
    */
   invite (keyOrSocket) {
     if (typeof keyOrSocket === 'string' || keyOrSocket instanceof String) {
-      if (!isURL(keyOrSocket)) {
+      if (!Util.isURL(keyOrSocket)) {
         return Promise.reject(`${keyOrSocket} is not a valid URL`)
       }
-      return provide(WEB_SOCKET).connect(keyOrSocket)
+      return ServiceFactory.get(WEB_SOCKET).connect(keyOrSocket)
         .then(ws => {
           ws.send(JSON.stringify({wcId: this.id}))
           return this.addChannel(ws)
@@ -257,7 +258,7 @@ class WebChannel {
       key: null
     }
     let settings = Object.assign({}, defaultSettings, options)
-    if (isURL(settings.url)) {
+    if (Util.isURL(settings.url)) {
       return this.gate.open(settings.url, dataCh => this.addChannel(dataCh), settings.key)
     } else {
       return Promise.reject(`${settings.url} is not a valid URL`)
@@ -430,7 +431,7 @@ class WebChannel {
       switch (header.code) {
         case INITIALIZATION:
           this.settings.topology = msg.manager
-          this.manager = provide(this.settings.topology)
+          this.manager = ServiceFactory.get(this.settings.topology)
           this.myId = header.recepientId
           this.id = msg.wcId
           channel.peerId = header.senderId
@@ -492,9 +493,9 @@ class WebChannel {
    */
   getService (id) {
     if (id === WEB_RTC) {
-      return provide(WEB_RTC, this.settings.iceServers)
+      return ServiceFactory.get(WEB_RTC, this.settings.iceServers)
     }
-    return provide(id)
+    return ServiceFactory.get(id)
   }
 
   /**

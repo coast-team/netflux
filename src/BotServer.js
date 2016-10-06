@@ -1,12 +1,8 @@
+import ServiceFactory, {WEB_SOCKET, CHANNEL_BUILDER, FULLY_CONNECTED} from 'ServiceFactory'
 import WebChannel from 'WebChannel'
-import {provide, WEB_SOCKET, CHANNEL_BUILDER, FULLY_CONNECTED} from 'serviceProvider'
 
 const MESSAGE_TYPE_ERROR = 4000
 const MESSAGE_UNKNOWN_ATTRIBUTE = 4001
-
-/**
- * @external {WebSocketServer} https://github.com/websockets/ws/blob/master/doc/ws.md#class-wsserver
- */
 
 /**
  * BotServer can listen on web socket. A peer can invite bot to join his `WebChannel`.
@@ -19,12 +15,12 @@ class BotServer {
    * plus `host` and `port` parameters.
    *
    * @param {Object} options
-   * @property {WEB_RTC|WEB_SOCKET} [options.connector=WEB_SOCKET] Which connector is preferable during connection establishment
-   * @property {FULLY_CONNECTED} [options.topology=FULLY_CONNECTED] Fully connected topology is the only one available for now
-   * @property {string} [options.signalingURL='wss://sigver-coastteam.rhcloud.com:8443'] Signaling server url
-   * @property {RTCIceServer} [options.iceServers=[{urls:'stun:turn01.uswest.xirsys.com'}]] Set of ice servers for WebRTC
-   * @property {string} [options.host='localhost']
-   * @property {number} [options.port=9000]
+   * @param {WEB_RTC|WEB_SOCKET} [options.connector=WEB_SOCKET] Which connector is preferable during connection establishment
+   * @param {FULLY_CONNECTED} [options.topology=FULLY_CONNECTED] Fully connected topology is the only one available for now
+   * @param {string} [options.signalingURL='wss://sigver-coastteam.rhcloud.com:8443'] Signaling server url
+   * @param {RTCIceServer} [options.iceServers=[{urls:'stun:turn01.uswest.xirsys.com'}]] Set of ice servers for WebRTC
+   * @param {string} [options.host='localhost']
+   * @param {number} [options.port=9000]
    */
   constructor (options = {}) {
     /**
@@ -112,7 +108,7 @@ class BotServer {
                 this.addWebChannel(wc)
                 wc.join(ws).then(() => { this.onWebChannel(wc) })
               } else if ('senderId' in msg) {
-                provide(CHANNEL_BUILDER).onChannel(wc, ws, msg.senderId)
+                ServiceFactory.get(CHANNEL_BUILDER).onChannel(wc, ws, msg.senderId)
               } else {
                 ws.close(MESSAGE_UNKNOWN_ATTRIBUTE, 'Unsupported message protocol')
               }

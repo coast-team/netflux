@@ -1,8 +1,8 @@
-import {isBrowser} from 'helper'
+import Util from 'Util'
 import Service from 'service/Service'
 import {USER_DATA} from 'WebChannel'
 
-let src = isBrowser() ? window : require('text-encoding')
+let src = Util.isBrowser() ? window : require('text-encoding')
 const TextEncoder = src.TextEncoder
 const TextDecoder = src.TextDecoder
 
@@ -114,18 +114,6 @@ class MessageBuilderService extends Service {
    * @param {ArrayBuffer} dataChunk - If the message is too big this
    * action would be executed for each data chunk until send whole message
    */
-
-  /**
-   * Header of the metadata of the messages sent/received over the `WebChannel`.
-   * @typedef {Object} MessageHeader
-   * @property {number} code Message type code
-   * @property {number} senderId Id of the sender peer
-   * @property {number} recipientId Id of the recipient peer
-   */
-
-   /**
-    * @typedef {string|ArrayBuffer|TypedArray} UserMessage
-    */
 
    /**
     * @private

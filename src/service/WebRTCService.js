@@ -1,13 +1,17 @@
 import 'webrtc-adapter'
-import {isBrowser, createCloseEvent} from 'helper'
+import Util from 'Util'
 import Service from 'service/Service'
-import {CHANNEL_BUILDER, provide} from 'serviceProvider'
+import ServiceFactory, {CHANNEL_BUILDER} from 'ServiceFactory'
 
 const CONNECT_TIMEOUT = 30000
 const REMOVE_ITEM_TIMEOUT = 5000
 let src
+/**
+* @ignore
+ * @type {boolean}
+ */
 let webRTCAvailable = true
-if (isBrowser()) {
+if (Util.isBrowser()) {
   src = window
 } else {
   try {
@@ -19,22 +23,6 @@ if (isBrowser()) {
 }
 const RTCPeerConnection = src.RTCPeerConnection
 const RTCIceCandidate = src.RTCIceCandidate
-
-/**
- * @external {RTCPeerConnection} https://developer.mozilla.org/en/docs/Web/API/RTCPeerConnection
- */
-/**
- * @external {RTCSessionDescription} https://developer.mozilla.org/en/docs/Web/API/RTCSessionDescription
- */
-/**
- * @external {RTCDataChannel} https://developer.mozilla.org/en/docs/Web/API/RTCDataChannel
- */
-/**
- * @external {RTCIceCandidate} https://developer.mozilla.org/en/docs/Web/API/RTCIceCandidate
- */
-/**
- * @external {RTCIceServer} https://developer.mozilla.org/en/docs/Web/API/RTCIceServer
- */
 
 /**
  * Service class responsible to establish connections between peers via
@@ -75,7 +63,7 @@ class WebRTCService extends Service {
       })
       this.listenOnDataChannel(item.pc, dataCh => {
         setTimeout(() => super.removeItem(wc, senderId), REMOVE_ITEM_TIMEOUT)
-        provide(CHANNEL_BUILDER).onChannel(wc, dataCh, senderId)
+        ServiceFactory.get(CHANNEL_BUILDER).onChannel(wc, dataCh, senderId)
       })
       this.createAnswer(item.pc, msg.offer, item.candidates)
         .then(answer => wc.sendInnerTo(senderId, this.id, {answer}))
@@ -300,7 +288,7 @@ class WebRTCService extends Service {
   setUpOnDisconnect (pc, dataCh) {
     pc.oniceconnectionstatechange = () => {
       if (pc.iceConnectionState === 'disconnected') {
-        if (dataCh.onclose) dataCh.onclose(createCloseEvent(4201, 'disconnected', false))
+        if (dataCh.onclose) dataCh.onclose(Util.createCloseEvent(4201, 'disconnected', false))
       }
     }
   }
