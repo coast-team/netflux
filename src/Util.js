@@ -6,6 +6,9 @@ let NodeCloseEvent = class CloseEvent {
   }
 }
 
+/**
+ * Utility class contains some helper static methods.
+ */
 class Util {
   /**
    * Create `CloseEvent`.
