@@ -39,7 +39,8 @@
     "test:coverage": "rm -rf coverage && npm run pretest && node jasmine.conf.js && karma start karma.conf.coverage.js",
     "test:travis": "npm run pretest && node jasmine.conf.js && karma start karma.conf.travis.js",
     "commit": "git-cz",
-    "semantic-release": "semantic-release pre && npm publish && semantic-release post"
+    "semantic-release": "semantic-release pre && npm publish && semantic-release post",
+    "lint": "eslint ./"
   },
   "dependencies": {
     "text-encoding": "^0.6.0",
@@ -76,38 +77,12 @@
     "rollup-plugin-string": "^2.0.2",
     "semantic-release": "^4.3.5",
     "sigver": "^7.1.0",
-    "standard": "^8.0.0",
-    "uglify-js": "^2.7.3"
-  },
-  "standard": {
-    "globals": [
-      "netflux",
-      "jasmine",
-      "describe",
-      "xdescribe",
-      "it",
-      "xit",
-      "expect",
-      "beforeEach",
-      "afterEach",
-      "beforeAll",
-      "afterAll",
-      "spyOn",
-      "DOMException",
-      "RTCPeerConnection",
-      "RTCSessionDescription",
-      "RTCDataChannel",
-      "RTCIceCandidate",
-      "WebSocket",
-      "TextEncoder",
-      "TextDecoder",
-      "Event",
-      "CloseEvent"
-    ],
-    "ignore": [
-      "dist/*",
-      "karma*.js"
-    ]
+    "uglify-js": "^2.7.3",
+    "eslint": "~3.7.0",
+    "eslint-config-standard": "^6.2.0",
+    "eslint-plugin-standard": "^2.0.0",
+    "eslint-config-conaclos": "~1.2.0",
+    "eslint-plugin-promise": "^2.0.0"
   },
   "config": {
     "ghooks": {

@@ -1,0 +1,33 @@
+{
+  "extends": [
+    "conaclos/esnext-base",
+    "standard"
+  ],
+  "rules": {
+    "no-shadow": 0
+  },
+  "globals": {
+    "netflux": true,
+    "jasmine": true,
+    "describe": true,
+    "xdescribe": true,
+    "it": true,
+    "xit": true,
+    "expect": true,
+    "beforeEach": true,
+    "afterEach": true,
+    "beforeAll": true,
+    "afterAll": true,
+    "spyOn": true,
+    "DOMException": true,
+    "RTCPeerConnection": true,
+    "RTCSessionDescription": true,
+    "RTCDataChannel": true,
+    "RTCIceCandidate": true,
+    "WebSocket": true,
+    "TextEncoder": true,
+    "TextDecoder": true,
+    "Event": true,
+    "CloseEvent": true
+  }
+}
