@@ -3,20 +3,20 @@ import * as helper from 'util/helper'
 const NB_PEERS = 12
 
 describe(`Fully connected: many peers (${NB_PEERS})`, () => {
-  let signalingURL = helper.SIGNALING_URL
-  let wcs = []
+  const signalingURL = helper.SIGNALING_URL
+  const wcs = []
 
   describe('Should establish a connection', () => {
     function allJoiningDetectedByAll () {
-      let joined = new Map()
-      let joinPromises = []
+      const joined = new Map()
+      const joinPromises = []
       for (let i = 0; i < NB_PEERS; i++) {
         wcs[i] = create({signalingURL})
         joined.set(i, [])
         if (i !== NB_PEERS - 1) {
           joinPromises.push(new Promise((resolve, reject) => {
             wcs[i].onPeerJoin = id => {
-              let joinedTab = joined.get(i)
+              const joinedTab = joined.get(i)
               expect(joinedTab.includes(id)).toBeFalsy()
               joinedTab.push(id)
               if (joinedTab.length === NB_PEERS - 1) resolve()
@@ -37,8 +37,8 @@ describe(`Fully connected: many peers (${NB_PEERS})`, () => {
         })
         .catch(done.fail)
 
-      let joinOneByOne = function (prom, index, key) {
-        let i = index
+      const joinOneByOne = function (prom, index, key) {
+        const i = index
         if (index === NB_PEERS) return prom
         return joinOneByOne(prom.then(() => wcs[i].join(key)), ++index, key)
       }
@@ -66,7 +66,7 @@ describe(`Fully connected: many peers (${NB_PEERS})`, () => {
 
   describe('Should send/receive', () => {
     helper.itBrowser(false, 'broadcast string message', done => {
-      let groups = []
+      const groups = []
       for (let i = 0; i < NB_PEERS; i++) {
         groups[i] = new helper.TestGroup(wcs[i], [String])
       }

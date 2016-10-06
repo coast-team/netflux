@@ -1,8 +1,8 @@
 // Configuration for running tests in NodeJS
-let Jasmine = require('jasmine')
-let SpecReporter = require('jasmine-spec-reporter')
+const Jasmine = require('jasmine')
+const SpecReporter = require('jasmine-spec-reporter')
 
-let config = {
+const config = {
   spec_dir: '.rolledupTest',
   spec_files: [
     'unit/**/*.test.js',
@@ -13,7 +13,7 @@ let config = {
   random: false
 }
 
-let jrunner = new Jasmine()
+const jrunner = new Jasmine()
 jrunner.configureDefaultReporter({print: () => {}})    // remove default reporter logs
 jasmine.getEnv().addReporter(new SpecReporter({displaySpecDuration: true}))   // add jasmine-spec-reporter
 jrunner.loadConfig(config)           // load jasmine.json configuration

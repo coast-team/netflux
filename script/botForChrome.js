@@ -1,7 +1,7 @@
 import {create} from 'dist/netflux.es2015.js'
 import {SIGNALING_URL, onMessageForBot} from 'test/util/helper'
 
-let wc = create({signalingURL: SIGNALING_URL})
+const wc = create({signalingURL: SIGNALING_URL})
 wc.onMessage = (id, msg, isBroadcast) => onMessageForBot(wc, id, msg, isBroadcast)
 wc.onClose = closeEvt => {
   console.log('Chrome bot has disconnected from Signaling server')

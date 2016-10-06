@@ -51,7 +51,7 @@ class WebRTCService extends Service {
    * @param {Object} msg
    */
   onMessage (channel, senderId, recepientId, msg) {
-    let wc = channel.webChannel
+    const wc = channel.webChannel
     let item = super.getItem(wc, senderId)
     if (!item) {
       item = new CandidatesBuffer()
@@ -86,7 +86,7 @@ class WebRTCService extends Service {
    * @returns {Promise<RTCDataChannel, string>}
    */
   connectOverWebChannel (wc, id) {
-    let item = new CandidatesBuffer(this.createPeerConnection(candidate => {
+    const item = new CandidatesBuffer(this.createPeerConnection(candidate => {
       wc.sendInnerTo(id, this.id, {candidate})
     }))
     super.setItem(wc, id, item)
@@ -110,7 +110,7 @@ class WebRTCService extends Service {
    */
   listenFromSignaling (ws, onChannel) {
     ws.onmessage = evt => {
-      let msg = JSON.parse(evt.data)
+      const msg = JSON.parse(evt.data)
       if ('id' in msg && 'data' in msg) {
         let item = super.getItem(ws, msg.id)
         if (!item) {
@@ -146,7 +146,7 @@ class WebRTCService extends Service {
    * @returns {type} Description
    */
   connectOverSignaling (ws, key) {
-    let item = new CandidatesBuffer(this.createPeerConnection(candidate => {
+    const item = new CandidatesBuffer(this.createPeerConnection(candidate => {
       if (ws.readyState === 1) ws.send(JSON.stringify({data: {candidate}}))
     }))
     super.setItem(ws, key, item)
@@ -154,7 +154,7 @@ class WebRTCService extends Service {
       ws.onclose = closeEvt => reject(closeEvt.reason)
       ws.onmessage = evt => {
         try {
-          let msg = JSON.parse(evt.data)
+          const msg = JSON.parse(evt.data)
           if ('data' in msg) {
             if ('answer' in msg.data) {
               item.pc.setRemoteDescription(msg.data.answer)
@@ -232,7 +232,7 @@ class WebRTCService extends Service {
    * @return {RTCPeerConnection}
    */
   createPeerConnection (onCandidate) {
-    let pc = new RTCPeerConnection({iceServers: this.iceServers})
+    const pc = new RTCPeerConnection({iceServers: this.iceServers})
     pc.isRemoteDescriptionSet = false
     pc.addReceivedCandidates = candidates => {
       pc.isRemoteDescriptionSet = true
@@ -240,7 +240,7 @@ class WebRTCService extends Service {
     }
     pc.onicecandidate = evt => {
       if (evt.candidate !== null) {
-        let candidate = {
+        const candidate = {
           candidate: evt.candidate.candidate,
           sdpMid: evt.candidate.sdpMid,
           sdpMLineIndex: evt.candidate.sdpMLineIndex
@@ -259,7 +259,7 @@ class WebRTCService extends Service {
    *
    */
   createDataChannel (pc, onOpen) {
-    let dc = pc.createDataChannel(null)
+    const dc = pc.createDataChannel(null)
     dc.onopen = evt => onOpen(dc)
     this.setUpOnDisconnect(pc, dc)
   }

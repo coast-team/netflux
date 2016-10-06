@@ -32,7 +32,7 @@ function randData (Instance) {
     res = randStr()
   } else {
     const lengthBuf = 64 + 64 * Math.ceil(Math.random() * 100)
-    let buffer = new ArrayBuffer(lengthBuf)
+    const buffer = new ArrayBuffer(lengthBuf)
     if (Instance === ArrayBuffer) return buffer
     else if ([Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array].includes(Instance)) {
       res = new Instance(buffer)
@@ -82,7 +82,7 @@ function isEqual (msg1, msg2, Instance) {
 function allMessagesAreSentAndReceived (groups, Instance, isBroadcast = true) {
   return Promise.all(groups.map(
     group => new Promise((resolve, reject) => {
-      let tab = new Map()
+      const tab = new Map()
       for (let g of groups) if (g.wc.myId !== group.wc.myId) tab.set(g.wc.myId, g.get(Instance))
       group.wc.onMessage = (id, msg, isBroadcast) => {
         expect(isBroadcast).toEqual(isBroadcast)
@@ -102,8 +102,8 @@ function checkMembers (wcs) {
     expect(wc.members.length).toEqual(wcs.length - 1)
     for (let wc2 of wcs) {
       if (wc.myId !== wc2.myId) {
-        let firstIndex = wc2.members.indexOf(wc.myId)
-        let lastIndex = wc2.members.lastIndexOf(wc.myId)
+        const firstIndex = wc2.members.indexOf(wc.myId)
+        const lastIndex = wc2.members.lastIndexOf(wc.myId)
         expect(firstIndex).not.toEqual(-1)
         expect(firstIndex).toEqual(lastIndex)
       }
@@ -165,7 +165,7 @@ function xitNode (shouldSkip, ...args) {
 
 function env () {
   if (Util.isBrowser()) {
-    let sUsrAg = navigator.userAgent
+    const sUsrAg = navigator.userAgent
     if (sUsrAg.indexOf('Chrome') > -1) {
       return 'CHROME'
     } else if (sUsrAg.indexOf('Firefox') > -1) {
@@ -192,7 +192,7 @@ function sendReceive (wc, data, done, id) {
 
 function onMessageForBot (wc, id, msg, isBroadcast) {
   try {
-    let data = JSON.parse(msg)
+    const data = JSON.parse(msg)
     switch (data.code) {
       case LEAVE_CODE:
         wc.leave()

@@ -17,12 +17,12 @@ import ServiceFactory, {CHANNEL_BUILDER} from 'ServiceFactory'
 class TopologyInterface extends Service {
 
   connectTo (wc, peerIds) {
-    let failed = []
+    const failed = []
     if (peerIds.length === 0) return Promise.resolve(failed)
     else {
       return new Promise((resolve, reject) => {
         let counter = 0
-        let cBuilder = ServiceFactory.get(CHANNEL_BUILDER)
+        const cBuilder = ServiceFactory.get(CHANNEL_BUILDER)
         peerIds.forEach(id => {
           cBuilder.connectTo(wc, id)
             .then(channel => this.onChannel(channel))

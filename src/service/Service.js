@@ -90,7 +90,7 @@ class Service {
    * @returns {Map}
    */
   getItems (obj) {
-    let items = itemsStorage.get(this.id).get(obj)
+    const items = itemsStorage.get(this.id).get(obj)
     if (items) return items
     else return new Map()
   }
@@ -102,8 +102,8 @@ class Service {
    * @param {number} id
    */
   removeItem (obj, id) {
-    let currentServiceTemp = itemsStorage.get(this.id)
-    let idMap = currentServiceTemp.get(obj)
+    const currentServiceTemp = itemsStorage.get(this.id)
+    const idMap = currentServiceTemp.get(obj)
     currentServiceTemp.get(obj).delete(id)
     if (idMap.size === 0) currentServiceTemp.delete(obj)
   }
@@ -117,9 +117,9 @@ class Service {
    * @returns {Object}
    */
   getFrom (storage, obj, id) {
-    let idMap = storage.get(this.id).get(obj)
+    const idMap = storage.get(this.id).get(obj)
     if (idMap !== undefined) {
-      let item = idMap.get(id)
+      const item = idMap.get(id)
       if (item !== undefined) return item
     }
     return null
@@ -134,7 +134,7 @@ class Service {
    *
    */
   setTo (storage, obj, id, data) {
-    let currentServiceTemp = storage.get(this.id)
+    const currentServiceTemp = storage.get(this.id)
     let idMap
     if (currentServiceTemp.has(obj)) {
       idMap = currentServiceTemp.get(obj)

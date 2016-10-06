@@ -15,7 +15,7 @@ import {WEB_SOCKET, WEB_RTC, FULLY_CONNECTED} from 'ServiceFactory'
  * @returns {WebChannel}
  */
 function create (options) {
-  let defaultSettings = {
+  const defaultSettings = {
     connector: WEB_RTC,
     topology: FULLY_CONNECTED,
     signalingURL: 'wss://sigver-coastteam.rhcloud.com:8443',
@@ -24,7 +24,7 @@ function create (options) {
     ],
     listenOn: ''
   }
-  let mySettings = Object.assign({}, defaultSettings, options)
+  const mySettings = Object.assign({}, defaultSettings, options)
   return new WebChannel(mySettings)
 }
 

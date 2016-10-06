@@ -4,7 +4,7 @@ import smallStr from 'util/200kb.txt'
 import bigStr from 'util/4mb.txt'
 
 describe('🤖 🙂  fully connected', () => {
-  let signalingURL = helper.SIGNALING_URL
+  const signalingURL = helper.SIGNALING_URL
   let wc
 
   it('Should establish a connection through data channel', done => {
@@ -24,13 +24,13 @@ describe('🤖 🙂  fully connected', () => {
 
   describe('Should send/receive', () => {
     it('Private string message', done => {
-      let data = helper.randData(String)
+      const data = helper.randData(String)
       helper.sendReceive(wc, data, done, wc.members[0])
     })
 
     for (let i of helper.INSTANCES) {
       it('broadcast: ' + i.prototype.constructor.name, done => {
-        let data = helper.randData(i)
+        const data = helper.randData(i)
         helper.sendReceive(wc, data, done)
       })
     }
@@ -44,13 +44,13 @@ describe('🤖 🙂  fully connected', () => {
     }, 10000)
 
     it(`${helper.MSG_NUMBER} small messages`, done => {
-      let data = []
-      let dataReceived = Array(helper.MSG_NUMBER)
+      const data = []
+      const dataReceived = Array(helper.MSG_NUMBER)
       for (let i = 0; i < helper.MSG_NUMBER; i++) data[i] = helper.randData(String)
       dataReceived.fill(0)
       wc.onMessage = (id, msg, isBroadcast) => {
         expect(typeof msg).toEqual('string')
-        let index = data.indexOf(msg)
+        const index = data.indexOf(msg)
         expect(index).not.toEqual(-1)
         expect(dataReceived[index]++).toEqual(0)
         expect(isBroadcast).toBeTruthy()

@@ -195,7 +195,7 @@ class WebChannel {
               ws.onclose = closeEvt => reject(closeEvt.reason)
               ws.onmessage = evt => {
                 try {
-                  let msg = JSON.parse(evt.data)
+                  const msg = JSON.parse(evt.data)
                   if ('isKeyOk' in msg) {
                     if (msg.isKeyOk) {
                       if ('useThis' in msg && msg.useThis) {
@@ -253,11 +253,11 @@ class WebChannel {
    * callback function take a parameter of type {@link SignalingGate~AccessData}.
    */
   open (options) {
-    let defaultSettings = {
+    const defaultSettings = {
       url: this.settings.signalingURL,
       key: null
     }
-    let settings = Object.assign({}, defaultSettings, options)
+    const settings = Object.assign({}, defaultSettings, options)
     if (Util.isURL(settings.url)) {
       return this.gate.open(settings.url, dataCh => this.addChannel(dataCh), settings.key)
     } else {
@@ -357,7 +357,7 @@ class WebChannel {
   addChannel (channel) {
     return this.initChannel(channel)
       .then(channel => {
-        let msg = this.msgBld.msg(INITIALIZATION, this.myId, channel.peerId, {
+        const msg = this.msgBld.msg(INITIALIZATION, this.myId, channel.peerId, {
           manager: this.manager.id,
           wcId: this.id
         })
@@ -397,7 +397,7 @@ class WebChannel {
       this.manager.sendInnerTo(recepient, this, data)
     } else {
       if (Number.isInteger(recepient)) {
-        let msg = this.msgBld.msg(INNER_DATA, this.myId, recepient, {serviceId, data})
+        const msg = this.msgBld.msg(INNER_DATA, this.myId, recepient, {serviceId, data})
         this.manager.sendInnerTo(recepient, this, msg)
       } else {
         recepient.send(this.msgBld.msg(INNER_DATA, this.myId, recepient.peerId, {serviceId, data}))
@@ -421,13 +421,13 @@ class WebChannel {
    * @param {external:ArrayBuffer} data - Message
    */
   onChannelMessage (channel, data) {
-    let header = this.msgBld.readHeader(data)
+    const header = this.msgBld.readHeader(data)
     if (header.code === USER_DATA) {
       this.msgBld.readUserMessage(this, header.senderId, data, (fullData, isBroadcast) => {
         this.onMessage(header.senderId, fullData, isBroadcast)
       })
     } else {
-      let msg = this.msgBld.readInternalMessage(data)
+      const msg = this.msgBld.readInternalMessage(data)
       switch (header.code) {
         case INITIALIZATION:
           this.settings.topology = msg.manager
@@ -450,7 +450,7 @@ class WebChannel {
           this.manager.sendTo(header.senderId, this, this.msgBld.msg(PONG, this.myId))
           break
         case PONG:
-          let now = Date.now()
+          const now = Date.now()
           this.pongNb++
           this.maxTime = Math.max(this.maxTime, now - this.pingTime)
           if (this.pongNb === this.members.length) {
@@ -476,7 +476,7 @@ class WebChannel {
    */
   initChannel (ch, id = -1) {
     if (id === -1) id = this.generateId()
-    let channel = new Channel(ch)
+    const channel = new Channel(ch)
     channel.peerId = id
     channel.webChannel = this
     channel.onMessage = data => this.onChannelMessage(channel, data)
@@ -505,7 +505,7 @@ class WebChannel {
    */
   generateId () {
     do {
-      let id = Math.ceil(Math.random() * MAX_ID)
+      const id = Math.ceil(Math.random() * MAX_ID)
       if (id === this.myId) continue
       if (this.members.includes(id)) continue
       if (this.generatedIds.has(id)) continue

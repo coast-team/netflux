@@ -95,8 +95,8 @@ class Channel {
   set onMessage (handler) {
     if (!Util.isBrowser() && Util.isSocket(this.channel)) {
       this.channel.onmessage = msgEvt => {
-        let ab = new ArrayBuffer(msgEvt.data.length)
-        let view = new Uint8Array(ab)
+        const ab = new ArrayBuffer(msgEvt.data.length)
+        const view = new Uint8Array(ab)
         for (let i = 0; i < msgEvt.data.length; i++) {
           view[i] = msgEvt.data[i]
         }
@@ -136,7 +136,7 @@ class Channel {
    * @returns {boolean}
    */
   isOpen () {
-    let state = this.channel.readyState
+    const state = this.channel.readyState
     return state === 1 || state === 'open'
   }
 

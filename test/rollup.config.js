@@ -1,14 +1,14 @@
-let fs = require('fs')
-let rollup = require('rollup')
-let includePaths = require('rollup-plugin-includepaths')
-let string = require('rollup-plugin-string')
+const fs = require('fs')
+const rollup = require('rollup')
+const includePaths = require('rollup-plugin-includepaths')
+const string = require('rollup-plugin-string')
 
-let entries = []
+const entries = []
 function read (path) {
   if (path.endsWith('test.js')) {
     entries.push(path)
   } else if (fs.statSync(path).isDirectory()) {
-    let items = fs.readdirSync(path)
+    const items = fs.readdirSync(path)
     for (let i of items) {
       read(path + '/' + i)
     }
@@ -17,7 +17,7 @@ function read (path) {
 read('test')
 
 for (let entry of entries) {
-  let dest = entry.replace(/^test/, '.rolledupTest')
+  const dest = entry.replace(/^test/, '.rolledupTest')
   rollup.rollup({
     entry,
     plugins: [

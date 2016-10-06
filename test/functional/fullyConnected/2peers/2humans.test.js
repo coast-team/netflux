@@ -4,8 +4,8 @@ import smallStr from 'util/200kb.txt'
 import bigStr from 'util/4mb.txt'
 
 describe('🙂 🙂  fully connected', () => {
-  let signalingURL = helper.SIGNALING_URL
-  let wcs = []
+  const signalingURL = helper.SIGNALING_URL
+  const wcs = []
 
   it('Should establish a connection', done => {
     wcs[0] = create({signalingURL})
@@ -59,7 +59,7 @@ describe('🙂 🙂  fully connected', () => {
     }
 
     it('~200 KB string', done => {
-      let groups = []
+      const groups = []
       for (let i = 0; i < 2; i++) {
         groups[i] = new helper.TestGroup(wcs[i], null)
         groups[i].set(String, smallStr + i)
@@ -70,8 +70,8 @@ describe('🙂 🙂  fully connected', () => {
     })
 
     helper.itBrowser(true, '~4 MB string', done => {
-      let index1 = Math.round(Math.random())
-      let index2 = 1 - index1
+      const index1 = Math.round(Math.random())
+      const index2 = 1 - index1
       wcs[index1].onMessage = (id, msg) => {
         expect(id).toEqual(wcs[index2].myId)
         expect(msg === bigStr).toBeTruthy()
@@ -81,15 +81,15 @@ describe('🙂 🙂  fully connected', () => {
     }, 10000)
 
     it(`${helper.MSG_NUMBER} small messages`, done => {
-      let msgArray1 = []
-      let msgArray2 = []
-      let msgArrays = [msgArray1, msgArray2]
-      let nb = Math.floor(helper.MSG_NUMBER / 3)
+      const msgArray1 = []
+      const msgArray2 = []
+      const msgArrays = [msgArray1, msgArray2]
+      const nb = Math.floor(helper.MSG_NUMBER / 3)
       for (let i = 0; i < nb; i++) {
         msgArray1[i] = helper.randStr()
         msgArray2[i] = helper.randStr()
       }
-      let startSend = index => new Promise((resolve, reject) => {
+      const startSend = index => new Promise((resolve, reject) => {
         for (let e of msgArrays[index]) wcs[index].send(e)
         resolve()
       })
@@ -171,7 +171,7 @@ describe('🙂 🙂  fully connected', () => {
 
   it('Should not be able to join the WebChannel after it has been closed', done => {
     expect(wcs[0].isOpen()).toBeTruthy()
-    let key = wcs[0].getOpenData().key
+    const key = wcs[0].getOpenData().key
     wcs[0].close()
     wcs[1].join(key).then(done.fail).catch(done)
   })

@@ -2,7 +2,7 @@ import Util from 'Util'
 import Service from 'service/Service'
 import {USER_DATA} from 'WebChannel'
 
-let src = Util.isBrowser() ? window : require('text-encoding')
+const src = Util.isBrowser() ? window : require('text-encoding')
 const TextEncoder = src.TextEncoder
 const TextDecoder = src.TextDecoder
 
@@ -132,27 +132,27 @@ class MessageBuilderService extends Service {
    * sent to all `WebChannel` members and false if only to one member
    */
   handleUserMessage (data, senderId, recipientId, action, isBroadcast = true) {
-    let workingData = this.userDataToType(data)
-    let dataUint8Array = workingData.content
+    const workingData = this.userDataToType(data)
+    const dataUint8Array = workingData.content
     if (dataUint8Array.byteLength <= MAX_USER_MSG_SIZE) {
-      let dataView = this.initHeader(1, senderId, recipientId,
+      const dataView = this.initHeader(1, senderId, recipientId,
         dataUint8Array.byteLength + USER_MSG_OFFSET
       )
       dataView.setUint32(HEADER_OFFSET, dataUint8Array.byteLength)
       dataView.setUint8(13, workingData.type)
       dataView.setUint8(14, isBroadcast ? 1 : 0)
-      let resultUint8Array = new Uint8Array(dataView.buffer)
+      const resultUint8Array = new Uint8Array(dataView.buffer)
       resultUint8Array.set(dataUint8Array, USER_MSG_OFFSET)
       action(resultUint8Array.buffer)
     } else {
       const msgId = Math.ceil(Math.random() * MAX_MSG_ID_SIZE)
       const totalChunksNb = Math.ceil(dataUint8Array.byteLength / MAX_USER_MSG_SIZE)
       for (let chunkNb = 0; chunkNb < totalChunksNb; chunkNb++) {
-        let currentChunkMsgByteLength = Math.min(
+        const currentChunkMsgByteLength = Math.min(
           MAX_USER_MSG_SIZE,
           dataUint8Array.byteLength - MAX_USER_MSG_SIZE * chunkNb
         )
-        let dataView = this.initHeader(
+        const dataView = this.initHeader(
           USER_DATA,
           senderId,
           recipientId,
@@ -163,10 +163,10 @@ class MessageBuilderService extends Service {
         dataView.setUint8(14, isBroadcast ? 1 : 0)
         dataView.setUint16(15, msgId)
         dataView.setUint16(17, chunkNb)
-        let resultUint8Array = new Uint8Array(dataView.buffer)
+        const resultUint8Array = new Uint8Array(dataView.buffer)
         let j = USER_MSG_OFFSET
-        let startIndex = MAX_USER_MSG_SIZE * chunkNb
-        let endIndex = startIndex + currentChunkMsgByteLength
+        const startIndex = MAX_USER_MSG_SIZE * chunkNb
+        const endIndex = startIndex + currentChunkMsgByteLength
         for (let i = startIndex; i < endIndex; i++) {
           resultUint8Array[j++] = dataUint8Array[i]
         }
@@ -186,10 +186,10 @@ class MessageBuilderService extends Service {
    * @returns {ArrayBuffer} - Built message
    */
   msg (code, senderId = null, recepientId = null, data = {}) {
-    let msgEncoded = (new TextEncoder()).encode(JSON.stringify(data))
-    let msgSize = msgEncoded.byteLength + HEADER_OFFSET
-    let dataView = this.initHeader(code, senderId, recepientId, msgSize)
-    let fullMsg = new Uint8Array(dataView.buffer)
+    const msgEncoded = (new TextEncoder()).encode(JSON.stringify(data))
+    const msgSize = msgEncoded.byteLength + HEADER_OFFSET
+    const dataView = this.initHeader(code, senderId, recepientId, msgSize)
+    const fullMsg = new Uint8Array(dataView.buffer)
     fullMsg.set(msgEncoded, HEADER_OFFSET)
     return fullMsg.buffer
   }
@@ -203,14 +203,14 @@ class MessageBuilderService extends Service {
    * @param {function(msg: UserMessage, isBroadcast: boolean)} action Callback when the message is ready
    */
   readUserMessage (wc, senderId, data, action) {
-    let dataView = new DataView(data)
-    let msgSize = dataView.getUint32(HEADER_OFFSET)
-    let dataType = dataView.getUint8(13)
-    let isBroadcast = dataView.getUint8(14)
+    const dataView = new DataView(data)
+    const msgSize = dataView.getUint32(HEADER_OFFSET)
+    const dataType = dataView.getUint8(13)
+    const isBroadcast = dataView.getUint8(14)
     if (msgSize > MAX_USER_MSG_SIZE) {
-      let msgId = dataView.getUint16(15)
-      let chunk = dataView.getUint16(17)
-      let buffer = this.getBuffer(wc, senderId, msgId)
+      const msgId = dataView.getUint16(15)
+      const chunk = dataView.getUint16(17)
+      const buffer = this.getBuffer(wc, senderId, msgId)
       if (buffer === undefined) {
         this.setBuffer(wc, senderId, msgId,
           new Buffer(msgSize, data, chunk, fullData => {
@@ -221,8 +221,8 @@ class MessageBuilderService extends Service {
         buffer.add(data, chunk)
       }
     } else {
-      let dataArray = new Uint8Array(data)
-      let userData = new Uint8Array(data.byteLength - USER_MSG_OFFSET)
+      const dataArray = new Uint8Array(data)
+      const userData = new Uint8Array(data.byteLength - USER_MSG_OFFSET)
       let j = USER_MSG_OFFSET
       for (let i = 0; i < userData.byteLength; i++) {
         userData[i] = dataArray[j++]
@@ -237,7 +237,7 @@ class MessageBuilderService extends Service {
    * @returns {Object}
    */
   readInternalMessage (data) {
-    let uInt8Array = new Uint8Array(data)
+    const uInt8Array = new Uint8Array(data)
     return JSON.parse((new TextDecoder())
       .decode(uInt8Array.subarray(HEADER_OFFSET, uInt8Array.byteLength))
     )
@@ -250,7 +250,7 @@ class MessageBuilderService extends Service {
    * @returns {MessageHeader}
    */
   readHeader (data) {
-    let dataView = new DataView(data)
+    const dataView = new DataView(data)
     return {
       code: dataView.getUint8(0),
       senderId: dataView.getUint32(1),
@@ -268,7 +268,7 @@ class MessageBuilderService extends Service {
    * @return {DataView} Data view with initialized header
    */
   initHeader (code, senderId, recipientId, dataSize) {
-    let dataView = new DataView(new ArrayBuffer(dataSize))
+    const dataView = new DataView(new ArrayBuffer(dataSize))
     dataView.setUint8(0, code)
     dataView.setUint32(1, senderId)
     dataView.setUint32(5, recipientId)
@@ -318,7 +318,7 @@ class MessageBuilderService extends Service {
    * @returns {MessageTypeEnum} User message type
    */
   userDataToType (data) {
-    let result = {}
+    const result = {}
     if (data instanceof ArrayBuffer) {
       result.type = ARRAY_BUFFER_TYPE
       result.content = new Uint8Array(data)
@@ -362,9 +362,9 @@ class MessageBuilderService extends Service {
    * @returns {Buffer|undefined} Returns buffer if it was found and undefined if not
    */
   getBuffer (wc, peerId, msgId) {
-    let wcBuffer = buffers.get(wc)
+    const wcBuffer = buffers.get(wc)
     if (wcBuffer !== undefined) {
-      let peerBuffer = wcBuffer.get(peerId)
+      const peerBuffer = wcBuffer.get(peerId)
       if (peerBuffer !== undefined) {
         return peerBuffer.get(msgId)
       }
@@ -423,8 +423,8 @@ class Buffer {
    * @param {number} chunkNb - Number of the chunk
    */
   add (data, chunkNb) {
-    let dataChunk = new Uint8Array(data)
-    let dataChunkSize = data.byteLength
+    const dataChunk = new Uint8Array(data)
+    const dataChunkSize = data.byteLength
     this.currentSize += dataChunkSize - USER_MSG_OFFSET
     let index = chunkNb * MAX_USER_MSG_SIZE
     for (let i = USER_MSG_OFFSET; i < dataChunkSize; i++) {

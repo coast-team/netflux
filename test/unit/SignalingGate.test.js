@@ -2,14 +2,14 @@ import SignalingGate from 'src/SignalingGate'
 import {SIGNALING_URL} from 'util/helper'
 
 describe('SignalingGate', () => {
-  let FakeWebChannel = class {
+  const FakeWebChannel = class {
     constructor (onClose = () => {}) {
       this.onClose = onClose
       this.settings = {iceServers: {}}
     }
   }
   let signalingGate
-  let signalingURL = SIGNALING_URL
+  const signalingURL = SIGNALING_URL
 
   it('Gate should be closed after construction', () => {
     signalingGate = new SignalingGate(new FakeWebChannel())
@@ -20,15 +20,15 @@ describe('SignalingGate', () => {
   })
 
   it('Should generate different keys', () => {
-    let key1 = signalingGate.generateKey()
-    let key2 = signalingGate.generateKey()
+    const key1 = signalingGate.generateKey()
+    const key2 = signalingGate.generateKey()
     expect(key1).not.toEqual(key2)
   })
 
   it('Should fail to open the gate with the key used by another gate', done => {
-    let key = signalingGate.generateKey()
-    let wcg1 = new SignalingGate(new FakeWebChannel())
-    let wcg2 = new SignalingGate(new FakeWebChannel())
+    const key = signalingGate.generateKey()
+    const wcg1 = new SignalingGate(new FakeWebChannel())
+    const wcg2 = new SignalingGate(new FakeWebChannel())
     wcg1.open(signalingURL, () => {}, key)
       .then(() => {
         wcg2.open(() => {}, key)
@@ -41,7 +41,7 @@ describe('SignalingGate', () => {
   })
 
   describe('Open with auto generated key', () => {
-    let signalingGate = new SignalingGate(new FakeWebChannel())
+    const signalingGate = new SignalingGate(new FakeWebChannel())
     let openData
 
     it('Should open the gate', done => {
@@ -71,7 +71,7 @@ describe('SignalingGate', () => {
     })
 
     it('onClose should be called', done => {
-      let wcg = new SignalingGate(new FakeWebChannel(done))
+      const wcg = new SignalingGate(new FakeWebChannel(done))
       wcg.open(signalingURL, () => {})
         .then(() => { wcg.close() })
         .catch(done.fail)
@@ -79,11 +79,11 @@ describe('SignalingGate', () => {
   })
 
   describe('Open with the specified key', () => {
-    let signalingGate = new SignalingGate(new FakeWebChannel())
+    const signalingGate = new SignalingGate(new FakeWebChannel())
     let openData
 
     it('Should open the gate', done => {
-      let key = signalingGate.generateKey()
+      const key = signalingGate.generateKey()
       signalingGate.open(signalingURL, () => {}, key)
         .then(data => {
           openData = data
@@ -111,8 +111,8 @@ describe('SignalingGate', () => {
     })
 
     it('onClose should be called', done => {
-      let key = signalingGate.generateKey()
-      let wcg = new SignalingGate(new FakeWebChannel(done))
+      const key = signalingGate.generateKey()
+      const wcg = new SignalingGate(new FakeWebChannel(done))
       wcg.open(signalingURL, () => {}, key)
         .then(() => { wcg.close() })
         .catch(done.fail)
