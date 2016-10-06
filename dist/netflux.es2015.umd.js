@@ -2444,13 +2444,6 @@ class Buffer {
 }
 
 /**
- * Service Provider module is a helper module for {@link module:service}. It is
- * responsible to instantiate all services. This module must be used to get
- * any service instance.
- * @module service/Service
- */
-
-/**
  * {@link WebRTCService} identifier.
  * @ignore
  * @type {number}
@@ -2491,6 +2484,9 @@ const MESSAGE_BUILDER = 4
  */
 const services = new Map()
 
+/**
+ * It is a factory helper class which is responsible to instantiate any service class.
+ */
 class ServiceFactory {
   /**
    * Provides the service instance specified by `id`.
@@ -2540,12 +2536,12 @@ class BotServer {
    * plus `host` and `port` parameters.
    *
    * @param {Object} options
-   * @property {WEB_RTC|WEB_SOCKET} [options.connector=WEB_SOCKET] Which connector is preferable during connection establishment
-   * @property {FULLY_CONNECTED} [options.topology=FULLY_CONNECTED] Fully connected topology is the only one available for now
-   * @property {string} [options.signalingURL='wss://sigver-coastteam.rhcloud.com:8443'] Signaling server url
-   * @property {RTCIceServer} [options.iceServers=[{urls:'stun:turn01.uswest.xirsys.com'}]] Set of ice servers for WebRTC
-   * @property {string} [options.host='localhost']
-   * @property {number} [options.port=9000]
+   * @param {WEB_RTC|WEB_SOCKET} [options.connector=WEB_SOCKET] Which connector is preferable during connection establishment
+   * @param {FULLY_CONNECTED} [options.topology=FULLY_CONNECTED] Fully connected topology is the only one available for now
+   * @param {string} [options.signalingURL='wss://sigver-coastteam.rhcloud.com:8443'] Signaling server url
+   * @param {RTCIceServer} [options.iceServers=[{urls:'stun:turn01.uswest.xirsys.com'}]] Set of ice servers for WebRTC
+   * @param {string} [options.host='localhost']
+   * @param {number} [options.port=9000]
    */
   constructor (options = {}) {
     /**

@@ -33,3 +33,7 @@
 /**
  * @external {Promise.reject} https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Promise/reject
  */
+
+/**
+ * @external {TypedArray} https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/TypedArray
+ */
