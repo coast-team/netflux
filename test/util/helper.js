@@ -37,14 +37,14 @@ function randData (Instance) {
     else if ([Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array].includes(Instance)) {
       res = new Instance(buffer)
       let sign = -1
-      for (let i in res) {
+      for (let i of res) {
         res[i] = Math.round(Math.random() * 255) * sign
         sign *= sign
       }
     } else if ([Float32Array, Float64Array].includes(Instance)) {
       res = new Instance(buffer)
       let sign = -1
-      for (let i in res) {
+      for (let i of res) {
         res[i] = Math.random() * 255 * sign
         sign *= sign
       }

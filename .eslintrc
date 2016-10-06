@@ -4,7 +4,15 @@
     "standard"
   ],
   "rules": {
-    "no-shadow": 0
+    "default-case": 0,
+    "no-console": 0,
+    "no-continue": 0,
+    "no-loop-func": 0,
+    "no-param-reassign": 0,
+    "no-shadow": 0,
+    "no-sync": 0,
+    "no-use-before-define": 0,
+    "prefer-const": 0
   },
   "globals": {
     "netflux": true,

@@ -307,6 +307,8 @@ class MessageBuilderService extends Service {
         return new Float32Array(buffer)
       case FLOAT_64_ARRAY_TYPE:
         return new Float64Array(buffer)
+      default:
+        throw new Error('Unknown type')
     }
   }
 

@@ -164,11 +164,12 @@ class FullyConnectedService extends TopologyInterface {
           if (request !== null) request.resolve(senderId)
         }
         break
-      case TICK:
+      case TICK: {
         this.setJP(wc, senderId, channel)
         const isJoining = super.getItem(wc, wc.myId) !== null
         wc.sendInnerTo(channel, this.id, {code: TOCK, isJoining})
         break
+      }
       case TOCK:
         if (msg.isJoining) this.setJP(wc, senderId, channel)
         else super.getItem(wc, wc.myId).channels.add(channel)

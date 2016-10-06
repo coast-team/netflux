@@ -242,6 +242,8 @@ class WebChannel {
         })
     } else if (keyOrSocket.constructor.name === 'WebSocket') {
       return this.addChannel(keyOrSocket)
+    } else {
+      return Promise.reject(`${keyOrSocket} is not a valid URL`)
     }
   }
 
@@ -430,14 +432,15 @@ class WebChannel {
     } else {
       const msg = this.msgBld.readInternalMessage(data)
       switch (header.code) {
-        case INITIALIZATION:
+        case INITIALIZATION: {
           this.settings.topology = msg.manager
           this.manager = ServiceFactory.get(this.settings.topology)
           this.myId = header.recepientId
           this.id = msg.wcId
           channel.peerId = header.senderId
           break
-        case INNER_DATA:
+        }
+        case INNER_DATA: {
           if (header.recepientId === 0 || this.myId === header.recepientId) {
             this.getService(msg.serviceId).onMessage(
               channel,
@@ -447,10 +450,11 @@ class WebChannel {
             )
           } else this.sendInnerTo(header.recepientId, null, data, true)
           break
+        }
         case PING:
           this.manager.sendTo(header.senderId, this, this.msgBld.msg(PONG, this.myId))
           break
-        case PONG:
+        case PONG: {
           const now = Date.now()
           this.pongNb++
           this.maxTime = Math.max(this.maxTime, now - this.pingTime)
@@ -459,6 +463,7 @@ class WebChannel {
             this.pingTime = 0
           }
           break
+        }
         default:
           throw new Error(`Unknown message type code: "${header.code}"`)
       }
