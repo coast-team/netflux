@@ -202,11 +202,11 @@ class WebRTCService extends Service {
    * Creates an SDP answer.
    *
    * @private
-   * @param  {RTCPeerConnection} pc
-   * @param  {string} offer
-   * @param  {Array[string]} candidates
-   * @return {Promise<RTCSessionDescription, string>} - Resolved when the offer has been succesfully created,
-   * set as local description and sent to the peer.
+   * @param {RTCPeerConnection} pc
+   * @param {string} offer
+   * @param {string[]} candidates
+   * @return {Promise<RTCSessionDescription, string>} - Resolved when the offer
+   *  has been succesfully created, set as local description and sent to the peer.
    */
   createAnswer (pc, offer, candidates) {
     return pc.setRemoteDescription(offer)
@@ -282,8 +282,6 @@ class WebRTCService extends Service {
    * @private
    * @param {RTCPeerConnection} pc
    * @param {RTCDataChannel} dataCh
-   *
-   * @returns {type} Description
    */
   setUpOnDisconnect (pc, dataCh) {
     pc.oniceconnectionstatechange = () => {
@@ -297,8 +295,6 @@ class WebRTCService extends Service {
    * @private
    * @param {CandidatesBuffer|null} obj
    * @param {string} candidate
-   *
-   * @returns {type} Description
    */
   addIceCandidate (obj, candidate) {
     if (obj !== null && obj.pc && obj.pc.isRemoteDescriptionSet) {

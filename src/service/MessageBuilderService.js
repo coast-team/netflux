@@ -279,7 +279,7 @@ class MessageBuilderService extends Service {
    * Netflux sends data in `ArrayBuffer`, but the user can send data in different
    * types. This function retrieve the inital message sent by the user.
    * @private
-   * @param {ArrayBuffer} Message as it was received by the `WebChannel`
+   * @param {ArrayBuffer} buffer Message as it was received by the `WebChannel`
    * @param {MessageTypeEnum} type Message type as it was defined by the user
    * @returns {ArrayBuffer|TypedArray} Initial user message
    */
@@ -314,7 +314,7 @@ class MessageBuilderService extends Service {
    * Identify the user message type.
    *
    * @private
-   * @param {UserMessage} User message
+   * @param {UserMessage} data User message
    * @returns {MessageTypeEnum} User message type
    */
   userDataToType (data) {
@@ -406,7 +406,8 @@ class Buffer {
 
   /**
    * @param {number} fullDataSize The total user message size
-   * @param {ArrayBuffer} The first chunk of the user message
+   * @param {ArrayBuffer} data The first chunk of the user message
+   * @param {number} chunkNb Number of the chunk
    * @param {function(buffer: ArrayBuffer)} action Callback to be executed when all
    * message chunks are received and thus the message is ready
    */

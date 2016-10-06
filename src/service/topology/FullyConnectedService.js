@@ -34,7 +34,7 @@ class FullyConnectedService extends TopologyInterface {
    *
    * @param {WebSocket|RTCDataChannel} channel
    *
-   * @returns {Promise<number, string}
+   * @returns {Promise<number, string>}
    */
   add (channel) {
     const wc = channel.webChannel

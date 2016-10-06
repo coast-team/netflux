@@ -157,25 +157,25 @@ class WebChannel {
      * Is the event handler called when a new peer has  joined the `WebChannel`.
      * @type {function(id: number)}
      */
-    this.onPeerJoin = id => {}
+    this.onPeerJoin = () => {}
 
     /**
      * Is the event handler called when a peer hes left the `WebChannel`.
      * @type {function(id: number)}
      */
-    this.onPeerLeave = id => {}
+    this.onPeerLeave = () => {}
 
     /**
      * Is the event handler called when a message is available on the `WebChannel`.
      * @type {function(id: number, msg: UserMessage, isBroadcast: boolean)}
      */
-    this.onMessage = (id, msg, isBroadcast) => {}
+    this.onMessage = () => {}
 
     /**
      * Is the event handler called when the `WebChannel` has been closed.
      * @type {function(closeEvt: CloseEvent)}
      */
-    this.onClose = closeEvt => {}
+    this.onClose = () => {}
   }
 
   /**
@@ -183,7 +183,7 @@ class WebChannel {
    *
    * @param  {string|WebSocket} keyOrSocket The key provided by one of the `WebChannel` members or a socket
    * @param  {string} [url=this.settings.signalingURL] Server URL
-   * @returns {Promise<, string>} It resolves once you became a `WebChannel` member.
+   * @returns {Promise<undefined,string>} It resolves once you became a `WebChannel` member.
    */
   join (keyOrSocket, url = this.settings.signalingURL) {
     return new Promise((resolve, reject) => {
@@ -228,7 +228,7 @@ class WebChannel {
    *
    * @param {string|WebSocket} keyOrSocket
    *
-   * @returns {Promise<, string>}
+   * @returns {Promise<undefined,string>}
    */
   invite (keyOrSocket) {
     if (typeof keyOrSocket === 'string' || keyOrSocket instanceof String) {
@@ -352,7 +352,7 @@ class WebChannel {
    * @private
    * @param {WebSocket|RTCDataChannel} channel
    *
-   * @returns {Promise<, string>}
+   * @returns {Promise<undefined,string>}
    */
   addChannel (channel) {
     return this.initChannel(channel)
@@ -388,9 +388,10 @@ class WebChannel {
    * Send a message to a service of the same peer, joining peer or any peer in
    * the `WebChannel`.
    * @private
-   * @param  {string} serviceId - Service id
-   * @param  {string} recepient - Identifier of recepient peer id
-   * @param  {Object} [msg={}] - Message to send
+   * @param {number} recepient - Identifier of recepient peer id
+   * @param {string} serviceId - Service id
+   * @param {Object} data - Message to send
+   * @param {boolean} [forward=false] - SHould the message be forwarded?
    */
   sendInnerTo (recepient, serviceId, data, forward = false) {
     if (forward) {

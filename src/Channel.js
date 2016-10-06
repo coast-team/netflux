@@ -90,7 +90,7 @@ class Channel {
   }
 
   /**
-   * @type {function(message: ArrayBuffer)}
+   * @param {function(msg: ArrayBuffer)} handler
    */
   set onMessage (handler) {
     if (!Util.isBrowser() && Util.isSocket(this.channel)) {
@@ -106,7 +106,7 @@ class Channel {
   }
 
   /**
-   * @type {function(message: CloseEvent)}
+   * @param {function(message: CloseEvent)} handler
    */
   set onClose (handler) {
     this.channel.onclose = closeEvt => {
@@ -118,7 +118,7 @@ class Channel {
   }
 
   /**
-   * @type {function(message: Event)}
+   * @param {function(message: Event)} handler
    */
   set onError (handler) {
     this.channel.onerror = evt => handler(evt)

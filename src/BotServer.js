@@ -57,15 +57,15 @@ class BotServer {
     this.webChannels = []
 
     /**
-     * @param {WebChannel} wc
+     * @type {function(wc: WebChannel)}
      */
-    this.onWebChannel = wc => {}
+    this.onWebChannel = () => {}
   }
 
   /**
    * Starts listen on socket.
    *
-   * @returns {Promise<, string>}
+   * @returns {Promise<undefined,string>}
    */
   start () {
     return new Promise((resolve, reject) => {
@@ -161,7 +161,7 @@ class BotServer {
   /**
    * Add `WebChannel`.
    *
-   * @param {WebChannel} wc Description
+   * @param {WebChannel} wc
    */
   addWebChannel (wc) {
     this.webChannels[this.webChannels.length] = wc
