@@ -2,7 +2,7 @@ import ServiceFactory, {WEB_SOCKET, CHANNEL_BUILDER, FULLY_CONNECTED} from 'Serv
 import WebChannel from 'WebChannel'
 
 const MESSAGE_TYPE_ERROR = 4000
-const MESSAGE_UNKNOWN_ATTRIBUTE = 4001
+const WEB_CHANNEL_NOT_FOUND = 4001
 
 /**
  * BotServer can listen on web socket. A peer can invite bot to join his `WebChannel`.
@@ -57,7 +57,7 @@ class BotServer {
     this.webChannels = []
 
     /**
-     * @type {function(wc: WebChannel)}
+     * @param {WebChannel} wc
      */
     this.onWebChannel = wc => {}
   }
@@ -101,20 +101,32 @@ class BotServer {
               }
             } else if ('wcId' in msg) {
               let wc = this.getWebChannel(msg.wcId)
-              if (wc === null) {
-                console.log('Listen on: ' + this.settings.listenOn)
-                if (wc === null) wc = new WebChannel(this.settings)
-                wc.id = msg.wcId
-                this.addWebChannel(wc)
-                wc.join(ws).then(() => { this.onWebChannel(wc) })
-              } else if ('senderId' in msg) {
-                ServiceFactory.get(CHANNEL_BUILDER).onChannel(wc, ws, msg.senderId)
+              if ('senderId' in msg) {
+                if (wc !== null) {
+                  ServiceFactory.get(CHANNEL_BUILDER).onChannel(wc, ws, msg.senderId)
+                } else {
+                  ws.close(WEB_CHANNEL_NOT_FOUND, `${msg.wcId} webChannel was not found (message received from ${msg.senderId})`)
+                  console.error(`${msg.wcId} webChannel was not found (message received from ${msg.senderId})`)
+                }
               } else {
-                ws.close(MESSAGE_UNKNOWN_ATTRIBUTE, 'Unsupported message protocol')
+                if (wc === null) {
+                  wc = new WebChannel(this.settings)
+                  wc.id = msg.wcId
+                  this.addWebChannel(wc)
+                  wc.join(ws).then(() => { this.onWebChannel(wc) })
+                } else if (wc.members.length === 0) {
+                  this.removeWebChannel(wc)
+                  wc = new WebChannel(this.settings)
+                  wc.id = msg.wcId
+                  this.addWebChannel(wc)
+                  wc.join(ws).then(() => { this.onWebChannel(wc) })
+                } else {
+                  console.error(`Bot refused to join ${msg.wcId} webChannel, because it is already in use`)
+                }
               }
             }
           } catch (err) {
-            ws.close(MESSAGE_TYPE_ERROR, 'msg')
+            ws.close(MESSAGE_TYPE_ERROR, `Unsupported message type: ${err.message}`)
             console.error(`Unsupported message type: ${err.message}`)
           }
         }
@@ -149,12 +161,19 @@ class BotServer {
   /**
    * Add `WebChannel`.
    *
-   * @param {type} wc Description
-   *
-   * @returns {type} Description
+   * @param {WebChannel} wc Description
    */
   addWebChannel (wc) {
     this.webChannels[this.webChannels.length] = wc
+  }
+
+  /**
+   * Remove `WebChannel`
+   *
+   * @param {WebChannel} wc
+   */
+  removeWebChannel (wc) {
+    this.webChannels.splice(this.webChannels.indexOf(wc), 1)
   }
 }
 
