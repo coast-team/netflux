@@ -6,14 +6,12 @@ import MessageBuilderService from 'service/MessageBuilderService'
 
 /**
  * {@link WebRTCService} identifier.
- * @ignore
  * @type {number}
  */
 const WEB_RTC = 0
 
 /**
 * {@link WebSocketService} identifier.
-* @ignore
 * @type {number}
 */
 const WEB_SOCKET = 1

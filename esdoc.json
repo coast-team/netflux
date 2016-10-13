@@ -1,4 +1,12 @@
 {
-  "source": "./src",
-  "destination": "./esdoc"
+  "source": "src",
+  "destination": "./esdoc",
+  "title": "Netflux",
+  "manual": {
+    "asset": "manual/asset",
+    "usage": ["manual/usage.md"],
+    "installation": ["manual/installation.md"],
+    "configuration": ["manual/configuration.md"],
+    "example": ["manual/examples/3peers.md"]
+  }
 }
