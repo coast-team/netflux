@@ -57,19 +57,19 @@ class BotServer {
     this.webChannels = []
 
     /**
-     * @param {WebChannel} wc
+     * @type {function(wc: WebChannel)}
      */
-    this.onWebChannel = wc => {}
+    this.onWebChannel = () => {}
   }
 
   /**
    * Starts listen on socket.
    *
-   * @returns {Promise<, string>}
+   * @returns {Promise<undefined,string>}
    */
   start () {
     return new Promise((resolve, reject) => {
-      let WebSocketServer = require('ws').Server
+      const WebSocketServer = require('ws').Server
       this.server = new WebSocketServer({
         host: this.settings.host,
         port: this.settings.port
@@ -90,9 +90,9 @@ class BotServer {
       this.server.on('connection', ws => {
         ws.onmessage = msgEvt => {
           try {
-            let msg = JSON.parse(msgEvt.data)
+            const msg = JSON.parse(msgEvt.data)
             if ('join' in msg) {
-              let wc = this.getWebChannel(msg.join)
+              const wc = this.getWebChannel(msg.join)
               if (wc === null) {
                 ws.send(JSON.stringify({isKeyOk: false}))
               } else {
@@ -161,7 +161,7 @@ class BotServer {
   /**
    * Add `WebChannel`.
    *
-   * @param {WebChannel} wc Description
+   * @param {WebChannel} wc
    */
   addWebChannel (wc) {
     this.webChannels[this.webChannels.length] = wc

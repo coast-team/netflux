@@ -1,4 +1,4 @@
-let NodeCloseEvent = class CloseEvent {
+const NodeCloseEvent = class CloseEvent {
   constructor (options = {}) {
     this.wasClean = options.wasClean
     this.code = options.code
@@ -20,7 +20,7 @@ class Util {
    * @returns {CloseEvent|NodeCloseEvent}
    */
   static createCloseEvent (code, reason = '', wasClean = true) {
-    let obj = {wasClean, code, reason}
+    const obj = {wasClean, code, reason}
     if (Util.isBrowser()) {
       return new CloseEvent('netfluxClose', obj)
     } else {
@@ -67,7 +67,7 @@ class Util {
       '(?:\\S+(?::\\S*)?@)?' +
       '(?:'
 
-    let tld = '(?:\\.(?:[a-z\\u00a1-\\uffff]{2,}))?'
+    const tld = '(?:\\.(?:[a-z\\u00a1-\\uffff]{2,}))?'
 
     regex +=
         // IP address dotted notation octets

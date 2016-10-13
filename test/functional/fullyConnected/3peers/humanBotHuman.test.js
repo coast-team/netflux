@@ -3,7 +3,7 @@ import * as helper from 'util/helper'
 
 xdescribe('🙂 🤖 🙂  || 🙂 🙂 🤖  fully connected', () => {
   const key = 'humanBotHuman'
-  let signalingURL = helper.SIGNALING_URL
+  const signalingURL = helper.SIGNALING_URL
   let wc
   let botId
 

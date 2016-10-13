@@ -1,6 +1,6 @@
-let rollup = require('rollup')
-let filesize = require('rollup-plugin-filesize')
-let includePaths = require('rollup-plugin-includepaths')
+const rollup = require('rollup')
+const filesize = require('rollup-plugin-filesize')
+const includePaths = require('rollup-plugin-includepaths')
 
 // Build distributions
 rollup.rollup({

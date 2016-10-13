@@ -11,13 +11,13 @@ server.start()
       wc.onMessage = (id, msg, isBroadcast) => helper.onMessageForBot(wc, id, msg, isBroadcast)
     }
 
-    let wcSocketChrome = create({signalingURL: helper.SIGNALING_URL})
+    const wcSocketChrome = create({signalingURL: helper.SIGNALING_URL})
     wcSocketChrome.id = helper.CHROME_WC_ID
     wcSocketChrome.onMessage = (id, msg, isBroadcast) => helper.onMessageForBot(wcSocketChrome, id, msg, isBroadcast)
 
     server.addWebChannel(wcSocketChrome)
 
-    let wcSocketFirefox = create({signalingURL: helper.SIGNALING_URL})
+    const wcSocketFirefox = create({signalingURL: helper.SIGNALING_URL})
     wcSocketFirefox.id = helper.FIREFOX_WC_ID
     wcSocketFirefox.onMessage = (id, msg, isBroadcast) => helper.onMessageForBot(wcSocketFirefox, id, msg, isBroadcast)
     server.addWebChannel(wcSocketFirefox)

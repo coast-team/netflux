@@ -4,8 +4,8 @@ import smallStr from 'util/200kb.txt'
 import bigStr from 'util/4mb.txt'
 
 describe('Fully connected: 3 peers', () => {
-  let signalingURL = helper.SIGNALING_URL
-  let wcs = []
+  const signalingURL = helper.SIGNALING_URL
+  const wcs = []
   afterAll(() => {
     wcs[0].leave()
     wcs[1].leave()
@@ -14,8 +14,8 @@ describe('Fully connected: 3 peers', () => {
 
   describe('Should establish a connection', () => {
     function* checkJoining (resolve, wc) {
-      let id1 = yield
-      let id2 = yield
+      const id1 = yield
+      const id2 = yield
       expect(id1).not.toEqual(id2)
       for (let e of wcs) {
         if (e.myId !== wc.myId) {
@@ -24,8 +24,8 @@ describe('Fully connected: 3 peers', () => {
       }
       resolve()
     }
-    let allJoiningDetectedBy = wc => new Promise((resolve, reject) => {
-      let gen = checkJoining(resolve, wc)
+    const allJoiningDetectedBy = wc => new Promise((resolve, reject) => {
+      const gen = checkJoining(resolve, wc)
       gen.next()
       wc.onPeerJoin = id => gen.next(id)
     })
@@ -109,7 +109,7 @@ describe('Fully connected: 3 peers', () => {
     }
 
     helper.itBrowser(true, '~200 KB string', done => {
-      let groups = []
+      const groups = []
       for (let i = 0; i < 3; i++) {
         groups[i] = new helper.TestGroup(wcs[i], null)
         groups[i].set(String, smallStr + i)
@@ -120,10 +120,10 @@ describe('Fully connected: 3 peers', () => {
     })
 
     helper.itBrowser(true, '~4 MB string', done => {
-      let indexes = [0, 1, 2]
-      let index1 = Math.round(2 * Math.random())
+      const indexes = [0, 1, 2]
+      const index1 = Math.round(2 * Math.random())
       indexes.splice(index1, 1)
-      let index2 = indexes[Math.round(Math.random())]
+      const index2 = indexes[Math.round(Math.random())]
       wcs[index1].onMessage = (id, msg) => {
         expect(id).toEqual(wcs[index2].myId)
         expect(msg === bigStr).toBeTruthy()
@@ -133,19 +133,19 @@ describe('Fully connected: 3 peers', () => {
     }, 4000)
 
     it(`${helper.MSG_NUMBER} small messages`, done => {
-      let msgs = []
+      const msgs = []
       for (let i = 0; i < 3; i++) msgs[i] = []
-      let nb = Math.floor(helper.MSG_NUMBER / 3)
+      const nb = Math.floor(helper.MSG_NUMBER / 3)
       for (let i = 0; i < nb; i++) {
         msgs[0][i] = helper.randStr()
         msgs[1][i] = helper.randStr()
         msgs[2][i] = helper.randStr()
       }
-      let startSend = index => new Promise((resolve, reject) => {
+      const startSend = index => new Promise((resolve, reject) => {
         for (let msg of msgs[index]) wcs[index].send(msg)
         resolve()
       })
-      let allMessagesReceived = index => {
+      const allMessagesReceived = index => {
         return new Promise((resolve, reject) => {
           let counter1 = 0
           let counter2 = 0

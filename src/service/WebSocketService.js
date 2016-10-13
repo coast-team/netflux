@@ -25,7 +25,7 @@ class WebSocketService extends Service {
   connect (url) {
     return new Promise((resolve, reject) => {
       try {
-        let ws = new WebSocket(url)
+        const ws = new WebSocket(url)
         ws.onopen = () => resolve(ws)
         // Timeout for node (otherwise it will loop forever if incorrect address)
         setTimeout(() => {

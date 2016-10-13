@@ -1,0 +1,41 @@
+{
+  "extends": [
+    "conaclos/esnext-base",
+    "standard"
+  ],
+  "rules": {
+    "default-case": 0,
+    "no-console": 0,
+    "no-continue": 0,
+    "no-loop-func": 0,
+    "no-param-reassign": 0,
+    "no-shadow": 0,
+    "no-sync": 0,
+    "no-use-before-define": 0,
+    "prefer-const": 0
+  },
+  "globals": {
+    "netflux": true,
+    "jasmine": true,
+    "describe": true,
+    "xdescribe": true,
+    "it": true,
+    "xit": true,
+    "expect": true,
+    "beforeEach": true,
+    "afterEach": true,
+    "beforeAll": true,
+    "afterAll": true,
+    "spyOn": true,
+    "DOMException": true,
+    "RTCPeerConnection": true,
+    "RTCSessionDescription": true,
+    "RTCDataChannel": true,
+    "RTCIceCandidate": true,
+    "WebSocket": true,
+    "TextEncoder": true,
+    "TextDecoder": true,
+    "Event": true,
+    "CloseEvent": true
+  }
+}

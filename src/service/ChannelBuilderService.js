@@ -53,8 +53,8 @@ class ChannelBuilderService extends Service {
    * @returns {{listenOn: string, connectors: number[]}}
    */
   availableConnectors (wc) {
-    let res = {}
-    let connectors = []
+    const res = {}
+    const connectors = []
     if (webRTCAvailable) connectors[connectors.length] = WEB_RTC
     if (wc.settings.listenOn !== '') {
       connectors[connectors.length] = WEB_SOCKET
@@ -75,7 +75,7 @@ class ChannelBuilderService extends Service {
   onChannel (wc, channel, senderId) {
     wc.initChannel(channel, senderId)
       .then(channel => {
-        let pendReq = super.getPendingRequest(wc, senderId)
+        const pendReq = super.getPendingRequest(wc, senderId)
         if (pendReq !== null) pendReq.resolve(channel)
       })
   }
@@ -87,9 +87,9 @@ class ChannelBuilderService extends Service {
    * @param {Object} msg
    */
   onMessage (channel, senderId, recepientId, msg) {
-    let wc = channel.webChannel
-    let myConnectObj = this.availableConnectors(wc)
-    let myConnectors = myConnectObj.connectors
+    const wc = channel.webChannel
+    const myConnectObj = this.availableConnectors(wc)
+    const myConnectors = myConnectObj.connectors
 
     if ('failedReason' in msg) {
       super.getPendingRequest(wc, senderId).reject(msg.failedReason)

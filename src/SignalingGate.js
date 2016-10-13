@@ -59,7 +59,7 @@ class SignalingGate {
           ws.onerror = err => reject(err.message)
           ws.onmessage = evt => {
             try {
-              let msg = JSON.parse(evt.data)
+              const msg = JSON.parse(evt.data)
               if ('isKeyOk' in msg) {
                 if (msg.isKeyOk) {
                   ServiceFactory.get(WEB_RTC, this.webChannel.settings.iceServers)

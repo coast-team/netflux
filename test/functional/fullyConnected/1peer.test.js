@@ -2,7 +2,7 @@ import {create} from 'src/index'
 import {SIGNALING_URL} from 'util/helper'
 
 describe('🙂', () => {
-  let wc = create({signalingURL: SIGNALING_URL})
+  const wc = create({signalingURL: SIGNALING_URL})
   it('Should construct a WebChannel', () => {
     expect(wc.id).not.toBeNull()
     expect(wc.id).not.toBeUndefined()

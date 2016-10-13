@@ -5,7 +5,7 @@ describe('WebSocketService', () => {
   const ONLINE_SECURE_SERVER = 'wss://sigver-coastteam.rhcloud.com:8443'
   const LOCAL_SERVER = 'ws://localhost:8000'
   const WRONG_URL = 'https://github.com:8100/coast-team/netflux'
-  let webSocketService = new WebSocketService()
+  const webSocketService = new WebSocketService()
   let socket = {}
 
   afterEach(() => {
