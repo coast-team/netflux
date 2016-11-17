@@ -34,8 +34,8 @@ Universal Module Definition module is compatible with AMD, CommonJS and "global"
 ```
 
 **CDN**
- - Release: https://cdn.rawgit.com/coast-team/netflux/v1.0.0-rc.3/dist/netflux.es2015.umd.js (Instead of `v1.0.0-rc.3` you may specify one of the [available releases](https://github.com/coast-team/netflux/releases))
- - Nightly: https://github.com/coast-team/netflux/blob/master/dist/netflux.es2015.umd.js
+ - Release: https://cdn.rawgit.com/coast-team/netflux/v1.0.0-rc.4/dist/netflux.es5.umd.min.js
+ - Nightly: https://github.com/coast-team/netflux/blob/master/dist/netflux.es6.js
 
 
 ## NodeJS
