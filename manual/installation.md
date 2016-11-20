@@ -5,8 +5,8 @@ npm install -S netflux
 Netflux has an optional dependency: `wrtc`. This package provides WebRTC API in NodeJS. It is optional because Netflux can use `WebSocket` instead. For some use cases maybe you still want to connect your server to the peer to peer network via `RTCDataChannel`, then you have to successfully install this dependency.
 
 If you have problems with `wrtc` installation then:
-- For Ubuntu 16.04 execute: `sudo apt-get install libexpat1-dev`
-- For other systems, consult `wrtc` home page: https://github.com/js-platform/node-webrtc
+- For Ubuntu 16.04 execute: `sudo apt-get install pkg-config libncurses5-dev libssl-dev libnss3-dev libexpat1-dev`
+- For another system, consult `wrtc` home page: https://github.com/js-platform/node-webrtc
 
 
 # What you need
