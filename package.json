@@ -41,7 +41,9 @@
     "commit": "git-cz",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
     "lint": "eslint ./",
-    "doc": "esdoc -c esdoc.json"
+    "doc": "esdoc -c esdoc.json",
+    "precommit": "npm run test:coverage",
+    "commitmsg": "validate-commit-msg"
   },
   "dependencies": {
     "text-encoding": "^0.6.0",
@@ -62,7 +64,7 @@
     "eslint-config-standard": "^6.2.0",
     "eslint-plugin-promise": "^3.0.0",
     "eslint-plugin-standard": "^2.0.0",
-    "ghooks": "^1.0.1",
+    "husky": "^0.11.9",
     "istanbul": "^0.4.3",
     "jasmine": "^2.4.2",
     "jasmine-core": "^2.4.2",
@@ -87,12 +89,10 @@
     "rollup-plugin-uglify": "^1.0.1",
     "semantic-release": "^4.3.5",
     "sigver": "^7.1.0",
-    "uglify-js": "^2.7.3"
+    "uglify-js": "^2.7.3",
+    "validate-commit-msg": "^2.8.2"
   },
   "config": {
-    "ghooks": {
-      "pre-commit": "npm run test:coverage"
-    },
     "commitizen": {
       "path": "node_modules/cz-conventional-changelog"
     }
