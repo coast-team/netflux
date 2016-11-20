@@ -94,6 +94,33 @@ class Util {
     if (!(new RegExp(regex, 'i')).exec(str)) return false
     return true
   }
+
+  static require (module) {
+    try {
+      return require(module)
+    } catch (err) {
+      console.error(`${module} could not be found: ${err}`)
+      return undefined
+    }
+  }
+
+  static get WEB_RTC_LIB () { return 1 }
+  static get WEB_SOCKET_LIB () { return 2 }
+  static get TEXT_ENCODING_LIB () { return 3 }
+
+  static getLib (libConst) {
+    switch (libConst) {
+      case Util.WEB_RTC_LIB:
+        return Util.isBrowser() ? window : Util.require('wrtc')
+      case Util.WEB_SOCKET_LIB:
+        return Util.isBrowser() ? window.WebSocket : Util.require('ws')
+      case Util.TEXT_ENCODING_LIB:
+        return Util.isBrowser() ? window : Util.require('text-encoding')
+      default:
+        console.error(`${libConst} is unknown lib constant. See Util`)
+        return undefined
+    }
+  }
 }
 
 export default Util

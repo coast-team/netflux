@@ -2,27 +2,10 @@ import 'webrtc-adapter'
 import Util from 'Util'
 import Service from 'service/Service'
 import ServiceFactory, {CHANNEL_BUILDER} from 'ServiceFactory'
+const wrtc = Util.getLib(Util.WEB_RTC_LIB)
 
 const CONNECT_TIMEOUT = 30000
 const REMOVE_ITEM_TIMEOUT = 5000
-let src
-/**
-* @ignore
- * @type {boolean}
- */
-let webRTCAvailable = true
-if (Util.isBrowser()) {
-  src = window
-} else {
-  try {
-    src = require('wrtc')
-  } catch (err) {
-    src = {}
-    webRTCAvailable = false
-  }
-}
-const RTCPeerConnection = src.RTCPeerConnection
-const RTCIceCandidate = src.RTCIceCandidate
 
 /**
  * Service class responsible to establish connections between peers via
@@ -232,7 +215,7 @@ class WebRTCService extends Service {
    * @return {RTCPeerConnection}
    */
   createPeerConnection (onCandidate) {
-    const pc = new RTCPeerConnection({iceServers: this.iceServers})
+    const pc = new wrtc.RTCPeerConnection({iceServers: this.iceServers})
     pc.isRemoteDescriptionSet = false
     pc.addReceivedCandidates = candidates => {
       pc.isRemoteDescriptionSet = true
@@ -298,7 +281,7 @@ class WebRTCService extends Service {
    */
   addIceCandidate (obj, candidate) {
     if (obj !== null && obj.pc && obj.pc.isRemoteDescriptionSet) {
-      obj.pc.addIceCandidate(new RTCIceCandidate(candidate))
+      obj.pc.addIceCandidate(new wrtc.RTCIceCandidate(candidate))
         .catch(evt => console.error(`Add ICE candidate: ${evt.message}`))
     } else obj.candidates[obj.candidates.length] = candidate
   }
@@ -315,4 +298,3 @@ class CandidatesBuffer {
 }
 
 export default WebRTCService
-export {webRTCAvailable}

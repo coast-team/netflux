@@ -1,10 +1,7 @@
 import Util from 'Util'
 import Service from 'service/Service'
 import {USER_DATA} from 'WebChannel'
-
-const src = Util.isBrowser() ? window : require('text-encoding')
-const TextEncoder = src.TextEncoder
-const TextDecoder = src.TextDecoder
+const ted = Util.getLib(Util.TEXT_ENCODING_LIB)
 
 /**
  * Maximum size of the user message sent over `Channel`. Is meant without metadata.
@@ -186,7 +183,7 @@ class MessageBuilderService extends Service {
    * @returns {ArrayBuffer} - Built message
    */
   msg (code, senderId = null, recepientId = null, data = {}) {
-    const msgEncoded = (new TextEncoder()).encode(JSON.stringify(data))
+    const msgEncoded = (new ted.TextEncoder()).encode(JSON.stringify(data))
     const msgSize = msgEncoded.byteLength + HEADER_OFFSET
     const dataView = this.initHeader(code, senderId, recepientId, msgSize)
     const fullMsg = new Uint8Array(dataView.buffer)
@@ -238,7 +235,7 @@ class MessageBuilderService extends Service {
    */
   readInternalMessage (data) {
     const uInt8Array = new Uint8Array(data)
-    return JSON.parse((new TextDecoder())
+    return JSON.parse((new ted.TextDecoder())
       .decode(uInt8Array.subarray(HEADER_OFFSET, uInt8Array.byteLength))
     )
   }
@@ -290,7 +287,7 @@ class MessageBuilderService extends Service {
       case U_INT_8_ARRAY_TYPE:
         return new Uint8Array(buffer)
       case STRING_TYPE:
-        return new TextDecoder().decode(new Uint8Array(buffer))
+        return new ted.TextDecoder().decode(new Uint8Array(buffer))
       case INT_8_ARRAY_TYPE:
         return new Int8Array(buffer)
       case U_INT_8_CLAMPED_ARRAY_TYPE:
@@ -329,7 +326,7 @@ class MessageBuilderService extends Service {
       result.content = data
     } else if (typeof data === 'string' || data instanceof String) {
       result.type = STRING_TYPE
-      result.content = new TextEncoder().encode(data)
+      result.content = new ted.TextEncoder().encode(data)
     } else {
       result.content = new Uint8Array(data.buffer)
       if (data instanceof Int8Array) {

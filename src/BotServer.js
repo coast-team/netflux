@@ -1,5 +1,6 @@
 import ServiceFactory, {WEB_SOCKET, CHANNEL_BUILDER, FULLY_CONNECTED} from 'ServiceFactory'
 import WebChannel from 'WebChannel'
+import Util from 'Util'
 
 const MESSAGE_TYPE_ERROR = 4000
 const WEB_CHANNEL_NOT_FOUND = 4001
@@ -69,7 +70,7 @@ class BotServer {
    */
   start () {
     return new Promise((resolve, reject) => {
-      const WebSocketServer = require('ws').Server
+      const WebSocketServer = Util.require('ws').Server
       this.server = new WebSocketServer({
         host: this.settings.host,
         port: this.settings.port

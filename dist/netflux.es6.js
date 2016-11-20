@@ -551,28 +551,39 @@ class Util {
     if (!(new RegExp(regex, 'i')).exec(str)) return false
     return true
   }
+
+  static require (module) {
+    try {
+      return require(module)
+    } catch (err) {
+      console.error(`${module} could not be found: ${err}`);
+      return undefined
+    }
+  }
+
+  static get WEB_RTC_LIB () { return 1 }
+  static get WEB_SOCKET_LIB () { return 2 }
+  static get TEXT_ENCODING_LIB () { return 3 }
+
+  static getLib (libConst) {
+    switch (libConst) {
+      case Util.WEB_RTC_LIB:
+        return Util.isBrowser() ? window : Util.require('wrtc')
+      case Util.WEB_SOCKET_LIB:
+        return Util.isBrowser() ? window.WebSocket : Util.require('ws')
+      case Util.TEXT_ENCODING_LIB:
+        return Util.isBrowser() ? window : Util.require('text-encoding')
+      default:
+        console.error(`${libConst} is unknown lib constant. See Util`);
+        return undefined
+    }
+  }
 }
+
+const wrtc = Util.getLib(Util.WEB_RTC_LIB);
 
 const CONNECT_TIMEOUT = 30000;
 const REMOVE_ITEM_TIMEOUT = 5000;
-let src;
-/**
-* @ignore
- * @type {boolean}
- */
-let webRTCAvailable = true;
-if (Util.isBrowser()) {
-  src = window;
-} else {
-  try {
-    src = require('wrtc');
-  } catch (err) {
-    src = {};
-    webRTCAvailable = false;
-  }
-}
-const RTCPeerConnection$1 = src.RTCPeerConnection;
-const RTCIceCandidate$1 = src.RTCIceCandidate;
 
 /**
  * Service class responsible to establish connections between peers via
@@ -782,7 +793,7 @@ class WebRTCService extends Service {
    * @return {RTCPeerConnection}
    */
   createPeerConnection (onCandidate) {
-    const pc = new RTCPeerConnection$1({iceServers: this.iceServers});
+    const pc = new wrtc.RTCPeerConnection({iceServers: this.iceServers});
     pc.isRemoteDescriptionSet = false;
     pc.addReceivedCandidates = candidates => {
       pc.isRemoteDescriptionSet = true;
@@ -848,7 +859,7 @@ class WebRTCService extends Service {
    */
   addIceCandidate (obj, candidate) {
     if (obj !== null && obj.pc && obj.pc.isRemoteDescriptionSet) {
-      obj.pc.addIceCandidate(new RTCIceCandidate$1(candidate))
+      obj.pc.addIceCandidate(new wrtc.RTCIceCandidate(candidate))
         .catch(evt => console.error(`Add ICE candidate: ${evt.message}`));
     } else obj.candidates[obj.candidates.length] = candidate;
   }
@@ -864,14 +875,9 @@ class CandidatesBuffer {
   }
 }
 
-const WebSocket = Util.isBrowser() ? window.WebSocket : require('ws');
+const WebSocket = Util.getLib(Util.WEB_SOCKET_LIB);
+
 const CONNECT_TIMEOUT$1 = 10000;
-/**
- * One of the web socket state constant.
- * @ignore
- * @type {number}
- */
-const OPEN = WebSocket.OPEN;
 
 /**
  * Service class responsible to establish connections between peers via
@@ -892,11 +898,13 @@ class WebSocketService extends Service {
         ws.onopen = () => resolve(ws);
         // Timeout for node (otherwise it will loop forever if incorrect address)
         setTimeout(() => {
-          if (ws.readyState !== OPEN) {
+          if (ws.readyState !== ws.OPEN) {
             reject(`WebSocket connection timeout with ${url}`);
           }
         }, CONNECT_TIMEOUT$1);
-      } catch (err) { reject(err.message); }
+      } catch (err) {
+        reject(err.message);
+      }
     })
   }
 
@@ -955,7 +963,9 @@ class ChannelBuilderService extends Service {
   availableConnectors (wc) {
     const res = {};
     const connectors = [];
-    if (webRTCAvailable) connectors[connectors.length] = WEB_RTC;
+    if (Util.getLib(Util.WEB_RTC_LIB) !== undefined) {
+      connectors[connectors.length] = WEB_RTC;
+    }
     if (wc.settings.listenOn !== '') {
       connectors[connectors.length] = WEB_SOCKET;
       res.listenOn = wc.settings.listenOn;
@@ -1443,7 +1453,7 @@ class SignalingGate {
    * closed
    */
   isOpen () {
-    return this.ws !== null && this.ws.readyState === OPEN
+    return this.ws !== null && this.ws.readyState === this.ws.OPEN
   }
 
   /**
@@ -2009,9 +2019,7 @@ class WebChannel {
   }
 }
 
-const src$1 = Util.isBrowser() ? window : require('text-encoding');
-const TextEncoder = src$1.TextEncoder;
-const TextDecoder = src$1.TextDecoder;
+const ted = Util.getLib(Util.TEXT_ENCODING_LIB);
 
 /**
  * Maximum size of the user message sent over `Channel`. Is meant without metadata.
@@ -2193,7 +2201,7 @@ class MessageBuilderService extends Service {
    * @returns {ArrayBuffer} - Built message
    */
   msg (code, senderId = null, recepientId = null, data = {}) {
-    const msgEncoded = (new TextEncoder()).encode(JSON.stringify(data));
+    const msgEncoded = (new ted.TextEncoder()).encode(JSON.stringify(data));
     const msgSize = msgEncoded.byteLength + HEADER_OFFSET;
     const dataView = this.initHeader(code, senderId, recepientId, msgSize);
     const fullMsg = new Uint8Array(dataView.buffer);
@@ -2245,7 +2253,7 @@ class MessageBuilderService extends Service {
    */
   readInternalMessage (data) {
     const uInt8Array = new Uint8Array(data);
-    return JSON.parse((new TextDecoder())
+    return JSON.parse((new ted.TextDecoder())
       .decode(uInt8Array.subarray(HEADER_OFFSET, uInt8Array.byteLength))
     )
   }
@@ -2297,7 +2305,7 @@ class MessageBuilderService extends Service {
       case U_INT_8_ARRAY_TYPE:
         return new Uint8Array(buffer)
       case STRING_TYPE:
-        return new TextDecoder().decode(new Uint8Array(buffer))
+        return new ted.TextDecoder().decode(new Uint8Array(buffer))
       case INT_8_ARRAY_TYPE:
         return new Int8Array(buffer)
       case U_INT_8_CLAMPED_ARRAY_TYPE:
@@ -2336,7 +2344,7 @@ class MessageBuilderService extends Service {
       result.content = data;
     } else if (typeof data === 'string' || data instanceof String) {
       result.type = STRING_TYPE;
-      result.content = new TextEncoder().encode(data);
+      result.content = new ted.TextEncoder().encode(data);
     } else {
       result.content = new Uint8Array(data.buffer);
       if (data instanceof Int8Array) {
@@ -2591,7 +2599,7 @@ class BotServer {
    */
   start () {
     return new Promise((resolve, reject) => {
-      const WebSocketServer = require('ws').Server;
+      const WebSocketServer = Util.require('ws').Server;
       this.server = new WebSocketServer({
         host: this.settings.host,
         port: this.settings.port

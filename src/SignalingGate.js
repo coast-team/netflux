@@ -1,5 +1,4 @@
 import ServiceFactory, {WEB_RTC, WEB_SOCKET} from 'ServiceFactory'
-import {OPEN} from 'service/WebSocketService'
 
 /**
  * This class represents a door of the `WebChannel` for the current peer. If the door
@@ -87,7 +86,7 @@ class SignalingGate {
    * closed
    */
   isOpen () {
-    return this.ws !== null && this.ws.readyState === OPEN
+    return this.ws !== null && this.ws.readyState === this.ws.OPEN
   }
 
   /**

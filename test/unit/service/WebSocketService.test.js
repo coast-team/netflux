@@ -1,4 +1,4 @@
-import WebSocketService, {OPEN} from 'src/service/WebSocketService'
+import WebSocketService from 'src/service/WebSocketService'
 
 describe('WebSocketService', () => {
   const ONLINE_SERVER = 'ws://sigver-coastteam.rhcloud.com:8000'
@@ -9,7 +9,7 @@ describe('WebSocketService', () => {
   let socket = {}
 
   afterEach(() => {
-    if ('readyState' in socket && socket.readyState === OPEN) socket.close()
+    if ('readyState' in socket && socket.readyState === socket.OPEN) socket.close()
   })
 
   it(`Should open a socket with ${LOCAL_SERVER}`, done => {

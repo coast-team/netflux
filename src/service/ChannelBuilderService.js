@@ -1,4 +1,4 @@
-import {webRTCAvailable} from 'service/WebRTCService'
+import Util from 'Util'
 import Service from 'service/Service'
 import ServiceFactory, {WEB_RTC, WEB_SOCKET} from 'ServiceFactory'
 
@@ -55,7 +55,9 @@ class ChannelBuilderService extends Service {
   availableConnectors (wc) {
     const res = {}
     const connectors = []
-    if (webRTCAvailable) connectors[connectors.length] = WEB_RTC
+    if (Util.getLib(Util.WEB_RTC_LIB) !== undefined) {
+      connectors[connectors.length] = WEB_RTC
+    }
     if (wc.settings.listenOn !== '') {
       connectors[connectors.length] = WEB_SOCKET
       res.listenOn = wc.settings.listenOn
