@@ -1,7 +1,7 @@
 {
   "name": "netflux",
   "description": "Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done.",
-  "version": "1.0.0-rc.4",
+  "version": "1.0.0-rc.5",
   "license": "AGPL-3.0",
   "main": "dist/netflux.es5.umd.min.js",
   "jsnext:main": "dist/netflux.es2015.js",
