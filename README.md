@@ -29,7 +29,7 @@ Full documentation: https://doc.esdoc.org/github.com/coast-team/netflux
 # API
 `create` function is the start point, unless you are developing a peer bot, then consider using `BotServer` (see below). `create` functions return an object of type `WebChannel` which represents the peer to peer network.
 
-`dist/netflux.es2015.js` and `dist/netflux.es2015.umd.js` both exports:
+`dist/netflux.es2015.es.js` and `dist/netflux.es5.umd.minjs` both exports:
 
  - [**create**(settings): WebChannel](https://doc.esdoc.org/github.com/coast-team/netflux/function/index.html#static-function-create)
 
@@ -76,9 +76,6 @@ Full documentation: https://doc.esdoc.org/github.com/coast-team/netflux
   - [**ping**(): Promise<number, string>](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-method-ping)
  - [**WEB_RTC**](https://doc.esdoc.org/github.com/coast-team/netflux/variable/index.html#static-variable-WEB_RTC) constant
  - [**WEB_SOCKET**](https://doc.esdoc.org/github.com/coast-team/netflux/variable/index.html#static-variable-WEB_SOCKET) constant
-
-`dist/netflux.es2015.js` additionally exports:
-
  - [**BotServer**(settings)](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/BotServer.js~BotServer.html)
 
    Members:

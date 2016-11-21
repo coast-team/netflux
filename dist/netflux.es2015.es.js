@@ -565,7 +565,7 @@ class Util {
   static get WEB_SOCKET_LIB () { return 2 }
   static get TEXT_ENCODING_LIB () { return 3 }
 
-  static getLib (libConst) {
+  static requireLib (libConst) {
     switch (libConst) {
       case Util.WEB_RTC_LIB:
         return Util.isBrowser() ? window : Util.require('wrtc')
@@ -580,7 +580,7 @@ class Util {
   }
 }
 
-const wrtc = Util.getLib(Util.WEB_RTC_LIB);
+const wrtc = Util.requireLib(Util.WEB_RTC_LIB);
 
 const CONNECT_TIMEOUT = 30000;
 const REMOVE_ITEM_TIMEOUT = 5000;
@@ -875,7 +875,7 @@ class CandidatesBuffer {
   }
 }
 
-const WebSocket = Util.getLib(Util.WEB_SOCKET_LIB);
+const WebSocket = Util.requireLib(Util.WEB_SOCKET_LIB);
 
 const CONNECT_TIMEOUT$1 = 10000;
 
@@ -963,7 +963,7 @@ class ChannelBuilderService extends Service {
   availableConnectors (wc) {
     const res = {};
     const connectors = [];
-    if (Util.getLib(Util.WEB_RTC_LIB) !== undefined) {
+    if (Util.requireLib(Util.WEB_RTC_LIB) !== undefined) {
       connectors[connectors.length] = WEB_RTC;
     }
     if (wc.settings.listenOn !== '') {
@@ -2019,7 +2019,7 @@ class WebChannel {
   }
 }
 
-const ted = Util.getLib(Util.TEXT_ENCODING_LIB);
+const ted = Util.requireLib(Util.TEXT_ENCODING_LIB);
 
 /**
  * Maximum size of the user message sent over `Channel`. Is meant without metadata.

@@ -108,7 +108,7 @@ class Util {
   static get WEB_SOCKET_LIB () { return 2 }
   static get TEXT_ENCODING_LIB () { return 3 }
 
-  static getLib (libConst) {
+  static requireLib (libConst) {
     switch (libConst) {
       case Util.WEB_RTC_LIB:
         return Util.isBrowser() ? window : Util.require('wrtc')

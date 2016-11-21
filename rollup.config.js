@@ -19,10 +19,10 @@ rollup.rollup({
     })
   ]
 }).then((bundle) => {
-  console.log('ES bundle:')
+  console.log('ES6 code & ES bundle:')
   bundle.write({
     format: 'es',
-    dest: 'dist/netflux.es6.js'
+    dest: 'dist/netflux.es2015.es.js'
   })
 })
 
@@ -45,7 +45,7 @@ rollup.rollup({
     uglify()
   ]
 }).then((bundle) => {
-  console.log('UMD bundle:')
+  console.log('ES5 code & UMD bundle:')
   bundle.write({
     format: 'umd',
     moduleName: 'netflux',

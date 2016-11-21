@@ -1,4 +1,4 @@
-import {create} from 'dist/netflux.es6.js'
+import {create} from 'dist/netflux.es2015.es.js'
 import {SIGNALING_URL, onMessageForBot} from 'test/util/helper'
 
 const wc = create({signalingURL: SIGNALING_URL})

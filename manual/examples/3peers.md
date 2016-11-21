@@ -1,4 +1,4 @@
-Each of the clients in the following examples included `dist/netflux.es2015.umd.js` script in his browser. Thus Netflux is available under global `netflux` variable.
+Each of the clients in the following examples included `dist/netflux.es5.umd.min.js` script in his browser. Thus Netflux is available under global `netflux` variable.
 
 # 3 browsers/clients
 Peers **A**, **B** and **C** will constitute a peer to peer network. We suppose that all of them using the default Signaling server provided by Netflux.

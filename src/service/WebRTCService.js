@@ -2,7 +2,7 @@ import 'webrtc-adapter'
 import Util from 'Util'
 import Service from 'service/Service'
 import ServiceFactory, {CHANNEL_BUILDER} from 'ServiceFactory'
-const wrtc = Util.getLib(Util.WEB_RTC_LIB)
+const wrtc = Util.requireLib(Util.WEB_RTC_LIB)
 
 const CONNECT_TIMEOUT = 30000
 const REMOVE_ITEM_TIMEOUT = 5000
