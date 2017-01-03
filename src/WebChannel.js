@@ -284,8 +284,7 @@ class WebChannel {
   }
 
   /**
-   * Get the data which should be provided to all clients who must join
-   * the `WebChannel`. It is the same data which
+   * Get the data allowing to join the `WebChannel`. It is the same data which
    * {@link WebChannel#open} callback function provides.
    * @returns {OpenData|null} - Data to join the `WebChannel` or null is the `WebChannel` is closed
    */
