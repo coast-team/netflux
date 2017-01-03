@@ -1,7 +1,7 @@
 {
   "name": "netflux",
   "description": "Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done.",
-  "version": "1.0.0-rc.5",
+  "version": "1.0.0-rc.6",
   "license": "AGPL-3.0",
   "main": "dist/netflux.es5.umd.min.js",
   "jsnext:main": "dist/netflux.es2015.js",
@@ -88,7 +88,7 @@
     "rollup-plugin-string": "^2.0.2",
     "rollup-plugin-uglify": "^1.0.1",
     "semantic-release": "^4.3.5",
-    "sigver": "^7.1.0",
+    "sigver": "^8.0.1",
     "uglify-js": "^2.7.3",
     "validate-commit-msg": "^2.8.2"
   },

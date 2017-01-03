@@ -73,7 +73,7 @@ class SignalingGate {
               reject('Server responce is not a JSON string: ' + err.message)
             }
           }
-          ws.send(JSON.stringify({key}))
+          ws.send(JSON.stringify({open: key}))
         })
         .catch(reject)
     })
