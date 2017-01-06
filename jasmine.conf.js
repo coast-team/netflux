@@ -1,6 +1,6 @@
 // Configuration for running tests in NodeJS
 const Jasmine = require('jasmine')
-const SpecReporter = require('jasmine-spec-reporter')
+const SpecReporter = require('jasmine-spec-reporter').SpecReporter
 
 const config = {
   spec_dir: '.rolledupTest',
