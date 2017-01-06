@@ -1,24 +1,31 @@
-# [![NPM](https://nodei.co/npm/netflux.png)](https://nodei.co/npm/netflux/) [![Join the chat at https://gitter.im/coast-team/netflux](https://img.shields.io/badge/GITTER-join%20chat-green.svg?style=flat-square)](https://gitter.im/coast-team/netflux?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)&nbsp;[![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg?style=flat-square)](https://github.com/semantic-release/semantic-release)&nbsp;[![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg?style=flat-square)](http://commitizen.github.io/cz-cli/)&nbsp;
+# <p align="center">Netflux</p>
 
-[![Dependency Status](https://david-dm.org/coast-team/netflux.svg?style=flat-square)](https://david-dm.org/coast-team/netflux)&nbsp;
-[![devDependency Status](https://david-dm.org/coast-team/netflux/dev-status.svg?style=flat-square)](https://david-dm.org/coast-team/netflux?type=dev)&nbsp;
-[![optionalDependencies Status](https://david-dm.org/coast-team/netflux/optional-status.svg?style=flat-square)](https://david-dm.org/coast-team/netflux?type=optional)
+<p align="center">
+  Javascript abstract peer to peer transport API for client and server.<br />
+  Permits to create a fully connected peer to peer network based on WebRTC and WebSocket.<br />
+  Allows to send/receive [String](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/String), [ArrayBuffer](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer), [TypedArray](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/TypedArray) data types over the network.
+<p>
 
-[![Build Status](https://travis-ci.org/coast-team/netflux.svg?branch=master)](https://travis-ci.org/coast-team/netflux)&nbsp;
-[![bitHound Overall Score](https://www.bithound.io/github/coast-team/netflux/badges/score.svg)](https://www.bithound.io/github/coast-team/netflux)&nbsp;
-[![Code Climate](https://codeclimate.com/github/coast-team/netflux/badges/gpa.svg)](https://codeclimate.com/github/coast-team/netflux)&nbsp;
-[![Test Coverage](https://codeclimate.com/github/coast-team/netflux/badges/coverage.svg)](https://codeclimate.com/github/coast-team/netflux/coverage)&nbsp;
-[![Documentation](https://doc.esdoc.org/github.com/coast-team/netflux/badge.svg)](https://doc.esdoc.org/github.com/coast-team/netflux)
+<p align="center">
+  [![npm version](https://img.shields.io/npm/v/netflux.svg?style=flat-square)](https://www.npmjs.com/package/netflux)&nbsp;
+  [![Build Status](https://travis-ci.org/coast-team/netflux.svg?branch=master)](https://travis-ci.org/coast-team/netflux)&nbsp;
+  [![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg?style=flat-square)](https://github.com/semantic-release/semantic-release)&nbsp;
+  [![Join the chat at https://gitter.im/coast-team/netflux](https://img.shields.io/badge/GITTER-join%20chat-green.svg?style=flat-square)](https://gitter.im/coast-team/netflux?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)<br />
+  [![Dependency Status](https://david-dm.org/coast-team/netflux.svg?style=flat-square)](https://david-dm.org/coast-team/netflux)&nbsp;
+  [![peerDependencies Status](https://david-dm.org/coast-team/netflux/peer-status.svg?style=flat-square)](https://david-dm.org/coast-team/netflux?type=peer)&nbsp;
+  [![devDependency Status](https://david-dm.org/coast-team/netflux/dev-status.svg?style=flat-square)](https://david-dm.org/coast-team/netflux?type=dev)<br />
+  [![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg?style=flat-square)](http://commitizen.github.io/cz-cli/)&nbsp;
+  [![bitHound Overall Score](https://www.bithound.io/github/coast-team/netflux/badges/score.svg)](https://www.bithound.io/github/coast-team/netflux)&nbsp;
+  [![Code Climate](https://codeclimate.com/github/coast-team/netflux/badges/gpa.svg)](https://codeclimate.com/github/coast-team/netflux)&nbsp;
+  [![Test Coverage](https://codeclimate.com/github/coast-team/netflux/badges/coverage.svg)](https://codeclimate.com/github/coast-team/netflux/coverage)&nbsp;
+  [![Documentation](https://doc.esdoc.org/github.com/coast-team/netflux/badge.svg)](https://doc.esdoc.org/github.com/coast-team/netflux)
+<p>
 
-Abstract peer to peer transport API for client and server.
+<p align="center">
+  <img src="manual/asset/example_support.png" />
+<p>
 
-Permit to create a fully connected peer to peer network based on WebRTC and WebSocket.
-
-Allows to send/receive the following data types over the network: [String](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/String), [ArrayBuffer](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer), [TypedArray](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/TypedArray).
-
-<p align="center"><img src="manual/asset/example_support.png" /></p>
-
-# Table of contents
+## Table of contents
  - [Installation](https://doc.esdoc.org/github.com/coast-team/netflux/manual/installation.html)
  - [Usage](https://doc.esdoc.org/github.com/coast-team/netflux/manual/usage.html)
  - [Configuration](https://doc.esdoc.org/github.com/coast-team/netflux/manual/configuration.html)
@@ -26,7 +33,7 @@ Allows to send/receive the following data types over the network: [String](https
 
 Full documentation: https://doc.esdoc.org/github.com/coast-team/netflux
 
-# API
+## API
 `create` function is the start point, unless you are developing a peer bot, then consider using `BotServer` (see below). `create` functions return an object of type `WebChannel` which represents the peer to peer network.
 
 `dist/netflux.es2015.es.js` and `dist/netflux.es5.umd.minjs` both exports:
