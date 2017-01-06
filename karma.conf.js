@@ -1,6 +1,7 @@
 // Karma configuration
 // Generated on Tue Dec 22 2015 18:29:31 GMT+0100 (CET)
-
+const TYPE = process.argv[4]
+console.log('TYPE: ' + TYPE)
 module.exports = (config) => {
   config.set({
 
@@ -31,20 +32,16 @@ module.exports = (config) => {
     },
 
     rollupPreprocessor: {
-      rollup: {
-        plugins: [
-          require('rollup-plugin-string')({
-            include: 'test/**/*.txt'
-          }),
-          require('rollup-plugin-includepaths')({
-            paths: ['', 'src/', 'test/', 'dist/'],
-            extensions: ['.js', '.txt']
-          })
-        ]
-      },
-      bundle: {
-        format: 'iife'
-      }
+      plugins: [
+        require('rollup-plugin-string')({
+          include: 'test/**/*.txt'
+        }),
+        require('rollup-plugin-includepaths')({
+          paths: ['', 'src/', 'test/', 'dist/'],
+          extensions: ['.js', '.txt']
+        })
+      ],
+      format: 'iife'
     },
 
     // test results reporter to use
@@ -94,4 +91,65 @@ module.exports = (config) => {
 
     browserNoActivityTimeout: 200000
   })
+
+  if (process.env.TRAVIS || TYPE === 'travis') {
+    Object.assign(config, {
+      browsers: ['Chrome_travis_ci'],
+
+      customLaunchers: {
+        Chrome_travis_ci: {
+          base: 'Chrome',
+          flags: ['--no-sandbox']
+        }
+      },
+
+      coverageReporter: {
+        reporters: [
+          {type: 'text'},
+          {type: 'lcovonly', subdir: '.'}
+        ]
+      },
+      autoWatch: false,
+      singleRun: true,
+      browserNoActivityTimeout: 120000
+    })
+  } else if (TYPE === 'coverage') {
+    Object.assign(config, {
+      rollupPreprocessor: {
+        plugins: [
+          require('rollup-plugin-string')({
+            include: 'test/**/*.txt'
+          }),
+          require('rollup-plugin-includepaths')({
+            paths: ['', 'src/', 'test/'],
+            extensions: ['.js', '.txt']
+          }),
+          require('rollup-plugin-istanbul')({
+            exclude: [
+              'test/**/*.js',
+              'test/*.js',
+              'test/*.txt',
+              'dist/*.js'
+            ]
+          })
+        ],
+        format: 'iife'
+      },
+
+      reporters: ['spec', 'coverage'],
+
+      coverageReporter: {
+        dir: 'coverage',
+        reporters: [
+          {type: 'html'},
+          {type: 'text'},
+          {type: 'lcovonly', subdir: '.'}
+        ]
+      },
+
+      autoWatch: false,
+
+      singleRun: true
+    })
+  }
 }
