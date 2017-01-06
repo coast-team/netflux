@@ -1,12 +1,11 @@
+# Usage
 There are two builds in `dist` folder:
 ```
 dist/netflux.es2015.es.js     // ES2015 code & ES bundle (export/import)
 dist/netflux.es5.umd.min.js   // ES5 code minified & UMD bundle
 ```
 
-Both are ES2015 javascript code without transpiling or polyfills.
-
-# ES2015 module
+## ES2015 module
 ```
 dist/netflux.es2015.es.js
 ```
@@ -21,12 +20,12 @@ If you do not use *jsnext:main* then:
 import {create, BotServer, WEB_RTC, WEB_SOCKET} from './node_modules/netflux/dist/netflux.es2015.es.js'
 ```
 
-# UMD module
+## UMD module
 ```
 dist/netflux.es5.umd.min.js
 ```
 Universal Module Definition module is compatible with AMD, CommonJS and "global" modules. It works in browser and NodeJS.
-## Browser
+### Browser
 ```html
 <script src="netflux.es5.umd.min.js">
   window.netflux !== undefined // true
@@ -38,7 +37,7 @@ Universal Module Definition module is compatible with AMD, CommonJS and "global"
  - Nightly: https://github.com/coast-team/netflux/blob/master/dist/netflux.es2015.es.js
 
 
-## NodeJS
+### NodeJS
 
 ```Javascript
 const netflux = require('netflux')

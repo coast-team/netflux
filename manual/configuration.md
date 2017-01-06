@@ -1,4 +1,4 @@
-# Default settings
+# Configuration
 You can rewrite each of the following settings.
 
 When using [`netflux.create(settings)`](https://doc.esdoc.org/github.com/coast-team/netflux/function/index.html#static-function-create) function, the default `settings` are:
