@@ -21,7 +21,7 @@ describe('WebSocketService', () => {
       .catch(done.fail)
   }, 30000)
 
-  it(`Should open a socket with ${ONLINE_SERVER}`, done => {
+  xit(`Should open a socket with ${ONLINE_SERVER}`, done => {
     webSocketService.connect(ONLINE_SERVER)
       .then(ws => {
         socket = ws
@@ -30,7 +30,7 @@ describe('WebSocketService', () => {
       .catch(done.fail)
   }, 30000)
 
-  it(`Should open a socket with ${ONLINE_SECURE_SERVER}`, done => {
+  xit(`Should open a socket with ${ONLINE_SECURE_SERVER}`, done => {
     webSocketService.connect(ONLINE_SECURE_SERVER)
       .then(ws => {
         socket = ws
