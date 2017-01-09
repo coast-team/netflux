@@ -1,6 +1,6 @@
 # Developer guide
 ## Requirements
-* NodeJS > v4.
+* Node.js 6.x.
 * Chrome, Firefox (stable channels) for run tests.
 
 ## Install
@@ -11,23 +11,14 @@ npm install
 ```
 
 ## Run tests
-Run test in several browsers.
-```
+Node.js and Browsers test:
+```shell
 npm test
-```
-Run test in browser X, where is X is `Chrome` or `Firefox`.
-```
-npm run testin X
 ```
 
 ## Generate documentation
-For API users
-```
+```shell
 npm run doc
-```
-For developers (shows private attributes, functions etc.)
-```
-npm run docdev
 ```
 
 ## ES2015 with Babel
@@ -49,9 +40,7 @@ Release are automated with help of *semantic-release*.
 
 ## Code style
 
-[![js-standard-style](https://cdn.rawgit.com/feross/standard/master/badge.svg)](https://github.com/feross/standard)
-
-The project follows JavaScript Standard Style.
+The project uses Eslint and follows JavaScript Standard Style + some personalised rules.
 
 ## Setup development environment
 Look at Wiki page: [Setup IDE](https://github.com/coast-team/netflux/wiki/Setup-IDE)
