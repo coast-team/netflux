@@ -7,7 +7,7 @@ import Util from 'Util'
  * Maximum identifier number for {@link WebChannel#generateId} function.
  * @type {number}
  */
-const MAX_ID = 4294967295
+const MAX_ID = 2147483647
 
 /**
  * Timout for ping `WebChannel` in milliseconds.
