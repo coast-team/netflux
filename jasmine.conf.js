@@ -3,7 +3,7 @@ const Jasmine = require('jasmine')
 const SpecReporter = require('jasmine-spec-reporter').SpecReporter
 
 const config = {
-  spec_dir: '.rolledupTest',
+  spec_dir: 'test/.rolledup',
   spec_files: [
     'unit/**/*.test.js',
     'functional/fullyConnected/1peer.test.js',

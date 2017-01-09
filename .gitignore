@@ -8,8 +8,6 @@ npm-debug*
 coverage
 
 # Documentation
-doc/*
-!doc/uml.png
 esdoc
 
 # webrtc-adapter

@@ -1,7 +1,11 @@
 // Karma configuration
 // Generated on Tue Dec 22 2015 18:29:31 GMT+0100 (CET)
+
+/*
+  To configurate test run. Possible values: travis, coverage
+ */
 const TYPE = process.argv[4]
-console.log('TYPE: ' + TYPE)
+
 module.exports = (config) => {
   config.set({
 

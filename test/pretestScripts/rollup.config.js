@@ -2,14 +2,14 @@ const rollup = require('rollup')
 const includePaths = require('rollup-plugin-includepaths')
 
 const entries = [
-  'script/botServer.js',
-  'script/botForFirefox.js',
-  'script/botForChrome.js',
-  'script/botForNode.js'
+  'test/pretestScripts/botServer.js',
+  'test/pretestScripts/botForFirefox.js',
+  'test/pretestScripts/botForChrome.js',
+  'test/pretestScripts/botForNode.js'
 ]
 
 for (let entry of entries) {
-  const dest = entry.replace(/^script/, '.rolledupScript')
+  const dest = entry.replace(/pretestScripts/, 'pretestScripts/.rolledup')
   rollup.rollup({
     entry,
     plugins: [

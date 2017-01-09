@@ -1,0 +1,6 @@
+apps:
+  - script: node_modules/.bin/sigver
+  - script: test/pretestScripts/.rolledup/botServer.js
+  - script: test/pretestScripts/.rolledup/botForFirefox.js
+  - script: test/pretestScripts/.rolledup/botForChrome.js
+  - script: test/pretestScripts/.rolledup/botForNode.js

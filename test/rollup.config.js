@@ -17,7 +17,7 @@ function read (path) {
 read('test')
 
 for (let entry of entries) {
-  const dest = entry.replace(/^test/, '.rolledupTest')
+  const dest = entry.replace(/^test/, 'test/.rolledup')
   rollup.rollup({
     entry,
     plugins: [
