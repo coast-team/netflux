@@ -71,7 +71,7 @@
     "karma-rollup-preprocessor": "^3.0.3",
     "karma-spec-reporter": "0.0.26",
     "pm2": "^2.0.12",
-    "rollup": "^0.40.2",
+    "rollup": "^0.41.1",
     "rollup-plugin-babel": "^2.6.1",
     "rollup-plugin-filesize": "^1.0.0",
     "rollup-plugin-includepaths": "^0.1.5",
