@@ -1,6 +1,6 @@
 import {create} from 'src/index'
 import * as helper from 'util/helper'
-const NB_PEERS = 12
+const NB_PEERS = 8
 
 describe(`Fully connected: many peers (${NB_PEERS})`, () => {
   const signalingURL = helper.SIGNALING_URL
