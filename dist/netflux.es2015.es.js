@@ -564,6 +564,7 @@ class Util {
   static get WEB_RTC_LIB () { return 1 }
   static get WEB_SOCKET_LIB () { return 2 }
   static get TEXT_ENCODING_LIB () { return 3 }
+  static get EVENT_SOURCE_LIB () { return 4 }
 
   static requireLib (libConst) {
     switch (libConst) {
@@ -573,6 +574,8 @@ class Util {
         return Util.isBrowser() ? window.WebSocket : Util.require('ws')
       case Util.TEXT_ENCODING_LIB:
         return Util.isBrowser() ? window : Util.require('text-encoding')
+      case Util.EVENT_SOURCE_LIB:
+        return Util.isBrowser() ? window : Util.require('eventsource')
       default:
         console.error(`${libConst} is unknown lib constant. See Util`);
         return undefined
@@ -908,6 +911,54 @@ class WebSocketService extends Service {
     })
   }
 
+}
+
+const EventSource = Util.requireLib(Util.EVENT_SOURCE_LIB);
+
+const CONNECT_TIMEOUT$2 = 2000;
+
+/**
+ * Service class responsible to establish connections between peers via
+ * `WebSocket`.
+ */
+class EventSourceService extends Service {
+
+  /**
+   * Creates EventSource object.
+   *
+   * @param {string} url - Server url
+   * @returns {Promise<EventSource, string>} It is resolved once the WebSocket has been created and rejected otherwise
+   */
+  connect (url) {
+    return new Promise((resolve, reject) => {
+      try {
+        const es = new EventSource(url);
+        es.onerror = err => reject(err.message);
+        es.addEventListener('auth', evtMsg => {
+          es.send = function (str) {
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', url, true);
+
+            xhr.onload = function () {
+              if (this.status !== 200) {
+                es.onerror(new Error(this.statusText));
+              }
+            };
+
+            xhr.onerror = err => es.onerror(new Error(err.message));
+            xhr.send(`${evtMsg.data}@${str}`);
+          };
+          resolve(es);
+        });
+        // Timeout if "auth" event has not been received.
+        setTimeout(() => {
+          reject(`Authentication event has not been received from ${url} within ${CONNECT_TIMEOUT$2}ms`);
+        }, CONNECT_TIMEOUT$2);
+      } catch (err) {
+        reject(err.message);
+      }
+    })
+  }
 }
 
 /**
@@ -2461,6 +2512,12 @@ const WEB_RTC = 0;
 const WEB_SOCKET = 1;
 
 /**
+* {@link WebSocketService} identifier.
+* @type {number}
+*/
+const EVENT_SOURCE = 5;
+
+/**
  * {@link ChannelBuilderService} identifier.
  * @ignore
  * @type {number}
@@ -2509,6 +2566,8 @@ class ServiceFactory {
         return new WebRTCService(WEB_RTC, options)
       case WEB_SOCKET:
         return new WebSocketService(WEB_SOCKET)
+      case EVENT_SOURCE:
+        return new EventSourceService(EVENT_SOURCE)
       case CHANNEL_BUILDER:
         return new ChannelBuilderService(CHANNEL_BUILDER)
       case FULLY_CONNECTED:

@@ -36,6 +36,7 @@
     "TextEncoder": true,
     "TextDecoder": true,
     "Event": true,
-    "CloseEvent": true
+    "CloseEvent": true,
+    "XMLHttpRequest": true
   }
 }

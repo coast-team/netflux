@@ -1,6 +1,7 @@
 import FullyConnectedService from 'service/topology/FullyConnectedService'
 import WebRTCService from 'service/WebRTCService'
 import WebSocketService from 'service/WebSocketService'
+import EventSourceService from 'service/EventSourceService'
 import ChannelBuilderService from 'service/ChannelBuilderService'
 import MessageBuilderService from 'service/MessageBuilderService'
 
@@ -15,6 +16,12 @@ const WEB_RTC = 0
 * @type {number}
 */
 const WEB_SOCKET = 1
+
+/**
+* {@link WebSocketService} identifier.
+* @type {number}
+*/
+const EVENT_SOURCE = 5
 
 /**
  * {@link ChannelBuilderService} identifier.
@@ -65,6 +72,8 @@ class ServiceFactory {
         return new WebRTCService(WEB_RTC, options)
       case WEB_SOCKET:
         return new WebSocketService(WEB_SOCKET)
+      case EVENT_SOURCE:
+        return new EventSourceService(EVENT_SOURCE)
       case CHANNEL_BUILDER:
         return new ChannelBuilderService(CHANNEL_BUILDER)
       case FULLY_CONNECTED:

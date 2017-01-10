@@ -107,6 +107,7 @@ class Util {
   static get WEB_RTC_LIB () { return 1 }
   static get WEB_SOCKET_LIB () { return 2 }
   static get TEXT_ENCODING_LIB () { return 3 }
+  static get EVENT_SOURCE_LIB () { return 4 }
 
   static requireLib (libConst) {
     switch (libConst) {
@@ -116,6 +117,8 @@ class Util {
         return Util.isBrowser() ? window.WebSocket : Util.require('ws')
       case Util.TEXT_ENCODING_LIB:
         return Util.isBrowser() ? window : Util.require('text-encoding')
+      case Util.EVENT_SOURCE_LIB:
+        return Util.isBrowser() ? window : Util.require('eventsource')
       default:
         console.error(`${libConst} is unknown lib constant. See Util`)
         return undefined

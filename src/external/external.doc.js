@@ -27,6 +27,10 @@
  */
 
 /**
+ * @external {EventSource} https://developer.mozilla.org/en/docs/Web/API/EventSource
+ */
+
+/**
  * @external {Promise.resolve} https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Promise/resolve
  */
 
