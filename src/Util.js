@@ -62,7 +62,7 @@ class Util {
     let regex =
       '^' +
       // protocol identifier
-      '(?:(?:wss|ws)://)' +
+      '(?:(?:wss|ws|http|https)://)' +
       // user:pass authentication
       '(?:\\S+(?::\\S*)?@)?' +
       '(?:'
@@ -108,6 +108,7 @@ class Util {
   static get WEB_SOCKET_LIB () { return 2 }
   static get TEXT_ENCODING_LIB () { return 3 }
   static get EVENT_SOURCE_LIB () { return 4 }
+  static get XML_HTTP_REQUEST_LIB () { return 5 }
 
   static requireLib (libConst) {
     switch (libConst) {
@@ -118,7 +119,9 @@ class Util {
       case Util.TEXT_ENCODING_LIB:
         return Util.isBrowser() ? window : Util.require('text-encoding')
       case Util.EVENT_SOURCE_LIB:
-        return Util.isBrowser() ? window : Util.require('eventsource')
+        return Util.isBrowser() ? window.EventSource : Util.require('eventsource')
+      case Util.XML_HTTP_REQUEST_LIB:
+        return Util.isBrowser() ? window.XMLHttpRequest : Util.require('xmlhttprequest').XMLHttpRequest
       default:
         console.error(`${libConst} is unknown lib constant. See Util`)
         return undefined
