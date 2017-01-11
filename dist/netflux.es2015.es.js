@@ -880,7 +880,7 @@ class CandidatesBuffer {
 
 const WebSocket = Util.requireLib(Util.WEB_SOCKET_LIB);
 
-const CONNECT_TIMEOUT$1 = 10000;
+const CONNECT_TIMEOUT$1 = 2000;
 
 /**
  * Service class responsible to establish connections between peers via
@@ -902,7 +902,7 @@ class WebSocketService extends Service {
         // Timeout for node (otherwise it will loop forever if incorrect address)
         setTimeout(() => {
           if (ws.readyState !== ws.OPEN) {
-            reject(`WebSocket connection timeout with ${url}`);
+            reject(`WebSocket connection timeout with ${url} within ${CONNECT_TIMEOUT$1}ms`);
           }
         }, CONNECT_TIMEOUT$1);
       } catch (err) {
@@ -916,6 +916,7 @@ class WebSocketService extends Service {
 const EventSource = Util.requireLib(Util.EVENT_SOURCE_LIB);
 
 const CONNECT_TIMEOUT$2 = 2000;
+const CLOSE_AFTER_RECONNECT_TIMEOUT = 6000;
 
 /**
  * Service class responsible to establish connections between peers via
@@ -932,23 +933,22 @@ class EventSourceService extends Service {
   connect (url) {
     return new Promise((resolve, reject) => {
       try {
-        const es = new EventSource(url);
-        es.onerror = err => reject(err.message);
-        es.addEventListener('auth', evtMsg => {
-          es.send = function (str) {
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', url, true);
-
-            xhr.onload = function () {
-              if (this.status !== 200) {
-                es.onerror(new Error(this.statusText));
-              }
-            };
-
-            xhr.onerror = err => es.onerror(new Error(err.message));
-            xhr.send(`${evtMsg.data}@${str}`);
-          };
-          resolve(es);
+        let reconnectTimeout = null;
+        const res = new RichEventSource(url);
+        res.onerror = err => {
+          reconnectTimeout = setTimeout(() => {
+            res.close();
+          }, CLOSE_AFTER_RECONNECT_TIMEOUT);
+          reject(err.message);
+        };
+        res.onopen = () => {
+          if (reconnectTimeout) {
+            clearTimeout(reconnectTimeout);
+          }
+        };
+        res.addEventListener('auth', evtMsg => {
+          this.auth = evtMsg.data;
+          resolve(res);
         });
         // Timeout if "auth" event has not been received.
         setTimeout(() => {
@@ -958,6 +958,34 @@ class EventSourceService extends Service {
         reject(err.message);
       }
     })
+  }
+}
+
+class RichEventSource extends EventSource.constructor {
+
+  constructor (url) {
+    super(url);
+    this.auth = '';
+    this.onclose = () => {};
+  }
+
+  close () {
+    this.onclose();
+    super.close();
+  }
+
+  send (str) {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', super.url, true);
+
+    xhr.onload = function () {
+      if (this.status !== 200) {
+        this.onerror(new Error(this.statusText));
+      }
+    };
+
+    xhr.onerror = err => this.onerror(new Error(err.message));
+    xhr.send(`${this.auth}@${str}`);
   }
 }
 

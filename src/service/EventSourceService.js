@@ -3,6 +3,7 @@ import Service from 'service/Service'
 const EventSource = Util.requireLib(Util.EVENT_SOURCE_LIB)
 
 const CONNECT_TIMEOUT = 2000
+const CLOSE_AFTER_RECONNECT_TIMEOUT = 6000
 
 /**
  * Service class responsible to establish connections between peers via
@@ -19,23 +20,22 @@ class EventSourceService extends Service {
   connect (url) {
     return new Promise((resolve, reject) => {
       try {
-        const es = new EventSource(url)
-        es.onerror = err => reject(err.message)
-        es.addEventListener('auth', evtMsg => {
-          es.send = function (str) {
-            const xhr = new XMLHttpRequest()
-            xhr.open('POST', url, true)
-
-            xhr.onload = function () {
-              if (this.status !== 200) {
-                es.onerror(new Error(this.statusText))
-              }
-            }
-
-            xhr.onerror = err => es.onerror(new Error(err.message))
-            xhr.send(`${evtMsg.data}@${str}`)
+        let reconnectTimeout = null
+        const res = new RichEventSource(url)
+        res.onerror = err => {
+          reconnectTimeout = setTimeout(() => {
+            res.close()
+          }, CLOSE_AFTER_RECONNECT_TIMEOUT)
+          reject(err.message)
+        }
+        res.onopen = () => {
+          if (reconnectTimeout) {
+            clearTimeout(reconnectTimeout)
           }
-          resolve(es)
+        }
+        res.addEventListener('auth', evtMsg => {
+          this.auth = evtMsg.data
+          resolve(res)
         })
         // Timeout if "auth" event has not been received.
         setTimeout(() => {
@@ -45,6 +45,34 @@ class EventSourceService extends Service {
         reject(err.message)
       }
     })
+  }
+}
+
+class RichEventSource extends EventSource.constructor {
+
+  constructor (url) {
+    super(url)
+    this.auth = ''
+    this.onclose = () => {}
+  }
+
+  close () {
+    this.onclose()
+    super.close()
+  }
+
+  send (str) {
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', super.url, true)
+
+    xhr.onload = function () {
+      if (this.status !== 200) {
+        this.onerror(new Error(this.statusText))
+      }
+    }
+
+    xhr.onerror = err => this.onerror(new Error(err.message))
+    xhr.send(`${this.auth}@${str}`)
   }
 }
 
