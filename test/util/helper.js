@@ -1,7 +1,9 @@
 import Util from 'src/Util'
+import {create} from 'src/index'
 
 // Main signaling server for all tests
 const SIGNALING_URL = 'ws://localhost:8000'
+export const SIGNALING_URL_EVENT_SOURCE = 'http://localhost:8001'
 const BOT = 'ws://localhost:9000'
 const CHROME_WC_ID = 11111
 const FIREFOX_WC_ID = 11111
@@ -109,6 +111,32 @@ function checkMembers (wcs) {
       }
     }
   }
+}
+
+export function createWebChannels (amount, options) {
+  if (amount >= 2) {
+    return new Promise((resolve, reject) => {
+      const wcs = []
+      const counts = []
+      const resPromises = []
+
+      for (let i = 0; i < amount; i++) {
+        wcs[i] = create(options)
+        counts[i] = 1
+        resPromises[i] = new Promise((resolve, reject) => {
+          wcs[i].onPeerJoin = () => { if (++counts[i] === amount) resolve() }
+        })
+      }
+      let resPromise = wcs[0].open()
+      for (let i = 1; i < amount; i++) {
+        resPromise = resPromise.then(() => wcs[i].join(wcs[0].getOpenData().key))
+      }
+      Promise.all(resPromises)
+        .then(() => resolve(wcs))
+      setTimeout(() => reject('createWebChannels timeout'), 4900)
+    })
+  }
+  return Promise.reject('createWebChannels accepts only 2 or more number of web channels')
 }
 
 class TestGroup {

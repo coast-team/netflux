@@ -189,34 +189,9 @@ class WebChannel {
     return new Promise((resolve, reject) => {
       this.onJoin = resolve
       if (keyOrSocket.constructor.name !== 'WebSocket') {
-        if (Util.isURL(url)) {
-          ServiceFactory.get(WEB_SOCKET).connect(url)
-            .then(ws => {
-              ws.onclose = closeEvt => reject(closeEvt.reason)
-              ws.onmessage = evt => {
-                try {
-                  const msg = JSON.parse(evt.data)
-                  if ('isKeyOk' in msg) {
-                    if (msg.isKeyOk) {
-                      if ('useThis' in msg && msg.useThis) {
-                        this.initChannel(ws).catch(reject)
-                      } else {
-                        ServiceFactory.get(WEB_RTC, this.settings.iceServers).connectOverSignaling(ws, keyOrSocket)
-                          .then(channel => {
-                            ws.onclose = null
-                            ws.close()
-                            return this.initChannel(channel)
-                          })
-                          .catch(reject)
-                      }
-                    } else reject(`The key "${keyOrSocket}" was not found`)
-                  } else reject(`Unknown message from the server ${url}: ${evt.data}`)
-                } catch (err) { reject(err.message) }
-              }
-              ws.send(JSON.stringify({join: keyOrSocket}))
-            })
-            .catch(reject)
-        } else reject(`${url} is not a valid URL`)
+        this.gate.join(url, keyOrSocket)
+          .then(con => this.initChannel(con))
+          .catch(reject)
       } else {
         this.initChannel(keyOrSocket).catch(reject)
       }
@@ -299,7 +274,7 @@ class WebChannel {
     if (this.channels.size !== 0) {
       this.members = []
       this.pingTime = 0
-      // this.gate.close()
+      this.gate.close()
       this.manager.leave(this)
     }
   }
@@ -335,7 +310,7 @@ class WebChannel {
    * @returns {Promise}
    */
   ping () {
-    if (this.members.length !== 0 && this.pingTime === 0) {
+    if (this.channels.size !== 0 && this.pingTime === 0) {
       return new Promise((resolve, reject) => {
         if (this.pingTime === 0) {
           this.pingTime = Date.now()
@@ -346,7 +321,7 @@ class WebChannel {
           setTimeout(() => resolve(PING_TIMEOUT), PING_TIMEOUT)
         }
       })
-    } else return Promise.resolve(0)
+    } else return Promise.reject('No peers to ping')
   }
 
   /**

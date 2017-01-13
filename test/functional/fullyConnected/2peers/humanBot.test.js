@@ -5,22 +5,43 @@ import bigStr from 'util/4mb.txt'
 
 describe('🙂 🤖  fully connected', () => {
   const signalingURL = helper.SIGNALING_URL
-  let wc
 
   it('Should establish a connection through socket', done => {
-    wc = create({signalingURL})
+    const wc = create({signalingURL})
     wc.onPeerJoin = id => expect(id).toEqual(wc.members[0])
     spyOn(wc, 'onPeerJoin')
     wc.invite(helper.BOT)
-      .then(id => {
+      .then(() => {
         expect(wc.members.length).toEqual(1)
         expect(wc.onPeerJoin).toHaveBeenCalledTimes(1)
+        wc.leave()
         done()
       })
       .catch(done.fail)
   })
 
+  it('Should ping', done => {
+    const wc = create({signalingURL})
+    wc.invite(helper.BOT)
+      .then(() => wc.ping())
+      .then(p => expect(Number.isInteger(p)).toBeTruthy())
+      .then(() => wc.leave())
+      .then(done)
+      .catch(done.fail)
+  })
+
   describe('Should send/receive', () => {
+    let wc
+
+    beforeAll(done => {
+      wc = create({signalingURL})
+      wc.invite(helper.BOT)
+        .then(() => wc.ping())
+        .then(done)
+    })
+
+    afterAll(() => wc.leave())
+
     it('Private string message', done => {
       const data = helper.randData(String)
       helper.sendReceive(wc, data, done, wc.members[0])
@@ -58,29 +79,32 @@ describe('🙂 🤖  fully connected', () => {
     }, 10000)
   })
 
-  it('Should ping', done => {
-    wc.ping().then(p => expect(Number.isInteger(p)).toBeTruthy()).then(done).catch(done.fail)
-  })
-
   describe('Should leave', () => {
+    let wc
+
+    beforeEach(done => {
+      wc = create({signalingURL})
+      wc.invite(helper.BOT)
+        .then(() => wc.ping())
+        .then(done)
+    })
+
     it('🙂', done => {
-      wc.onMessage = done.fail
       wc.leave()
       expect(wc.members.length).toEqual(0)
-      done()
+      wc.ping()
+        .then(done.fail)
+        .catch(done)
     })
 
     it('🤖', done => {
-      wc.onMessage = done.fail
       wc.onPeerLeave = id => {
         expect(wc.members.length).toEqual(0)
-        done()
+        wc.ping()
+          .then(done.fail)
+          .catch(done)
       }
-      wc.join(wc.id, helper.BOT)
-        .then(() => {
-          wc.sendTo(wc.members[0], JSON.stringify({code: helper.LEAVE_CODE}))
-        })
-        .catch(done.fail)
+      wc.sendTo(wc.members[0], JSON.stringify({code: helper.LEAVE_CODE}))
     })
   })
 })

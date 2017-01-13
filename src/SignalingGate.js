@@ -1,4 +1,5 @@
-import ServiceFactory, {WEB_RTC, WEB_SOCKET} from 'ServiceFactory'
+import ServiceFactory, {WEB_RTC, WEB_SOCKET, EVENT_SOURCE} from 'ServiceFactory'
+import Util from 'Util'
 
 /**
  * This class represents a door of the `WebChannel` for the current peer. If the door
@@ -28,11 +29,11 @@ class SignalingGate {
      */
     this.key = null
     /**
-     * Web socket with the signaling server.
+     * Connection with the signaling server.
      * @private
-     * @type {external:WebSocket|external:ws/WebSocket}
+     * @type {external:WebSocket|external:ws/WebSocket|external:EventSource}
      */
-    this.ws = null
+    this.con = null
   }
 
   /**
@@ -46,24 +47,27 @@ class SignalingGate {
   open (url, onChannel, key = null) {
     return new Promise((resolve, reject) => {
       if (key === null) key = this.generateKey()
-      ServiceFactory.get(WEB_SOCKET).connect(url)
-        .then(ws => {
-          ws.onclose = closeEvt => {
+      this.getConnectionService(url)
+        .connect(url)
+        .then(con => {
+          con.onclose = closeEvt => {
             this.key = null
-            this.ws = null
+            this.con = null
             this.url = null
             this.webChannel.onClose(closeEvt)
             reject(closeEvt.reason)
           }
-          ws.onerror = err => reject(err.message)
-          ws.onmessage = evt => {
+          con.onerror = err => {
+            reject(err.message)
+          }
+          con.onmessage = evt => {
             try {
               const msg = JSON.parse(evt.data)
               if ('isKeyOk' in msg) {
                 if (msg.isKeyOk) {
                   ServiceFactory.get(WEB_RTC, this.webChannel.settings.iceServers)
-                    .listenFromSignaling(ws, onChannel)
-                  this.ws = ws
+                    .listenFromSignaling(con, onChannel)
+                  this.con = con
                   this.key = key
                   this.url = url
                   resolve({url, key})
@@ -73,7 +77,42 @@ class SignalingGate {
               reject('Server responce is not a JSON string: ' + err.message)
             }
           }
-          ws.send(JSON.stringify({open: key}))
+          con.send(JSON.stringify({open: key}))
+        })
+        .catch(err => {
+          reject(err)
+        })
+    })
+  }
+
+  join (url, key) {
+    return new Promise((resolve, reject) => {
+      this.getConnectionService(url)
+        .connect(url)
+        .then(con => {
+          con.onclose = closeEvt => reject(closeEvt.reason)
+          con.onmessage = evt => {
+            try {
+              const msg = JSON.parse(evt.data)
+              if ('isKeyOk' in msg) {
+                if (msg.isKeyOk) {
+                  if ('useThis' in msg && msg.useThis) {
+                    resolve(con)
+                  } else {
+                    ServiceFactory.get(WEB_RTC, this.webChannel.settings.iceServers)
+                      .connectOverSignaling(con, key)
+                      .then(channel => {
+                        con.onclose = null
+                        con.close()
+                        resolve(channel)
+                      })
+                      .catch(reject)
+                  }
+                } else reject(`The key "${key}" not found`)
+              } else reject(`Unknown message from ${url}: ${evt.data}`)
+            } catch (err) { reject(err.message) }
+          }
+          con.send(JSON.stringify({join: key}))
         })
         .catch(reject)
     })
@@ -86,7 +125,7 @@ class SignalingGate {
    * closed
    */
   isOpen () {
-    return this.ws !== null && this.ws.readyState === this.ws.OPEN
+    return this.con !== null && this.con.readyState === this.con.OPEN
   }
 
   /**
@@ -109,7 +148,27 @@ class SignalingGate {
    */
   close () {
     if (this.isOpen()) {
-      this.ws.close()
+      this.con.close()
+    }
+  }
+
+  /**
+   * Get the connection service for signaling server.
+   *
+   * @private
+   * @param {string} url Signaling server url
+   *
+   * @returns {Service}
+   */
+  getConnectionService (url) {
+    if (Util.isURL(url)) {
+      if (url.search(/^wss?/) !== -1) {
+        return ServiceFactory.get(WEB_SOCKET)
+      } else {
+        return ServiceFactory.get(EVENT_SOURCE)
+      }
+    } else {
+      throw new Error(`${url} is not a valid URL`)
     }
   }
 

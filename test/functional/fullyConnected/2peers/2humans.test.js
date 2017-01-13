@@ -4,12 +4,10 @@ import smallStr from 'util/200kb.txt'
 import bigStr from 'util/4mb.txt'
 
 describe('🙂 🙂  fully connected', () => {
-  const signalingURL = helper.SIGNALING_URL
-  const wcs = []
+  const wcOptions = {signalingURL: helper.SIGNALING_URL}
 
   it('Should establish a connection', done => {
-    wcs[0] = create({signalingURL})
-    wcs[1] = create({signalingURL})
+    const wcs = [create(wcOptions), create(wcOptions)]
     Promise.all([
       new Promise((resolve, reject) => {
         wcs[0].onPeerJoin = id => {
@@ -25,16 +23,53 @@ describe('🙂 🙂  fully connected', () => {
           expect(wcs[1].members[0]).toEqual(wcs[0].myId)
         })
     ])
+      .then(() => { for (let wc of wcs) wc.leave() })
       .then(done)
       .catch(done.fail)
   })
 
-  describe('Should send/receive', () => {
-    let groups
+  it('Should ping', done => {
+    helper.createWebChannels(2, wcOptions)
+      .then(wcs => {
+        Promise.all([
+          wcs[0].ping().then(p => expect(Number.isInteger(p)).toBeTruthy()),
+          wcs[1].ping().then(p => expect(Number.isInteger(p)).toBeTruthy())
+        ])
+        .then(() => { for (let wc of wcs) wc.leave() })
+        .then(done)
+      })
+      .catch(done.fail)
+  })
 
-    beforeAll(() => {
-      groups = []
-      for (let i = 0; i < 2; i++) groups[i] = new helper.TestGroup(wcs[i])
+  it('Should not be able to join the WebChannel after it has been closed', done => {
+    const wc = create(wcOptions)
+    wc.open()
+      .then(data => {
+        wc.close()
+        return create(wcOptions).join(data.key)
+      })
+      .then(done.fail)
+      .catch(() => {
+        wc.leave()
+        done()
+      })
+  })
+
+  describe('Should send/receive', () => {
+    let groups = []
+    let wcs
+
+    beforeAll(done => {
+      helper.createWebChannels(2, wcOptions)
+        .then(webChannels => {
+          wcs = webChannels
+          for (let i = 0; i < 2; i++) groups[i] = new helper.TestGroup(wcs[i])
+          done()
+        })
+    })
+
+    afterAll(() => {
+      for (let wc of wcs) wc.leave()
     })
 
     it('Private string message', done => {
@@ -116,63 +151,44 @@ describe('🙂 🙂  fully connected', () => {
     }, 10000)
   })
 
-  it('Should ping', done => {
-    Promise.all([
-      wcs[0].ping()
-        .then(p => expect(Number.isInteger(p)).toBeTruthy()),
-      wcs[1].ping()
-        .then(p => expect(Number.isInteger(p)).toBeTruthy())
-    ]).then(done).catch(done.fail)
-  }, 10000)
-
   describe('Should leave', () => {
-    const message = 'Hi world!'
+    let wcs
 
-    it('The peer who opened the WebChannel', done => {
+    beforeEach(done => {
+      helper.createWebChannels(2, wcOptions)
+        .then(webChannels => { wcs = webChannels })
+        .then(done)
+    })
+
+    it('opener', done => {
       wcs[0].onMessage = done.fail
       wcs[1].onMessage = done.fail
       wcs[1].onPeerLeave = id => {
         expect(id).toBe(wcs[0].myId)
-        wcs[0].send(message)
-        wcs[0].sendTo(wcs[1].myId, message)
-        wcs[1].send(message)
-        wcs[1].sendTo(wcs[0].myId, message)
         expect(wcs[0].members.length).toEqual(0)
         expect(wcs[1].members.length).toEqual(0)
-        setTimeout(done, 100)
+        wcs[1].ping()
+          .then(done.fail)
+          .catch(done)
       }
       wcs[0].leave()
     })
 
-    it('Joined peer', done => {
-      wcs[0] = create({signalingURL})
-      wcs[0].open()
-        .then(data => wcs[1].join(data.key))
-        .then(() => {
-          wcs[0].onMessage = done.fail
-          wcs[1].onMessage = done.fail
-          wcs[0].onPeerLeave = id => {
-            expect(id).toBe(wcs[1].myId)
-            wcs[0].send(message)
-            wcs[0].sendTo(wcs[1].myId, message)
-            wcs[1].send(message)
-            wcs[1].sendTo(wcs[0].myId, message)
-            expect(wcs[0].members.length).toEqual(0)
-            expect(wcs[1].members.length).toEqual(0)
-            setTimeout(done, 100)
-          }
-          setTimeout(() => {
-            wcs[1].leave()
-          }, 100)
-        })
-        .catch(done.fail)
+    it('joining', done => {
+      wcs[0].onMessage = done.fail
+      wcs[1].onMessage = done.fail
+      wcs[0].onPeerLeave = id => {
+        expect(id).toBe(wcs[1].myId)
+        expect(wcs[0].members.length).toEqual(0)
+        expect(wcs[1].members.length).toEqual(0)
+        wcs[1].ping()
+          .then(done.fail)
+          .catch(() => {
+            wcs[0].leave()
+            done()
+          })
+      }
+      wcs[1].leave()
     })
-  })
-
-  it('Should not be able to join the WebChannel after it has been closed', done => {
-    expect(wcs[0].isOpen()).toBeTruthy()
-    const key = wcs[0].getOpenData().key
-    wcs[0].close()
-    wcs[1].join(key).then(done.fail).catch(done)
   })
 })

@@ -519,7 +519,7 @@ class Util {
     let regex =
       '^' +
       // protocol identifier
-      '(?:(?:wss|ws)://)' +
+      '(?:(?:wss|ws|http|https)://)' +
       // user:pass authentication
       '(?:\\S+(?::\\S*)?@)?' +
       '(?:';
@@ -565,6 +565,7 @@ class Util {
   static get WEB_SOCKET_LIB () { return 2 }
   static get TEXT_ENCODING_LIB () { return 3 }
   static get EVENT_SOURCE_LIB () { return 4 }
+  static get XML_HTTP_REQUEST_LIB () { return 5 }
 
   static requireLib (libConst) {
     switch (libConst) {
@@ -575,7 +576,9 @@ class Util {
       case Util.TEXT_ENCODING_LIB:
         return Util.isBrowser() ? window : Util.require('text-encoding')
       case Util.EVENT_SOURCE_LIB:
-        return Util.isBrowser() ? window : Util.require('eventsource')
+        return Util.isBrowser() ? window.EventSource : Util.require('eventsource')
+      case Util.XML_HTTP_REQUEST_LIB:
+        return Util.isBrowser() ? window.XMLHttpRequest : Util.require('xmlhttprequest').XMLHttpRequest
       default:
         console.error(`${libConst} is unknown lib constant. See Util`);
         return undefined
@@ -914,6 +917,7 @@ class WebSocketService extends Service {
 }
 
 const EventSource = Util.requireLib(Util.EVENT_SOURCE_LIB);
+const XMLHttpRequest = Util.requireLib(Util.XML_HTTP_REQUEST_LIB);
 
 const CONNECT_TIMEOUT$2 = 2000;
 const CLOSE_AFTER_RECONNECT_TIMEOUT = 6000;
@@ -933,23 +937,26 @@ class EventSourceService extends Service {
   connect (url) {
     return new Promise((resolve, reject) => {
       try {
-        let reconnectTimeout = null;
         const res = new RichEventSource(url);
-        res.onerror = err => {
-          reconnectTimeout = setTimeout(() => {
-            res.close();
-          }, CLOSE_AFTER_RECONNECT_TIMEOUT);
-          reject(err.message);
-        };
-        res.onopen = () => {
-          if (reconnectTimeout) {
-            clearTimeout(reconnectTimeout);
-          }
-        };
         res.addEventListener('auth', evtMsg => {
-          this.auth = evtMsg.data;
+          res.auth = evtMsg.data;
+          if (res.OPEN === undefined) {
+            res.OPEN = 1;
+          }
+
+          // Close function is defined here and not in the RichEventSource class
+          // definition, because in NodeJS with eventsource package, method
+          // overriding does not work.
+          res.nativeClose = res.close;
+          res.close = function () {
+            if (typeof this.onclose === 'function') {
+              this.onclose(Util.createCloseEvent('close'));
+            }
+            this.nativeClose();
+          };
           resolve(res);
         });
+        res.onerror = err => reject(err.message);
         // Timeout if "auth" event has not been received.
         setTimeout(() => {
           reject(`Authentication event has not been received from ${url} within ${CONNECT_TIMEOUT$2}ms`);
@@ -961,30 +968,49 @@ class EventSourceService extends Service {
   }
 }
 
-class RichEventSource extends EventSource.constructor {
+class RichEventSource extends EventSource {
 
   constructor (url) {
     super(url);
     this.auth = '';
-    this.onclose = () => {};
+    this.reconnectTimeout = null;
+    this.onopen = () => {
+      if (this.reconnectTimeout) {
+        clearTimeout(this.reconnectTimeout);
+      }
+    };
   }
 
-  close () {
-    this.onclose();
-    super.close();
+  set onerror (cb) {
+    super.onerror = err => {
+      cb(err);
+      if (!this.reconnectTimeout) {
+        this.reconnectTimeout = setTimeout(() => {
+          this.close();
+        }, CLOSE_AFTER_RECONNECT_TIMEOUT);
+      }
+    };
   }
 
-  send (str) {
+  // close () {
+  //   console.log('closing EventSource')
+  //   if (typeof this.onclose === 'function') {
+  //     this.onclose(new CloseEvent('close'))
+  //   }
+  //   super.close()
+  // }
+
+  send (str = '') {
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', super.url, true);
+    xhr.open('POST', this.url, true);
 
-    xhr.onload = function () {
-      if (this.status !== 200) {
-        this.onerror(new Error(this.statusText));
+    xhr.onload = () => {
+      if (xhr.status !== 200) {
+        super.onerror(new Error(xhr.statusText));
       }
     };
 
-    xhr.onerror = err => this.onerror(new Error(err.message));
+    xhr.onerror = err => super.onerror(new Error(err.message));
     xhr.send(`${this.auth}@${str}`);
   }
 }
@@ -1469,11 +1495,11 @@ class SignalingGate {
      */
     this.key = null;
     /**
-     * Web socket with the signaling server.
+     * Connection with the signaling server.
      * @private
-     * @type {external:WebSocket|external:ws/WebSocket}
+     * @type {external:WebSocket|external:ws/WebSocket|external:EventSource}
      */
-    this.ws = null;
+    this.con = null;
   }
 
   /**
@@ -1487,24 +1513,27 @@ class SignalingGate {
   open (url, onChannel, key = null) {
     return new Promise((resolve, reject) => {
       if (key === null) key = this.generateKey();
-      ServiceFactory.get(WEB_SOCKET).connect(url)
-        .then(ws => {
-          ws.onclose = closeEvt => {
+      this.getConnectionService(url)
+        .connect(url)
+        .then(con => {
+          con.onclose = closeEvt => {
             this.key = null;
-            this.ws = null;
+            this.con = null;
             this.url = null;
             this.webChannel.onClose(closeEvt);
             reject(closeEvt.reason);
           };
-          ws.onerror = err => reject(err.message);
-          ws.onmessage = evt => {
+          con.onerror = err => {
+            reject(err.message);
+          };
+          con.onmessage = evt => {
             try {
               const msg = JSON.parse(evt.data);
               if ('isKeyOk' in msg) {
                 if (msg.isKeyOk) {
                   ServiceFactory.get(WEB_RTC, this.webChannel.settings.iceServers)
-                    .listenFromSignaling(ws, onChannel);
-                  this.ws = ws;
+                    .listenFromSignaling(con, onChannel);
+                  this.con = con;
                   this.key = key;
                   this.url = url;
                   resolve({url, key});
@@ -1514,7 +1543,42 @@ class SignalingGate {
               reject('Server responce is not a JSON string: ' + err.message);
             }
           };
-          ws.send(JSON.stringify({open: key}));
+          con.send(JSON.stringify({open: key}));
+        })
+        .catch(err => {
+          reject(err);
+        });
+    })
+  }
+
+  join (url, key) {
+    return new Promise((resolve, reject) => {
+      this.getConnectionService(url)
+        .connect(url)
+        .then(con => {
+          con.onclose = closeEvt => reject(closeEvt.reason);
+          con.onmessage = evt => {
+            try {
+              const msg = JSON.parse(evt.data);
+              if ('isKeyOk' in msg) {
+                if (msg.isKeyOk) {
+                  if ('useThis' in msg && msg.useThis) {
+                    resolve(con);
+                  } else {
+                    ServiceFactory.get(WEB_RTC, this.webChannel.settings.iceServers)
+                      .connectOverSignaling(con, key)
+                      .then(channel => {
+                        con.onclose = null;
+                        con.close();
+                        resolve(channel);
+                      })
+                      .catch(reject);
+                  }
+                } else reject(`The key "${key}" not found`);
+              } else reject(`Unknown message from ${url}: ${evt.data}`);
+            } catch (err) { reject(err.message); }
+          };
+          con.send(JSON.stringify({join: key}));
         })
         .catch(reject);
     })
@@ -1527,7 +1591,7 @@ class SignalingGate {
    * closed
    */
   isOpen () {
-    return this.ws !== null && this.ws.readyState === this.ws.OPEN
+    return this.con !== null && this.con.readyState === this.con.OPEN
   }
 
   /**
@@ -1550,7 +1614,27 @@ class SignalingGate {
    */
   close () {
     if (this.isOpen()) {
-      this.ws.close();
+      this.con.close();
+    }
+  }
+
+  /**
+   * Get the connection service for signaling server.
+   *
+   * @private
+   * @param {string} url Signaling server url
+   *
+   * @returns {Service}
+   */
+  getConnectionService (url) {
+    if (Util.isURL(url)) {
+      if (url.search(/^wss?/) !== -1) {
+        return ServiceFactory.get(WEB_SOCKET)
+      } else {
+        return ServiceFactory.get(EVENT_SOURCE)
+      }
+    } else {
+      throw new Error(`${url} is not a valid URL`)
     }
   }
 
@@ -1760,34 +1844,9 @@ class WebChannel {
     return new Promise((resolve, reject) => {
       this.onJoin = resolve;
       if (keyOrSocket.constructor.name !== 'WebSocket') {
-        if (Util.isURL(url)) {
-          ServiceFactory.get(WEB_SOCKET).connect(url)
-            .then(ws => {
-              ws.onclose = closeEvt => reject(closeEvt.reason);
-              ws.onmessage = evt => {
-                try {
-                  const msg = JSON.parse(evt.data);
-                  if ('isKeyOk' in msg) {
-                    if (msg.isKeyOk) {
-                      if ('useThis' in msg && msg.useThis) {
-                        this.initChannel(ws).catch(reject);
-                      } else {
-                        ServiceFactory.get(WEB_RTC, this.settings.iceServers).connectOverSignaling(ws, keyOrSocket)
-                          .then(channel => {
-                            ws.onclose = null;
-                            ws.close();
-                            return this.initChannel(channel)
-                          })
-                          .catch(reject);
-                      }
-                    } else reject(`The key "${keyOrSocket}" was not found`);
-                  } else reject(`Unknown message from the server ${url}: ${evt.data}`);
-                } catch (err) { reject(err.message); }
-              };
-              ws.send(JSON.stringify({join: keyOrSocket}));
-            })
-            .catch(reject);
-        } else reject(`${url} is not a valid URL`);
+        this.gate.join(url, keyOrSocket)
+          .then(con => this.initChannel(con))
+          .catch(reject);
       } else {
         this.initChannel(keyOrSocket).catch(reject);
       }
@@ -1870,7 +1929,7 @@ class WebChannel {
     if (this.channels.size !== 0) {
       this.members = [];
       this.pingTime = 0;
-      // this.gate.close()
+      this.gate.close();
       this.manager.leave(this);
     }
   }
@@ -1906,7 +1965,7 @@ class WebChannel {
    * @returns {Promise}
    */
   ping () {
-    if (this.members.length !== 0 && this.pingTime === 0) {
+    if (this.channels.size !== 0 && this.pingTime === 0) {
       return new Promise((resolve, reject) => {
         if (this.pingTime === 0) {
           this.pingTime = Date.now();
@@ -1917,7 +1976,7 @@ class WebChannel {
           setTimeout(() => resolve(PING_TIMEOUT), PING_TIMEOUT);
         }
       })
-    } else return Promise.resolve(0)
+    } else return Promise.reject('No peers to ping')
   }
 
   /**
