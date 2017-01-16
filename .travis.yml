@@ -6,6 +6,7 @@ notifications:
 branches:
   only:
     - master
+    - /^greenkeeper-.*$/
 addons:
   firefox: "latest"
   apt:
