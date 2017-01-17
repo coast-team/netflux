@@ -46,7 +46,7 @@
   "dependencies": {
     "eventsource": "^0.2.1",
     "text-encoding": "^0.6.4",
-    "webrtc-adapter": "^2.1.0",
+    "webrtc-adapter": "^3.0.0",
     "ws": "^1.1.1",
     "xmlhttprequest": "^1.8.0"
   },
