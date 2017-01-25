@@ -53,10 +53,10 @@ class EventSourceService extends Service {
   }
 }
 
-class RichEventSource extends EventSource {
+class RichEventSource {
 
   constructor (url) {
-    super(url)
+    this.es = new EventSource(url)
     this.auth = ''
     this.reconnectTimeout = null
     this.onopen = () => {
@@ -64,10 +64,29 @@ class RichEventSource extends EventSource {
         clearTimeout(this.reconnectTimeout)
       }
     }
+    this.OPEN = this.es.OPEN
   }
 
+  get url () { return this.es.url }
+
+  get readyState () { return this.es.readyState }
+
+  get onopen () { return this.es.onopen }
+
+  set onopen (cb) { this.es.onopen = cb }
+
+  get onmessage () { return this.es.onmessage }
+
+  set onmessage (cb) { this.es.onmessage = cb }
+
+  get onclose () { return this.es.onclose }
+
+  set onclose (cb) { this.es.onclose = cb }
+
+  get onerror () { return this.es.onerror }
+
   set onerror (cb) {
-    super.onerror = err => {
+    this.es.onerror = err => {
       cb(err)
       if (!this.reconnectTimeout) {
         this.reconnectTimeout = setTimeout(() => {
@@ -77,13 +96,9 @@ class RichEventSource extends EventSource {
     }
   }
 
-  // close () {
-  //   console.log('closing EventSource')
-  //   if (typeof this.onclose === 'function') {
-  //     this.onclose(new CloseEvent('close'))
-  //   }
-  //   super.close()
-  // }
+  addEventListener (event, cb) { this.es.addEventListener(event, cb) }
+
+  close () { this.es.close() }
 
   send (str = '') {
     const xhr = new XMLHttpRequest()
@@ -91,11 +106,11 @@ class RichEventSource extends EventSource {
 
     xhr.onload = () => {
       if (xhr.status !== 200) {
-        super.onerror(new Error(xhr.statusText))
+        this.es.onerror(new Error(xhr.statusText))
       }
     }
 
-    xhr.onerror = err => super.onerror(new Error(err.message))
+    xhr.onerror = err => this.es.onerror(new Error(err.message))
     xhr.send(`${this.auth}@${str}`)
   }
 }
