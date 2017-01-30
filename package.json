@@ -47,7 +47,7 @@
     "eventsource": "^0.2.1",
     "text-encoding": "^0.6.4",
     "webrtc-adapter": "^3.0.0",
-    "ws": "^1.1.1",
+    "ws": "^2.0.0",
     "xmlhttprequest": "^1.8.0"
   },
   "peerDependencies": {
