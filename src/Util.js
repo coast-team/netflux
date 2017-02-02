@@ -1,8 +1,9 @@
 const NodeCloseEvent = class CloseEvent {
-  constructor (options = {}) {
-    this.wasClean = options.wasClean
-    this.code = options.code
-    this.reason = options.reason
+  constructor (name, options = {}) {
+    this.name = name
+    this.wasClean = options.wasClean || false
+    this.code = options.code || 0
+    this.reason = options.reason || ''
   }
 }
 
@@ -10,23 +11,6 @@ const NodeCloseEvent = class CloseEvent {
  * Utility class contains some helper static methods.
  */
 class Util {
-  /**
-   * Create `CloseEvent`.
-   *
-   * @param {number} code
-   * @param {string} [reason=]
-   * @param {boolean} [wasClean=true]
-   *
-   * @returns {CloseEvent|NodeCloseEvent}
-   */
-  static createCloseEvent (code, reason = '', wasClean = true) {
-    const obj = {wasClean, code, reason}
-    if (Util.isBrowser()) {
-      return new CloseEvent('netfluxClose', obj)
-    } else {
-      return new NodeCloseEvent(obj)
-    }
-  }
 
   /**
    * Check execution environment.
@@ -108,7 +92,8 @@ class Util {
   static get WEB_SOCKET_LIB () { return 2 }
   static get TEXT_ENCODING_LIB () { return 3 }
   static get EVENT_SOURCE_LIB () { return 4 }
-  static get XML_HTTP_REQUEST_LIB () { return 5 }
+  static get FETCH () { return 5 }
+  static get CLOSE_EVENT () { return 6 }
 
   static requireLib (libConst) {
     switch (libConst) {
@@ -120,8 +105,10 @@ class Util {
         return Util.isBrowser() ? window : Util.require('text-encoding')
       case Util.EVENT_SOURCE_LIB:
         return Util.isBrowser() ? window.EventSource : Util.require('eventsource')
-      case Util.XML_HTTP_REQUEST_LIB:
-        return Util.isBrowser() ? window.XMLHttpRequest : Util.require('xmlhttprequest').XMLHttpRequest
+      case Util.FETCH:
+        return Util.isBrowser() ? window.XMLHttpRequest : Util.require('node-fetch')
+      case Util.CLOSE_EVENT:
+        return Util.isBrowser() ? window.CloseEvent : NodeCloseEvent
       default:
         console.error(`${libConst} is unknown lib constant. See Util`)
         return undefined

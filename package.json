@@ -45,10 +45,10 @@
   },
   "dependencies": {
     "eventsource": "^0.2.1",
+    "node-fetch": "^1.6.3",
     "text-encoding": "^0.6.4",
     "webrtc-adapter": "^3.0.0",
-    "ws": "^1.1.1",
-    "xmlhttprequest": "^1.8.0"
+    "ws": "^1.1.1"
   },
   "peerDependencies": {
     "wrtc": "0.0.x"
