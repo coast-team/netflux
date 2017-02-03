@@ -6,7 +6,7 @@ import bigStr from 'util/4mb.txt'
 describe('🙂 🙂  fully connected', () => {
   const wcOptions = {signalingURL: helper.SIGNALING_URL}
 
-  it('Should establish a connection', done => {
+  it('Should establish a connection using open/join', done => {
     const wcs = [create(wcOptions), create(wcOptions)]
     Promise.all([
       new Promise((resolve, reject) => {
@@ -18,6 +18,29 @@ describe('🙂 🙂  fully connected', () => {
       }),
       wcs[0].open()
         .then(data => wcs[1].join(data.key))
+        .then(() => {
+          expect(wcs[0].id).toEqual(wcs[1].id)
+          expect(wcs[1].members[0]).toEqual(wcs[0].myId)
+        })
+    ])
+      .then(() => { for (let wc of wcs) wc.leave() })
+      .then(done)
+      .catch(done.fail)
+  })
+
+  it('Should establish a connection using join/join', done => {
+    const wcs = [create(wcOptions), create(wcOptions)]
+    const key = helper.randKey()
+    Promise.all([
+      new Promise((resolve, reject) => {
+        wcs[0].onPeerJoin = id => {
+          expect(id).toEqual(wcs[1].myId)
+          expect(wcs[0].members[0]).toEqual(wcs[1].myId)
+          resolve()
+        }
+      }),
+      wcs[0].join(key)
+        .then(() => wcs[1].join(key))
         .then(() => {
           expect(wcs[0].id).toEqual(wcs[1].id)
           expect(wcs[1].members[0]).toEqual(wcs[0].myId)
