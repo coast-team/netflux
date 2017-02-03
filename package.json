@@ -89,7 +89,7 @@
     "rollup-plugin-string": "^2.0.2",
     "rollup-plugin-uglify": "^1.0.1",
     "semantic-release": "^6.3.2",
-    "sigver": "^9.0.0",
+    "sigver": "^10.0.0",
     "uglify-js": "^2.7.3",
     "validate-commit-msg": "^2.8.2"
   },
