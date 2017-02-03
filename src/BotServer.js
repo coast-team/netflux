@@ -1,5 +1,6 @@
 import ServiceFactory, {WEB_SOCKET, CHANNEL_BUILDER, FULLY_CONNECTED} from 'ServiceFactory'
 import WebChannel from 'WebChannel'
+import Util from 'Util'
 
 const MESSAGE_TYPE_ERROR = 4000
 const WEB_CHANNEL_NOT_FOUND = 4001
@@ -69,19 +70,11 @@ class BotServer {
    */
   start () {
     return new Promise((resolve, reject) => {
-      let WebSocketServer
-      try {
-        console.log('uws module would be used for Bot server')
-        WebSocketServer = require('uws').Server
-      } catch (err) {
-        console.log(err.message)
-        try {
-          WebSocketServer = require('ws').Server
-          console.log('ws module is used for Bot server instead')
-        } catch (err2) {
-          console.log(`ERROR: ${err2.message}. Thus the Bot server cannot be run`)
-          reject(err2.message)
-        }
+      console.log('uws module would be used for Bot server')
+      let WebSocketServer = Util.require('uws').Server
+      if (WebSocketServer === undefined) {
+        console.log('Could not find uws module, thus ws module will be used for Bot server instead')
+        WebSocketServer = Util.require('ws').Server
       }
 
       this.server = new WebSocketServer({
