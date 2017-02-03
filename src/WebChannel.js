@@ -137,7 +137,7 @@ class WebChannel {
      * @private
      * @type {SignalingGate}
      */
-    this.gate = new SignalingGate(this)
+    this.gate = new SignalingGate(this, ch => this.addChannel(ch))
 
     /**
      * Unique `WebChannel` identifier. Its value is the same for all `WebChannel` members.
@@ -187,12 +187,23 @@ class WebChannel {
    */
   join (keyOrSocket, url = this.settings.signalingURL) {
     return new Promise((resolve, reject) => {
-      this.onJoin = resolve
       if (keyOrSocket.constructor.name !== 'WebSocket') {
         this.gate.join(url, keyOrSocket)
-          .then(con => this.initChannel(con))
+          .then(res => {
+            if (res.opened) {
+              resolve()
+            } else {
+              this.onJoin = () => {
+                this.gate.openExisted(res.sigCon, keyOrSocket)
+                  .then(resolve)
+              }
+              this.initChannel(res.con)
+                .catch(reject)
+            }
+          })
           .catch(reject)
       } else {
+        this.onJoin = resolve
         this.initChannel(keyOrSocket).catch(reject)
       }
     })
@@ -225,20 +236,19 @@ class WebChannel {
   /**
    * Enable other peers to join the `WebChannel` with your help as an
    * intermediary peer.
-   * @param  {Object} [options] Any available connection service options
+   * @param  {string} [key] Key to use. If none provide, then generate one.
    * @returns {Promise} It is resolved once the `WebChannel` is open. The
    * callback function take a parameter of type {@link SignalingGate~AccessData}.
    */
-  open (options) {
-    const defaultSettings = {
-      url: this.settings.signalingURL,
-      key: null
-    }
-    const settings = Object.assign({}, defaultSettings, options)
-    if (Util.isURL(settings.url)) {
-      return this.gate.open(settings.url, dataCh => this.addChannel(dataCh), settings.key)
+  open (key = null) {
+    if (Util.isURL(this.settings.signalingURL)) {
+      if (key !== null) {
+        return this.gate.open(this.settings.signalingURL, key)
+      } else {
+        return this.gate.open(this.settings.signalingURL)
+      }
     } else {
-      return Promise.reject(`${settings.url} is not a valid URL`)
+      return Promise.reject(`${this.settings.signalingURL} is not a valid URL`)
     }
   }
 

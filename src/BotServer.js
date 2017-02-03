@@ -95,9 +95,9 @@ class BotServer {
             if ('join' in msg) {
               const wc = this.getWebChannel(msg.join)
               if (wc === null) {
-                ws.send(JSON.stringify({isKeyOk: false}))
+                ws.send(JSON.stringify({opened: false, useThis: false}))
               } else {
-                ws.send(JSON.stringify({isKeyOk: true, useThis: true}))
+                ws.send(JSON.stringify({opened: false, useThis: true}))
                 wc.invite(ws)
               }
             } else if ('wcId' in msg) {

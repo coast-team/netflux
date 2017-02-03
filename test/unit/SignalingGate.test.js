@@ -2,7 +2,7 @@ import SignalingGate from 'src/SignalingGate'
 import * as helper from 'util/helper'
 
 describe('SignalingGate', () => {
-  const FakeWebChannel = class {
+  const WebChannelMock = class {
     constructor (onClose = () => {}) {
       this.onClose = onClose
       this.settings = {iceServers: {}}
@@ -15,7 +15,7 @@ describe('SignalingGate', () => {
 
     describe(title, () => {
       it('Gate should be closed after construction', () => {
-        const signalingGate = new SignalingGate(new FakeWebChannel())
+        const signalingGate = new SignalingGate(new WebChannelMock(), () => {})
         expect(signalingGate.isOpen()).toBeFalsy()
         expect(signalingGate.con).toBeNull()
         expect(signalingGate.key).toBeNull()
@@ -23,34 +23,31 @@ describe('SignalingGate', () => {
       })
 
       it('Should generate different keys', () => {
-        const signalingGate = new SignalingGate(new FakeWebChannel())
+        const signalingGate = new SignalingGate(new WebChannelMock(), () => {})
         const key1 = signalingGate.generateKey()
         const key2 = signalingGate.generateKey()
         expect(key1).not.toEqual(key2)
       })
 
-      it('Should fail to open the gate with the key used by another gate', done => {
-        const signalingGate = new SignalingGate(new FakeWebChannel())
-        const key = signalingGate.generateKey()
-        const wcg1 = new SignalingGate(new FakeWebChannel())
-        const wcg2 = new SignalingGate(new FakeWebChannel())
-        wcg1.open(signalingURL, () => {}, key)
+      it('Should open 2 gates with the same key', done => {
+        const sg1 = new SignalingGate(new WebChannelMock(), () => {})
+        const sg2 = new SignalingGate(new WebChannelMock(), () => {})
+        sg1.open(signalingURL)
+          .then(openData => sg2.open(signalingURL, openData.key))
           .then(() => {
-            wcg2.open(() => {}, key)
-              .then(done.fail)
-              .catch(() => {
-                wcg1.close()
-                done()
-              })
-          }).catch(done.fail)
+            sg1.close()
+            sg2.close()
+            done()
+          })
+          .catch(done.fail)
       })
 
       describe('Open with auto generated key', () => {
-        const signalingGate = new SignalingGate(new FakeWebChannel())
+        const sg = new SignalingGate(new WebChannelMock(), () => {})
         let openData
 
         it('Should open the gate', done => {
-          signalingGate.open(signalingURL, () => {})
+          sg.open(signalingURL)
             .then(data => {
               openData = data
               expect(data.key).toBeDefined()
@@ -62,34 +59,34 @@ describe('SignalingGate', () => {
         })
 
         it('isOpen should return true', () => {
-          expect(signalingGate.isOpen()).toBeTruthy()
+          expect(sg.isOpen()).toBeTruthy()
         })
 
         it('getOpenData should return', () => {
-          expect(signalingGate.getOpenData()).toEqual(openData)
+          expect(sg.getOpenData()).toEqual(openData)
         })
 
         it('Should close', () => {
-          signalingGate.close()
-          expect(signalingGate.isOpen()).toBeFalsy()
-          expect(signalingGate.getOpenData()).toBeNull()
+          sg.close()
+          expect(sg.isOpen()).toBeFalsy()
+          expect(sg.getOpenData()).toBeNull()
         })
 
         it('onClose should be called', done => {
-          const sg = new SignalingGate(new FakeWebChannel(done))
-          sg.open(signalingURL, () => {})
+          const sg = new SignalingGate(new WebChannelMock(done), () => {})
+          sg.open(signalingURL)
             .then(() => sg.close())
             .catch(done.fail)
         })
       })
 
       describe('Open with the specified key', () => {
-        const signalingGate = new SignalingGate(new FakeWebChannel())
+        const sg = new SignalingGate(new WebChannelMock(), () => {})
         let openData
 
         it('Should open the gate', done => {
-          const key = signalingGate.generateKey()
-          signalingGate.open(signalingURL, () => {}, key)
+          const key = sg.generateKey()
+          sg.open(signalingURL, key)
             .then(data => {
               openData = data
               expect(data.key).toBeDefined()
@@ -102,23 +99,23 @@ describe('SignalingGate', () => {
         })
 
         it('isOpen should return true', () => {
-          expect(signalingGate.isOpen()).toBeTruthy()
+          expect(sg.isOpen()).toBeTruthy()
         })
 
         it('getOpenDataData should return', () => {
-          expect(signalingGate.getOpenData()).toEqual(openData)
+          expect(sg.getOpenData()).toEqual(openData)
         })
 
         it('Should close', () => {
-          signalingGate.close()
-          expect(signalingGate.isOpen()).toBeFalsy()
-          expect(signalingGate.getOpenData()).toBeNull()
+          sg.close()
+          expect(sg.isOpen()).toBeFalsy()
+          expect(sg.getOpenData()).toBeNull()
         })
 
         it('onClose should be called', done => {
-          const key = signalingGate.generateKey()
-          const wcg = new SignalingGate(new FakeWebChannel(done))
-          wcg.open(signalingURL, () => {}, key)
+          const key = sg.generateKey()
+          const wcg = new SignalingGate(new WebChannelMock(done), () => {})
+          wcg.open(signalingURL, key)
             .then(() => { wcg.close() })
             .catch(done.fail)
         })

@@ -10,7 +10,7 @@ function run () {
     console.log('Chrome bot has disconnected from Signaling server')
     run()
   }
-  wc.open({key: 'CHROME'})
+  wc.open('CHROME')
     .then(() => console.log('Bot for Chrome is ready'))
     .catch(reason => console.error('Chrome bot WebChannel open error: ' + reason))
 }

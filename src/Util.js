@@ -106,7 +106,7 @@ class Util {
       case Util.EVENT_SOURCE_LIB:
         return Util.isBrowser() ? window.EventSource : Util.require('eventsource')
       case Util.FETCH:
-        return Util.isBrowser() ? window.XMLHttpRequest : Util.require('node-fetch')
+        return Util.isBrowser() ? window.fetch : Util.require('node-fetch')
       case Util.CLOSE_EVENT:
         return Util.isBrowser() ? window.CloseEvent : NodeCloseEvent
       default:

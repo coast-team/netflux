@@ -453,13 +453,14 @@ class JoiningPeer {
   }
 }
 
-!function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a="function"==typeof require&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r);}return n[o].exports}for(var i="function"==typeof require&&require,o=0;o<r.length;o++)s(r[o]);return s}({1:[function(require,module,exports){},{}],2:[function(require,module,exports){"use strict";!function(){var utils=require("./utils"),logging=utils.log,browserDetails=utils.browserDetails;module.exports.browserDetails=browserDetails,module.exports.extractVersion=utils.extractVersion,module.exports.disableLog=utils.disableLog;var chromeShim=require("./chrome/chrome_shim")||null,edgeShim=require("./edge/edge_shim")||null,firefoxShim=require("./firefox/firefox_shim")||null,safariShim=require("./safari/safari_shim")||null;switch(browserDetails.browser){case"opera":case"chrome":if(!chromeShim||!chromeShim.shimPeerConnection)return void logging("Chrome shim is not included in this adapter release.");logging("adapter.js shimming chrome."),module.exports.browserShim=chromeShim,chromeShim.shimGetUserMedia(),chromeShim.shimMediaStream(),chromeShim.shimSourceObject(),utils.shimCreateObjectURL(),chromeShim.shimPeerConnection(),chromeShim.shimOnTrack();break;case"firefox":if(!firefoxShim||!firefoxShim.shimPeerConnection)return void logging("Firefox shim is not included in this adapter release.");logging("adapter.js shimming firefox."),module.exports.browserShim=firefoxShim,firefoxShim.shimGetUserMedia(),utils.shimCreateObjectURL(),firefoxShim.shimSourceObject(),firefoxShim.shimPeerConnection(),firefoxShim.shimOnTrack();break;case"edge":if(!edgeShim||!edgeShim.shimPeerConnection)return void logging("MS edge shim is not included in this adapter release.");logging("adapter.js shimming edge."),module.exports.browserShim=edgeShim,edgeShim.shimGetUserMedia(),utils.shimCreateObjectURL(),edgeShim.shimPeerConnection();break;case"safari":if(!safariShim)return void logging("Safari shim is not included in this adapter release.");logging("adapter.js shimming safari."),module.exports.browserShim=safariShim,safariShim.shimGetUserMedia();break;default:logging("Unsupported browser!");}}();},{"./chrome/chrome_shim":3,"./edge/edge_shim":1,"./firefox/firefox_shim":5,"./safari/safari_shim":7,"./utils":8}],3:[function(require,module,exports){"use strict";var logging=require("../utils.js").log,browserDetails=require("../utils.js").browserDetails,chromeShim={shimMediaStream:function(){window.MediaStream=window.MediaStream||window.webkitMediaStream;},shimOnTrack:function(){"object"!=typeof window||!window.RTCPeerConnection||"ontrack"in window.RTCPeerConnection.prototype||Object.defineProperty(window.RTCPeerConnection.prototype,"ontrack",{get:function(){return this._ontrack},set:function(f){var self=this;this._ontrack&&(this.removeEventListener("track",this._ontrack),this.removeEventListener("addstream",this._ontrackpoly)),this.addEventListener("track",this._ontrack=f),this.addEventListener("addstream",this._ontrackpoly=function(e){e.stream.addEventListener("addtrack",function(te){var event=new Event("track");event.track=te.track,event.receiver={track:te.track},event.streams=[e.stream],self.dispatchEvent(event);}),e.stream.getTracks().forEach(function(track){var event=new Event("track");event.track=track,event.receiver={track:track},event.streams=[e.stream],this.dispatchEvent(event);}.bind(this));}.bind(this));}});},shimSourceObject:function(){"object"==typeof window&&(!window.HTMLMediaElement||"srcObject"in window.HTMLMediaElement.prototype||Object.defineProperty(window.HTMLMediaElement.prototype,"srcObject",{get:function(){return this._srcObject},set:function(stream){var self=this;return this._srcObject=stream,this.src&&URL.revokeObjectURL(this.src),stream?(this.src=URL.createObjectURL(stream),stream.addEventListener("addtrack",function(){self.src&&URL.revokeObjectURL(self.src),self.src=URL.createObjectURL(stream);}),void stream.addEventListener("removetrack",function(){self.src&&URL.revokeObjectURL(self.src),self.src=URL.createObjectURL(stream);})):void(this.src="")}}));},shimPeerConnection:function(){window.RTCPeerConnection||(window.RTCPeerConnection=function(pcConfig,pcConstraints){return logging("PeerConnection"),pcConfig&&pcConfig.iceTransportPolicy&&(pcConfig.iceTransports=pcConfig.iceTransportPolicy),new webkitRTCPeerConnection(pcConfig,pcConstraints)},window.RTCPeerConnection.prototype=webkitRTCPeerConnection.prototype,webkitRTCPeerConnection.generateCertificate&&Object.defineProperty(window.RTCPeerConnection,"generateCertificate",{get:function(){return webkitRTCPeerConnection.generateCertificate}}));var origGetStats=RTCPeerConnection.prototype.getStats;RTCPeerConnection.prototype.getStats=function(selector,successCallback,errorCallback){var self=this,args=arguments;if(arguments.length>0&&"function"==typeof selector)return origGetStats.apply(this,arguments);if(0===origGetStats.length)return origGetStats.apply(this,arguments);var fixChromeStats_=function(response){var standardReport={},reports=response.result();return reports.forEach(function(report){var standardStats={id:report.id,timestamp:report.timestamp,type:{localcandidate:"local-candidate",remotecandidate:"remote-candidate"}[report.type]||report.type};report.names().forEach(function(name){standardStats[name]=report.stat(name);}),standardReport[standardStats.id]=standardStats;}),standardReport},makeMapStats=function(stats){return new Map(Object.keys(stats).map(function(key){return[key,stats[key]]}))};if(arguments.length>=2){var successCallbackWrapper_=function(response){args[1](makeMapStats(fixChromeStats_(response)));};return origGetStats.apply(this,[successCallbackWrapper_,arguments[0]])}return new Promise(function(resolve,reject){origGetStats.apply(self,[function(response){resolve(makeMapStats(fixChromeStats_(response)));},reject]);}).then(successCallback,errorCallback)},browserDetails.version<51&&["setLocalDescription","setRemoteDescription","addIceCandidate"].forEach(function(method){var nativeMethod=RTCPeerConnection.prototype[method];RTCPeerConnection.prototype[method]=function(){var args=arguments,self=this,promise=new Promise(function(resolve,reject){nativeMethod.apply(self,[args[0],resolve,reject]);});return args.length<2?promise:promise.then(function(){args[1].apply(null,[]);},function(err){args.length>=3&&args[2].apply(null,[err]);})};}),browserDetails.version<52&&["createOffer","createAnswer"].forEach(function(method){var nativeMethod=RTCPeerConnection.prototype[method];RTCPeerConnection.prototype[method]=function(){var self=this;if(arguments.length<1||1===arguments.length&&"object"==typeof arguments[0]){var opts=1===arguments.length?arguments[0]:void 0;return new Promise(function(resolve,reject){nativeMethod.apply(self,[resolve,reject,opts]);})}return nativeMethod.apply(this,arguments)};}),["setLocalDescription","setRemoteDescription","addIceCandidate"].forEach(function(method){var nativeMethod=RTCPeerConnection.prototype[method];RTCPeerConnection.prototype[method]=function(){return arguments[0]=new("addIceCandidate"===method?RTCIceCandidate:RTCSessionDescription)(arguments[0]),nativeMethod.apply(this,arguments)};});var nativeAddIceCandidate=RTCPeerConnection.prototype.addIceCandidate;RTCPeerConnection.prototype.addIceCandidate=function(){return arguments[0]?nativeAddIceCandidate.apply(this,arguments):(arguments[1]&&arguments[1].apply(null),Promise.resolve())};}};module.exports={shimMediaStream:chromeShim.shimMediaStream,shimOnTrack:chromeShim.shimOnTrack,shimSourceObject:chromeShim.shimSourceObject,shimPeerConnection:chromeShim.shimPeerConnection,shimGetUserMedia:require("./getusermedia")};},{"../utils.js":8,"./getusermedia":4}],4:[function(require,module,exports){"use strict";var logging=require("../utils.js").log;module.exports=function(){var constraintsToChrome_=function(c){if("object"!=typeof c||c.mandatory||c.optional)return c;var cc={};return Object.keys(c).forEach(function(key){if("require"!==key&&"advanced"!==key&&"mediaSource"!==key){var r="object"==typeof c[key]?c[key]:{ideal:c[key]};void 0!==r.exact&&"number"==typeof r.exact&&(r.min=r.max=r.exact);var oldname_=function(prefix,name){return prefix?prefix+name.charAt(0).toUpperCase()+name.slice(1):"deviceId"===name?"sourceId":name};if(void 0!==r.ideal){cc.optional=cc.optional||[];var oc={};"number"==typeof r.ideal?(oc[oldname_("min",key)]=r.ideal,cc.optional.push(oc),oc={},oc[oldname_("max",key)]=r.ideal,cc.optional.push(oc)):(oc[oldname_("",key)]=r.ideal,cc.optional.push(oc));}void 0!==r.exact&&"number"!=typeof r.exact?(cc.mandatory=cc.mandatory||{},cc.mandatory[oldname_("",key)]=r.exact):["min","max"].forEach(function(mix){void 0!==r[mix]&&(cc.mandatory=cc.mandatory||{},cc.mandatory[oldname_(mix,key)]=r[mix]);});}}),c.advanced&&(cc.optional=(cc.optional||[]).concat(c.advanced)),cc},shimConstraints_=function(constraints,func){if(constraints=JSON.parse(JSON.stringify(constraints)),constraints&&constraints.audio&&(constraints.audio=constraintsToChrome_(constraints.audio)),constraints&&"object"==typeof constraints.video){var face=constraints.video.facingMode;if(face=face&&("object"==typeof face?face:{ideal:face}),face&&("user"===face.exact||"environment"===face.exact||"user"===face.ideal||"environment"===face.ideal)&&(!navigator.mediaDevices.getSupportedConstraints||!navigator.mediaDevices.getSupportedConstraints().facingMode)&&(delete constraints.video.facingMode,"environment"===face.exact||"environment"===face.ideal))return navigator.mediaDevices.enumerateDevices().then(function(devices){devices=devices.filter(function(d){return"videoinput"===d.kind});var back=devices.find(function(d){return d.label.toLowerCase().indexOf("back")!==-1})||devices.length&&devices[devices.length-1];return back&&(constraints.video.deviceId=face.exact?{exact:back.deviceId}:{ideal:back.deviceId}),constraints.video=constraintsToChrome_(constraints.video),logging("chrome: "+JSON.stringify(constraints)),func(constraints)});constraints.video=constraintsToChrome_(constraints.video);}return logging("chrome: "+JSON.stringify(constraints)),func(constraints)},shimError_=function(e){return{name:{PermissionDeniedError:"NotAllowedError",ConstraintNotSatisfiedError:"OverconstrainedError"}[e.name]||e.name,message:e.message,constraint:e.constraintName,toString:function(){return this.name+(this.message&&": ")+this.message}}},getUserMedia_=function(constraints,onSuccess,onError){shimConstraints_(constraints,function(c){navigator.webkitGetUserMedia(c,onSuccess,function(e){onError(shimError_(e));});});};navigator.getUserMedia=getUserMedia_;var getUserMediaPromise_=function(constraints){return new Promise(function(resolve,reject){navigator.getUserMedia(constraints,resolve,reject);})};if(navigator.mediaDevices||(navigator.mediaDevices={getUserMedia:getUserMediaPromise_,enumerateDevices:function(){return new Promise(function(resolve){var kinds={audio:"audioinput",video:"videoinput"};return MediaStreamTrack.getSources(function(devices){resolve(devices.map(function(device){return{label:device.label,kind:kinds[device.kind],deviceId:device.id,groupId:""}}));})})}}),navigator.mediaDevices.getUserMedia){var origGetUserMedia=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);navigator.mediaDevices.getUserMedia=function(cs){return shimConstraints_(cs,function(c){return origGetUserMedia(c).then(function(stream){if(c.audio&&!stream.getAudioTracks().length||c.video&&!stream.getVideoTracks().length)throw stream.getTracks().forEach(function(track){track.stop();}),new DOMException("","NotFoundError");return stream},function(e){return Promise.reject(shimError_(e))})})};}else navigator.mediaDevices.getUserMedia=function(constraints){return getUserMediaPromise_(constraints)};"undefined"==typeof navigator.mediaDevices.addEventListener&&(navigator.mediaDevices.addEventListener=function(){logging("Dummy mediaDevices.addEventListener called.");}),"undefined"==typeof navigator.mediaDevices.removeEventListener&&(navigator.mediaDevices.removeEventListener=function(){logging("Dummy mediaDevices.removeEventListener called.");});};},{"../utils.js":8}],5:[function(require,module,exports){"use strict";var browserDetails=require("../utils").browserDetails,firefoxShim={shimOnTrack:function(){"object"!=typeof window||!window.RTCPeerConnection||"ontrack"in window.RTCPeerConnection.prototype||Object.defineProperty(window.RTCPeerConnection.prototype,"ontrack",{get:function(){return this._ontrack},set:function(f){this._ontrack&&(this.removeEventListener("track",this._ontrack),this.removeEventListener("addstream",this._ontrackpoly)),this.addEventListener("track",this._ontrack=f),this.addEventListener("addstream",this._ontrackpoly=function(e){e.stream.getTracks().forEach(function(track){var event=new Event("track");event.track=track,event.receiver={track:track},event.streams=[e.stream],this.dispatchEvent(event);}.bind(this));}.bind(this));}});},shimSourceObject:function(){"object"==typeof window&&(!window.HTMLMediaElement||"srcObject"in window.HTMLMediaElement.prototype||Object.defineProperty(window.HTMLMediaElement.prototype,"srcObject",{get:function(){return this.mozSrcObject},set:function(stream){this.mozSrcObject=stream;}}));},shimPeerConnection:function(){if("object"==typeof window&&(window.RTCPeerConnection||window.mozRTCPeerConnection)){window.RTCPeerConnection||(window.RTCPeerConnection=function(pcConfig,pcConstraints){if(browserDetails.version<38&&pcConfig&&pcConfig.iceServers){for(var newIceServers=[],i=0;i<pcConfig.iceServers.length;i++){var server=pcConfig.iceServers[i];if(server.hasOwnProperty("urls"))for(var j=0;j<server.urls.length;j++){var newServer={url:server.urls[j]};0===server.urls[j].indexOf("turn")&&(newServer.username=server.username,newServer.credential=server.credential),newIceServers.push(newServer);}else newIceServers.push(pcConfig.iceServers[i]);}pcConfig.iceServers=newIceServers;}return new mozRTCPeerConnection(pcConfig,pcConstraints)},window.RTCPeerConnection.prototype=mozRTCPeerConnection.prototype,mozRTCPeerConnection.generateCertificate&&Object.defineProperty(window.RTCPeerConnection,"generateCertificate",{get:function(){return mozRTCPeerConnection.generateCertificate}}),window.RTCSessionDescription=mozRTCSessionDescription,window.RTCIceCandidate=mozRTCIceCandidate),["setLocalDescription","setRemoteDescription","addIceCandidate"].forEach(function(method){var nativeMethod=RTCPeerConnection.prototype[method];RTCPeerConnection.prototype[method]=function(){return arguments[0]=new("addIceCandidate"===method?RTCIceCandidate:RTCSessionDescription)(arguments[0]),nativeMethod.apply(this,arguments)};});var nativeAddIceCandidate=RTCPeerConnection.prototype.addIceCandidate;RTCPeerConnection.prototype.addIceCandidate=function(){return arguments[0]?nativeAddIceCandidate.apply(this,arguments):(arguments[1]&&arguments[1].apply(null),Promise.resolve())};var makeMapStats=function(stats){var map=new Map;return Object.keys(stats).forEach(function(key){map.set(key,stats[key]),map[key]=stats[key];}),map},modernStatsTypes={inboundrtp:"inbound-rtp",outboundrtp:"outbound-rtp",candidatepair:"candidate-pair",localcandidate:"local-candidate",remotecandidate:"remote-candidate"},nativeGetStats=RTCPeerConnection.prototype.getStats;RTCPeerConnection.prototype.getStats=function(selector,onSucc,onErr){return nativeGetStats.apply(this,[selector||null]).then(function(stats){return browserDetails.version<48&&(stats=makeMapStats(stats)),browserDetails.version<53&&!onSucc&&stats.forEach(function(stat){stat.type=modernStatsTypes[stat.type]||stat.type;}),stats}).then(onSucc,onErr)};}}};module.exports={shimOnTrack:firefoxShim.shimOnTrack,shimSourceObject:firefoxShim.shimSourceObject,shimPeerConnection:firefoxShim.shimPeerConnection,shimGetUserMedia:require("./getusermedia")};},{"../utils":8,"./getusermedia":6}],6:[function(require,module,exports){"use strict";var logging=require("../utils").log,browserDetails=require("../utils").browserDetails;module.exports=function(){var shimError_=function(e){return{name:{SecurityError:"NotAllowedError",PermissionDeniedError:"NotAllowedError"}[e.name]||e.name,message:{"The operation is insecure.":"The request is not allowed by the user agent or the platform in the current context."}[e.message]||e.message,constraint:e.constraint,toString:function(){return this.name+(this.message&&": ")+this.message}}},getUserMedia_=function(constraints,onSuccess,onError){var constraintsToFF37_=function(c){if("object"!=typeof c||c.require)return c;var require=[];return Object.keys(c).forEach(function(key){if("require"!==key&&"advanced"!==key&&"mediaSource"!==key){var r=c[key]="object"==typeof c[key]?c[key]:{ideal:c[key]};if(void 0===r.min&&void 0===r.max&&void 0===r.exact||require.push(key),void 0!==r.exact&&("number"==typeof r.exact?r.min=r.max=r.exact:c[key]=r.exact,delete r.exact),void 0!==r.ideal){c.advanced=c.advanced||[];var oc={};"number"==typeof r.ideal?oc[key]={min:r.ideal,max:r.ideal}:oc[key]=r.ideal,c.advanced.push(oc),delete r.ideal,Object.keys(r).length||delete c[key];}}}),require.length&&(c.require=require),c};return constraints=JSON.parse(JSON.stringify(constraints)),browserDetails.version<38&&(logging("spec: "+JSON.stringify(constraints)),constraints.audio&&(constraints.audio=constraintsToFF37_(constraints.audio)),constraints.video&&(constraints.video=constraintsToFF37_(constraints.video)),logging("ff37: "+JSON.stringify(constraints))),navigator.mozGetUserMedia(constraints,onSuccess,function(e){onError(shimError_(e));})},getUserMediaPromise_=function(constraints){return new Promise(function(resolve,reject){getUserMedia_(constraints,resolve,reject);})};if(navigator.mediaDevices||(navigator.mediaDevices={getUserMedia:getUserMediaPromise_,addEventListener:function(){},removeEventListener:function(){}}),navigator.mediaDevices.enumerateDevices=navigator.mediaDevices.enumerateDevices||function(){return new Promise(function(resolve){var infos=[{kind:"audioinput",deviceId:"default",label:"",groupId:""},{kind:"videoinput",deviceId:"default",label:"",groupId:""}];resolve(infos);})},browserDetails.version<41){var orgEnumerateDevices=navigator.mediaDevices.enumerateDevices.bind(navigator.mediaDevices);navigator.mediaDevices.enumerateDevices=function(){return orgEnumerateDevices().then(void 0,function(e){if("NotFoundError"===e.name)return[];throw e})};}if(browserDetails.version<49){var origGetUserMedia=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);navigator.mediaDevices.getUserMedia=function(c){return origGetUserMedia(c).then(function(stream){if(c.audio&&!stream.getAudioTracks().length||c.video&&!stream.getVideoTracks().length)throw stream.getTracks().forEach(function(track){track.stop();}),new DOMException("The object can not be found here.","NotFoundError");return stream},function(e){return Promise.reject(shimError_(e))})};}navigator.getUserMedia=function(constraints,onSuccess,onError){return browserDetails.version<44?getUserMedia_(constraints,onSuccess,onError):(console.warn("navigator.getUserMedia has been replaced by navigator.mediaDevices.getUserMedia"),void navigator.mediaDevices.getUserMedia(constraints).then(onSuccess,onError))};};},{"../utils":8}],7:[function(require,module,exports){"use strict";var safariShim={shimGetUserMedia:function(){navigator.getUserMedia=navigator.webkitGetUserMedia;}};module.exports={shimGetUserMedia:safariShim.shimGetUserMedia};},{}],8:[function(require,module,exports){"use strict";var logDisabled_=!0,utils={disableLog:function(bool){return"boolean"!=typeof bool?new Error("Argument type: "+typeof bool+". Please use a boolean."):(logDisabled_=bool,bool?"adapter.js logging disabled":"adapter.js logging enabled")},log:function(){if("object"==typeof window){if(logDisabled_)return;"undefined"!=typeof console&&"function"==typeof console.log&&console.log.apply(console,arguments);}},extractVersion:function(uastring,expr,pos){var match=uastring.match(expr);return match&&match.length>=pos&&parseInt(match[pos],10)},detectBrowser:function(){var result={};if(result.browser=null,result.version=null,"undefined"==typeof window||!window.navigator)return result.browser="Not a browser.",result;if(navigator.mozGetUserMedia)result.browser="firefox",result.version=this.extractVersion(navigator.userAgent,/Firefox\/([0-9]+)\./,1);else if(navigator.webkitGetUserMedia)if(window.webkitRTCPeerConnection)result.browser="chrome",result.version=this.extractVersion(navigator.userAgent,/Chrom(e|ium)\/([0-9]+)\./,2);else{if(!navigator.userAgent.match(/Version\/(\d+).(\d+)/))return result.browser="Unsupported webkit-based browser with GUM support but no WebRTC support.",result;result.browser="safari",result.version=this.extractVersion(navigator.userAgent,/AppleWebKit\/([0-9]+)\./,1);}else{if(!navigator.mediaDevices||!navigator.userAgent.match(/Edge\/(\d+).(\d+)$/))return result.browser="Not a supported browser.",result;result.browser="edge",result.version=this.extractVersion(navigator.userAgent,/Edge\/(\d+).(\d+)$/,2);}return result},shimCreateObjectURL:function(){var nativeCreateObjectURL=URL.createObjectURL.bind(URL),nativeRevokeObjectURL=URL.revokeObjectURL.bind(URL),streams=new Map,newId=0;URL.createObjectURL=function(stream){if("getTracks"in stream){var url="polyblob:"+ ++newId;return streams.set(url,stream),console.log("URL.createObjectURL(stream) is deprecated! Use elem.srcObject = stream instead!"),url}return nativeCreateObjectURL(stream)},URL.revokeObjectURL=function(url){nativeRevokeObjectURL(url),streams.delete(url);};var dsc=Object.getOwnPropertyDescriptor(window.HTMLMediaElement.prototype,"src");Object.defineProperty(window.HTMLMediaElement.prototype,"src",{get:function(){return dsc.get.apply(this)},set:function(url){return this.srcObject=streams.get(url)||null,dsc.set.apply(this,[url])}});}};module.exports={log:utils.log,disableLog:utils.disableLog,browserDetails:utils.detectBrowser(),extractVersion:utils.extractVersion,shimCreateObjectURL:utils.shimCreateObjectURL};},{}]},{},[2]);
+!function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a="function"==typeof require&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r);}return n[o].exports}for(var i="function"==typeof require&&require,o=0;o<r.length;o++)s(r[o]);return s}({1:[function(require,module,exports){},{}],2:[function(require,module,exports){"use strict";!function(){var utils=require("./utils"),logging=utils.log,browserDetails=utils.browserDetails;module.exports.browserDetails=browserDetails,module.exports.extractVersion=utils.extractVersion,module.exports.disableLog=utils.disableLog;var chromeShim=require("./chrome/chrome_shim")||null,edgeShim=require("./edge/edge_shim")||null,firefoxShim=require("./firefox/firefox_shim")||null,safariShim=require("./safari/safari_shim")||null;switch(browserDetails.browser){case"chrome":if(!chromeShim||!chromeShim.shimPeerConnection)return void logging("Chrome shim is not included in this adapter release.");logging("adapter.js shimming chrome."),module.exports.browserShim=chromeShim,chromeShim.shimGetUserMedia(),chromeShim.shimMediaStream(),utils.shimCreateObjectURL(),chromeShim.shimSourceObject(),chromeShim.shimPeerConnection(),chromeShim.shimOnTrack();break;case"firefox":if(!firefoxShim||!firefoxShim.shimPeerConnection)return void logging("Firefox shim is not included in this adapter release.");logging("adapter.js shimming firefox."),module.exports.browserShim=firefoxShim,firefoxShim.shimGetUserMedia(),utils.shimCreateObjectURL(),firefoxShim.shimSourceObject(),firefoxShim.shimPeerConnection(),firefoxShim.shimOnTrack();break;case"edge":if(!edgeShim||!edgeShim.shimPeerConnection)return void logging("MS edge shim is not included in this adapter release.");logging("adapter.js shimming edge."),module.exports.browserShim=edgeShim,edgeShim.shimGetUserMedia(),utils.shimCreateObjectURL(),edgeShim.shimPeerConnection();break;case"safari":if(!safariShim)return void logging("Safari shim is not included in this adapter release.");logging("adapter.js shimming safari."),module.exports.browserShim=safariShim,safariShim.shimGetUserMedia();break;default:logging("Unsupported browser!");}}();},{"./chrome/chrome_shim":3,"./edge/edge_shim":1,"./firefox/firefox_shim":5,"./safari/safari_shim":7,"./utils":8}],3:[function(require,module,exports){"use strict";var logging=require("../utils.js").log,browserDetails=require("../utils.js").browserDetails,chromeShim={shimMediaStream:function(){window.MediaStream=window.MediaStream||window.webkitMediaStream;},shimOnTrack:function(){"object"!=typeof window||!window.RTCPeerConnection||"ontrack"in window.RTCPeerConnection.prototype||Object.defineProperty(window.RTCPeerConnection.prototype,"ontrack",{get:function(){return this._ontrack},set:function(f){var self=this;this._ontrack&&(this.removeEventListener("track",this._ontrack),this.removeEventListener("addstream",this._ontrackpoly)),this.addEventListener("track",this._ontrack=f),this.addEventListener("addstream",this._ontrackpoly=function(e){e.stream.addEventListener("addtrack",function(te){var event=new Event("track");event.track=te.track,event.receiver={track:te.track},event.streams=[e.stream],self.dispatchEvent(event);}),e.stream.getTracks().forEach(function(track){var event=new Event("track");event.track=track,event.receiver={track:track},event.streams=[e.stream],this.dispatchEvent(event);}.bind(this));}.bind(this));}});},shimSourceObject:function(){"object"==typeof window&&(!window.HTMLMediaElement||"srcObject"in window.HTMLMediaElement.prototype||Object.defineProperty(window.HTMLMediaElement.prototype,"srcObject",{get:function(){return this._srcObject},set:function(stream){var self=this;return this._srcObject=stream,this.src&&URL.revokeObjectURL(this.src),stream?(this.src=URL.createObjectURL(stream),stream.addEventListener("addtrack",function(){self.src&&URL.revokeObjectURL(self.src),self.src=URL.createObjectURL(stream);}),void stream.addEventListener("removetrack",function(){self.src&&URL.revokeObjectURL(self.src),self.src=URL.createObjectURL(stream);})):void(this.src="")}}));},shimPeerConnection:function(){window.RTCPeerConnection||(window.RTCPeerConnection=function(pcConfig,pcConstraints){return logging("PeerConnection"),pcConfig&&pcConfig.iceTransportPolicy&&(pcConfig.iceTransports=pcConfig.iceTransportPolicy),new webkitRTCPeerConnection(pcConfig,pcConstraints)},window.RTCPeerConnection.prototype=webkitRTCPeerConnection.prototype,webkitRTCPeerConnection.generateCertificate&&Object.defineProperty(window.RTCPeerConnection,"generateCertificate",{get:function(){return webkitRTCPeerConnection.generateCertificate}}));var origGetStats=RTCPeerConnection.prototype.getStats;RTCPeerConnection.prototype.getStats=function(selector,successCallback,errorCallback){var self=this,args=arguments;if(arguments.length>0&&"function"==typeof selector)return origGetStats.apply(this,arguments);if(0===origGetStats.length&&(0===arguments.length||"function"!=typeof arguments[0]))return origGetStats.apply(this,[]);var fixChromeStats_=function(response){var standardReport={},reports=response.result();return reports.forEach(function(report){var standardStats={id:report.id,timestamp:report.timestamp,type:{localcandidate:"local-candidate",remotecandidate:"remote-candidate"}[report.type]||report.type};report.names().forEach(function(name){standardStats[name]=report.stat(name);}),standardReport[standardStats.id]=standardStats;}),standardReport},makeMapStats=function(stats){return new Map(Object.keys(stats).map(function(key){return[key,stats[key]]}))};if(arguments.length>=2){var successCallbackWrapper_=function(response){args[1](makeMapStats(fixChromeStats_(response)));};return origGetStats.apply(this,[successCallbackWrapper_,arguments[0]])}return new Promise(function(resolve,reject){origGetStats.apply(self,[function(response){resolve(makeMapStats(fixChromeStats_(response)));},reject]);}).then(successCallback,errorCallback)},browserDetails.version<51&&["setLocalDescription","setRemoteDescription","addIceCandidate"].forEach(function(method){var nativeMethod=RTCPeerConnection.prototype[method];RTCPeerConnection.prototype[method]=function(){var args=arguments,self=this,promise=new Promise(function(resolve,reject){nativeMethod.apply(self,[args[0],resolve,reject]);});return args.length<2?promise:promise.then(function(){args[1].apply(null,[]);},function(err){args.length>=3&&args[2].apply(null,[err]);})};}),browserDetails.version<52&&["createOffer","createAnswer"].forEach(function(method){var nativeMethod=RTCPeerConnection.prototype[method];RTCPeerConnection.prototype[method]=function(){var self=this;if(arguments.length<1||1===arguments.length&&"object"==typeof arguments[0]){var opts=1===arguments.length?arguments[0]:void 0;return new Promise(function(resolve,reject){nativeMethod.apply(self,[resolve,reject,opts]);})}return nativeMethod.apply(this,arguments)};}),["setLocalDescription","setRemoteDescription","addIceCandidate"].forEach(function(method){var nativeMethod=RTCPeerConnection.prototype[method];RTCPeerConnection.prototype[method]=function(){return arguments[0]=new("addIceCandidate"===method?RTCIceCandidate:RTCSessionDescription)(arguments[0]),nativeMethod.apply(this,arguments)};});var nativeAddIceCandidate=RTCPeerConnection.prototype.addIceCandidate;RTCPeerConnection.prototype.addIceCandidate=function(){return arguments[0]?nativeAddIceCandidate.apply(this,arguments):(arguments[1]&&arguments[1].apply(null),Promise.resolve())};}};module.exports={shimMediaStream:chromeShim.shimMediaStream,shimOnTrack:chromeShim.shimOnTrack,shimSourceObject:chromeShim.shimSourceObject,shimPeerConnection:chromeShim.shimPeerConnection,shimGetUserMedia:require("./getusermedia")};},{"../utils.js":8,"./getusermedia":4}],4:[function(require,module,exports){"use strict";var logging=require("../utils.js").log;module.exports=function(){var constraintsToChrome_=function(c){if("object"!=typeof c||c.mandatory||c.optional)return c;var cc={};return Object.keys(c).forEach(function(key){if("require"!==key&&"advanced"!==key&&"mediaSource"!==key){var r="object"==typeof c[key]?c[key]:{ideal:c[key]};void 0!==r.exact&&"number"==typeof r.exact&&(r.min=r.max=r.exact);var oldname_=function(prefix,name){return prefix?prefix+name.charAt(0).toUpperCase()+name.slice(1):"deviceId"===name?"sourceId":name};if(void 0!==r.ideal){cc.optional=cc.optional||[];var oc={};"number"==typeof r.ideal?(oc[oldname_("min",key)]=r.ideal,cc.optional.push(oc),oc={},oc[oldname_("max",key)]=r.ideal,cc.optional.push(oc)):(oc[oldname_("",key)]=r.ideal,cc.optional.push(oc));}void 0!==r.exact&&"number"!=typeof r.exact?(cc.mandatory=cc.mandatory||{},cc.mandatory[oldname_("",key)]=r.exact):["min","max"].forEach(function(mix){void 0!==r[mix]&&(cc.mandatory=cc.mandatory||{},cc.mandatory[oldname_(mix,key)]=r[mix]);});}}),c.advanced&&(cc.optional=(cc.optional||[]).concat(c.advanced)),cc},shimConstraints_=function(constraints,func){if(constraints=JSON.parse(JSON.stringify(constraints)),constraints&&constraints.audio&&(constraints.audio=constraintsToChrome_(constraints.audio)),constraints&&"object"==typeof constraints.video){var face=constraints.video.facingMode;if(face=face&&("object"==typeof face?face:{ideal:face}),face&&("user"===face.exact||"environment"===face.exact||"user"===face.ideal||"environment"===face.ideal)&&(!navigator.mediaDevices.getSupportedConstraints||!navigator.mediaDevices.getSupportedConstraints().facingMode)&&(delete constraints.video.facingMode,"environment"===face.exact||"environment"===face.ideal))return navigator.mediaDevices.enumerateDevices().then(function(devices){devices=devices.filter(function(d){return"videoinput"===d.kind});var back=devices.find(function(d){return d.label.toLowerCase().indexOf("back")!==-1})||devices.length&&devices[devices.length-1];return back&&(constraints.video.deviceId=face.exact?{exact:back.deviceId}:{ideal:back.deviceId}),constraints.video=constraintsToChrome_(constraints.video),logging("chrome: "+JSON.stringify(constraints)),func(constraints)});constraints.video=constraintsToChrome_(constraints.video);}return logging("chrome: "+JSON.stringify(constraints)),func(constraints)},shimError_=function(e){return{name:{PermissionDeniedError:"NotAllowedError",ConstraintNotSatisfiedError:"OverconstrainedError"}[e.name]||e.name,message:e.message,constraint:e.constraintName,toString:function(){return this.name+(this.message&&": ")+this.message}}},getUserMedia_=function(constraints,onSuccess,onError){shimConstraints_(constraints,function(c){navigator.webkitGetUserMedia(c,onSuccess,function(e){onError(shimError_(e));});});};navigator.getUserMedia=getUserMedia_;var getUserMediaPromise_=function(constraints){return new Promise(function(resolve,reject){navigator.getUserMedia(constraints,resolve,reject);})};if(navigator.mediaDevices||(navigator.mediaDevices={getUserMedia:getUserMediaPromise_,enumerateDevices:function(){return new Promise(function(resolve){var kinds={audio:"audioinput",video:"videoinput"};return MediaStreamTrack.getSources(function(devices){resolve(devices.map(function(device){return{label:device.label,kind:kinds[device.kind],deviceId:device.id,groupId:""}}));})})}}),navigator.mediaDevices.getUserMedia){var origGetUserMedia=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);navigator.mediaDevices.getUserMedia=function(cs){return shimConstraints_(cs,function(c){return origGetUserMedia(c).then(function(stream){if(c.audio&&!stream.getAudioTracks().length||c.video&&!stream.getVideoTracks().length)throw stream.getTracks().forEach(function(track){track.stop();}),new DOMException("","NotFoundError");return stream},function(e){return Promise.reject(shimError_(e))})})};}else navigator.mediaDevices.getUserMedia=function(constraints){return getUserMediaPromise_(constraints)};"undefined"==typeof navigator.mediaDevices.addEventListener&&(navigator.mediaDevices.addEventListener=function(){logging("Dummy mediaDevices.addEventListener called.");}),"undefined"==typeof navigator.mediaDevices.removeEventListener&&(navigator.mediaDevices.removeEventListener=function(){logging("Dummy mediaDevices.removeEventListener called.");});};},{"../utils.js":8}],5:[function(require,module,exports){"use strict";var browserDetails=require("../utils").browserDetails,firefoxShim={shimOnTrack:function(){"object"!=typeof window||!window.RTCPeerConnection||"ontrack"in window.RTCPeerConnection.prototype||Object.defineProperty(window.RTCPeerConnection.prototype,"ontrack",{get:function(){return this._ontrack},set:function(f){this._ontrack&&(this.removeEventListener("track",this._ontrack),this.removeEventListener("addstream",this._ontrackpoly)),this.addEventListener("track",this._ontrack=f),this.addEventListener("addstream",this._ontrackpoly=function(e){e.stream.getTracks().forEach(function(track){var event=new Event("track");event.track=track,event.receiver={track:track},event.streams=[e.stream],this.dispatchEvent(event);}.bind(this));}.bind(this));}});},shimSourceObject:function(){"object"==typeof window&&(!window.HTMLMediaElement||"srcObject"in window.HTMLMediaElement.prototype||Object.defineProperty(window.HTMLMediaElement.prototype,"srcObject",{get:function(){return this.mozSrcObject},set:function(stream){this.mozSrcObject=stream;}}));},shimPeerConnection:function(){if("object"==typeof window&&(window.RTCPeerConnection||window.mozRTCPeerConnection)){window.RTCPeerConnection||(window.RTCPeerConnection=function(pcConfig,pcConstraints){if(browserDetails.version<38&&pcConfig&&pcConfig.iceServers){for(var newIceServers=[],i=0;i<pcConfig.iceServers.length;i++){var server=pcConfig.iceServers[i];if(server.hasOwnProperty("urls"))for(var j=0;j<server.urls.length;j++){var newServer={url:server.urls[j]};0===server.urls[j].indexOf("turn")&&(newServer.username=server.username,newServer.credential=server.credential),newIceServers.push(newServer);}else newIceServers.push(pcConfig.iceServers[i]);}pcConfig.iceServers=newIceServers;}return new mozRTCPeerConnection(pcConfig,pcConstraints)},window.RTCPeerConnection.prototype=mozRTCPeerConnection.prototype,mozRTCPeerConnection.generateCertificate&&Object.defineProperty(window.RTCPeerConnection,"generateCertificate",{get:function(){return mozRTCPeerConnection.generateCertificate}}),window.RTCSessionDescription=mozRTCSessionDescription,window.RTCIceCandidate=mozRTCIceCandidate),["setLocalDescription","setRemoteDescription","addIceCandidate"].forEach(function(method){var nativeMethod=RTCPeerConnection.prototype[method];RTCPeerConnection.prototype[method]=function(){return arguments[0]=new("addIceCandidate"===method?RTCIceCandidate:RTCSessionDescription)(arguments[0]),nativeMethod.apply(this,arguments)};});var nativeAddIceCandidate=RTCPeerConnection.prototype.addIceCandidate;RTCPeerConnection.prototype.addIceCandidate=function(){return arguments[0]?nativeAddIceCandidate.apply(this,arguments):(arguments[1]&&arguments[1].apply(null),Promise.resolve())};var makeMapStats=function(stats){var map=new Map;return Object.keys(stats).forEach(function(key){map.set(key,stats[key]),map[key]=stats[key];}),map},modernStatsTypes={inboundrtp:"inbound-rtp",outboundrtp:"outbound-rtp",candidatepair:"candidate-pair",localcandidate:"local-candidate",remotecandidate:"remote-candidate"},nativeGetStats=RTCPeerConnection.prototype.getStats;RTCPeerConnection.prototype.getStats=function(selector,onSucc,onErr){return nativeGetStats.apply(this,[selector||null]).then(function(stats){if(browserDetails.version<48&&(stats=makeMapStats(stats)),browserDetails.version<53&&!onSucc)try{stats.forEach(function(stat){stat.type=modernStatsTypes[stat.type]||stat.type;});}catch(e){if("TypeError"!==e.name)throw e;stats.forEach(function(stat,i){stats.set(i,Object.assign({},stat,{type:modernStatsTypes[stat.type]||stat.type}));});}return stats}).then(onSucc,onErr)};}}};module.exports={shimOnTrack:firefoxShim.shimOnTrack,shimSourceObject:firefoxShim.shimSourceObject,shimPeerConnection:firefoxShim.shimPeerConnection,shimGetUserMedia:require("./getusermedia")};},{"../utils":8,"./getusermedia":6}],6:[function(require,module,exports){"use strict";var logging=require("../utils").log,browserDetails=require("../utils").browserDetails;module.exports=function(){var shimError_=function(e){return{name:{SecurityError:"NotAllowedError",PermissionDeniedError:"NotAllowedError"}[e.name]||e.name,message:{"The operation is insecure.":"The request is not allowed by the user agent or the platform in the current context."}[e.message]||e.message,constraint:e.constraint,toString:function(){return this.name+(this.message&&": ")+this.message}}},getUserMedia_=function(constraints,onSuccess,onError){var constraintsToFF37_=function(c){if("object"!=typeof c||c.require)return c;var require=[];return Object.keys(c).forEach(function(key){if("require"!==key&&"advanced"!==key&&"mediaSource"!==key){var r=c[key]="object"==typeof c[key]?c[key]:{ideal:c[key]};if(void 0===r.min&&void 0===r.max&&void 0===r.exact||require.push(key),void 0!==r.exact&&("number"==typeof r.exact?r.min=r.max=r.exact:c[key]=r.exact,delete r.exact),void 0!==r.ideal){c.advanced=c.advanced||[];var oc={};"number"==typeof r.ideal?oc[key]={min:r.ideal,max:r.ideal}:oc[key]=r.ideal,c.advanced.push(oc),delete r.ideal,Object.keys(r).length||delete c[key];}}}),require.length&&(c.require=require),c};return constraints=JSON.parse(JSON.stringify(constraints)),browserDetails.version<38&&(logging("spec: "+JSON.stringify(constraints)),constraints.audio&&(constraints.audio=constraintsToFF37_(constraints.audio)),constraints.video&&(constraints.video=constraintsToFF37_(constraints.video)),logging("ff37: "+JSON.stringify(constraints))),navigator.mozGetUserMedia(constraints,onSuccess,function(e){onError(shimError_(e));})},getUserMediaPromise_=function(constraints){return new Promise(function(resolve,reject){getUserMedia_(constraints,resolve,reject);})};if(navigator.mediaDevices||(navigator.mediaDevices={getUserMedia:getUserMediaPromise_,addEventListener:function(){},removeEventListener:function(){}}),navigator.mediaDevices.enumerateDevices=navigator.mediaDevices.enumerateDevices||function(){return new Promise(function(resolve){var infos=[{kind:"audioinput",deviceId:"default",label:"",groupId:""},{kind:"videoinput",deviceId:"default",label:"",groupId:""}];resolve(infos);})},browserDetails.version<41){var orgEnumerateDevices=navigator.mediaDevices.enumerateDevices.bind(navigator.mediaDevices);navigator.mediaDevices.enumerateDevices=function(){return orgEnumerateDevices().then(void 0,function(e){if("NotFoundError"===e.name)return[];throw e})};}if(browserDetails.version<49){var origGetUserMedia=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);navigator.mediaDevices.getUserMedia=function(c){return origGetUserMedia(c).then(function(stream){if(c.audio&&!stream.getAudioTracks().length||c.video&&!stream.getVideoTracks().length)throw stream.getTracks().forEach(function(track){track.stop();}),new DOMException("The object can not be found here.","NotFoundError");return stream},function(e){return Promise.reject(shimError_(e))})};}navigator.getUserMedia=function(constraints,onSuccess,onError){return browserDetails.version<44?getUserMedia_(constraints,onSuccess,onError):(console.warn("navigator.getUserMedia has been replaced by navigator.mediaDevices.getUserMedia"),void navigator.mediaDevices.getUserMedia(constraints).then(onSuccess,onError))};};},{"../utils":8}],7:[function(require,module,exports){"use strict";var safariShim={shimGetUserMedia:function(){navigator.getUserMedia=navigator.webkitGetUserMedia;}};module.exports={shimGetUserMedia:safariShim.shimGetUserMedia};},{}],8:[function(require,module,exports){"use strict";var logDisabled_=!0,utils={disableLog:function(bool){return"boolean"!=typeof bool?new Error("Argument type: "+typeof bool+". Please use a boolean."):(logDisabled_=bool,bool?"adapter.js logging disabled":"adapter.js logging enabled")},log:function(){if("object"==typeof window){if(logDisabled_)return;"undefined"!=typeof console&&"function"==typeof console.log&&console.log.apply(console,arguments);}},extractVersion:function(uastring,expr,pos){var match=uastring.match(expr);return match&&match.length>=pos&&parseInt(match[pos],10)},detectBrowser:function(){var result={};if(result.browser=null,result.version=null,"undefined"==typeof window||!window.navigator)return result.browser="Not a browser.",result;if(navigator.mozGetUserMedia)result.browser="firefox",result.version=this.extractVersion(navigator.userAgent,/Firefox\/([0-9]+)\./,1);else if(navigator.webkitGetUserMedia)if(window.webkitRTCPeerConnection)result.browser="chrome",result.version=this.extractVersion(navigator.userAgent,/Chrom(e|ium)\/([0-9]+)\./,2);else{if(!navigator.userAgent.match(/Version\/(\d+).(\d+)/))return result.browser="Unsupported webkit-based browser with GUM support but no WebRTC support.",result;result.browser="safari",result.version=this.extractVersion(navigator.userAgent,/AppleWebKit\/([0-9]+)\./,1);}else{if(!navigator.mediaDevices||!navigator.userAgent.match(/Edge\/(\d+).(\d+)$/))return result.browser="Not a supported browser.",result;result.browser="edge",result.version=this.extractVersion(navigator.userAgent,/Edge\/(\d+).(\d+)$/,2);}return result},shimCreateObjectURL:function(){if("object"==typeof window&&window.HTMLMediaElement&&"srcObject"in window.HTMLMediaElement.prototype){var nativeCreateObjectURL=URL.createObjectURL.bind(URL),nativeRevokeObjectURL=URL.revokeObjectURL.bind(URL),streams=new Map,newId=0;URL.createObjectURL=function(stream){if("getTracks"in stream){var url="polyblob:"+ ++newId;return streams.set(url,stream),console.log("URL.createObjectURL(stream) is deprecated! Use elem.srcObject = stream instead!"),url}return nativeCreateObjectURL(stream)},URL.revokeObjectURL=function(url){nativeRevokeObjectURL(url),streams.delete(url);};var dsc=Object.getOwnPropertyDescriptor(window.HTMLMediaElement.prototype,"src");Object.defineProperty(window.HTMLMediaElement.prototype,"src",{get:function(){return dsc.get.apply(this)},set:function(url){return this.srcObject=streams.get(url)||null,dsc.set.apply(this,[url])}});}}};module.exports={log:utils.log,disableLog:utils.disableLog,browserDetails:utils.detectBrowser(),extractVersion:utils.extractVersion,shimCreateObjectURL:utils.shimCreateObjectURL};},{}]},{},[2]);
 
 const NodeCloseEvent = class CloseEvent {
-  constructor (options = {}) {
-    this.wasClean = options.wasClean;
-    this.code = options.code;
-    this.reason = options.reason;
+  constructor (name, options = {}) {
+    this.name = name;
+    this.wasClean = options.wasClean || false;
+    this.code = options.code || 0;
+    this.reason = options.reason || '';
   }
 };
 
@@ -467,23 +468,6 @@ const NodeCloseEvent = class CloseEvent {
  * Utility class contains some helper static methods.
  */
 class Util {
-  /**
-   * Create `CloseEvent`.
-   *
-   * @param {number} code
-   * @param {string} [reason=]
-   * @param {boolean} [wasClean=true]
-   *
-   * @returns {CloseEvent|NodeCloseEvent}
-   */
-  static createCloseEvent (code, reason = '', wasClean = true) {
-    const obj = {wasClean, code, reason};
-    if (Util.isBrowser()) {
-      return new CloseEvent('netfluxClose', obj)
-    } else {
-      return new NodeCloseEvent(obj)
-    }
-  }
 
   /**
    * Check execution environment.
@@ -565,7 +549,8 @@ class Util {
   static get WEB_SOCKET_LIB () { return 2 }
   static get TEXT_ENCODING_LIB () { return 3 }
   static get EVENT_SOURCE_LIB () { return 4 }
-  static get XML_HTTP_REQUEST_LIB () { return 5 }
+  static get FETCH () { return 5 }
+  static get CLOSE_EVENT () { return 6 }
 
   static requireLib (libConst) {
     switch (libConst) {
@@ -577,8 +562,10 @@ class Util {
         return Util.isBrowser() ? window : Util.require('text-encoding')
       case Util.EVENT_SOURCE_LIB:
         return Util.isBrowser() ? window.EventSource : Util.require('eventsource')
-      case Util.XML_HTTP_REQUEST_LIB:
-        return Util.isBrowser() ? window.XMLHttpRequest : Util.require('xmlhttprequest').XMLHttpRequest
+      case Util.FETCH:
+        return Util.isBrowser() ? window.fetch : Util.require('node-fetch')
+      case Util.CLOSE_EVENT:
+        return Util.isBrowser() ? window.CloseEvent : NodeCloseEvent
       default:
         console.error(`${libConst} is unknown lib constant. See Util`);
         return undefined
@@ -587,6 +574,7 @@ class Util {
 }
 
 const wrtc = Util.requireLib(Util.WEB_RTC_LIB);
+const CloseEvent = Util.requireLib(Util.CLOSE_EVENT);
 
 const CONNECT_TIMEOUT = 30000;
 const REMOVE_ITEM_TIMEOUT = 5000;
@@ -853,7 +841,12 @@ class WebRTCService extends Service {
   setUpOnDisconnect (pc, dataCh) {
     pc.oniceconnectionstatechange = () => {
       if (pc.iceConnectionState === 'disconnected') {
-        if (dataCh.onclose) dataCh.onclose(Util.createCloseEvent(4201, 'disconnected', false));
+        if (dataCh.onclose) {
+          dataCh.onclose(new CloseEvent('disconnect', {
+            code: 4201,
+            reason: 'disconnected'
+          }));
+        }
       }
     };
   }
@@ -917,10 +910,10 @@ class WebSocketService extends Service {
 }
 
 const EventSource = Util.requireLib(Util.EVENT_SOURCE_LIB);
-const XMLHttpRequest = Util.requireLib(Util.XML_HTTP_REQUEST_LIB);
+const fetch = Util.requireLib(Util.FETCH);
+const CloseEvent$1 = Util.requireLib(Util.CLOSE_EVENT);
 
-const CONNECT_TIMEOUT$2 = 2000;
-const CLOSE_AFTER_RECONNECT_TIMEOUT = 6000;
+const CONNECT_TIMEOUT$2 = 5000;
 
 /**
  * Service class responsible to establish connections between peers via
@@ -929,7 +922,7 @@ const CLOSE_AFTER_RECONNECT_TIMEOUT = 6000;
 class EventSourceService extends Service {
 
   /**
-   * Creates EventSource object.
+   * Creates RichEventSource object.
    *
    * @param {string} url - Server url
    * @returns {Promise<EventSource, string>} It is resolved once the WebSocket has been created and rejected otherwise
@@ -938,24 +931,7 @@ class EventSourceService extends Service {
     return new Promise((resolve, reject) => {
       try {
         const res = new RichEventSource(url);
-        res.addEventListener('auth', evtMsg => {
-          res.auth = evtMsg.data;
-          if (res.OPEN === undefined) {
-            res.OPEN = 1;
-          }
-
-          // Close function is defined here and not in the RichEventSource class
-          // definition, because in NodeJS with eventsource package, method
-          // overriding does not work.
-          res.nativeClose = res.close;
-          res.close = function () {
-            if (typeof this.onclose === 'function') {
-              this.onclose(Util.createCloseEvent('close'));
-            }
-            this.nativeClose();
-          };
-          resolve(res);
-        });
+        res.onopen = () => resolve(res);
         res.onerror = err => reject(err.message);
         // Timeout if "auth" event has not been received.
         setTimeout(() => {
@@ -971,62 +947,58 @@ class EventSourceService extends Service {
 class RichEventSource {
 
   constructor (url) {
-    this.es = new EventSource(url);
     this.auth = '';
-    this.reconnectTimeout = null;
-    this.onopen = () => {
-      if (this.reconnectTimeout) {
-        clearTimeout(this.reconnectTimeout);
-      }
-    };
-    this.OPEN = this.es.OPEN;
+    this._onopen = () => {};
+    this._onerror = () => {};
+    this._onclose = () => {};
+    this.es = new EventSource(url);
+    this.es.addEventListener('auth', evtMsg => {
+      this.auth = evtMsg.data;
+      this._onopen();
+    });
+    this.es.addEventListener('close', evtMsg => {
+      const data = JSON.parse(evtMsg.data);
+      this.es.close();
+      this._onclose(new CloseEvent$1('close', {
+        wasClean: true,
+        code: data.code,
+        reason: data.reason
+      }));
+    });
+    this.es.onerror = this._onerror;
   }
 
+  get CONNECTING () { return this.es.OPEN !== undefined ? this.es.OPEN : 0 }
+  get OPEN () { return this.es.OPEN !== undefined ? this.es.OPEN : 1 }
+  get CLOSED () { return this.es.OPEN !== undefined ? this.es.OPEN : 2 }
   get url () { return this.es.url }
-
   get readyState () { return this.es.readyState }
 
-  get onopen () { return this.es.onopen }
-
-  set onopen (cb) { this.es.onopen = cb; }
+  get onopen () { return this._onopen }
+  set onopen (cb) { this._onopen = cb; }
 
   get onmessage () { return this.es.onmessage }
-
   set onmessage (cb) { this.es.onmessage = cb; }
 
-  get onclose () { return this.es.onclose }
+  get onclose () { return this._onclose }
+  set onclose (cb) { this._onclose = cb; }
 
-  set onclose (cb) { this.es.onclose = cb; }
+  get onerror () { return this._onerror }
+  set onerror (cb) { this._onerror = cb; }
 
-  get onerror () { return this.es.onerror }
-
-  set onerror (cb) {
-    this.es.onerror = err => {
-      cb(err);
-      if (!this.reconnectTimeout) {
-        this.reconnectTimeout = setTimeout(() => {
-          this.close();
-        }, CLOSE_AFTER_RECONNECT_TIMEOUT);
-      }
-    };
+  close () {
+    this.es.close();
+    this._onclose(new CloseEvent$1('close', {wasClean: true, code: 1000}));
   }
 
-  addEventListener (event, cb) { this.es.addEventListener(event, cb); }
-
-  close () { this.es.close(); }
-
   send (str = '') {
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', this.url, true);
-
-    xhr.onload = () => {
-      if (xhr.status !== 200) {
-        this.es.onerror(new Error(xhr.statusText));
-      }
-    };
-
-    xhr.onerror = err => this.es.onerror(new Error(err.message));
-    xhr.send(`${this.auth}@${str}`);
+    fetch(this.url, { method: 'POST', body: `${this.auth}@${str}` })
+      .then(response => {
+        if (response.status !== 200) {
+          this._onerror(new Error(response.status + ': ' + response.statusText));
+        }
+      })
+      .catch(err => this._onerror(err));
   }
 }
 
@@ -1491,8 +1463,9 @@ class SignalingGate {
 
   /**
    * @param {WebChannel} wc
+   * @param {function(ch: RTCDataChannel)} onChannel
    */
-  constructor (wc) {
+  constructor (wc, onChannel) {
     /**
      * @type {WebChannel}
      */
@@ -1515,50 +1488,37 @@ class SignalingGate {
      * @type {external:WebSocket|external:ws/WebSocket|external:EventSource}
      */
     this.con = null;
+
+    this.onChannel = onChannel;
   }
 
   /**
    * Open the gate.
    *
    * @param {string} url Signaling server url
-   * @param {function(ch: RTCDataChannel)} onChannel
-   * @param {string} key
+   * @param {string} [key = this.generateKey()]
    * @returns {Promise<OpenData, string>}
    */
-  open (url, onChannel, key = null) {
+  open (url, key = this.generateKey()) {
     return new Promise((resolve, reject) => {
-      if (key === null) key = this.generateKey();
       this.getConnectionService(url)
         .connect(url)
-        .then(con => {
-          con.onclose = closeEvt => {
-            this.key = null;
-            this.con = null;
-            this.url = null;
-            this.webChannel.onClose(closeEvt);
-            reject(closeEvt.reason);
-          };
-          con.onerror = err => {
-            reject(err.message);
-          };
-          con.onmessage = evt => {
+        .then(sigCon => {
+          sigCon.onclose = closeEvt => reject(closeEvt.reason);
+          sigCon.onerror = err => reject(err.message);
+          sigCon.onmessage = evt => {
             try {
               const msg = JSON.parse(evt.data);
-              if ('isKeyOk' in msg) {
-                if (msg.isKeyOk) {
-                  ServiceFactory.get(WEB_RTC, this.webChannel.settings.iceServers)
-                    .listenFromSignaling(con, onChannel);
-                  this.con = con;
-                  this.key = key;
-                  this.url = url;
-                  resolve({url, key});
-                } else reject(`${key} key already exists`);
+              if ('opened' in msg) {
+                if (msg.opened) {
+                  resolve(this.listenOnOpen(sigCon, key));
+                } else reject(`Could not open with ${key}`);
               } else reject(`Unknown message from ${url}: ${evt.data}`);
             } catch (err) {
               reject('Server responce is not a JSON string: ' + err.message);
             }
           };
-          con.send(JSON.stringify({open: key}));
+          sigCon.send(JSON.stringify({open: key}));
         })
         .catch(err => {
           reject(err);
@@ -1566,34 +1526,65 @@ class SignalingGate {
     })
   }
 
+  /**
+   * Open the gate when the connection with the signaling server exists already.
+   *
+   * @param {WebSocket|RichEventSource} sigCon Connection with the signaling
+   * @param {string} key
+   * @returns {Promise<OpenData, string>}
+   */
+  openExisted (sigCon, key) {
+    return new Promise((resolve, reject) => {
+      sigCon.onclose = closeEvt => reject(closeEvt.reason);
+      sigCon.onerror = err => reject(err.message);
+      sigCon.onmessage = evt => {
+        try {
+          const msg = JSON.parse(evt.data);
+          if ('opened' in msg) {
+            if (msg.opened) {
+              resolve(this.listenOnOpen(sigCon, key));
+            } else reject(`Could not open with ${key}`);
+          } else reject(`Unknown message from ${sigCon.url}: ${evt.data}`);
+        } catch (err) {
+          reject('Server responce is not a JSON string: ' + err.message);
+        }
+      };
+      sigCon.send(JSON.stringify({open: key}));
+    })
+  }
+
   join (url, key) {
     return new Promise((resolve, reject) => {
       this.getConnectionService(url)
         .connect(url)
-        .then(con => {
-          con.onclose = closeEvt => reject(closeEvt.reason);
-          con.onmessage = evt => {
+        .then(sigCon => {
+          sigCon.onclose = closeEvt => reject(closeEvt.reason);
+          sigCon.onerror = err => reject(err.message);
+          sigCon.onmessage = evt => {
             try {
               const msg = JSON.parse(evt.data);
-              if ('isKeyOk' in msg) {
-                if (msg.isKeyOk) {
-                  if ('useThis' in msg && msg.useThis) {
-                    resolve(con);
+              if ('opened' in msg) {
+                if (!msg.opened) {
+                  if ('useThis' in msg) {
+                    if (msg.useThis) {
+                      resolve({opened: false, con: sigCon});
+                    } else {
+                      reject(`Open a gate with bot server is not possible`);
+                    }
                   } else {
                     ServiceFactory.get(WEB_RTC, this.webChannel.settings.iceServers)
-                      .connectOverSignaling(con, key)
-                      .then(channel => {
-                        con.onclose = null;
-                        con.close();
-                        resolve(channel);
-                      })
+                      .connectOverSignaling(sigCon, key)
+                      .then(dc => resolve({opened: false, con: dc, sigCon}))
                       .catch(reject);
                   }
-                } else reject(`The key "${key}" not found`);
+                } else {
+                  this.listenOnOpen(sigCon, key);
+                  resolve({opened: true, sigCon});
+                }
               } else reject(`Unknown message from ${url}: ${evt.data}`);
             } catch (err) { reject(err.message); }
           };
-          con.send(JSON.stringify({join: key}));
+          sigCon.send(JSON.stringify({join: key}));
         })
         .catch(reject);
     })
@@ -1651,6 +1642,25 @@ class SignalingGate {
     } else {
       throw new Error(`${url} is not a valid URL`)
     }
+  }
+
+  listenOnOpen (sigCon, key) {
+    ServiceFactory.get(WEB_RTC, this.webChannel.settings.iceServers)
+      .listenFromSignaling(sigCon, con => this.onChannel(con));
+    this.con = sigCon;
+    this.con.onclose = closeEvt => {
+      this.key = null;
+      this.con = null;
+      this.url = null;
+      this.webChannel.onClose(closeEvt);
+    };
+    this.key = key;
+    if (sigCon.url.endsWith('/')) {
+      this.url = sigCon.url.substr(0, sigCon.url.length - 1);
+    } else {
+      this.url = sigCon.url;
+    }
+    return {url: this.url, key}
   }
 
   /**
@@ -1807,7 +1817,7 @@ class WebChannel {
      * @private
      * @type {SignalingGate}
      */
-    this.gate = new SignalingGate(this);
+    this.gate = new SignalingGate(this, ch => this.addChannel(ch));
 
     /**
      * Unique `WebChannel` identifier. Its value is the same for all `WebChannel` members.
@@ -1857,12 +1867,23 @@ class WebChannel {
    */
   join (keyOrSocket, url = this.settings.signalingURL) {
     return new Promise((resolve, reject) => {
-      this.onJoin = resolve;
       if (keyOrSocket.constructor.name !== 'WebSocket') {
         this.gate.join(url, keyOrSocket)
-          .then(con => this.initChannel(con))
+          .then(res => {
+            if (res.opened) {
+              resolve();
+            } else {
+              this.onJoin = () => {
+                this.gate.openExisted(res.sigCon, keyOrSocket)
+                  .then(resolve);
+              };
+              this.initChannel(res.con)
+                .catch(reject);
+            }
+          })
           .catch(reject);
       } else {
+        this.onJoin = resolve;
         this.initChannel(keyOrSocket).catch(reject);
       }
     })
@@ -1895,20 +1916,19 @@ class WebChannel {
   /**
    * Enable other peers to join the `WebChannel` with your help as an
    * intermediary peer.
-   * @param  {Object} [options] Any available connection service options
+   * @param  {string} [key] Key to use. If none provide, then generate one.
    * @returns {Promise} It is resolved once the `WebChannel` is open. The
    * callback function take a parameter of type {@link SignalingGate~AccessData}.
    */
-  open (options) {
-    const defaultSettings = {
-      url: this.settings.signalingURL,
-      key: null
-    };
-    const settings = Object.assign({}, defaultSettings, options);
-    if (Util.isURL(settings.url)) {
-      return this.gate.open(settings.url, dataCh => this.addChannel(dataCh), settings.key)
+  open (key = null) {
+    if (Util.isURL(this.settings.signalingURL)) {
+      if (key !== null) {
+        return this.gate.open(this.settings.signalingURL, key)
+      } else {
+        return this.gate.open(this.settings.signalingURL)
+      }
     } else {
-      return Promise.reject(`${settings.url} is not a valid URL`)
+      return Promise.reject(`${this.settings.signalingURL} is not a valid URL`)
     }
   }
 
@@ -2779,9 +2799,9 @@ class BotServer {
             if ('join' in msg) {
               const wc = this.getWebChannel(msg.join);
               if (wc === null) {
-                ws.send(JSON.stringify({isKeyOk: false}));
+                ws.send(JSON.stringify({opened: false, useThis: false}));
               } else {
-                ws.send(JSON.stringify({isKeyOk: true, useThis: true}));
+                ws.send(JSON.stringify({opened: false, useThis: true}));
                 wc.invite(ws);
               }
             } else if ('wcId' in msg) {

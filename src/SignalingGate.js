@@ -10,8 +10,9 @@ class SignalingGate {
 
   /**
    * @param {WebChannel} wc
+   * @param {function(ch: RTCDataChannel)} onChannel
    */
-  constructor (wc) {
+  constructor (wc, onChannel) {
     /**
      * @type {WebChannel}
      */
@@ -34,50 +35,37 @@ class SignalingGate {
      * @type {external:WebSocket|external:ws/WebSocket|external:EventSource}
      */
     this.con = null
+
+    this.onChannel = onChannel
   }
 
   /**
    * Open the gate.
    *
    * @param {string} url Signaling server url
-   * @param {function(ch: RTCDataChannel)} onChannel
-   * @param {string} key
+   * @param {string} [key = this.generateKey()]
    * @returns {Promise<OpenData, string>}
    */
-  open (url, onChannel, key = null) {
+  open (url, key = this.generateKey()) {
     return new Promise((resolve, reject) => {
-      if (key === null) key = this.generateKey()
       this.getConnectionService(url)
         .connect(url)
-        .then(con => {
-          con.onclose = closeEvt => {
-            this.key = null
-            this.con = null
-            this.url = null
-            this.webChannel.onClose(closeEvt)
-            reject(closeEvt.reason)
-          }
-          con.onerror = err => {
-            reject(err.message)
-          }
-          con.onmessage = evt => {
+        .then(sigCon => {
+          sigCon.onclose = closeEvt => reject(closeEvt.reason)
+          sigCon.onerror = err => reject(err.message)
+          sigCon.onmessage = evt => {
             try {
               const msg = JSON.parse(evt.data)
-              if ('isKeyOk' in msg) {
-                if (msg.isKeyOk) {
-                  ServiceFactory.get(WEB_RTC, this.webChannel.settings.iceServers)
-                    .listenFromSignaling(con, onChannel)
-                  this.con = con
-                  this.key = key
-                  this.url = url
-                  resolve({url, key})
-                } else reject(`${key} key already exists`)
+              if ('opened' in msg) {
+                if (msg.opened) {
+                  resolve(this.listenOnOpen(sigCon, key))
+                } else reject(`Could not open with ${key}`)
               } else reject(`Unknown message from ${url}: ${evt.data}`)
             } catch (err) {
               reject('Server responce is not a JSON string: ' + err.message)
             }
           }
-          con.send(JSON.stringify({open: key}))
+          sigCon.send(JSON.stringify({open: key}))
         })
         .catch(err => {
           reject(err)
@@ -85,34 +73,65 @@ class SignalingGate {
     })
   }
 
+  /**
+   * Open the gate when the connection with the signaling server exists already.
+   *
+   * @param {WebSocket|RichEventSource} sigCon Connection with the signaling
+   * @param {string} key
+   * @returns {Promise<OpenData, string>}
+   */
+  openExisted (sigCon, key) {
+    return new Promise((resolve, reject) => {
+      sigCon.onclose = closeEvt => reject(closeEvt.reason)
+      sigCon.onerror = err => reject(err.message)
+      sigCon.onmessage = evt => {
+        try {
+          const msg = JSON.parse(evt.data)
+          if ('opened' in msg) {
+            if (msg.opened) {
+              resolve(this.listenOnOpen(sigCon, key))
+            } else reject(`Could not open with ${key}`)
+          } else reject(`Unknown message from ${sigCon.url}: ${evt.data}`)
+        } catch (err) {
+          reject('Server responce is not a JSON string: ' + err.message)
+        }
+      }
+      sigCon.send(JSON.stringify({open: key}))
+    })
+  }
+
   join (url, key) {
     return new Promise((resolve, reject) => {
       this.getConnectionService(url)
         .connect(url)
-        .then(con => {
-          con.onclose = closeEvt => reject(closeEvt.reason)
-          con.onmessage = evt => {
+        .then(sigCon => {
+          sigCon.onclose = closeEvt => reject(closeEvt.reason)
+          sigCon.onerror = err => reject(err.message)
+          sigCon.onmessage = evt => {
             try {
               const msg = JSON.parse(evt.data)
-              if ('isKeyOk' in msg) {
-                if (msg.isKeyOk) {
-                  if ('useThis' in msg && msg.useThis) {
-                    resolve(con)
+              if ('opened' in msg) {
+                if (!msg.opened) {
+                  if ('useThis' in msg) {
+                    if (msg.useThis) {
+                      resolve({opened: false, con: sigCon})
+                    } else {
+                      reject(`Open a gate with bot server is not possible`)
+                    }
                   } else {
                     ServiceFactory.get(WEB_RTC, this.webChannel.settings.iceServers)
-                      .connectOverSignaling(con, key)
-                      .then(channel => {
-                        con.onclose = null
-                        con.close()
-                        resolve(channel)
-                      })
+                      .connectOverSignaling(sigCon, key)
+                      .then(dc => resolve({opened: false, con: dc, sigCon}))
                       .catch(reject)
                   }
-                } else reject(`The key "${key}" not found`)
+                } else {
+                  this.listenOnOpen(sigCon, key)
+                  resolve({opened: true, sigCon})
+                }
               } else reject(`Unknown message from ${url}: ${evt.data}`)
             } catch (err) { reject(err.message) }
           }
-          con.send(JSON.stringify({join: key}))
+          sigCon.send(JSON.stringify({join: key}))
         })
         .catch(reject)
     })
@@ -170,6 +189,25 @@ class SignalingGate {
     } else {
       throw new Error(`${url} is not a valid URL`)
     }
+  }
+
+  listenOnOpen (sigCon, key) {
+    ServiceFactory.get(WEB_RTC, this.webChannel.settings.iceServers)
+      .listenFromSignaling(sigCon, con => this.onChannel(con))
+    this.con = sigCon
+    this.con.onclose = closeEvt => {
+      this.key = null
+      this.con = null
+      this.url = null
+      this.webChannel.onClose(closeEvt)
+    }
+    this.key = key
+    if (sigCon.url.endsWith('/')) {
+      this.url = sigCon.url.substr(0, sigCon.url.length - 1)
+    } else {
+      this.url = sigCon.url
+    }
+    return {url: this.url, key}
   }
 
   /**

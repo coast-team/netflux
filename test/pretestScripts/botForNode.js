@@ -7,7 +7,7 @@ function run () {
   wc.onClose = closeEvt => {
     console.log(`Node bot has disconnected from Signaling server`)
   }
-  wc.open({key: 'NODE'})
+  wc.open('NODE')
     .then(() => console.log('Bot for Node is ready'))
     .catch(reason => console.error('Node bot WebChannel open error: ' + reason))
 }

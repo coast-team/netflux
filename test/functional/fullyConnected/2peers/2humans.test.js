@@ -41,18 +41,18 @@ describe('🙂 🙂  fully connected', () => {
       .catch(done.fail)
   })
 
-  it('Should not be able to join the WebChannel after it has been closed', done => {
+  it('Should be able to open a door while joining the WebChannel after it has been closed', done => {
     const wc = create(wcOptions)
     wc.open()
       .then(data => {
         wc.close()
         return create(wcOptions).join(data.key)
       })
-      .then(done.fail)
-      .catch(() => {
+      .then(() => {
         wc.leave()
         done()
       })
+      .catch(done.fail)
   })
 
   describe('Should send/receive', () => {
