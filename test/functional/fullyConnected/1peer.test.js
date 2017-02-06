@@ -1,4 +1,4 @@
-import {create} from 'src/index'
+import {create} from 'src/index.browser'
 import {SIGNALING_URL} from 'util/helper'
 
 describe('🙂', () => {

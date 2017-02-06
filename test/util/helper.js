@@ -1,7 +1,8 @@
 import Util from 'src/Util'
-import {create} from 'src/index'
+import {create} from 'src/index.browser'
 
 // Main signaling server for all tests
+// const SIGNALING_URL = 'ws://localhost:8000'
 const SIGNALING_URL = 'ws://localhost:8000'
 export const SIGNALING_URL_EVENT_SOURCE = 'http://localhost:8001'
 const BOT = 'ws://localhost:9000'

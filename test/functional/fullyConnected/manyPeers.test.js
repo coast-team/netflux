@@ -1,4 +1,4 @@
-import {create} from 'src/index'
+import {create} from 'src/index.browser'
 import * as helper from 'util/helper'
 const NB_PEERS = 8
 

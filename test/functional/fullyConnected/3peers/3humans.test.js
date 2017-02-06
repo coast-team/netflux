@@ -1,4 +1,4 @@
-import {create} from 'src/index'
+import {create} from 'src/index.browser'
 import * as helper from 'util/helper'
 import smallStr from 'util/200kb.txt'
 import bigStr from 'util/4mb.txt'

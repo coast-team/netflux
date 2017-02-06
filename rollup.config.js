@@ -6,7 +6,7 @@ const babel = require('rollup-plugin-babel')
 
 // netflux.es5.umd.js
 rollup.rollup({
-  entry: 'src/index.js',
+  entry: 'src/index.node.js',
   plugins: [
     filesize({
       format: {
@@ -41,7 +41,7 @@ rollup.rollup({
 
 // netflux.es5.module.browser.js
 rollup.rollup({
-  entry: 'src/index.js',
+  entry: 'src/index.browser.js',
   plugins: [
     filesize({
       format: {
@@ -75,7 +75,7 @@ rollup.rollup({
 
 // netflux.es5.module.node.js
 rollup.rollup({
-  entry: 'src/index.js',
+  entry: 'src/index.node.js',
   plugins: [
     filesize({
       format: {

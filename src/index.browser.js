@@ -1,4 +1,3 @@
-import BotServer from 'BotServer'
 import WebChannel from 'WebChannel'
 import {WEB_SOCKET, WEB_RTC, FULLY_CONNECTED} from 'ServiceFactory'
 
@@ -30,7 +29,6 @@ function create (options) {
 
 export {
   create,
-  BotServer,
   WEB_SOCKET,
   WEB_RTC
 }

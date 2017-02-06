@@ -4208,4 +4208,4 @@ function create(options) {
  * @param {Channel} channel Netflux channel
  */
 
-export { create, BotServer, WEB_SOCKET, WEB_RTC };
+export { BotServer, create, WEB_SOCKET, WEB_RTC };

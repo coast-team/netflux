@@ -2205,6 +2205,582 @@ var ChannelBuilderService = function (_Service) {
   return ChannelBuilderService;
 }(Service);
 
+var ted = Util.require(Util.TEXT_ENCODING);
+
+/**
+ * Maximum size of the user message sent over `Channel`. Is meant without metadata.
+ * @type {number}
+ */
+var MAX_USER_MSG_SIZE = 16365;
+
+/**
+ * User message offset in the array buffer. All data before are metadata.
+ * @type {number}
+ */
+var USER_MSG_OFFSET = 19;
+
+/**
+ * First index in the array buffer after header (which is the part of metadata).
+ * @type {number}
+ */
+var HEADER_OFFSET = 9;
+
+/**
+ * Maximum message id number.
+ * @type {number}
+ */
+var MAX_MSG_ID_SIZE = 65535;
+
+/**
+ * User allowed message type: {@link ArrayBuffer}
+ * @type {number}
+ */
+var ARRAY_BUFFER_TYPE = 1;
+
+/**
+ * User allowed message type: {@link external:Uint8Array}
+ * @type {number}
+ */
+var U_INT_8_ARRAY_TYPE = 2;
+
+/**
+ * User allowed message type: {@link external:String}
+ * @type {number}
+ */
+var STRING_TYPE = 3;
+
+/**
+ * User allowed message type: {@link external:Int8Array}
+ * @type {number}
+ */
+var INT_8_ARRAY_TYPE = 4;
+
+/**
+ * User allowed message type: {@link external:Uint8ClampedArray}
+ * @type {number}
+ */
+var U_INT_8_CLAMPED_ARRAY_TYPE = 5;
+
+/**
+ * User allowed message type: {@link external:Int16Array}
+ * @type {number}
+ */
+var INT_16_ARRAY_TYPE = 6;
+
+/**
+ * User allowed message type: {@link external:Uint16Array}
+ * @type {number}
+ */
+var U_INT_16_ARRAY_TYPE = 7;
+
+/**
+ * User allowed message type: {@link external:Int32Array}
+ * @type {number}
+ */
+var INT_32_ARRAY_TYPE = 8;
+
+/**
+ * User allowed message type: {@link external:Uint32Array}
+ * @type {number}
+ */
+var U_INT_32_ARRAY_TYPE = 9;
+
+/**
+ * User allowed message type: {@link external:Float32Array}
+ * @type {number}
+ */
+var FLOAT_32_ARRAY_TYPE = 10;
+
+/**
+ * User allowed message type: {@link external:Float64Array}
+ * @type {number}
+ */
+var FLOAT_64_ARRAY_TYPE = 11;
+
+/**
+ * Buffer for big user messages.
+ */
+var buffers = new WeakMap();
+
+/**
+ * Message builder service is responsible to build messages to send them over the
+ * `WebChannel` and treat messages received by the `WebChannel`. It also manage
+ * big messages (more then 16ko) sent by users. Internal messages are always less
+ * 16ko.
+ */
+
+var MessageBuilderService = function (_Service) {
+  inherits(MessageBuilderService, _Service);
+
+  function MessageBuilderService() {
+    classCallCheck(this, MessageBuilderService);
+    return possibleConstructorReturn(this, (MessageBuilderService.__proto__ || Object.getPrototypeOf(MessageBuilderService)).apply(this, arguments));
+  }
+
+  createClass(MessageBuilderService, [{
+    key: 'handleUserMessage',
+
+
+    /**
+     * @callback MessageBuilderService~Send
+     * @param {ArrayBuffer} dataChunk - If the message is too big this
+     * action would be executed for each data chunk until send whole message
+     */
+
+    /**
+     * @private
+     * @typedef {ARRAY_BUFFER_TYPE|U_INT_8_ARRAY_TYPE|STRING_TYPE|INT_8_ARRAY_TYPE|U_INT_8_CLAMPED_ARRAY_TYPE|INT_16_ARRAY_TYPE|U_INT_16_ARRAY_TYPE|INT_32_ARRAY_TYPE|U_INT_32_ARRAY_TYPE|FLOAT_32_ARRAY_TYPE|FLOAT_64_ARRAY_TYPE} MessageTypeEnum
+     */
+
+    /**
+     * Prepare user message to be sent over the `WebChannel`.
+     *
+     * @param {UserMessage} data Message to be sent
+     * @param {number} senderId Id of the peer who sends this message
+     * @param {number} recipientId Id of the recipient peer
+     * @param {function(dataChunk: ArrayBuffer)} action Send callback executed for each
+     * data chunk if the message is too big
+     * @param {boolean} [isBroadcast=true] Equals to true if this message would be
+     * sent to all `WebChannel` members and false if only to one member
+     */
+    value: function handleUserMessage(data, senderId, recipientId, action) {
+      var isBroadcast = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : true;
+
+      var workingData = this.userDataToType(data);
+      var dataUint8Array = workingData.content;
+      if (dataUint8Array.byteLength <= MAX_USER_MSG_SIZE) {
+        var dataView = this.initHeader(1, senderId, recipientId, dataUint8Array.byteLength + USER_MSG_OFFSET);
+        dataView.setUint32(HEADER_OFFSET, dataUint8Array.byteLength);
+        dataView.setUint8(13, workingData.type);
+        dataView.setUint8(14, isBroadcast ? 1 : 0);
+        var resultUint8Array = new Uint8Array(dataView.buffer);
+        resultUint8Array.set(dataUint8Array, USER_MSG_OFFSET);
+        action(resultUint8Array.buffer);
+      } else {
+        var msgId = Math.ceil(Math.random() * MAX_MSG_ID_SIZE);
+        var totalChunksNb = Math.ceil(dataUint8Array.byteLength / MAX_USER_MSG_SIZE);
+        for (var chunkNb = 0; chunkNb < totalChunksNb; chunkNb++) {
+          var currentChunkMsgByteLength = Math.min(MAX_USER_MSG_SIZE, dataUint8Array.byteLength - MAX_USER_MSG_SIZE * chunkNb);
+          var _dataView = this.initHeader(USER_DATA, senderId, recipientId, USER_MSG_OFFSET + currentChunkMsgByteLength);
+          _dataView.setUint32(9, dataUint8Array.byteLength);
+          _dataView.setUint8(13, workingData.type);
+          _dataView.setUint8(14, isBroadcast ? 1 : 0);
+          _dataView.setUint16(15, msgId);
+          _dataView.setUint16(17, chunkNb);
+          var _resultUint8Array = new Uint8Array(_dataView.buffer);
+          var j = USER_MSG_OFFSET;
+          var startIndex = MAX_USER_MSG_SIZE * chunkNb;
+          var endIndex = startIndex + currentChunkMsgByteLength;
+          for (var i = startIndex; i < endIndex; i++) {
+            _resultUint8Array[j++] = dataUint8Array[i];
+          }
+          action(_resultUint8Array.buffer);
+        }
+      }
+    }
+
+    /**
+     * Build a message which can be then sent trough the `Channel`.
+     *
+     * @param {number} code One of the internal message type code (e.g. {@link
+     * USER_DATA})
+     * @param {number} [senderId=null]
+     * @param {number} [recepientId=null]
+     * @param {Object} [data={}] Could be empty if the code is enough
+     * @returns {ArrayBuffer} - Built message
+     */
+
+  }, {
+    key: 'msg',
+    value: function msg(code) {
+      var senderId = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+      var recepientId = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+      var data = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+
+      var msgEncoded = new ted.TextEncoder().encode(JSON.stringify(data));
+      var msgSize = msgEncoded.byteLength + HEADER_OFFSET;
+      var dataView = this.initHeader(code, senderId, recepientId, msgSize);
+      var fullMsg = new Uint8Array(dataView.buffer);
+      fullMsg.set(msgEncoded, HEADER_OFFSET);
+      return fullMsg.buffer;
+    }
+
+    /**
+     * Read user message which was prepared by another peer with
+     * {@link MessageBuilderService#handleUserMessage} and sent.
+     * @param {WebChannel} wc WebChannel
+     * @param {number} senderId Id of the peer who sent this message
+     * @param {ArrayBuffer} data Message
+     * @param {function(msg: UserMessage, isBroadcast: boolean)} action Callback when the message is ready
+     */
+
+  }, {
+    key: 'readUserMessage',
+    value: function readUserMessage(wc, senderId, data, action) {
+      var _this2 = this;
+
+      var dataView = new DataView(data);
+      var msgSize = dataView.getUint32(HEADER_OFFSET);
+      var dataType = dataView.getUint8(13);
+      var isBroadcast = dataView.getUint8(14);
+      if (msgSize > MAX_USER_MSG_SIZE) {
+        var msgId = dataView.getUint16(15);
+        var chunk = dataView.getUint16(17);
+        var buffer = this.getBuffer(wc, senderId, msgId);
+        if (buffer === undefined) {
+          this.setBuffer(wc, senderId, msgId, new Buffer(msgSize, data, chunk, function (fullData) {
+            action(_this2.extractUserData(fullData, dataType), isBroadcast);
+          }));
+        } else {
+          buffer.add(data, chunk);
+        }
+      } else {
+        var dataArray = new Uint8Array(data);
+        var userData = new Uint8Array(data.byteLength - USER_MSG_OFFSET);
+        var j = USER_MSG_OFFSET;
+        for (var i = 0; i < userData.byteLength; i++) {
+          userData[i] = dataArray[j++];
+        }
+        action(this.extractUserData(userData.buffer, dataType), isBroadcast);
+      }
+    }
+
+    /**
+     * Read internal Netflux message.
+     * @param {ArrayBuffer} data Message
+     * @returns {Object}
+     */
+
+  }, {
+    key: 'readInternalMessage',
+    value: function readInternalMessage(data) {
+      var uInt8Array = new Uint8Array(data);
+      return JSON.parse(new ted.TextDecoder().decode(uInt8Array.subarray(HEADER_OFFSET, uInt8Array.byteLength)));
+    }
+
+    /**
+     * Extract header from the message. Each user message has a header which is
+     * a part of the message metadata.
+     * @param {ArrayBuffer} data Whole message
+     * @returns {MessageHeader}
+     */
+
+  }, {
+    key: 'readHeader',
+    value: function readHeader(data) {
+      var dataView = new DataView(data);
+      return {
+        code: dataView.getUint8(0),
+        senderId: dataView.getUint32(1),
+        recepientId: dataView.getUint32(5)
+      };
+    }
+
+    /**
+     * Create an `ArrayBuffer` and fill in the header.
+     * @private
+     * @param {number} code Message type code
+     * @param {number} senderId Sender peer id
+     * @param {number} recipientId Recipient peer id
+     * @param {number} dataSize Message size in bytes
+     * @return {DataView} Data view with initialized header
+     */
+
+  }, {
+    key: 'initHeader',
+    value: function initHeader(code, senderId, recipientId, dataSize) {
+      var dataView = new DataView(new ArrayBuffer(dataSize));
+      dataView.setUint8(0, code);
+      dataView.setUint32(1, senderId);
+      dataView.setUint32(5, recipientId);
+      return dataView;
+    }
+
+    /**
+     * Netflux sends data in `ArrayBuffer`, but the user can send data in different
+     * types. This function retrieve the inital message sent by the user.
+     * @private
+     * @param {ArrayBuffer} buffer Message as it was received by the `WebChannel`
+     * @param {MessageTypeEnum} type Message type as it was defined by the user
+     * @returns {ArrayBuffer|TypedArray} Initial user message
+     */
+
+  }, {
+    key: 'extractUserData',
+    value: function extractUserData(buffer, type) {
+      switch (type) {
+        case ARRAY_BUFFER_TYPE:
+          return buffer;
+        case U_INT_8_ARRAY_TYPE:
+          return new Uint8Array(buffer);
+        case STRING_TYPE:
+          return new ted.TextDecoder().decode(new Uint8Array(buffer));
+        case INT_8_ARRAY_TYPE:
+          return new Int8Array(buffer);
+        case U_INT_8_CLAMPED_ARRAY_TYPE:
+          return new Uint8ClampedArray(buffer);
+        case INT_16_ARRAY_TYPE:
+          return new Int16Array(buffer);
+        case U_INT_16_ARRAY_TYPE:
+          return new Uint16Array(buffer);
+        case INT_32_ARRAY_TYPE:
+          return new Int32Array(buffer);
+        case U_INT_32_ARRAY_TYPE:
+          return new Uint32Array(buffer);
+        case FLOAT_32_ARRAY_TYPE:
+          return new Float32Array(buffer);
+        case FLOAT_64_ARRAY_TYPE:
+          return new Float64Array(buffer);
+        default:
+          throw new Error('Unknown type');
+      }
+    }
+
+    /**
+     * Identify the user message type.
+     *
+     * @private
+     * @param {UserMessage} data User message
+     * @returns {MessageTypeEnum} User message type
+     */
+
+  }, {
+    key: 'userDataToType',
+    value: function userDataToType(data) {
+      var result = {};
+      if (data instanceof ArrayBuffer) {
+        result.type = ARRAY_BUFFER_TYPE;
+        result.content = new Uint8Array(data);
+      } else if (data instanceof Uint8Array) {
+        result.type = U_INT_8_ARRAY_TYPE;
+        result.content = data;
+      } else if (typeof data === 'string' || data instanceof String) {
+        result.type = STRING_TYPE;
+        result.content = new ted.TextEncoder().encode(data);
+      } else {
+        result.content = new Uint8Array(data.buffer);
+        if (data instanceof Int8Array) {
+          result.type = INT_8_ARRAY_TYPE;
+        } else if (data instanceof Uint8ClampedArray) {
+          result.type = U_INT_8_CLAMPED_ARRAY_TYPE;
+        } else if (data instanceof Int16Array) {
+          result.type = INT_16_ARRAY_TYPE;
+        } else if (data instanceof Uint16Array) {
+          result.type = U_INT_16_ARRAY_TYPE;
+        } else if (data instanceof Int32Array) {
+          result.type = INT_32_ARRAY_TYPE;
+        } else if (data instanceof Uint32Array) {
+          result.type = U_INT_32_ARRAY_TYPE;
+        } else if (data instanceof Float32Array) {
+          result.type = FLOAT_32_ARRAY_TYPE;
+        } else if (data instanceof Float64Array) {
+          result.type = FLOAT_64_ARRAY_TYPE;
+        } else {
+          throw new Error('Unknown data object');
+        }
+      }
+      return result;
+    }
+
+    /**
+     * Get the buffer.
+     * @private
+     * @param {WebChannel} wc WebChannel
+     * @param {number} peerId Peer id
+     * @param {number} msgId Message id
+     * @returns {Buffer|undefined} Returns buffer if it was found and undefined if not
+     */
+
+  }, {
+    key: 'getBuffer',
+    value: function getBuffer(wc, peerId, msgId) {
+      var wcBuffer = buffers.get(wc);
+      if (wcBuffer !== undefined) {
+        var peerBuffer = wcBuffer.get(peerId);
+        if (peerBuffer !== undefined) {
+          return peerBuffer.get(msgId);
+        }
+      }
+      return undefined;
+    }
+
+    /**
+     * Add a new buffer to the buffer array.
+     * @private
+     * @param {WebChannel} wc WebChannel
+     * @param {number} peerId Peer id
+     * @param {number} msgId Message id
+     * @param {Buffer} buffer
+     */
+
+  }, {
+    key: 'setBuffer',
+    value: function setBuffer(wc, peerId, msgId, buffer) {
+      var wcBuffer = buffers.get(wc);
+      if (wcBuffer === undefined) {
+        wcBuffer = new Map();
+        buffers.set(wc, wcBuffer);
+      }
+      var peerBuffer = wcBuffer.get(peerId);
+      if (peerBuffer === undefined) {
+        peerBuffer = new Map();
+        wcBuffer.set(peerId, peerBuffer);
+      }
+      peerBuffer.set(msgId, buffer);
+    }
+  }]);
+  return MessageBuilderService;
+}(Service);
+
+/**
+ * Buffer class used when the user message exceeds the message size limit which
+ * may be sent over a `Channel`. Each buffer is identified by `WebChannel` id,
+ * peer id (who sends the big message) and message id (in case if the peer sends
+ * more then 1 big message at a time).
+ * @private
+ */
+
+
+var Buffer = function () {
+
+  /**
+   * @param {number} fullDataSize The total user message size
+   * @param {ArrayBuffer} data The first chunk of the user message
+   * @param {number} chunkNb Number of the chunk
+   * @param {function(buffer: ArrayBuffer)} action Callback to be executed when all
+   * message chunks are received and thus the message is ready
+   */
+  function Buffer(fullDataSize, data, chunkNb, action) {
+    classCallCheck(this, Buffer);
+
+    this.fullData = new Uint8Array(fullDataSize);
+    this.currentSize = 0;
+    this.action = action;
+    this.add(data, chunkNb);
+  }
+
+  /**
+   * Add a chunk of message to the buffer.
+   * @param {ArrayBuffer} data - Message chunk
+   * @param {number} chunkNb - Number of the chunk
+   */
+
+
+  createClass(Buffer, [{
+    key: 'add',
+    value: function add(data, chunkNb) {
+      var dataChunk = new Uint8Array(data);
+      var dataChunkSize = data.byteLength;
+      this.currentSize += dataChunkSize - USER_MSG_OFFSET;
+      var index = chunkNb * MAX_USER_MSG_SIZE;
+      for (var i = USER_MSG_OFFSET; i < dataChunkSize; i++) {
+        this.fullData[index++] = dataChunk[i];
+      }
+      if (this.currentSize === this.fullData.byteLength) {
+        this.action(this.fullData.buffer);
+      }
+    }
+  }]);
+  return Buffer;
+}();
+
+/**
+ * {@link WebRTCService} identifier.
+ * @type {number}
+ */
+var WEB_RTC = 0;
+
+/**
+* {@link WebSocketService} identifier.
+* @type {number}
+*/
+var WEB_SOCKET = 1;
+
+/**
+* {@link WebSocketService} identifier.
+* @type {number}
+*/
+var EVENT_SOURCE = 5;
+
+/**
+ * {@link ChannelBuilderService} identifier.
+ * @ignore
+ * @type {number}
+ */
+var CHANNEL_BUILDER = 2;
+
+/**
+ * {@link FullyConnectedService} identifier.
+ * @ignore
+ * @type {number}
+ */
+var FULLY_CONNECTED = 3;
+
+/**
+ * {@link MessageBuilderService} identifier
+ * @ignore
+ * @type {number}
+ */
+var MESSAGE_BUILDER = 4;
+
+/**
+ * Contains singletons services.
+ * @type {Map}
+ */
+var services = new Map();
+
+/**
+ * It is a factory helper class which is responsible to instantiate any service class.
+ */
+
+var ServiceFactory = function () {
+  function ServiceFactory() {
+    classCallCheck(this, ServiceFactory);
+  }
+
+  createClass(ServiceFactory, null, [{
+    key: 'get',
+
+    /**
+     * Provides the service instance specified by `id`.
+     *
+     * @throws {Error} If the service `id` is unknown
+     * @param  {MESSAGE_BUILDER|WEB_RTC|WEB_SOCKET|FULLY_CONNECTED|CHANNEL_BUILDER} id The service identifier
+     * @param  {Object} [options] Any options that the service accepts
+     * @returns {Service}
+     */
+    value: function get$$1(id) {
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+      if (services.has(id)) {
+        return services.get(id);
+      }
+      var service = void 0;
+      switch (id) {
+        case WEB_RTC:
+          return new WebRTCService(WEB_RTC, options);
+        case WEB_SOCKET:
+          return new WebSocketService(WEB_SOCKET);
+        case EVENT_SOURCE:
+          return new EventSourceService(EVENT_SOURCE);
+        case CHANNEL_BUILDER:
+          return new ChannelBuilderService(CHANNEL_BUILDER);
+        case FULLY_CONNECTED:
+          service = new FullyConnectedService(FULLY_CONNECTED);
+          services.set(id, service);
+          return service;
+        case MESSAGE_BUILDER:
+          service = new MessageBuilderService(MESSAGE_BUILDER);
+          services.set(id, service);
+          return service;
+        default:
+          throw new Error(id + ' is an Unknown service id');
+      }
+    }
+  }]);
+  return ServiceFactory;
+}();
+
 /**
  * Wrapper class for `RTCDataChannel` and `WebSocket`.
  */
@@ -3277,889 +3853,6 @@ var WebChannel = function () {
   return WebChannel;
 }();
 
-var ted = Util.require(Util.TEXT_ENCODING);
-
-/**
- * Maximum size of the user message sent over `Channel`. Is meant without metadata.
- * @type {number}
- */
-var MAX_USER_MSG_SIZE = 16365;
-
-/**
- * User message offset in the array buffer. All data before are metadata.
- * @type {number}
- */
-var USER_MSG_OFFSET = 19;
-
-/**
- * First index in the array buffer after header (which is the part of metadata).
- * @type {number}
- */
-var HEADER_OFFSET = 9;
-
-/**
- * Maximum message id number.
- * @type {number}
- */
-var MAX_MSG_ID_SIZE = 65535;
-
-/**
- * User allowed message type: {@link ArrayBuffer}
- * @type {number}
- */
-var ARRAY_BUFFER_TYPE = 1;
-
-/**
- * User allowed message type: {@link external:Uint8Array}
- * @type {number}
- */
-var U_INT_8_ARRAY_TYPE = 2;
-
-/**
- * User allowed message type: {@link external:String}
- * @type {number}
- */
-var STRING_TYPE = 3;
-
-/**
- * User allowed message type: {@link external:Int8Array}
- * @type {number}
- */
-var INT_8_ARRAY_TYPE = 4;
-
-/**
- * User allowed message type: {@link external:Uint8ClampedArray}
- * @type {number}
- */
-var U_INT_8_CLAMPED_ARRAY_TYPE = 5;
-
-/**
- * User allowed message type: {@link external:Int16Array}
- * @type {number}
- */
-var INT_16_ARRAY_TYPE = 6;
-
-/**
- * User allowed message type: {@link external:Uint16Array}
- * @type {number}
- */
-var U_INT_16_ARRAY_TYPE = 7;
-
-/**
- * User allowed message type: {@link external:Int32Array}
- * @type {number}
- */
-var INT_32_ARRAY_TYPE = 8;
-
-/**
- * User allowed message type: {@link external:Uint32Array}
- * @type {number}
- */
-var U_INT_32_ARRAY_TYPE = 9;
-
-/**
- * User allowed message type: {@link external:Float32Array}
- * @type {number}
- */
-var FLOAT_32_ARRAY_TYPE = 10;
-
-/**
- * User allowed message type: {@link external:Float64Array}
- * @type {number}
- */
-var FLOAT_64_ARRAY_TYPE = 11;
-
-/**
- * Buffer for big user messages.
- */
-var buffers = new WeakMap();
-
-/**
- * Message builder service is responsible to build messages to send them over the
- * `WebChannel` and treat messages received by the `WebChannel`. It also manage
- * big messages (more then 16ko) sent by users. Internal messages are always less
- * 16ko.
- */
-
-var MessageBuilderService = function (_Service) {
-  inherits(MessageBuilderService, _Service);
-
-  function MessageBuilderService() {
-    classCallCheck(this, MessageBuilderService);
-    return possibleConstructorReturn(this, (MessageBuilderService.__proto__ || Object.getPrototypeOf(MessageBuilderService)).apply(this, arguments));
-  }
-
-  createClass(MessageBuilderService, [{
-    key: 'handleUserMessage',
-
-
-    /**
-     * @callback MessageBuilderService~Send
-     * @param {ArrayBuffer} dataChunk - If the message is too big this
-     * action would be executed for each data chunk until send whole message
-     */
-
-    /**
-     * @private
-     * @typedef {ARRAY_BUFFER_TYPE|U_INT_8_ARRAY_TYPE|STRING_TYPE|INT_8_ARRAY_TYPE|U_INT_8_CLAMPED_ARRAY_TYPE|INT_16_ARRAY_TYPE|U_INT_16_ARRAY_TYPE|INT_32_ARRAY_TYPE|U_INT_32_ARRAY_TYPE|FLOAT_32_ARRAY_TYPE|FLOAT_64_ARRAY_TYPE} MessageTypeEnum
-     */
-
-    /**
-     * Prepare user message to be sent over the `WebChannel`.
-     *
-     * @param {UserMessage} data Message to be sent
-     * @param {number} senderId Id of the peer who sends this message
-     * @param {number} recipientId Id of the recipient peer
-     * @param {function(dataChunk: ArrayBuffer)} action Send callback executed for each
-     * data chunk if the message is too big
-     * @param {boolean} [isBroadcast=true] Equals to true if this message would be
-     * sent to all `WebChannel` members and false if only to one member
-     */
-    value: function handleUserMessage(data, senderId, recipientId, action) {
-      var isBroadcast = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : true;
-
-      var workingData = this.userDataToType(data);
-      var dataUint8Array = workingData.content;
-      if (dataUint8Array.byteLength <= MAX_USER_MSG_SIZE) {
-        var dataView = this.initHeader(1, senderId, recipientId, dataUint8Array.byteLength + USER_MSG_OFFSET);
-        dataView.setUint32(HEADER_OFFSET, dataUint8Array.byteLength);
-        dataView.setUint8(13, workingData.type);
-        dataView.setUint8(14, isBroadcast ? 1 : 0);
-        var resultUint8Array = new Uint8Array(dataView.buffer);
-        resultUint8Array.set(dataUint8Array, USER_MSG_OFFSET);
-        action(resultUint8Array.buffer);
-      } else {
-        var msgId = Math.ceil(Math.random() * MAX_MSG_ID_SIZE);
-        var totalChunksNb = Math.ceil(dataUint8Array.byteLength / MAX_USER_MSG_SIZE);
-        for (var chunkNb = 0; chunkNb < totalChunksNb; chunkNb++) {
-          var currentChunkMsgByteLength = Math.min(MAX_USER_MSG_SIZE, dataUint8Array.byteLength - MAX_USER_MSG_SIZE * chunkNb);
-          var _dataView = this.initHeader(USER_DATA, senderId, recipientId, USER_MSG_OFFSET + currentChunkMsgByteLength);
-          _dataView.setUint32(9, dataUint8Array.byteLength);
-          _dataView.setUint8(13, workingData.type);
-          _dataView.setUint8(14, isBroadcast ? 1 : 0);
-          _dataView.setUint16(15, msgId);
-          _dataView.setUint16(17, chunkNb);
-          var _resultUint8Array = new Uint8Array(_dataView.buffer);
-          var j = USER_MSG_OFFSET;
-          var startIndex = MAX_USER_MSG_SIZE * chunkNb;
-          var endIndex = startIndex + currentChunkMsgByteLength;
-          for (var i = startIndex; i < endIndex; i++) {
-            _resultUint8Array[j++] = dataUint8Array[i];
-          }
-          action(_resultUint8Array.buffer);
-        }
-      }
-    }
-
-    /**
-     * Build a message which can be then sent trough the `Channel`.
-     *
-     * @param {number} code One of the internal message type code (e.g. {@link
-     * USER_DATA})
-     * @param {number} [senderId=null]
-     * @param {number} [recepientId=null]
-     * @param {Object} [data={}] Could be empty if the code is enough
-     * @returns {ArrayBuffer} - Built message
-     */
-
-  }, {
-    key: 'msg',
-    value: function msg(code) {
-      var senderId = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
-      var recepientId = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
-      var data = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
-
-      var msgEncoded = new ted.TextEncoder().encode(JSON.stringify(data));
-      var msgSize = msgEncoded.byteLength + HEADER_OFFSET;
-      var dataView = this.initHeader(code, senderId, recepientId, msgSize);
-      var fullMsg = new Uint8Array(dataView.buffer);
-      fullMsg.set(msgEncoded, HEADER_OFFSET);
-      return fullMsg.buffer;
-    }
-
-    /**
-     * Read user message which was prepared by another peer with
-     * {@link MessageBuilderService#handleUserMessage} and sent.
-     * @param {WebChannel} wc WebChannel
-     * @param {number} senderId Id of the peer who sent this message
-     * @param {ArrayBuffer} data Message
-     * @param {function(msg: UserMessage, isBroadcast: boolean)} action Callback when the message is ready
-     */
-
-  }, {
-    key: 'readUserMessage',
-    value: function readUserMessage(wc, senderId, data, action) {
-      var _this2 = this;
-
-      var dataView = new DataView(data);
-      var msgSize = dataView.getUint32(HEADER_OFFSET);
-      var dataType = dataView.getUint8(13);
-      var isBroadcast = dataView.getUint8(14);
-      if (msgSize > MAX_USER_MSG_SIZE) {
-        var msgId = dataView.getUint16(15);
-        var chunk = dataView.getUint16(17);
-        var buffer = this.getBuffer(wc, senderId, msgId);
-        if (buffer === undefined) {
-          this.setBuffer(wc, senderId, msgId, new Buffer(msgSize, data, chunk, function (fullData) {
-            action(_this2.extractUserData(fullData, dataType), isBroadcast);
-          }));
-        } else {
-          buffer.add(data, chunk);
-        }
-      } else {
-        var dataArray = new Uint8Array(data);
-        var userData = new Uint8Array(data.byteLength - USER_MSG_OFFSET);
-        var j = USER_MSG_OFFSET;
-        for (var i = 0; i < userData.byteLength; i++) {
-          userData[i] = dataArray[j++];
-        }
-        action(this.extractUserData(userData.buffer, dataType), isBroadcast);
-      }
-    }
-
-    /**
-     * Read internal Netflux message.
-     * @param {ArrayBuffer} data Message
-     * @returns {Object}
-     */
-
-  }, {
-    key: 'readInternalMessage',
-    value: function readInternalMessage(data) {
-      var uInt8Array = new Uint8Array(data);
-      return JSON.parse(new ted.TextDecoder().decode(uInt8Array.subarray(HEADER_OFFSET, uInt8Array.byteLength)));
-    }
-
-    /**
-     * Extract header from the message. Each user message has a header which is
-     * a part of the message metadata.
-     * @param {ArrayBuffer} data Whole message
-     * @returns {MessageHeader}
-     */
-
-  }, {
-    key: 'readHeader',
-    value: function readHeader(data) {
-      var dataView = new DataView(data);
-      return {
-        code: dataView.getUint8(0),
-        senderId: dataView.getUint32(1),
-        recepientId: dataView.getUint32(5)
-      };
-    }
-
-    /**
-     * Create an `ArrayBuffer` and fill in the header.
-     * @private
-     * @param {number} code Message type code
-     * @param {number} senderId Sender peer id
-     * @param {number} recipientId Recipient peer id
-     * @param {number} dataSize Message size in bytes
-     * @return {DataView} Data view with initialized header
-     */
-
-  }, {
-    key: 'initHeader',
-    value: function initHeader(code, senderId, recipientId, dataSize) {
-      var dataView = new DataView(new ArrayBuffer(dataSize));
-      dataView.setUint8(0, code);
-      dataView.setUint32(1, senderId);
-      dataView.setUint32(5, recipientId);
-      return dataView;
-    }
-
-    /**
-     * Netflux sends data in `ArrayBuffer`, but the user can send data in different
-     * types. This function retrieve the inital message sent by the user.
-     * @private
-     * @param {ArrayBuffer} buffer Message as it was received by the `WebChannel`
-     * @param {MessageTypeEnum} type Message type as it was defined by the user
-     * @returns {ArrayBuffer|TypedArray} Initial user message
-     */
-
-  }, {
-    key: 'extractUserData',
-    value: function extractUserData(buffer, type) {
-      switch (type) {
-        case ARRAY_BUFFER_TYPE:
-          return buffer;
-        case U_INT_8_ARRAY_TYPE:
-          return new Uint8Array(buffer);
-        case STRING_TYPE:
-          return new ted.TextDecoder().decode(new Uint8Array(buffer));
-        case INT_8_ARRAY_TYPE:
-          return new Int8Array(buffer);
-        case U_INT_8_CLAMPED_ARRAY_TYPE:
-          return new Uint8ClampedArray(buffer);
-        case INT_16_ARRAY_TYPE:
-          return new Int16Array(buffer);
-        case U_INT_16_ARRAY_TYPE:
-          return new Uint16Array(buffer);
-        case INT_32_ARRAY_TYPE:
-          return new Int32Array(buffer);
-        case U_INT_32_ARRAY_TYPE:
-          return new Uint32Array(buffer);
-        case FLOAT_32_ARRAY_TYPE:
-          return new Float32Array(buffer);
-        case FLOAT_64_ARRAY_TYPE:
-          return new Float64Array(buffer);
-        default:
-          throw new Error('Unknown type');
-      }
-    }
-
-    /**
-     * Identify the user message type.
-     *
-     * @private
-     * @param {UserMessage} data User message
-     * @returns {MessageTypeEnum} User message type
-     */
-
-  }, {
-    key: 'userDataToType',
-    value: function userDataToType(data) {
-      var result = {};
-      if (data instanceof ArrayBuffer) {
-        result.type = ARRAY_BUFFER_TYPE;
-        result.content = new Uint8Array(data);
-      } else if (data instanceof Uint8Array) {
-        result.type = U_INT_8_ARRAY_TYPE;
-        result.content = data;
-      } else if (typeof data === 'string' || data instanceof String) {
-        result.type = STRING_TYPE;
-        result.content = new ted.TextEncoder().encode(data);
-      } else {
-        result.content = new Uint8Array(data.buffer);
-        if (data instanceof Int8Array) {
-          result.type = INT_8_ARRAY_TYPE;
-        } else if (data instanceof Uint8ClampedArray) {
-          result.type = U_INT_8_CLAMPED_ARRAY_TYPE;
-        } else if (data instanceof Int16Array) {
-          result.type = INT_16_ARRAY_TYPE;
-        } else if (data instanceof Uint16Array) {
-          result.type = U_INT_16_ARRAY_TYPE;
-        } else if (data instanceof Int32Array) {
-          result.type = INT_32_ARRAY_TYPE;
-        } else if (data instanceof Uint32Array) {
-          result.type = U_INT_32_ARRAY_TYPE;
-        } else if (data instanceof Float32Array) {
-          result.type = FLOAT_32_ARRAY_TYPE;
-        } else if (data instanceof Float64Array) {
-          result.type = FLOAT_64_ARRAY_TYPE;
-        } else {
-          throw new Error('Unknown data object');
-        }
-      }
-      return result;
-    }
-
-    /**
-     * Get the buffer.
-     * @private
-     * @param {WebChannel} wc WebChannel
-     * @param {number} peerId Peer id
-     * @param {number} msgId Message id
-     * @returns {Buffer|undefined} Returns buffer if it was found and undefined if not
-     */
-
-  }, {
-    key: 'getBuffer',
-    value: function getBuffer(wc, peerId, msgId) {
-      var wcBuffer = buffers.get(wc);
-      if (wcBuffer !== undefined) {
-        var peerBuffer = wcBuffer.get(peerId);
-        if (peerBuffer !== undefined) {
-          return peerBuffer.get(msgId);
-        }
-      }
-      return undefined;
-    }
-
-    /**
-     * Add a new buffer to the buffer array.
-     * @private
-     * @param {WebChannel} wc WebChannel
-     * @param {number} peerId Peer id
-     * @param {number} msgId Message id
-     * @param {Buffer} buffer
-     */
-
-  }, {
-    key: 'setBuffer',
-    value: function setBuffer(wc, peerId, msgId, buffer) {
-      var wcBuffer = buffers.get(wc);
-      if (wcBuffer === undefined) {
-        wcBuffer = new Map();
-        buffers.set(wc, wcBuffer);
-      }
-      var peerBuffer = wcBuffer.get(peerId);
-      if (peerBuffer === undefined) {
-        peerBuffer = new Map();
-        wcBuffer.set(peerId, peerBuffer);
-      }
-      peerBuffer.set(msgId, buffer);
-    }
-  }]);
-  return MessageBuilderService;
-}(Service);
-
-/**
- * Buffer class used when the user message exceeds the message size limit which
- * may be sent over a `Channel`. Each buffer is identified by `WebChannel` id,
- * peer id (who sends the big message) and message id (in case if the peer sends
- * more then 1 big message at a time).
- * @private
- */
-
-
-var Buffer = function () {
-
-  /**
-   * @param {number} fullDataSize The total user message size
-   * @param {ArrayBuffer} data The first chunk of the user message
-   * @param {number} chunkNb Number of the chunk
-   * @param {function(buffer: ArrayBuffer)} action Callback to be executed when all
-   * message chunks are received and thus the message is ready
-   */
-  function Buffer(fullDataSize, data, chunkNb, action) {
-    classCallCheck(this, Buffer);
-
-    this.fullData = new Uint8Array(fullDataSize);
-    this.currentSize = 0;
-    this.action = action;
-    this.add(data, chunkNb);
-  }
-
-  /**
-   * Add a chunk of message to the buffer.
-   * @param {ArrayBuffer} data - Message chunk
-   * @param {number} chunkNb - Number of the chunk
-   */
-
-
-  createClass(Buffer, [{
-    key: 'add',
-    value: function add(data, chunkNb) {
-      var dataChunk = new Uint8Array(data);
-      var dataChunkSize = data.byteLength;
-      this.currentSize += dataChunkSize - USER_MSG_OFFSET;
-      var index = chunkNb * MAX_USER_MSG_SIZE;
-      for (var i = USER_MSG_OFFSET; i < dataChunkSize; i++) {
-        this.fullData[index++] = dataChunk[i];
-      }
-      if (this.currentSize === this.fullData.byteLength) {
-        this.action(this.fullData.buffer);
-      }
-    }
-  }]);
-  return Buffer;
-}();
-
-/**
- * {@link WebRTCService} identifier.
- * @type {number}
- */
-var WEB_RTC = 0;
-
-/**
-* {@link WebSocketService} identifier.
-* @type {number}
-*/
-var WEB_SOCKET = 1;
-
-/**
-* {@link WebSocketService} identifier.
-* @type {number}
-*/
-var EVENT_SOURCE = 5;
-
-/**
- * {@link ChannelBuilderService} identifier.
- * @ignore
- * @type {number}
- */
-var CHANNEL_BUILDER = 2;
-
-/**
- * {@link FullyConnectedService} identifier.
- * @ignore
- * @type {number}
- */
-var FULLY_CONNECTED = 3;
-
-/**
- * {@link MessageBuilderService} identifier
- * @ignore
- * @type {number}
- */
-var MESSAGE_BUILDER = 4;
-
-/**
- * Contains singletons services.
- * @type {Map}
- */
-var services = new Map();
-
-/**
- * It is a factory helper class which is responsible to instantiate any service class.
- */
-
-var ServiceFactory = function () {
-  function ServiceFactory() {
-    classCallCheck(this, ServiceFactory);
-  }
-
-  createClass(ServiceFactory, null, [{
-    key: 'get',
-
-    /**
-     * Provides the service instance specified by `id`.
-     *
-     * @throws {Error} If the service `id` is unknown
-     * @param  {MESSAGE_BUILDER|WEB_RTC|WEB_SOCKET|FULLY_CONNECTED|CHANNEL_BUILDER} id The service identifier
-     * @param  {Object} [options] Any options that the service accepts
-     * @returns {Service}
-     */
-    value: function get$$1(id) {
-      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-
-      if (services.has(id)) {
-        return services.get(id);
-      }
-      var service = void 0;
-      switch (id) {
-        case WEB_RTC:
-          return new WebRTCService(WEB_RTC, options);
-        case WEB_SOCKET:
-          return new WebSocketService(WEB_SOCKET);
-        case EVENT_SOURCE:
-          return new EventSourceService(EVENT_SOURCE);
-        case CHANNEL_BUILDER:
-          return new ChannelBuilderService(CHANNEL_BUILDER);
-        case FULLY_CONNECTED:
-          service = new FullyConnectedService(FULLY_CONNECTED);
-          services.set(id, service);
-          return service;
-        case MESSAGE_BUILDER:
-          service = new MessageBuilderService(MESSAGE_BUILDER);
-          services.set(id, service);
-          return service;
-        default:
-          throw new Error(id + ' is an Unknown service id');
-      }
-    }
-  }]);
-  return ServiceFactory;
-}();
-
-var MESSAGE_TYPE_ERROR = 4000;
-var WEB_CHANNEL_NOT_FOUND = 4001;
-
-/**
- * BotServer can listen on web socket. A peer can invite bot to join his `WebChannel`.
- * He can also join one of the bot's `WebChannel`.
- */
-
-var BotServer = function () {
-
-  /**
-   * Bot server settings are the same as for `WebChannel` (see {@link WebChannelSettings}),
-   * plus `host` and `port` parameters.
-   *
-   * @param {Object} options
-   * @param {WEB_RTC|WEB_SOCKET} [options.connector=WEB_SOCKET] Which connector is preferable during connection establishment
-   * @param {FULLY_CONNECTED} [options.topology=FULLY_CONNECTED] Fully connected topology is the only one available for now
-   * @param {string} [options.signalingURL='wss://sigver-coastteam.rhcloud.com:8443'] Signaling server url
-   * @param {RTCIceServer} [options.iceServers=[{urls:'stun:turn01.uswest.xirsys.com'}]] Set of ice servers for WebRTC
-   * @param {string} [options.host='localhost']
-   * @param {number} [options.port=9000]
-   */
-  function BotServer() {
-    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    classCallCheck(this, BotServer);
-
-    /**
-     * Default settings.
-     * @private
-     * @type {Object}
-     */
-    this.defaultSettings = {
-      connector: WEB_SOCKET,
-      topology: FULLY_CONNECTED,
-      signalingURL: 'wss://sigver-coastteam.rhcloud.com:8443',
-      iceServers: [{ urls: 'stun:turn01.uswest.xirsys.com' }],
-      host: 'localhost',
-      port: 9000
-    };
-
-    /**
-     * @private
-     * @type {Object}
-     */
-    this.settings = Object.assign({}, this.defaultSettings, options);
-    this.settings.listenOn = 'ws://' + this.settings.host + ':' + this.settings.port;
-
-    /**
-     * @type {WebSocketServer}
-     */
-    this.server = null;
-
-    /**
-     * @type {WebChannel[]}
-     */
-    this.webChannels = [];
-
-    /**
-     * @type {function(wc: WebChannel)}
-     */
-    this.onWebChannel = function () {};
-  }
-
-  /**
-   * Starts listen on socket.
-   *
-   * @returns {Promise<undefined,string>}
-   */
-
-
-  createClass(BotServer, [{
-    key: 'start',
-    value: function start() {
-      var _this = this;
-
-      return new Promise(function (resolve, reject) {
-        var WebSocketServer = void 0;
-        try {
-          console.log('uws module would be used for Bot server');
-          WebSocketServer = require('uws').Server;
-        } catch (err) {
-          try {
-            console.log(err.message + '. ws module will be used for Bot server instead');
-            WebSocketServer = Util.require('ws').Server;
-          } catch (err) {
-            console.log(err.message + '. Bot server cannot be run');
-          }
-        }
-        if (WebSocketServer === undefined) {
-          console.log('Could not find uws module, thus ws module will be used for Bot server instead');
-          WebSocketServer = Util.require('ws').Server;
-        }
-
-        _this.server = new WebSocketServer({
-          host: _this.settings.host,
-          port: _this.settings.port
-        }, resolve);
-
-        var _iteratorNormalCompletion = true;
-        var _didIteratorError = false;
-        var _iteratorError = undefined;
-
-        try {
-          for (var _iterator = _this.webChannels[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-            var wc = _step.value;
-
-            wc.settings.listenOn = _this.settings.listenOn;
-          }
-        } catch (err) {
-          _didIteratorError = true;
-          _iteratorError = err;
-        } finally {
-          try {
-            if (!_iteratorNormalCompletion && _iterator.return) {
-              _iterator.return();
-            }
-          } finally {
-            if (_didIteratorError) {
-              throw _iteratorError;
-            }
-          }
-        }
-
-        _this.server.on('error', function (err) {
-          console.error('Server error: ', err);
-          var _iteratorNormalCompletion2 = true;
-          var _didIteratorError2 = false;
-          var _iteratorError2 = undefined;
-
-          try {
-            for (var _iterator2 = _this.webChannels[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-              var wc = _step2.value;
-
-              wc.settings.listenOn = '';
-            }
-          } catch (err) {
-            _didIteratorError2 = true;
-            _iteratorError2 = err;
-          } finally {
-            try {
-              if (!_iteratorNormalCompletion2 && _iterator2.return) {
-                _iterator2.return();
-              }
-            } finally {
-              if (_didIteratorError2) {
-                throw _iteratorError2;
-              }
-            }
-          }
-
-          reject('Server error: ' + err.messsage);
-        });
-
-        _this.server.on('connection', function (ws) {
-          ws.onmessage = function (msgEvt) {
-            try {
-              var msg = JSON.parse(msgEvt.data);
-              if ('join' in msg) {
-                var wc = _this.getWebChannel(msg.join);
-                if (wc === null) {
-                  ws.send(JSON.stringify({ opened: false, useThis: false }));
-                } else {
-                  ws.send(JSON.stringify({ opened: false, useThis: true }));
-                  wc.invite(ws);
-                }
-              } else if ('wcId' in msg) {
-                (function () {
-                  var wc = _this.getWebChannel(msg.wcId);
-                  if ('senderId' in msg) {
-                    if (wc !== null) {
-                      ServiceFactory.get(CHANNEL_BUILDER).onChannel(wc, ws, msg.senderId);
-                    } else {
-                      ws.close(WEB_CHANNEL_NOT_FOUND, msg.wcId + ' webChannel was not found (message received from ' + msg.senderId + ')');
-                      console.error(msg.wcId + ' webChannel was not found (message received from ' + msg.senderId + ')');
-                    }
-                  } else {
-                    if (wc === null) {
-                      wc = new WebChannel(_this.settings);
-                      wc.id = msg.wcId;
-                      _this.addWebChannel(wc);
-                      wc.join(ws).then(function () {
-                        _this.onWebChannel(wc);
-                      });
-                    } else if (wc.members.length === 0) {
-                      _this.removeWebChannel(wc);
-                      wc = new WebChannel(_this.settings);
-                      wc.id = msg.wcId;
-                      _this.addWebChannel(wc);
-                      wc.join(ws).then(function () {
-                        _this.onWebChannel(wc);
-                      });
-                    } else {
-                      console.error('Bot refused to join ' + msg.wcId + ' webChannel, because it is already in use');
-                    }
-                  }
-                })();
-              }
-            } catch (err) {
-              ws.close(MESSAGE_TYPE_ERROR, 'Unsupported message type: ' + err.message);
-              console.error('Unsupported message type: ' + err.message);
-            }
-          };
-        });
-      });
-    }
-
-    /**
-     * Stops listen on web socket.
-     */
-
-  }, {
-    key: 'stop',
-    value: function stop() {
-      var _iteratorNormalCompletion3 = true;
-      var _didIteratorError3 = false;
-      var _iteratorError3 = undefined;
-
-      try {
-        for (var _iterator3 = this.webChannels[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-          var wc = _step3.value;
-
-          wc.settings.listenOn = '';
-        }
-      } catch (err) {
-        _didIteratorError3 = true;
-        _iteratorError3 = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion3 && _iterator3.return) {
-            _iterator3.return();
-          }
-        } finally {
-          if (_didIteratorError3) {
-            throw _iteratorError3;
-          }
-        }
-      }
-
-      this.server.close();
-    }
-
-    /**
-     * Get `WebChannel` identified by its `id`.
-     *
-     * @param {number} id
-     *
-     * @returns {WebChannel|null}
-     */
-
-  }, {
-    key: 'getWebChannel',
-    value: function getWebChannel(id) {
-      var _iteratorNormalCompletion4 = true;
-      var _didIteratorError4 = false;
-      var _iteratorError4 = undefined;
-
-      try {
-        for (var _iterator4 = this.webChannels[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-          var wc = _step4.value;
-
-          if (id === wc.id) return wc;
-        }
-      } catch (err) {
-        _didIteratorError4 = true;
-        _iteratorError4 = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion4 && _iterator4.return) {
-            _iterator4.return();
-          }
-        } finally {
-          if (_didIteratorError4) {
-            throw _iteratorError4;
-          }
-        }
-      }
-
-      return null;
-    }
-
-    /**
-     * Add `WebChannel`.
-     *
-     * @param {WebChannel} wc
-     */
-
-  }, {
-    key: 'addWebChannel',
-    value: function addWebChannel(wc) {
-      this.webChannels[this.webChannels.length] = wc;
-    }
-
-    /**
-     * Remove `WebChannel`
-     *
-     * @param {WebChannel} wc
-     */
-
-  }, {
-    key: 'removeWebChannel',
-    value: function removeWebChannel(wc) {
-      this.webChannels.splice(this.webChannels.indexOf(wc), 1);
-    }
-  }]);
-  return BotServer;
-}();
-
 /**
  * Create `WebChannel`.
  *
@@ -4198,4 +3891,4 @@ function create(options) {
  * @param {Channel} channel Netflux channel
  */
 
-export { create, BotServer, WEB_SOCKET, WEB_RTC };
+export { create, WEB_SOCKET, WEB_RTC };
