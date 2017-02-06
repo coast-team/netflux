@@ -10,7 +10,7 @@ const NodeCloseEvent = class CloseEvent {
 /**
  * Utility class contains some helper static methods.
  */
-class Util {
+export default class Util {
 
   /**
    * Check execution environment.
@@ -79,41 +79,29 @@ class Util {
     return true
   }
 
-  static require (module) {
-    try {
-      return require(module)
-    } catch (err) {
-      console.error(`${module} could not be found: ${err}`)
-      return undefined
-    }
-  }
-
-  static get WEB_RTC_LIB () { return 1 }
-  static get WEB_SOCKET_LIB () { return 2 }
-  static get TEXT_ENCODING_LIB () { return 3 }
-  static get EVENT_SOURCE_LIB () { return 4 }
+  static get WEB_RTC () { return 1 }
+  static get WEB_SOCKET () { return 2 }
+  static get TEXT_ENCODING () { return 3 }
+  static get EVENT_SOURCE () { return 4 }
   static get FETCH () { return 5 }
   static get CLOSE_EVENT () { return 6 }
 
-  static requireLib (libConst) {
-    switch (libConst) {
-      case Util.WEB_RTC_LIB:
-        return Util.isBrowser() ? window : Util.require('wrtc')
-      case Util.WEB_SOCKET_LIB:
-        return Util.isBrowser() ? window.WebSocket : Util.require('ws')
-      case Util.TEXT_ENCODING_LIB:
-        return Util.isBrowser() ? window : Util.require('text-encoding')
-      case Util.EVENT_SOURCE_LIB:
-        return Util.isBrowser() ? window.EventSource : Util.require('eventsource')
-      case Util.FETCH:
-        return Util.isBrowser() ? window.fetch : Util.require('node-fetch')
-      case Util.CLOSE_EVENT:
-        return Util.isBrowser() ? window.CloseEvent : NodeCloseEvent
-      default:
-        console.error(`${libConst} is unknown lib constant. See Util`)
-        return undefined
+  static require (libConst) {
+    try {
+      switch (libConst) {
+        case Util.WEB_RTC: return WEB_RTC_MODULE
+        case Util.WEB_SOCKET: return WEB_SOCKET_MODULE
+        case Util.TEXT_ENCODING: return TEXT_ENCODING_MODULE
+        case Util.EVENT_SOURCE: return EVENT_SOURCE_MODULE
+        case Util.FETCH: return FETCH_MODULE
+        case Util.CLOSE_EVENT: return Util.isBrowser() ? window.CloseEvent : NodeCloseEvent
+        default:
+          console.error(`${libConst} is unknown library`)
+          return undefined
+      }
+    } catch (err) {
+      console.error(err.message)
+      return undefined
     }
   }
 }
-
-export default Util

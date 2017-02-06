@@ -1,4 +1,4 @@
-import {create} from 'dist/netflux.es2015.es.js'
+import {create} from 'dist/netflux.es5.module.node.js'
 import {SIGNALING_URL, onMessageForBot} from 'test/util/helper'
 
 let wc

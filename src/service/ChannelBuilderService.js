@@ -55,7 +55,7 @@ class ChannelBuilderService extends Service {
   availableConnectors (wc) {
     const res = {}
     const connectors = []
-    if (Util.requireLib(Util.WEB_RTC_LIB) !== undefined) {
+    if (Util.require(Util.WEB_RTC) !== undefined) {
       connectors[connectors.length] = WEB_RTC
     }
     if (wc.settings.listenOn !== '') {

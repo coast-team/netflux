@@ -1,4 +1,4 @@
-import {create, BotServer} from 'dist/netflux.es2015.es.js'
+import {create, BotServer} from 'dist/netflux.es5.module.node.js'
 import * as helper from 'test/util/helper'
 
 const host = helper.BOT.substring(helper.BOT.lastIndexOf('/') + 1, helper.BOT.lastIndexOf(':'))

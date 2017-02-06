@@ -1,6 +1,6 @@
 import Util from 'Util'
 import Service from 'service/Service'
-const WebSocket = Util.requireLib(Util.WEB_SOCKET_LIB)
+const WebSocket = Util.require(Util.WEB_SOCKET)
 
 const CONNECT_TIMEOUT = 2000
 

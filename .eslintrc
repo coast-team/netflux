@@ -12,7 +12,8 @@
     "no-shadow": 0,
     "no-sync": 0,
     "no-use-before-define": 0,
-    "prefer-const": 0
+    "prefer-const": 0,
+    "no-catch-shadow": 0
   },
   "globals": {
     "netflux": true,
@@ -37,6 +38,10 @@
     "TextDecoder": true,
     "Event": true,
     "CloseEvent": true,
-    "XMLHttpRequest": true
+    "WEB_RTC_MODULE": true,
+    "WEB_SOCKET_MODULE": true,
+    "TEXT_ENCODING_MODULE": true,
+    "EVENT_SOURCE_MODULE": true,
+    "FETCH_MODULE": true
   }
 }

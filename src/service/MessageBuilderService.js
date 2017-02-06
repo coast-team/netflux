@@ -1,7 +1,7 @@
 import Util from 'Util'
 import Service from 'service/Service'
 import {USER_DATA} from 'WebChannel'
-const ted = Util.requireLib(Util.TEXT_ENCODING_LIB)
+const ted = Util.require(Util.TEXT_ENCODING)
 
 /**
  * Maximum size of the user message sent over `Channel`. Is meant without metadata.

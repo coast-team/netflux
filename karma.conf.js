@@ -43,6 +43,13 @@ module.exports = (config) => {
         require('rollup-plugin-includepaths')({
           paths: ['', 'src/', 'test/', 'dist/'],
           extensions: ['.js', '.txt']
+        }),
+        require('rollup-plugin-replace')({
+          WEB_RTC_MODULE: `window`,
+          WEB_SOCKET_MODULE: `window.WebSocket`,
+          TEXT_ENCODING_MODULE: `window`,
+          EVENT_SOURCE_MODULE: `window.EventSource`,
+          FETCH_MODULE: `window.fetch`
         })
       ],
       format: 'iife'
@@ -135,6 +142,13 @@ module.exports = (config) => {
               'test/*.txt',
               'dist/*.js'
             ]
+          }),
+          require('rollup-plugin-replace')({
+            WEB_RTC_MODULE: `window`,
+            WEB_SOCKET_MODULE: `window.WebSocket`,
+            TEXT_ENCODING_MODULE: `window`,
+            EVENT_SOURCE_MODULE: `window.EventSource`,
+            FETCH_MODULE: `window.fetch`
           })
         ],
         format: 'iife'

@@ -70,8 +70,18 @@ class BotServer {
    */
   start () {
     return new Promise((resolve, reject) => {
-      console.log('uws module would be used for Bot server')
-      let WebSocketServer = Util.require('uws').Server
+      let WebSocketServer
+      try {
+        console.log('uws module would be used for Bot server')
+        WebSocketServer = require('uws').Server
+      } catch (err) {
+        try {
+          console.log(`${err.message}. ws module will be used for Bot server instead`)
+          WebSocketServer = Util.require('ws').Server
+        } catch (err) {
+          console.log(`${err.message}. Bot server cannot be run`)
+        }
+      }
       if (WebSocketServer === undefined) {
         console.log('Could not find uws module, thus ws module will be used for Bot server instead')
         WebSocketServer = Util.require('ws').Server

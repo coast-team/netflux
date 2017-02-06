@@ -1,9 +1,9 @@
 import Util from 'Util'
 import Service from 'service/Service'
 
-const EventSource = Util.requireLib(Util.EVENT_SOURCE_LIB)
-const fetch = Util.requireLib(Util.FETCH)
-const CloseEvent = Util.requireLib(Util.CLOSE_EVENT)
+const EventSource = Util.require(Util.EVENT_SOURCE)
+const fetch = Util.require(Util.FETCH)
+const CloseEvent = Util.require(Util.CLOSE_EVENT)
 
 const CONNECT_TIMEOUT = 5000
 
