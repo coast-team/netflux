@@ -2983,11 +2983,13 @@ var WebChannel = function () {
   }, {
     key: 'leave',
     value: function leave() {
+      this.pingTime = 0;
       if (this.channels.size !== 0) {
         this.members = [];
-        this.pingTime = 0;
-        this.gate.close();
         this.manager.leave(this);
+      }
+      if (this.isOpen()) {
+        this.gate.close();
       }
     }
 
