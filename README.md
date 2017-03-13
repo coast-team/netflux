@@ -1,9 +1,9 @@
 # <p align="center">Netflux</p>
 
 <p align="center">
-  Universal Javascript **peer to peer** transport API for client and server.<br />
-  Permits to create a fully connected peer to peer network based on **WebRTC** and **WebSocket**.<br />
-  Allows to send/receive **String**, **ArrayBuffer**, **TypedArray** data types over the network.
+  Universal Javascript <strong style="font-weight: bold">peer to peer</strong> transport API for client and server.<br />
+  Permits to create a fully connected peer to peer network based on <strong style="font-weight: bold">WebRTC</strong> and <strong style="font-weight: bold">WebSocket</strong>.<br />
+  Allows to send/receive <strong style="font-weight: bold">String</strong>, <strong style="font-weight: bold">ArrayBuffer</strong>, <strong style="font-weight: bold">TypedArray</strong> data types over the network.
 </p>
 
 <p align="center">
