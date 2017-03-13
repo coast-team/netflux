@@ -1,24 +1,42 @@
 # <p align="center">Netflux</p>
 
 <p align="center">
-  Javascript abstract peer to peer transport API for client and server.<br />
-  Permits to create a fully connected peer to peer network based on WebRTC and WebSocket.<br />
-  Allows to send/receive [String][String], [ArrayBuffer][ArrayBuffer], [TypedArray][TypedArray] data types over the network.
+  Universal Javascript **peer to peer** transport API for client and server.<br />
+  Permits to create a fully connected peer to peer network based on **WebRTC** and **WebSocket**.<br />
+  Allows to send/receive **String**, **ArrayBuffer**, **TypedArray** data types over the network.
 </p>
 
 <p align="center">
-  [![npm version][npm]][npm-url]&nbsp;
-  [![Build Status][build]][build-url]&nbsp;
-  [![semantic-release][semantic-release]][semantic-release-url]&nbsp;
-  [![Join the chat at https://gitter.im/coast-team/netflux][gitter]][gitter-url]
+  <a href="https://www.npmjs.com/package/netflux">
+    <img src="https://img.shields.io/npm/v/netflux.svg?style=flat-square" />
+  </a>&nbsp;
+  <a href="https://travis-ci.org/coast-team/netflux">
+    <img src="https://travis-ci.org/coast-team/netflux.svg?branch=master" />
+  </a>&nbsp;
+  <a href="https://github.com/semantic-release/semantic-release">
+    <img src="https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg?style=flat-square" />
+  </a>&nbsp;
+  <a href="https://gitter.im/coast-team/netflux?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge">
+    <img src="https://img.shields.io/badge/GITTER-join%20chat-green.svg?style=flat-square" />
+  </a>
 
   <br />
 
-  [![Commitizen friendly][commitizen]][commitizen-url]&nbsp;
-  [![bitHound Overall Score][bithound]][bithound-url]&nbsp;
-  [![Code Climate][codeclimate]][codeclimate-url]&nbsp;
-  [![Test Coverage][coverage]][coverage-url]&nbsp;
-  [![Documentation][doc]][doc-url]
+  <a href="http://commitizen.github.io/cz-cli">
+    <img src="https://img.shields.io/badge/commitizen-friendly-brightgreen.svg?style=flat-square" />
+  </a>&nbsp;
+  <a href="https://www.bithound.io/github/coast-team/netflux">
+    <img src="https://www.bithound.io/github/coast-team/netflux/badges/score.svg" />
+  </a>&nbsp;
+  <a href="https://codeclimate.com/github/coast-team/netflux">
+    <img src="https://codeclimate.com/github/coast-team/netflux/badges/gpa.svg" />
+  </a>&nbsp;
+  <a href="https://codeclimate.com/github/coast-team/netflux/coverage">
+    <img src="https://codeclimate.com/github/coast-team/netflux/badges/coverage.svg" />
+  </a>&nbsp;
+  <a href="https://doc.esdoc.org/github.com/coast-team/netflux">
+    <img src="https://doc.esdoc.org/github.com/coast-team/netflux/badge.svg" />
+  </a>
 </p>
 
 <p align="center">
@@ -119,18 +137,6 @@ Full documentation: https://doc.esdoc.org/github.com/coast-team/netflux
 [TypedArray]: https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/TypedArray
 [Sigver]: https://github.com/coast-team/sigver
 [Netflux:Configuration]: https://doc.esdoc.org/github.com/coast-team/netflux/manual/configuration/configuration.html
-
-[npm]: https://img.shields.io/npm/v/netflux.svg?style=flat-square
-[npm-url]: https://www.npmjs.com/package/netflux
-
-[build]: https://travis-ci.org/coast-team/netflux.svg?branch=master
-[build-url]: https://travis-ci.org/coast-team/netflux
-
-[semantic-release]: https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg?style=flat-square
-[semantic-release-url]: https://github.com/semantic-release/semantic-release
-
-[gitter]: https://img.shields.io/badge/GITTER-join%20chat-green.svg?style=flat-square
-[gitter-url]: https://gitter.im/coast-team/netflux?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
 
 [commitizen]: https://img.shields.io/badge/commitizen-friendly-brightgreen.svg?style=flat-square
 [commitizen-url]: http://commitizen.github.io/cz-cli
