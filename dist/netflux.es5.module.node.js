@@ -788,7 +788,7 @@ var JoiningPeer = function JoiningPeer(channel, onJoin) {
           edgeShim = require("./edge/edge_shim") || null,
           firefoxShim = require("./firefox/firefox_shim") || null,
           safariShim = require("./safari/safari_shim") || null;switch (browserDetails.browser) {case "chrome":
-          if (!chromeShim || !chromeShim.shimPeerConnection) return void logging("Chrome shim is not included in this adapter release.");logging("adapter.js shimming chrome."), module.exports.browserShim = chromeShim, chromeShim.shimGetUserMedia(), chromeShim.shimMediaStream(), utils.shimCreateObjectURL(), chromeShim.shimSourceObject(), chromeShim.shimPeerConnection(), chromeShim.shimOnTrack();break;case "firefox":
+          if (!chromeShim || !chromeShim.shimPeerConnection) return void logging("Chrome shim is not included in this adapter release.");logging("adapter.js shimming chrome."), module.exports.browserShim = chromeShim, chromeShim.shimGetUserMedia(), chromeShim.shimMediaStream(), utils.shimCreateObjectURL(), chromeShim.shimSourceObject(), chromeShim.shimPeerConnection(), chromeShim.shimOnTrack(), chromeShim.shimGetSendersWithDtmf();break;case "firefox":
           if (!firefoxShim || !firefoxShim.shimPeerConnection) return void logging("Firefox shim is not included in this adapter release.");logging("adapter.js shimming firefox."), module.exports.browserShim = firefoxShim, firefoxShim.shimGetUserMedia(), utils.shimCreateObjectURL(), firefoxShim.shimSourceObject(), firefoxShim.shimPeerConnection(), firefoxShim.shimOnTrack();break;case "edge":
           if (!edgeShim || !edgeShim.shimPeerConnection) return void logging("MS edge shim is not included in this adapter release.");logging("adapter.js shimming edge."), module.exports.browserShim = edgeShim, edgeShim.shimGetUserMedia(), utils.shimCreateObjectURL(), edgeShim.shimPeerConnection();break;case "safari":
           if (!safariShim) return void logging("Safari shim is not included in this adapter release.");logging("adapter.js shimming safari."), module.exports.browserShim = safariShim, safariShim.shimGetUserMedia();break;default:
@@ -812,15 +812,34 @@ var JoiningPeer = function JoiningPeer(channel, onJoin) {
               }.bind(this));
             }.bind(this));
           } });
+      }, shimGetSendersWithDtmf: function shimGetSendersWithDtmf() {
+        if ("object" == (typeof window === "undefined" ? "undefined" : _typeof(window)) && window.RTCPeerConnection && !("getSenders" in RTCPeerConnection.prototype) && "createDTMFSender" in RTCPeerConnection.prototype) {
+          RTCPeerConnection.prototype.getSenders = function () {
+            return this._senders;
+          };var origAddStream = RTCPeerConnection.prototype.addStream,
+              origRemoveStream = RTCPeerConnection.prototype.removeStream;RTCPeerConnection.prototype.addStream = function (stream) {
+            var pc = this;pc._senders = pc._senders || [], origAddStream.apply(pc, [stream]), stream.getTracks().forEach(function (track) {
+              pc._senders.push({ track: track, get dtmf() {
+                  return void 0 === this._dtmf && ("audio" === track.kind ? this._dtmf = pc.createDTMFSender(track) : this._dtmf = null), this._dtmf;
+                } });
+            });
+          }, RTCPeerConnection.prototype.removeStream = function (stream) {
+            var pc = this;pc._senders = pc._senders || [], origRemoveStream.apply(pc, [stream]), stream.getTracks().forEach(function (track) {
+              var sender = pc._senders.find(function (s) {
+                return s.track === track;
+              });sender && pc._senders.splice(pc._senders.indexOf(sender), 1);
+            });
+          };
+        }
       }, shimSourceObject: function shimSourceObject() {
         "object" == (typeof window === "undefined" ? "undefined" : _typeof(window)) && (!window.HTMLMediaElement || "srcObject" in window.HTMLMediaElement.prototype || Object.defineProperty(window.HTMLMediaElement.prototype, "srcObject", { get: function get$$1() {
             return this._srcObject;
           }, set: function set$$1(stream) {
-            var self = this;return this._srcObject = stream, this.src && URL.revokeObjectURL(this.src), stream ? (this.src = URL.createObjectURL(stream), stream.addEventListener("addtrack", function () {
+            var self = this;if (this._srcObject = stream, this.src && URL.revokeObjectURL(this.src), !stream) return void (this.src = "");this.src = URL.createObjectURL(stream), stream.addEventListener("addtrack", function () {
               self.src && URL.revokeObjectURL(self.src), self.src = URL.createObjectURL(stream);
-            }), void stream.addEventListener("removetrack", function () {
+            }), stream.addEventListener("removetrack", function () {
               self.src && URL.revokeObjectURL(self.src), self.src = URL.createObjectURL(stream);
-            })) : void (this.src = "");
+            });
           } }));
       }, shimPeerConnection: function shimPeerConnection() {
         window.RTCPeerConnection || (window.RTCPeerConnection = function (pcConfig, pcConstraints) {
@@ -830,8 +849,7 @@ var JoiningPeer = function JoiningPeer(channel, onJoin) {
           } }));var origGetStats = RTCPeerConnection.prototype.getStats;RTCPeerConnection.prototype.getStats = function (selector, successCallback, errorCallback) {
           var self = this,
               args = arguments;if (arguments.length > 0 && "function" == typeof selector) return origGetStats.apply(this, arguments);if (0 === origGetStats.length && (0 === arguments.length || "function" != typeof arguments[0])) return origGetStats.apply(this, []);var fixChromeStats_ = function fixChromeStats_(response) {
-            var standardReport = {},
-                reports = response.result();return reports.forEach(function (report) {
+            var standardReport = {};return response.result().forEach(function (report) {
               var standardStats = { id: report.id, timestamp: report.timestamp, type: { localcandidate: "local-candidate", remotecandidate: "remote-candidate" }[report.type] || report.type };report.names().forEach(function (name) {
                 standardStats[name] = report.stat(name);
               }), standardReport[standardStats.id] = standardStats;
@@ -877,10 +895,11 @@ var JoiningPeer = function JoiningPeer(channel, onJoin) {
         });var nativeAddIceCandidate = RTCPeerConnection.prototype.addIceCandidate;RTCPeerConnection.prototype.addIceCandidate = function () {
           return arguments[0] ? nativeAddIceCandidate.apply(this, arguments) : (arguments[1] && arguments[1].apply(null), Promise.resolve());
         };
-      } };module.exports = { shimMediaStream: chromeShim.shimMediaStream, shimOnTrack: chromeShim.shimOnTrack, shimSourceObject: chromeShim.shimSourceObject, shimPeerConnection: chromeShim.shimPeerConnection, shimGetUserMedia: require("./getusermedia") };
+      } };module.exports = { shimMediaStream: chromeShim.shimMediaStream, shimOnTrack: chromeShim.shimOnTrack, shimGetSendersWithDtmf: chromeShim.shimGetSendersWithDtmf, shimSourceObject: chromeShim.shimSourceObject, shimPeerConnection: chromeShim.shimPeerConnection, shimGetUserMedia: require("./getusermedia") };
   }, { "../utils.js": 8, "./getusermedia": 4 }], 4: [function (require, module, exports) {
     "use strict";
-    var logging = require("../utils.js").log;module.exports = function () {
+    var logging = require("../utils.js").log,
+        browserDetails = require("../utils.js").browserDetails;module.exports = function () {
       var constraintsToChrome_ = function constraintsToChrome_(c) {
         if ("object" != (typeof c === "undefined" ? "undefined" : _typeof(c)) || c.mandatory || c.optional) return c;var cc = {};return Object.keys(c).forEach(function (key) {
           if ("require" !== key && "advanced" !== key && "mediaSource" !== key) {
@@ -896,7 +915,7 @@ var JoiningPeer = function JoiningPeer(channel, onJoin) {
       },
           shimConstraints_ = function shimConstraints_(constraints, func) {
         if (constraints = JSON.parse(JSON.stringify(constraints)), constraints && constraints.audio && (constraints.audio = constraintsToChrome_(constraints.audio)), constraints && "object" == _typeof(constraints.video)) {
-          var face = constraints.video.facingMode;if (face = face && ("object" == (typeof face === "undefined" ? "undefined" : _typeof(face)) ? face : { ideal: face }), face && ("user" === face.exact || "environment" === face.exact || "user" === face.ideal || "environment" === face.ideal) && (!navigator.mediaDevices.getSupportedConstraints || !navigator.mediaDevices.getSupportedConstraints().facingMode) && (delete constraints.video.facingMode, "environment" === face.exact || "environment" === face.ideal)) return navigator.mediaDevices.enumerateDevices().then(function (devices) {
+          var face = constraints.video.facingMode;face = face && ("object" == (typeof face === "undefined" ? "undefined" : _typeof(face)) ? face : { ideal: face });var getSupportedFacingModeLies = browserDetails.version < 59;if (face && ("user" === face.exact || "environment" === face.exact || "user" === face.ideal || "environment" === face.ideal) && (!navigator.mediaDevices.getSupportedConstraints || !navigator.mediaDevices.getSupportedConstraints().facingMode || getSupportedFacingModeLies) && (delete constraints.video.facingMode, "environment" === face.exact || "environment" === face.ideal)) return navigator.mediaDevices.enumerateDevices().then(function (devices) {
             devices = devices.filter(function (d) {
               return "videoinput" === d.kind;
             });var back = devices.find(function (d) {
@@ -928,6 +947,8 @@ var JoiningPeer = function JoiningPeer(channel, onJoin) {
               }));
             });
           });
+        }, getSupportedConstraints: function getSupportedConstraints() {
+          return { deviceId: !0, echoCancellation: !0, facingMode: !0, frameRate: !0, height: !0, width: !0 };
         } }), navigator.mediaDevices.getUserMedia) {
         var origGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);navigator.mediaDevices.getUserMedia = function (cs) {
           return shimConstraints_(cs, function (c) {
@@ -942,9 +963,9 @@ var JoiningPeer = function JoiningPeer(channel, onJoin) {
         };
       } else navigator.mediaDevices.getUserMedia = function (constraints) {
         return getUserMediaPromise_(constraints);
-      };"undefined" == typeof navigator.mediaDevices.addEventListener && (navigator.mediaDevices.addEventListener = function () {
+      };void 0 === navigator.mediaDevices.addEventListener && (navigator.mediaDevices.addEventListener = function () {
         logging("Dummy mediaDevices.addEventListener called.");
-      }), "undefined" == typeof navigator.mediaDevices.removeEventListener && (navigator.mediaDevices.removeEventListener = function () {
+      }), void 0 === navigator.mediaDevices.removeEventListener && (navigator.mediaDevices.removeEventListener = function () {
         logging("Dummy mediaDevices.removeEventListener called.");
       });
     };
@@ -1034,7 +1055,7 @@ var JoiningPeer = function JoiningPeer(channel, onJoin) {
         });
       };if (navigator.mediaDevices || (navigator.mediaDevices = { getUserMedia: getUserMediaPromise_, addEventListener: function addEventListener() {}, removeEventListener: function removeEventListener() {} }), navigator.mediaDevices.enumerateDevices = navigator.mediaDevices.enumerateDevices || function () {
         return new Promise(function (resolve) {
-          var infos = [{ kind: "audioinput", deviceId: "default", label: "", groupId: "" }, { kind: "videoinput", deviceId: "default", label: "", groupId: "" }];resolve(infos);
+          resolve([{ kind: "audioinput", deviceId: "default", label: "", groupId: "" }, { kind: "videoinput", deviceId: "default", label: "", groupId: "" }]);
         });
       }, browserDetails.version < 41) {
         var orgEnumerateDevices = navigator.mediaDevices.enumerateDevices.bind(navigator.mediaDevices);navigator.mediaDevices.enumerateDevices = function () {
@@ -1053,13 +1074,15 @@ var JoiningPeer = function JoiningPeer(channel, onJoin) {
           });
         };
       }navigator.getUserMedia = function (constraints, onSuccess, onError) {
-        return browserDetails.version < 44 ? getUserMedia_(constraints, onSuccess, onError) : (console.warn("navigator.getUserMedia has been replaced by navigator.mediaDevices.getUserMedia"), void navigator.mediaDevices.getUserMedia(constraints).then(onSuccess, onError));
+        if (browserDetails.version < 44) return getUserMedia_(constraints, onSuccess, onError);console.warn("navigator.getUserMedia has been replaced by navigator.mediaDevices.getUserMedia"), navigator.mediaDevices.getUserMedia(constraints).then(onSuccess, onError);
       };
     };
   }, { "../utils": 8 }], 7: [function (require, module, exports) {
     "use strict";
     var safariShim = { shimGetUserMedia: function shimGetUserMedia() {
-        navigator.getUserMedia = navigator.webkitGetUserMedia;
+        navigator.getUserMedia || (navigator.webkitGetUserMedia ? navigator.getUserMedia = navigator.webkitGetUserMedia.bind(navigator) : navigator.mediaDevices && navigator.mediaDevices.getUserMedia && (navigator.getUserMedia = function (constraints, cb, errcb) {
+          navigator.mediaDevices.getUserMedia(constraints).then(cb, errcb);
+        }.bind(navigator)));
       } };module.exports = { shimGetUserMedia: safariShim.shimGetUserMedia };
   }, {}], 8: [function (require, module, exports) {
     "use strict";
@@ -1073,12 +1096,12 @@ var JoiningPeer = function JoiningPeer(channel, onJoin) {
       }, extractVersion: function extractVersion(uastring, expr, pos) {
         var match = uastring.match(expr);return match && match.length >= pos && parseInt(match[pos], 10);
       }, detectBrowser: function detectBrowser() {
-        var result = {};if (result.browser = null, result.version = null, "undefined" == typeof window || !window.navigator) return result.browser = "Not a browser.", result;if (navigator.mozGetUserMedia) result.browser = "firefox", result.version = this.extractVersion(navigator.userAgent, /Firefox\/([0-9]+)\./, 1);else if (navigator.webkitGetUserMedia) {
-          if (window.webkitRTCPeerConnection) result.browser = "chrome", result.version = this.extractVersion(navigator.userAgent, /Chrom(e|ium)\/([0-9]+)\./, 2);else {
-            if (!navigator.userAgent.match(/Version\/(\d+).(\d+)/)) return result.browser = "Unsupported webkit-based browser with GUM support but no WebRTC support.", result;result.browser = "safari", result.version = this.extractVersion(navigator.userAgent, /AppleWebKit\/([0-9]+)\./, 1);
+        var result = {};if (result.browser = null, result.version = null, "undefined" == typeof window || !window.navigator) return result.browser = "Not a browser.", result;if (navigator.mozGetUserMedia) result.browser = "firefox", result.version = this.extractVersion(navigator.userAgent, /Firefox\/(\d+)\./, 1);else if (navigator.webkitGetUserMedia) {
+          if (window.webkitRTCPeerConnection) result.browser = "chrome", result.version = this.extractVersion(navigator.userAgent, /Chrom(e|ium)\/(\d+)\./, 2);else {
+            if (!navigator.userAgent.match(/Version\/(\d+).(\d+)/)) return result.browser = "Unsupported webkit-based browser with GUM support but no WebRTC support.", result;result.browser = "safari", result.version = this.extractVersion(navigator.userAgent, /AppleWebKit\/(\d+)\./, 1);
           }
-        } else {
-          if (!navigator.mediaDevices || !navigator.userAgent.match(/Edge\/(\d+).(\d+)$/)) return result.browser = "Not a supported browser.", result;result.browser = "edge", result.version = this.extractVersion(navigator.userAgent, /Edge\/(\d+).(\d+)$/, 2);
+        } else if (navigator.mediaDevices && navigator.userAgent.match(/Edge\/(\d+).(\d+)$/)) result.browser = "edge", result.version = this.extractVersion(navigator.userAgent, /Edge\/(\d+).(\d+)$/, 2);else {
+          if (!navigator.mediaDevices || !navigator.userAgent.match(/AppleWebKit\/(\d+)\./)) return result.browser = "Not a supported browser.", result;result.browser = "safari", result.version = this.extractVersion(navigator.userAgent, /AppleWebKit\/(\d+)\./, 1);
         }return result;
       }, shimCreateObjectURL: function shimCreateObjectURL() {
         if ("object" == (typeof window === "undefined" ? "undefined" : _typeof(window)) && window.HTMLMediaElement && "srcObject" in window.HTMLMediaElement.prototype) {
@@ -1095,9 +1118,11 @@ var JoiningPeer = function JoiningPeer(channel, onJoin) {
               return dsc.get.apply(this);
             }, set: function set$$1(url) {
               return this.srcObject = streams.get(url) || null, dsc.set.apply(this, [url]);
-            } });
+            } });var nativeSetAttribute = HTMLMediaElement.prototype.setAttribute;HTMLMediaElement.prototype.setAttribute = function () {
+            return 2 === arguments.length && "src" === ("" + arguments[0]).toLowerCase() && (this.srcObject = streams.get(arguments[1]) || null), nativeSetAttribute.apply(this, arguments);
+          };
         }
-      } };module.exports = { log: utils.log, disableLog: utils.disableLog, browserDetails: utils.detectBrowser(), extractVersion: utils.extractVersion, shimCreateObjectURL: utils.shimCreateObjectURL };
+      } };module.exports = { log: utils.log, disableLog: utils.disableLog, browserDetails: utils.detectBrowser(), extractVersion: utils.extractVersion, shimCreateObjectURL: utils.shimCreateObjectURL, detectBrowser: utils.detectBrowser.bind(utils) };
   }, {}] }, {}, [2]);
 
 var NodeCloseEvent = function CloseEvent(name) {
@@ -1686,18 +1711,16 @@ var WebSocketService = function (_Service) {
     value: function connect(url) {
       return new Promise(function (resolve, reject) {
         try {
-          (function () {
-            var ws = new WebSocket(url);
-            ws.onopen = function () {
-              return resolve(ws);
-            };
-            // Timeout for node (otherwise it will loop forever if incorrect address)
-            setTimeout(function () {
-              if (ws.readyState !== ws.OPEN) {
-                reject('WebSocket connection timeout with ' + url + ' within ' + CONNECT_TIMEOUT$1 + 'ms');
-              }
-            }, CONNECT_TIMEOUT$1);
-          })();
+          var ws = new WebSocket(url);
+          ws.onopen = function () {
+            return resolve(ws);
+          };
+          // Timeout for node (otherwise it will loop forever if incorrect address)
+          setTimeout(function () {
+            if (ws.readyState !== ws.OPEN) {
+              reject('WebSocket connection timeout with ' + url + ' within ' + CONNECT_TIMEOUT$1 + 'ms');
+            }
+          }, CONNECT_TIMEOUT$1);
         } catch (err) {
           reject(err.message);
         }
@@ -1739,19 +1762,17 @@ var EventSourceService = function (_Service) {
     value: function connect(url) {
       return new Promise(function (resolve, reject) {
         try {
-          (function () {
-            var res = new RichEventSource(url);
-            res.onopen = function () {
-              return resolve(res);
-            };
-            res.onerror = function (err) {
-              return reject(err.message);
-            };
-            // Timeout if "auth" event has not been received.
-            setTimeout(function () {
-              reject('Authentication event has not been received from ' + url + ' within ' + CONNECT_TIMEOUT$2 + 'ms');
-            }, CONNECT_TIMEOUT$2);
-          })();
+          var res = new RichEventSource(url);
+          res.onopen = function () {
+            return resolve(res);
+          };
+          res.onerror = function (err) {
+            return reject(err.message);
+          };
+          // Timeout if "auth" event has not been received.
+          setTimeout(function () {
+            reject('Authentication event has not been received from ' + url + ' within ' + CONNECT_TIMEOUT$2 + 'ms');
+          }, CONNECT_TIMEOUT$2);
         } catch (err) {
           reject(err.message);
         }
@@ -2893,28 +2914,28 @@ var WebChannel = function () {
     /**
      * Invite a peer to join the `WebChannel`.
      *
-     * @param {string|WebSocket} keyOrSocket
+     * @param {string|WebSocket} urlOrSocket
      *
      * @returns {Promise<undefined,string>}
      */
 
   }, {
     key: 'invite',
-    value: function invite(keyOrSocket) {
+    value: function invite(urlOrSocket) {
       var _this3 = this;
 
-      if (typeof keyOrSocket === 'string' || keyOrSocket instanceof String) {
-        if (!Util.isURL(keyOrSocket)) {
-          return Promise.reject(keyOrSocket + ' is not a valid URL');
+      if (typeof urlOrSocket === 'string' || urlOrSocket instanceof String) {
+        if (!Util.isURL(urlOrSocket)) {
+          return Promise.reject(urlOrSocket + ' is not a valid URL');
         }
-        return ServiceFactory.get(WEB_SOCKET).connect(keyOrSocket).then(function (ws) {
+        return ServiceFactory.get(WEB_SOCKET).connect(urlOrSocket).then(function (ws) {
           ws.send(JSON.stringify({ wcId: _this3.id }));
           return _this3.addChannel(ws);
         });
-      } else if (keyOrSocket.constructor.name === 'WebSocket') {
-        return this.addChannel(keyOrSocket);
+      } else if (urlOrSocket.constructor.name === 'WebSocket') {
+        return this.addChannel(urlOrSocket);
       } else {
-        return Promise.reject(keyOrSocket + ' is not a valid URL');
+        return Promise.reject(urlOrSocket + ' is not a valid URL');
       }
     }
 
@@ -4031,36 +4052,34 @@ var BotServer = function () {
                   wc.invite(ws);
                 }
               } else if ('wcId' in msg) {
-                (function () {
-                  var wc = _this.getWebChannel(msg.wcId);
-                  if ('senderId' in msg) {
-                    if (wc !== null) {
-                      ServiceFactory.get(CHANNEL_BUILDER).onChannel(wc, ws, msg.senderId);
-                    } else {
-                      ws.close(WEB_CHANNEL_NOT_FOUND, msg.wcId + ' webChannel was not found (message received from ' + msg.senderId + ')');
-                      console.error(msg.wcId + ' webChannel was not found (message received from ' + msg.senderId + ')');
-                    }
+                var _wc = _this.getWebChannel(msg.wcId);
+                if ('senderId' in msg) {
+                  if (_wc !== null) {
+                    ServiceFactory.get(CHANNEL_BUILDER).onChannel(_wc, ws, msg.senderId);
                   } else {
-                    if (wc === null) {
-                      wc = new WebChannel(_this.settings);
-                      wc.id = msg.wcId;
-                      _this.addWebChannel(wc);
-                      wc.join(ws).then(function () {
-                        _this.onWebChannel(wc);
-                      });
-                    } else if (wc.members.length === 0) {
-                      _this.removeWebChannel(wc);
-                      wc = new WebChannel(_this.settings);
-                      wc.id = msg.wcId;
-                      _this.addWebChannel(wc);
-                      wc.join(ws).then(function () {
-                        _this.onWebChannel(wc);
-                      });
-                    } else {
-                      console.error('Bot refused to join ' + msg.wcId + ' webChannel, because it is already in use');
-                    }
+                    ws.close(WEB_CHANNEL_NOT_FOUND, msg.wcId + ' webChannel was not found (message received from ' + msg.senderId + ')');
+                    console.error(msg.wcId + ' webChannel was not found (message received from ' + msg.senderId + ')');
                   }
-                })();
+                } else {
+                  if (_wc === null) {
+                    _wc = new WebChannel(_this.settings);
+                    _wc.id = msg.wcId;
+                    _this.addWebChannel(_wc);
+                    _wc.join(ws).then(function () {
+                      _this.onWebChannel(_wc);
+                    });
+                  } else if (_wc.members.length === 0) {
+                    _this.removeWebChannel(_wc);
+                    _wc = new WebChannel(_this.settings);
+                    _wc.id = msg.wcId;
+                    _this.addWebChannel(_wc);
+                    _wc.join(ws).then(function () {
+                      _this.onWebChannel(_wc);
+                    });
+                  } else {
+                    console.error('Bot refused to join ' + msg.wcId + ' webChannel, because it is already in use');
+                  }
+                }
               }
             } catch (err) {
               ws.close(MESSAGE_TYPE_ERROR, 'Unsupported message type: ' + err.message);
