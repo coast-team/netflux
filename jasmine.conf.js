@@ -7,7 +7,8 @@ const config = {
   spec_files: [
     'unit/**/*.test.js',
     'functional/fullyConnected/1peer.test.js',
-    'functional/fullyConnected/2peers/**/*.test.js'
+    'functional/fullyConnected/2peers/2humans.test.js',
+    'functional/fullyConnected/3peers/3humans.test.js'
   ],
   stopSpecOnExpectationFailure: false,
   random: false
