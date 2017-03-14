@@ -212,24 +212,24 @@ class WebChannel {
   /**
    * Invite a peer to join the `WebChannel`.
    *
-   * @param {string|WebSocket} keyOrSocket
+   * @param {string|WebSocket} urlOrSocket
    *
    * @returns {Promise<undefined,string>}
    */
-  invite (keyOrSocket) {
-    if (typeof keyOrSocket === 'string' || keyOrSocket instanceof String) {
-      if (!Util.isURL(keyOrSocket)) {
-        return Promise.reject(`${keyOrSocket} is not a valid URL`)
+  invite (urlOrSocket) {
+    if (typeof urlOrSocket === 'string' || urlOrSocket instanceof String) {
+      if (!Util.isURL(urlOrSocket)) {
+        return Promise.reject(`${urlOrSocket} is not a valid URL`)
       }
-      return ServiceFactory.get(WEB_SOCKET).connect(keyOrSocket)
+      return ServiceFactory.get(WEB_SOCKET).connect(urlOrSocket)
         .then(ws => {
           ws.send(JSON.stringify({wcId: this.id}))
           return this.addChannel(ws)
         })
-    } else if (keyOrSocket.constructor.name === 'WebSocket') {
-      return this.addChannel(keyOrSocket)
+    } else if (urlOrSocket.constructor.name === 'WebSocket') {
+      return this.addChannel(urlOrSocket)
     } else {
-      return Promise.reject(`${keyOrSocket} is not a valid URL`)
+      return Promise.reject(`${urlOrSocket} is not a valid URL`)
     }
   }
 

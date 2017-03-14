@@ -1,26 +1,63 @@
 # <p align="center">Netflux</p>
 
 <p align="center">
-  Javascript abstract peer to peer transport API for client and server.<br />
-  Permits to create a fully connected peer to peer network based on WebRTC and WebSocket.<br />
-  Allows to send/receive [String](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/String), [ArrayBuffer](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer), [TypedArray](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/TypedArray) data types over the network.
-<p>
+  Universal Javascript <strong style="font-weight: bold">peer to peer</strong> transport API for client and server.<br />
+  Permits to create a fully connected peer to peer network based on <strong style="font-weight: bold">WebRTC</strong> and <strong style="font-weight: bold">WebSocket</strong>.<br />
+  Allows to send/receive <strong style="font-weight: bold">String</strong>, <strong style="font-weight: bold">ArrayBuffer</strong>, <strong style="font-weight: bold">TypedArray</strong> data types over the network.
+</p>
 
 <p align="center">
-  [![npm version](https://img.shields.io/npm/v/netflux.svg?style=flat-square)](https://www.npmjs.com/package/netflux)&nbsp;
-  [![Build Status](https://travis-ci.org/coast-team/netflux.svg?branch=master)](https://travis-ci.org/coast-team/netflux)&nbsp;
-  [![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg?style=flat-square)](https://github.com/semantic-release/semantic-release)&nbsp;
-  [![Join the chat at https://gitter.im/coast-team/netflux](https://img.shields.io/badge/GITTER-join%20chat-green.svg?style=flat-square)](https://gitter.im/coast-team/netflux?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)<br />
-  [![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg?style=flat-square)](http://commitizen.github.io/cz-cli/)&nbsp;
-  [![bitHound Overall Score](https://www.bithound.io/github/coast-team/netflux/badges/score.svg)](https://www.bithound.io/github/coast-team/netflux)&nbsp;
-  [![Code Climate](https://codeclimate.com/github/coast-team/netflux/badges/gpa.svg)](https://codeclimate.com/github/coast-team/netflux)&nbsp;
-  [![Test Coverage](https://codeclimate.com/github/coast-team/netflux/badges/coverage.svg)](https://codeclimate.com/github/coast-team/netflux/coverage)&nbsp;
-  [![Documentation](https://doc.esdoc.org/github.com/coast-team/netflux/badge.svg)](https://doc.esdoc.org/github.com/coast-team/netflux)
-<p>
+  <a href="https://www.npmjs.com/package/netflux">
+    <img src="https://img.shields.io/npm/v/netflux.svg?style=flat-square" />
+  </a>&nbsp;
+  <a href="https://travis-ci.org/coast-team/netflux">
+    <img src="https://travis-ci.org/coast-team/netflux.svg?branch=master" />
+  </a>&nbsp;
+  <a href="https://github.com/semantic-release/semantic-release">
+    <img src="https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg?style=flat-square" />
+  </a>&nbsp;
+  <a href="https://gitter.im/coast-team/netflux?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge">
+    <img src="https://img.shields.io/badge/GITTER-join%20chat-green.svg?style=flat-square" />
+  </a>
+
+  <br />
+
+  <a href="http://commitizen.github.io/cz-cli">
+    <img src="https://img.shields.io/badge/commitizen-friendly-brightgreen.svg?style=flat-square" />
+  </a>&nbsp;
+  <a href="https://www.bithound.io/github/coast-team/netflux">
+    <img src="https://www.bithound.io/github/coast-team/netflux/badges/score.svg" />
+  </a>&nbsp;
+  <a href="https://codeclimate.com/github/coast-team/netflux">
+    <img src="https://codeclimate.com/github/coast-team/netflux/badges/gpa.svg" />
+  </a>&nbsp;
+  <a href="https://codeclimate.com/github/coast-team/netflux/coverage">
+    <img src="https://codeclimate.com/github/coast-team/netflux/badges/coverage.svg" />
+  </a>&nbsp;
+  <a href="https://doc.esdoc.org/github.com/coast-team/netflux">
+    <img src="https://doc.esdoc.org/github.com/coast-team/netflux/badge.svg" />
+  </a>
+</p>
 
 <p align="center">
   <img src="manual/asset/example_support.png" />
-<p>
+</p>
+
+## Features
+- Universal API (works in browser and server)
+- Creates peer to peer full mesh network
+- Allows to send/receive [String][String], [ArrayBuffer][ArrayBuffer], [TypedArray][TypedArray] data types.
+- Allows mixed connections between peers ([WebSocket][WebSocket] or [RTCDataChannel][RTCDataChannel])
+- Automatically chooses between [WebSocket][WebSocket] & [RTCDataChannel][RTCDataChannel]
+- No server is mandatory, except signaling server ([Sigver][Sigver])
+- Signaling and ICE server URLs are parameterized (see [doc page][Netflux:Configuration]), which allows to have the whole control over the peer to peer network
+- Built with DEFAULT Signaling and STUN servers for easy quick start ([doc page][Netflux:Configuration])
+- Each peer acts as a Signaling server to establish connection between two other peers (Signaling server is still mandatory for the first connection in the network, but this feature helps to reduce the Signaling server load)
+- Provides 3 builds:
+ - `dist/netflux.es5.module.browser.js` ES5 code, ES6 module for browser (exports `create` function and does not contain any NodeJS related code)
+ - `dist/netflux.es5.module.node.js` ES5 code, ECMAScript 6 module for NodeJS (exports `create` function, plus `BotServer` class)
+ - `dist/netflux.es5.umd.js` ES5 code, UMD module format for both browser and NodeJS
+- `package.json` has `module` and `browser` attributes which understood be **Webpack**, **Browserify** or other module bundlers for easy consumption.
 
 ## Table of contents
  - [Installation](https://doc.esdoc.org/github.com/coast-team/netflux/manual/installation.html)
@@ -91,3 +128,27 @@ Full documentation: https://doc.esdoc.org/github.com/coast-team/netflux
    - [**addWebChannel**(wc: WebChannel)](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/BotServer.js~BotServer.html#instance-method-addWebChannel)
    - [**removeWebChannel**(wc: WebChannel)](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/BotServer.js~BotServer.html#instance-method-removeWebChannel)
    - [**getWebChannel**(id: number): WebChannel | null](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/BotServer.js~BotServer.html#instance-method-getWebChannel)
+
+
+[WebSocket]: https://developer.mozilla.org/en/docs/Web/API/WebSocket
+[RTCDataChannel]: https://developer.mozilla.org/en/docs/Web/API/RTCDataChannel
+[String]: https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/String
+[ArrayBuffer]: https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer
+[TypedArray]: https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/TypedArray
+[Sigver]: https://github.com/coast-team/sigver
+[Netflux:Configuration]: https://doc.esdoc.org/github.com/coast-team/netflux/manual/configuration/configuration.html
+
+[commitizen]: https://img.shields.io/badge/commitizen-friendly-brightgreen.svg?style=flat-square
+[commitizen-url]: http://commitizen.github.io/cz-cli
+
+[bithound]: https://www.bithound.io/github/coast-team/netflux/badges/score.svg
+[bithound-url]: https://www.bithound.io/github/coast-team/netflux
+
+[codeclimate]: https://codeclimate.com/github/coast-team/netflux/badges/gpa.svg
+[codeclimate-url]: https://codeclimate.com/github/coast-team/netflux
+
+[coverage]: https://codeclimate.com/github/coast-team/netflux/badges/coverage.svg
+[coverage-url]: https://codeclimate.com/github/coast-team/netflux/coverage
+
+[doc]: https://doc.esdoc.org/github.com/coast-team/netflux/badge.svg
+[doc-url]: https://doc.esdoc.org/github.com/coast-team/netflux
