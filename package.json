@@ -37,12 +37,12 @@
     "test:node": "npm run pretest && node jasmine.conf.js",
     "test:coverage": "rm -rf coverage && npm run pretest && node jasmine.conf.js && karma start -- coverage",
     "test:travis": "npm run pretest && node jasmine.conf.js && karma start -- travis",
-    "commit": "git-cz",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
     "lint": "eslint ./",
     "doc": "esdoc -c esdoc.json",
     "precommit": "npm run test:coverage",
-    "commitmsg": "validate-commit-msg"
+    "commitmsg": "validate-commit-msg",
+    "cz": "git-cz"
   },
   "dependencies": {
     "eventsource": "^0.2.1",
