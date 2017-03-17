@@ -23,7 +23,6 @@ before_install:
   - sudo apt-get install python2.7 git-all pkg-config libncurses5-dev libssl-dev libnss3-dev libexpat-dev -y
   - npm config set python python2
   - sudo apt-get update -qq
-  - npm update -g
   - npm install wrtc@0.0.60
   - npm install -g codeclimate-test-reporter
 script:
