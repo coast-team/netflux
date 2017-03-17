@@ -28,7 +28,6 @@ const TOCK = 5
  * @extends module:webChannelManager~WebChannelTopologyInterface
  */
 class FullyConnectedService extends TopologyInterface {
-
   /**
    * Add a peer to the `WebChannel`.
    *

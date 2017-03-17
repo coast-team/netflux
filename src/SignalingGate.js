@@ -7,7 +7,6 @@ import Util from 'Util'
  * many doors as peers in the `WebChannel` and each of them can be closed or opened.
  */
 class SignalingGate {
-
   /**
    * @param {WebChannel} wc
    * @param {function(ch: RTCDataChannel)} onChannel
@@ -51,25 +50,21 @@ class SignalingGate {
       this.getConnectionService(url)
         .connect(url)
         .then(sigCon => {
-          sigCon.onclose = closeEvt => reject(closeEvt.reason)
-          sigCon.onerror = err => reject(err.message)
+          sigCon.onclose = closeEvt => reject(new Error(closeEvt.reason))
+          sigCon.onerror = err => reject(err)
           sigCon.onmessage = evt => {
             try {
               const msg = JSON.parse(evt.data)
               if ('opened' in msg) {
                 if (msg.opened) {
                   resolve(this.listenOnOpen(sigCon, key))
-                } else reject(`Could not open with ${key}`)
-              } else reject(`Unknown message from ${url}: ${evt.data}`)
-            } catch (err) {
-              reject('Server responce is not a JSON string: ' + err.message)
-            }
+                } else reject(new Error(`Could not open with ${key}`))
+              } else reject(new Error(`Unknown message from ${url}: ${evt.data}`))
+            } catch (err) { reject(err) }
           }
           sigCon.send(JSON.stringify({open: key}))
         })
-        .catch(err => {
-          reject(err)
-        })
+        .catch(err => { reject(err) })
     })
   }
 
@@ -82,19 +77,17 @@ class SignalingGate {
    */
   openExisted (sigCon, key) {
     return new Promise((resolve, reject) => {
-      sigCon.onclose = closeEvt => reject(closeEvt.reason)
-      sigCon.onerror = err => reject(err.message)
+      sigCon.onclose = closeEvt => reject(new Error(closeEvt.reason))
+      sigCon.onerror = err => reject(err)
       sigCon.onmessage = evt => {
         try {
           const msg = JSON.parse(evt.data)
           if ('opened' in msg) {
             if (msg.opened) {
               resolve(this.listenOnOpen(sigCon, key))
-            } else reject(`Could not open with ${key}`)
-          } else reject(`Unknown message from ${sigCon.url}: ${evt.data}`)
-        } catch (err) {
-          reject('Server responce is not a JSON string: ' + err.message)
-        }
+            } else reject(new Error(`Could not open with ${key}`))
+          } else reject(new Error(`Unknown message from ${sigCon.url}: ${evt.data}`))
+        } catch (err) { reject(err) }
       }
       sigCon.send(JSON.stringify({open: key}))
     })
@@ -116,7 +109,7 @@ class SignalingGate {
                     if (msg.useThis) {
                       resolve({opened: false, con: sigCon})
                     } else {
-                      reject(`Open a gate with bot server is not possible`)
+                      reject(new Error(`Open a gate with bot server is not possible`))
                     }
                   } else {
                     ServiceFactory.get(WEB_RTC, this.webChannel.settings.iceServers)
@@ -128,8 +121,8 @@ class SignalingGate {
                   this.listenOnOpen(sigCon, key)
                   resolve({opened: true, sigCon})
                 }
-              } else reject(`Unknown message from ${url}: ${evt.data}`)
-            } catch (err) { reject(err.message) }
+              } else reject(new Error(`Unknown message from ${url}: ${evt.data}`))
+            } catch (err) { reject(err) }
           }
           sigCon.send(JSON.stringify({join: key}))
         })

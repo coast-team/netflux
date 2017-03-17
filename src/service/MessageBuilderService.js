@@ -105,7 +105,6 @@ const buffers = new WeakMap()
  * 16ko.
  */
 class MessageBuilderService extends Service {
-
   /**
    * @callback MessageBuilderService~Send
    * @param {ArrayBuffer} dataChunk - If the message is too big this
@@ -402,7 +401,6 @@ class MessageBuilderService extends Service {
  * @private
  */
 class Buffer {
-
   /**
    * @param {number} fullDataSize The total user message size
    * @param {ArrayBuffer} data The first chunk of the user message

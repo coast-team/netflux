@@ -22,7 +22,6 @@ const requestsStorage = new Map()
  * and can store data temporarly in order to accomplish its task(s).
  */
 class Service {
-
   /**
    * It should be invoked only by calling `super` from the children constructor.
    *

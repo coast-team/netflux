@@ -8,7 +8,6 @@ import ServiceFactory, {WEB_RTC, WEB_SOCKET} from 'ServiceFactory'
  * based on the services availability and peers' preferences.
  */
 class ChannelBuilderService extends Service {
-
   /**
    * @param {number} id Service identifier
    */
@@ -94,7 +93,7 @@ class ChannelBuilderService extends Service {
     const myConnectors = myConnectObj.connectors
 
     if ('failedReason' in msg) {
-      super.getPendingRequest(wc, senderId).reject(msg.failedReason)
+      super.getPendingRequest(wc, senderId).reject(new Error(msg.failedReason))
     } else if ('shouldConnect' in msg) {
       if (this.isEqual(msg.shouldConnect, this.WS)) {
         ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn)
@@ -103,7 +102,8 @@ class ChannelBuilderService extends Service {
             this.onChannel(wc, channel, senderId)
           })
           .catch(reason => {
-            super.getPendingRequest(wc, senderId).reject(`Failed to establish a socket: ${reason}`)
+            super.getPendingRequest(wc, senderId)
+              .reject(new Error(`Failed to establish a socket: ${reason}`))
           })
       } else if (this.isEqual(msg.shouldConnect, this.WS_WR)) {
         ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn)
@@ -117,7 +117,8 @@ class ChannelBuilderService extends Service {
             if ('feedbackOnFail' in msg && msg.feedbackOnFail === true) {
               wc.sendInnerTo(senderId, this.id, {tryOn: this.WS, listenOn: myConnectObj.listenOn})
             } else {
-              super.getPendingRequest(wc, senderId).reject(`Failed to establish a socket and then a data channel: ${reason}`)
+              super.getPendingRequest(wc, senderId)
+                .reject(new Error(`Failed to establish a socket and then a data channel: ${reason}`))
             }
           })
       }
@@ -308,7 +309,6 @@ class ChannelBuilderService extends Service {
     }
     return true
   }
-
 }
 
 export default ChannelBuilderService

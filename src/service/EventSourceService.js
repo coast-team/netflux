@@ -12,7 +12,6 @@ const CONNECT_TIMEOUT = 5000
  * `WebSocket`.
  */
 class EventSourceService extends Service {
-
   /**
    * Creates RichEventSource object.
    *
@@ -27,7 +26,7 @@ class EventSourceService extends Service {
         res.onerror = err => reject(err.message)
         // Timeout if "auth" event has not been received.
         setTimeout(() => {
-          reject(`Authentication event has not been received from ${url} within ${CONNECT_TIMEOUT}ms`)
+          reject(new Error(`Authentication event has not been received from ${url} within ${CONNECT_TIMEOUT}ms`))
         }, CONNECT_TIMEOUT)
       } catch (err) {
         reject(err.message)
@@ -37,7 +36,6 @@ class EventSourceService extends Service {
 }
 
 class RichEventSource {
-
   constructor (url) {
     this.auth = ''
     this._onopen = () => {}

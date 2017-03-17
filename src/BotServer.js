@@ -10,7 +10,6 @@ const WEB_CHANNEL_NOT_FOUND = 4001
  * He can also join one of the bot's `WebChannel`.
  */
 class BotServer {
-
   /**
    * Bot server settings are the same as for `WebChannel` (see {@link WebChannelSettings}),
    * plus `host` and `port` parameters.
@@ -101,7 +100,7 @@ class BotServer {
         for (let wc of this.webChannels) {
           wc.settings.listenOn = ''
         }
-        reject(`Server error: ${err.messsage}`)
+        reject(err)
       })
 
       this.server.on('connection', ws => {

@@ -14,7 +14,6 @@ const REMOVE_ITEM_TIMEOUT = 5000
  *
  */
 class WebRTCService extends Service {
-
   /**
    * @param  {number} id Service identifier
    * @param  {RTCIceServer} iceServers WebRTC configuration object
@@ -75,7 +74,7 @@ class WebRTCService extends Service {
     }))
     super.setItem(wc, id, item)
     return new Promise((resolve, reject) => {
-      setTimeout(reject, CONNECT_TIMEOUT, 'WebRTC connect timeout')
+      setTimeout(() => reject(new Error(`WebRTC ${CONNECT_TIMEOUT} connection timeout`)), CONNECT_TIMEOUT)
       this.createDataChannel(item.pc, dataCh => {
         setTimeout(() => super.removeItem(wc, id), REMOVE_ITEM_TIMEOUT)
         resolve(dataCh)
@@ -135,7 +134,8 @@ class WebRTCService extends Service {
     }))
     super.setItem(ws, key, item)
     return new Promise((resolve, reject) => {
-      ws.onclose = closeEvt => reject(closeEvt.reason)
+      ws.onclose = closeEvt => reject(new Error(closeEvt.reason))
+      ws.onerror = err => reject(err)
       ws.onmessage = evt => {
         try {
           const msg = JSON.parse(evt.data)
@@ -143,13 +143,13 @@ class WebRTCService extends Service {
             if ('answer' in msg.data) {
               item.pc.setRemoteDescription(msg.data.answer)
                 .then(() => item.pc.addReceivedCandidates(item.candidates))
-                .catch(err => reject(`Set answer (signaling): ${err.message}`))
+                .catch(err => reject(new Error(`Set answer (signaling): ${err.message}`)))
             } else if ('candidate' in msg.data) {
               this.addIceCandidate(super.getItem(ws, key), msg.data.candidate)
             }
           }
         } catch (err) {
-          reject(`Unknown message from the server ${ws.url}: ${evt.data}`)
+          reject(new Error(`Unknown message from ${ws.url}: ${evt.data}`))
         }
       }
 

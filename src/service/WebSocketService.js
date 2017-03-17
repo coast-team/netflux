@@ -2,14 +2,13 @@ import Util from 'Util'
 import Service from 'service/Service'
 const WebSocket = Util.require(Util.WEB_SOCKET)
 
-const CONNECT_TIMEOUT = 2000
+const CONNECT_TIMEOUT = 3000
 
 /**
  * Service class responsible to establish connections between peers via
  * `WebSocket`.
  */
 class WebSocketService extends Service {
-
   /**
    * Creates WebSocket with server.
    *
@@ -24,15 +23,12 @@ class WebSocketService extends Service {
         // Timeout for node (otherwise it will loop forever if incorrect address)
         setTimeout(() => {
           if (ws.readyState !== ws.OPEN) {
-            reject(`WebSocket connection timeout with ${url} within ${CONNECT_TIMEOUT}ms`)
+            reject(new Error(`WebSocket ${CONNECT_TIMEOUT}ms connection timeout with ${url}`))
           }
         }, CONNECT_TIMEOUT)
-      } catch (err) {
-        reject(err.message)
-      }
+      } catch (err) { reject(err) }
     })
   }
-
 }
 
 export default WebSocketService

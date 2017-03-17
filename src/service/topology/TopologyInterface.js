@@ -15,7 +15,6 @@ import ServiceFactory, {CHANNEL_BUILDER} from 'ServiceFactory'
  * @interface
  */
 class TopologyInterface extends Service {
-
   connectTo (wc, peerIds) {
     const failed = []
     if (peerIds.length === 0) return Promise.resolve(failed)

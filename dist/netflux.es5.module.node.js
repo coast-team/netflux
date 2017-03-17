@@ -128,7 +128,6 @@ var requestsStorage = new Map();
  */
 
 var Service = function () {
-
   /**
    * It should be invoked only by calling `super` from the children constructor.
    *
@@ -429,7 +428,6 @@ var FullyConnectedService = function (_TopologyInterface) {
 
   createClass(FullyConnectedService, [{
     key: 'add',
-
 
     /**
      * Add a peer to the `WebChannel`.
@@ -1147,7 +1145,6 @@ var Util = function () {
   createClass(Util, null, [{
     key: 'isBrowser',
 
-
     /**
      * Check execution environment.
      *
@@ -1378,7 +1375,9 @@ var WebRTCService = function (_Service) {
       }));
       get(WebRTCService.prototype.__proto__ || Object.getPrototypeOf(WebRTCService.prototype), 'setItem', this).call(this, wc, id, item);
       return new Promise(function (resolve, reject) {
-        setTimeout(reject, CONNECT_TIMEOUT, 'WebRTC connect timeout');
+        setTimeout(function () {
+          return reject(new Error('WebRTC ' + CONNECT_TIMEOUT + ' connection timeout'));
+        }, CONNECT_TIMEOUT);
         _this3.createDataChannel(item.pc, function (dataCh) {
           setTimeout(function () {
             return get(WebRTCService.prototype.__proto__ || Object.getPrototypeOf(WebRTCService.prototype), 'removeItem', _this3).call(_this3, wc, id);
@@ -1451,7 +1450,10 @@ var WebRTCService = function (_Service) {
       get(WebRTCService.prototype.__proto__ || Object.getPrototypeOf(WebRTCService.prototype), 'setItem', this).call(this, ws, key, item);
       return new Promise(function (resolve, reject) {
         ws.onclose = function (closeEvt) {
-          return reject(closeEvt.reason);
+          return reject(new Error(closeEvt.reason));
+        };
+        ws.onerror = function (err) {
+          return reject(err);
         };
         ws.onmessage = function (evt) {
           try {
@@ -1461,14 +1463,14 @@ var WebRTCService = function (_Service) {
                 item.pc.setRemoteDescription(msg.data.answer).then(function () {
                   return item.pc.addReceivedCandidates(item.candidates);
                 }).catch(function (err) {
-                  return reject('Set answer (signaling): ' + err.message);
+                  return reject(new Error('Set answer (signaling): ' + err.message));
                 });
               } else if ('candidate' in msg.data) {
                 _this5.addIceCandidate(get(WebRTCService.prototype.__proto__ || Object.getPrototypeOf(WebRTCService.prototype), 'getItem', _this5).call(_this5, ws, key), msg.data.candidate);
               }
             }
           } catch (err) {
-            reject('Unknown message from the server ' + ws.url + ': ' + evt.data);
+            reject(new Error('Unknown message from ' + ws.url + ': ' + evt.data));
           }
         };
 
@@ -1683,7 +1685,7 @@ var CandidatesBuffer = function CandidatesBuffer() {
 
 var WebSocket = Util.require(Util.WEB_SOCKET);
 
-var CONNECT_TIMEOUT$1 = 2000;
+var CONNECT_TIMEOUT$1 = 3000;
 
 /**
  * Service class responsible to establish connections between peers via
@@ -1701,7 +1703,6 @@ var WebSocketService = function (_Service) {
   createClass(WebSocketService, [{
     key: 'connect',
 
-
     /**
      * Creates WebSocket with server.
      *
@@ -1718,11 +1719,11 @@ var WebSocketService = function (_Service) {
           // Timeout for node (otherwise it will loop forever if incorrect address)
           setTimeout(function () {
             if (ws.readyState !== ws.OPEN) {
-              reject('WebSocket connection timeout with ' + url + ' within ' + CONNECT_TIMEOUT$1 + 'ms');
+              reject(new Error('WebSocket ' + CONNECT_TIMEOUT$1 + 'ms connection timeout with ' + url));
             }
           }, CONNECT_TIMEOUT$1);
         } catch (err) {
-          reject(err.message);
+          reject(err);
         }
       });
     }
@@ -1752,7 +1753,6 @@ var EventSourceService = function (_Service) {
   createClass(EventSourceService, [{
     key: 'connect',
 
-
     /**
      * Creates RichEventSource object.
      *
@@ -1771,7 +1771,7 @@ var EventSourceService = function (_Service) {
           };
           // Timeout if "auth" event has not been received.
           setTimeout(function () {
-            reject('Authentication event has not been received from ' + url + ' within ' + CONNECT_TIMEOUT$2 + 'ms');
+            reject(new Error('Authentication event has not been received from ' + url + ' within ' + CONNECT_TIMEOUT$2 + 'ms'));
           }, CONNECT_TIMEOUT$2);
         } catch (err) {
           reject(err.message);
@@ -2007,14 +2007,14 @@ var ChannelBuilderService = function (_Service) {
       var myConnectors = myConnectObj.connectors;
 
       if ('failedReason' in msg) {
-        get(ChannelBuilderService.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilderService.prototype), 'getPendingRequest', this).call(this, wc, senderId).reject(msg.failedReason);
+        get(ChannelBuilderService.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilderService.prototype), 'getPendingRequest', this).call(this, wc, senderId).reject(new Error(msg.failedReason));
       } else if ('shouldConnect' in msg) {
         if (this.isEqual(msg.shouldConnect, this.WS)) {
           ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn).then(function (channel) {
             channel.send(JSON.stringify({ wcId: wc.id, senderId: wc.myId }));
             _this4.onChannel(wc, channel, senderId);
           }).catch(function (reason) {
-            get(ChannelBuilderService.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilderService.prototype), 'getPendingRequest', _this4).call(_this4, wc, senderId).reject('Failed to establish a socket: ' + reason);
+            get(ChannelBuilderService.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilderService.prototype), 'getPendingRequest', _this4).call(_this4, wc, senderId).reject(new Error('Failed to establish a socket: ' + reason));
           });
         } else if (this.isEqual(msg.shouldConnect, this.WS_WR)) {
           ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn).then(function (channel) {
@@ -2028,7 +2028,7 @@ var ChannelBuilderService = function (_Service) {
             if ('feedbackOnFail' in msg && msg.feedbackOnFail === true) {
               wc.sendInnerTo(senderId, _this4.id, { tryOn: _this4.WS, listenOn: myConnectObj.listenOn });
             } else {
-              get(ChannelBuilderService.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilderService.prototype), 'getPendingRequest', _this4).call(_this4, wc, senderId).reject('Failed to establish a socket and then a data channel: ' + reason);
+              get(ChannelBuilderService.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilderService.prototype), 'getPendingRequest', _this4).call(_this4, wc, senderId).reject(new Error('Failed to establish a socket and then a data channel: ' + reason));
             }
           });
         }
@@ -2425,7 +2425,6 @@ var Channel = function () {
  */
 
 var SignalingGate = function () {
-
   /**
    * @param {WebChannel} wc
    * @param {function(ch: RTCDataChannel)} onChannel
@@ -2478,10 +2477,10 @@ var SignalingGate = function () {
       return new Promise(function (resolve, reject) {
         _this.getConnectionService(url).connect(url).then(function (sigCon) {
           sigCon.onclose = function (closeEvt) {
-            return reject(closeEvt.reason);
+            return reject(new Error(closeEvt.reason));
           };
           sigCon.onerror = function (err) {
-            return reject(err.message);
+            return reject(err);
           };
           sigCon.onmessage = function (evt) {
             try {
@@ -2489,10 +2488,10 @@ var SignalingGate = function () {
               if ('opened' in msg) {
                 if (msg.opened) {
                   resolve(_this.listenOnOpen(sigCon, key));
-                } else reject('Could not open with ' + key);
-              } else reject('Unknown message from ' + url + ': ' + evt.data);
+                } else reject(new Error('Could not open with ' + key));
+              } else reject(new Error('Unknown message from ' + url + ': ' + evt.data));
             } catch (err) {
-              reject('Server responce is not a JSON string: ' + err.message);
+              reject(err);
             }
           };
           sigCon.send(JSON.stringify({ open: key }));
@@ -2517,10 +2516,10 @@ var SignalingGate = function () {
 
       return new Promise(function (resolve, reject) {
         sigCon.onclose = function (closeEvt) {
-          return reject(closeEvt.reason);
+          return reject(new Error(closeEvt.reason));
         };
         sigCon.onerror = function (err) {
-          return reject(err.message);
+          return reject(err);
         };
         sigCon.onmessage = function (evt) {
           try {
@@ -2528,10 +2527,10 @@ var SignalingGate = function () {
             if ('opened' in msg) {
               if (msg.opened) {
                 resolve(_this2.listenOnOpen(sigCon, key));
-              } else reject('Could not open with ' + key);
-            } else reject('Unknown message from ' + sigCon.url + ': ' + evt.data);
+              } else reject(new Error('Could not open with ' + key));
+            } else reject(new Error('Unknown message from ' + sigCon.url + ': ' + evt.data));
           } catch (err) {
-            reject('Server responce is not a JSON string: ' + err.message);
+            reject(err);
           }
         };
         sigCon.send(JSON.stringify({ open: key }));
@@ -2559,7 +2558,7 @@ var SignalingGate = function () {
                     if (msg.useThis) {
                       resolve({ opened: false, con: sigCon });
                     } else {
-                      reject('Open a gate with bot server is not possible');
+                      reject(new Error('Open a gate with bot server is not possible'));
                     }
                   } else {
                     ServiceFactory.get(WEB_RTC, _this3.webChannel.settings.iceServers).connectOverSignaling(sigCon, key).then(function (dc) {
@@ -2570,9 +2569,9 @@ var SignalingGate = function () {
                   _this3.listenOnOpen(sigCon, key);
                   resolve({ opened: true, sigCon: sigCon });
                 }
-              } else reject('Unknown message from ' + url + ': ' + evt.data);
+              } else reject(new Error('Unknown message from ' + url + ': ' + evt.data));
             } catch (err) {
-              reject(err.message);
+              reject(err);
             }
           };
           sigCon.send(JSON.stringify({ join: key }));
@@ -2745,7 +2744,6 @@ var PONG = 5;
  */
 
 var WebChannel = function () {
-
   /**
    * @param {WebChannelSettings} settings Web channel settings
    */
@@ -2926,7 +2924,7 @@ var WebChannel = function () {
 
       if (typeof urlOrSocket === 'string' || urlOrSocket instanceof String) {
         if (!Util.isURL(urlOrSocket)) {
-          return Promise.reject(urlOrSocket + ' is not a valid URL');
+          return Promise.reject(new Error(urlOrSocket + ' is not a valid URL'));
         }
         return ServiceFactory.get(WEB_SOCKET).connect(urlOrSocket).then(function (ws) {
           ws.send(JSON.stringify({ wcId: _this3.id }));
@@ -2935,7 +2933,7 @@ var WebChannel = function () {
       } else if (urlOrSocket.constructor.name === 'WebSocket') {
         return this.addChannel(urlOrSocket);
       } else {
-        return Promise.reject(urlOrSocket + ' is not a valid URL');
+        return Promise.reject(new Error(urlOrSocket + ' is not a valid URL'));
       }
     }
 
@@ -2959,7 +2957,7 @@ var WebChannel = function () {
           return this.gate.open(this.settings.signalingURL);
         }
       } else {
-        return Promise.reject(this.settings.signalingURL + ' is not a valid URL');
+        return Promise.reject(new Error(this.settings.signalingURL + ' is not a valid URL'));
       }
     }
 
@@ -3075,7 +3073,7 @@ var WebChannel = function () {
             }, PING_TIMEOUT);
           }
         });
-      } else return Promise.reject('No peers to ping');
+      } else return Promise.reject(new Error('No peers to ping'));
     }
 
     /**
@@ -3425,7 +3423,6 @@ var MessageBuilderService = function (_Service) {
   createClass(MessageBuilderService, [{
     key: 'handleUserMessage',
 
-
     /**
      * @callback MessageBuilderService~Send
      * @param {ArrayBuffer} dataChunk - If the message is too big this
@@ -3747,7 +3744,6 @@ var MessageBuilderService = function (_Service) {
 
 
 var Buffer = function () {
-
   /**
    * @param {number} fullDataSize The total user message size
    * @param {ArrayBuffer} data The first chunk of the user message
@@ -3895,7 +3891,6 @@ var WEB_CHANNEL_NOT_FOUND = 4001;
  */
 
 var BotServer = function () {
-
   /**
    * Bot server settings are the same as for `WebChannel` (see {@link WebChannelSettings}),
    * plus `host` and `port` parameters.
@@ -4036,7 +4031,7 @@ var BotServer = function () {
             }
           }
 
-          reject('Server error: ' + err.messsage);
+          reject(err);
         });
 
         _this.server.on('connection', function (ws) {

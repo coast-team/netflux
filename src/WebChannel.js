@@ -53,7 +53,6 @@ const PONG = 5
  * preserving the current `WebChannel` structure (network topology).
  */
 class WebChannel {
-
   /**
    * @param {WebChannelSettings} settings Web channel settings
    */
@@ -219,7 +218,7 @@ class WebChannel {
   invite (urlOrSocket) {
     if (typeof urlOrSocket === 'string' || urlOrSocket instanceof String) {
       if (!Util.isURL(urlOrSocket)) {
-        return Promise.reject(`${urlOrSocket} is not a valid URL`)
+        return Promise.reject(new Error(`${urlOrSocket} is not a valid URL`))
       }
       return ServiceFactory.get(WEB_SOCKET).connect(urlOrSocket)
         .then(ws => {
@@ -229,7 +228,7 @@ class WebChannel {
     } else if (urlOrSocket.constructor.name === 'WebSocket') {
       return this.addChannel(urlOrSocket)
     } else {
-      return Promise.reject(`${urlOrSocket} is not a valid URL`)
+      return Promise.reject(new Error(`${urlOrSocket} is not a valid URL`))
     }
   }
 
@@ -248,7 +247,7 @@ class WebChannel {
         return this.gate.open(this.settings.signalingURL)
       }
     } else {
-      return Promise.reject(`${this.settings.signalingURL} is not a valid URL`)
+      return Promise.reject(new Error(`${this.settings.signalingURL} is not a valid URL`))
     }
   }
 
@@ -333,7 +332,7 @@ class WebChannel {
           setTimeout(() => resolve(PING_TIMEOUT), PING_TIMEOUT)
         }
       })
-    } else return Promise.reject('No peers to ping')
+    } else return Promise.reject(new Error('No peers to ping'))
   }
 
   /**
