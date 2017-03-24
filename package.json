@@ -52,7 +52,7 @@
     "ws": "^2.0.2"
   },
   "peerDependencies": {
-    "uws": "^0.13.0",
+    "uws": "^0.14.0",
     "wrtc": "0.0.x"
   },
   "devDependencies": {
