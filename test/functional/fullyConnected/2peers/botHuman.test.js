@@ -12,6 +12,7 @@ describe('🤖 🙂  fully connected', () => {
     spyOn(wc, 'onPeerJoin')
     wc.join(helper.env())
       .then(() => {
+        console.log('JOINED successfully')
         expect(wc.members.length).toEqual(1)
         expect(wc.onPeerJoin).toHaveBeenCalledTimes(1)
         wc.leave()
@@ -20,7 +21,7 @@ describe('🤖 🙂  fully connected', () => {
       .catch(done.fail)
   })
 
-  it('Should ping', done => {
+  xit('Should ping', done => {
     const wc = create({signalingURL})
     wc.join(helper.env())
       .then(() => wc.ping())
@@ -42,19 +43,19 @@ describe('🤖 🙂  fully connected', () => {
 
     afterAll(() => wc.leave())
 
-    it('Private string message', done => {
+    xit('Private string message', done => {
       const data = helper.randData(String)
       helper.sendReceive(wc, data, done, wc.members[0])
     })
 
     for (let i of helper.INSTANCES) {
-      it('broadcast: ' + i.prototype.constructor.name, done => {
+      xit('broadcast: ' + i.prototype.constructor.name, done => {
         const data = helper.randData(i)
         helper.sendReceive(wc, data, done)
       })
     }
 
-    it('broadcast: ~200 KB string', done => {
+    xit('broadcast: ~200 KB string', done => {
       helper.sendReceive(wc, smallStr, done)
     })
 
@@ -62,7 +63,7 @@ describe('🤖 🙂  fully connected', () => {
       helper.sendReceive(wc, bigStr, done)
     }, 10000)
 
-    it(`${helper.MSG_NUMBER} small messages`, done => {
+    xit(`${helper.MSG_NUMBER} small messages`, done => {
       const data = []
       const dataReceived = Array(helper.MSG_NUMBER)
       for (let i = 0; i < helper.MSG_NUMBER; i++) data[i] = helper.randData(String)
@@ -89,7 +90,7 @@ describe('🤖 🙂  fully connected', () => {
         .then(done)
     })
 
-    it('🙂', done => {
+    xit('🙂', done => {
       wc.leave()
       expect(wc.members.length).toEqual(0)
       wc.ping()
@@ -97,7 +98,7 @@ describe('🤖 🙂  fully connected', () => {
         .catch(done)
     })
 
-    it('🤖', done => {
+    xit('🤖', done => {
       wc.onPeerLeave = id => {
         expect(wc.members.length).toEqual(0)
         wc.ping()

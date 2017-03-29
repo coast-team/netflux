@@ -1,4 +1,4 @@
-import 'webrtc-adapter'
+import '../../webrtc-adapter'
 import Util from 'Util'
 import Service from 'service/Service'
 import ServiceFactory, {CHANNEL_BUILDER} from 'ServiceFactory'
@@ -91,34 +91,38 @@ class WebRTCService extends Service {
    * @param {function(channel: RTCDataChannel)} onChannel
    *
    */
-  listenFromSignaling (ws, onChannel) {
-    ws.onmessage = evt => {
-      const msg = JSON.parse(evt.data)
-      if ('id' in msg && 'data' in msg) {
-        let item = super.getItem(ws, msg.id)
-        if (!item) {
-          item = new CandidatesBuffer(this.createPeerConnection(candidate => {
-            if (ws.readyState === 1) ws.send(JSON.stringify({id: msg.id, data: {candidate}}))
-          }))
-          super.setItem(ws, msg.id, item)
-        }
-        if ('offer' in msg.data) {
-          this.listenOnDataChannel(item.pc, dataCh => {
-            setTimeout(() => super.removeItem(ws, msg.id), REMOVE_ITEM_TIMEOUT)
-            onChannel(dataCh)
-          })
-          this.createAnswer(item.pc, msg.data.offer, item.candidates)
-            .then(answer => {
-              ws.send(JSON.stringify({id: msg.id, data: {answer}}))
+  listenFromSignaling (signaling, onChannel) {
+    signaling.filter(msg => 'id' in msg && 'data' in msg)
+      .subscribe(
+        msg => {
+          let item = super.getItem(signaling, msg.id)
+          if (!item) {
+            item = new CandidatesBuffer(this.createPeerConnection(candidate => {
+              signaling.next(JSON.stringify({id: msg.id, data: {candidate}}))
+            }))
+            super.setItem(signaling, msg.id, item)
+          }
+          if ('offer' in msg.data) {
+            this.listenOnDataChannel(item.pc, dataCh => {
+              setTimeout(() => super.removeItem(signaling, msg.id), REMOVE_ITEM_TIMEOUT)
+              onChannel(dataCh)
             })
-            .catch(err => {
-              console.error(`During establishing data channel connection through signaling: ${err.message}`)
-            })
-        } else if ('candidate' in msg.data) {
-          this.addIceCandidate(item, msg.data.candidate)
+            this.createAnswer(item.pc, msg.data.offer, item.candidates)
+              .then(answer => {
+                signaling.next(JSON.stringify({id: msg.id, data: {answer}}))
+              })
+              .catch(err => {
+                console.error(`During establishing data channel connection through signaling: ${err.message}`)
+              })
+          } else if ('candidate' in msg.data) {
+            this.addIceCandidate(item, msg.data.candidate)
+          }
+        },
+        err => console.log(err),
+        () => {
+          // clean
         }
-      }
-    }
+      )
   }
 
   /**
@@ -128,37 +132,36 @@ class WebRTCService extends Service {
    *
    * @returns {type} Description
    */
-  connectOverSignaling (ws, key) {
+  connectOverSignaling (signaling, key) {
     const item = new CandidatesBuffer(this.createPeerConnection(candidate => {
-      if (ws.readyState === 1) ws.send(JSON.stringify({data: {candidate}}))
+      signaling.next(JSON.stringify({data: {candidate}}))
     }))
-    super.setItem(ws, key, item)
+    super.setItem(signaling, key, item)
     return new Promise((resolve, reject) => {
-      ws.onclose = closeEvt => reject(new Error(closeEvt.reason))
-      ws.onerror = err => reject(err)
-      ws.onmessage = evt => {
-        try {
-          const msg = JSON.parse(evt.data)
-          if ('data' in msg) {
+      signaling.filter(msg => 'data' in msg)
+        .subscribe(
+          msg => {
             if ('answer' in msg.data) {
               item.pc.setRemoteDescription(msg.data.answer)
                 .then(() => item.pc.addReceivedCandidates(item.candidates))
                 .catch(err => reject(new Error(`Set answer (signaling): ${err.message}`)))
             } else if ('candidate' in msg.data) {
-              this.addIceCandidate(super.getItem(ws, key), msg.data.candidate)
+              this.addIceCandidate(super.getItem(signaling, key), msg.data.candidate)
             }
+          },
+          err => reject(err),
+          () => {
+            reject(new Error('WebSocket closed'))
+            // cleanup
           }
-        } catch (err) {
-          reject(new Error(`Unknown message from ${ws.url}: ${evt.data}`))
-        }
-      }
+        )
 
       this.createDataChannel(item.pc, dataCh => {
-        setTimeout(() => super.removeItem(ws, key), REMOVE_ITEM_TIMEOUT)
+        setTimeout(() => super.removeItem(signaling, key), REMOVE_ITEM_TIMEOUT)
         resolve(dataCh)
       })
       this.createOffer(item.pc)
-        .then(offer => ws.send(JSON.stringify({data: {offer}})))
+        .then(offer => signaling.next(JSON.stringify({data: {offer}})))
         .catch(reject)
     })
   }

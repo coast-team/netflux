@@ -47,12 +47,14 @@
   "dependencies": {
     "eventsource": "^0.2.1",
     "node-fetch": "^1.6.3",
+    "rxjs": "^5.2.0",
     "text-encoding": "^0.6.4",
+    "tslib": "^1.6.0",
     "webrtc-adapter": "^3.0.0",
     "ws": "^2.0.2"
   },
   "peerDependencies": {
-    "uws": "^0.13.0",
+    "uws": "^0.14.0",
     "wrtc": "0.0.x"
   },
   "devDependencies": {
@@ -83,10 +85,10 @@
     "pm2": "^2.0.12",
     "rollup": "^0.41.1",
     "rollup-plugin-babel": "^2.6.1",
+    "rollup-plugin-commonjs": "^8.0.2",
     "rollup-plugin-filesize": "^1.0.0",
     "rollup-plugin-includepaths": "^0.1.5",
     "rollup-plugin-istanbul": "^1.0.0",
-    "rollup-plugin-multi-entry": "^2.0.1",
     "rollup-plugin-replace": "^1.1.1",
     "rollup-plugin-string": "^2.0.2",
     "semantic-release": "^6.3.2",

@@ -1,5 +1,7 @@
 const rollup = require('rollup')
 const includePaths = require('rollup-plugin-includepaths')
+const commonjs = require('rollup-plugin-commonjs')
+const replace = require('rollup-plugin-replace')
 
 const entries = [
   'test/pretestScripts/botServer.js',
@@ -16,6 +18,18 @@ for (let entry of entries) {
       includePaths({
         paths: ['', 'src', 'test'],
         extensions: ['.js']
+      }),
+      commonjs({
+        extensions: [ '.js' ],
+        sourceMap: false,
+        ignoreGlobal: false
+      }),
+      replace({
+        WEB_RTC_MODULE: `require('wrtc')`,
+        WEB_SOCKET_MODULE: `require('uws')`,
+        TEXT_ENCODING_MODULE: `require('text-encoding')`,
+        EVENT_SOURCE_MODULE: `require('eventsource')`,
+        FETCH_MODULE: `require('node-fetch')`
       })
     ]
   }).then(bundle => bundle.write({format: 'cjs', dest}))

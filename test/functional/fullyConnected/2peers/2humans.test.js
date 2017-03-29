@@ -40,7 +40,10 @@ describe('🙂 🙂  fully connected', () => {
         }
       }),
       wcs[0].join(key)
-        .then(() => wcs[1].join(key))
+        .then(() => {
+          console.log('First join finished')
+          return wcs[1].join(key)
+        })
         .then(() => {
           expect(wcs[0].id).toEqual(wcs[1].id)
           expect(wcs[1].members[0]).toEqual(wcs[0].myId)

@@ -189,11 +189,12 @@ class WebChannel {
       if (keyOrSocket.constructor.name !== 'WebSocket') {
         this.gate.join(url, keyOrSocket)
           .then(res => {
-            if (res.opened) {
+            if (res.first) {
               resolve()
             } else {
+              console.log('PAssing HERRERERERELKFJLDFJDskf')
               this.onJoin = () => {
-                this.gate.openExisted(res.sigCon, keyOrSocket)
+                this.gate.open(keyOrSocket, url, res.sigCon)
                   .then(resolve)
               }
               this.initChannel(res.con)

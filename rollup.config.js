@@ -3,6 +3,7 @@ const rollup = require('rollup')
 const filesize = require('rollup-plugin-filesize')
 const includePaths = require('rollup-plugin-includepaths')
 const babel = require('rollup-plugin-babel')
+const commonjs = require('rollup-plugin-commonjs')
 
 // netflux.es5.umd.js
 rollup.rollup({
@@ -16,6 +17,11 @@ rollup.rollup({
     includePaths({
       paths: ['', 'src/'],
       extensions: ['.js']
+    }),
+    commonjs({
+      extensions: [ '.js' ],
+      sourceMap: false,
+      ignoreGlobal: false
     }),
     replace({
       WEB_RTC_MODULE: `Util.isBrowser() ? window : require('wrtc')`,
@@ -52,6 +58,11 @@ rollup.rollup({
       paths: ['', 'src/'],
       extensions: ['.js']
     }),
+    commonjs({
+      extensions: [ '.js' ],
+      sourceMap: false,
+      ignoreGlobal: false
+    }),
     replace({
       WEB_RTC_MODULE: `window`,
       WEB_SOCKET_MODULE: `window.WebSocket`,
@@ -86,9 +97,14 @@ rollup.rollup({
       paths: ['', 'src/'],
       extensions: ['.js']
     }),
+    commonjs({
+      extensions: [ '.js' ],
+      sourceMap: false,
+      ignoreGlobal: false
+    }),
     replace({
       WEB_RTC_MODULE: `require('wrtc')`,
-      WEB_SOCKET_MODULE: `require('ws')`,
+      WEB_SOCKET_MODULE: `require('uws')`,
       TEXT_ENCODING_MODULE: `require('text-encoding')`,
       EVENT_SOURCE_MODULE: `require('eventsource')`,
       FETCH_MODULE: `require('node-fetch')`

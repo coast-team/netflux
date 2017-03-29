@@ -3,6 +3,7 @@ const rollup = require('rollup')
 const includePaths = require('rollup-plugin-includepaths')
 const string = require('rollup-plugin-string')
 const replace = require('rollup-plugin-replace')
+const commonjs = require('rollup-plugin-commonjs')
 
 const entries = []
 function read (path) {
@@ -29,9 +30,14 @@ for (let entry of entries) {
         paths: ['', 'test/', 'src/'],
         extensions: ['.js', '.txt']
       }),
+      commonjs({
+        extensions: [ '.js' ],
+        sourceMap: false,
+        ignoreGlobal: false
+      }),
       replace({
         WEB_RTC_MODULE: `require('wrtc')`,
-        WEB_SOCKET_MODULE: `require('ws')`,
+        WEB_SOCKET_MODULE: `require('uws')`,
         TEXT_ENCODING_MODULE: `require('text-encoding')`,
         EVENT_SOURCE_MODULE: `require('eventsource')`,
         FETCH_MODULE: `require('node-fetch')`

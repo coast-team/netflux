@@ -9,7 +9,7 @@ describe('SignalingGate', () => {
     }
   }
   run(`through WebSocket ${helper.SIGNALING_URL}`, helper.SIGNALING_URL)
-  run(`through EventSource ${helper.SIGNALING_URL_EVENT_SOURCE}`, helper.SIGNALING_URL_EVENT_SOURCE)
+  // run(`through EventSource ${helper.SIGNALING_URL_EVENT_SOURCE}`, helper.SIGNALING_URL_EVENT_SOURCE)
   function run (title, url) {
     const signalingURL = url
 

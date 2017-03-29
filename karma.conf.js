@@ -18,12 +18,12 @@ module.exports = (config) => {
 
     // list of files / patterns to load in the browser
     files: [
-      'node_modules/webrtc-adapter/out/adapter_no_edge_no_global.js',
-      'test/unit/**/*.test.js',
-      'test/functional/fullyConnected/1peer.test.js',
-      'test/functional/fullyConnected/2peers/**/*.test.js',
-      'test/functional/fullyConnected/3peers/**/*.test.js',
-      'test/functional/fullyConnected/manyPeers.test.js'
+      // 'node_modules/webrtc-adapter/out/adapter_no_edge_no_global.js',
+      // 'test/unit/**/*.test.js',
+      // 'test/functional/fullyConnected/1peer.test.js',
+      'test/functional/fullyConnected/2peers/botHuman.test.js',
+      // 'test/functional/fullyConnected/3peers/**/*.test.js',
+      // 'test/functional/fullyConnected/manyPeers.test.js'
     ],
 
     // list of files to exclude
@@ -43,6 +43,11 @@ module.exports = (config) => {
         require('rollup-plugin-includepaths')({
           paths: ['', 'src/', 'test/', 'dist/'],
           extensions: ['.js', '.txt']
+        }),
+        require('rollup-plugin-commonjs')({
+          extensions: [ '.js' ],
+          sourceMap: false,
+          ignoreGlobal: false
         }),
         require('rollup-plugin-replace')({
           WEB_RTC_MODULE: `window`,
@@ -134,6 +139,11 @@ module.exports = (config) => {
           require('rollup-plugin-includepaths')({
             paths: ['', 'src/', 'test/'],
             extensions: ['.js', '.txt']
+          }),
+          require('rollup-plugin-commonjs')({
+            extensions: [ '.js' ],
+            sourceMap: false,
+            ignoreGlobal: false
           }),
           require('rollup-plugin-istanbul')({
             exclude: [
