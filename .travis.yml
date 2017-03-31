@@ -24,6 +24,7 @@ before_install:
   - npm config set python python2
   - sudo apt-get update -qq
   - npm install wrtc@0.0.60
+  - npm install uws
   - npm install -g codeclimate-test-reporter
 script:
   - npm run test:travis

@@ -18,12 +18,13 @@ module.exports = (config) => {
 
     // list of files / patterns to load in the browser
     files: [
-      // 'node_modules/webrtc-adapter/out/adapter_no_edge_no_global.js',
-      // 'test/unit/**/*.test.js',
-      // 'test/functional/fullyConnected/1peer.test.js',
-      'test/functional/fullyConnected/2peers/botHuman.test.js',
-      // 'test/functional/fullyConnected/3peers/**/*.test.js',
-      // 'test/functional/fullyConnected/manyPeers.test.js'
+      'node_modules/webrtc-adapter/out/adapter_no_edge_no_global.js',
+      'test/unit/**/*.test.js',
+      'test/functional/fullyConnected/1peer.test.js',
+      'test/functional/fullyConnected/2peers/2humans.test.js',
+      // 'test/functional/fullyConnected/2peers/humanBot.test.js',
+      'test/functional/fullyConnected/3peers/*.test.js',
+      'test/functional/fullyConnected/manyPeers.test.js'
     ],
 
     // list of files to exclude

@@ -9,7 +9,7 @@ describe('Fully connected: 3 peers', () => {
   describe('Should establish a connection', () => {
     const wcs = []
 
-    function* checkJoining (resolve, wc) {
+    function * checkJoining (resolve, wc) {
       const id1 = yield
       const id2 = yield
       expect(id1).not.toEqual(id2)
@@ -284,7 +284,10 @@ describe('Fully connected: 3 peers', () => {
             expect(wcs[0].members.length).toEqual(0)
             expect(wcs[1].members.length).toEqual(0)
             expect(wcs[2].members.length).toEqual(0)
-            setTimeout(done, 20)
+            setTimeout(() => {
+              wcs[2].leave()
+              done()
+            }, 20)
           }
           wcs[1].leave()
         }).catch(done.fail)
@@ -343,7 +346,10 @@ describe('Fully connected: 3 peers', () => {
             expect(wcs[0].members.length).toEqual(0)
             expect(wcs[1].members.length).toEqual(0)
             expect(wcs[2].members.length).toEqual(0)
-            setTimeout(done, 20)
+            setTimeout(() => {
+              wcs[2].leave()
+              done()
+            }, 20)
           }
           wcs[0].leave()
         }).catch(done.fail)

@@ -9,6 +9,7 @@ const config = {
     'functional/fullyConnected/1peer.test.js',
     'functional/fullyConnected/2peers/2humans.test.js',
     'functional/fullyConnected/3peers/3humans.test.js'
+    // 'functional/fullyConnected/manyPeers.test.js'
   ],
   stopSpecOnExpectationFailure: false,
   random: false

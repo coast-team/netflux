@@ -1,17 +1,18 @@
 import {create} from 'dist/netflux.es5.module.node.js'
 import {SIGNALING_URL, onMessageForBot} from 'test/util/helper'
 
-let wc
+run()
 
+// Functions
 function run () {
-  wc = create({signalingURL: SIGNALING_URL})
+  const wc = create({signalingURL: SIGNALING_URL})
   wc.onMessage = (id, msg, isBroadcast) => onMessageForBot(wc, id, msg, isBroadcast)
   wc.onClose = closeEvt => {
-    console.log('Chrome bot has disconnected from Signaling server')
-    run()
+    console.log(`ChromeBot has disconnected from: ${SIGNALING_URL}`)
   }
   wc.open('CHROME')
-    .then(() => console.log('Bot for Chrome is ready'))
+    .then(() => console.log('ChromeBot is ready'))
     .catch(reason => console.error('Chrome bot WebChannel open error: ' + reason))
+
+  process.on('SIGINT', () => wc.leave())
 }
-run()

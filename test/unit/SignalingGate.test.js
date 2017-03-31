@@ -17,7 +17,7 @@ describe('SignalingGate', () => {
       it('Gate should be closed after construction', () => {
         const signalingGate = new SignalingGate(new WebChannelMock(), () => {})
         expect(signalingGate.isOpen()).toBeFalsy()
-        expect(signalingGate.con).toBeNull()
+        expect(signalingGate.stream).toBeNull()
         expect(signalingGate.key).toBeNull()
         expect(signalingGate.url).toBeNull()
       })
@@ -43,7 +43,8 @@ describe('SignalingGate', () => {
       })
 
       describe('Open with auto generated key', () => {
-        const sg = new SignalingGate(new WebChannelMock(), () => {})
+        const webChannelMock = new WebChannelMock()
+        const sg = new SignalingGate(webChannelMock, () => {})
         let openData
 
         it('Should open the gate', done => {
@@ -66,22 +67,19 @@ describe('SignalingGate', () => {
           expect(sg.getOpenData()).toEqual(openData)
         })
 
-        it('Should close', () => {
+        it('Should close & onClose should be called', done => {
+          webChannelMock.onClose = () => {
+            expect(sg.isOpen()).toBeFalsy()
+            expect(sg.getOpenData()).toBeNull()
+            done()
+          }
           sg.close()
-          expect(sg.isOpen()).toBeFalsy()
-          expect(sg.getOpenData()).toBeNull()
-        })
-
-        it('onClose should be called', done => {
-          const sg = new SignalingGate(new WebChannelMock(done), () => {})
-          sg.open(signalingURL)
-            .then(() => sg.close())
-            .catch(done.fail)
         })
       })
 
       describe('Open with the specified key', () => {
-        const sg = new SignalingGate(new WebChannelMock(), () => {})
+        const webChannelMock = new WebChannelMock()
+        const sg = new SignalingGate(webChannelMock, () => {})
         let openData
 
         it('Should open the gate', done => {
@@ -106,18 +104,13 @@ describe('SignalingGate', () => {
           expect(sg.getOpenData()).toEqual(openData)
         })
 
-        it('Should close', () => {
+        it('Should close & onClose should be called', done => {
+          webChannelMock.onClose = () => {
+            expect(sg.isOpen()).toBeFalsy()
+            expect(sg.getOpenData()).toBeNull()
+            done()
+          }
           sg.close()
-          expect(sg.isOpen()).toBeFalsy()
-          expect(sg.getOpenData()).toBeNull()
-        })
-
-        it('onClose should be called', done => {
-          const key = sg.generateKey()
-          const wcg = new SignalingGate(new WebChannelMock(done), () => {})
-          wcg.open(signalingURL, key)
-            .then(() => { wcg.close() })
-            .catch(done.fail)
         })
       })
     })

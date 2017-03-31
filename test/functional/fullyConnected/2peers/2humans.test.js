@@ -23,7 +23,7 @@ describe('🙂 🙂  fully connected', () => {
           expect(wcs[1].members[0]).toEqual(wcs[0].myId)
         })
     ])
-      .then(() => { for (let wc of wcs) wc.leave() })
+      .then(() => wcs.forEach(wc => wc.leave()))
       .then(done)
       .catch(done.fail)
   })
@@ -40,16 +40,13 @@ describe('🙂 🙂  fully connected', () => {
         }
       }),
       wcs[0].join(key)
-        .then(() => {
-          console.log('First join finished')
-          return wcs[1].join(key)
-        })
+        .then(() => wcs[1].join(key))
         .then(() => {
           expect(wcs[0].id).toEqual(wcs[1].id)
           expect(wcs[1].members[0]).toEqual(wcs[0].myId)
         })
     ])
-      .then(() => { for (let wc of wcs) wc.leave() })
+      .then(() => wcs.forEach(wc => wc.leave()))
       .then(done)
       .catch(done.fail)
   })
@@ -61,21 +58,24 @@ describe('🙂 🙂  fully connected', () => {
           wcs[0].ping().then(p => expect(Number.isInteger(p)).toBeTruthy()),
           wcs[1].ping().then(p => expect(Number.isInteger(p)).toBeTruthy())
         ])
-        .then(() => { for (let wc of wcs) wc.leave() })
+        .then(() => wcs.forEach(wc => wc.leave()))
         .then(done)
       })
       .catch(done.fail)
   })
 
-  it('Should be able to open a door while joining the WebChannel after it has been closed', done => {
-    const wc = create(wcOptions)
-    wc.open()
+  it('Should open a door which has had been closed', done => {
+    const wc1 = create(wcOptions)
+    let wc2 = null
+    wc1.open()
       .then(data => {
-        wc.close()
-        return create(wcOptions).join(data.key)
+        wc1.close()
+        wc2 = create(wcOptions)
+        return wc2.join(data.key)
       })
       .then(() => {
-        wc.leave()
+        expect(wc2.isOpen()).toBeTruthy()
+        wc2.leave()
         done()
       })
       .catch(done.fail)
@@ -94,9 +94,7 @@ describe('🙂 🙂  fully connected', () => {
         })
     })
 
-    afterAll(() => {
-      for (let wc of wcs) wc.leave()
-    })
+    afterAll(() => wcs.forEach(wc => wc.leave()))
 
     it('Private string message', done => {
       helper.allMessagesAreSentAndReceived(groups, String, false)
@@ -195,7 +193,10 @@ describe('🙂 🙂  fully connected', () => {
         expect(wcs[1].members.length).toEqual(0)
         wcs[1].ping()
           .then(done.fail)
-          .catch(done)
+          .catch(() => {
+            wcs[1].leave()
+            done()
+          })
       }
       wcs[0].leave()
     })

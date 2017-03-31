@@ -91,7 +91,6 @@ class ChannelBuilderService extends Service {
     const wc = channel.webChannel
     const myConnectObj = this.availableConnectors(wc)
     const myConnectors = myConnectObj.connectors
-
     if ('failedReason' in msg) {
       super.getPendingRequest(wc, senderId).reject(new Error(msg.failedReason))
     } else if ('shouldConnect' in msg) {
@@ -159,7 +158,9 @@ class ChannelBuilderService extends Service {
             wc.sendInnerTo(senderId, this.id, {shouldConnect: this.WS, listenOn: myConnectObj.listenOn})
           } else if (this.isEqual(myConnectors, this.WR)) {
             ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId)
-              .then(channel => this.onChannel(wc, channel, senderId))
+              .then(channel => {
+                this.onChannel(wc, channel, senderId)
+              })
               .catch(reason => {
                 wc.sendInnerTo(senderId, this.id, {failedReason: `Failed establish a data channel: ${reason}`})
               })

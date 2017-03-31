@@ -12,7 +12,6 @@ describe('🤖 🙂  fully connected', () => {
     spyOn(wc, 'onPeerJoin')
     wc.join(helper.env())
       .then(() => {
-        console.log('JOINED successfully')
         expect(wc.members.length).toEqual(1)
         expect(wc.onPeerJoin).toHaveBeenCalledTimes(1)
         wc.leave()
@@ -21,7 +20,7 @@ describe('🤖 🙂  fully connected', () => {
       .catch(done.fail)
   })
 
-  xit('Should ping', done => {
+  it('Should ping', done => {
     const wc = create({signalingURL})
     wc.join(helper.env())
       .then(() => wc.ping())
@@ -43,7 +42,7 @@ describe('🤖 🙂  fully connected', () => {
 
     afterAll(() => wc.leave())
 
-    xit('Private string message', done => {
+    it('Private string message', done => {
       const data = helper.randData(String)
       helper.sendReceive(wc, data, done, wc.members[0])
     })
@@ -55,15 +54,15 @@ describe('🤖 🙂  fully connected', () => {
       })
     }
 
-    xit('broadcast: ~200 KB string', done => {
+    it('broadcast: ~200 KB string', done => {
       helper.sendReceive(wc, smallStr, done)
     })
 
-    xit('broadcast: ~4 MB string', done => {
+    helper.xitBrowser('broadcast: ~4 MB string', done => {
       helper.sendReceive(wc, bigStr, done)
     }, 10000)
 
-    xit(`${helper.MSG_NUMBER} small messages`, done => {
+    it(`${helper.MSG_NUMBER} small messages`, done => {
       const data = []
       const dataReceived = Array(helper.MSG_NUMBER)
       for (let i = 0; i < helper.MSG_NUMBER; i++) data[i] = helper.randData(String)
@@ -90,7 +89,7 @@ describe('🤖 🙂  fully connected', () => {
         .then(done)
     })
 
-    xit('🙂', done => {
+    it('🙂', done => {
       wc.leave()
       expect(wc.members.length).toEqual(0)
       wc.ping()
@@ -98,12 +97,15 @@ describe('🤖 🙂  fully connected', () => {
         .catch(done)
     })
 
-    xit('🤖', done => {
+    it('🤖', done => {
       wc.onPeerLeave = id => {
         expect(wc.members.length).toEqual(0)
         wc.ping()
           .then(done.fail)
-          .catch(done)
+          .catch(() => {
+            wc.leave()
+            done()
+          })
       }
       wc.sendTo(wc.members[0], JSON.stringify({code: helper.LEAVE_CODE}))
     })

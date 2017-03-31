@@ -1,3 +1,6 @@
+import * as Rx from 'node_modules/rxjs/Subject'
+import 'node_modules/rxjs/add/operator/filter'
+
 import Util from 'Util'
 import Service from 'service/Service'
 const WebSocket = Util.require(Util.WEB_SOCKET)
@@ -17,7 +20,7 @@ class WebSocketService extends Service {
    */
   connect (url) {
     return new Promise((resolve, reject) => {
-      try {
+      if (Util.isURL(url) && url.search(/^wss?/) !== -1) {
         const ws = new WebSocket(url)
         ws.onopen = () => resolve(ws)
         // Timeout for node (otherwise it will loop forever if incorrect address)
@@ -26,8 +29,37 @@ class WebSocketService extends Service {
             reject(new Error(`WebSocket ${CONNECT_TIMEOUT}ms connection timeout with ${url}`))
           }
         }, CONNECT_TIMEOUT)
-      } catch (err) { reject(err) }
+      } else {
+        throw new Error(`${url} is not a valid URL`)
+      }
     })
+  }
+
+  subject (url) {
+    return this.connect(url)
+      .then(socket => {
+        const subject = new Rx.Subject()
+        socket.onmessage = evt => {
+          try {
+            subject.next(JSON.parse(evt.data))
+          } catch (err) {
+            console.error(`Unknown message from websocket : ${socket.url}` + evt.data)
+            socket.close(4000, err.message)
+          }
+        }
+        socket.onerror = err => subject.error(err)
+        socket.onclose = closeEvt => {
+          if (closeEvt.code === 1000 || closeEvt.code === 0) {
+            subject.complete()
+          } else {
+            subject.error(new Error(`${closeEvt.code}: ${closeEvt.reason}`))
+          }
+        }
+        subject.send = msg => socket.send(msg)
+        subject.close = (code, reason) => socket.close(code, reason)
+        subject.socket = socket
+        return subject
+      })
   }
 }
 

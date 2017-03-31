@@ -23,3 +23,9 @@ server.start()
     server.addWebChannel(wcSocketFirefox)
   })
   .catch(reason => console.error('Error bot server listen: ', reason))
+
+process.on('SIGINT', () => {
+  server.webChannels.forEach(wc => {
+    wc.leave()
+  })
+})

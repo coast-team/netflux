@@ -134,10 +134,9 @@ class FullyConnectedService extends TopologyInterface {
 
   onMessage (channel, senderId, recepientId, msg) {
     const wc = channel.webChannel
-    let jpMe
     switch (msg.code) {
-      case SHOULD_CONNECT_TO:
-        jpMe = this.setJP(wc, wc.myId, channel)
+      case SHOULD_CONNECT_TO: {
+        const jpMe = this.setJP(wc, wc.myId, channel)
         jpMe.channels.add(channel)
         super.connectTo(wc, msg.peers)
           .then(failed => {
@@ -152,26 +151,33 @@ class FullyConnectedService extends TopologyInterface {
             wc.onJoin()
           })
         break
-      case PEER_JOINED:
-        jpMe = super.getItem(wc, wc.myId)
+      } case PEER_JOINED: {
+        const jpMe = super.getItem(wc, wc.myId)
         super.removeItem(wc, senderId)
-        if (jpMe !== null) jpMe.channels.add(channel)
-        else {
+        if (jpMe !== null) {
+          jpMe.channels.add(channel)
+        } else {
           wc.channels.add(channel)
           wc.onPeerJoin$(senderId)
           const request = super.getPendingRequest(wc, senderId)
           if (request !== null) request.resolve(senderId)
         }
         break
-      case TICK: {
+      } case TICK: {
         this.setJP(wc, senderId, channel)
         const isJoining = super.getItem(wc, wc.myId) !== null
         wc.sendInnerTo(channel, this.id, {code: TOCK, isJoining})
         break
       }
       case TOCK:
-        if (msg.isJoining) this.setJP(wc, senderId, channel)
-        else super.getItem(wc, wc.myId).channels.add(channel)
+        if (msg.isJoining) {
+          this.setJP(wc, senderId, channel)
+        } else {
+          let jp = super.getItem(wc, wc.myId)
+          if (jp !== null) {
+            jp.channels.add(channel)
+          }
+        }
         super.getPendingRequest(wc, senderId).resolve()
         break
       case SHOULD_ADD_NEW_JOINING_PEER:

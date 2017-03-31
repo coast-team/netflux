@@ -103,8 +103,10 @@ class Service {
   removeItem (obj, id) {
     const currentServiceTemp = itemsStorage.get(this.id)
     const idMap = currentServiceTemp.get(obj)
-    currentServiceTemp.get(obj).delete(id)
-    if (idMap.size === 0) currentServiceTemp.delete(obj)
+    if (idMap !== undefined) {
+      idMap.delete(id)
+      if (idMap.size === 0) currentServiceTemp.delete(obj)
+    }
   }
 
   /**

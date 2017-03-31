@@ -1,7 +1,7 @@
 {
   "name": "netflux",
   "description": "Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done.",
-  "version": "1.0.0-rc.14",
+  "version": "1.1.0-beta.0",
   "license": "AGPL-3.0",
   "main": "dist/netflux.es5.umd.js",
   "module": "dist/netflux.es5.module.node.js",
@@ -28,7 +28,7 @@
   "scripts": {
     "prebuild": "uglifyjs ./node_modules/webrtc-adapter/out/adapter_no_edge_no_global.js -c -o webrtc-adapter.js",
     "build": "rm -rf dist && node rollup.config.js",
-    "testScripts": "rm -rf test/pretestScripts/.rolledup && node test/pretestScripts/rollup.config.js && pm2 startOrReload test/pretestScripts/process.yml",
+    "testScripts": "rm -rf test/pretestScripts/.rolledup && node test/pretestScripts/rollup.config.js && pm2 gracefulReload test/pretestScripts/process.yml",
     "test:browsers": "npm run build && npm run testScripts && karma start",
     "test:chrome": "npm run test:browsers -- --browsers Chrome",
     "test:firefox": "npm run test:browsers -- --browsers Firefox",
@@ -87,12 +87,12 @@
     "rollup-plugin-babel": "^2.6.1",
     "rollup-plugin-commonjs": "^8.0.2",
     "rollup-plugin-filesize": "^1.0.0",
-    "rollup-plugin-includepaths": "^0.1.5",
+    "rollup-plugin-includepaths": "^0.2.2",
     "rollup-plugin-istanbul": "^1.0.0",
     "rollup-plugin-replace": "^1.1.1",
     "rollup-plugin-string": "^2.0.2",
     "semantic-release": "^6.3.2",
-    "sigver": "^10.0.0",
+    "sigver": "^11.0.0",
     "uglify-js": "^2.7.3",
     "validate-commit-msg": "^2.8.2"
   },

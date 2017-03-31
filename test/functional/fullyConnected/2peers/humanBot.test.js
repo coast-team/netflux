@@ -58,7 +58,7 @@ describe('🙂 🤖  fully connected', () => {
       helper.sendReceive(wc, smallStr, done)
     })
 
-    xit('broadcast: ~4 MB string', done => {
+    helper.xitBrowser('broadcast: ~4 MB string', done => {
       helper.sendReceive(wc, bigStr, done)
     }, 10000)
 

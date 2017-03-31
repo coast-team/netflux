@@ -1,8 +1,5 @@
-import * as Rx from 'node_modules/rxjs/Rx'
-
 import ServiceFactory, {WEB_RTC, WEB_SOCKET, EVENT_SOURCE} from 'ServiceFactory'
 import Util from 'Util'
-const WebSocket = Util.require(Util.WEB_SOCKET)
 
 /**
  * This class represents a door of the `WebChannel` for the current peer. If the door
@@ -36,7 +33,7 @@ class SignalingGate {
      * @private
      * @type {external:WebSocket|external:ws/WebSocket|external:EventSource}
      */
-    this.con = null
+    this.stream = null
 
     this.onChannel = onChannel
   }
@@ -48,70 +45,90 @@ class SignalingGate {
    * @param {string} [key = this.generateKey()]
    * @returns {Promise<OpenData, string>}
    */
-  open (url, key = this.generateKey(), signalingSubject) {
+  open (url, key = this.generateKey(), signaling) {
+    if (signaling) {
+      return this.listenOnOpen(url, key, signaling)
+    } else {
+      return this.getConnectionService(url)
+        .subject(url)
+        .then(signaling => this.listenOnOpen(url, key, signaling))
+    }
+  }
+
+  listenOnOpen (url, key, signaling) {
     return new Promise((resolve, reject) => {
-      console.log('Open METHOD key is ' + key)
-      const signaling = signalingSubject || this.createSubject(url)
-      let subs = signaling.filter(msg => 'first' in msg)
+      signaling.filter(msg => 'first' in msg)
         .subscribe(
           msg => {
-            console.log('Open subs msg: ', msg)
-            this.con = signaling
+            this.stream = signaling
             this.key = key
             this.url = url.endsWith('/') ? url.substr(0, url.length - 1) : url
             resolve({url: this.url, key})
           },
-          err => reject(err),
-          () => {
+          err => {
             this.key = null
-            this.con = null
+            this.stream = null
             this.url = null
-            this.webChannel.onClose()
-          }
+            reject(err)
+          },
+          () => this.onClose()
         )
       ServiceFactory.get(WEB_RTC, this.webChannel.settings.iceServers)
-        .listenFromSignaling(signaling, con => this.onChannel(con))
-      console.log('Is closed: ' + subs.closed)
-      signaling.next(JSON.stringify({open: key}))
+        .listenFromSignaling(signaling, channel => this.onChannel(channel))
+      signaling.send(JSON.stringify({open: key}))
     })
   }
 
-  join (url, key, shouldOpen = true) {
-    console.log('JOIN METHOD')
+  join (url, key, shouldOpen) {
     return new Promise((resolve, reject) => {
-      const signaling = this.createSubject(url)
-      const subs = signaling.filter(msg => 'first' in msg)
-        .subscribe(
-          msg => {
-            console.log('Join msg -----------------------------------', msg)
-            if (msg.first) {
-              console.log('Join unsubscribe with key = ' + key)
-              // subs.unsubscribe()
-              this.open(url, key)
-                .then(() => resolve({first: true}))
-                .catch(reject)
-            } else {
-              if ('useThis' in msg) {
-                if (msg.useThis) {
-                  resolve({first: false, con: signaling})
+      this.getConnectionService(url)
+        .subject(url)
+        .then(signaling => {
+          const subs = signaling.filter(msg => 'first' in msg)
+            .subscribe(
+              msg => {
+                if (msg.first) {
+                  subs.unsubscribe()
+                  if (shouldOpen) {
+                    this.open(url, key, signaling)
+                      .then(() => resolve())
+                      .catch(reject)
+                  } else {
+                    signaling.close(1000)
+                    resolve()
+                  }
                 } else {
-                  reject(new Error(`Open a gate with bot server is not possible`))
+                  if ('useThis' in msg) {
+                    if (msg.useThis) {
+                      subs.unsubscribe()
+                      resolve(signaling.socket)
+                    } else {
+                      reject(new Error(`Open a gate with bot server is not possible`))
+                    }
+                  } else {
+                    ServiceFactory.get(WEB_RTC, this.webChannel.settings.iceServers)
+                      .connectOverSignaling(signaling, key)
+                      .then(dc => {
+                        subs.unsubscribe()
+                        if (shouldOpen) {
+                          this.open(url, key, signaling)
+                            .then(() => resolve(dc))
+                            .catch(reject)
+                        } else {
+                          signaling.close(1000)
+                          resolve(dc)
+                        }
+                      })
+                      .catch(reject)
+                  }
                 }
-              } else {
-                ServiceFactory.get(WEB_RTC, this.webChannel.settings.iceServers)
-                  .connectOverSignaling(signaling, key)
-                  .then(dc => {
-                    subs.unsubscribe()
-                    resolve({first: false, con: dc, sigCon: signaling})
-                  })
-                  .catch(reject)
-              }
-            }
-          },
-          err => reject(err),
-          () => reject(new Error(`WebSocket closed with ${url}`))
-        )
-      signaling.next(JSON.stringify({join: key}))
+              },
+              err => reject(err),
+              () => reject(new Error(`WebSocket closed with ${url}`))
+            )
+          signaling.send(JSON.stringify({join: key}))
+        })
+        .catch(err => console.error(err))
     })
   }
 
@@ -122,7 +139,7 @@ class SignalingGate {
    * closed
    */
   isOpen () {
-    return this.con !== null
+    return this.stream !== null
   }
 
   /**
@@ -145,11 +162,7 @@ class SignalingGate {
    */
   close () {
     if (this.isOpen()) {
-      this.con.socket.close(1000)
-      this.key = null
-      this.con = null
-      this.url = null
-      this.webChannel.onClose()
+      this.stream.close(1000)
     }
   }
 
@@ -168,20 +181,15 @@ class SignalingGate {
       } else {
         return ServiceFactory.get(EVENT_SOURCE)
       }
-    } else {
-      throw new Error(`${url} is not a valid URL`)
     }
+    throw new Error(`${url} is not a valid URL`)
   }
 
-  createSubject (url) {
-    if (Util.isURL(url) && url.search(/^wss?/) !== -1) {
-      return Rx.Observable.webSocket({
-        url,
-        WebSocketCtor: WebSocket
-      })
-    } else {
-      throw new Error(`${url} is not a valid URL`)
-    }
+  onClose () {
+    this.key = null
+    this.stream = null
+    this.url = null
+    this.webChannel.onClose()
   }
 
   /**

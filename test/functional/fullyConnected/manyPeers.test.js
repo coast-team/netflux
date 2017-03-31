@@ -1,78 +1,92 @@
 import {create} from 'src/index.browser'
 import * as helper from 'util/helper'
-const NB_PEERS = 8
+const NB_PEERS = 7
 
 describe(`Fully connected: many peers (${NB_PEERS})`, () => {
   const signalingURL = helper.SIGNALING_URL
-  const wcs = []
 
-  describe('Should establish a connection', () => {
-    function allJoiningDetectedByAll () {
-      const joined = new Map()
-      const joinPromises = []
-      for (let i = 0; i < NB_PEERS; i++) {
-        wcs[i] = create({signalingURL})
-        joined.set(i, [])
-        if (i !== NB_PEERS - 1) {
-          joinPromises.push(new Promise((resolve, reject) => {
-            wcs[i].onPeerJoin = id => {
-              const joinedTab = joined.get(i)
-              expect(joinedTab.includes(id)).toBeFalsy()
-              joinedTab.push(id)
-              if (joinedTab.length === NB_PEERS - 1) resolve()
-            }
-          }))
+  function allJoiningDetectedByAll (wcs) {
+    const joined = new Map()
+    const joinPromises = []
+    for (let i = 0; i < NB_PEERS; i++) {
+      wcs[i] = create({signalingURL})
+      joined.set(i, [])
+      joinPromises.push(new Promise((resolve, reject) => {
+        wcs[i].onPeerJoin = id => {
+          const joinedTab = joined.get(i)
+          expect(joinedTab.includes(id)).toBeFalsy()
+          joinedTab.push(id)
+          if (joinedTab.length === NB_PEERS - 1) resolve()
         }
-      }
-      return Promise.all(joinPromises)
+      }))
     }
+    return Promise.all(joinPromises)
+  }
 
-    helper.itBrowser(false, 'one by one', done => {
-      allJoiningDetectedByAll()
+  function sendReceive (wcs, done) {
+    const groups = []
+    for (let i = 0; i < NB_PEERS; i++) {
+      groups[i] = new helper.TestGroup(wcs[i], [String])
+    }
+    helper.allMessagesAreSentAndReceived(groups, String)
+      .then(done).catch(done.fail)
+
+    groups.forEach(g => g.wc.send(g.get(String)))
+  }
+
+  describe('one by one', () => {
+    const wcs = []
+
+    afterAll(() => wcs.forEach(wc => wc.leave()))
+
+    it('Should connect', done => {
+      allJoiningDetectedByAll(wcs)
         .then(() => {
           setTimeout(() => {
             helper.checkMembers(wcs)
+            wcs.forEach(wc => wc.close())
             done()
           }, 100)
         })
         .catch(done.fail)
+      let promise = wcs[0].open()
+        .then((data) => {
+          for (let i = 1; i < NB_PEERS; i++) {
+            promise = promise.then(() => wcs[i].join(data.key, {open: false}))
+          }
+          promise.catch(done.fail)
+        })
+    }, 30000)
 
-      const joinOneByOne = function (prom, index, key) {
-        const i = index
-        if (index === NB_PEERS) return prom
-        return joinOneByOne(prom.then(() => wcs[i].join(key)), ++index, key)
-      }
-      wcs[0].open()
-        .then(data => joinOneByOne(Promise.resolve(), 1, data.key))
-        .catch(done.fail)
-    }, 120000)
+    helper.itBrowser(false, 'broadcast string message', done => {
+      sendReceive(wcs, done)
+    })
+  })
 
-    helper.itBrowser(false, 'simultaneously', done => {
-      allJoiningDetectedByAll()
+  describe('simultaneously', () => {
+    const wcs = []
+
+    afterAll(() => wcs.forEach(wc => wc.leave()))
+
+    it('Should connect', done => {
+      allJoiningDetectedByAll(wcs)
         .then(() => {
           setTimeout(() => {
             helper.checkMembers(wcs)
+            wcs.forEach(wc => wc.close())
             done()
           }, 100)
         })
         .catch(done.fail)
       wcs[0].open()
         .then(data => {
-          for (let i = 1; i < wcs.length; i++) wcs[i].join(data.key)
+          for (let i = 1; i < wcs.length; i++) wcs[i].join(data.key, {open: false})
         })
         .catch(done.fail)
-    }, 120000)
-  })
+    }, 30000)
 
-  describe('Should send/receive', () => {
     helper.itBrowser(false, 'broadcast string message', done => {
-      const groups = []
-      for (let i = 0; i < NB_PEERS; i++) {
-        groups[i] = new helper.TestGroup(wcs[i], [String])
-      }
-      helper.allMessagesAreSentAndReceived(groups, String)
-        .then(done).catch(done.fail)
-      for (let g of groups) g.wc.send(g.get(String))
-    }, 60000)
+      sendReceive(wcs, done)
+    })
   })
 })

@@ -98,7 +98,7 @@ class WebRTCService extends Service {
           let item = super.getItem(signaling, msg.id)
           if (!item) {
             item = new CandidatesBuffer(this.createPeerConnection(candidate => {
-              signaling.next(JSON.stringify({id: msg.id, data: {candidate}}))
+              signaling.send(JSON.stringify({id: msg.id, data: {candidate}}))
             }))
             super.setItem(signaling, msg.id, item)
           }
@@ -109,7 +109,7 @@ class WebRTCService extends Service {
             })
             this.createAnswer(item.pc, msg.data.offer, item.candidates)
               .then(answer => {
-                signaling.next(JSON.stringify({id: msg.id, data: {answer}}))
+                signaling.send(JSON.stringify({id: msg.id, data: {answer}}))
               })
               .catch(err => {
                 console.error(`During establishing data channel connection through signaling: ${err.message}`)
@@ -134,11 +134,11 @@ class WebRTCService extends Service {
    */
   connectOverSignaling (signaling, key) {
     const item = new CandidatesBuffer(this.createPeerConnection(candidate => {
-      signaling.next(JSON.stringify({data: {candidate}}))
+      signaling.send(JSON.stringify({data: {candidate}}))
     }))
     super.setItem(signaling, key, item)
     return new Promise((resolve, reject) => {
-      signaling.filter(msg => 'data' in msg)
+      const subs = signaling.filter(msg => 'data' in msg)
         .subscribe(
           msg => {
             if ('answer' in msg.data) {
@@ -149,19 +149,23 @@ class WebRTCService extends Service {
               this.addIceCandidate(super.getItem(signaling, key), msg.data.candidate)
             }
           },
-          err => reject(err),
+          err => {
+            super.removeItem(signaling, key)
+            reject(err)
+          },
           () => {
+            super.removeItem(signaling, key)
             reject(new Error('WebSocket closed'))
-            // cleanup
           }
         )
 
       this.createDataChannel(item.pc, dataCh => {
         setTimeout(() => super.removeItem(signaling, key), REMOVE_ITEM_TIMEOUT)
+        subs.unsubscribe()
         resolve(dataCh)
       })
       this.createOffer(item.pc)
-        .then(offer => signaling.next(JSON.stringify({data: {offer}})))
+        .then(offer => signaling.send(JSON.stringify({data: {offer}})))
         .catch(reject)
     })
   }
