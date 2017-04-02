@@ -1,13 +1,13 @@
 import '../../webrtc-adapter'
 import Util from 'Util'
 import Service from 'service/Service'
-import ServiceFactory, {CHANNEL_BUILDER} from 'ServiceFactory'
+import { ReplaySubject } from 'node_modules/rxjs/BehaviorSubject'
+import { Observable } from 'node_modules/rxjs/Observable'
+import { serviceMessageStream } from 'Symbols'
 const wrtc = Util.require(Util.WEB_RTC)
 const CloseEvent = Util.require(Util.CLOSE_EVENT)
 
-const CONNECT_OVER_WEBCHANNEL_TIMEOUT = 10000
-const CONNECT_OVER_SIGNALING_TIMEOUT = 4000
-const REMOVE_ITEM_TIMEOUT = 5000
+const CONNECTION_TIMEOUT = 5000
 
 /**
  * Service class responsible to establish connections between peers via
@@ -35,30 +35,16 @@ class WebRTCService extends Service {
    * @param {Object} msg
    */
   onMessage (channel, senderId, recepientId, msg) {
-    const wc = channel.webChannel
-    let item = super.getItem(wc, senderId)
-    if (!item) {
-      item = new CandidatesBuffer()
-      super.setItem(wc, senderId, item)
-    }
-    if ('offer' in msg) {
-      item.pc = this.createPeerConnection(candidate => {
-        wc.sendInnerTo(senderId, this.id, {candidate})
-      })
-      this.listenOnDataChannel(item.pc, dataCh => {
-        setTimeout(() => super.removeItem(wc, senderId), REMOVE_ITEM_TIMEOUT)
-        ServiceFactory.get(CHANNEL_BUILDER).onChannel(wc, dataCh, senderId)
-      })
-      this.createAnswer(item.pc, msg.offer, item.candidates)
-        .then(answer => wc.sendInnerTo(senderId, this.id, {answer}))
-        .catch(err => console.error(`During Establishing dataChannel connection over webChannel: ${err.message}`))
-    } if ('answer' in msg) {
-      item.pc.setRemoteDescription(msg.answer)
-        .then(() => item.pc.addReceivedCandidates(item.candidates))
-        .catch(err => console.error(`Set answer (webChannel): ${err.message}`))
-    } else if ('candidate' in msg) {
-      this.addIceCandidate(item, msg.candidate)
-    }
+    // This method is replaced by onChannelFromWebChannel. Remove this method later
+  }
+
+  onChannelFromWebChannel (wc) {
+    return this.listenOnDataChannel(
+      wc[serviceMessageStream]
+        .filter(msg => msg.service === this.id)
+        .map(msg => ({msg: msg.msg, id: msg.sender})),
+      (msg, id) => wc.sendInnerTo(id, this.id, msg)
+    )
   }
 
   /**
@@ -70,20 +56,13 @@ class WebRTCService extends Service {
    * @returns {Promise<RTCDataChannel, string>}
    */
   connectOverWebChannel (wc, id) {
-    const item = new CandidatesBuffer(this.createPeerConnection(candidate => {
-      wc.sendInnerTo(id, this.id, {candidate})
-    }))
-    super.setItem(wc, id, item)
-    return new Promise((resolve, reject) => {
-      setTimeout(() => reject(new Error(`WebRTC ${CONNECT_OVER_WEBCHANNEL_TIMEOUT} connection timeout`)), CONNECT_OVER_WEBCHANNEL_TIMEOUT)
-      this.createDataChannel(item.pc, dataCh => {
-        setTimeout(() => super.removeItem(wc, id), REMOVE_ITEM_TIMEOUT)
-        resolve(dataCh)
-      })
-      this.createOffer(item.pc)
-        .then(offer => wc.sendInnerTo(id, this.id, {offer}))
-        .catch(reject)
-    })
+    return this.establishDataChannel(
+      wc[serviceMessageStream]
+        .filter(msg => msg.service === this.id && msg.sender === id)
+        .map(msg => msg.msg),
+      msg => wc.sendInnerTo(id, this.id, msg),
+      wc.myId
+    )
   }
 
   /**
@@ -92,38 +71,13 @@ class WebRTCService extends Service {
    * @param {function(channel: RTCDataChannel)} onChannel
    *
    */
-  listenFromSignaling (signaling, onChannel) {
-    signaling.filter(msg => 'id' in msg && 'data' in msg)
-      .subscribe(
-        msg => {
-          let item = super.getItem(signaling, msg.id)
-          if (!item) {
-            item = new CandidatesBuffer(this.createPeerConnection(candidate => {
-              signaling.send(JSON.stringify({id: msg.id, data: {candidate}}))
-            }))
-            super.setItem(signaling, msg.id, item)
-          }
-          if ('offer' in msg.data) {
-            this.listenOnDataChannel(item.pc, dataCh => {
-              setTimeout(() => super.removeItem(signaling, msg.id), REMOVE_ITEM_TIMEOUT)
-              onChannel(dataCh)
-            })
-            this.createAnswer(item.pc, msg.data.offer, item.candidates)
-              .then(answer => {
-                signaling.send(JSON.stringify({id: msg.id, data: {answer}}))
-              })
-              .catch(err => {
-                console.error(`During establishing data channel connection through signaling: ${err.message}`)
-              })
-          } else if ('candidate' in msg.data) {
-            this.addIceCandidate(item, msg.data.candidate)
-          }
-        },
-        err => console.log(err),
-        () => {
-          // clean
-        }
-      )
+  onChannelFromSignaling (stream) {
+    return this.listenOnDataChannel(
+      stream
+        .filter(msg => 'id' in msg && 'data' in msg)
+        .map(msg => ({msg: msg.data, id: msg.id})),
+      (msg, id) => stream.send(JSON.stringify({id, data: msg}))
+    )
   }
 
   /**
@@ -133,92 +87,127 @@ class WebRTCService extends Service {
    *
    * @returns {type} Description
    */
-  connectOverSignaling (signaling, key) {
-    const item = new CandidatesBuffer(this.createPeerConnection(candidate => {
-      signaling.send(JSON.stringify({data: {candidate}}))
-    }))
-    super.setItem(signaling, key, item)
+  connectOverSignaling (stream) {
+    return this.establishDataChannel(
+      stream.filter(msg => 'data' in msg).map(msg => msg.data),
+      msg => stream.send(JSON.stringify(msg))
+    )
+  }
+
+  establishDataChannel (stream, send, label = null) {
+    const pc = this.createPeerConnection()
+    const remoteCandidateStream = new ReplaySubject()
+    this.createLocalCandidateStream(pc).subscribe(
+      candidate => send({candidate}),
+      err => console.warn(err),
+      () => send({candidate: ''})
+    )
+
     return new Promise((resolve, reject) => {
-      const subs = signaling.filter(msg => 'data' in msg)
-        .subscribe(
-          msg => {
-            if ('answer' in msg.data) {
-              item.pc.setRemoteDescription(msg.data.answer)
-                .then(() => item.pc.addReceivedCandidates(item.candidates))
-                .catch(err => reject(new Error(`Set answer (signaling): ${err.message}`)))
-            } else if ('candidate' in msg.data) {
-              this.addIceCandidate(super.getItem(signaling, key), msg.data.candidate)
+      const subs = stream.subscribe(
+        msg => {
+          if ('answer' in msg) {
+            pc.setRemoteDescription(msg.answer)
+              .then(() => {
+                remoteCandidateStream.subscribe(
+                  candidate => {
+                    pc.addIceCandidate(new wrtc.RTCIceCandidate(candidate))
+                      .catch(reject)
+                  },
+                  err => console.warn(err),
+                  () => subs.unsubscribe()
+                )
+              })
+              .catch(reject)
+          } else if ('candidate' in msg) {
+            if (msg.candidate !== '') {
+              remoteCandidateStream.next(msg.candidate)
+            } else {
+              remoteCandidateStream.complete()
             }
-          },
-          err => {
-            super.removeItem(signaling, key)
-            reject(err)
-          },
-          () => {
-            super.removeItem(signaling, key)
-            reject(new Error(`Could not create an RTCDataChannel: WebSocket ${signaling.socket.url} closed`))
           }
-        )
-      this.createDataChannel(item.pc, dataCh => {
-        setTimeout(() => {
-          subs.unsubscribe()
-          super.removeItem(signaling, key)
-        }, REMOVE_ITEM_TIMEOUT)
-        resolve(dataCh)
-      })
-      this.createOffer(item.pc)
-        .then(offer => {
-          signaling.send(JSON.stringify({data: {offer}}))
-          setTimeout(() => {
-            reject(new Error(`Could not create an RTCDataChannel: CONNECT_OVER_SIGNALING_TIMEOUT (${CONNECT_OVER_SIGNALING_TIMEOUT}ms)`))
-          }, CONNECT_OVER_SIGNALING_TIMEOUT)
-        })
+        },
+        reject,
+        () => reject(new Error('Failed to establish RTCDataChannel: the connection with Signaling server was closed'))
+      )
+
+      this.waitForDataChannelOpen(pc, true, label)
+        .then(resolve)
+        .catch(reject)
+
+      pc.createOffer()
+        .then(offer => pc.setLocalDescription(offer))
+        .then(() => send({offer: {
+          type: pc.localDescription.type,
+          sdp: pc.localDescription.sdp
+        }}))
         .catch(reject)
     })
   }
 
-  /**
-   * Creates an SDP offer.
-   *
-   * @private
-   * @param  {RTCPeerConnection} pc
-   * @return {Promise<RTCSessionDescription, string>} - Resolved when the offer has been succesfully created,
-   * set as local description and sent to the peer.
-   */
-  createOffer (pc) {
-    return pc.createOffer()
-      .then(offer => pc.setLocalDescription(offer))
-      .then(() => {
-        return {
-          type: pc.localDescription.type,
-          sdp: pc.localDescription.sdp
-        }
-      })
+  listenOnDataChannel (stream, send) {
+    return Observable.create(observer => {
+      const clients = new Map()
+      stream.subscribe(
+        ({msg, id}) => {
+          let client = clients.get(id)
+          let pc
+          let remoteCandidateStream
+          if (client) {
+            [pc, remoteCandidateStream] = client
+          } else {
+            pc = this.createPeerConnection()
+            remoteCandidateStream = new ReplaySubject()
+            this.createLocalCandidateStream(pc).subscribe(
+              candidate => send({candidate}, id),
+              err => console.warn(err),
+              () => send({candidate: ''}, id)
+            )
+            clients.set(id, [pc, remoteCandidateStream])
+          }
+          if ('offer' in msg) {
+            this.waitForDataChannelOpen(pc, false)
+              .then(dc => observer.next(dc))
+              .catch(err => {
+                clients.delete(id)
+                console.warn(`Client "${id}" failed to establish RTCDataChannel with you: ${err.message}`)
+              })
+            pc.setRemoteDescription(msg.offer)
+              .then(() => remoteCandidateStream.subscribe(
+                  candidate => {
+                    pc.addIceCandidate(new wrtc.RTCIceCandidate(candidate))
+                      .catch(err => console.warn(err))
+                  },
+                  err => console.warn(err),
+                  () => clients.delete(id)
+                )
+              )
+              .then(() => pc.createAnswer())
+              .then(answer => pc.setLocalDescription(answer))
+              .then(() => send({answer: {
+                type: pc.localDescription.type,
+                sdp: pc.localDescription.sdp
+              }}, id))
+              .catch(err => {
+                clients.delete(id)
+                console.warn(err)
+              })
+          } else if ('candidate' in msg) {
+            if (msg.candidate !== '') {
+              remoteCandidateStream.next(msg.candidate)
+            } else {
+              remoteCandidateStream.complete()
+            }
+          }
+        },
+        err => observer.error(err),
+        () => observer.complete()
+      )
+    })
   }
 
-  /**
-   * Creates an SDP answer.
-   *
-   * @private
-   * @param {RTCPeerConnection} pc
-   * @param {string} offer
-   * @param {string[]} candidates
-   * @return {Promise<RTCSessionDescription, string>} - Resolved when the offer
-   *  has been succesfully created, set as local description and sent to the peer.
-   */
-  createAnswer (pc, offer, candidates) {
-    return pc.setRemoteDescription(offer)
-      .then(() => {
-        pc.addReceivedCandidates(candidates)
-        return pc.createAnswer()
-      })
-      .then(answer => pc.setLocalDescription(answer))
-      .then(() => {
-        return {
-          type: pc.localDescription.type,
-          sdp: pc.localDescription.sdp
-        }
-      })
+  createPeerConnection () {
+    return new wrtc.RTCPeerConnection({iceServers: this.iceServers})
   }
 
   /**
@@ -229,50 +218,53 @@ class WebRTCService extends Service {
    * candidate event handler.
    * @return {RTCPeerConnection}
    */
-  createPeerConnection (onCandidate) {
-    const pc = new wrtc.RTCPeerConnection({iceServers: this.iceServers})
-    pc.isRemoteDescriptionSet = false
-    pc.addReceivedCandidates = candidates => {
-      pc.isRemoteDescriptionSet = true
-      for (let c of candidates) this.addIceCandidate({pc}, c)
-    }
-    pc.onicecandidate = evt => {
-      if (evt.candidate !== null) {
-        const candidate = {
-          candidate: evt.candidate.candidate,
-          sdpMid: evt.candidate.sdpMid,
-          sdpMLineIndex: evt.candidate.sdpMLineIndex
+  createLocalCandidateStream (pc) {
+    return Observable.create(observer => {
+      pc.onicecandidate = evt => {
+        if (evt.candidate !== null) {
+          observer.next({
+            candidate: evt.candidate.candidate,
+            sdpMid: evt.candidate.sdpMid,
+            sdpMLineIndex: evt.candidate.sdpMLineIndex
+          })
+        } else {
+          observer.complete()
         }
-        onCandidate(candidate)
       }
-    }
-    return pc
+    })
   }
 
-  /**
-   *
-   * @private
-   * @param {RTCPeerConnection} pc
-   * @param {function(dc: RTCDataChannel)} onOpen
-   *
-   */
-  createDataChannel (pc, onOpen) {
-    const dc = pc.createDataChannel(null)
-    dc.onopen = evt => onOpen(dc)
-    this.setUpOnDisconnect(pc, dc)
-  }
-
-  /**
-   *
-   * @private
-   * @param {RTCPeerConnection} pc
-   * @param {function(dc: RTCDataChannel)} onOpen
-   *
-   */
-  listenOnDataChannel (pc, onOpen) {
-    pc.ondatachannel = dcEvt => {
-      this.setUpOnDisconnect(pc, dcEvt.channel)
-      dcEvt.channel.onopen = evt => onOpen(dcEvt.channel)
+  waitForDataChannelOpen (pc, offerCreator, label = null) {
+    if (offerCreator) {
+      let dc
+      try {
+        dc = pc.createDataChannel(label)
+        this.configOnDisconnect(pc, dc)
+        return new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            reject(new Error(`${CONNECTION_TIMEOUT}ms timeout`))
+          }, CONNECTION_TIMEOUT)
+          dc.onopen = evt => {
+            clearTimeout(timeout)
+            resolve(dc)
+          }
+        })
+      } catch (err) {
+        return Promise.reject(err)
+      }
+    } else {
+      return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error(`${CONNECTION_TIMEOUT}ms timeout`))
+        }, CONNECTION_TIMEOUT)
+        pc.ondatachannel = dcEvt => {
+          this.configOnDisconnect(pc, dcEvt.channel)
+          dcEvt.channel.onopen = evt => {
+            clearTimeout(timeout)
+            resolve(dcEvt.channel)
+          }
+        }
+      })
     }
   }
 
@@ -281,39 +273,15 @@ class WebRTCService extends Service {
    * @param {RTCPeerConnection} pc
    * @param {RTCDataChannel} dataCh
    */
-  setUpOnDisconnect (pc, dataCh) {
+  configOnDisconnect (pc, dc) {
     pc.oniceconnectionstatechange = () => {
-      if (pc.iceConnectionState === 'disconnected') {
-        if (dataCh.onclose) {
-          dataCh.onclose(new CloseEvent('disconnect', {
-            code: 4201,
-            reason: 'disconnected'
-          }))
-        }
+      if (pc.iceConnectionState === 'disconnected' && dc.onclose) {
+        dc.onclose(new CloseEvent('disconnect', {
+          code: 4201,
+          reason: 'disconnected'
+        }))
       }
     }
-  }
-
-  /**
-   * @private
-   * @param {CandidatesBuffer|null} obj
-   * @param {string} candidate
-   */
-  addIceCandidate (obj, candidate) {
-    if (obj !== null && obj.pc && obj.pc.isRemoteDescriptionSet) {
-      obj.pc.addIceCandidate(new wrtc.RTCIceCandidate(candidate))
-        .catch(evt => console.error(`Add ICE candidate: ${evt.message}`))
-    } else obj.candidates[obj.candidates.length] = candidate
-  }
-}
-
-/**
- * @private
- */
-class CandidatesBuffer {
-  constructor (pc = null, candidates = []) {
-    this.pc = pc
-    this.candidates = candidates
   }
 }
 

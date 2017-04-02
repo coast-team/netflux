@@ -1,7 +1,9 @@
-import ServiceFactory, {WEB_RTC, WEB_SOCKET, MESSAGE_BUILDER} from 'ServiceFactory'
+import ServiceFactory, {WEB_RTC, WEB_SOCKET, MESSAGE_BUILDER, CHANNEL_BUILDER} from 'ServiceFactory'
 import Channel from 'Channel'
 import SignalingGate from 'SignalingGate'
 import Util from 'Util'
+import { Subject } from 'node_modules/rxjs/Subject'
+import { serviceMessageStream, webrtcService } from 'Symbols'
 
 /**
  * Maximum identifier number for {@link WebChannel#generateId} function.
@@ -184,6 +186,11 @@ class WebChannel {
      * @type {function(closeEvt: CloseEvent)}
      */
     this.onClose = () => {}
+
+    this[serviceMessageStream] = new Subject()
+    this[webrtcService] = ServiceFactory.get(WEB_RTC)
+    this[webrtcService].onChannelFromWebChannel(this)
+      .subscribe(dc => ServiceFactory.get(CHANNEL_BUILDER).onChannel(this, dc, Number(dc.label)))
   }
 
   /**
@@ -286,6 +293,7 @@ class WebChannel {
     }
     this.onInitChannel = () => {}
     this.onJoin = () => {}
+    this[serviceMessageStream].complete()
     this.gate.close()
   }
 
@@ -426,12 +434,17 @@ class WebChannel {
         }
         case INNER_DATA: {
           if (header.recepientId === 0 || this.myId === header.recepientId) {
-            this.getService(msg.serviceId).onMessage(
-              channel,
-              header.senderId,
-              header.recepientId,
-              msg.data
-            )
+            if (msg.serviceId !== WEB_RTC) {
+              this.getService(msg.serviceId).onMessage(
+                channel,
+                header.senderId,
+                header.recepientId,
+                msg.data
+              )
+            }
+            this[serviceMessageStream].next({
+              channel, serviceId: msg.serviceId, senderId: header.senderId, recepientId: header.recepientId, msg: msg.data
+            })
           } else this.sendInnerTo(header.recepientId, null, data, true)
           break
         }
