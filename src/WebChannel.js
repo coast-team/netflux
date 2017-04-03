@@ -9,6 +9,9 @@ import Util from 'Util'
  */
 const MAX_ID = 2147483647
 
+const REJOIN_MAX_ATTEMPTS = 10
+const REJOIN_TIMEOUT = 2000
+
 /**
  * Timout for ping `WebChannel` in milliseconds.
  * @type {number}
@@ -193,22 +196,14 @@ class WebChannel {
   join (keyOrSocket, options = {}) {
     let settings = {
       url: this.settings.signalingURL,
-      open: true
+      open: true,
+      rejoinAttempts: REJOIN_MAX_ATTEMPTS,
+      rejoinTimeout: REJOIN_TIMEOUT
     }
     Object.assign(settings, options)
     return new Promise((resolve, reject) => {
       if (keyOrSocket.constructor.name !== 'WebSocket') {
-        this.gate.join(settings.url, keyOrSocket, settings.open)
-          .then(connection => {
-            if (connection) {
-              this.onJoin = () => resolve()
-              this.initChannel(connection)
-                .catch(reject)
-            } else {
-              resolve()
-            }
-          })
-          .catch(reject)
+        this.joinRecursively(keyOrSocket, settings, () => resolve(), err => reject(err), 0)
       } else {
         this.onJoin = resolve
         this.initChannel(keyOrSocket).catch(reject)
@@ -509,6 +504,41 @@ class WebChannel {
       return ServiceFactory.get(WEB_RTC, this.settings.iceServers)
     }
     return ServiceFactory.get(id)
+  }
+
+/**
+ *
+ * @private
+ * @param  {[type]} key
+ * @param  {[type]} options
+ * @param  {[type]} resolve
+ * @param  {[type]} reject
+ * @param  {[type]} attempt
+ * @return {void}
+ */
+  joinRecursively (key, options, resolve, reject, attempt) {
+    this.gate.join(key, options.url, options.open)
+      .then(connection => {
+        if (connection) {
+          this.onJoin = () => resolve()
+          this.initChannel(connection)
+            .catch(reject)
+        } else {
+          resolve()
+        }
+      })
+      .catch(err => {
+        attempt++
+        console.log(`Failed to join via ${options.url} with ${key} key: ${err.message}`)
+        if (attempt === options.rejoinAttempts) {
+          reject(new Error(`Failed to join via ${options.url} with ${key} key: reached maximum rejoin attempts (${REJOIN_MAX_ATTEMPTS})`))
+        } else {
+          console.log(`Trying to rejoin in ${options.rejoinTimeout} the ${attempt} time... `)
+          setTimeout(() => {
+            this.joinRecursively(key, options, () => resolve(), err => reject(err), attempt)
+          }, options.rejoinTimeout)
+        }
+      })
   }
 
   /**

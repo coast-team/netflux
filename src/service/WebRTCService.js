@@ -5,7 +5,8 @@ import ServiceFactory, {CHANNEL_BUILDER} from 'ServiceFactory'
 const wrtc = Util.require(Util.WEB_RTC)
 const CloseEvent = Util.require(Util.CLOSE_EVENT)
 
-const CONNECT_TIMEOUT = 30000
+const CONNECT_OVER_WEBCHANNEL_TIMEOUT = 10000
+const CONNECT_OVER_SIGNALING_TIMEOUT = 4000
 const REMOVE_ITEM_TIMEOUT = 5000
 
 /**
@@ -74,7 +75,7 @@ class WebRTCService extends Service {
     }))
     super.setItem(wc, id, item)
     return new Promise((resolve, reject) => {
-      setTimeout(() => reject(new Error(`WebRTC ${CONNECT_TIMEOUT} connection timeout`)), CONNECT_TIMEOUT)
+      setTimeout(() => reject(new Error(`WebRTC ${CONNECT_OVER_WEBCHANNEL_TIMEOUT} connection timeout`)), CONNECT_OVER_WEBCHANNEL_TIMEOUT)
       this.createDataChannel(item.pc, dataCh => {
         setTimeout(() => super.removeItem(wc, id), REMOVE_ITEM_TIMEOUT)
         resolve(dataCh)
@@ -155,17 +156,23 @@ class WebRTCService extends Service {
           },
           () => {
             super.removeItem(signaling, key)
-            reject(new Error('WebSocket closed'))
+            reject(new Error(`Could not create an RTCDataChannel: WebSocket ${signaling.socket.url} closed`))
           }
         )
-
       this.createDataChannel(item.pc, dataCh => {
-        setTimeout(() => super.removeItem(signaling, key), REMOVE_ITEM_TIMEOUT)
-        subs.unsubscribe()
+        setTimeout(() => {
+          subs.unsubscribe()
+          super.removeItem(signaling, key)
+        }, REMOVE_ITEM_TIMEOUT)
         resolve(dataCh)
       })
       this.createOffer(item.pc)
-        .then(offer => signaling.send(JSON.stringify({data: {offer}})))
+        .then(offer => {
+          signaling.send(JSON.stringify({data: {offer}}))
+          setTimeout(() => {
+            reject(new Error(`Could not create an RTCDataChannel: CONNECT_OVER_SIGNALING_TIMEOUT (${CONNECT_OVER_SIGNALING_TIMEOUT}ms)`))
+          }, CONNECT_OVER_SIGNALING_TIMEOUT)
+        })
         .catch(reject)
     })
   }

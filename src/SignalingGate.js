@@ -57,21 +57,26 @@ class SignalingGate {
 
   listenOnOpen (url, key, signaling) {
     return new Promise((resolve, reject) => {
-      signaling.filter(msg => 'first' in msg)
+      signaling.filter(msg => 'first' in msg || 'ping' in msg)
         .subscribe(
           msg => {
-            this.stream = signaling
-            this.key = key
-            this.url = url.endsWith('/') ? url.substr(0, url.length - 1) : url
-            resolve({url: this.url, key})
+            if (msg.first) {
+              this.stream = signaling
+              this.key = key
+              this.url = url.endsWith('/') ? url.substr(0, url.length - 1) : url
+              resolve({url: this.url, key})
+            } else if (msg.ping) {
+              signaling.send(JSON.stringify({pong: true}))
+            }
           },
           err => {
-            this.key = null
-            this.stream = null
-            this.url = null
+            this.onClose()
             reject(err)
           },
-          () => this.onClose()
+          () => {
+            this.onClose()
+            reject(new Error(''))
+          }
         )
       ServiceFactory.get(WEB_RTC, this.webChannel.settings.iceServers)
         .listenFromSignaling(signaling, channel => this.onChannel(channel))
@@ -79,7 +84,7 @@ class SignalingGate {
     })
   }
 
-  join (url, key, shouldOpen) {
+  join (key, url, shouldOpen) {
     return new Promise((resolve, reject) => {
       this.getConnectionService(url)
         .subject(url)
@@ -92,7 +97,7 @@ class SignalingGate {
                   if (shouldOpen) {
                     this.open(url, key, signaling)
                       .then(() => resolve())
-                      .catch(reject)
+                      .catch(err => reject(err))
                   } else {
                     signaling.close(1000)
                     resolve()
@@ -103,7 +108,7 @@ class SignalingGate {
                       subs.unsubscribe()
                       resolve(signaling.socket)
                     } else {
-                      reject(new Error(`Open a gate with bot server is not possible`))
+                      signaling.error(new Error(`Failed to join via ${url}: uncorrect bot server response`))
                     }
                   } else {
                     ServiceFactory.get(WEB_RTC, this.webChannel.settings.iceServers)
@@ -113,22 +118,24 @@ class SignalingGate {
                         if (shouldOpen) {
                           this.open(url, key, signaling)
                             .then(() => resolve(dc))
-                            .catch(reject)
+                            .catch(err => reject(err))
                         } else {
                           signaling.close(1000)
                           resolve(dc)
                         }
                       })
-                      .catch(reject)
+                      .catch(err => {
+                        signaling.close(1000)
+                        signaling.error(err)
+                      })
                   }
                 }
               },
-              err => reject(err),
-              () => reject(new Error(`WebSocket closed with ${url}`))
+              err => reject(err)
             )
           signaling.send(JSON.stringify({join: key}))
         })
-        .catch(err => console.error(err))
+        .catch(err => reject(err))
     })
   }
 
@@ -186,10 +193,12 @@ class SignalingGate {
   }
 
   onClose () {
-    this.key = null
-    this.stream = null
-    this.url = null
-    this.webChannel.onClose()
+    if (this.isOpen()) {
+      this.key = null
+      this.stream = null
+      this.url = null
+      this.webChannel.onClose()
+    }
   }
 
   /**

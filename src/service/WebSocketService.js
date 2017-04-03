@@ -49,7 +49,7 @@ class WebSocketService extends Service {
         }
         socket.onerror = err => subject.error(err)
         socket.onclose = closeEvt => {
-          if (closeEvt.code === 1000 || closeEvt.code === 0) {
+          if (closeEvt.code === 1000) {
             subject.complete()
           } else {
             subject.error(new Error(`${closeEvt.code}: ${closeEvt.reason}`))

@@ -941,7 +941,7 @@ function createCommonjsModule(fn, module) {
             devices = devices.filter(function (d) {
               return "videoinput" === d.kind;
             });var back = devices.find(function (d) {
-              return d.label.toLowerCase().indexOf("back") !== -1;
+              return -1 !== d.label.toLowerCase().indexOf("back");
             }) || devices.length && devices[devices.length - 1];return back && (constraints.video.deviceId = face.exact ? { exact: back.deviceId } : { ideal: back.deviceId }), constraints.video = constraintsToChrome_(constraints.video), logging("chrome: " + JSON.stringify(constraints)), func(constraints);
           });constraints.video = constraintsToChrome_(constraints.video);
         }return logging("chrome: " + JSON.stringify(constraints)), func(constraints);
@@ -1296,7 +1296,8 @@ var Util = function () {
 var wrtc = Util.require(Util.WEB_RTC);
 var CloseEvent = Util.require(Util.CLOSE_EVENT);
 
-var CONNECT_TIMEOUT = 30000;
+var CONNECT_OVER_WEBCHANNEL_TIMEOUT = 10000;
+var CONNECT_OVER_SIGNALING_TIMEOUT = 4000;
 var REMOVE_ITEM_TIMEOUT = 5000;
 
 /**
@@ -1390,8 +1391,8 @@ var WebRTCService = function (_Service) {
       get(WebRTCService.prototype.__proto__ || Object.getPrototypeOf(WebRTCService.prototype), 'setItem', this).call(this, wc, id, item);
       return new Promise(function (resolve, reject) {
         setTimeout(function () {
-          return reject(new Error('WebRTC ' + CONNECT_TIMEOUT + ' connection timeout'));
-        }, CONNECT_TIMEOUT);
+          return reject(new Error('WebRTC ' + CONNECT_OVER_WEBCHANNEL_TIMEOUT + ' connection timeout'));
+        }, CONNECT_OVER_WEBCHANNEL_TIMEOUT);
         _this3.createDataChannel(item.pc, function (dataCh) {
           setTimeout(function () {
             return get(WebRTCService.prototype.__proto__ || Object.getPrototypeOf(WebRTCService.prototype), 'removeItem', _this3).call(_this3, wc, id);
@@ -1483,18 +1484,20 @@ var WebRTCService = function (_Service) {
           reject(err);
         }, function () {
           get(WebRTCService.prototype.__proto__ || Object.getPrototypeOf(WebRTCService.prototype), 'removeItem', _this5).call(_this5, signaling, key);
-          reject(new Error('WebSocket closed'));
+          reject(new Error('Could not create an RTCDataChannel: WebSocket ' + signaling.socket.url + ' closed'));
         });
-
         _this5.createDataChannel(item.pc, function (dataCh) {
           setTimeout(function () {
-            return get(WebRTCService.prototype.__proto__ || Object.getPrototypeOf(WebRTCService.prototype), 'removeItem', _this5).call(_this5, signaling, key);
+            subs.unsubscribe();
+            get(WebRTCService.prototype.__proto__ || Object.getPrototypeOf(WebRTCService.prototype), 'removeItem', _this5).call(_this5, signaling, key);
           }, REMOVE_ITEM_TIMEOUT);
-          subs.unsubscribe();
           resolve(dataCh);
         });
         _this5.createOffer(item.pc).then(function (offer) {
-          return signaling.send(JSON.stringify({ data: { offer: offer } }));
+          signaling.send(JSON.stringify({ data: { offer: offer } }));
+          setTimeout(function () {
+            reject(new Error('Could not create an RTCDataChannel: CONNECT_OVER_SIGNALING_TIMEOUT (' + CONNECT_OVER_SIGNALING_TIMEOUT + 'ms)'));
+          }, CONNECT_OVER_SIGNALING_TIMEOUT);
         }).catch(reject);
       });
     }
@@ -2802,7 +2805,7 @@ Observable_1.Observable.prototype.filter = filter_1.filter;
 
 var WebSocket = Util.require(Util.WEB_SOCKET);
 
-var CONNECT_TIMEOUT$1 = 3000;
+var CONNECT_TIMEOUT = 3000;
 
 /**
  * Service class responsible to establish connections between peers via
@@ -2836,9 +2839,9 @@ var WebSocketService = function (_Service) {
           // Timeout for node (otherwise it will loop forever if incorrect address)
           setTimeout(function () {
             if (ws.readyState !== ws.OPEN) {
-              reject(new Error('WebSocket ' + CONNECT_TIMEOUT$1 + 'ms connection timeout with ' + url));
+              reject(new Error('WebSocket ' + CONNECT_TIMEOUT + 'ms connection timeout with ' + url));
             }
-          }, CONNECT_TIMEOUT$1);
+          }, CONNECT_TIMEOUT);
         } else {
           throw new Error(url + ' is not a valid URL');
         }
@@ -2861,7 +2864,7 @@ var WebSocketService = function (_Service) {
           return subject.error(err);
         };
         socket.onclose = function (closeEvt) {
-          if (closeEvt.code === 1000 || closeEvt.code === 0) {
+          if (closeEvt.code === 1000) {
             subject.complete();
           } else {
             subject.error(new Error(closeEvt.code + ': ' + closeEvt.reason));
@@ -2885,7 +2888,7 @@ var EventSource = Util.require(Util.EVENT_SOURCE);
 var fetch = Util.require(Util.FETCH);
 var CloseEvent$1 = Util.require(Util.CLOSE_EVENT);
 
-var CONNECT_TIMEOUT$2 = 5000;
+var CONNECT_TIMEOUT$1 = 5000;
 
 /**
  * Service class responsible to establish connections between peers via
@@ -2921,8 +2924,8 @@ var EventSourceService = function (_Service) {
           };
           // Timeout if "auth" event has not been received.
           setTimeout(function () {
-            reject(new Error('Authentication event has not been received from ' + url + ' within ' + CONNECT_TIMEOUT$2 + 'ms'));
-          }, CONNECT_TIMEOUT$2);
+            reject(new Error('Authentication event has not been received from ' + url + ' within ' + CONNECT_TIMEOUT$1 + 'ms'));
+          }, CONNECT_TIMEOUT$1);
         } catch (err) {
           reject(err.message);
         }
@@ -4213,19 +4216,22 @@ var SignalingGate = function () {
 
       return new Promise(function (resolve, reject) {
         signaling.filter(function (msg) {
-          return 'first' in msg;
+          return 'first' in msg || 'ping' in msg;
         }).subscribe(function (msg) {
-          _this2.stream = signaling;
-          _this2.key = key;
-          _this2.url = url.endsWith('/') ? url.substr(0, url.length - 1) : url;
-          resolve({ url: _this2.url, key: key });
+          if (msg.first) {
+            _this2.stream = signaling;
+            _this2.key = key;
+            _this2.url = url.endsWith('/') ? url.substr(0, url.length - 1) : url;
+            resolve({ url: _this2.url, key: key });
+          } else if (msg.ping) {
+            signaling.send(JSON.stringify({ pong: true }));
+          }
         }, function (err) {
-          _this2.key = null;
-          _this2.stream = null;
-          _this2.url = null;
+          _this2.onClose();
           reject(err);
         }, function () {
-          return _this2.onClose();
+          _this2.onClose();
+          reject(new Error(''));
         });
         ServiceFactory.get(WEB_RTC, _this2.webChannel.settings.iceServers).listenFromSignaling(signaling, function (channel) {
           return _this2.onChannel(channel);
@@ -4235,7 +4241,7 @@ var SignalingGate = function () {
     }
   }, {
     key: 'join',
-    value: function join(url, key, shouldOpen) {
+    value: function join(key, url, shouldOpen) {
       var _this3 = this;
 
       return new Promise(function (resolve, reject) {
@@ -4248,7 +4254,9 @@ var SignalingGate = function () {
               if (shouldOpen) {
                 _this3.open(url, key, signaling).then(function () {
                   return resolve();
-                }).catch(reject);
+                }).catch(function (err) {
+                  return reject(err);
+                });
               } else {
                 signaling.close(1000);
                 resolve();
@@ -4259,7 +4267,7 @@ var SignalingGate = function () {
                   subs.unsubscribe();
                   resolve(signaling.socket);
                 } else {
-                  reject(new Error('Open a gate with bot server is not possible'));
+                  signaling.error(new Error('Failed to join via ' + url + ': uncorrect bot server response'));
                 }
               } else {
                 ServiceFactory.get(WEB_RTC, _this3.webChannel.settings.iceServers).connectOverSignaling(signaling, key).then(function (dc) {
@@ -4267,22 +4275,25 @@ var SignalingGate = function () {
                   if (shouldOpen) {
                     _this3.open(url, key, signaling).then(function () {
                       return resolve(dc);
-                    }).catch(reject);
+                    }).catch(function (err) {
+                      return reject(err);
+                    });
                   } else {
                     signaling.close(1000);
                     resolve(dc);
                   }
-                }).catch(reject);
+                }).catch(function (err) {
+                  signaling.close(1000);
+                  signaling.error(err);
+                });
               }
             }
           }, function (err) {
             return reject(err);
-          }, function () {
-            return reject(new Error('WebSocket closed with ' + url));
           });
           signaling.send(JSON.stringify({ join: key }));
         }).catch(function (err) {
-          return console.error(err);
+          return reject(err);
         });
       });
     }
@@ -4354,10 +4365,12 @@ var SignalingGate = function () {
   }, {
     key: 'onClose',
     value: function onClose() {
-      this.key = null;
-      this.stream = null;
-      this.url = null;
-      this.webChannel.onClose();
+      if (this.isOpen()) {
+        this.key = null;
+        this.stream = null;
+        this.url = null;
+        this.webChannel.onClose();
+      }
     }
 
     /**
@@ -4390,6 +4403,9 @@ var SignalingGate = function () {
  * @type {number}
  */
 var MAX_ID = 2147483647;
+
+var REJOIN_MAX_ATTEMPTS = 10;
+var REJOIN_TIMEOUT = 2000;
 
 /**
  * Timout for ping `WebChannel` in milliseconds.
@@ -4590,21 +4606,18 @@ var WebChannel = function () {
 
       var settings = {
         url: this.settings.signalingURL,
-        open: true
+        open: true,
+        rejoinAttempts: REJOIN_MAX_ATTEMPTS,
+        rejoinTimeout: REJOIN_TIMEOUT
       };
       Object.assign(settings, options);
       return new Promise(function (resolve, reject) {
         if (keyOrSocket.constructor.name !== 'WebSocket') {
-          _this2.gate.join(settings.url, keyOrSocket, settings.open).then(function (connection) {
-            if (connection) {
-              _this2.onJoin = function () {
-                return resolve();
-              };
-              _this2.initChannel(connection).catch(reject);
-            } else {
-              resolve();
-            }
-          }).catch(reject);
+          _this2.joinRecursively(keyOrSocket, settings, function () {
+            return resolve();
+          }, function (err) {
+            return reject(err);
+          }, 0);
         } else {
           _this2.onJoin = resolve;
           _this2.initChannel(keyOrSocket).catch(reject);
@@ -4987,6 +5000,49 @@ var WebChannel = function () {
     }
 
     /**
+     *
+     * @private
+     * @param  {[type]} key
+     * @param  {[type]} options
+     * @param  {[type]} resolve
+     * @param  {[type]} reject
+     * @param  {[type]} attempt
+     * @return {void}
+     */
+
+  }, {
+    key: 'joinRecursively',
+    value: function joinRecursively(key, options, resolve, reject, attempt) {
+      var _this10 = this;
+
+      this.gate.join(key, options.url, options.open).then(function (connection) {
+        if (connection) {
+          _this10.onJoin = function () {
+            return resolve();
+          };
+          _this10.initChannel(connection).catch(reject);
+        } else {
+          resolve();
+        }
+      }).catch(function (err) {
+        attempt++;
+        console.log('Failed to join via ' + options.url + ' with ' + key + ' key: ' + err.message);
+        if (attempt === options.rejoinAttempts) {
+          reject(new Error('Failed to join via ' + options.url + ' with ' + key + ' key: reached maximum rejoin attempts (' + REJOIN_MAX_ATTEMPTS + ')'));
+        } else {
+          console.log('Trying to rejoin in ' + options.rejoinTimeout + ' the ' + attempt + ' time... ');
+          setTimeout(function () {
+            _this10.joinRecursively(key, options, function () {
+              return resolve();
+            }, function (err) {
+              return reject(err);
+            }, attempt);
+          }, options.rejoinTimeout);
+        }
+      });
+    }
+
+    /**
      * Generate random id for a `WebChannel` or a new peer.
      * @private
      * @returns {number} - Generated id
@@ -4995,16 +5051,16 @@ var WebChannel = function () {
   }, {
     key: 'generateId',
     value: function generateId() {
-      var _this10 = this;
+      var _this11 = this;
 
       var _loop = function _loop() {
         var id = Math.ceil(Math.random() * MAX_ID);
-        if (id === _this10.myId) return 'continue';
-        if (_this10.members.includes(id)) return 'continue';
-        if (_this10.generatedIds.has(id)) return 'continue';
-        _this10.generatedIds.add(id);
+        if (id === _this11.myId) return 'continue';
+        if (_this11.members.includes(id)) return 'continue';
+        if (_this11.generatedIds.has(id)) return 'continue';
+        _this11.generatedIds.add(id);
         setTimeout(function () {
-          return _this10.generatedIds.delete(id);
+          return _this11.generatedIds.delete(id);
         }, ID_TIMEOUT);
         return {
           v: id
