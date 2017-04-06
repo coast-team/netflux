@@ -51,13 +51,17 @@ class SignalingGate {
     } else {
       return this.getConnectionService(url)
         .subject(url)
-        .then(signaling => this.listenOnOpen(url, key, signaling))
+        .then(signaling => {
+          signaling.filter(msg => 'first' in msg || 'ping' in msg)
+            .subscribe(() => signaling.send(JSON.stringify({pong: true})))
+          return this.listenOnOpen(url, key, signaling)
+        })
     }
   }
 
   listenOnOpen (url, key, signaling) {
     return new Promise((resolve, reject) => {
-      signaling.filter(msg => 'first' in msg || 'ping' in msg)
+      signaling.filter(msg => 'first' in msg)
         .subscribe(
           msg => {
             if (msg.first) {
@@ -65,8 +69,6 @@ class SignalingGate {
               this.key = key
               this.url = url.endsWith('/') ? url.substr(0, url.length - 1) : url
               resolve({url: this.url, key})
-            } else if (msg.ping) {
-              signaling.send(JSON.stringify({pong: true}))
             }
           },
           err => {
@@ -89,6 +91,8 @@ class SignalingGate {
       this.getConnectionService(url)
         .subject(url)
         .then(signaling => {
+          signaling.filter(msg => 'first' in msg || 'ping' in msg)
+            .subscribe(() => signaling.send(JSON.stringify({pong: true})))
           const subs = signaling.filter(msg => 'first' in msg)
             .subscribe(
               msg => {
