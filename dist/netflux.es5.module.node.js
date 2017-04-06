@@ -812,8 +812,8 @@ function createCommonjsModule(fn, module) {
           safariShim = require("./safari/safari_shim") || null;switch (browserDetails.browser) {case "chrome":
           if (!chromeShim || !chromeShim.shimPeerConnection) return void logging("Chrome shim is not included in this adapter release.");logging("adapter.js shimming chrome."), module.exports.browserShim = chromeShim, chromeShim.shimGetUserMedia(), chromeShim.shimMediaStream(), utils.shimCreateObjectURL(), chromeShim.shimSourceObject(), chromeShim.shimPeerConnection(), chromeShim.shimOnTrack(), chromeShim.shimGetSendersWithDtmf();break;case "firefox":
           if (!firefoxShim || !firefoxShim.shimPeerConnection) return void logging("Firefox shim is not included in this adapter release.");logging("adapter.js shimming firefox."), module.exports.browserShim = firefoxShim, firefoxShim.shimGetUserMedia(), utils.shimCreateObjectURL(), firefoxShim.shimSourceObject(), firefoxShim.shimPeerConnection(), firefoxShim.shimOnTrack();break;case "edge":
-          if (!edgeShim || !edgeShim.shimPeerConnection) return void logging("MS edge shim is not included in this adapter release.");logging("adapter.js shimming edge."), module.exports.browserShim = edgeShim, edgeShim.shimGetUserMedia(), utils.shimCreateObjectURL(), edgeShim.shimPeerConnection();break;case "safari":
-          if (!safariShim) return void logging("Safari shim is not included in this adapter release.");logging("adapter.js shimming safari."), module.exports.browserShim = safariShim, safariShim.shimGetUserMedia();break;default:
+          if (!edgeShim || !edgeShim.shimPeerConnection) return void logging("MS edge shim is not included in this adapter release.");logging("adapter.js shimming edge."), module.exports.browserShim = edgeShim, edgeShim.shimGetUserMedia(), utils.shimCreateObjectURL(), edgeShim.shimPeerConnection(), edgeShim.shimReplaceTrack();break;case "safari":
+          if (!safariShim) return void logging("Safari shim is not included in this adapter release.");logging("adapter.js shimming safari."), module.exports.browserShim = safariShim, safariShim.shimOnAddStream(), safariShim.shimGetUserMedia();break;default:
           logging("Unsupported browser!");}
     }();
   }, { "./chrome/chrome_shim": 3, "./edge/edge_shim": 1, "./firefox/firefox_shim": 5, "./safari/safari_shim": 7, "./utils": 8 }], 3: [function (require, module, exports) {
@@ -864,11 +864,21 @@ function createCommonjsModule(fn, module) {
             });
           } }));
       }, shimPeerConnection: function shimPeerConnection() {
-        window.RTCPeerConnection || (window.RTCPeerConnection = function (pcConfig, pcConstraints) {
+        if (window.RTCPeerConnection) {
+          var OrigPeerConnection = RTCPeerConnection;window.RTCPeerConnection = function (pcConfig, pcConstraints) {
+            if (pcConfig && pcConfig.iceServers) {
+              for (var newIceServers = [], i = 0; i < pcConfig.iceServers.length; i++) {
+                var server = pcConfig.iceServers[i];!server.hasOwnProperty("urls") && server.hasOwnProperty("url") ? (console.warn("RTCIceServer.url is deprecated! Use urls instead."), server = JSON.parse(JSON.stringify(server)), server.urls = server.url, newIceServers.push(server)) : newIceServers.push(pcConfig.iceServers[i]);
+              }pcConfig.iceServers = newIceServers;
+            }return new OrigPeerConnection(pcConfig, pcConstraints);
+          }, window.RTCPeerConnection.prototype = OrigPeerConnection.prototype, Object.defineProperty(window.RTCPeerConnection, "generateCertificate", { get: function get$$1() {
+              return OrigPeerConnection.generateCertificate;
+            } });
+        } else window.RTCPeerConnection = function (pcConfig, pcConstraints) {
           return logging("PeerConnection"), pcConfig && pcConfig.iceTransportPolicy && (pcConfig.iceTransports = pcConfig.iceTransportPolicy), new webkitRTCPeerConnection(pcConfig, pcConstraints);
         }, window.RTCPeerConnection.prototype = webkitRTCPeerConnection.prototype, webkitRTCPeerConnection.generateCertificate && Object.defineProperty(window.RTCPeerConnection, "generateCertificate", { get: function get$$1() {
             return webkitRTCPeerConnection.generateCertificate;
-          } }));var origGetStats = RTCPeerConnection.prototype.getStats;RTCPeerConnection.prototype.getStats = function (selector, successCallback, errorCallback) {
+          } });var origGetStats = RTCPeerConnection.prototype.getStats;RTCPeerConnection.prototype.getStats = function (selector, successCallback, errorCallback) {
           var self = this,
               args = arguments;if (arguments.length > 0 && "function" == typeof selector) return origGetStats.apply(this, arguments);if (0 === origGetStats.length && (0 === arguments.length || "function" != typeof arguments[0])) return origGetStats.apply(this, []);var fixChromeStats_ = function fixChromeStats_(response) {
             var standardReport = {};return response.result().forEach(function (report) {
@@ -937,13 +947,15 @@ function createCommonjsModule(fn, module) {
       },
           shimConstraints_ = function shimConstraints_(constraints, func) {
         if (constraints = JSON.parse(JSON.stringify(constraints)), constraints && constraints.audio && (constraints.audio = constraintsToChrome_(constraints.audio)), constraints && "object" == _typeof(constraints.video)) {
-          var face = constraints.video.facingMode;face = face && ("object" == (typeof face === "undefined" ? "undefined" : _typeof(face)) ? face : { ideal: face });var getSupportedFacingModeLies = browserDetails.version < 59;if (face && ("user" === face.exact || "environment" === face.exact || "user" === face.ideal || "environment" === face.ideal) && (!navigator.mediaDevices.getSupportedConstraints || !navigator.mediaDevices.getSupportedConstraints().facingMode || getSupportedFacingModeLies) && (delete constraints.video.facingMode, "environment" === face.exact || "environment" === face.ideal)) return navigator.mediaDevices.enumerateDevices().then(function (devices) {
-            devices = devices.filter(function (d) {
-              return "videoinput" === d.kind;
-            });var back = devices.find(function (d) {
-              return -1 !== d.label.toLowerCase().indexOf("back");
-            }) || devices.length && devices[devices.length - 1];return back && (constraints.video.deviceId = face.exact ? { exact: back.deviceId } : { ideal: back.deviceId }), constraints.video = constraintsToChrome_(constraints.video), logging("chrome: " + JSON.stringify(constraints)), func(constraints);
-          });constraints.video = constraintsToChrome_(constraints.video);
+          var face = constraints.video.facingMode;face = face && ("object" == (typeof face === "undefined" ? "undefined" : _typeof(face)) ? face : { ideal: face });var getSupportedFacingModeLies = browserDetails.version < 61;if (face && ("user" === face.exact || "environment" === face.exact || "user" === face.ideal || "environment" === face.ideal) && (!navigator.mediaDevices.getSupportedConstraints || !navigator.mediaDevices.getSupportedConstraints().facingMode || getSupportedFacingModeLies)) {
+            delete constraints.video.facingMode;var match;if ("environment" === face.exact || "environment" === face.ideal ? match = "back" : "user" !== face.exact && "user" !== face.ideal || (match = "front"), match) return navigator.mediaDevices.enumerateDevices().then(function (devices) {
+              devices = devices.filter(function (d) {
+                return "videoinput" === d.kind;
+              });var dev = devices.find(function (d) {
+                return -1 !== d.label.toLowerCase().indexOf(match);
+              });return dev && (constraints.video.deviceId = face.exact ? { exact: dev.deviceId } : { ideal: dev.deviceId }), constraints.video = constraintsToChrome_(constraints.video), logging("chrome: " + JSON.stringify(constraints)), func(constraints);
+            });
+          }constraints.video = constraintsToChrome_(constraints.video);
         }return logging("chrome: " + JSON.stringify(constraints)), func(constraints);
       },
           shimError_ = function shimError_(e) {
@@ -1054,7 +1066,7 @@ function createCommonjsModule(fn, module) {
     var logging = require("../utils").log,
         browserDetails = require("../utils").browserDetails;module.exports = function () {
       var shimError_ = function shimError_(e) {
-        return { name: { SecurityError: "NotAllowedError", PermissionDeniedError: "NotAllowedError" }[e.name] || e.name, message: { "The operation is insecure.": "The request is not allowed by the user agent or the platform in the current context." }[e.message] || e.message, constraint: e.constraint, toString: function toString() {
+        return { name: { NotSupportedError: "TypeError", SecurityError: "NotAllowedError", PermissionDeniedError: "NotAllowedError" }[e.name] || e.name, message: { "The operation is insecure.": "The request is not allowed by the user agent or the platform in the current context." }[e.message] || e.message, constraint: e.constraint, toString: function toString() {
             return this.name + (this.message && ": ") + this.message;
           } };
       },
@@ -1101,11 +1113,21 @@ function createCommonjsModule(fn, module) {
     };
   }, { "../utils": 8 }], 7: [function (require, module, exports) {
     "use strict";
-    var safariShim = { shimGetUserMedia: function shimGetUserMedia() {
+    var safariShim = { shimOnAddStream: function shimOnAddStream() {
+        "object" != (typeof window === "undefined" ? "undefined" : _typeof(window)) || !window.RTCPeerConnection || "onaddstream" in window.RTCPeerConnection.prototype || Object.defineProperty(window.RTCPeerConnection.prototype, "onaddstream", { get: function get$$1() {
+            return this._onaddstream;
+          }, set: function set$$1(f) {
+            this._onaddstream && (this.removeEventListener("addstream", this._onaddstream), this.removeEventListener("track", this._onaddstreampoly)), this.addEventListener("addstream", this._onaddstream = f), this.addEventListener("track", this._onaddstreampoly = function (e) {
+              var stream = e.streams[0];if (this._streams || (this._streams = []), !(this._streams.indexOf(stream) >= 0)) {
+                this._streams.push(stream);var event = new Event("addstream");event.stream = e.streams[0], this.dispatchEvent(event);
+              }
+            }.bind(this));
+          } });
+      }, shimGetUserMedia: function shimGetUserMedia() {
         navigator.getUserMedia || (navigator.webkitGetUserMedia ? navigator.getUserMedia = navigator.webkitGetUserMedia.bind(navigator) : navigator.mediaDevices && navigator.mediaDevices.getUserMedia && (navigator.getUserMedia = function (constraints, cb, errcb) {
           navigator.mediaDevices.getUserMedia(constraints).then(cb, errcb);
         }.bind(navigator)));
-      } };module.exports = { shimGetUserMedia: safariShim.shimGetUserMedia };
+      } };module.exports = { shimOnAddStream: safariShim.shimOnAddStream, shimGetUserMedia: safariShim.shimGetUserMedia };
   }, {}], 8: [function (require, module, exports) {
     "use strict";
     var logDisabled_ = !0,
@@ -2014,14 +2036,18 @@ var Observer = {
 	empty: empty
 };
 
-var Symbol$1 = root.root.Symbol;
-var $$rxSubscriber = (typeof Symbol$1 === 'function' && typeof Symbol$1.for === 'function') ?
-    Symbol$1.for('rxSubscriber') : '@@rxSubscriber';
+var rxSubscriber = createCommonjsModule(function (module, exports) {
+"use strict";
 
+var Symbol = root.root.Symbol;
+exports.rxSubscriber = (typeof Symbol === 'function' && typeof Symbol.for === 'function') ?
+    Symbol.for('rxSubscriber') : '@@rxSubscriber';
+/**
+ * @deprecated use rxSubscriber instead
+ */
+exports.$$rxSubscriber = exports.rxSubscriber;
 
-var rxSubscriber = {
-	$$rxSubscriber: $$rxSubscriber
-};
+});
 
 var __extends$1 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -2084,7 +2110,7 @@ var Subscriber = (function (_super) {
                 break;
         }
     }
-    Subscriber.prototype[rxSubscriber.$$rxSubscriber] = function () { return this; };
+    Subscriber.prototype[rxSubscriber.rxSubscriber] = function () { return this; };
     /**
      * A static factory for a Subscriber, given a (potentially partial) definition
      * of an Observer.
@@ -2186,14 +2212,16 @@ var SafeSubscriber = (function (_super) {
             next = observerOrNext;
         }
         else if (observerOrNext) {
-            context = observerOrNext;
             next = observerOrNext.next;
             error = observerOrNext.error;
             complete = observerOrNext.complete;
-            if (isFunction_1.isFunction(context.unsubscribe)) {
-                this.add(context.unsubscribe.bind(context));
+            if (observerOrNext !== Observer.empty) {
+                context = Object.create(observerOrNext);
+                if (isFunction_1.isFunction(context.unsubscribe)) {
+                    this.add(context.unsubscribe.bind(context));
+                }
+                context.unsubscribe = this.unsubscribe.bind(this);
             }
-            context.unsubscribe = this.unsubscribe.bind(this);
         }
         this._context = context;
         this._next = next;
@@ -2292,8 +2320,8 @@ function toSubscriber(nextOrObserver, error, complete) {
         if (nextOrObserver instanceof Subscriber_1.Subscriber) {
             return nextOrObserver;
         }
-        if (nextOrObserver[rxSubscriber.$$rxSubscriber]) {
-            return nextOrObserver[rxSubscriber.$$rxSubscriber]();
+        if (nextOrObserver[rxSubscriber.rxSubscriber]) {
+            return nextOrObserver[rxSubscriber.rxSubscriber]();
         }
     }
     if (!nextOrObserver && !error && !complete) {
@@ -2307,6 +2335,9 @@ var toSubscriber_2 = toSubscriber;
 var toSubscriber_1 = {
 	toSubscriber: toSubscriber_2
 };
+
+var observable = createCommonjsModule(function (module, exports) {
+"use strict";
 
 function getSymbolObservable(context) {
     var $$observable;
@@ -2325,14 +2356,14 @@ function getSymbolObservable(context) {
     }
     return $$observable;
 }
-var getSymbolObservable_1 = getSymbolObservable;
-var $$observable = getSymbolObservable(root.root);
+exports.getSymbolObservable = getSymbolObservable;
+exports.observable = getSymbolObservable(root.root);
+/**
+ * @deprecated use observable instead
+ */
+exports.$$observable = exports.observable;
 
-
-var observable = {
-	getSymbolObservable: getSymbolObservable_1,
-	$$observable: $$observable
-};
+});
 
 /**
  * A representation of any set of values over any amount of time. This the most basic building block
@@ -2415,7 +2446,10 @@ var Observable = (function () {
             throw new Error('no Promise impl found');
         }
         return new PromiseCtor(function (resolve, reject) {
-            var subscription = _this.subscribe(function (value) {
+            // Must be declared in a separate statement to avoid a RefernceError when
+            // accessing subscription below in the closure due to Temporal Dead Zone.
+            var subscription;
+            subscription = _this.subscribe(function (value) {
                 if (subscription) {
                     // if there is a subscription, then we can surmise
                     // the next handling is asynchronous. Any errors thrown
@@ -2449,7 +2483,7 @@ var Observable = (function () {
      * @method Symbol.observable
      * @return {Observable} this instance of the observable
      */
-    Observable.prototype[observable.$$observable] = function () {
+    Observable.prototype[observable.observable] = function () {
         return this;
     };
     // HACK: Since TypeScript inherits static properties too, we have to
@@ -2584,7 +2618,7 @@ var Subject = (function (_super) {
         this.hasError = false;
         this.thrownError = null;
     }
-    Subject.prototype[rxSubscriber.$$rxSubscriber] = function () {
+    Subject.prototype[rxSubscriber.rxSubscriber] = function () {
         return new SubjectSubscriber(this);
     };
     Subject.prototype.lift = function (operator) {
@@ -3641,6 +3675,11 @@ var SignalingGate = function () {
         return this.listenOnOpen(url, key, signaling);
       } else {
         return this.getConnectionService(url).subject(url).then(function (signaling) {
+          signaling.filter(function (msg) {
+            return 'first' in msg || 'ping' in msg;
+          }).subscribe(function () {
+            return signaling.send(JSON.stringify({ pong: true }));
+          });
           return _this.listenOnOpen(url, key, signaling);
         });
       }
@@ -3652,15 +3691,13 @@ var SignalingGate = function () {
 
       return new Promise(function (resolve, reject) {
         signaling.filter(function (msg) {
-          return 'first' in msg || 'ping' in msg;
+          return 'first' in msg;
         }).subscribe(function (msg) {
           if (msg.first) {
             _this2.stream = signaling;
             _this2.key = key;
             _this2.url = url.endsWith('/') ? url.substr(0, url.length - 1) : url;
             resolve({ url: _this2.url, key: key });
-          } else if (msg.ping) {
-            signaling.send(JSON.stringify({ pong: true }));
           }
         }, function (err) {
           _this2.onClose();
@@ -3682,6 +3719,11 @@ var SignalingGate = function () {
 
       return new Promise(function (resolve, reject) {
         _this3.getConnectionService(url).subject(url).then(function (signaling) {
+          signaling.filter(function (msg) {
+            return 'first' in msg || 'ping' in msg;
+          }).subscribe(function () {
+            return signaling.send(JSON.stringify({ pong: true }));
+          });
           var subs = signaling.filter(function (msg) {
             return 'first' in msg;
           }).subscribe(function (msg) {
