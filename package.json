@@ -81,7 +81,7 @@
     "karma-firefox-launcher": "^1.0.0",
     "karma-jasmine": "^1.0.2",
     "karma-rollup-preprocessor": "^4.0.0",
-    "karma-spec-reporter": "0.0.30",
+    "karma-spec-reporter": "0.0.31",
     "pm2": "^2.0.12",
     "rollup": "^0.41.1",
     "rollup-plugin-babel": "^2.6.1",
