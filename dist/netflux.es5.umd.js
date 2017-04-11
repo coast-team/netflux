@@ -954,12 +954,14 @@ function createCommonjsModule(fn, module) {
           shimConstraints_ = function shimConstraints_(constraints, func) {
         if (constraints = JSON.parse(JSON.stringify(constraints)), constraints && constraints.audio && (constraints.audio = constraintsToChrome_(constraints.audio)), constraints && "object" == _typeof(constraints.video)) {
           var face = constraints.video.facingMode;face = face && ("object" == (typeof face === "undefined" ? "undefined" : _typeof(face)) ? face : { ideal: face });var getSupportedFacingModeLies = browserDetails.version < 61;if (face && ("user" === face.exact || "environment" === face.exact || "user" === face.ideal || "environment" === face.ideal) && (!navigator.mediaDevices.getSupportedConstraints || !navigator.mediaDevices.getSupportedConstraints().facingMode || getSupportedFacingModeLies)) {
-            delete constraints.video.facingMode;var match;if ("environment" === face.exact || "environment" === face.ideal ? match = "back" : "user" !== face.exact && "user" !== face.ideal || (match = "front"), match) return navigator.mediaDevices.enumerateDevices().then(function (devices) {
+            delete constraints.video.facingMode;var matches;if ("environment" === face.exact || "environment" === face.ideal ? matches = ["back", "rear"] : "user" !== face.exact && "user" !== face.ideal || (matches = ["front"]), matches) return navigator.mediaDevices.enumerateDevices().then(function (devices) {
               devices = devices.filter(function (d) {
                 return "videoinput" === d.kind;
               });var dev = devices.find(function (d) {
-                return -1 !== d.label.toLowerCase().indexOf(match);
-              });return dev && (constraints.video.deviceId = face.exact ? { exact: dev.deviceId } : { ideal: dev.deviceId }), constraints.video = constraintsToChrome_(constraints.video), logging("chrome: " + JSON.stringify(constraints)), func(constraints);
+                return matches.some(function (match) {
+                  return -1 !== d.label.toLowerCase().indexOf(match);
+                });
+              });return !dev && devices.length && -1 !== matches.indexOf("back") && (dev = devices[devices.length - 1]), dev && (constraints.video.deviceId = face.exact ? { exact: dev.deviceId } : { ideal: dev.deviceId }), constraints.video = constraintsToChrome_(constraints.video), logging("chrome: " + JSON.stringify(constraints)), func(constraints);
             });
           }constraints.video = constraintsToChrome_(constraints.video);
         }return logging("chrome: " + JSON.stringify(constraints)), func(constraints);
@@ -3223,15 +3225,15 @@ var ChannelBuilderService = function (_Service) {
             channel.send(JSON.stringify({ wcId: wc.id, senderId: wc.myId }));
             _this4.onChannel(wc, channel, senderId);
           }).catch(function (reason) {
-            return ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId);
-          }).then(function (channel) {
-            return _this4.onChannel(wc, channel, senderId);
-          }).catch(function (reason) {
-            if ('feedbackOnFail' in msg && msg.feedbackOnFail === true) {
-              wc.sendInnerTo(senderId, _this4.id, { tryOn: _this4.WS, listenOn: myConnectObj.listenOn });
-            } else {
-              get(ChannelBuilderService.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilderService.prototype), 'getPendingRequest', _this4).call(_this4, wc, senderId).reject(new Error('Failed to establish a socket and then a data channel: ' + reason));
-            }
+            ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId).then(function (channel) {
+              return _this4.onChannel(wc, channel, senderId);
+            }).catch(function (reason) {
+              if ('feedbackOnFail' in msg && msg.feedbackOnFail === true) {
+                wc.sendInnerTo(senderId, _this4.id, { tryOn: _this4.WS, listenOn: myConnectObj.listenOn });
+              } else {
+                get(ChannelBuilderService.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilderService.prototype), 'getPendingRequest', _this4).call(_this4, wc, senderId).reject(new Error('Failed to establish a socket and then a data channel: ' + reason));
+              }
+            });
           });
         }
       } else if ('tryOn' in msg && this.isEqual(msg.tryOn, this.WS)) {
@@ -3315,11 +3317,11 @@ var ChannelBuilderService = function (_Service) {
                 channel.send(JSON.stringify({ wcId: wc.id, senderId: wc.myId }));
                 _this4.onChannel(wc, channel, senderId);
               }).catch(function (reason) {
-                return ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId);
-              }).then(function (channel) {
-                return _this4.onChannel(wc, channel, senderId);
-              }).catch(function (reason) {
-                return wc.sendInnerTo(senderId, _this4.id, { shouldConnect: _this4.WS, listenOn: myConnectObj.listenOn });
+                ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId).then(function (channel) {
+                  return _this4.onChannel(wc, channel, senderId);
+                }).catch(function (reason) {
+                  return wc.sendInnerTo(senderId, _this4.id, { shouldConnect: _this4.WS, listenOn: myConnectObj.listenOn });
+                });
               });
             }
           }
@@ -3334,12 +3336,12 @@ var ChannelBuilderService = function (_Service) {
               ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId).then(function (channel) {
                 return _this4.onChannel(wc, channel, senderId);
               }).catch(function (reason) {
-                return ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn);
-              }).then(function (channel) {
-                channel.send(JSON.stringify({ wcId: wc.id, senderId: wc.myId }));
-                _this4.onChannel(wc, channel, senderId);
-              }).catch(function (reason) {
-                return wc.sendInnerTo(senderId, _this4.id, { failedReason: 'Failed to establish a data channel and then a socket: ' + reason });
+                ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn).then(function (channel) {
+                  channel.send(JSON.stringify({ wcId: wc.id, senderId: wc.myId }));
+                  _this4.onChannel(wc, channel, senderId);
+                }).catch(function (reason) {
+                  return wc.sendInnerTo(senderId, _this4.id, { failedReason: 'Failed to establish a data channel and then a socket: ' + reason });
+                });
               });
             } else if (this.isEqual(myConnectors, this.WS_WR)) {
               wc.sendInnerTo(senderId, this.id, { shouldConnect: this.WS_WR, feedbackOnFail: true, listenOn: myConnectObj.listenOn });
@@ -3347,12 +3349,12 @@ var ChannelBuilderService = function (_Service) {
               ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId).then(function (channel) {
                 return _this4.onChannel(wc, channel, senderId);
               }).catch(function (reason) {
-                return ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn);
-              }).then(function (channel) {
-                channel.send(JSON.stringify({ wcId: wc.id, senderId: wc.myId }));
-                _this4.onChannel(wc, channel, senderId);
-              }).catch(function (reason) {
-                return wc.sendInnerTo(senderId, _this4.id, { shouldConnect: _this4.WS, listenOn: myConnectObj.listenOn });
+                ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn).then(function (channel) {
+                  channel.send(JSON.stringify({ wcId: wc.id, senderId: wc.myId }));
+                  _this4.onChannel(wc, channel, senderId);
+                }).catch(function (reason) {
+                  return wc.sendInnerTo(senderId, _this4.id, { shouldConnect: _this4.WS, listenOn: myConnectObj.listenOn });
+                });
               });
             }
           }

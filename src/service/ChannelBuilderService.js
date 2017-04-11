@@ -110,15 +110,17 @@ class ChannelBuilderService extends Service {
             channel.send(JSON.stringify({wcId: wc.id, senderId: wc.myId}))
             this.onChannel(wc, channel, senderId)
           })
-          .catch(reason => ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId))
-          .then(channel => this.onChannel(wc, channel, senderId))
           .catch(reason => {
-            if ('feedbackOnFail' in msg && msg.feedbackOnFail === true) {
-              wc.sendInnerTo(senderId, this.id, {tryOn: this.WS, listenOn: myConnectObj.listenOn})
-            } else {
-              super.getPendingRequest(wc, senderId)
-                .reject(new Error(`Failed to establish a socket and then a data channel: ${reason}`))
-            }
+            ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId)
+              .then(channel => this.onChannel(wc, channel, senderId))
+              .catch(reason => {
+                if ('feedbackOnFail' in msg && msg.feedbackOnFail === true) {
+                  wc.sendInnerTo(senderId, this.id, {tryOn: this.WS, listenOn: myConnectObj.listenOn})
+                } else {
+                  super.getPendingRequest(wc, senderId)
+                    .reject(new Error(`Failed to establish a socket and then a data channel: ${reason}`))
+                }
+              })
           })
       }
     } else if ('tryOn' in msg && this.isEqual(msg.tryOn, this.WS)) {
@@ -204,9 +206,11 @@ class ChannelBuilderService extends Service {
                 channel.send(JSON.stringify({wcId: wc.id, senderId: wc.myId}))
                 this.onChannel(wc, channel, senderId)
               })
-              .catch(reason => ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId))
-              .then(channel => this.onChannel(wc, channel, senderId))
-              .catch(reason => wc.sendInnerTo(senderId, this.id, {shouldConnect: this.WS, listenOn: myConnectObj.listenOn}))
+              .catch(reason => {
+                ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId)
+                  .then(channel => this.onChannel(wc, channel, senderId))
+                  .catch(reason => wc.sendInnerTo(senderId, this.id, {shouldConnect: this.WS, listenOn: myConnectObj.listenOn}))
+              })
           }
         }
 
@@ -220,24 +224,28 @@ class ChannelBuilderService extends Service {
             ServiceFactory.get(WEB_RTC, wc.settings.iceServers)
               .connectOverWebChannel(wc, senderId)
               .then(channel => this.onChannel(wc, channel, senderId))
-              .catch(reason => ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn))
-              .then(channel => {
-                channel.send(JSON.stringify({wcId: wc.id, senderId: wc.myId}))
-                this.onChannel(wc, channel, senderId)
+              .catch(reason => {
+                ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn)
+                  .then(channel => {
+                    channel.send(JSON.stringify({wcId: wc.id, senderId: wc.myId}))
+                    this.onChannel(wc, channel, senderId)
+                  })
+                  .catch(reason => wc.sendInnerTo(senderId, this.id, {failedReason: `Failed to establish a data channel and then a socket: ${reason}`}))
               })
-              .catch(reason => wc.sendInnerTo(senderId, this.id, {failedReason: `Failed to establish a data channel and then a socket: ${reason}`}))
           } else if (this.isEqual(myConnectors, this.WS_WR)) {
             wc.sendInnerTo(senderId, this.id, {shouldConnect: this.WS_WR, feedbackOnFail: true, listenOn: myConnectObj.listenOn})
           } else if (this.isEqual(myConnectors, this.WR_WS)) {
             ServiceFactory.get(WEB_RTC, wc.settings.iceServers)
               .connectOverWebChannel(wc, senderId)
               .then(channel => this.onChannel(wc, channel, senderId))
-              .catch(reason => ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn))
-              .then(channel => {
-                channel.send(JSON.stringify({wcId: wc.id, senderId: wc.myId}))
-                this.onChannel(wc, channel, senderId)
+              .catch(reason => {
+                ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn)
+                  .then(channel => {
+                    channel.send(JSON.stringify({wcId: wc.id, senderId: wc.myId}))
+                    this.onChannel(wc, channel, senderId)
+                  })
+                  .catch(reason => wc.sendInnerTo(senderId, this.id, {shouldConnect: this.WS, listenOn: myConnectObj.listenOn}))
               })
-              .catch(reason => wc.sendInnerTo(senderId, this.id, {shouldConnect: this.WS, listenOn: myConnectObj.listenOn}))
           }
         }
       }
