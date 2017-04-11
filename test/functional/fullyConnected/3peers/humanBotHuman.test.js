@@ -1,42 +1,77 @@
 import {create} from 'src/index.browser'
 import * as helper from 'util/helper'
 
-xdescribe('🙂 🤖 🙂  || 🙂 🙂 🤖  fully connected', () => {
-  const key = 'humanBotHuman'
-  const signalingURL = helper.SIGNALING_URL
-  let wc
-  let botId
+describe('🙂 🤖 🙂  fully connected', () => {
+  const wcOptions = {signalingURL: helper.SIGNALING_URL}
 
   it(helper.env() + ': Should establish a connection', done => {
-    let counter = 0
-    wc = create({signalingURL})
-    wc.onPeerJoin = id => {
-      counter++
-      if (counter === 2) {
-        if (botId) {
-          console.log('Me is ' + helper.env() + ' : ' + wc.myId)
-          console.log('First join: ' + wc.members[0])
-          console.log('Seconde join: ' + wc.members[1])
-        }
-        expect(wc.members.length).toEqual(2)
-        setTimeout(done, 1000)
-      }
+    const wc1 = create(wcOptions)
+    const wc2 = create(wcOptions)
+    const key = helper.randStr()
+    wc1.onPeerJoin = id => {
+      wc1.members.includes(id)
     }
-    wc.open({key})
+    wc2.onPeerJoin = id => {
+      wc2.members.includes(id)
+    }
+    spyOn(wc1, 'onPeerJoin')
+    spyOn(wc2, 'onPeerJoin')
+    wc1.open(key)
+      .then(() => wc1.invite(helper.BOT))
+      .then(() => wc2.join(key))
       .then(() => {
-        console.log(helper.env() + ' opened')
-        wc.invite(helper.BOT)
-          .then(id => { console.log('Bot id is: ' + id); botId = id })
-          .catch(done.fail)
+        setTimeout(() => {
+          expect(wc1.members.length).toEqual(2)
+          expect(wc1.members[0]).not.toEqual(wc1.members[1])
+          expect(wc2.members.length).toEqual(2)
+          expect(wc2.members[0]).not.toEqual(wc2.members[1])
+          expect(wc1.onPeerJoin).toHaveBeenCalledTimes(2)
+          expect(wc2.onPeerJoin).toHaveBeenCalledTimes(2)
+          wc1.leave()
+          wc2.leave()
+          done()
+        }, 1000)
       })
-      .catch(() => wc.join(key))
       .catch(done.fail)
-  }, 10000)
+  })
+})
 
-  it(helper.env() + ': Should send/receive string', (done) => {
-    // let data = helper.randStr()
-    setTimeout(() => helper.sendReceive(wc, 'lapsdn90350HA2Ràzhc àref', done, botId), 1000)
-  }, 10000)
+// xdescribe('🙂 🤖 🙂  || 🙂 🙂 🤖  fully connected', () => {
+//   const key = 'humanBotHuman'
+//   const signalingURL = helper.SIGNALING_URL
+//   let wc
+//   let botId
+//
+//   it(helper.env() + ': Should establish a connection', done => {
+//     let counter = 0
+//     wc = create({signalingURL})
+//     wc.onPeerJoin = id => {
+//       counter++
+//       if (counter === 2) {
+//         if (botId) {
+//           console.log('Me is ' + helper.env() + ' : ' + wc.myId)
+//           console.log('First join: ' + wc.members[0])
+//           console.log('Seconde join: ' + wc.members[1])
+//         }
+//         expect(wc.members.length).toEqual(2)
+//         setTimeout(done, 1000)
+//       }
+//     }
+//     wc.open({key})
+//       .then(() => {
+//         console.log(helper.env() + ' opened')
+//         wc.invite(helper.BOT)
+//           .then(id => { console.log('Bot id is: ' + id); botId = id })
+//           .catch(done.fail)
+//       })
+//       .catch(() => wc.join(key))
+//       .catch(done.fail)
+//   }, 10000)
+//
+//   it(helper.env() + ': Should send/receive string', (done) => {
+//     // let data = helper.randStr()
+//     setTimeout(() => helper.sendReceive(wc, 'lapsdn90350HA2Ràzhc àref', done, botId), 1000)
+//   }, 10000)
   //
   // describe('Should send/receive', () => {
   //
@@ -106,4 +141,4 @@ xdescribe('🙂 🤖 🙂  || 🙂 🙂 🤖  fully connected', () => {
   //       .catch(done.fail)
   //   })
   // })
-})
+// })
