@@ -3524,6 +3524,7 @@ var WebRTCService = function (_Service) {
         };
       });
     }
+<<<<<<< HEAD
 
     /**
      * @private
@@ -3556,6 +3557,85 @@ var WebRTCService = function (_Service) {
           });
         } catch (err) {
           return Promise.reject(err);
+=======
+    Subject.prototype[rxSubscriber.rxSubscriber] = function () {
+        return new SubjectSubscriber(this);
+    };
+    Subject.prototype.lift = function (operator) {
+        var subject = new AnonymousSubject(this, this);
+        subject.operator = operator;
+        return subject;
+    };
+    Subject.prototype.next = function (value) {
+        if (this.closed) {
+            throw new ObjectUnsubscribedError_1.ObjectUnsubscribedError();
+        }
+        if (!this.isStopped) {
+            var observers = this.observers;
+            var len = observers.length;
+            var copy = observers.slice();
+            for (var i = 0; i < len; i++) {
+                copy[i].next(value);
+            }
+        }
+    };
+    Subject.prototype.error = function (err) {
+        if (this.closed) {
+            throw new ObjectUnsubscribedError_1.ObjectUnsubscribedError();
+        }
+        this.hasError = true;
+        this.thrownError = err;
+        this.isStopped = true;
+        var observers = this.observers;
+        var len = observers.length;
+        var copy = observers.slice();
+        for (var i = 0; i < len; i++) {
+            copy[i].error(err);
+        }
+        this.observers.length = 0;
+    };
+    Subject.prototype.complete = function () {
+        if (this.closed) {
+            throw new ObjectUnsubscribedError_1.ObjectUnsubscribedError();
+        }
+        this.isStopped = true;
+        var observers = this.observers;
+        var len = observers.length;
+        var copy = observers.slice();
+        for (var i = 0; i < len; i++) {
+            copy[i].complete();
+        }
+        this.observers.length = 0;
+    };
+    Subject.prototype.unsubscribe = function () {
+        this.isStopped = true;
+        this.closed = true;
+        this.observers = null;
+    };
+    Subject.prototype._trySubscribe = function (subscriber) {
+        if (this.closed) {
+            throw new ObjectUnsubscribedError_1.ObjectUnsubscribedError();
+        }
+        else {
+            return _super.prototype._trySubscribe.call(this, subscriber);
+        }
+    };
+    Subject.prototype._subscribe = function (subscriber) {
+        if (this.closed) {
+            throw new ObjectUnsubscribedError_1.ObjectUnsubscribedError();
+        }
+        else if (this.hasError) {
+            subscriber.error(this.thrownError);
+            return Subscription_1.Subscription.EMPTY;
+        }
+        else if (this.isStopped) {
+            subscriber.complete();
+            return Subscription_1.Subscription.EMPTY;
+        }
+        else {
+            this.observers.push(subscriber);
+            return new SubjectSubscription_1.SubjectSubscription(this, subscriber);
+>>>>>>> master
         }
       } else {
         return new Promise(function (resolve, reject) {
@@ -4064,7 +4144,10 @@ var ChannelBuilderService = function (_Service) {
             channel.send(JSON.stringify({ wcId: wc.id, senderId: wc.myId }));
             _this4.onChannel(wc, channel, senderId);
           }).catch(function (reason) {
+<<<<<<< HEAD
 <<<<<<< Updated upstream
+=======
+>>>>>>> master
             ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId).then(function (channel) {
               return _this4.onChannel(wc, channel, senderId);
             }).catch(function (reason) {
@@ -4074,6 +4157,7 @@ var ChannelBuilderService = function (_Service) {
                 get(ChannelBuilderService.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilderService.prototype), 'getPendingRequest', _this4).call(_this4, wc, senderId).reject(new Error('Failed to establish a socket and then a data channel: ' + reason));
               }
             });
+<<<<<<< HEAD
 =======
             return ServiceFactory.get(WEB_RTC).connectOverWebChannel(wc, senderId, { iceServers: wc.iceServers });
           }).then(function (channel) {
@@ -4085,6 +4169,8 @@ var ChannelBuilderService = function (_Service) {
               get(ChannelBuilderService.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilderService.prototype), 'getPendingRequest', _this4).call(_this4, wc, senderId).reject(new Error('Failed to establish a socket and then a data channel: ' + reason));
             }
 >>>>>>> Stashed changes
+=======
+>>>>>>> master
           });
         }
       } else if ('tryOn' in msg && this.isEqual(msg.tryOn, this.WS)) {
@@ -4168,12 +4254,16 @@ var ChannelBuilderService = function (_Service) {
                 channel.send(JSON.stringify({ wcId: wc.id, senderId: wc.myId }));
                 _this4.onChannel(wc, channel, senderId);
               }).catch(function (reason) {
+<<<<<<< HEAD
 <<<<<<< Updated upstream
+=======
+>>>>>>> master
                 ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId).then(function (channel) {
                   return _this4.onChannel(wc, channel, senderId);
                 }).catch(function (reason) {
                   return wc.sendInnerTo(senderId, _this4.id, { shouldConnect: _this4.WS, listenOn: myConnectObj.listenOn });
                 });
+<<<<<<< HEAD
 =======
                 return ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId, { iceServers: wc.iceServers });
               }).then(function (channel) {
@@ -4181,6 +4271,8 @@ var ChannelBuilderService = function (_Service) {
               }).catch(function (reason) {
                 return wc.sendInnerTo(senderId, _this4.id, { shouldConnect: _this4.WS, listenOn: myConnectObj.listenOn });
 >>>>>>> Stashed changes
+=======
+>>>>>>> master
               });
             }
           }
@@ -5567,9 +5659,28 @@ var WebChannel = function () {
         if (!Util.isURL(urlOrSocket)) {
           return Promise.reject(new Error(urlOrSocket + ' is not a valid URL'));
         }
-        return ServiceFactory.get(WEB_SOCKET).connect(urlOrSocket).then(function (ws) {
-          ws.send(JSON.stringify({ wcId: _this3.id }));
-          return _this3.addChannel(ws);
+        return new Promise(function (resolve, reject) {
+          ServiceFactory.get(WEB_SOCKET).connect(urlOrSocket).then(function (ws) {
+            ws.onmessage = function (evt) {
+              var msg = JSON.parse(evt.data);
+              if ('inviteOk' in msg) {
+                if (msg.inviteOk) {
+                  ws.onmessage = function () {};
+                  ws.send(JSON.stringify({ wcId: _this3.id }));
+                  _this3.addChannel(ws).then(function () {
+                    return resolve();
+                  });
+                } else {
+                  ws.close(1000);
+                  reject(new Error('Bot already has been invited'));
+                }
+              } else {
+                ws.close(1000);
+                reject(new Error('Unknown message from bot server: ' + evt.data));
+              }
+            };
+            ws.send(JSON.stringify({ wcId: _this3.id, check: true }));
+          });
         });
       } else if (urlOrSocket.constructor.name === 'WebSocket') {
         return this.addChannel(urlOrSocket);
