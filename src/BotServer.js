@@ -124,6 +124,13 @@ class BotServer {
                   ws.close(WEB_CHANNEL_NOT_FOUND, `${msg.wcId} webChannel was not found (message received from ${msg.senderId})`)
                   console.error(`${msg.wcId} webChannel was not found (message received from ${msg.senderId})`)
                 }
+              } else if ('check' in msg) {
+                if (wc === null || wc.members.length === 0) {
+                  ws.send(JSON.stringify({inviteOk: true}))
+                } else {
+                  ws.send(JSON.stringify({inviteOk: false}))
+                  console.error(`Bot refused to join ${msg.wcId} webChannel, because it is already in use`)
+                }
               } else {
                 if (wc === null) {
                   wc = new WebChannel(this.settings)
@@ -137,7 +144,7 @@ class BotServer {
                   this.addWebChannel(wc)
                   wc.join(ws).then(() => { this.onWebChannel(wc) })
                 } else {
-                  console.error(`Bot refused to join ${msg.wcId} webChannel, because it is already in use`)
+                  ws.close()
                 }
               }
             }

@@ -223,11 +223,29 @@ class WebChannel {
       if (!Util.isURL(urlOrSocket)) {
         return Promise.reject(new Error(`${urlOrSocket} is not a valid URL`))
       }
-      return ServiceFactory.get(WEB_SOCKET).connect(urlOrSocket)
-        .then(ws => {
-          ws.send(JSON.stringify({wcId: this.id}))
-          return this.addChannel(ws)
-        })
+      return new Promise((resolve, reject) => {
+        ServiceFactory.get(WEB_SOCKET).connect(urlOrSocket)
+          .then(ws => {
+            ws.onmessage = evt => {
+              const msg = JSON.parse(evt.data)
+              if ('inviteOk' in msg) {
+                if (msg.inviteOk) {
+                  ws.onmessage = () => {}
+                  ws.send(JSON.stringify({wcId: this.id}))
+                  this.addChannel(ws)
+                    .then(() => resolve())
+                } else {
+                  ws.close(1000)
+                  reject(new Error('Bot already has been invited'))
+                }
+              } else {
+                ws.close(1000)
+                reject(new Error('Unknown message from bot server: ' + evt.data))
+              }
+            }
+            ws.send(JSON.stringify({wcId: this.id, check: true}))
+          })
+      })
     } else if (urlOrSocket.constructor.name === 'WebSocket') {
       return this.addChannel(urlOrSocket)
     } else {
@@ -561,3 +579,5 @@ class WebChannel {
 
 export default WebChannel
 export {USER_DATA}
+export const serviceMessageStream = Symbol('serviceMessageStream')
+export const channelBuilderService = Symbol('channelBuilderService')
