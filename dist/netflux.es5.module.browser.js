@@ -103,6 +103,48 @@ var possibleConstructorReturn = function (self, call) {
   return call && (typeof call === "object" || typeof call === "function") ? call : self;
 };
 
+
+
+
+
+var slicedToArray = function () {
+  function sliceIterator(arr, i) {
+    var _arr = [];
+    var _n = true;
+    var _d = false;
+    var _e = undefined;
+
+    try {
+      for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+        _arr.push(_s.value);
+
+        if (i && _arr.length === i) break;
+      }
+    } catch (err) {
+      _d = true;
+      _e = err;
+    } finally {
+      try {
+        if (!_n && _i["return"]) _i["return"]();
+      } finally {
+        if (_d) throw _e;
+      }
+    }
+
+    return _arr;
+  }
+
+  return function (arr, i) {
+    if (Array.isArray(arr)) {
+      return arr;
+    } else if (Symbol.iterator in Object(arr)) {
+      return sliceIterator(arr, i);
+    } else {
+      throw new TypeError("Invalid attempt to destructure non-iterable instance");
+    }
+  };
+}();
+
 /**
  * Default timeout for any pending request.
  * @type {number}
@@ -1317,412 +1359,6 @@ var Util = function () {
   return Util;
 }();
 
-var wrtc = Util.require(Util.WEB_RTC);
-var CloseEvent = Util.require(Util.CLOSE_EVENT);
-
-var CONNECT_OVER_WEBCHANNEL_TIMEOUT = 10000;
-var CONNECT_OVER_SIGNALING_TIMEOUT = 4000;
-var REMOVE_ITEM_TIMEOUT = 5000;
-
-/**
- * Service class responsible to establish connections between peers via
- * `RTCDataChannel`.
- *
- */
-
-var WebRTCService = function (_Service) {
-  inherits(WebRTCService, _Service);
-
-  /**
-   * @param  {number} id Service identifier
-   * @param  {RTCIceServer} iceServers WebRTC configuration object
-   */
-  function WebRTCService(id, iceServers) {
-    classCallCheck(this, WebRTCService);
-
-    /**
-     * @private
-     * @type {RTCIceServer}
-     */
-    var _this = possibleConstructorReturn(this, (WebRTCService.__proto__ || Object.getPrototypeOf(WebRTCService)).call(this, id));
-
-    _this.iceServers = iceServers;
-    return _this;
-  }
-
-  /**
-   * @param {Channel} channel
-   * @param {number} senderId
-   * @param {number} recepientId
-   * @param {Object} msg
-   */
-
-
-  createClass(WebRTCService, [{
-    key: 'onMessage',
-    value: function onMessage(channel, senderId, recepientId, msg) {
-      var _this2 = this;
-
-      var wc = channel.webChannel;
-      var item = get(WebRTCService.prototype.__proto__ || Object.getPrototypeOf(WebRTCService.prototype), 'getItem', this).call(this, wc, senderId);
-      if (!item) {
-        item = new CandidatesBuffer();
-        get(WebRTCService.prototype.__proto__ || Object.getPrototypeOf(WebRTCService.prototype), 'setItem', this).call(this, wc, senderId, item);
-      }
-      if ('offer' in msg) {
-        item.pc = this.createPeerConnection(function (candidate) {
-          wc.sendInnerTo(senderId, _this2.id, { candidate: candidate });
-        });
-        this.listenOnDataChannel(item.pc, function (dataCh) {
-          setTimeout(function () {
-            return get(WebRTCService.prototype.__proto__ || Object.getPrototypeOf(WebRTCService.prototype), 'removeItem', _this2).call(_this2, wc, senderId);
-          }, REMOVE_ITEM_TIMEOUT);
-          ServiceFactory.get(CHANNEL_BUILDER).onChannel(wc, dataCh, senderId);
-        });
-        this.createAnswer(item.pc, msg.offer, item.candidates).then(function (answer) {
-          return wc.sendInnerTo(senderId, _this2.id, { answer: answer });
-        }).catch(function (err) {
-          return console.error('During Establishing dataChannel connection over webChannel: ' + err.message);
-        });
-      }if ('answer' in msg) {
-        item.pc.setRemoteDescription(msg.answer).then(function () {
-          return item.pc.addReceivedCandidates(item.candidates);
-        }).catch(function (err) {
-          return console.error('Set answer (webChannel): ' + err.message);
-        });
-      } else if ('candidate' in msg) {
-        this.addIceCandidate(item, msg.candidate);
-      }
-    }
-
-    /**
-     * Establishes an `RTCDataChannel` with a peer identified by `id` trough `WebChannel`.
-     *
-     * @param {WebChannel} wc
-     * @param {number} id
-     *
-     * @returns {Promise<RTCDataChannel, string>}
-     */
-
-  }, {
-    key: 'connectOverWebChannel',
-    value: function connectOverWebChannel(wc, id) {
-      var _this3 = this;
-
-      var item = new CandidatesBuffer(this.createPeerConnection(function (candidate) {
-        wc.sendInnerTo(id, _this3.id, { candidate: candidate });
-      }));
-      get(WebRTCService.prototype.__proto__ || Object.getPrototypeOf(WebRTCService.prototype), 'setItem', this).call(this, wc, id, item);
-      return new Promise(function (resolve, reject) {
-        setTimeout(function () {
-          return reject(new Error('WebRTC ' + CONNECT_OVER_WEBCHANNEL_TIMEOUT + ' connection timeout'));
-        }, CONNECT_OVER_WEBCHANNEL_TIMEOUT);
-        _this3.createDataChannel(item.pc, function (dataCh) {
-          setTimeout(function () {
-            return get(WebRTCService.prototype.__proto__ || Object.getPrototypeOf(WebRTCService.prototype), 'removeItem', _this3).call(_this3, wc, id);
-          }, REMOVE_ITEM_TIMEOUT);
-          resolve(dataCh);
-        });
-        _this3.createOffer(item.pc).then(function (offer) {
-          return wc.sendInnerTo(id, _this3.id, { offer: offer });
-        }).catch(reject);
-      });
-    }
-
-    /**
-     *
-     * @param {WebSocket} ws
-     * @param {function(channel: RTCDataChannel)} onChannel
-     *
-     */
-
-  }, {
-    key: 'listenFromSignaling',
-    value: function listenFromSignaling(signaling, onChannel) {
-      var _this4 = this;
-
-      signaling.filter(function (msg) {
-        return 'id' in msg && 'data' in msg;
-      }).subscribe(function (msg) {
-        var item = get(WebRTCService.prototype.__proto__ || Object.getPrototypeOf(WebRTCService.prototype), 'getItem', _this4).call(_this4, signaling, msg.id);
-        if (!item) {
-          item = new CandidatesBuffer(_this4.createPeerConnection(function (candidate) {
-            signaling.send(JSON.stringify({ id: msg.id, data: { candidate: candidate } }));
-          }));
-          get(WebRTCService.prototype.__proto__ || Object.getPrototypeOf(WebRTCService.prototype), 'setItem', _this4).call(_this4, signaling, msg.id, item);
-        }
-        if ('offer' in msg.data) {
-          _this4.listenOnDataChannel(item.pc, function (dataCh) {
-            setTimeout(function () {
-              return get(WebRTCService.prototype.__proto__ || Object.getPrototypeOf(WebRTCService.prototype), 'removeItem', _this4).call(_this4, signaling, msg.id);
-            }, REMOVE_ITEM_TIMEOUT);
-            onChannel(dataCh);
-          });
-          _this4.createAnswer(item.pc, msg.data.offer, item.candidates).then(function (answer) {
-            signaling.send(JSON.stringify({ id: msg.id, data: { answer: answer } }));
-          }).catch(function (err) {
-            console.error('During establishing data channel connection through signaling: ' + err.message);
-          });
-        } else if ('candidate' in msg.data) {
-          _this4.addIceCandidate(item, msg.data.candidate);
-        }
-      }, function (err) {
-        return console.log(err);
-      }, function () {
-        // clean
-      });
-    }
-
-    /**
-     *
-     * @param {type} ws
-     * @param {type} key Description
-     *
-     * @returns {type} Description
-     */
-
-  }, {
-    key: 'connectOverSignaling',
-    value: function connectOverSignaling(signaling, key) {
-      var _this5 = this;
-
-      var item = new CandidatesBuffer(this.createPeerConnection(function (candidate) {
-        signaling.send(JSON.stringify({ data: { candidate: candidate } }));
-      }));
-      get(WebRTCService.prototype.__proto__ || Object.getPrototypeOf(WebRTCService.prototype), 'setItem', this).call(this, signaling, key, item);
-      return new Promise(function (resolve, reject) {
-        var subs = signaling.filter(function (msg) {
-          return 'data' in msg;
-        }).subscribe(function (msg) {
-          if ('answer' in msg.data) {
-            item.pc.setRemoteDescription(msg.data.answer).then(function () {
-              return item.pc.addReceivedCandidates(item.candidates);
-            }).catch(function (err) {
-              return reject(new Error('Set answer (signaling): ' + err.message));
-            });
-          } else if ('candidate' in msg.data) {
-            _this5.addIceCandidate(get(WebRTCService.prototype.__proto__ || Object.getPrototypeOf(WebRTCService.prototype), 'getItem', _this5).call(_this5, signaling, key), msg.data.candidate);
-          }
-        }, function (err) {
-          get(WebRTCService.prototype.__proto__ || Object.getPrototypeOf(WebRTCService.prototype), 'removeItem', _this5).call(_this5, signaling, key);
-          reject(err);
-        }, function () {
-          get(WebRTCService.prototype.__proto__ || Object.getPrototypeOf(WebRTCService.prototype), 'removeItem', _this5).call(_this5, signaling, key);
-          reject(new Error('Could not create an RTCDataChannel: WebSocket ' + signaling.socket.url + ' closed'));
-        });
-        _this5.createDataChannel(item.pc, function (dataCh) {
-          setTimeout(function () {
-            subs.unsubscribe();
-            get(WebRTCService.prototype.__proto__ || Object.getPrototypeOf(WebRTCService.prototype), 'removeItem', _this5).call(_this5, signaling, key);
-          }, REMOVE_ITEM_TIMEOUT);
-          resolve(dataCh);
-        });
-        _this5.createOffer(item.pc).then(function (offer) {
-          signaling.send(JSON.stringify({ data: { offer: offer } }));
-          setTimeout(function () {
-            reject(new Error('Could not create an RTCDataChannel: CONNECT_OVER_SIGNALING_TIMEOUT (' + CONNECT_OVER_SIGNALING_TIMEOUT + 'ms)'));
-          }, CONNECT_OVER_SIGNALING_TIMEOUT);
-        }).catch(reject);
-      });
-    }
-
-    /**
-     * Creates an SDP offer.
-     *
-     * @private
-     * @param  {RTCPeerConnection} pc
-     * @return {Promise<RTCSessionDescription, string>} - Resolved when the offer has been succesfully created,
-     * set as local description and sent to the peer.
-     */
-
-  }, {
-    key: 'createOffer',
-    value: function createOffer(pc) {
-      return pc.createOffer().then(function (offer) {
-        return pc.setLocalDescription(offer);
-      }).then(function () {
-        return {
-          type: pc.localDescription.type,
-          sdp: pc.localDescription.sdp
-        };
-      });
-    }
-
-    /**
-     * Creates an SDP answer.
-     *
-     * @private
-     * @param {RTCPeerConnection} pc
-     * @param {string} offer
-     * @param {string[]} candidates
-     * @return {Promise<RTCSessionDescription, string>} - Resolved when the offer
-     *  has been succesfully created, set as local description and sent to the peer.
-     */
-
-  }, {
-    key: 'createAnswer',
-    value: function createAnswer(pc, offer, candidates) {
-      return pc.setRemoteDescription(offer).then(function () {
-        pc.addReceivedCandidates(candidates);
-        return pc.createAnswer();
-      }).then(function (answer) {
-        return pc.setLocalDescription(answer);
-      }).then(function () {
-        return {
-          type: pc.localDescription.type,
-          sdp: pc.localDescription.sdp
-        };
-      });
-    }
-
-    /**
-     * Creates an instance of `RTCPeerConnection` and sets `onicecandidate` event handler.
-     *
-     * @private
-     * @param  {function(candidate: Object)} onCandidate
-     * candidate event handler.
-     * @return {RTCPeerConnection}
-     */
-
-  }, {
-    key: 'createPeerConnection',
-    value: function createPeerConnection(onCandidate) {
-      var _this6 = this;
-
-      var pc = new wrtc.RTCPeerConnection({ iceServers: this.iceServers });
-      pc.isRemoteDescriptionSet = false;
-      pc.addReceivedCandidates = function (candidates) {
-        pc.isRemoteDescriptionSet = true;
-        var _iteratorNormalCompletion = true;
-        var _didIteratorError = false;
-        var _iteratorError = undefined;
-
-        try {
-          for (var _iterator = candidates[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-            var c = _step.value;
-            _this6.addIceCandidate({ pc: pc }, c);
-          }
-        } catch (err) {
-          _didIteratorError = true;
-          _iteratorError = err;
-        } finally {
-          try {
-            if (!_iteratorNormalCompletion && _iterator.return) {
-              _iterator.return();
-            }
-          } finally {
-            if (_didIteratorError) {
-              throw _iteratorError;
-            }
-          }
-        }
-      };
-      pc.onicecandidate = function (evt) {
-        if (evt.candidate !== null) {
-          var candidate = {
-            candidate: evt.candidate.candidate,
-            sdpMid: evt.candidate.sdpMid,
-            sdpMLineIndex: evt.candidate.sdpMLineIndex
-          };
-          onCandidate(candidate);
-        }
-      };
-      return pc;
-    }
-
-    /**
-     *
-     * @private
-     * @param {RTCPeerConnection} pc
-     * @param {function(dc: RTCDataChannel)} onOpen
-     *
-     */
-
-  }, {
-    key: 'createDataChannel',
-    value: function createDataChannel(pc, onOpen) {
-      var dc = pc.createDataChannel(null);
-      dc.onopen = function (evt) {
-        return onOpen(dc);
-      };
-      this.setUpOnDisconnect(pc, dc);
-    }
-
-    /**
-     *
-     * @private
-     * @param {RTCPeerConnection} pc
-     * @param {function(dc: RTCDataChannel)} onOpen
-     *
-     */
-
-  }, {
-    key: 'listenOnDataChannel',
-    value: function listenOnDataChannel(pc, onOpen) {
-      var _this7 = this;
-
-      pc.ondatachannel = function (dcEvt) {
-        _this7.setUpOnDisconnect(pc, dcEvt.channel);
-        dcEvt.channel.onopen = function (evt) {
-          return onOpen(dcEvt.channel);
-        };
-      };
-    }
-
-    /**
-     * @private
-     * @param {RTCPeerConnection} pc
-     * @param {RTCDataChannel} dataCh
-     */
-
-  }, {
-    key: 'setUpOnDisconnect',
-    value: function setUpOnDisconnect(pc, dataCh) {
-      pc.oniceconnectionstatechange = function () {
-        if (pc.iceConnectionState === 'disconnected') {
-          if (dataCh.onclose) {
-            dataCh.onclose(new CloseEvent('disconnect', {
-              code: 4201,
-              reason: 'disconnected'
-            }));
-          }
-        }
-      };
-    }
-
-    /**
-     * @private
-     * @param {CandidatesBuffer|null} obj
-     * @param {string} candidate
-     */
-
-  }, {
-    key: 'addIceCandidate',
-    value: function addIceCandidate(obj, candidate) {
-      if (obj !== null && obj.pc && obj.pc.isRemoteDescriptionSet) {
-        obj.pc.addIceCandidate(new wrtc.RTCIceCandidate(candidate)).catch(function (evt) {
-          return console.error('Add ICE candidate: ' + evt.message);
-        });
-      } else obj.candidates[obj.candidates.length] = candidate;
-    }
-  }]);
-  return WebRTCService;
-}(Service);
-
-/**
- * @private
- */
-
-
-var CandidatesBuffer = function CandidatesBuffer() {
-  var pc = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
-  var candidates = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
-  classCallCheck(this, CandidatesBuffer);
-
-  this.pc = pc;
-  this.candidates = candidates;
-};
-
 var root = createCommonjsModule(function (module, exports) {
 "use strict";
 /**
@@ -1796,7 +1432,7 @@ var tryCatch_1 = {
 	tryCatch: tryCatch_2
 };
 
-var __extends$2 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+var __extends$3 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -1806,7 +1442,7 @@ var __extends$2 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b
  * `unsubscribe` of a {@link Subscription}.
  */
 var UnsubscriptionError = (function (_super) {
-    __extends$2(UnsubscriptionError, _super);
+    __extends$3(UnsubscriptionError, _super);
     function UnsubscriptionError(errors) {
         _super.call(this);
         this.errors = errors;
@@ -2041,7 +1677,7 @@ exports.$$rxSubscriber = exports.rxSubscriber;
 
 });
 
-var __extends$1 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+var __extends$2 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -2061,7 +1697,7 @@ var __extends$1 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b
  * @class Subscriber<T>
  */
 var Subscriber = (function (_super) {
-    __extends$1(Subscriber, _super);
+    __extends$2(Subscriber, _super);
     /**
      * @param {Observer|function(value: T): void} [destinationOrNext] A partially
      * defined Observer or a `next` callback function.
@@ -2194,7 +1830,7 @@ var Subscriber_2 = Subscriber;
  * @extends {Ignored}
  */
 var SafeSubscriber = (function (_super) {
-    __extends$1(SafeSubscriber, _super);
+    __extends$2(SafeSubscriber, _super);
     function SafeSubscriber(_parentSubscriber, observerOrNext, error, complete) {
         _super.call(this);
         this._parentSubscriber = _parentSubscriber;
@@ -2500,7 +2136,7 @@ var Observable_1 = {
 	Observable: Observable_2
 };
 
-var __extends$3 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+var __extends$4 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -2515,7 +2151,7 @@ var __extends$3 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b
  * @class ObjectUnsubscribedError
  */
 var ObjectUnsubscribedError = (function (_super) {
-    __extends$3(ObjectUnsubscribedError, _super);
+    __extends$4(ObjectUnsubscribedError, _super);
     function ObjectUnsubscribedError() {
         var err = _super.call(this, 'object unsubscribed');
         this.name = err.name = 'ObjectUnsubscribedError';
@@ -2531,7 +2167,7 @@ var ObjectUnsubscribedError_1 = {
 	ObjectUnsubscribedError: ObjectUnsubscribedError_2
 };
 
-var __extends$4 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+var __extends$5 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -2543,7 +2179,7 @@ var __extends$4 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b
  * @extends {Ignored}
  */
 var SubjectSubscription = (function (_super) {
-    __extends$4(SubjectSubscription, _super);
+    __extends$5(SubjectSubscription, _super);
     function SubjectSubscription(subject, subscriber) {
         _super.call(this);
         this.subject = subject;
@@ -2575,7 +2211,7 @@ var SubjectSubscription_1 = {
 	SubjectSubscription: SubjectSubscription_2
 };
 
-var __extends = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+var __extends$1 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -2590,18 +2226,19 @@ var __extends = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) 
  * @class SubjectSubscriber<T>
  */
 var SubjectSubscriber = (function (_super) {
-    __extends(SubjectSubscriber, _super);
+    __extends$1(SubjectSubscriber, _super);
     function SubjectSubscriber(destination) {
         _super.call(this, destination);
         this.destination = destination;
     }
     return SubjectSubscriber;
 }(Subscriber_1.Subscriber));
+var SubjectSubscriber_1 = SubjectSubscriber;
 /**
  * @class Subject<T>
  */
 var Subject = (function (_super) {
-    __extends(Subject, _super);
+    __extends$1(Subject, _super);
     function Subject() {
         _super.call(this);
         this.observers = [];
@@ -2704,7 +2341,7 @@ var Subject_2 = Subject;
  * @class AnonymousSubject<T>
  */
 var AnonymousSubject = (function (_super) {
-    __extends(AnonymousSubject, _super);
+    __extends$1(AnonymousSubject, _super);
     function AnonymousSubject(destination, source) {
         _super.call(this);
         this.destination = destination;
@@ -2739,8 +2376,1226 @@ var AnonymousSubject = (function (_super) {
     };
     return AnonymousSubject;
 }(Subject));
+var AnonymousSubject_1 = AnonymousSubject;
 
-var __extends$5 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+
+var Subject_1 = {
+	SubjectSubscriber: SubjectSubscriber_1,
+	Subject: Subject_2,
+	AnonymousSubject: AnonymousSubject_1
+};
+
+var __extends$8 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+
+/**
+ * A unit of work to be executed in a {@link Scheduler}. An action is typically
+ * created from within a Scheduler and an RxJS user does not need to concern
+ * themselves about creating and manipulating an Action.
+ *
+ * ```ts
+ * class Action<T> extends Subscription {
+ *   new (scheduler: Scheduler, work: (state?: T) => void);
+ *   schedule(state?: T, delay: number = 0): Subscription;
+ * }
+ * ```
+ *
+ * @class Action<T>
+ */
+var Action = (function (_super) {
+    __extends$8(Action, _super);
+    function Action(scheduler, work) {
+        _super.call(this);
+    }
+    /**
+     * Schedules this action on its parent Scheduler for execution. May be passed
+     * some context object, `state`. May happen at some point in the future,
+     * according to the `delay` parameter, if specified.
+     * @param {T} [state] Some contextual data that the `work` function uses when
+     * called by the Scheduler.
+     * @param {number} [delay] Time to wait before executing the work, where the
+     * time unit is implicit and defined by the Scheduler.
+     * @return {void}
+     */
+    Action.prototype.schedule = function (state, delay) {
+        if (delay === void 0) { delay = 0; }
+        return this;
+    };
+    return Action;
+}(Subscription_1.Subscription));
+var Action_2 = Action;
+
+
+var Action_1 = {
+	Action: Action_2
+};
+
+var __extends$7 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+
+
+/**
+ * We need this JSDoc comment for affecting ESDoc.
+ * @ignore
+ * @extends {Ignored}
+ */
+var AsyncAction = (function (_super) {
+    __extends$7(AsyncAction, _super);
+    function AsyncAction(scheduler, work) {
+        _super.call(this, scheduler, work);
+        this.scheduler = scheduler;
+        this.work = work;
+        this.pending = false;
+    }
+    AsyncAction.prototype.schedule = function (state, delay) {
+        if (delay === void 0) { delay = 0; }
+        if (this.closed) {
+            return this;
+        }
+        // Always replace the current state with the new state.
+        this.state = state;
+        // Set the pending flag indicating that this action has been scheduled, or
+        // has recursively rescheduled itself.
+        this.pending = true;
+        var id = this.id;
+        var scheduler = this.scheduler;
+        //
+        // Important implementation note:
+        //
+        // Actions only execute once by default, unless rescheduled from within the
+        // scheduled callback. This allows us to implement single and repeat
+        // actions via the same code path, without adding API surface area, as well
+        // as mimic traditional recursion but across asynchronous boundaries.
+        //
+        // However, JS runtimes and timers distinguish between intervals achieved by
+        // serial `setTimeout` calls vs. a single `setInterval` call. An interval of
+        // serial `setTimeout` calls can be individually delayed, which delays
+        // scheduling the next `setTimeout`, and so on. `setInterval` attempts to
+        // guarantee the interval callback will be invoked more precisely to the
+        // interval period, regardless of load.
+        //
+        // Therefore, we use `setInterval` to schedule single and repeat actions.
+        // If the action reschedules itself with the same delay, the interval is not
+        // canceled. If the action doesn't reschedule, or reschedules with a
+        // different delay, the interval will be canceled after scheduled callback
+        // execution.
+        //
+        if (id != null) {
+            this.id = this.recycleAsyncId(scheduler, id, delay);
+        }
+        this.delay = delay;
+        // If this action has already an async Id, don't request a new one.
+        this.id = this.id || this.requestAsyncId(scheduler, this.id, delay);
+        return this;
+    };
+    AsyncAction.prototype.requestAsyncId = function (scheduler, id, delay) {
+        if (delay === void 0) { delay = 0; }
+        return root.root.setInterval(scheduler.flush.bind(scheduler, this), delay);
+    };
+    AsyncAction.prototype.recycleAsyncId = function (scheduler, id, delay) {
+        if (delay === void 0) { delay = 0; }
+        // If this action is rescheduled with the same delay time, don't clear the interval id.
+        if (delay !== null && this.delay === delay) {
+            return id;
+        }
+        // Otherwise, if the action's delay time is different from the current delay,
+        // clear the interval id
+        return root.root.clearInterval(id) && undefined || undefined;
+    };
+    /**
+     * Immediately executes this action and the `work` it contains.
+     * @return {any}
+     */
+    AsyncAction.prototype.execute = function (state, delay) {
+        if (this.closed) {
+            return new Error('executing a cancelled action');
+        }
+        this.pending = false;
+        var error = this._execute(state, delay);
+        if (error) {
+            return error;
+        }
+        else if (this.pending === false && this.id != null) {
+            // Dequeue if the action didn't reschedule itself. Don't call
+            // unsubscribe(), because the action could reschedule later.
+            // For example:
+            // ```
+            // scheduler.schedule(function doWork(counter) {
+            //   /* ... I'm a busy worker bee ... */
+            //   var originalAction = this;
+            //   /* wait 100ms before rescheduling the action */
+            //   setTimeout(function () {
+            //     originalAction.schedule(counter + 1);
+            //   }, 100);
+            // }, 1000);
+            // ```
+            this.id = this.recycleAsyncId(this.scheduler, this.id, null);
+        }
+    };
+    AsyncAction.prototype._execute = function (state, delay) {
+        var errored = false;
+        var errorValue = undefined;
+        try {
+            this.work(state);
+        }
+        catch (e) {
+            errored = true;
+            errorValue = !!e && e || new Error(e);
+        }
+        if (errored) {
+            this.unsubscribe();
+            return errorValue;
+        }
+    };
+    AsyncAction.prototype._unsubscribe = function () {
+        var id = this.id;
+        var scheduler = this.scheduler;
+        var actions = scheduler.actions;
+        var index = actions.indexOf(this);
+        this.work = null;
+        this.delay = null;
+        this.state = null;
+        this.pending = false;
+        this.scheduler = null;
+        if (index !== -1) {
+            actions.splice(index, 1);
+        }
+        if (id != null) {
+            this.id = this.recycleAsyncId(scheduler, id, null);
+        }
+    };
+    return AsyncAction;
+}(Action_1.Action));
+var AsyncAction_2 = AsyncAction;
+
+
+var AsyncAction_1 = {
+	AsyncAction: AsyncAction_2
+};
+
+var __extends$6 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+
+/**
+ * We need this JSDoc comment for affecting ESDoc.
+ * @ignore
+ * @extends {Ignored}
+ */
+var QueueAction = (function (_super) {
+    __extends$6(QueueAction, _super);
+    function QueueAction(scheduler, work) {
+        _super.call(this, scheduler, work);
+        this.scheduler = scheduler;
+        this.work = work;
+    }
+    QueueAction.prototype.schedule = function (state, delay) {
+        if (delay === void 0) { delay = 0; }
+        if (delay > 0) {
+            return _super.prototype.schedule.call(this, state, delay);
+        }
+        this.delay = delay;
+        this.state = state;
+        this.scheduler.flush(this);
+        return this;
+    };
+    QueueAction.prototype.execute = function (state, delay) {
+        return (delay > 0 || this.closed) ?
+            _super.prototype.execute.call(this, state, delay) :
+            this._execute(state, delay);
+    };
+    QueueAction.prototype.requestAsyncId = function (scheduler, id, delay) {
+        if (delay === void 0) { delay = 0; }
+        // If delay exists and is greater than 0, or if the delay is null (the
+        // action wasn't rescheduled) but was originally scheduled as an async
+        // action, then recycle as an async action.
+        if ((delay !== null && delay > 0) || (delay === null && this.delay > 0)) {
+            return _super.prototype.requestAsyncId.call(this, scheduler, id, delay);
+        }
+        // Otherwise flush the scheduler starting with this action.
+        return scheduler.flush(this);
+    };
+    return QueueAction;
+}(AsyncAction_1.AsyncAction));
+var QueueAction_2 = QueueAction;
+
+
+var QueueAction_1 = {
+	QueueAction: QueueAction_2
+};
+
+/**
+ * An execution context and a data structure to order tasks and schedule their
+ * execution. Provides a notion of (potentially virtual) time, through the
+ * `now()` getter method.
+ *
+ * Each unit of work in a Scheduler is called an {@link Action}.
+ *
+ * ```ts
+ * class Scheduler {
+ *   now(): number;
+ *   schedule(work, delay?, state?): Subscription;
+ * }
+ * ```
+ *
+ * @class Scheduler
+ */
+var Scheduler = (function () {
+    function Scheduler(SchedulerAction, now) {
+        if (now === void 0) { now = Scheduler.now; }
+        this.SchedulerAction = SchedulerAction;
+        this.now = now;
+    }
+    /**
+     * Schedules a function, `work`, for execution. May happen at some point in
+     * the future, according to the `delay` parameter, if specified. May be passed
+     * some context object, `state`, which will be passed to the `work` function.
+     *
+     * The given arguments will be processed an stored as an Action object in a
+     * queue of actions.
+     *
+     * @param {function(state: ?T): ?Subscription} work A function representing a
+     * task, or some unit of work to be executed by the Scheduler.
+     * @param {number} [delay] Time to wait before executing the work, where the
+     * time unit is implicit and defined by the Scheduler itself.
+     * @param {T} [state] Some contextual data that the `work` function uses when
+     * called by the Scheduler.
+     * @return {Subscription} A subscription in order to be able to unsubscribe
+     * the scheduled work.
+     */
+    Scheduler.prototype.schedule = function (work, delay, state) {
+        if (delay === void 0) { delay = 0; }
+        return new this.SchedulerAction(this, work).schedule(state, delay);
+    };
+    Scheduler.now = Date.now ? Date.now : function () { return +new Date(); };
+    return Scheduler;
+}());
+var Scheduler_2 = Scheduler;
+
+
+var Scheduler_1 = {
+	Scheduler: Scheduler_2
+};
+
+var __extends$10 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+
+var AsyncScheduler = (function (_super) {
+    __extends$10(AsyncScheduler, _super);
+    function AsyncScheduler() {
+        _super.apply(this, arguments);
+        this.actions = [];
+        /**
+         * A flag to indicate whether the Scheduler is currently executing a batch of
+         * queued actions.
+         * @type {boolean}
+         */
+        this.active = false;
+        /**
+         * An internal ID used to track the latest asynchronous task such as those
+         * coming from `setTimeout`, `setInterval`, `requestAnimationFrame`, and
+         * others.
+         * @type {any}
+         */
+        this.scheduled = undefined;
+    }
+    AsyncScheduler.prototype.flush = function (action) {
+        var actions = this.actions;
+        if (this.active) {
+            actions.push(action);
+            return;
+        }
+        var error;
+        this.active = true;
+        do {
+            if (error = action.execute(action.state, action.delay)) {
+                break;
+            }
+        } while (action = actions.shift()); // exhaust the scheduler queue
+        this.active = false;
+        if (error) {
+            while (action = actions.shift()) {
+                action.unsubscribe();
+            }
+            throw error;
+        }
+    };
+    return AsyncScheduler;
+}(Scheduler_1.Scheduler));
+var AsyncScheduler_2 = AsyncScheduler;
+
+
+var AsyncScheduler_1 = {
+	AsyncScheduler: AsyncScheduler_2
+};
+
+var __extends$9 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+
+var QueueScheduler = (function (_super) {
+    __extends$9(QueueScheduler, _super);
+    function QueueScheduler() {
+        _super.apply(this, arguments);
+    }
+    return QueueScheduler;
+}(AsyncScheduler_1.AsyncScheduler));
+var QueueScheduler_2 = QueueScheduler;
+
+
+var QueueScheduler_1 = {
+	QueueScheduler: QueueScheduler_2
+};
+
+/**
+ *
+ * Queue Scheduler
+ *
+ * <span class="informal">Put every next task on a queue, instead of executing it immediately</span>
+ *
+ * `queue` scheduler, when used with delay, behaves the same as {@link async} scheduler.
+ *
+ * When used without delay, it schedules given task synchronously - executes it right when
+ * it is scheduled. However when called recursively, that is when inside the scheduled task,
+ * another task is scheduled with queue scheduler, instead of executing immediately as well,
+ * that task will be put on a queue and wait for current one to finish.
+ *
+ * This means that when you execute task with `queue` scheduler, you are sure it will end
+ * before any other task scheduled with that scheduler will start.
+ *
+ * @examples <caption>Schedule recursively first, then do something</caption>
+ *
+ * Rx.Scheduler.queue.schedule(() => {
+ *   Rx.Scheduler.queue.schedule(() => console.log('second')); // will not happen now, but will be put on a queue
+ *
+ *   console.log('first');
+ * });
+ *
+ * // Logs:
+ * // "first"
+ * // "second"
+ *
+ *
+ * @example <caption>Reschedule itself recursively</caption>
+ *
+ * Rx.Scheduler.queue.schedule(function(state) {
+ *   if (state !== 0) {
+ *     console.log('before', state);
+ *     this.schedule(state - 1); // `this` references currently executing Action,
+ *                               // which we reschedule with new state
+ *     console.log('after', state);
+ *   }
+ * }, 0, 3);
+ *
+ * // In scheduler that runs recursively, you would expect:
+ * // "before", 3
+ * // "before", 2
+ * // "before", 1
+ * // "after", 1
+ * // "after", 2
+ * // "after", 3
+ *
+ * // But with queue it logs:
+ * // "before", 3
+ * // "after", 3
+ * // "before", 2
+ * // "after", 2
+ * // "before", 1
+ * // "after", 1
+ *
+ *
+ * @static true
+ * @name queue
+ * @owner Scheduler
+ */
+var queue_1 = new QueueScheduler_1.QueueScheduler(QueueAction_1.QueueAction);
+
+
+var queue = {
+	queue: queue_1
+};
+
+/**
+ * Represents a push-based event or value that an {@link Observable} can emit.
+ * This class is particularly useful for operators that manage notifications,
+ * like {@link materialize}, {@link dematerialize}, {@link observeOn}, and
+ * others. Besides wrapping the actual delivered value, it also annotates it
+ * with metadata of, for instance, what type of push message it is (`next`,
+ * `error`, or `complete`).
+ *
+ * @see {@link materialize}
+ * @see {@link dematerialize}
+ * @see {@link observeOn}
+ *
+ * @class Notification<T>
+ */
+var Notification = (function () {
+    function Notification(kind, value, error) {
+        this.kind = kind;
+        this.value = value;
+        this.error = error;
+        this.hasValue = kind === 'N';
+    }
+    /**
+     * Delivers to the given `observer` the value wrapped by this Notification.
+     * @param {Observer} observer
+     * @return
+     */
+    Notification.prototype.observe = function (observer) {
+        switch (this.kind) {
+            case 'N':
+                return observer.next && observer.next(this.value);
+            case 'E':
+                return observer.error && observer.error(this.error);
+            case 'C':
+                return observer.complete && observer.complete();
+        }
+    };
+    /**
+     * Given some {@link Observer} callbacks, deliver the value represented by the
+     * current Notification to the correctly corresponding callback.
+     * @param {function(value: T): void} next An Observer `next` callback.
+     * @param {function(err: any): void} [error] An Observer `error` callback.
+     * @param {function(): void} [complete] An Observer `complete` callback.
+     * @return {any}
+     */
+    Notification.prototype.do = function (next, error, complete) {
+        var kind = this.kind;
+        switch (kind) {
+            case 'N':
+                return next && next(this.value);
+            case 'E':
+                return error && error(this.error);
+            case 'C':
+                return complete && complete();
+        }
+    };
+    /**
+     * Takes an Observer or its individual callback functions, and calls `observe`
+     * or `do` methods accordingly.
+     * @param {Observer|function(value: T): void} nextOrObserver An Observer or
+     * the `next` callback.
+     * @param {function(err: any): void} [error] An Observer `error` callback.
+     * @param {function(): void} [complete] An Observer `complete` callback.
+     * @return {any}
+     */
+    Notification.prototype.accept = function (nextOrObserver, error, complete) {
+        if (nextOrObserver && typeof nextOrObserver.next === 'function') {
+            return this.observe(nextOrObserver);
+        }
+        else {
+            return this.do(nextOrObserver, error, complete);
+        }
+    };
+    /**
+     * Returns a simple Observable that just delivers the notification represented
+     * by this Notification instance.
+     * @return {any}
+     */
+    Notification.prototype.toObservable = function () {
+        var kind = this.kind;
+        switch (kind) {
+            case 'N':
+                return Observable_1.Observable.of(this.value);
+            case 'E':
+                return Observable_1.Observable.throw(this.error);
+            case 'C':
+                return Observable_1.Observable.empty();
+        }
+        throw new Error('unexpected notification kind value');
+    };
+    /**
+     * A shortcut to create a Notification instance of the type `next` from a
+     * given value.
+     * @param {T} value The `next` value.
+     * @return {Notification<T>} The "next" Notification representing the
+     * argument.
+     */
+    Notification.createNext = function (value) {
+        if (typeof value !== 'undefined') {
+            return new Notification('N', value);
+        }
+        return this.undefinedValueNotification;
+    };
+    /**
+     * A shortcut to create a Notification instance of the type `error` from a
+     * given error.
+     * @param {any} [err] The `error` error.
+     * @return {Notification<T>} The "error" Notification representing the
+     * argument.
+     */
+    Notification.createError = function (err) {
+        return new Notification('E', undefined, err);
+    };
+    /**
+     * A shortcut to create a Notification instance of the type `complete`.
+     * @return {Notification<any>} The valueless "complete" Notification.
+     */
+    Notification.createComplete = function () {
+        return this.completeNotification;
+    };
+    Notification.completeNotification = new Notification('C');
+    Notification.undefinedValueNotification = new Notification('N', undefined);
+    return Notification;
+}());
+var Notification_2 = Notification;
+
+
+var Notification_1 = {
+	Notification: Notification_2
+};
+
+var __extends$11 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+
+
+/**
+ * @see {@link Notification}
+ *
+ * @param scheduler
+ * @param delay
+ * @return {Observable<R>|WebSocketSubject<T>|Observable<T>}
+ * @method observeOn
+ * @owner Observable
+ */
+function observeOn(scheduler, delay) {
+    if (delay === void 0) { delay = 0; }
+    return this.lift(new ObserveOnOperator(scheduler, delay));
+}
+var observeOn_2 = observeOn;
+var ObserveOnOperator = (function () {
+    function ObserveOnOperator(scheduler, delay) {
+        if (delay === void 0) { delay = 0; }
+        this.scheduler = scheduler;
+        this.delay = delay;
+    }
+    ObserveOnOperator.prototype.call = function (subscriber, source) {
+        return source.subscribe(new ObserveOnSubscriber(subscriber, this.scheduler, this.delay));
+    };
+    return ObserveOnOperator;
+}());
+var ObserveOnOperator_1 = ObserveOnOperator;
+/**
+ * We need this JSDoc comment for affecting ESDoc.
+ * @ignore
+ * @extends {Ignored}
+ */
+var ObserveOnSubscriber = (function (_super) {
+    __extends$11(ObserveOnSubscriber, _super);
+    function ObserveOnSubscriber(destination, scheduler, delay) {
+        if (delay === void 0) { delay = 0; }
+        _super.call(this, destination);
+        this.scheduler = scheduler;
+        this.delay = delay;
+    }
+    ObserveOnSubscriber.dispatch = function (arg) {
+        var notification = arg.notification, destination = arg.destination;
+        notification.observe(destination);
+        this.unsubscribe();
+    };
+    ObserveOnSubscriber.prototype.scheduleMessage = function (notification) {
+        this.add(this.scheduler.schedule(ObserveOnSubscriber.dispatch, this.delay, new ObserveOnMessage(notification, this.destination)));
+    };
+    ObserveOnSubscriber.prototype._next = function (value) {
+        this.scheduleMessage(Notification_1.Notification.createNext(value));
+    };
+    ObserveOnSubscriber.prototype._error = function (err) {
+        this.scheduleMessage(Notification_1.Notification.createError(err));
+    };
+    ObserveOnSubscriber.prototype._complete = function () {
+        this.scheduleMessage(Notification_1.Notification.createComplete());
+    };
+    return ObserveOnSubscriber;
+}(Subscriber_1.Subscriber));
+var ObserveOnSubscriber_1 = ObserveOnSubscriber;
+var ObserveOnMessage = (function () {
+    function ObserveOnMessage(notification, destination) {
+        this.notification = notification;
+        this.destination = destination;
+    }
+    return ObserveOnMessage;
+}());
+var ObserveOnMessage_1 = ObserveOnMessage;
+
+
+var observeOn_1 = {
+	observeOn: observeOn_2,
+	ObserveOnOperator: ObserveOnOperator_1,
+	ObserveOnSubscriber: ObserveOnSubscriber_1,
+	ObserveOnMessage: ObserveOnMessage_1
+};
+
+var __extends = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+
+
+
+
+
+
+/**
+ * @class ReplaySubject<T>
+ */
+var ReplaySubject = (function (_super) {
+    __extends(ReplaySubject, _super);
+    function ReplaySubject(bufferSize, windowTime, scheduler) {
+        if (bufferSize === void 0) { bufferSize = Number.POSITIVE_INFINITY; }
+        if (windowTime === void 0) { windowTime = Number.POSITIVE_INFINITY; }
+        _super.call(this);
+        this.scheduler = scheduler;
+        this._events = [];
+        this._bufferSize = bufferSize < 1 ? 1 : bufferSize;
+        this._windowTime = windowTime < 1 ? 1 : windowTime;
+    }
+    ReplaySubject.prototype.next = function (value) {
+        var now = this._getNow();
+        this._events.push(new ReplayEvent(now, value));
+        this._trimBufferThenGetEvents();
+        _super.prototype.next.call(this, value);
+    };
+    ReplaySubject.prototype._subscribe = function (subscriber) {
+        var _events = this._trimBufferThenGetEvents();
+        var scheduler = this.scheduler;
+        var subscription;
+        if (this.closed) {
+            throw new ObjectUnsubscribedError_1.ObjectUnsubscribedError();
+        }
+        else if (this.hasError) {
+            subscription = Subscription_1.Subscription.EMPTY;
+        }
+        else if (this.isStopped) {
+            subscription = Subscription_1.Subscription.EMPTY;
+        }
+        else {
+            this.observers.push(subscriber);
+            subscription = new SubjectSubscription_1.SubjectSubscription(this, subscriber);
+        }
+        if (scheduler) {
+            subscriber.add(subscriber = new observeOn_1.ObserveOnSubscriber(subscriber, scheduler));
+        }
+        var len = _events.length;
+        for (var i = 0; i < len && !subscriber.closed; i++) {
+            subscriber.next(_events[i].value);
+        }
+        if (this.hasError) {
+            subscriber.error(this.thrownError);
+        }
+        else if (this.isStopped) {
+            subscriber.complete();
+        }
+        return subscription;
+    };
+    ReplaySubject.prototype._getNow = function () {
+        return (this.scheduler || queue.queue).now();
+    };
+    ReplaySubject.prototype._trimBufferThenGetEvents = function () {
+        var now = this._getNow();
+        var _bufferSize = this._bufferSize;
+        var _windowTime = this._windowTime;
+        var _events = this._events;
+        var eventsCount = _events.length;
+        var spliceCount = 0;
+        // Trim events that fall out of the time window.
+        // Start at the front of the list. Break early once
+        // we encounter an event that falls within the window.
+        while (spliceCount < eventsCount) {
+            if ((now - _events[spliceCount].time) < _windowTime) {
+                break;
+            }
+            spliceCount++;
+        }
+        if (eventsCount > _bufferSize) {
+            spliceCount = Math.max(spliceCount, eventsCount - _bufferSize);
+        }
+        if (spliceCount > 0) {
+            _events.splice(0, spliceCount);
+        }
+        return _events;
+    };
+    return ReplaySubject;
+}(Subject_1.Subject));
+var ReplaySubject_2 = ReplaySubject;
+var ReplayEvent = (function () {
+    function ReplayEvent(time, value) {
+        this.time = time;
+        this.value = value;
+    }
+    return ReplayEvent;
+}());
+
+var __extends$12 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+
+/**
+ * Applies a given `project` function to each value emitted by the source
+ * Observable, and emits the resulting values as an Observable.
+ *
+ * <span class="informal">Like [Array.prototype.map()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map),
+ * it passes each source value through a transformation function to get
+ * corresponding output values.</span>
+ *
+ * <img src="./img/map.png" width="100%">
+ *
+ * Similar to the well known `Array.prototype.map` function, this operator
+ * applies a projection to each value and emits that projection in the output
+ * Observable.
+ *
+ * @example <caption>Map every every click to the clientX position of that click</caption>
+ * var clicks = Rx.Observable.fromEvent(document, 'click');
+ * var positions = clicks.map(ev => ev.clientX);
+ * positions.subscribe(x => console.log(x));
+ *
+ * @see {@link mapTo}
+ * @see {@link pluck}
+ *
+ * @param {function(value: T, index: number): R} project The function to apply
+ * to each `value` emitted by the source Observable. The `index` parameter is
+ * the number `i` for the i-th emission that has happened since the
+ * subscription, starting from the number `0`.
+ * @param {any} [thisArg] An optional argument to define what `this` is in the
+ * `project` function.
+ * @return {Observable<R>} An Observable that emits the values from the source
+ * Observable transformed by the given `project` function.
+ * @method map
+ * @owner Observable
+ */
+function map$2(project, thisArg) {
+    if (typeof project !== 'function') {
+        throw new TypeError('argument is not a function. Are you looking for `mapTo()`?');
+    }
+    return this.lift(new MapOperator(project, thisArg));
+}
+var map_2 = map$2;
+var MapOperator = (function () {
+    function MapOperator(project, thisArg) {
+        this.project = project;
+        this.thisArg = thisArg;
+    }
+    MapOperator.prototype.call = function (subscriber, source) {
+        return source.subscribe(new MapSubscriber(subscriber, this.project, this.thisArg));
+    };
+    return MapOperator;
+}());
+var MapOperator_1 = MapOperator;
+/**
+ * We need this JSDoc comment for affecting ESDoc.
+ * @ignore
+ * @extends {Ignored}
+ */
+var MapSubscriber = (function (_super) {
+    __extends$12(MapSubscriber, _super);
+    function MapSubscriber(destination, project, thisArg) {
+        _super.call(this, destination);
+        this.project = project;
+        this.count = 0;
+        this.thisArg = thisArg || this;
+    }
+    // NOTE: This looks unoptimized, but it's actually purposefully NOT
+    // using try/catch optimizations.
+    MapSubscriber.prototype._next = function (value) {
+        var result;
+        try {
+            result = this.project.call(this.thisArg, value, this.count++);
+        }
+        catch (err) {
+            this.destination.error(err);
+            return;
+        }
+        this.destination.next(result);
+    };
+    return MapSubscriber;
+}(Subscriber_1.Subscriber));
+
+
+var map_1 = {
+	map: map_2,
+	MapOperator: MapOperator_1
+};
+
+Observable_1.Observable.prototype.map = map_1.map;
+
+var serviceMessageStream = Symbol('serviceMessageStream');
+var webrtcService = Symbol('webrtcServiceStream');
+
+var wrtc = Util.require(Util.WEB_RTC);
+var CloseEvent = Util.require(Util.CLOSE_EVENT);
+
+var CONNECTION_TIMEOUT = 5000;
+
+/**
+ * Service class responsible to establish `RTCDataChannel` between two clients via
+ * signaling server or `WebChannel`.
+ *
+ */
+
+var WebRTCService = function (_Service) {
+  inherits(WebRTCService, _Service);
+
+  function WebRTCService() {
+    classCallCheck(this, WebRTCService);
+    return possibleConstructorReturn(this, (WebRTCService.__proto__ || Object.getPrototypeOf(WebRTCService)).apply(this, arguments));
+  }
+
+  createClass(WebRTCService, [{
+    key: 'onChannelFromWebChannel',
+    value: function onChannelFromWebChannel(wc) {
+      var _this2 = this;
+
+      return this.onDataChannel(wc[serviceMessageStream].filter(function (msg) {
+        return msg.serviceId === _this2.id;
+      }).map(function (msg) {
+        return { msg: msg.content, id: msg.senderId };
+      }), function (msg, id) {
+        return wc.sendInnerTo(id, _this2.id, msg);
+      });
+    }
+
+    /**
+     * Establish an `RTCDataChannel` with a peer identified by `id` trough `WebChannel`.
+     * Starts by sending an **SDP offer**.
+     *
+     * @param {WebChannel} wc WebChannel
+     * @param {number} id Peer id
+     * @param {RTCConfiguration} rtcConfiguration Configuration object for `RTCPeerConnection`
+     *
+     * @returns {Promise<RTCDataChannel>} Data channel between you and `id` peer
+     */
+
+  }, {
+    key: 'connectOverWebChannel',
+    value: function connectOverWebChannel(wc, id, rtcConfiguration) {
+      var _this3 = this;
+
+      return this.createDataChannel(wc[serviceMessageStream].filter(function (msg) {
+        return msg.serviceId === _this3.id && msg.senderId === id;
+      }).map(function (msg) {
+        return msg.content;
+      }), function (msg) {
+        return wc.sendInnerTo(id, _this3.id, msg);
+      }, wc.myId, rtcConfiguration);
+    }
+
+    /**
+     * Listen on `RTCDataChannel` from Signaling server. Starts to listen on **SDP answer**.
+     *
+     * @param {Subject} stream Specific to Netflux RxJs Subject connection with Signaling server
+     * @param {RTCConfiguration} rtcConfiguration Configuration object for `RTCPeerConnection`
+     *
+     * @returns {Observable<RTCDataChannel>} Observable emitting `RTCDataChannel`. Can emit errors and completes when the stream with Signaling server has completed.
+     */
+
+  }, {
+    key: 'onChannelFromSignaling',
+    value: function onChannelFromSignaling(stream, rtcConfiguration) {
+      return this.onDataChannel(stream.filter(function (msg) {
+        return 'id' in msg && 'data' in msg;
+      }).map(function (msg) {
+        return { msg: msg.data, id: msg.id };
+      }), function (msg, id) {
+        return stream.send(JSON.stringify({ id: id, data: msg }));
+      }, rtcConfiguration);
+    }
+
+    /**
+     * Establish an `RTCDataChannel` with a peer identified by `id` trough Signaling server.
+     * Starts by sending an **SDP offer**.
+     *
+     * @param {Subject} stream Specific to Netflux RxJs Subject connection with Signaling server
+     * @param {RTCConfiguration} rtcConfiguration Configuration object for `RTCPeerConnection`
+     *
+     * @returns {Promise<RTCDataChannel>} Data channel between you and `id` peer
+     */
+
+  }, {
+    key: 'connectOverSignaling',
+    value: function connectOverSignaling(stream, rtcConfiguration) {
+      return this.createDataChannel(stream.filter(function (msg) {
+        return 'data' in msg;
+      }).map(function (msg) {
+        return msg.data;
+      }), function (msg) {
+        return stream.send(JSON.stringify({ data: msg }));
+      }, rtcConfiguration);
+    }
+
+    /**
+     * @private
+     * @param  {Subject} stream
+     * @param  {function(msg: Object): void} send
+     * @param  {string} [label=null]
+     * @param  {RTCConfiguration} rtcConfiguration
+     * @return {Promise<RTCDataChannel>}
+     */
+
+  }, {
+    key: 'createDataChannel',
+    value: function createDataChannel(stream, send) {
+      var _this4 = this;
+
+      var label = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+      var rtcConfiguration = arguments[3];
+
+      var pc = this.createPeerConnection(rtcConfiguration);
+      var remoteCandidateStream = new ReplaySubject_2();
+      this.createLocalCandidateStream(pc).subscribe(function (candidate) {
+        return send({ candidate: candidate });
+      }, function (err) {
+        return console.warn(err);
+      }, function () {
+        return send({ candidate: '' });
+      });
+
+      return new Promise(function (resolve, reject) {
+        var subs = stream.subscribe(function (msg) {
+          if ('answer' in msg) {
+            pc.setRemoteDescription(msg.answer).then(function () {
+              remoteCandidateStream.subscribe(function (candidate) {
+                pc.addIceCandidate(new wrtc.RTCIceCandidate(candidate)).catch(reject);
+              }, function (err) {
+                return console.warn(err);
+              }, function () {
+                return subs.unsubscribe();
+              });
+            }).catch(reject);
+          } else if ('candidate' in msg) {
+            if (msg.candidate !== '') {
+              remoteCandidateStream.next(msg.candidate);
+            } else {
+              remoteCandidateStream.complete();
+            }
+          }
+        }, reject, function () {
+          return reject(new Error('Failed to establish RTCDataChannel: the connection with Signaling server was closed'));
+        });
+
+        _this4.openDataChannel(pc, true, label).then(resolve).catch(reject);
+
+        pc.createOffer().then(function (offer) {
+          return pc.setLocalDescription(offer);
+        }).then(function () {
+          return send({ offer: {
+              type: pc.localDescription.type,
+              sdp: pc.localDescription.sdp
+            } });
+        }).catch(reject);
+      });
+    }
+
+    /**
+     * @private
+     * @param  {Subject} stream
+     * @param  {function(msg: Object, id: number): void} send
+     * @param  {RTCConfiguration} rtcConfiguration
+     * @return {Observable<RTCDataChannel>}
+     */
+
+  }, {
+    key: 'onDataChannel',
+    value: function onDataChannel(stream, send, rtcConfiguration) {
+      var _this5 = this;
+
+      return Observable_2.create(function (observer) {
+        var clients = new Map();
+        stream.subscribe(function (_ref) {
+          var msg = _ref.msg,
+              id = _ref.id;
+
+          var client = clients.get(id);
+          var pc = void 0;
+          var remoteCandidateStream = void 0;
+          if (client) {
+            var _client = slicedToArray(client, 2);
+
+            pc = _client[0];
+            remoteCandidateStream = _client[1];
+          } else {
+            pc = _this5.createPeerConnection(rtcConfiguration);
+            remoteCandidateStream = new ReplaySubject_2();
+            _this5.createLocalCandidateStream(pc).subscribe(function (candidate) {
+              return send({ candidate: candidate }, id);
+            }, function (err) {
+              return console.warn(err);
+            }, function () {
+              return send({ candidate: '' }, id);
+            });
+            clients.set(id, [pc, remoteCandidateStream]);
+          }
+          if ('offer' in msg) {
+            _this5.openDataChannel(pc, false).then(function (dc) {
+              return observer.next(dc);
+            }).catch(function (err) {
+              clients.delete(id);
+              console.warn('Client "' + id + '" failed to establish RTCDataChannel with you: ' + err.message);
+            });
+            pc.setRemoteDescription(msg.offer).then(function () {
+              return remoteCandidateStream.subscribe(function (candidate) {
+                pc.addIceCandidate(new wrtc.RTCIceCandidate(candidate)).catch(function (err) {
+                  return console.warn(err);
+                });
+              }, function (err) {
+                return console.warn(err);
+              }, function () {
+                return clients.delete(id);
+              });
+            }).then(function () {
+              return pc.createAnswer();
+            }).then(function (answer) {
+              return pc.setLocalDescription(answer);
+            }).then(function () {
+              return send({ answer: {
+                  type: pc.localDescription.type,
+                  sdp: pc.localDescription.sdp
+                } }, id);
+            }).catch(function (err) {
+              clients.delete(id);
+              console.warn(err);
+            });
+          } else if ('candidate' in msg) {
+            if (msg.candidate !== '') {
+              remoteCandidateStream.next(msg.candidate);
+            } else {
+              remoteCandidateStream.complete();
+            }
+          }
+        }, function (err) {
+          return observer.error(err);
+        }, function () {
+          return observer.complete();
+        });
+      });
+    }
+
+    /**
+     * @private
+     * @param  {RTCConfiguration} [rtcConfiguration={}]
+     * @return {RTCPeerConnection}
+     */
+
+  }, {
+    key: 'createPeerConnection',
+    value: function createPeerConnection() {
+      var rtcConfiguration = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+      return new wrtc.RTCPeerConnection(rtcConfiguration);
+    }
+
+    /**
+     * @private
+     * @param  {RTCPeerConnection} pc
+     * @return {Observable<{candidate: string, sdpMid: string, sdpMLineIndex: string}>}
+     */
+
+  }, {
+    key: 'createLocalCandidateStream',
+    value: function createLocalCandidateStream(pc) {
+      return Observable_2.create(function (observer) {
+        pc.onicecandidate = function (evt) {
+          if (evt.candidate !== null) {
+            observer.next({
+              candidate: evt.candidate.candidate,
+              sdpMid: evt.candidate.sdpMid,
+              sdpMLineIndex: evt.candidate.sdpMLineIndex
+            });
+          } else {
+            observer.complete();
+          }
+        };
+      });
+    }
+
+    /**
+     * @private
+     * @param  {RTCPeerConnection} pc
+     * @param  {boolean} offerCreator
+     * @param  {string} [label=null]
+     * @return {Promise<RTCDataChannel>}
+     */
+
+  }, {
+    key: 'openDataChannel',
+    value: function openDataChannel(pc, offerCreator) {
+      var _this6 = this;
+
+      var label = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+
+      if (offerCreator) {
+        var dc = void 0;
+        try {
+          dc = pc.createDataChannel(label);
+          this.configOnDisconnect(pc, dc);
+          return new Promise(function (resolve, reject) {
+            var timeout = setTimeout(function () {
+              reject(new Error(CONNECTION_TIMEOUT + 'ms timeout'));
+            }, CONNECTION_TIMEOUT);
+            dc.onopen = function (evt) {
+              clearTimeout(timeout);
+              resolve(dc);
+            };
+          });
+        } catch (err) {
+          return Promise.reject(err);
+        }
+      } else {
+        return new Promise(function (resolve, reject) {
+          var timeout = setTimeout(function () {
+            reject(new Error(CONNECTION_TIMEOUT + 'ms timeout'));
+          }, CONNECTION_TIMEOUT);
+          pc.ondatachannel = function (dcEvt) {
+            _this6.configOnDisconnect(pc, dcEvt.channel);
+            dcEvt.channel.onopen = function (evt) {
+              clearTimeout(timeout);
+              resolve(dcEvt.channel);
+            };
+          };
+        });
+      }
+    }
+
+    /**
+     * @private
+     * @param {RTCPeerConnection} pc
+     * @param {RTCDataChannel} dc
+     */
+
+  }, {
+    key: 'configOnDisconnect',
+    value: function configOnDisconnect(pc, dc) {
+      pc.oniceconnectionstatechange = function () {
+        if (pc.iceConnectionState === 'disconnected' && dc.onclose) {
+          dc.onclose(new CloseEvent('disconnect', {
+            code: 4201,
+            reason: 'disconnected'
+          }));
+        }
+      };
+    }
+  }]);
+  return WebRTCService;
+}(Service);
+
+var __extends$13 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -2806,7 +3661,7 @@ var FilterOperator = (function () {
  * @extends {Ignored}
  */
 var FilterSubscriber = (function (_super) {
-    __extends$5(FilterSubscriber, _super);
+    __extends$13(FilterSubscriber, _super);
     function FilterSubscriber(destination, predicate, thisArg) {
         _super.call(this, destination);
         this.predicate = predicate;
@@ -3209,6 +4064,7 @@ var ChannelBuilderService = function (_Service) {
             channel.send(JSON.stringify({ wcId: wc.id, senderId: wc.myId }));
             _this4.onChannel(wc, channel, senderId);
           }).catch(function (reason) {
+<<<<<<< Updated upstream
             ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId).then(function (channel) {
               return _this4.onChannel(wc, channel, senderId);
             }).catch(function (reason) {
@@ -3218,6 +4074,17 @@ var ChannelBuilderService = function (_Service) {
                 get(ChannelBuilderService.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilderService.prototype), 'getPendingRequest', _this4).call(_this4, wc, senderId).reject(new Error('Failed to establish a socket and then a data channel: ' + reason));
               }
             });
+=======
+            return ServiceFactory.get(WEB_RTC).connectOverWebChannel(wc, senderId, { iceServers: wc.iceServers });
+          }).then(function (channel) {
+            return _this4.onChannel(wc, channel, senderId);
+          }).catch(function (reason) {
+            if ('feedbackOnFail' in msg && msg.feedbackOnFail === true) {
+              wc.sendInnerTo(senderId, _this4.id, { tryOn: _this4.WS, listenOn: myConnectObj.listenOn });
+            } else {
+              get(ChannelBuilderService.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilderService.prototype), 'getPendingRequest', _this4).call(_this4, wc, senderId).reject(new Error('Failed to establish a socket and then a data channel: ' + reason));
+            }
+>>>>>>> Stashed changes
           });
         }
       } else if ('tryOn' in msg && this.isEqual(msg.tryOn, this.WS)) {
@@ -3256,7 +4123,7 @@ var ChannelBuilderService = function (_Service) {
             } else if (this.isEqual(myConnectors, this.WS)) {
               wc.sendInnerTo(senderId, this.id, { shouldConnect: this.WS, listenOn: myConnectObj.listenOn });
             } else if (this.isEqual(myConnectors, this.WR)) {
-              ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId).then(function (channel) {
+              ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId, { iceServers: wc.iceServers }).then(function (channel) {
                 _this4.onChannel(wc, channel, senderId);
               }).catch(function (reason) {
                 wc.sendInnerTo(senderId, _this4.id, { failedReason: 'Failed establish a data channel: ' + reason });
@@ -3264,7 +4131,7 @@ var ChannelBuilderService = function (_Service) {
             } else if (this.isEqual(myConnectors, this.WS_WR)) {
               wc.sendInnerTo(senderId, this.id, { shouldConnect: this.WS_WR, listenOn: myConnectObj.listenOn });
             } else if (this.isEqual(myConnectors, this.WR_WS)) {
-              ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId).then(function (channel) {
+              ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId, { iceServers: wc.iceServers }).then(function (channel) {
                 return _this4.onChannel(wc, channel, senderId);
               }).catch(function (reason) {
                 wc.sendInnerTo(senderId, _this4.id, { shouldConnect: _this4.WS, listenOn: myConnectObj.listenOn });
@@ -3283,7 +4150,7 @@ var ChannelBuilderService = function (_Service) {
                 channel.send(JSON.stringify({ wcId: wc.id, senderId: wc.myId }));
                 _this4.onChannel(wc, channel, senderId);
               }).catch(function (reason) {
-                return ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId);
+                return ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId, { iceServers: wc.iceServers });
               }).then(function (channel) {
                 return _this4.onChannel(wc, channel, senderId);
               }).catch(function (reason) {
@@ -3301,11 +4168,19 @@ var ChannelBuilderService = function (_Service) {
                 channel.send(JSON.stringify({ wcId: wc.id, senderId: wc.myId }));
                 _this4.onChannel(wc, channel, senderId);
               }).catch(function (reason) {
+<<<<<<< Updated upstream
                 ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId).then(function (channel) {
                   return _this4.onChannel(wc, channel, senderId);
                 }).catch(function (reason) {
                   return wc.sendInnerTo(senderId, _this4.id, { shouldConnect: _this4.WS, listenOn: myConnectObj.listenOn });
                 });
+=======
+                return ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId, { iceServers: wc.iceServers });
+              }).then(function (channel) {
+                return _this4.onChannel(wc, channel, senderId);
+              }).catch(function (reason) {
+                return wc.sendInnerTo(senderId, _this4.id, { shouldConnect: _this4.WS, listenOn: myConnectObj.listenOn });
+>>>>>>> Stashed changes
               });
             }
           }
@@ -3317,7 +4192,7 @@ var ChannelBuilderService = function (_Service) {
             } else if (this.isEqual(myConnectors, this.WS)) {
               this.wsWs(wc, senderId, msg.listenOn, myConnectObj.listenOn);
             } else if (this.isEqual(myConnectors, this.WR)) {
-              ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId).then(function (channel) {
+              ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId, { iceServers: wc.iceServers }).then(function (channel) {
                 return _this4.onChannel(wc, channel, senderId);
               }).catch(function (reason) {
                 ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn).then(function (channel) {
@@ -3330,7 +4205,7 @@ var ChannelBuilderService = function (_Service) {
             } else if (this.isEqual(myConnectors, this.WS_WR)) {
               wc.sendInnerTo(senderId, this.id, { shouldConnect: this.WS_WR, feedbackOnFail: true, listenOn: myConnectObj.listenOn });
             } else if (this.isEqual(myConnectors, this.WR_WS)) {
-              ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId).then(function (channel) {
+              ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId, { iceServers: wc.iceServers }).then(function (channel) {
                 return _this4.onChannel(wc, channel, senderId);
               }).catch(function (reason) {
                 ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn).then(function (channel) {
@@ -4272,8 +5147,8 @@ var SignalingGate = function () {
           _this2.onClose();
           reject(new Error(''));
         });
-        ServiceFactory.get(WEB_RTC, _this2.webChannel.settings.iceServers).listenFromSignaling(signaling, function (channel) {
-          return _this2.onChannel(channel);
+        ServiceFactory.get(WEB_RTC, _this2.webChannel.settings.iceServers).onChannelFromSignaling(signaling, { iceServers: _this2.webChannel.settings.iceServers }).subscribe(function (dc) {
+          return _this2.onChannel(dc);
         });
         signaling.send(JSON.stringify({ open: key }));
       });
@@ -4314,7 +5189,7 @@ var SignalingGate = function () {
                   signaling.error(new Error('Failed to join via ' + url + ': uncorrect bot server response'));
                 }
               } else {
-                ServiceFactory.get(WEB_RTC, _this3.webChannel.settings.iceServers).connectOverSignaling(signaling, key).then(function (dc) {
+                ServiceFactory.get(WEB_RTC, _this3.webChannel.settings.iceServers).connectOverSignaling(signaling, key, { iceServers: _this3.webChannel.settings.iceServers }).then(function (dc) {
                   subs.unsubscribe();
                   if (shouldOpen) {
                     _this3.open(url, key, signaling).then(function () {
@@ -4630,6 +5505,12 @@ var WebChannel = function () {
      * @type {function(closeEvt: CloseEvent)}
      */
     this.onClose = function () {};
+
+    this[serviceMessageStream] = new Subject_2();
+    this[webrtcService] = ServiceFactory.get(WEB_RTC);
+    this[webrtcService].onChannelFromWebChannel(this, { iceServers: this.settings.iceServers }).subscribe(function (dc) {
+      return ServiceFactory.get(CHANNEL_BUILDER).onChannel(_this, dc, Number(dc.label));
+    });
   }
 
   /**
@@ -4765,6 +5646,7 @@ var WebChannel = function () {
       }
       this.onInitChannel = function () {};
       this.onJoin = function () {};
+      this[serviceMessageStream].complete();
       this.gate.close();
     }
 
@@ -4949,7 +5831,17 @@ var WebChannel = function () {
           case INNER_DATA:
             {
               if (header.recepientId === 0 || this.myId === header.recepientId) {
-                this.getService(msg.serviceId).onMessage(channel, header.senderId, header.recepientId, msg.data);
+                if (msg.serviceId !== WEB_RTC) {
+                  this.getService(msg.serviceId).onMessage(channel, header.senderId, header.recepientId, msg.data);
+                } else {
+                  this[serviceMessageStream].next({
+                    channel: channel,
+                    serviceId: msg.serviceId,
+                    senderId: header.senderId,
+                    recepientId: header.recepientId,
+                    content: msg.data
+                  });
+                }
               } else this.sendInnerTo(header.recepientId, null, data, true);
               break;
             }

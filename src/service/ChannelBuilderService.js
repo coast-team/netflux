@@ -1,6 +1,7 @@
 import Util from 'Util'
 import Service from 'service/Service'
 import ServiceFactory, {WEB_RTC, WEB_SOCKET} from 'ServiceFactory'
+import { serviceMessageStream } from 'WebChannel'
 
 /**
  * It is responsible to build a channel between two peers with a help of `WebSocketService` and `WebRTCService`.
@@ -13,6 +14,7 @@ class ChannelBuilderService extends Service {
    */
   constructor (id) {
     super(id)
+
     /**
      * @private
      */
@@ -29,6 +31,19 @@ class ChannelBuilderService extends Service {
      * @private
      */
     this.WR_WS = [WEB_RTC, WEB_SOCKET]
+  }
+
+  init (wc, rtcConfiguration) {
+    super.init(wc)
+    ServiceFactory.get(WEB_RTC)
+        .onChannelFromWebChannel(wc, rtcConfiguration)
+        .subscribe(dc => this.onChannel(wc, dc, Number(dc.label)))
+
+    wc[serviceMessageStream]
+      .filter(msg => msg.serviceId === this.id)
+      .subscribe(
+        msg => this.onMessage(msg.channel, msg.senderId, msg.recepientId, msg.content)
+      )
   }
 
   /**
@@ -77,7 +92,7 @@ class ChannelBuilderService extends Service {
     wc.initChannel(channel, senderId)
       .then(channel => {
         const pendReq = super.getPendingRequest(wc, senderId)
-        if (pendReq !== null) pendReq.resolve(channel)
+        if (pendReq) pendReq.resolve(channel)
       })
   }
 
@@ -159,7 +174,7 @@ class ChannelBuilderService extends Service {
           } else if (this.isEqual(myConnectors, this.WS)) {
             wc.sendInnerTo(senderId, this.id, {shouldConnect: this.WS, listenOn: myConnectObj.listenOn})
           } else if (this.isEqual(myConnectors, this.WR)) {
-            ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId)
+            ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId, {iceServers: wc.iceServers})
               .then(channel => {
                 this.onChannel(wc, channel, senderId)
               })
@@ -169,7 +184,7 @@ class ChannelBuilderService extends Service {
           } else if (this.isEqual(myConnectors, this.WS_WR)) {
             wc.sendInnerTo(senderId, this.id, {shouldConnect: this.WS_WR, listenOn: myConnectObj.listenOn})
           } else if (this.isEqual(myConnectors, this.WR_WS)) {
-            ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId)
+            ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId, {iceServers: wc.iceServers})
               .then(channel => this.onChannel(wc, channel, senderId))
               .catch(reason => {
                 wc.sendInnerTo(senderId, this.id, {shouldConnect: this.WS, listenOn: myConnectObj.listenOn})
@@ -189,7 +204,7 @@ class ChannelBuilderService extends Service {
                 channel.send(JSON.stringify({wcId: wc.id, senderId: wc.myId}))
                 this.onChannel(wc, channel, senderId)
               })
-              .catch(reason => ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId))
+              .catch(reason => ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId, {iceServers: wc.iceServers}))
               .then(channel => this.onChannel(wc, channel, senderId))
               .catch(reason => wc.sendInnerTo(senderId, this.id, {failedReason: `Failed to establish a socket and then a data channel: ${reason}`}))
           } else if (this.isEqual(myConnectors, this.WS_WR)) {
@@ -222,7 +237,7 @@ class ChannelBuilderService extends Service {
             this.wsWs(wc, senderId, msg.listenOn, myConnectObj.listenOn)
           } else if (this.isEqual(myConnectors, this.WR)) {
             ServiceFactory.get(WEB_RTC, wc.settings.iceServers)
-              .connectOverWebChannel(wc, senderId)
+              .connectOverWebChannel(wc, senderId, {iceServers: wc.iceServers})
               .then(channel => this.onChannel(wc, channel, senderId))
               .catch(reason => {
                 ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn)
@@ -236,7 +251,7 @@ class ChannelBuilderService extends Service {
             wc.sendInnerTo(senderId, this.id, {shouldConnect: this.WS_WR, feedbackOnFail: true, listenOn: myConnectObj.listenOn})
           } else if (this.isEqual(myConnectors, this.WR_WS)) {
             ServiceFactory.get(WEB_RTC, wc.settings.iceServers)
-              .connectOverWebChannel(wc, senderId)
+              .connectOverWebChannel(wc, senderId, {iceServers: wc.iceServers})
               .then(channel => this.onChannel(wc, channel, senderId))
               .catch(reason => {
                 ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn)

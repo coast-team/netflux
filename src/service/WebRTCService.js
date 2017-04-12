@@ -1,101 +1,96 @@
 import '../../webrtc-adapter'
 import Util from 'Util'
 import Service from 'service/Service'
-import { ReplaySubject } from 'node_modules/rxjs/BehaviorSubject'
+import { ReplaySubject } from 'node_modules/rxjs/ReplaySubject'
 import { Observable } from 'node_modules/rxjs/Observable'
-import { serviceMessageStream } from 'Symbols'
+import 'node_modules/rxjs/add/operator/map'
+import { serviceMessageStream } from 'WebChannel'
 const wrtc = Util.require(Util.WEB_RTC)
 const CloseEvent = Util.require(Util.CLOSE_EVENT)
 
 const CONNECTION_TIMEOUT = 5000
 
 /**
- * Service class responsible to establish connections between peers via
- * `RTCDataChannel`.
+ * Service class responsible to establish `RTCDataChannel` between two clients via
+ * signaling server or `WebChannel`.
  *
  */
 class WebRTCService extends Service {
-  /**
-   * @param  {number} id Service identifier
-   * @param  {RTCIceServer} iceServers WebRTC configuration object
-   */
-  constructor (id, iceServers) {
-    super(id)
-    /**
-     * @private
-     * @type {RTCIceServer}
-     */
-    this.iceServers = iceServers
-  }
-
-  /**
-   * @param {Channel} channel
-   * @param {number} senderId
-   * @param {number} recepientId
-   * @param {Object} msg
-   */
-  onMessage (channel, senderId, recepientId, msg) {
-    // This method is replaced by onChannelFromWebChannel. Remove this method later
-  }
-
   onChannelFromWebChannel (wc) {
-    return this.listenOnDataChannel(
+    return this.onDataChannel(
       wc[serviceMessageStream]
-        .filter(msg => msg.service === this.id)
-        .map(msg => ({msg: msg.msg, id: msg.sender})),
+        .filter(msg => msg.serviceId === this.id)
+        .map(msg => ({msg: msg.content, id: msg.senderId})),
       (msg, id) => wc.sendInnerTo(id, this.id, msg)
     )
   }
 
   /**
-   * Establishes an `RTCDataChannel` with a peer identified by `id` trough `WebChannel`.
+   * Establish an `RTCDataChannel` with a peer identified by `id` trough `WebChannel`.
+   * Starts by sending an **SDP offer**.
    *
-   * @param {WebChannel} wc
-   * @param {number} id
+   * @param {WebChannel} wc WebChannel
+   * @param {number} id Peer id
+   * @param {RTCConfiguration} rtcConfiguration Configuration object for `RTCPeerConnection`
    *
-   * @returns {Promise<RTCDataChannel, string>}
+   * @returns {Promise<RTCDataChannel>} Data channel between you and `id` peer
    */
-  connectOverWebChannel (wc, id) {
-    return this.establishDataChannel(
+  connectOverWebChannel (wc, id, rtcConfiguration) {
+    return this.createDataChannel(
       wc[serviceMessageStream]
-        .filter(msg => msg.service === this.id && msg.sender === id)
-        .map(msg => msg.msg),
+        .filter(msg => msg.serviceId === this.id && msg.senderId === id)
+        .map(msg => msg.content),
       msg => wc.sendInnerTo(id, this.id, msg),
-      wc.myId
+      wc.myId,
+      rtcConfiguration
     )
   }
 
   /**
+   * Listen on `RTCDataChannel` from Signaling server. Starts to listen on **SDP answer**.
    *
-   * @param {WebSocket} ws
-   * @param {function(channel: RTCDataChannel)} onChannel
+   * @param {Subject} stream Specific to Netflux RxJs Subject connection with Signaling server
+   * @param {RTCConfiguration} rtcConfiguration Configuration object for `RTCPeerConnection`
    *
+   * @returns {Observable<RTCDataChannel>} Observable emitting `RTCDataChannel`. Can emit errors and completes when the stream with Signaling server has completed.
    */
-  onChannelFromSignaling (stream) {
-    return this.listenOnDataChannel(
+  onChannelFromSignaling (stream, rtcConfiguration) {
+    return this.onDataChannel(
       stream
         .filter(msg => 'id' in msg && 'data' in msg)
         .map(msg => ({msg: msg.data, id: msg.id})),
-      (msg, id) => stream.send(JSON.stringify({id, data: msg}))
+      (msg, id) => stream.send(JSON.stringify({id, data: msg})),
+      rtcConfiguration
     )
   }
 
   /**
+   * Establish an `RTCDataChannel` with a peer identified by `id` trough Signaling server.
+   * Starts by sending an **SDP offer**.
    *
-   * @param {type} ws
-   * @param {type} key Description
+   * @param {Subject} stream Specific to Netflux RxJs Subject connection with Signaling server
+   * @param {RTCConfiguration} rtcConfiguration Configuration object for `RTCPeerConnection`
    *
-   * @returns {type} Description
+   * @returns {Promise<RTCDataChannel>} Data channel between you and `id` peer
    */
-  connectOverSignaling (stream) {
-    return this.establishDataChannel(
+  connectOverSignaling (stream, rtcConfiguration) {
+    return this.createDataChannel(
       stream.filter(msg => 'data' in msg).map(msg => msg.data),
-      msg => stream.send(JSON.stringify(msg))
+      msg => stream.send(JSON.stringify({data: msg})),
+      rtcConfiguration
     )
   }
 
-  establishDataChannel (stream, send, label = null) {
-    const pc = this.createPeerConnection()
+  /**
+   * @private
+   * @param  {Subject} stream
+   * @param  {function(msg: Object): void} send
+   * @param  {string} [label=null]
+   * @param  {RTCConfiguration} rtcConfiguration
+   * @return {Promise<RTCDataChannel>}
+   */
+  createDataChannel (stream, send, label = null, rtcConfiguration) {
+    const pc = this.createPeerConnection(rtcConfiguration)
     const remoteCandidateStream = new ReplaySubject()
     this.createLocalCandidateStream(pc).subscribe(
       candidate => send({candidate}),
@@ -131,7 +126,7 @@ class WebRTCService extends Service {
         () => reject(new Error('Failed to establish RTCDataChannel: the connection with Signaling server was closed'))
       )
 
-      this.waitForDataChannelOpen(pc, true, label)
+      this.openDataChannel(pc, true, label)
         .then(resolve)
         .catch(reject)
 
@@ -145,7 +140,14 @@ class WebRTCService extends Service {
     })
   }
 
-  listenOnDataChannel (stream, send) {
+  /**
+   * @private
+   * @param  {Subject} stream
+   * @param  {function(msg: Object, id: number): void} send
+   * @param  {RTCConfiguration} rtcConfiguration
+   * @return {Observable<RTCDataChannel>}
+   */
+  onDataChannel (stream, send, rtcConfiguration) {
     return Observable.create(observer => {
       const clients = new Map()
       stream.subscribe(
@@ -156,7 +158,7 @@ class WebRTCService extends Service {
           if (client) {
             [pc, remoteCandidateStream] = client
           } else {
-            pc = this.createPeerConnection()
+            pc = this.createPeerConnection(rtcConfiguration)
             remoteCandidateStream = new ReplaySubject()
             this.createLocalCandidateStream(pc).subscribe(
               candidate => send({candidate}, id),
@@ -166,7 +168,7 @@ class WebRTCService extends Service {
             clients.set(id, [pc, remoteCandidateStream])
           }
           if ('offer' in msg) {
-            this.waitForDataChannelOpen(pc, false)
+            this.openDataChannel(pc, false)
               .then(dc => observer.next(dc))
               .catch(err => {
                 clients.delete(id)
@@ -206,17 +208,19 @@ class WebRTCService extends Service {
     })
   }
 
-  createPeerConnection () {
-    return new wrtc.RTCPeerConnection({iceServers: this.iceServers})
+  /**
+   * @private
+   * @param  {RTCConfiguration} [rtcConfiguration={}]
+   * @return {RTCPeerConnection}
+   */
+  createPeerConnection (rtcConfiguration = {}) {
+    return new wrtc.RTCPeerConnection(rtcConfiguration)
   }
 
   /**
-   * Creates an instance of `RTCPeerConnection` and sets `onicecandidate` event handler.
-   *
    * @private
-   * @param  {function(candidate: Object)} onCandidate
-   * candidate event handler.
-   * @return {RTCPeerConnection}
+   * @param  {RTCPeerConnection} pc
+   * @return {Observable<{candidate: string, sdpMid: string, sdpMLineIndex: string}>}
    */
   createLocalCandidateStream (pc) {
     return Observable.create(observer => {
@@ -234,7 +238,14 @@ class WebRTCService extends Service {
     })
   }
 
-  waitForDataChannelOpen (pc, offerCreator, label = null) {
+  /**
+   * @private
+   * @param  {RTCPeerConnection} pc
+   * @param  {boolean} offerCreator
+   * @param  {string} [label=null]
+   * @return {Promise<RTCDataChannel>}
+   */
+  openDataChannel (pc, offerCreator, label = null) {
     if (offerCreator) {
       let dc
       try {
@@ -271,7 +282,7 @@ class WebRTCService extends Service {
   /**
    * @private
    * @param {RTCPeerConnection} pc
-   * @param {RTCDataChannel} dataCh
+   * @param {RTCDataChannel} dc
    */
   configOnDisconnect (pc, dc) {
     pc.oniceconnectionstatechange = () => {

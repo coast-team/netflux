@@ -81,7 +81,8 @@ class SignalingGate {
           }
         )
       ServiceFactory.get(WEB_RTC, this.webChannel.settings.iceServers)
-        .listenFromSignaling(signaling, channel => this.onChannel(channel))
+        .onChannelFromSignaling(signaling, {iceServers: this.webChannel.settings.iceServers})
+        .subscribe(dc => this.onChannel(dc))
       signaling.send(JSON.stringify({open: key}))
     })
   }
@@ -116,7 +117,7 @@ class SignalingGate {
                     }
                   } else {
                     ServiceFactory.get(WEB_RTC, this.webChannel.settings.iceServers)
-                      .connectOverSignaling(signaling, key)
+                      .connectOverSignaling(signaling, key, {iceServers: this.webChannel.settings.iceServers})
                       .then(dc => {
                         subs.unsubscribe()
                         if (shouldOpen) {

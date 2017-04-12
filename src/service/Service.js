@@ -1,3 +1,7 @@
+const pendingRequests = Symbol('pedingRequest')
+const setPendingRequest = Symbol('pedingRequest')
+const getPendingRequest = Symbol('pedingRequest')
+
 /**
  * Default timeout for any pending request.
  * @type {number}
@@ -9,13 +13,6 @@ const DEFAULT_REQUEST_TIMEOUT = 60000
  */
 const itemsStorage = new Map()
 
-/**
- * Pending request map. Pending request is when a service uses a Promise
- * which will be fulfilled or rejected somewhere else in code. For exemple when
- * a peer is waiting for a feedback from another peer before Promise has completed.
- * @type {Map}
- */
-const requestsStorage = new Map()
 
 /**
  * Abstract class which each service should inherit. Each service is independent
@@ -33,8 +30,20 @@ class Service {
      * @type {number}
      */
     this.id = id
+    this.symbolId = Symbol(id)
     if (!itemsStorage.has(this.id)) itemsStorage.set(this.id, new WeakMap())
-    if (!requestsStorage.has(this.id)) requestsStorage.set(this.id, new WeakMap())
+  }
+
+  init (wc) {
+    wc[this.symbolId] = {
+      /**
+       * Pending request map. Pending request is when a service uses a Promise
+       * which will be fulfilled or rejected somewhere else in code. For exemple when
+       * a peer is waiting for a feedback from another peer before Promise has completed.
+       * @type {Map}
+       */
+      pendingRequests: new Map()
+    }
   }
 
   /**
@@ -45,7 +54,7 @@ class Service {
    * @param {number} [timeout=DEFAULT_REQUEST_TIMEOUT] Timeout in milliseconds
    */
   setPendingRequest (obj, id, data, timeout = DEFAULT_REQUEST_TIMEOUT) {
-    this.setTo(requestsStorage, obj, id, data)
+    obj[this.symbolId].pendingRequests.set(id, data)
     setTimeout(() => { data.reject('Pending request timeout') }, timeout)
   }
 
@@ -57,7 +66,7 @@ class Service {
    * @returns {{resolve: Promise.resolve, reject:Promise.reject}}
    */
   getPendingRequest (obj, id) {
-    return this.getFrom(requestsStorage, obj, id)
+    return obj[this.symbolId].pendingRequests.get(id)
   }
 
   /**

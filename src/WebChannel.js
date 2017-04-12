@@ -3,7 +3,6 @@ import Channel from 'Channel'
 import SignalingGate from 'SignalingGate'
 import Util from 'Util'
 import { Subject } from 'node_modules/rxjs/Subject'
-import { serviceMessageStream, webrtcService } from 'Symbols'
 
 /**
  * Maximum identifier number for {@link WebChannel#generateId} function.
@@ -188,9 +187,8 @@ class WebChannel {
     this.onClose = () => {}
 
     this[serviceMessageStream] = new Subject()
-    this[webrtcService] = ServiceFactory.get(WEB_RTC)
-    this[webrtcService].onChannelFromWebChannel(this)
-      .subscribe(dc => ServiceFactory.get(CHANNEL_BUILDER).onChannel(this, dc, Number(dc.label)))
+    this[channelBuilderService] = ServiceFactory.get(CHANNEL_BUILDER)
+    this[channelBuilderService].init(this, {iceServers: this.settings.iceServers})
   }
 
   /**
@@ -434,17 +432,22 @@ class WebChannel {
         }
         case INNER_DATA: {
           if (header.recepientId === 0 || this.myId === header.recepientId) {
-            if (msg.serviceId !== WEB_RTC) {
+            if (msg.serviceId !== WEB_RTC && msg.serviceId !== CHANNEL_BUILDER) {
               this.getService(msg.serviceId).onMessage(
                 channel,
                 header.senderId,
                 header.recepientId,
                 msg.data
               )
+            } else {
+              this[serviceMessageStream].next({
+                channel,
+                serviceId: msg.serviceId,
+                senderId: header.senderId,
+                recepientId: header.recepientId,
+                content: msg.data
+              })
             }
-            this[serviceMessageStream].next({
-              channel, serviceId: msg.serviceId, senderId: header.senderId, recepientId: header.recepientId, msg: msg.data
-            })
           } else this.sendInnerTo(header.recepientId, null, data, true)
           break
         }
@@ -574,3 +577,5 @@ class WebChannel {
 
 export default WebChannel
 export {USER_DATA}
+export const serviceMessageStream = Symbol('serviceMessageStream')
+export const channelBuilderService = Symbol('channelBuilderService')
