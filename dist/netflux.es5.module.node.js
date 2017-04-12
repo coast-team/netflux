@@ -4122,9 +4122,28 @@ var WebChannel = function () {
         if (!Util.isURL(urlOrSocket)) {
           return Promise.reject(new Error(urlOrSocket + ' is not a valid URL'));
         }
-        return ServiceFactory.get(WEB_SOCKET).connect(urlOrSocket).then(function (ws) {
-          ws.send(JSON.stringify({ wcId: _this3.id }));
-          return _this3.addChannel(ws);
+        return new Promise(function (resolve, reject) {
+          ServiceFactory.get(WEB_SOCKET).connect(urlOrSocket).then(function (ws) {
+            ws.onmessage = function (evt) {
+              var msg = JSON.parse(evt.data);
+              if ('inviteOk' in msg) {
+                if (msg.inviteOk) {
+                  ws.onmessage = function () {};
+                  ws.send(JSON.stringify({ wcId: _this3.id }));
+                  _this3.addChannel(ws).then(function () {
+                    return resolve();
+                  });
+                } else {
+                  ws.close(1000);
+                  reject(new Error('Bot already has been invited'));
+                }
+              } else {
+                ws.close(1000);
+                reject(new Error('Unknown message from bot server: ' + evt.data));
+              }
+            };
+            ws.send(JSON.stringify({ wcId: _this3.id, check: true }));
+          });
         });
       } else if (urlOrSocket.constructor.name === 'WebSocket') {
         return this.addChannel(urlOrSocket);
@@ -5310,6 +5329,13 @@ var BotServer = function () {
                     ws.close(WEB_CHANNEL_NOT_FOUND, msg.wcId + ' webChannel was not found (message received from ' + msg.senderId + ')');
                     console.error(msg.wcId + ' webChannel was not found (message received from ' + msg.senderId + ')');
                   }
+                } else if ('check' in msg) {
+                  if (_wc === null || _wc.members.length === 0) {
+                    ws.send(JSON.stringify({ inviteOk: true }));
+                  } else {
+                    ws.send(JSON.stringify({ inviteOk: false }));
+                    console.error('Bot refused to join ' + msg.wcId + ' webChannel, because it is already in use');
+                  }
                 } else {
                   if (_wc === null) {
                     _wc = new WebChannel(_this.settings);
@@ -5327,7 +5353,7 @@ var BotServer = function () {
                       _this.onWebChannel(_wc);
                     });
                   } else {
-                    console.error('Bot refused to join ' + msg.wcId + ' webChannel, because it is already in use');
+                    ws.close();
                   }
                 }
               }

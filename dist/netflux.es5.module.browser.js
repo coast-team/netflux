@@ -4686,9 +4686,28 @@ var WebChannel = function () {
         if (!Util.isURL(urlOrSocket)) {
           return Promise.reject(new Error(urlOrSocket + ' is not a valid URL'));
         }
-        return ServiceFactory.get(WEB_SOCKET).connect(urlOrSocket).then(function (ws) {
-          ws.send(JSON.stringify({ wcId: _this3.id }));
-          return _this3.addChannel(ws);
+        return new Promise(function (resolve, reject) {
+          ServiceFactory.get(WEB_SOCKET).connect(urlOrSocket).then(function (ws) {
+            ws.onmessage = function (evt) {
+              var msg = JSON.parse(evt.data);
+              if ('inviteOk' in msg) {
+                if (msg.inviteOk) {
+                  ws.onmessage = function () {};
+                  ws.send(JSON.stringify({ wcId: _this3.id }));
+                  _this3.addChannel(ws).then(function () {
+                    return resolve();
+                  });
+                } else {
+                  ws.close(1000);
+                  reject(new Error('Bot already has been invited'));
+                }
+              } else {
+                ws.close(1000);
+                reject(new Error('Unknown message from bot server: ' + evt.data));
+              }
+            };
+            ws.send(JSON.stringify({ wcId: _this3.id, check: true }));
+          });
         });
       } else if (urlOrSocket.constructor.name === 'WebSocket') {
         return this.addChannel(urlOrSocket);
