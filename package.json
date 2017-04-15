@@ -74,7 +74,7 @@
     "istanbul": "^0.4.3",
     "jasmine": "^2.4.2",
     "jasmine-core": "^2.4.2",
-    "jasmine-spec-reporter": "^3.0.0",
+    "jasmine-spec-reporter": "^4.0.0",
     "json": "^9.0.3",
     "karma": "^1.1.0",
     "karma-chrome-launcher": "^2.0.0",
