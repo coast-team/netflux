@@ -45,7 +45,7 @@
     "cz": "git-cz"
   },
   "dependencies": {
-    "eventsource": "^0.2.1",
+    "eventsource": "^1.0.0",
     "node-fetch": "^1.6.3",
     "rxjs": "^5.2.0",
     "text-encoding": "^0.6.4",
@@ -74,7 +74,7 @@
     "istanbul": "^0.4.3",
     "jasmine": "^2.4.2",
     "jasmine-core": "^2.4.2",
-    "jasmine-spec-reporter": "^3.0.0",
+    "jasmine-spec-reporter": "^4.1.0",
     "json": "^9.0.3",
     "karma": "^1.1.0",
     "karma-chrome-launcher": "^2.0.0",
