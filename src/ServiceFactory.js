@@ -59,23 +59,30 @@ class ServiceFactory {
    *
    * @throws {Error} If the service `id` is unknown
    * @param  {MESSAGE_BUILDER|WEB_RTC|WEB_SOCKET|FULLY_CONNECTED|CHANNEL_BUILDER} id The service identifier
-   * @param  {Object} [options] Any options that the service accepts
    * @returns {Service}
    */
-  static get (id, options = {}) {
+  static get (id) {
     if (services.has(id)) {
       return services.get(id)
     }
     let service
     switch (id) {
       case WEB_RTC:
-        return new WebRTCService(WEB_RTC, options)
+        service = new WebRTCService(WEB_RTC)
+        services.set(id, service)
+        return service
       case WEB_SOCKET:
-        return new WebSocketService(WEB_SOCKET)
+        service = new WebSocketService(WEB_SOCKET)
+        services.set(id, service)
+        return service
       case EVENT_SOURCE:
-        return new EventSourceService(EVENT_SOURCE)
+        service = new EventSourceService(EVENT_SOURCE)
+        services.set(id, service)
+        return service
       case CHANNEL_BUILDER:
-        return new ChannelBuilderService(CHANNEL_BUILDER)
+        service = new ChannelBuilderService(CHANNEL_BUILDER)
+        services.set(id, service)
+        return service
       case FULLY_CONNECTED:
         service = new FullyConnectedService(FULLY_CONNECTED)
         services.set(id, service)

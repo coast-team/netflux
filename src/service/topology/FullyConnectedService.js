@@ -160,7 +160,7 @@ class FullyConnectedService extends TopologyInterface {
           wc.channels.add(channel)
           wc.onPeerJoin$(senderId)
           const request = super.getPendingRequest(wc, senderId)
-          if (request !== null) request.resolve(senderId)
+          if (request !== undefined) request.resolve(senderId)
         }
         break
       } case TICK: {

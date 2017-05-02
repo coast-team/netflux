@@ -157,14 +157,6 @@ var DEFAULT_REQUEST_TIMEOUT = 60000;
 var itemsStorage = new Map();
 
 /**
- * Pending request map. Pending request is when a service uses a Promise
- * which will be fulfilled or rejected somewhere else in code. For exemple when
- * a peer is waiting for a feedback from another peer before Promise has completed.
- * @type {Map}
- */
-var requestsStorage = new Map();
-
-/**
  * Abstract class which each service should inherit. Each service is independent
  * and can store data temporarly in order to accomplish its task(s).
  */
@@ -184,24 +176,41 @@ var Service = function () {
      */
     this.id = id;
     if (!itemsStorage.has(this.id)) itemsStorage.set(this.id, new WeakMap());
-    if (!requestsStorage.has(this.id)) requestsStorage.set(this.id, new WeakMap());
   }
 
-  /**
-   * Add a new pending request identified by `obj` and `id`.
-   * @param {Object} obj
-   * @param {number} id
-   * @param {{resolve: Promise.resolve, reject:Promise.reject}} data
-   * @param {number} [timeout=DEFAULT_REQUEST_TIMEOUT] Timeout in milliseconds
-   */
-
-
   createClass(Service, [{
+    key: 'init',
+    value: function init(wc) {
+      if (!wc[services]) {
+        wc[services] = {};
+      }
+      if (!wc[services][this.id]) {
+        wc[services][this.id] = {
+          /**
+           * Pending request map. Pending request is when a service uses a Promise
+           * which will be fulfilled or rejected somewhere else in code. For exemple when
+           * a peer is waiting for a feedback from another peer before Promise has completed.
+           * @type {Map}
+           */
+          pendingRequests: new Map()
+        };
+      }
+    }
+
+    /**
+     * Add a new pending request identified by `obj` and `id`.
+     * @param {Object} obj
+     * @param {number} id
+     * @param {{resolve: Promise.resolve, reject:Promise.reject}} data
+     * @param {number} [timeout=DEFAULT_REQUEST_TIMEOUT] Timeout in milliseconds
+     */
+
+  }, {
     key: 'setPendingRequest',
     value: function setPendingRequest(obj, id, data) {
       var timeout = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : DEFAULT_REQUEST_TIMEOUT;
 
-      this.setTo(requestsStorage, obj, id, data);
+      obj[services][this.id].pendingRequests.set(id, data);
       setTimeout(function () {
         data.reject('Pending request timeout');
       }, timeout);
@@ -218,7 +227,7 @@ var Service = function () {
   }, {
     key: 'getPendingRequest',
     value: function getPendingRequest(obj, id) {
-      return this.getFrom(requestsStorage, obj, id);
+      return obj[services][this.id].pendingRequests.get(id);
     }
 
     /**
@@ -741,7 +750,7 @@ var FullyConnectedService = function (_TopologyInterface) {
               wc.channels.add(channel);
               wc.onPeerJoin$(senderId);
               var request = get(FullyConnectedService.prototype.__proto__ || Object.getPrototypeOf(FullyConnectedService.prototype), 'getPendingRequest', this).call(this, wc, senderId);
-              if (request !== null) request.resolve(senderId);
+              if (request !== undefined) request.resolve(senderId);
             }
             break;
           }case TICK:
@@ -3236,9 +3245,6 @@ var map_1 = {
 
 Observable_1.Observable.prototype.map = map_1.map;
 
-var serviceMessageStream = Symbol('serviceMessageStream');
-var webrtcService = Symbol('webrtcServiceStream');
-
 var wrtc = Util.require(Util.WEB_RTC);
 var CloseEvent = Util.require(Util.CLOSE_EVENT);
 
@@ -3524,7 +3530,6 @@ var WebRTCService = function (_Service) {
         };
       });
     }
-<<<<<<< HEAD
 
     /**
      * @private
@@ -3557,85 +3562,6 @@ var WebRTCService = function (_Service) {
           });
         } catch (err) {
           return Promise.reject(err);
-=======
-    Subject.prototype[rxSubscriber.rxSubscriber] = function () {
-        return new SubjectSubscriber(this);
-    };
-    Subject.prototype.lift = function (operator) {
-        var subject = new AnonymousSubject(this, this);
-        subject.operator = operator;
-        return subject;
-    };
-    Subject.prototype.next = function (value) {
-        if (this.closed) {
-            throw new ObjectUnsubscribedError_1.ObjectUnsubscribedError();
-        }
-        if (!this.isStopped) {
-            var observers = this.observers;
-            var len = observers.length;
-            var copy = observers.slice();
-            for (var i = 0; i < len; i++) {
-                copy[i].next(value);
-            }
-        }
-    };
-    Subject.prototype.error = function (err) {
-        if (this.closed) {
-            throw new ObjectUnsubscribedError_1.ObjectUnsubscribedError();
-        }
-        this.hasError = true;
-        this.thrownError = err;
-        this.isStopped = true;
-        var observers = this.observers;
-        var len = observers.length;
-        var copy = observers.slice();
-        for (var i = 0; i < len; i++) {
-            copy[i].error(err);
-        }
-        this.observers.length = 0;
-    };
-    Subject.prototype.complete = function () {
-        if (this.closed) {
-            throw new ObjectUnsubscribedError_1.ObjectUnsubscribedError();
-        }
-        this.isStopped = true;
-        var observers = this.observers;
-        var len = observers.length;
-        var copy = observers.slice();
-        for (var i = 0; i < len; i++) {
-            copy[i].complete();
-        }
-        this.observers.length = 0;
-    };
-    Subject.prototype.unsubscribe = function () {
-        this.isStopped = true;
-        this.closed = true;
-        this.observers = null;
-    };
-    Subject.prototype._trySubscribe = function (subscriber) {
-        if (this.closed) {
-            throw new ObjectUnsubscribedError_1.ObjectUnsubscribedError();
-        }
-        else {
-            return _super.prototype._trySubscribe.call(this, subscriber);
-        }
-    };
-    Subject.prototype._subscribe = function (subscriber) {
-        if (this.closed) {
-            throw new ObjectUnsubscribedError_1.ObjectUnsubscribedError();
-        }
-        else if (this.hasError) {
-            subscriber.error(this.thrownError);
-            return Subscription_1.Subscription.EMPTY;
-        }
-        else if (this.isStopped) {
-            subscriber.complete();
-            return Subscription_1.Subscription.EMPTY;
-        }
-        else {
-            this.observers.push(subscriber);
-            return new SubjectSubscription_1.SubjectSubscription(this, subscriber);
->>>>>>> master
         }
       } else {
         return new Promise(function (resolve, reject) {
@@ -4051,24 +3977,40 @@ var ChannelBuilderService = function (_Service) {
     return _this;
   }
 
-  /**
-   * Establish a channel with the peer identified by `id`.
-   *
-   * @param {WebChannel} wc
-   * @param {number} id
-   *
-   * @returns {Promise<Channel, string>}
-   */
-
-
   createClass(ChannelBuilderService, [{
-    key: 'connectTo',
-    value: function connectTo(wc, id) {
+    key: 'init',
+    value: function init(wc, rtcConfiguration) {
       var _this2 = this;
 
+      get(ChannelBuilderService.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilderService.prototype), 'init', this).call(this, wc);
+      ServiceFactory.get(WEB_RTC).onChannelFromWebChannel(wc, rtcConfiguration).subscribe(function (dc) {
+        return _this2.onChannel(wc, dc, Number(dc.label));
+      });
+
+      wc[serviceMessageStream].filter(function (msg) {
+        return msg.serviceId === _this2.id;
+      }).subscribe(function (msg) {
+        return _this2.onMessage(msg.channel, msg.senderId, msg.recepientId, msg.content);
+      });
+    }
+
+    /**
+     * Establish a channel with the peer identified by `id`.
+     *
+     * @param {WebChannel} wc
+     * @param {number} id
+     *
+     * @returns {Promise<Channel, string>}
+     */
+
+  }, {
+    key: 'connectTo',
+    value: function connectTo(wc, id) {
+      var _this3 = this;
+
       return new Promise(function (resolve, reject) {
-        get(ChannelBuilderService.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilderService.prototype), 'setPendingRequest', _this2).call(_this2, wc, id, { resolve: resolve, reject: reject });
-        wc.sendInnerTo(id, _this2.id, _this2.availableConnectors(wc));
+        get(ChannelBuilderService.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilderService.prototype), 'setPendingRequest', _this3).call(_this3, wc, id, { resolve: resolve, reject: reject });
+        wc.sendInnerTo(id, _this3.id, _this3.availableConnectors(wc));
       });
     }
 
@@ -4106,11 +4048,11 @@ var ChannelBuilderService = function (_Service) {
   }, {
     key: 'onChannel',
     value: function onChannel(wc, channel, senderId) {
-      var _this3 = this;
+      var _this4 = this;
 
       wc.initChannel(channel, senderId).then(function (channel) {
-        var pendReq = get(ChannelBuilderService.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilderService.prototype), 'getPendingRequest', _this3).call(_this3, wc, senderId);
-        if (pendReq !== null) pendReq.resolve(channel);
+        var pendReq = get(ChannelBuilderService.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilderService.prototype), 'getPendingRequest', _this4).call(_this4, wc, senderId);
+        if (pendReq) pendReq.resolve(channel);
       });
     }
 
@@ -4124,7 +4066,7 @@ var ChannelBuilderService = function (_Service) {
   }, {
     key: 'onMessage',
     value: function onMessage(channel, senderId, recepientId, msg) {
-      var _this4 = this;
+      var _this5 = this;
 
       var wc = channel.webChannel;
       var myConnectObj = this.availableConnectors(wc);
@@ -4135,50 +4077,32 @@ var ChannelBuilderService = function (_Service) {
         if (this.isEqual(msg.shouldConnect, this.WS)) {
           ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn).then(function (channel) {
             channel.send(JSON.stringify({ wcId: wc.id, senderId: wc.myId }));
-            _this4.onChannel(wc, channel, senderId);
+            _this5.onChannel(wc, channel, senderId);
           }).catch(function (reason) {
-            get(ChannelBuilderService.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilderService.prototype), 'getPendingRequest', _this4).call(_this4, wc, senderId).reject(new Error('Failed to establish a socket: ' + reason));
+            get(ChannelBuilderService.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilderService.prototype), 'getPendingRequest', _this5).call(_this5, wc, senderId).reject(new Error('Failed to establish a socket: ' + reason));
           });
         } else if (this.isEqual(msg.shouldConnect, this.WS_WR)) {
           ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn).then(function (channel) {
             channel.send(JSON.stringify({ wcId: wc.id, senderId: wc.myId }));
-            _this4.onChannel(wc, channel, senderId);
+            _this5.onChannel(wc, channel, senderId);
           }).catch(function (reason) {
-<<<<<<< HEAD
-<<<<<<< Updated upstream
-=======
->>>>>>> master
             ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId).then(function (channel) {
-              return _this4.onChannel(wc, channel, senderId);
+              return _this5.onChannel(wc, channel, senderId);
             }).catch(function (reason) {
               if ('feedbackOnFail' in msg && msg.feedbackOnFail === true) {
-                wc.sendInnerTo(senderId, _this4.id, { tryOn: _this4.WS, listenOn: myConnectObj.listenOn });
+                wc.sendInnerTo(senderId, _this5.id, { tryOn: _this5.WS, listenOn: myConnectObj.listenOn });
               } else {
-                get(ChannelBuilderService.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilderService.prototype), 'getPendingRequest', _this4).call(_this4, wc, senderId).reject(new Error('Failed to establish a socket and then a data channel: ' + reason));
+                get(ChannelBuilderService.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilderService.prototype), 'getPendingRequest', _this5).call(_this5, wc, senderId).reject(new Error('Failed to establish a socket and then a data channel: ' + reason));
               }
             });
-<<<<<<< HEAD
-=======
-            return ServiceFactory.get(WEB_RTC).connectOverWebChannel(wc, senderId, { iceServers: wc.iceServers });
-          }).then(function (channel) {
-            return _this4.onChannel(wc, channel, senderId);
-          }).catch(function (reason) {
-            if ('feedbackOnFail' in msg && msg.feedbackOnFail === true) {
-              wc.sendInnerTo(senderId, _this4.id, { tryOn: _this4.WS, listenOn: myConnectObj.listenOn });
-            } else {
-              get(ChannelBuilderService.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilderService.prototype), 'getPendingRequest', _this4).call(_this4, wc, senderId).reject(new Error('Failed to establish a socket and then a data channel: ' + reason));
-            }
->>>>>>> Stashed changes
-=======
->>>>>>> master
           });
         }
       } else if ('tryOn' in msg && this.isEqual(msg.tryOn, this.WS)) {
         ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn).then(function (channel) {
           channel.send(JSON.stringify({ wcId: wc.id, senderId: wc.myId }));
-          _this4.onChannel(wc, channel, senderId);
+          _this5.onChannel(wc, channel, senderId);
         }).catch(function (reason) {
-          return wc.sendInnerTo(senderId, _this4.id, { failedReason: 'Failed to establish a socket: ' + reason });
+          return wc.sendInnerTo(senderId, _this5.id, { failedReason: 'Failed to establish a socket: ' + reason });
         });
       } else if ('connectors' in msg) {
         if (!this.isValid(msg.connectors)) {
@@ -4210,17 +4134,17 @@ var ChannelBuilderService = function (_Service) {
               wc.sendInnerTo(senderId, this.id, { shouldConnect: this.WS, listenOn: myConnectObj.listenOn });
             } else if (this.isEqual(myConnectors, this.WR)) {
               ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId, { iceServers: wc.iceServers }).then(function (channel) {
-                _this4.onChannel(wc, channel, senderId);
+                _this5.onChannel(wc, channel, senderId);
               }).catch(function (reason) {
-                wc.sendInnerTo(senderId, _this4.id, { failedReason: 'Failed establish a data channel: ' + reason });
+                wc.sendInnerTo(senderId, _this5.id, { failedReason: 'Failed establish a data channel: ' + reason });
               });
             } else if (this.isEqual(myConnectors, this.WS_WR)) {
               wc.sendInnerTo(senderId, this.id, { shouldConnect: this.WS_WR, listenOn: myConnectObj.listenOn });
             } else if (this.isEqual(myConnectors, this.WR_WS)) {
               ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId, { iceServers: wc.iceServers }).then(function (channel) {
-                return _this4.onChannel(wc, channel, senderId);
+                return _this5.onChannel(wc, channel, senderId);
               }).catch(function (reason) {
-                wc.sendInnerTo(senderId, _this4.id, { shouldConnect: _this4.WS, listenOn: myConnectObj.listenOn });
+                wc.sendInnerTo(senderId, _this5.id, { shouldConnect: _this5.WS, listenOn: myConnectObj.listenOn });
               });
             }
           }
@@ -4234,45 +4158,31 @@ var ChannelBuilderService = function (_Service) {
             } else if (this.isEqual(myConnectors, this.WR)) {
               ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn).then(function (channel) {
                 channel.send(JSON.stringify({ wcId: wc.id, senderId: wc.myId }));
-                _this4.onChannel(wc, channel, senderId);
+                _this5.onChannel(wc, channel, senderId);
               }).catch(function (reason) {
                 return ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId, { iceServers: wc.iceServers });
               }).then(function (channel) {
-                return _this4.onChannel(wc, channel, senderId);
+                return _this5.onChannel(wc, channel, senderId);
               }).catch(function (reason) {
-                return wc.sendInnerTo(senderId, _this4.id, { failedReason: 'Failed to establish a socket and then a data channel: ' + reason });
+                return wc.sendInnerTo(senderId, _this5.id, { failedReason: 'Failed to establish a socket and then a data channel: ' + reason });
               });
             } else if (this.isEqual(myConnectors, this.WS_WR)) {
               ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn).then(function (channel) {
                 channel.send(JSON.stringify({ wcId: wc.id, senderId: wc.myId }));
-                _this4.onChannel(wc, channel, senderId);
+                _this5.onChannel(wc, channel, senderId);
               });
             } else if (this.isEqual(myConnectors, this.WR_WS)) {
               wc.sendInnerTo(senderId, this.id, { shouldConnect: this.WS_WR, listenOn: myConnectObj.listenOn });
             } else {
               ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn).then(function (channel) {
                 channel.send(JSON.stringify({ wcId: wc.id, senderId: wc.myId }));
-                _this4.onChannel(wc, channel, senderId);
+                _this5.onChannel(wc, channel, senderId);
               }).catch(function (reason) {
-<<<<<<< HEAD
-<<<<<<< Updated upstream
-=======
->>>>>>> master
                 ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId).then(function (channel) {
-                  return _this4.onChannel(wc, channel, senderId);
+                  return _this5.onChannel(wc, channel, senderId);
                 }).catch(function (reason) {
-                  return wc.sendInnerTo(senderId, _this4.id, { shouldConnect: _this4.WS, listenOn: myConnectObj.listenOn });
+                  return wc.sendInnerTo(senderId, _this5.id, { shouldConnect: _this5.WS, listenOn: myConnectObj.listenOn });
                 });
-<<<<<<< HEAD
-=======
-                return ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId, { iceServers: wc.iceServers });
-              }).then(function (channel) {
-                return _this4.onChannel(wc, channel, senderId);
-              }).catch(function (reason) {
-                return wc.sendInnerTo(senderId, _this4.id, { shouldConnect: _this4.WS, listenOn: myConnectObj.listenOn });
->>>>>>> Stashed changes
-=======
->>>>>>> master
               });
             }
           }
@@ -4285,26 +4195,26 @@ var ChannelBuilderService = function (_Service) {
               this.wsWs(wc, senderId, msg.listenOn, myConnectObj.listenOn);
             } else if (this.isEqual(myConnectors, this.WR)) {
               ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId, { iceServers: wc.iceServers }).then(function (channel) {
-                return _this4.onChannel(wc, channel, senderId);
+                return _this5.onChannel(wc, channel, senderId);
               }).catch(function (reason) {
                 ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn).then(function (channel) {
                   channel.send(JSON.stringify({ wcId: wc.id, senderId: wc.myId }));
-                  _this4.onChannel(wc, channel, senderId);
+                  _this5.onChannel(wc, channel, senderId);
                 }).catch(function (reason) {
-                  return wc.sendInnerTo(senderId, _this4.id, { failedReason: 'Failed to establish a data channel and then a socket: ' + reason });
+                  return wc.sendInnerTo(senderId, _this5.id, { failedReason: 'Failed to establish a data channel and then a socket: ' + reason });
                 });
               });
             } else if (this.isEqual(myConnectors, this.WS_WR)) {
               wc.sendInnerTo(senderId, this.id, { shouldConnect: this.WS_WR, feedbackOnFail: true, listenOn: myConnectObj.listenOn });
             } else if (this.isEqual(myConnectors, this.WR_WS)) {
               ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId, { iceServers: wc.iceServers }).then(function (channel) {
-                return _this4.onChannel(wc, channel, senderId);
+                return _this5.onChannel(wc, channel, senderId);
               }).catch(function (reason) {
                 ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn).then(function (channel) {
                   channel.send(JSON.stringify({ wcId: wc.id, senderId: wc.myId }));
-                  _this4.onChannel(wc, channel, senderId);
+                  _this5.onChannel(wc, channel, senderId);
                 }).catch(function (reason) {
-                  return wc.sendInnerTo(senderId, _this4.id, { shouldConnect: _this4.WS, listenOn: myConnectObj.listenOn });
+                  return wc.sendInnerTo(senderId, _this5.id, { shouldConnect: _this5.WS, listenOn: myConnectObj.listenOn });
                 });
               });
             }
@@ -4324,13 +4234,13 @@ var ChannelBuilderService = function (_Service) {
   }, {
     key: 'wsWs',
     value: function wsWs(wc, senderId, peerWsURL, myWsURL) {
-      var _this5 = this;
+      var _this6 = this;
 
       ServiceFactory.get(WEB_SOCKET).connect(peerWsURL).then(function (channel) {
         channel.send(JSON.stringify({ wcId: wc.id, senderId: wc.myId }));
-        _this5.onChannel(wc, channel, senderId);
+        _this6.onChannel(wc, channel, senderId);
       }).catch(function (reason) {
-        wc.sendInnerTo(senderId, _this5.id, { shouldConnect: _this5.WS, listenOn: myWsURL });
+        wc.sendInnerTo(senderId, _this6.id, { shouldConnect: _this6.WS, listenOn: myWsURL });
       });
     }
 
@@ -4344,13 +4254,13 @@ var ChannelBuilderService = function (_Service) {
   }, {
     key: 'ws',
     value: function ws(wc, senderId, peerWsURL) {
-      var _this6 = this;
+      var _this7 = this;
 
       ServiceFactory.get(WEB_SOCKET).connect(peerWsURL).then(function (channel) {
         channel.send(JSON.stringify({ wcId: wc.id, senderId: wc.myId }));
-        _this6.onChannel(wc, channel, senderId);
+        _this7.onChannel(wc, channel, senderId);
       }).catch(function (reason) {
-        wc.sendInnerTo(senderId, _this6.id, {
+        wc.sendInnerTo(senderId, _this7.id, {
           failedReason: 'Failed to establish a socket: ' + reason
         });
       });
@@ -4911,7 +4821,7 @@ var MESSAGE_BUILDER = 4;
  * Contains singletons services.
  * @type {Map}
  */
-var services = new Map();
+var services$1 = new Map();
 
 /**
  * It is a factory helper class which is responsible to instantiate any service class.
@@ -4930,32 +4840,37 @@ var ServiceFactory = function () {
      *
      * @throws {Error} If the service `id` is unknown
      * @param  {MESSAGE_BUILDER|WEB_RTC|WEB_SOCKET|FULLY_CONNECTED|CHANNEL_BUILDER} id The service identifier
-     * @param  {Object} [options] Any options that the service accepts
      * @returns {Service}
      */
     value: function get$$1(id) {
-      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-
-      if (services.has(id)) {
-        return services.get(id);
+      if (services$1.has(id)) {
+        return services$1.get(id);
       }
       var service = void 0;
       switch (id) {
         case WEB_RTC:
-          return new WebRTCService(WEB_RTC, options);
+          service = new WebRTCService(WEB_RTC);
+          services$1.set(id, service);
+          return service;
         case WEB_SOCKET:
-          return new WebSocketService(WEB_SOCKET);
+          service = new WebSocketService(WEB_SOCKET);
+          services$1.set(id, service);
+          return service;
         case EVENT_SOURCE:
-          return new EventSourceService(EVENT_SOURCE);
+          service = new EventSourceService(EVENT_SOURCE);
+          services$1.set(id, service);
+          return service;
         case CHANNEL_BUILDER:
-          return new ChannelBuilderService(CHANNEL_BUILDER);
+          service = new ChannelBuilderService(CHANNEL_BUILDER);
+          services$1.set(id, service);
+          return service;
         case FULLY_CONNECTED:
           service = new FullyConnectedService(FULLY_CONNECTED);
-          services.set(id, service);
+          services$1.set(id, service);
           return service;
         case MESSAGE_BUILDER:
           service = new MessageBuilderService(MESSAGE_BUILDER);
-          services.set(id, service);
+          services$1.set(id, service);
           return service;
         default:
           throw new Error(id + ' is an Unknown service id');
@@ -5499,13 +5414,6 @@ var WebChannel = function () {
     this.onJoin = function () {};
 
     /**
-     * `WebChannel` topology.
-     * @private
-     * @type {Service}
-     */
-    this.manager = ServiceFactory.get(this.settings.topology);
-
-    /**
      * Message builder service instance.
      *
      * @private
@@ -5599,17 +5507,22 @@ var WebChannel = function () {
     this.onClose = function () {};
 
     this[serviceMessageStream] = new Subject_2();
-    this[webrtcService] = ServiceFactory.get(WEB_RTC);
-    this[webrtcService].onChannelFromWebChannel(this, { iceServers: this.settings.iceServers }).subscribe(function (dc) {
-      return ServiceFactory.get(CHANNEL_BUILDER).onChannel(_this, dc, Number(dc.label));
-    });
+    var channelBuilder = ServiceFactory.get(CHANNEL_BUILDER);
+    channelBuilder.init(this, { iceServers: this.settings.iceServers });
+
+    /**
+     * `WebChannel` topology.
+     * @private
+     * @type {Service}
+     */
+    this.setTopology(this.settings.topology);
   }
 
   /**
    * Join the `WebChannel`.
    *
    * @param  {string|WebSocket} keyOrSocket The key provided by one of the `WebChannel` members or a socket
-   * @param  {string} [url=this.settings.signalingURL] Server URL
+   * @param  {string} [options] Join options
    * @returns {Promise<undefined,string>} It resolves once you became a `WebChannel` member.
    */
 
@@ -5753,7 +5666,7 @@ var WebChannel = function () {
       this.pingTime = 0;
       if (this.channels.size !== 0) {
         this.members = [];
-        this.manager.leave(this);
+        this[topologyService].leave(this);
       }
       this.onInitChannel = function () {};
       this.onJoin = function () {};
@@ -5773,7 +5686,7 @@ var WebChannel = function () {
 
       if (this.channels.size !== 0) {
         this.msgBld.handleUserMessage(data, this.myId, null, function (dataChunk) {
-          _this4.manager.broadcast(_this4, dataChunk);
+          _this4[topologyService].broadcast(_this4, dataChunk);
         });
       }
     }
@@ -5791,7 +5704,7 @@ var WebChannel = function () {
 
       if (this.channels.size !== 0) {
         this.msgBld.handleUserMessage(data, this.myId, id, function (dataChunk) {
-          _this5.manager.sendTo(id, _this5, dataChunk);
+          _this5[topologyService].sendTo(id, _this5, dataChunk);
         }, false);
       }
     }
@@ -5816,7 +5729,7 @@ var WebChannel = function () {
             _this6.pingFinish = function (delay) {
               return resolve(delay);
             };
-            _this6.manager.broadcast(_this6, _this6.msgBld.msg(PING, _this6.myId));
+            _this6[topologyService].broadcast(_this6, _this6.msgBld.msg(PING, _this6.myId));
             setTimeout(function () {
               return resolve(PING_TIMEOUT);
             }, PING_TIMEOUT);
@@ -5839,11 +5752,11 @@ var WebChannel = function () {
 
       return this.initChannel(channel).then(function (channel) {
         var msg = _this7.msgBld.msg(INITIALIZATION, _this7.myId, channel.peerId, {
-          manager: _this7.manager.id,
+          topology: _this7[topologyService].id,
           wcId: _this7.id
         });
         channel.send(msg);
-        return _this7.manager.add(channel);
+        return _this7[topologyService].add(channel);
       });
     }
 
@@ -5887,11 +5800,11 @@ var WebChannel = function () {
       var forward = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
 
       if (forward) {
-        this.manager.sendInnerTo(recepient, this, data);
+        this[topologyService].sendInnerTo(recepient, this, data);
       } else {
         if (Number.isInteger(recepient)) {
           var msg = this.msgBld.msg(INNER_DATA, this.myId, recepient, { serviceId: serviceId, data: data });
-          this.manager.sendInnerTo(recepient, this, msg);
+          this[topologyService].sendInnerTo(recepient, this, msg);
         } else {
           recepient.send(this.msgBld.msg(INNER_DATA, this.myId, recepient.peerId, { serviceId: serviceId, data: data }));
         }
@@ -5907,7 +5820,7 @@ var WebChannel = function () {
   }, {
     key: 'sendInner',
     value: function sendInner(serviceId, data) {
-      this.manager.sendInner(this, this.msgBld.msg(INNER_DATA, this.myId, null, { serviceId: serviceId, data: data }));
+      this[topologyService].sendInner(this, this.msgBld.msg(INNER_DATA, this.myId, null, { serviceId: serviceId, data: data }));
     }
 
     /**
@@ -5932,8 +5845,7 @@ var WebChannel = function () {
         switch (header.code) {
           case INITIALIZATION:
             {
-              this.settings.topology = msg.manager;
-              this.manager = ServiceFactory.get(this.settings.topology);
+              this.setTopology(msg.topology);
               this.myId = header.recepientId;
               this.id = msg.wcId;
               channel.peerId = header.senderId;
@@ -5942,7 +5854,7 @@ var WebChannel = function () {
           case INNER_DATA:
             {
               if (header.recepientId === 0 || this.myId === header.recepientId) {
-                if (msg.serviceId !== WEB_RTC) {
+                if (msg.serviceId !== WEB_RTC && msg.serviceId !== CHANNEL_BUILDER) {
                   this.getService(msg.serviceId).onMessage(channel, header.senderId, header.recepientId, msg.data);
                 } else {
                   this[serviceMessageStream].next({
@@ -5971,7 +5883,7 @@ var WebChannel = function () {
               break;
             }
           case PING:
-            this.manager.sendTo(header.senderId, this, this.msgBld.msg(PONG, this.myId));
+            this[topologyService].sendTo(header.senderId, this, this.msgBld.msg(PONG, this.myId));
             break;
           case PONG:
             {
@@ -6017,10 +5929,10 @@ var WebChannel = function () {
           return _this9.onChannelMessage(channel, data);
         };
         channel.onClose = function (closeEvt) {
-          return _this9.manager.onChannelClose(closeEvt, channel);
+          return _this9[topologyService].onChannelClose(closeEvt, channel);
         };
         channel.onError = function (evt) {
-          return _this9.manager.onChannelError(evt, channel);
+          return _this9[topologyService].onChannelError(evt, channel);
         };
         _this9.onInitChannel.set(channel.peerId, { resolve: function resolve() {
             _this9.onInitChannel.delete(channel.peerId);
@@ -6088,6 +6000,13 @@ var WebChannel = function () {
         }
       });
     }
+  }, {
+    key: 'setTopology',
+    value: function setTopology(topology) {
+      this.settings.topology = topology;
+      this[topologyService] = ServiceFactory.get(topology);
+      this[topologyService].init(this);
+    }
 
     /**
      * Generate random id for a `WebChannel` or a new peer.
@@ -6129,6 +6048,10 @@ var WebChannel = function () {
   }]);
   return WebChannel;
 }();
+
+var serviceMessageStream = Symbol('serviceMessageStream');
+var services = Symbol('services');
+var topologyService = Symbol('topologyService');
 
 /**
  * Create `WebChannel`.
