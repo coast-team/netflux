@@ -35,7 +35,6 @@
     "test:firefox": "npm run test -- --browsers Firefox",
     "test:coverage": "rm -rf coverage && npm run test -- -- coverage",
     "test:travis": "npm run test:node && npm run test -- -- travis",
-    "posttest:travis": "pm2 stop all",
     "pretest:node": "npm run build && npm run build:testscripts && pm2 gracefulReload test/util/scripts/process.node.yml && rm -rf test/.rolledup && node test/rollup.config.js",
     "test:node": "node jasmine.conf.js",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
