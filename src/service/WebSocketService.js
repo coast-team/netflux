@@ -1,17 +1,21 @@
-import * as Rx from 'node_modules/rxjs/Subject'
+import { Subject } from 'node_modules/rxjs/Subject'
+import { BehaviorSubject } from 'node_modules/rxjs/BehaviorSubject'
 import 'node_modules/rxjs/add/operator/filter'
 
-import Util from 'Util'
-import Service from 'service/Service'
+import { Util } from 'Util'
+import { Service } from 'service/Service'
 const WebSocket = Util.require(Util.WEB_SOCKET)
 
 const CONNECT_TIMEOUT = 3000
+const isListening = new BehaviorSubject(false)
+const wsStream = new Subject()
+let url = ''
 
 /**
  * Service class responsible to establish connections between peers via
  * `WebSocket`.
  */
-class WebSocketService extends Service {
+export class WebSocketService extends Service {
   /**
    * Creates WebSocket with server.
    *
@@ -35,15 +39,22 @@ class WebSocketService extends Service {
     })
   }
 
+  onWebSocket (wc) {
+    if (url) {
+      return wsStream.asObservable()
+    }
+    throw new Error('Peer is not listening on WebSocket')
+  }
+
   subject (url) {
     return this.connect(url)
       .then(socket => {
-        const subject = new Rx.Subject()
+        const subject = new Subject()
         socket.onmessage = evt => {
           try {
             subject.next(JSON.parse(evt.data))
           } catch (err) {
-            console.error(`Unknown message from websocket : ${socket.url}` + evt.data)
+            console.error(`WebSocket message error from ${socket.url}: ${err.message}` + evt.data)
             socket.close(4000, err.message)
           }
         }
@@ -63,4 +74,25 @@ class WebSocketService extends Service {
   }
 }
 
-export default WebSocketService
+export class WebSocketChecker {
+  static isListening () {
+    return isListening.asObservable()
+  }
+
+  static get url () {
+    return url
+  }
+}
+
+export class BotHelper {
+  static listen (serverUrl) {
+    url = serverUrl
+    if (serverUrl) {
+      isListening.next(true)
+    } else {
+      isListening.next(false)
+    }
+  }
+
+  static get wsStream () { return wsStream }
+}

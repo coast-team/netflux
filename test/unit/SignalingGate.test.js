@@ -1,4 +1,4 @@
-import SignalingGate from 'src/SignalingGate'
+import { SignalingGate } from 'src/SignalingGate'
 import * as helper from 'util/helper'
 
 describe('SignalingGate', () => {

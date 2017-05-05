@@ -1,48 +1,48 @@
-import FullyConnectedService from 'service/topology/FullyConnectedService'
-import WebRTCService from 'service/WebRTCService'
-import WebSocketService from 'service/WebSocketService'
-import EventSourceService from 'service/EventSourceService'
-import ChannelBuilderService from 'service/ChannelBuilderService'
-import MessageBuilderService from 'service/MessageBuilderService'
+import { FullyConnectedService } from 'service/topology/FullyConnectedService'
+import { WebRTCService } from 'service/WebRTCService'
+import { WebSocketService } from 'service/WebSocketService'
+import { EventSourceService } from 'service/EventSourceService'
+import { ChannelBuilderService } from 'service/ChannelBuilderService'
+import { MessageBuilderService } from 'service/MessageBuilderService'
 
 /**
  * {@link WebRTCService} identifier.
  * @type {number}
  */
-const WEB_RTC = 0
+export const WEB_RTC = 0
 
 /**
 * {@link WebSocketService} identifier.
 * @type {number}
 */
-const WEB_SOCKET = 1
+export const WEB_SOCKET = 1
 
 /**
 * {@link WebSocketService} identifier.
 * @type {number}
 */
-const EVENT_SOURCE = 5
+export const EVENT_SOURCE = 5
 
 /**
  * {@link ChannelBuilderService} identifier.
  * @ignore
  * @type {number}
  */
-const CHANNEL_BUILDER = 2
+export const CHANNEL_BUILDER = 2
 
 /**
  * {@link FullyConnectedService} identifier.
  * @ignore
  * @type {number}
  */
-const FULLY_CONNECTED = 3
+export const FULLY_CONNECTED = 3
 
 /**
  * {@link MessageBuilderService} identifier
  * @ignore
  * @type {number}
  */
-const MESSAGE_BUILDER = 4
+export const MESSAGE_BUILDER = 4
 
 /**
  * Contains singletons services.
@@ -53,7 +53,7 @@ const services = new Map()
 /**
  * It is a factory helper class which is responsible to instantiate any service class.
  */
-class ServiceFactory {
+export class ServiceFactory {
   /**
    * Provides the service instance specified by `id`.
    *
@@ -96,6 +96,3 @@ class ServiceFactory {
     }
   }
 }
-
-export default ServiceFactory
-export {WEB_RTC, WEB_SOCKET, EVENT_SOURCE, CHANNEL_BUILDER, FULLY_CONNECTED, MESSAGE_BUILDER}

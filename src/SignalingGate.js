@@ -1,12 +1,12 @@
-import ServiceFactory, {WEB_RTC, WEB_SOCKET, EVENT_SOURCE} from 'ServiceFactory'
-import Util from 'Util'
+import { ServiceFactory, WEB_RTC, WEB_SOCKET, EVENT_SOURCE } from 'ServiceFactory'
+import { Util } from 'Util'
 
 /**
  * This class represents a door of the `WebChannel` for the current peer. If the door
  * is open, then clients can join the `WebChannel` through this peer. There are as
  * many doors as peers in the `WebChannel` and each of them can be closed or opened.
  */
-class SignalingGate {
+export class SignalingGate {
   /**
    * @param {WebChannel} wc
    * @param {function(ch: RTCDataChannel)} onChannel
@@ -52,7 +52,7 @@ class SignalingGate {
       return this.getConnectionService(url)
         .subject(url)
         .then(signaling => {
-          signaling.filter(msg => 'first' in msg || 'ping' in msg)
+          signaling.filter(msg => 'ping' in msg)
             .subscribe(() => signaling.send(JSON.stringify({pong: true})))
           return this.listenOnOpen(url, key, signaling)
         })
@@ -80,7 +80,7 @@ class SignalingGate {
             reject(new Error(''))
           }
         )
-      ServiceFactory.get(WEB_RTC, this.webChannel.settings.iceServers)
+      ServiceFactory.get(WEB_RTC)
         .onChannelFromSignaling(signaling, {iceServers: this.webChannel.settings.iceServers})
         .subscribe(dc => this.onChannel(dc))
       signaling.send(JSON.stringify({open: key}))
@@ -92,7 +92,7 @@ class SignalingGate {
       this.getConnectionService(url)
         .subject(url)
         .then(signaling => {
-          signaling.filter(msg => 'first' in msg || 'ping' in msg)
+          signaling.filter(msg => 'ping' in msg)
             .subscribe(() => signaling.send(JSON.stringify({pong: true})))
           const subs = signaling.filter(msg => 'first' in msg)
             .subscribe(
@@ -108,32 +108,23 @@ class SignalingGate {
                     resolve()
                   }
                 } else {
-                  if ('useThis' in msg) {
-                    if (msg.useThis) {
+                  ServiceFactory.get(WEB_RTC)
+                    .connectOverSignaling(signaling, key, {iceServers: this.webChannel.settings.iceServers})
+                    .then(dc => {
                       subs.unsubscribe()
-                      resolve(signaling.socket)
-                    } else {
-                      signaling.error(new Error(`Failed to join via ${url}: uncorrect bot server response`))
-                    }
-                  } else {
-                    ServiceFactory.get(WEB_RTC, this.webChannel.settings.iceServers)
-                      .connectOverSignaling(signaling, key, {iceServers: this.webChannel.settings.iceServers})
-                      .then(dc => {
-                        subs.unsubscribe()
-                        if (shouldOpen) {
-                          this.open(url, key, signaling)
-                            .then(() => resolve(dc))
-                            .catch(err => reject(err))
-                        } else {
-                          signaling.close(1000)
-                          resolve(dc)
-                        }
-                      })
-                      .catch(err => {
+                      if (shouldOpen) {
+                        this.open(url, key, signaling)
+                          .then(() => resolve(dc))
+                          .catch(err => reject(err))
+                      } else {
                         signaling.close(1000)
-                        signaling.error(err)
-                      })
-                  }
+                        resolve(dc)
+                      }
+                    })
+                    .catch(err => {
+                      signaling.close(1000)
+                      signaling.error(err)
+                    })
                 }
               },
               err => reject(err)
@@ -225,5 +216,3 @@ class SignalingGate {
     return result
   }
 }
-
-export default SignalingGate

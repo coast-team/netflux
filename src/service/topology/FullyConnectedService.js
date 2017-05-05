@@ -1,4 +1,4 @@
-import TopologyInterface from 'service/topology/TopologyInterface'
+import { TopologyInterface } from 'service/topology/TopologyInterface'
 
 /**
  * One of the internal message type. The message is intended for the `WebChannel`
@@ -27,7 +27,7 @@ const TOCK = 5
  *
  * @extends module:webChannelManager~WebChannelTopologyInterface
  */
-class FullyConnectedService extends TopologyInterface {
+export class FullyConnectedService extends TopologyInterface {
   /**
    * Add a peer to the `WebChannel`.
    *
@@ -229,5 +229,3 @@ class JoiningPeer {
     this.channels = new Set()
   }
 }
-
-export default FullyConnectedService

@@ -1,9 +1,9 @@
-import Util from 'Util'
+import { Util } from 'Util'
 
 /**
  * Wrapper class for `RTCDataChannel` and `WebSocket`.
  */
-class Channel {
+export class Channel {
   /**
    * Creates a channel from existing `RTCDataChannel` or `WebSocket`.
    * @param {WebSocket|RTCDataChannel} channel Data channel or web socket
@@ -142,5 +142,3 @@ class Channel {
     this.channel.close()
   }
 }
-
-export default Channel

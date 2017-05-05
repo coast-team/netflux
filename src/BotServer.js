@@ -1,50 +1,64 @@
-import ServiceFactory, {WEB_SOCKET, CHANNEL_BUILDER, FULLY_CONNECTED} from 'ServiceFactory'
-import WebChannel from 'WebChannel'
-import Util from 'Util'
+import { BotHelper } from 'service/WebSocketService'
+import { WebChannel } from 'WebChannel'
+import { Util } from 'Util'
+import { defaults } from 'defaults'
 
-const MESSAGE_TYPE_ERROR = 4000
-const WEB_CHANNEL_NOT_FOUND = 4001
+const url = require('url')
 
 /**
  * BotServer can listen on web socket. A peer can invite bot to join his `WebChannel`.
  * He can also join one of the bot's `WebChannel`.
  */
-class BotServer {
+export class BotServer {
   /**
    * Bot server settings are the same as for `WebChannel` (see {@link WebChannelSettings}),
    * plus `host` and `port` parameters.
    *
    * @param {Object} options
-   * @param {WEB_RTC|WEB_SOCKET} [options.connector=WEB_SOCKET] Which connector is preferable during connection establishment
    * @param {FULLY_CONNECTED} [options.topology=FULLY_CONNECTED] Fully connected topology is the only one available for now
-   * @param {string} [options.signalingURL='wss://sigver-coastteam.rhcloud.com:8443'] Signaling server url
-   * @param {RTCIceServer} [options.iceServers=[{urls:'stun:turn01.uswest.xirsys.com'}]] Set of ice servers for WebRTC
-   * @param {string} [options.host='localhost']
-   * @param {number} [options.port=9000]
+   * @param {string} [options.signalingURL='wss://www.coedit.re:10473'] Signaling server url
+   * @param {RTCIceServer} [options.iceServers=[{urls:'stun3.l.google.com:19302'}]] Set of ice servers for WebRTC
+   * @param {Object} [options.bot] Options for bot server
+   * @param {string} [options.bot.protocol='wss'] Bot protocol to be transmitted to other peers to connect to bot
+   * @param {string} [options.bot.host='127.0.0.1'] Bot hostname where to bing the server
+   * @param {number} [options.bot.port=8080] Bot port where to bind the server
+   * @param {Object} [options.bot.server=null] A pre-created Node.js HTTP server
    */
   constructor (options = {}) {
-    /**
-     * Default settings.
-     * @private
-     * @type {Object}
-     */
-    this.defaultSettings = {
-      connector: WEB_SOCKET,
-      topology: FULLY_CONNECTED,
-      signalingURL: 'wss://sigver-coastteam.rhcloud.com:8443',
-      iceServers: [
-        {urls: 'stun:turn01.uswest.xirsys.com'}
-      ],
-      host: 'localhost',
-      port: 9000
+    const botDefaults = {
+      bot: {
+        protocol: 'wss',
+        host: '127.0.0.1',
+        port: 8080,
+        server: undefined,
+        perMessageDeflate: false
+      }
     }
 
-    /**
-     * @private
-     * @type {Object}
-     */
-    this.settings = Object.assign({}, this.defaultSettings, options)
-    this.settings.listenOn = `ws://${this.settings.host}:${this.settings.port}`
+    let wcOptions = Object.assign({}, defaults, options)
+    this.wcSettings = {
+      topology: wcOptions.topology,
+      signalingURL: wcOptions.signalingURL,
+      iceServers: wcOptions.iceServers
+    }
+    this.botSettings = Object.assign({}, botDefaults.bot, options.bot)
+    this.serverSettings = {
+      perMessageDeflate: this.botSettings.perMessageDeflate,
+      verifyClient: (info) => this.validateConnection(info)
+    }
+    let host
+    let port
+    if (this.botSettings.server) {
+      this.serverSettings.server = this.botSettings.server
+      host = this.settings.bot.server.address().address
+      port = this.settings.bot.server.address().port
+    } else {
+      host = this.botSettings.host
+      port = this.botSettings.port
+      this.serverSettings.host = host
+      this.serverSettings.port = port
+    }
+    this.url = `${this.botSettings.protocol}://${host}:${port}`
 
     /**
      * @type {WebSocketServer}
@@ -71,7 +85,6 @@ class BotServer {
     return new Promise((resolve, reject) => {
       let WebSocketServer
       try {
-        console.log('uws module would be used for Bot server')
         WebSocketServer = require('uws').Server
       } catch (err) {
         try {
@@ -79,81 +92,43 @@ class BotServer {
           WebSocketServer = Util.require('ws').Server
         } catch (err) {
           console.log(`${err.message}. Bot server cannot be run`)
+          reject(err)
         }
       }
-      if (WebSocketServer === undefined) {
-        console.log('Could not find uws module, thus ws module will be used for Bot server instead')
-        WebSocketServer = Util.require('ws').Server
-      }
 
-      this.server = new WebSocketServer({
-        host: this.settings.host,
-        port: this.settings.port
-      }, resolve)
+      try {
+        this.server = new WebSocketServer(this.serverSettings)
+        BotHelper.listen(this.url)
 
-      for (let wc of this.webChannels) {
-        wc.settings.listenOn = this.settings.listenOn
-      }
+        this.server.on('error', err => {
+          BotHelper.listen('')
+          reject(err)
+        })
 
-      this.server.on('error', (err) => {
-        console.error('Server error: ', err)
-        for (let wc of this.webChannels) {
-          wc.settings.listenOn = ''
-        }
-        reject(err)
-      })
-
-      this.server.on('connection', ws => {
-        ws.onmessage = msgEvt => {
-          try {
-            const msg = JSON.parse(msgEvt.data)
-            if ('join' in msg) {
-              const wc = this.getWebChannel(msg.join)
-              if (wc === null) {
-                ws.send(JSON.stringify({first: false, useThis: false}))
-              } else {
-                ws.send(JSON.stringify({first: false, useThis: true}))
-                wc.invite(ws)
+        this.server.on('connection', ws => {
+          const {pathname, query} = url.parse(ws.upgradeReq.url, true)
+          const wcId = Number(query.wcId)
+          let wc = this.getWebChannel(wcId)
+          switch (pathname) {
+            case '/invite':
+              console.log('Inviting to ' + wcId)
+              if (wc && wc.members.length === 0) {
+                this.removeWebChannel(wc)
               }
-            } else if ('wcId' in msg) {
-              let wc = this.getWebChannel(msg.wcId)
-              if ('senderId' in msg) {
-                if (wc !== null) {
-                  ServiceFactory.get(CHANNEL_BUILDER).onChannel(wc, ws, msg.senderId)
-                } else {
-                  ws.close(WEB_CHANNEL_NOT_FOUND, `${msg.wcId} webChannel was not found (message received from ${msg.senderId})`)
-                  console.error(`${msg.wcId} webChannel was not found (message received from ${msg.senderId})`)
-                }
-              } else if ('check' in msg) {
-                if (wc === null || wc.members.length === 0) {
-                  ws.send(JSON.stringify({inviteOk: true}))
-                } else {
-                  ws.send(JSON.stringify({inviteOk: false}))
-                  console.error(`Bot refused to join ${msg.wcId} webChannel, because it is already in use`)
-                }
-              } else {
-                if (wc === null) {
-                  wc = new WebChannel(this.settings)
-                  wc.id = msg.wcId
-                  this.addWebChannel(wc)
-                  wc.join(ws).then(() => { this.onWebChannel(wc) })
-                } else if (wc.members.length === 0) {
-                  this.removeWebChannel(wc)
-                  wc = new WebChannel(this.settings)
-                  wc.id = msg.wcId
-                  this.addWebChannel(wc)
-                  wc.join(ws).then(() => { this.onWebChannel(wc) })
-                } else {
-                  ws.close()
-                }
-              }
-            }
-          } catch (err) {
-            ws.close(MESSAGE_TYPE_ERROR, `Unsupported message type: ${err.message}`)
-            console.error(`Unsupported message type: ${err.message}`)
+              wc = new WebChannel(this.wcSettings)
+              wc.id = wcId
+              this.addWebChannel(wc)
+              wc.join(ws).then(() => this.onWebChannel(wc))
+              break
+            case '/internalChannel':
+              BotHelper.wsStream.next({wc, ws, senderId: query.senderId})
+              break
           }
-        }
-      })
+        })
+      } catch (err) {
+        console.log('Bot server Error: ' + err.message)
+        reject(err)
+      }
     })
   }
 
@@ -161,9 +136,7 @@ class BotServer {
    * Stops listen on web socket.
    */
   stop () {
-    for (let wc of this.webChannels) {
-      wc.settings.listenOn = ''
-    }
+    BotHelper.listen('')
     this.server.close()
   }
 
@@ -178,7 +151,7 @@ class BotServer {
     for (let wc of this.webChannels) {
       if (id === wc.id) return wc
     }
-    return null
+    return undefined
   }
 
   /**
@@ -198,6 +171,21 @@ class BotServer {
   removeWebChannel (wc) {
     this.webChannels.splice(this.webChannels.indexOf(wc), 1)
   }
-}
 
-export default BotServer
+  validateConnection (info) {
+    const {pathname, query} = url.parse(info.req.url, true)
+    const wcId = query.wcId ? Number(query.wcId) : undefined
+    switch (pathname) {
+      case '/invite':
+        if (wcId) {
+          const wc = this.getWebChannel(wcId)
+          return wc === undefined || wc.members.length === 0
+        }
+        return false
+      case '/internalChannel':
+        return query.senderId && wcId && this.getWebChannel(wcId)
+      default:
+        return false
+    }
+  }
+}

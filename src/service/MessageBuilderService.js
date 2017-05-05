@@ -1,6 +1,6 @@
-import Util from 'Util'
-import Service from 'service/Service'
-import {USER_DATA} from 'WebChannel'
+import { Util } from 'Util'
+import { Service } from 'service/Service'
+import { USER_DATA } from 'WebChannel'
 const ted = Util.require(Util.TEXT_ENCODING)
 
 /**
@@ -104,7 +104,7 @@ const buffers = new WeakMap()
  * big messages (more then 16ko) sent by users. Internal messages are always less
  * 16ko.
  */
-class MessageBuilderService extends Service {
+export class MessageBuilderService extends Service {
   /**
    * @callback MessageBuilderService~Send
    * @param {ArrayBuffer} dataChunk - If the message is too big this
@@ -433,5 +433,3 @@ class Buffer {
     }
   }
 }
-
-export default MessageBuilderService

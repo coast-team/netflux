@@ -1,4 +1,4 @@
-import { services } from 'WebChannel'
+import { services } from 'symbols'
 
 /**
  * Default timeout for any pending request.
@@ -15,7 +15,7 @@ const itemsStorage = new Map()
  * Abstract class which each service should inherit. Each service is independent
  * and can store data temporarly in order to accomplish its task(s).
  */
-class Service {
+export class Service {
   /**
    * It should be invoked only by calling `super` from the children constructor.
    *
@@ -156,5 +156,3 @@ class Service {
     if (!idMap.has(id)) idMap.set(id, data)
   }
 }
-
-export default Service

@@ -10,7 +10,7 @@ const NodeCloseEvent = class CloseEvent {
 /**
  * Utility class contains some helper static methods.
  */
-export default class Util {
+export class Util {
   /**
    * Check execution environment.
    *
@@ -42,40 +42,17 @@ export default class Util {
    * @returns {type} Description
    */
   static isURL (str) {
-    let regex =
+    const regex =
       '^' +
-      // protocol identifier
-      '(?:(?:wss|ws|http|https)://)' +
-      // user:pass authentication
-      '(?:\\S+(?::\\S*)?@)?' +
-      '(?:'
+        // protocol identifier
+        '(?:wss|ws)://' +
+        // Host name/IP
+        '[^\\s]+' +
+        // port number
+        '(?::\\d{2,5})?' +
+      '$'
 
-    const tld = '(?:\\.(?:[a-z\\u00a1-\\uffff]{2,}))?'
-
-    regex +=
-        // IP address dotted notation octets
-        // excludes loopback network 0.0.0.0
-        // excludes reserved space >= 224.0.0.0
-        // excludes network & broacast addresses
-        // (first & last IP address of each class)
-        '(?:[1-9]\\d?|1\\d\\d|2[01]\\d|22[0-3])' +
-        '(?:\\.(?:1?\\d{1,2}|2[0-4]\\d|25[0-5])){2}' +
-        '(?:\\.(?:[1-9]\\d?|1\\d\\d|2[0-4]\\d|25[0-4]))' +
-      '|' +
-        // host name
-        '(?:(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)' +
-        // domain name
-        '(?:\\.(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)*' +
-        tld +
-      ')' +
-      // port number
-      '(?::\\d{2,5})?' +
-      // resource path
-      '(?:[/?#]\\S*)?' +
-    '$'
-
-    if (!(new RegExp(regex, 'i')).exec(str)) return false
-    return true
+    return (new RegExp(regex, 'i')).test(str)
   }
 
   static get WEB_RTC () { return 1 }

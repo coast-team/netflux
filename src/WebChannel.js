@@ -1,8 +1,10 @@
-import ServiceFactory, {WEB_RTC, WEB_SOCKET, MESSAGE_BUILDER, CHANNEL_BUILDER} from 'ServiceFactory'
-import Channel from 'Channel'
-import SignalingGate from 'SignalingGate'
-import Util from 'Util'
 import { Subject } from 'node_modules/rxjs/Subject'
+
+import { serviceMessageStream, topologyService } from 'symbols'
+import { ServiceFactory, WEB_RTC, WEB_SOCKET, MESSAGE_BUILDER, CHANNEL_BUILDER } from 'ServiceFactory'
+import { Channel } from 'Channel'
+import { SignalingGate } from 'SignalingGate'
+import { Util } from 'Util'
 
 /**
  * Maximum identifier number for {@link WebChannel#generateId} function.
@@ -60,7 +62,7 @@ const INIT_CHANNEL_BIS = 7
  * the `WebChannel` and he also possess enough information to be able to add it
  * preserving the current `WebChannel` structure (network topology).
  */
-class WebChannel {
+export class WebChannel {
   /**
    * @param {WebChannelSettings} settings Web channel settings
    */
@@ -210,7 +212,7 @@ class WebChannel {
       if (keyOrSocket.constructor.name !== 'WebSocket') {
         this.joinRecursively(keyOrSocket, settings, () => resolve(), err => reject(err), 0)
       } else {
-        this.onJoin = resolve
+        this.onJoin = () => resolve()
         this.initChannel(keyOrSocket).catch(reject)
       }
     })
@@ -219,42 +221,17 @@ class WebChannel {
   /**
    * Invite a peer to join the `WebChannel`.
    *
-   * @param {string|WebSocket} urlOrSocket
+   * @param {string} url
    *
    * @returns {Promise<undefined,string>}
    */
-  invite (urlOrSocket) {
-    if (typeof urlOrSocket === 'string' || urlOrSocket instanceof String) {
-      if (!Util.isURL(urlOrSocket)) {
-        return Promise.reject(new Error(`${urlOrSocket} is not a valid URL`))
-      }
-      return new Promise((resolve, reject) => {
-        ServiceFactory.get(WEB_SOCKET).connect(urlOrSocket)
-          .then(ws => {
-            ws.onmessage = evt => {
-              const msg = JSON.parse(evt.data)
-              if ('inviteOk' in msg) {
-                if (msg.inviteOk) {
-                  ws.onmessage = () => {}
-                  ws.send(JSON.stringify({wcId: this.id}))
-                  this.addChannel(ws)
-                    .then(() => resolve())
-                } else {
-                  ws.close(1000)
-                  reject(new Error('Bot already has been invited'))
-                }
-              } else {
-                ws.close(1000)
-                reject(new Error('Unknown message from bot server: ' + evt.data))
-              }
-            }
-            ws.send(JSON.stringify({wcId: this.id, check: true}))
-          })
-      })
-    } else if (urlOrSocket.constructor.name === 'WebSocket') {
-      return this.addChannel(urlOrSocket)
+  invite (url) {
+    if (Util.isURL(url)) {
+      return ServiceFactory.get(WEB_SOCKET)
+        .connect(`${url}/invite?wcId=${this.id}`)
+        .then(ws => this.addChannel(ws))
     } else {
-      return Promise.reject(new Error(`${urlOrSocket} is not a valid URL`))
+      return Promise.reject(new Error(`${url} is not a valid URL`))
     }
   }
 
@@ -307,7 +284,7 @@ class WebChannel {
       this.members = []
       this[topologyService].leave(this)
     }
-    this.onInitChannel = () => {}
+    this.onInitChannel = new Map()
     this.onJoin = () => {}
     this[serviceMessageStream].complete()
     this.gate.close()
@@ -450,7 +427,7 @@ class WebChannel {
         case INNER_DATA: {
           if (header.recepientId === 0 || this.myId === header.recepientId) {
             if (msg.serviceId !== WEB_RTC && msg.serviceId !== CHANNEL_BUILDER) {
-              this.getService(msg.serviceId).onMessage(
+              ServiceFactory.get(msg.serviceId).onMessage(
                 channel,
                 header.senderId,
                 header.recepientId,
@@ -526,19 +503,6 @@ class WebChannel {
     })
   }
 
-  /**
-   * @private
-   * @param {MESSAGE_BUILDER|WEB_RTC|WEB_SOCKET|FULLY_CONNECTED|CHANNEL_BUILDER} id
-   *
-   * @returns {Service}
-   */
-  getService (id) {
-    if (id === WEB_RTC) {
-      return ServiceFactory.get(WEB_RTC, this.settings.iceServers)
-    }
-    return ServiceFactory.get(id)
-  }
-
 /**
  *
  * @private
@@ -598,8 +562,4 @@ class WebChannel {
   }
 }
 
-export default WebChannel
-export {USER_DATA}
-export const serviceMessageStream = Symbol('serviceMessageStream')
-export const services = Symbol('services')
-export const topologyService = Symbol('topologyService')
+export { USER_DATA }

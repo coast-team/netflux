@@ -1,45 +1,59 @@
-import Util from 'Util'
-import Service from 'service/Service'
-import ServiceFactory, {WEB_RTC, WEB_SOCKET} from 'ServiceFactory'
-import { serviceMessageStream } from 'WebChannel'
+import { Service } from 'service/Service'
+import { ServiceFactory, WEB_RTC, WEB_SOCKET } from 'ServiceFactory'
+import { WebSocketChecker } from 'service/WebSocketService'
+import { WebRTCChecker } from 'service/WebRTCService'
+import { serviceMessageStream } from 'symbols'
+
+const ListenFlags = {
+  none: 0b00,
+  ws: 0b01,
+  wrtc: 0b10,
+  all: 0b11
+}
+
+let iListenOn = ListenFlags.none
 
 /**
  * It is responsible to build a channel between two peers with a help of `WebSocketService` and `WebRTCService`.
  * Its algorithm determine which channel (socket or dataChannel) should be created
  * based on the services availability and peers' preferences.
  */
-class ChannelBuilderService extends Service {
-  /**
-   * @param {number} id Service identifier
-   */
+export class ChannelBuilderService extends Service {
   constructor (id) {
     super(id)
 
-    /**
-     * @private
-     */
-    this.WS = [WEB_SOCKET]
-    /**
-     * @private
-     */
-    this.WR = [WEB_RTC]
-    /**
-     * @private
-     */
-    this.WS_WR = [WEB_SOCKET, WEB_RTC]
-    /**
-     * @private
-     */
-    this.WR_WS = [WEB_RTC, WEB_SOCKET]
+    // Check whether the peer is listening on WebSocket
+    WebSocketChecker.isListening()
+      .subscribe((value) => {
+        iListenOn = value ? iListenOn | ListenFlags.ws : iListenOn & ~ListenFlags.ws
+      })
+
+    // Check whether the peer supports WebRTC
+    if (WebRTCChecker.isSupported) {
+      iListenOn |= ListenFlags.wrtc
+    }
   }
 
-  init (wc, rtcConfiguration) {
-    super.init(wc)
-    ServiceFactory.get(WEB_RTC)
-        .onChannelFromWebChannel(wc, rtcConfiguration)
-        .subscribe(dc => this.onChannel(wc, dc, Number(dc.label)))
+  init (webChannel, rtcConfiguration) {
+    super.init(webChannel)
 
-    wc[serviceMessageStream]
+    // Listen on RTCDataChannel
+    if (iListenOn & ListenFlags.wrtc) {
+      ServiceFactory.get(WEB_RTC)
+        .onChannelFromWebChannel(webChannel, rtcConfiguration)
+        .subscribe(dc => this.onChannel(webChannel, dc, Number(dc.label)))
+    }
+
+    // Listen on WebSocket
+    if (iListenOn & ListenFlags.ws) {
+      ServiceFactory.get(WEB_SOCKET)
+        .onWebSocket()
+        .filter(({wc}) => wc.id === webChannel.id)
+        .subscribe(({wc, ws, senderId}) => this.onChannel(wc, ws, senderId))
+    }
+
+    // Subscribe to WebChannel internal message stream for this service
+    webChannel[serviceMessageStream]
       .filter(msg => msg.serviceId === this.id)
       .subscribe(
         msg => this.onMessage(msg.channel, msg.senderId, msg.recepientId, msg.content)
@@ -57,30 +71,8 @@ class ChannelBuilderService extends Service {
   connectTo (wc, id) {
     return new Promise((resolve, reject) => {
       super.setPendingRequest(wc, id, {resolve, reject})
-      wc.sendInnerTo(id, this.id, this.availableConnectors(wc))
+      wc.sendInnerTo(id, this.id, {connectors: iListenOn, url: WebSocketChecker.url})
     })
-  }
-
-  /**
-   * @param {WebChannel} wc
-   *
-   * @returns {{listenOn: string, connectors: number[]}}
-   */
-  availableConnectors (wc) {
-    const res = {}
-    const connectors = []
-    if (Util.require(Util.WEB_RTC) !== undefined) {
-      connectors[connectors.length] = WEB_RTC
-    }
-    if (wc.settings.listenOn !== '') {
-      connectors[connectors.length] = WEB_SOCKET
-      res.listenOn = wc.settings.listenOn
-    }
-    if (connectors.length === 2 && connectors[0] !== wc.settings.connector) {
-      connectors.reverse()
-    }
-    res.connectors = connectors
-    return res
   }
 
   /**
@@ -104,235 +96,58 @@ class ChannelBuilderService extends Service {
    */
   onMessage (channel, senderId, recepientId, msg) {
     const wc = channel.webChannel
-    const myConnectObj = this.availableConnectors(wc)
-    const myConnectors = myConnectObj.connectors
+
     if ('failedReason' in msg) {
       super.getPendingRequest(wc, senderId).reject(new Error(msg.failedReason))
     } else if ('shouldConnect' in msg) {
-      if (this.isEqual(msg.shouldConnect, this.WS)) {
-        ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn)
-          .then(channel => {
-            channel.send(JSON.stringify({wcId: wc.id, senderId: wc.myId}))
-            this.onChannel(wc, channel, senderId)
-          })
+      if (msg.shouldConnect & ListenFlags.ws) {
+        ServiceFactory.get(WEB_SOCKET)
+          .connect(`${msg.url}/internalChannel?wcId=${wc.id}&senderId=${wc.myId}`)
+          .then(ws => this.onChannel(wc, ws, senderId))
           .catch(reason => {
             super.getPendingRequest(wc, senderId)
               .reject(new Error(`Failed to establish a socket: ${reason}`))
           })
-      } else if (this.isEqual(msg.shouldConnect, this.WS_WR)) {
-        ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn)
-          .then(channel => {
-            channel.send(JSON.stringify({wcId: wc.id, senderId: wc.myId}))
-            this.onChannel(wc, channel, senderId)
-          })
-          .catch(reason => {
-            ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId)
-              .then(channel => this.onChannel(wc, channel, senderId))
-              .catch(reason => {
-                if ('feedbackOnFail' in msg && msg.feedbackOnFail === true) {
-                  wc.sendInnerTo(senderId, this.id, {tryOn: this.WS, listenOn: myConnectObj.listenOn})
-                } else {
-                  super.getPendingRequest(wc, senderId)
-                    .reject(new Error(`Failed to establish a socket and then a data channel: ${reason}`))
-                }
-              })
-          })
       }
-    } else if ('tryOn' in msg && this.isEqual(msg.tryOn, this.WS)) {
-      ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn)
-        .then(channel => {
-          channel.send(JSON.stringify({wcId: wc.id, senderId: wc.myId}))
-          this.onChannel(wc, channel, senderId)
-        })
-        .catch(reason => wc.sendInnerTo(senderId, this.id, {failedReason: `Failed to establish a socket: ${reason}`}))
     } else if ('connectors' in msg) {
-      if (!this.isValid(msg.connectors)) {
-        wc.sendInnerTo(senderId, this.id, {failedReason: `Unknown connectors: ${msg.connectors}`})
-      } else {
-        // []
-        if (msg.connectors.length === 0) {
-          if (myConnectors.length === 0 || this.isEqual(myConnectors, this.WS)) {
-            wc.sendInnerTo(senderId, this.id, {failedReason: 'No common connectors'})
-          } else {
-            wc.sendInnerTo(senderId, this.id, {shouldConnect: this.WS, listenOn: myConnectObj.listenOn})
-          }
-        }
+      // If remote peer is listening on WebSocket, connect to him
+      if (msg.connectors & ListenFlags.ws) {
+        ServiceFactory.get(WEB_SOCKET)
+          .connect(`${msg.url}/internalChannel?wcId=${wc.id}&senderId=${wc.myId}`)
+          .then(ws => this.onChannel(wc, ws, senderId))
+          .catch(reason => {
+            // If failed to connect to the remote peer by WebSocket, ask him to connect to me via WebSocket
+            if (iListenOn & ListenFlags.ws) {
+              wc.sendInnerTo(senderId, this.id, {shouldConnect: ListenFlags.ws, url: WebSocketChecker.url})
+            } else {
+              wc.sendInnerTo(senderId, this.id, {
+                failedReason: `Failed to establish a socket: ${reason}`
+              })
+            }
+          })
 
-        // [ws]
-        if (this.isEqual(msg.connectors, this.WS)) {
-          if (myConnectors.length === 0 || this.isEqual(myConnectors, this.WS)) {
-            this.ws(wc, senderId, msg.listenOn)
-          } else {
-            this.wsWs(wc, senderId, msg.listenOn, myConnectObj.listenOn)
-          }
+      // If remote peer is able to connect over RTCDataChannel, verify first if I am listening on WebSocket
+      } else if (msg.connectors & ListenFlags.wrtc) {
+        if (iListenOn & ListenFlags.ws) {
+          wc.sendInnerTo(senderId, this.id, {shouldConnect: ListenFlags.ws, url: WebSocketChecker.url})
+        } else if (iListenOn & ListenFlags.wrtc) {
+          ServiceFactory.get(WEB_RTC)
+            .connectOverWebChannel(wc, senderId, {iceServers: wc.settings.iceServers})
+            .then(channel => this.onChannel(wc, channel, senderId))
+            .catch(reason => {
+              wc.sendInnerTo(senderId, this.id, {failedReason: `Failed establish a data channel: ${reason}`})
+            })
+        } else {
+          wc.sendInnerTo(senderId, this.id, {failedReason: 'No common connectors'})
         }
-
-        // [wr]
-        if (this.isEqual(msg.connectors, this.WR)) {
-          if (myConnectors.length === 0) {
-            wc.sendInnerTo(senderId, this.id, {failedReason: 'No common connectors'})
-          } else if (this.isEqual(myConnectors, this.WS)) {
-            wc.sendInnerTo(senderId, this.id, {shouldConnect: this.WS, listenOn: myConnectObj.listenOn})
-          } else if (this.isEqual(myConnectors, this.WR)) {
-            ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId, {iceServers: wc.iceServers})
-              .then(channel => {
-                this.onChannel(wc, channel, senderId)
-              })
-              .catch(reason => {
-                wc.sendInnerTo(senderId, this.id, {failedReason: `Failed establish a data channel: ${reason}`})
-              })
-          } else if (this.isEqual(myConnectors, this.WS_WR)) {
-            wc.sendInnerTo(senderId, this.id, {shouldConnect: this.WS_WR, listenOn: myConnectObj.listenOn})
-          } else if (this.isEqual(myConnectors, this.WR_WS)) {
-            ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId, {iceServers: wc.iceServers})
-              .then(channel => this.onChannel(wc, channel, senderId))
-              .catch(reason => {
-                wc.sendInnerTo(senderId, this.id, {shouldConnect: this.WS, listenOn: myConnectObj.listenOn})
-              })
-          }
-        }
-
-        // [ws, wr]
-        if (this.isEqual(msg.connectors, this.WS_WR)) {
-          if (myConnectors.length === 0) {
-            this.ws(wc, senderId, msg.listenOn)
-          } else if (this.isEqual(myConnectors, this.WS)) {
-            this.wsWs(wc, senderId, msg.listenOn, myConnectObj.listenOn)
-          } else if (this.isEqual(myConnectors, this.WR)) {
-            ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn)
-              .then(channel => {
-                channel.send(JSON.stringify({wcId: wc.id, senderId: wc.myId}))
-                this.onChannel(wc, channel, senderId)
-              })
-              .catch(reason => ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId, {iceServers: wc.iceServers}))
-              .then(channel => this.onChannel(wc, channel, senderId))
-              .catch(reason => wc.sendInnerTo(senderId, this.id, {failedReason: `Failed to establish a socket and then a data channel: ${reason}`}))
-          } else if (this.isEqual(myConnectors, this.WS_WR)) {
-            ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn)
-              .then(channel => {
-                channel.send(JSON.stringify({wcId: wc.id, senderId: wc.myId}))
-                this.onChannel(wc, channel, senderId)
-              })
-          } else if (this.isEqual(myConnectors, this.WR_WS)) {
-            wc.sendInnerTo(senderId, this.id, {shouldConnect: this.WS_WR, listenOn: myConnectObj.listenOn})
-          } else {
-            ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn)
-              .then(channel => {
-                channel.send(JSON.stringify({wcId: wc.id, senderId: wc.myId}))
-                this.onChannel(wc, channel, senderId)
-              })
-              .catch(reason => {
-                ServiceFactory.get(WEB_RTC, wc.settings.iceServers).connectOverWebChannel(wc, senderId)
-                  .then(channel => this.onChannel(wc, channel, senderId))
-                  .catch(reason => wc.sendInnerTo(senderId, this.id, {shouldConnect: this.WS, listenOn: myConnectObj.listenOn}))
-              })
-          }
-        }
-
-        // [wr, ws]
-        if (this.isEqual(msg.connectors, this.WR_WS)) {
-          if (myConnectors.length === 0) {
-            this.ws(wc, senderId, msg.listenOn)
-          } else if (this.isEqual(myConnectors, this.WS)) {
-            this.wsWs(wc, senderId, msg.listenOn, myConnectObj.listenOn)
-          } else if (this.isEqual(myConnectors, this.WR)) {
-            ServiceFactory.get(WEB_RTC, wc.settings.iceServers)
-              .connectOverWebChannel(wc, senderId, {iceServers: wc.iceServers})
-              .then(channel => this.onChannel(wc, channel, senderId))
-              .catch(reason => {
-                ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn)
-                  .then(channel => {
-                    channel.send(JSON.stringify({wcId: wc.id, senderId: wc.myId}))
-                    this.onChannel(wc, channel, senderId)
-                  })
-                  .catch(reason => wc.sendInnerTo(senderId, this.id, {failedReason: `Failed to establish a data channel and then a socket: ${reason}`}))
-              })
-          } else if (this.isEqual(myConnectors, this.WS_WR)) {
-            wc.sendInnerTo(senderId, this.id, {shouldConnect: this.WS_WR, feedbackOnFail: true, listenOn: myConnectObj.listenOn})
-          } else if (this.isEqual(myConnectors, this.WR_WS)) {
-            ServiceFactory.get(WEB_RTC, wc.settings.iceServers)
-              .connectOverWebChannel(wc, senderId, {iceServers: wc.iceServers})
-              .then(channel => this.onChannel(wc, channel, senderId))
-              .catch(reason => {
-                ServiceFactory.get(WEB_SOCKET).connect(msg.listenOn)
-                  .then(channel => {
-                    channel.send(JSON.stringify({wcId: wc.id, senderId: wc.myId}))
-                    this.onChannel(wc, channel, senderId)
-                  })
-                  .catch(reason => wc.sendInnerTo(senderId, this.id, {shouldConnect: this.WS, listenOn: myConnectObj.listenOn}))
-              })
-          }
+      // If peer is not listening on WebSocket and is not able to connect over RTCDataChannel
+      } else if (msg.connectors & ListenFlags.none) {
+        if (iListenOn & ListenFlags.ws) {
+          wc.sendInnerTo(senderId, this.id, {shouldConnect: ListenFlags.ws, url: WebSocketChecker.url})
+        } else {
+          wc.sendInnerTo(senderId, this.id, {failedReason: 'No common connectors'})
         }
       }
     }
-  }
-
-  /**
-   * @private
-   * @param {WebChannel} wc
-   * @param {number} senderId
-   * @param {string} peerWsURL
-   * @param {string} myWsURL
-   */
-  wsWs (wc, senderId, peerWsURL, myWsURL) {
-    ServiceFactory.get(WEB_SOCKET).connect(peerWsURL)
-      .then(channel => {
-        channel.send(JSON.stringify({wcId: wc.id, senderId: wc.myId}))
-        this.onChannel(wc, channel, senderId)
-      })
-      .catch(reason => {
-        wc.sendInnerTo(senderId, this.id, {shouldConnect: this.WS, listenOn: myWsURL})
-      })
-  }
-
-  /**
-   * @private
-   * @param {WebChannel} wc
-   * @param {number} senderId
-   * @param {string} peerWsURL
-   */
-  ws (wc, senderId, peerWsURL) {
-    ServiceFactory.get(WEB_SOCKET).connect(peerWsURL)
-      .then(channel => {
-        channel.send(JSON.stringify({wcId: wc.id, senderId: wc.myId}))
-        this.onChannel(wc, channel, senderId)
-      })
-      .catch(reason => {
-        wc.sendInnerTo(senderId, this.id, {
-          failedReason: `Failed to establish a socket: ${reason}`
-        })
-      })
-  }
-
-  /**
-   * @private
-   * @param {number[]} connectors
-   *
-   * @returns {boolean}
-   */
-  isValid (connectors) {
-    if (this.isEqual(connectors, this.WS) ||
-      this.isEqual(connectors, this.WR) ||
-      this.isEqual(connectors, this.WS_WR) ||
-      this.isEqual(connectors, this.WR_WS)
-    ) return true
-    return false
-  }
-
-  /**
-   * @private
-   * @param {number[]} arr1
-   * @param {number[]} arr2
-   *
-   * @returns {type} Description
-   */
-  isEqual (arr1, arr2) {
-    if (arr1.length !== arr2.length) return false
-    for (let i = 0; i < arr1.length; i++) {
-      if (arr1[i] !== arr2[i]) return false
-    }
-    return true
   }
 }
-
-export default ChannelBuilderService

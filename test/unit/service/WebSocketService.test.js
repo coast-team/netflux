@@ -1,10 +1,10 @@
-import WebSocketService from 'src/service/WebSocketService'
-import * as helper from 'util/helper'
+import { WebSocketService } from 'src/service/WebSocketService'
+import { SIGNALING_URL } from 'util/helper'
 
 describe('WebSocketService', () => {
-  const GOOD_URL = helper.SIGNALING_URL
+  const GOOD_URL = SIGNALING_URL
   const WRONG_URL = 'https://github.com:8100/coast-team/netflux'
-  const webSocketService = new WebSocketService()
+  const webSocketService = new WebSocketService(42)
 
   it(`Should open a socket with ${GOOD_URL}`, done => {
     webSocketService.connect(GOOD_URL)

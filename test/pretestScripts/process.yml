@@ -8,4 +8,5 @@ apps:
   - script: test/pretestScripts/.rolledup/botServer.js
   - script: test/pretestScripts/.rolledup/botForFirefox.js
   - script: test/pretestScripts/.rolledup/botForChrome.js
-  - script: test/pretestScripts/.rolledup/botForNode.js
+# Disable test for NodeJS temporarly because of wrtc node module working incorrectly
+#  - script: test/pretestScripts/.rolledup/botForNode.js

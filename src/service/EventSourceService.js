@@ -1,5 +1,5 @@
-import Util from 'Util'
-import Service from 'service/Service'
+import { Util } from 'Util'
+import { Service } from 'service/Service'
 
 const EventSource = Util.require(Util.EVENT_SOURCE)
 const fetch = Util.require(Util.FETCH)
@@ -11,7 +11,7 @@ const CONNECT_TIMEOUT = 5000
  * Service class responsible to establish connections between peers via
  * `WebSocket`.
  */
-class EventSourceService extends Service {
+export class EventSourceService extends Service {
   /**
    * Creates RichEventSource object.
    *
@@ -91,5 +91,3 @@ class RichEventSource {
       .catch(err => this._onerror(err))
   }
 }
-
-export default EventSourceService

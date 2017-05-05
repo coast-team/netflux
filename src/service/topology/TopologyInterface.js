@@ -1,5 +1,5 @@
-import Service from 'service/Service'
-import ServiceFactory, {CHANNEL_BUILDER} from 'ServiceFactory'
+import { Service } from 'service/Service'
+import { ServiceFactory, CHANNEL_BUILDER } from 'ServiceFactory'
 
 /**
  * It is responsible to preserve Web Channel
@@ -14,7 +14,7 @@ import ServiceFactory, {CHANNEL_BUILDER} from 'ServiceFactory'
  * @see FullyConnectedService
  * @interface
  */
-class TopologyInterface extends Service {
+export class TopologyInterface extends Service {
   connectTo (wc, peerIds) {
     const failed = []
     if (peerIds.length === 0) return Promise.resolve(failed)
@@ -81,5 +81,3 @@ class TopologyInterface extends Service {
     throw new Error('Must be implemented by subclass!')
   }
 }
-
-export default TopologyInterface

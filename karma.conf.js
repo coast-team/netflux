@@ -22,7 +22,7 @@ module.exports = (config) => {
       'test/unit/**/*.test.js',
       'test/functional/fullyConnected/1peer.test.js',
       'test/functional/fullyConnected/2peers/2humans.test.js',
-      // 'test/functional/fullyConnected/2peers/humanBot.test.js',
+      'test/functional/fullyConnected/2peers/humanBot.test.js',
       'test/functional/fullyConnected/3peers/*.test.js',
       'test/functional/fullyConnected/manyPeers.test.js'
     ],
@@ -68,15 +68,6 @@ module.exports = (config) => {
 
     specReporter: {
       showSpecTiming: true
-    },
-
-    coverageReporter: {
-      dir: 'coverage',
-      reporters: [
-        {type: 'html'},
-        {type: 'text-summary'},
-        {type: 'lcovonly', subdir: '.'}
-      ]
     },
 
     // web server port
@@ -147,11 +138,12 @@ module.exports = (config) => {
             ignoreGlobal: false
           }),
           require('rollup-plugin-istanbul')({
+            include: [
+              'src/**/*.js'
+            ],
             exclude: [
-              'test/**/*.js',
-              'test/*.js',
-              'test/*.txt',
-              'dist/*.js'
+              'src/BotServer.js',
+              'src/service/EventSourceService.js'
             ]
           }),
           require('rollup-plugin-replace')({

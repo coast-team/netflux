@@ -1,10 +1,10 @@
-import '../../webrtc-adapter'
-import Util from 'Util'
-import Service from 'service/Service'
+import '../../node_modules/webrtc-adapter/out/adapter_no_edge_no_global'
+import { Util } from 'Util'
+import { Service } from 'service/Service'
 import { ReplaySubject } from 'node_modules/rxjs/ReplaySubject'
 import { Observable } from 'node_modules/rxjs/Observable'
 import 'node_modules/rxjs/add/operator/map'
-import { serviceMessageStream } from 'WebChannel'
+import { serviceMessageStream } from 'symbols'
 const wrtc = Util.require(Util.WEB_RTC)
 const CloseEvent = Util.require(Util.CLOSE_EVENT)
 
@@ -15,14 +15,17 @@ const CONNECTION_TIMEOUT = 5000
  * signaling server or `WebChannel`.
  *
  */
-class WebRTCService extends Service {
+export class WebRTCService extends Service {
   onChannelFromWebChannel (wc) {
-    return this.onDataChannel(
-      wc[serviceMessageStream]
-        .filter(msg => msg.serviceId === this.id)
-        .map(msg => ({msg: msg.content, id: msg.senderId})),
-      (msg, id) => wc.sendInnerTo(id, this.id, msg)
-    )
+    if (WebRTCChecker.isSupported) {
+      return this.onDataChannel(
+        wc[serviceMessageStream]
+          .filter(msg => msg.serviceId === this.id)
+          .map(msg => ({msg: msg.content, id: msg.senderId})),
+        (msg, id) => wc.sendInnerTo(id, this.id, msg)
+      )
+    }
+    throw new Error('Peer is not listening on RTCDataChannel')
   }
 
   /**
@@ -55,13 +58,16 @@ class WebRTCService extends Service {
    * @returns {Observable<RTCDataChannel>} Observable emitting `RTCDataChannel`. Can emit errors and completes when the stream with Signaling server has completed.
    */
   onChannelFromSignaling (stream, rtcConfiguration) {
-    return this.onDataChannel(
-      stream
-        .filter(msg => 'id' in msg && 'data' in msg)
-        .map(msg => ({msg: msg.data, id: msg.id})),
-      (msg, id) => stream.send(JSON.stringify({id, data: msg})),
-      rtcConfiguration
-    )
+    if (WebRTCChecker.isSupported) {
+      return this.onDataChannel(
+        stream
+          .filter(msg => 'id' in msg && 'data' in msg)
+          .map(msg => ({msg: msg.data, id: msg.id})),
+        (msg, id) => stream.send(JSON.stringify({id, data: msg})),
+        rtcConfiguration
+      )
+    }
+    throw new Error('Peer is not listening on RTCDataChannel')
   }
 
   /**
@@ -296,4 +302,8 @@ class WebRTCService extends Service {
   }
 }
 
-export default WebRTCService
+export class WebRTCChecker {
+  static get isSupported () {
+    return wrtc !== undefined
+  }
+}
