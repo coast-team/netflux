@@ -1042,7 +1042,7 @@ var Subject_1 = {
 	AnonymousSubject: AnonymousSubject_1
 };
 
-var serviceMessageStream = Symbol('serviceMessageStream');
+var msgStream = Symbol('msgStream');
 var services = Symbol('services');
 var topologyService = Symbol('topologyService');
 
@@ -3137,134 +3137,6 @@ module.exports = {
 
 },{}]},{},[2]);
 
-var NodeCloseEvent = function CloseEvent(name) {
-  var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-  classCallCheck(this, CloseEvent);
-
-  this.name = name;
-  this.wasClean = options.wasClean || false;
-  this.code = options.code || 0;
-  this.reason = options.reason || '';
-};
-
-/**
- * Utility class contains some helper static methods.
- */
-var Util = function () {
-  function Util() {
-    classCallCheck(this, Util);
-  }
-
-  createClass(Util, null, [{
-    key: 'isBrowser',
-
-    /**
-     * Check execution environment.
-     *
-     * @returns {boolean} Description
-     */
-    value: function isBrowser() {
-      if (typeof window === 'undefined' || typeof process !== 'undefined' && process.title === 'node') {
-        return false;
-      }
-      return true;
-    }
-
-    /**
-     * Check whether the channel is a socket.
-     *
-     * @param {WebSocket|RTCDataChannel} channel
-     *
-     * @returns {boolean}
-     */
-
-  }, {
-    key: 'isSocket',
-    value: function isSocket(channel) {
-      return channel.constructor.name === 'WebSocket';
-    }
-
-    /**
-     * Check whether the string is a valid URL.
-     *
-     * @param {string} str
-     *
-     * @returns {type} Description
-     */
-
-  }, {
-    key: 'isURL',
-    value: function isURL(str) {
-      var regex = '^' +
-      // protocol identifier
-      '(?:wss|ws)://' +
-      // Host name/IP
-      '[^\\s]+' +
-      // port number
-      '(?::\\d{2,5})?' + '$';
-
-      return new RegExp(regex, 'i').test(str);
-    }
-  }, {
-    key: 'require',
-    value: function require(libConst) {
-      try {
-        switch (libConst) {
-          case Util.WEB_RTC:
-            return window;
-          case Util.WEB_SOCKET:
-            return window.WebSocket;
-          case Util.TEXT_ENCODING:
-            return window;
-          case Util.EVENT_SOURCE:
-            return window.EventSource;
-          case Util.FETCH:
-            return window.fetch;
-          case Util.CLOSE_EVENT:
-            return Util.isBrowser() ? window.CloseEvent : NodeCloseEvent;
-          default:
-            console.error(libConst + ' is unknown library');
-            return undefined;
-        }
-      } catch (err) {
-        console.error(err.message);
-        return undefined;
-      }
-    }
-  }, {
-    key: 'WEB_RTC',
-    get: function get$$1() {
-      return 1;
-    }
-  }, {
-    key: 'WEB_SOCKET',
-    get: function get$$1() {
-      return 2;
-    }
-  }, {
-    key: 'TEXT_ENCODING',
-    get: function get$$1() {
-      return 3;
-    }
-  }, {
-    key: 'EVENT_SOURCE',
-    get: function get$$1() {
-      return 4;
-    }
-  }, {
-    key: 'FETCH',
-    get: function get$$1() {
-      return 5;
-    }
-  }, {
-    key: 'CLOSE_EVENT',
-    get: function get$$1() {
-      return 6;
-    }
-  }]);
-  return Util;
-}();
-
 var __extends$8 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -4116,6 +3988,134 @@ var map_1 = {
 
 Observable_1.Observable.prototype.map = map_1.map;
 
+var NodeCloseEvent = function CloseEvent(name) {
+  var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  classCallCheck(this, CloseEvent);
+
+  this.name = name;
+  this.wasClean = options.wasClean || false;
+  this.code = options.code || 0;
+  this.reason = options.reason || '';
+};
+
+/**
+ * Utility class contains some helper static methods.
+ */
+var Util = function () {
+  function Util() {
+    classCallCheck(this, Util);
+  }
+
+  createClass(Util, null, [{
+    key: 'isBrowser',
+
+    /**
+     * Check execution environment.
+     *
+     * @returns {boolean} Description
+     */
+    value: function isBrowser() {
+      if (typeof window === 'undefined' || typeof process !== 'undefined' && process.title === 'node') {
+        return false;
+      }
+      return true;
+    }
+
+    /**
+     * Check whether the channel is a socket.
+     *
+     * @param {WebSocket|RTCDataChannel} channel
+     *
+     * @returns {boolean}
+     */
+
+  }, {
+    key: 'isSocket',
+    value: function isSocket(channel) {
+      return channel.constructor.name === 'WebSocket';
+    }
+
+    /**
+     * Check whether the string is a valid URL.
+     *
+     * @param {string} str
+     *
+     * @returns {type} Description
+     */
+
+  }, {
+    key: 'isURL',
+    value: function isURL(str) {
+      var regex = '^' +
+      // protocol identifier
+      '(?:wss|ws)://' +
+      // Host name/IP
+      '[^\\s]+' +
+      // port number
+      '(?::\\d{2,5})?' + '$';
+
+      return new RegExp(regex, 'i').test(str);
+    }
+  }, {
+    key: 'require',
+    value: function require(libConst) {
+      try {
+        switch (libConst) {
+          case Util.WEB_RTC:
+            return window;
+          case Util.WEB_SOCKET:
+            return window.WebSocket;
+          case Util.TEXT_ENCODING:
+            return window;
+          case Util.EVENT_SOURCE:
+            return window.EventSource;
+          case Util.FETCH:
+            return window.fetch;
+          case Util.CLOSE_EVENT:
+            return Util.isBrowser() ? window.CloseEvent : NodeCloseEvent;
+          default:
+            console.error(libConst + ' is unknown library');
+            return undefined;
+        }
+      } catch (err) {
+        console.error(err.message);
+        return undefined;
+      }
+    }
+  }, {
+    key: 'WEB_RTC',
+    get: function get$$1() {
+      return 1;
+    }
+  }, {
+    key: 'WEB_SOCKET',
+    get: function get$$1() {
+      return 2;
+    }
+  }, {
+    key: 'TEXT_ENCODING',
+    get: function get$$1() {
+      return 3;
+    }
+  }, {
+    key: 'EVENT_SOURCE',
+    get: function get$$1() {
+      return 4;
+    }
+  }, {
+    key: 'FETCH',
+    get: function get$$1() {
+      return 5;
+    }
+  }, {
+    key: 'CLOSE_EVENT',
+    get: function get$$1() {
+      return 6;
+    }
+  }]);
+  return Util;
+}();
+
 var wrtc = Util.require(Util.WEB_RTC);
 var CloseEvent = Util.require(Util.CLOSE_EVENT);
 
@@ -4140,7 +4140,7 @@ var WebRTCService = function (_Service) {
       var _this2 = this;
 
       if (WebRTCChecker.isSupported) {
-        return this.onDataChannel(wc[serviceMessageStream].filter(function (msg) {
+        return this.onDataChannel(wc[msgStream].filter(function (msg) {
           return msg.serviceId === _this2.id;
         }).map(function (msg) {
           return { msg: msg.content, id: msg.senderId };
@@ -4167,7 +4167,7 @@ var WebRTCService = function (_Service) {
     value: function connectOverWebChannel(wc, id, rtcConfiguration) {
       var _this3 = this;
 
-      return this.createDataChannel(wc[serviceMessageStream].filter(function (msg) {
+      return this.createDataChannel(wc[msgStream].filter(function (msg) {
         return msg.serviceId === _this3.id && msg.senderId === id;
       }).map(function (msg) {
         return msg.content;
@@ -4993,7 +4993,7 @@ var ChannelBuilderService = function (_Service) {
       }
 
       // Subscribe to WebChannel internal message stream for this service
-      webChannel[serviceMessageStream].filter(function (msg) {
+      webChannel[msgStream].filter(function (msg) {
         return msg.serviceId === _this2.id;
       }).subscribe(function (msg) {
         return _this2.onMessage(msg.channel, msg.senderId, msg.recepientId, msg.content);
@@ -6294,7 +6294,7 @@ var WebChannel = function () {
      */
     this.onClose = function () {};
 
-    this[serviceMessageStream] = new Subject_2();
+    this[msgStream] = new Subject_2();
     var channelBuilder = ServiceFactory.get(CHANNEL_BUILDER);
     channelBuilder.init(this, { iceServers: this.settings.iceServers });
 
@@ -6435,7 +6435,7 @@ var WebChannel = function () {
       }
       this.onInitChannel = new Map();
       this.onJoin = function () {};
-      this[serviceMessageStream].complete();
+      this[msgStream].complete();
       this.gate.close();
     }
 
@@ -6622,7 +6622,7 @@ var WebChannel = function () {
                 if (msg.serviceId !== WEB_RTC && msg.serviceId !== CHANNEL_BUILDER) {
                   ServiceFactory.get(msg.serviceId).onMessage(channel, header.senderId, header.recepientId, msg.data);
                 } else {
-                  this[serviceMessageStream].next({
+                  this[msgStream].next({
                     channel: channel,
                     serviceId: msg.serviceId,
                     senderId: header.senderId,

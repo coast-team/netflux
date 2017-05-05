@@ -20,11 +20,11 @@ module.exports = (config) => {
     files: [
       'node_modules/webrtc-adapter/out/adapter_no_edge_no_global.js',
       'test/unit/**/*.test.js',
-      'test/functional/fullyConnected/1peer.test.js',
-      'test/functional/fullyConnected/2peers/2humans.test.js',
-      'test/functional/fullyConnected/2peers/humanBot.test.js',
-      'test/functional/fullyConnected/3peers/*.test.js',
-      'test/functional/fullyConnected/manyPeers.test.js'
+      'test/e2e/fullyConnected/1peer.test.js',
+      'test/e2e/fullyConnected/2peers/2humans.test.js',
+      'test/e2e/fullyConnected/2peers/humanBot.test.js',
+      'test/e2e/fullyConnected/3peers/*.test.js',
+      'test/e2e/fullyConnected/manyPeers.test.js'
     ],
 
     // list of files to exclude

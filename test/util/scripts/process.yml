@@ -1,0 +1,10 @@
+apps:
+  - script: node_modules/.bin/sigver
+    name: '1sigver-ws'
+    args: '--port 8000'
+#  - script: node_modules/.bin/sigver
+#    name: 'sigver-sse'
+#    args: '--port 8001 --type sse'
+  - script: test/util/scripts/.rolledup/botServer.js
+  - script: test/util/scripts/.rolledup/botForFirefox.js
+  - script: test/util/scripts/.rolledup/botForChrome.js

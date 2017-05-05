@@ -1,6 +1,5 @@
 sudo: required
 dist: trusty
-language: node_js
 notifications:
   email: false
 branches:
@@ -11,14 +10,16 @@ addons:
   apt:
     packages:
       - google-chrome-stable
+language: node_js
 node_js:
   - "7"
+install:
+  - npm install uws
+  - npm install -g codeclimate-test-reporter
 before_script:
   - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start
   - sleep 3
-  - npm install uws
-  - npm install -g codeclimate-test-reporter
 script:
   - npm run test:travis
 after_success:

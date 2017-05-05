@@ -5,11 +5,7 @@ const SpecReporter = require('jasmine-spec-reporter').SpecReporter
 const config = {
   spec_dir: 'test/.rolledup',
   spec_files: [
-    'unit/**/*.test.js',
-    'functional/fullyConnected/1peer.test.js',
-    'functional/fullyConnected/2peers/2humans.test.js',
-    'functional/fullyConnected/3peers/3humans.test.js'
-    // 'functional/fullyConnected/manyPeers.test.js'
+    'unit/**/*.test.js'
   ],
   stopSpecOnExpectationFailure: false,
   random: false

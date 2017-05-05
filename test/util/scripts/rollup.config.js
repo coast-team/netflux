@@ -4,14 +4,14 @@ const commonjs = require('rollup-plugin-commonjs')
 const replace = require('rollup-plugin-replace')
 
 const entries = [
-  'test/pretestScripts/botServer.js',
-  'test/pretestScripts/botForFirefox.js',
-  'test/pretestScripts/botForChrome.js',
-  'test/pretestScripts/botForNode.js'
+  'test/util/scripts/botServer.js',
+  'test/util/scripts/botForFirefox.js',
+  'test/util/scripts/botForChrome.js',
+  'test/util/scripts/botForNode.js'
 ]
 
 for (let entry of entries) {
-  const dest = entry.replace(/pretestScripts/, 'pretestScripts/.rolledup')
+  const dest = entry.replace(/scripts/, 'scripts/.rolledup')
   rollup.rollup({
     entry,
     plugins: [

@@ -1,10 +1,11 @@
 import '../../node_modules/webrtc-adapter/out/adapter_no_edge_no_global'
-import { Util } from 'Util'
-import { Service } from 'service/Service'
 import { ReplaySubject } from 'node_modules/rxjs/ReplaySubject'
 import { Observable } from 'node_modules/rxjs/Observable'
 import 'node_modules/rxjs/add/operator/map'
-import { serviceMessageStream } from 'symbols'
+
+import { msgStream } from 'symbols'
+import { Util } from 'Util'
+import { Service } from 'service/Service'
 const wrtc = Util.require(Util.WEB_RTC)
 const CloseEvent = Util.require(Util.CLOSE_EVENT)
 
@@ -19,7 +20,7 @@ export class WebRTCService extends Service {
   onChannelFromWebChannel (wc) {
     if (WebRTCChecker.isSupported) {
       return this.onDataChannel(
-        wc[serviceMessageStream]
+        wc[msgStream]
           .filter(msg => msg.serviceId === this.id)
           .map(msg => ({msg: msg.content, id: msg.senderId})),
         (msg, id) => wc.sendInnerTo(id, this.id, msg)
@@ -40,7 +41,7 @@ export class WebRTCService extends Service {
    */
   connectOverWebChannel (wc, id, rtcConfiguration) {
     return this.createDataChannel(
-      wc[serviceMessageStream]
+      wc[msgStream]
         .filter(msg => msg.serviceId === this.id && msg.senderId === id)
         .map(msg => msg.content),
       msg => wc.sendInnerTo(id, this.id, msg),

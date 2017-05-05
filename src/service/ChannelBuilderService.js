@@ -2,7 +2,7 @@ import { Service } from 'service/Service'
 import { ServiceFactory, WEB_RTC, WEB_SOCKET } from 'ServiceFactory'
 import { WebSocketChecker } from 'service/WebSocketService'
 import { WebRTCChecker } from 'service/WebRTCService'
-import { serviceMessageStream } from 'symbols'
+import { msgStream } from 'symbols'
 
 const ListenFlags = {
   none: 0b00,
@@ -53,7 +53,7 @@ export class ChannelBuilderService extends Service {
     }
 
     // Subscribe to WebChannel internal message stream for this service
-    webChannel[serviceMessageStream]
+    webChannel[msgStream]
       .filter(msg => msg.serviceId === this.id)
       .subscribe(
         msg => this.onMessage(msg.channel, msg.senderId, msg.recepientId, msg.content)

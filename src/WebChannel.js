@@ -1,6 +1,6 @@
 import { Subject } from 'node_modules/rxjs/Subject'
 
-import { serviceMessageStream, topologyService } from 'symbols'
+import { msgStream, topologyService } from 'symbols'
 import { ServiceFactory, WEB_RTC, WEB_SOCKET, MESSAGE_BUILDER, CHANNEL_BUILDER } from 'ServiceFactory'
 import { Channel } from 'Channel'
 import { SignalingGate } from 'SignalingGate'
@@ -181,7 +181,7 @@ export class WebChannel {
      */
     this.onClose = () => {}
 
-    this[serviceMessageStream] = new Subject()
+    this[msgStream] = new Subject()
     const channelBuilder = ServiceFactory.get(CHANNEL_BUILDER)
     channelBuilder.init(this, {iceServers: this.settings.iceServers})
 
@@ -286,7 +286,7 @@ export class WebChannel {
     }
     this.onInitChannel = new Map()
     this.onJoin = () => {}
-    this[serviceMessageStream].complete()
+    this[msgStream].complete()
     this.gate.close()
   }
 
@@ -434,7 +434,7 @@ export class WebChannel {
                 msg.data
               )
             } else {
-              this[serviceMessageStream].next({
+              this[msgStream].next({
                 channel,
                 serviceId: msg.serviceId,
                 senderId: header.senderId,

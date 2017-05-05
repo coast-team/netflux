@@ -8,7 +8,6 @@ describe('🙂 🤖  fully connected', () => {
 
   it('Should establish a connection through socket', done => {
     const wc = create({signalingURL})
-    console.log(wc.myId + ' invites...')
     wc.onPeerJoin = id => expect(id).toEqual(wc.members[0])
     spyOn(wc, 'onPeerJoin')
     wc.invite(helper.BOT)
@@ -23,7 +22,6 @@ describe('🙂 🤖  fully connected', () => {
 
   it('Should ping', done => {
     const wc = create({signalingURL})
-    console.log(wc.myId + ' invites...')
     wc.invite(helper.BOT)
       .then(() => wc.ping())
       .then(p => expect(Number.isInteger(p)).toBeTruthy())
@@ -37,7 +35,6 @@ describe('🙂 🤖  fully connected', () => {
 
     beforeAll(done => {
       wc = create({signalingURL})
-      console.log(wc.myId + ' invites...')
       wc.invite(helper.BOT)
         .then(() => wc.ping())
         .then(done)
