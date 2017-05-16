@@ -3,12 +3,13 @@ import { ServiceFactory, WEB_RTC, WEB_SOCKET } from 'ServiceFactory'
 import { WebSocketChecker } from 'service/WebSocketService'
 import { WebRTCChecker } from 'service/WebRTCService'
 import { msgStream } from 'symbols'
+import * as log from 'log'
 
 const ListenFlags = {
-  none: 0b00,
-  ws: 0b01,
-  wrtc: 0b10,
-  all: 0b11
+  none: 0b00, // 0
+  ws: 0b01,   // 1
+  wrtc: 0b10, // 2
+  all: 0b11   // 4
 }
 
 let iListenOn = ListenFlags.none
@@ -69,6 +70,7 @@ export class ChannelBuilderService extends Service {
    * @returns {Promise<Channel, string>}
    */
   connectTo (wc, id) {
+    log.info('ChannelBuilderService connecTo', {wc: wc.id, ME: wc.myId, TO: id, iListenOn})
     return new Promise((resolve, reject) => {
       super.setPendingRequest(wc, id, {resolve, reject})
       wc.sendInnerTo(id, this.id, {connectors: iListenOn, url: WebSocketChecker.url})
@@ -84,7 +86,9 @@ export class ChannelBuilderService extends Service {
     wc.initChannel(channel, senderId)
       .then(channel => {
         const pendReq = super.getPendingRequest(wc, senderId)
-        if (pendReq) pendReq.resolve(channel)
+        if (pendReq) {
+          pendReq.resolve(channel)
+        }
       })
   }
 
@@ -96,7 +100,7 @@ export class ChannelBuilderService extends Service {
    */
   onMessage (channel, senderId, recepientId, msg) {
     const wc = channel.webChannel
-
+    log.info('ChannelBuilderService onMessage', {wc: wc.id, ME: wc.myId, FROM: senderId, VIA: channel.peerId, msg})
     if ('failedReason' in msg) {
       super.getPendingRequest(wc, senderId).reject(new Error(msg.failedReason))
     } else if ('shouldConnect' in msg) {

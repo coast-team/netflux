@@ -202,7 +202,7 @@ export class MessageBuilderService extends Service {
     const dataView = new DataView(data)
     const msgSize = dataView.getUint32(HEADER_OFFSET)
     const dataType = dataView.getUint8(13)
-    const isBroadcast = dataView.getUint8(14)
+    const isBroadcast = dataView.getUint8(14) === 1
     if (msgSize > MAX_USER_MSG_SIZE) {
       const msgId = dataView.getUint16(15)
       const chunk = dataView.getUint16(17)

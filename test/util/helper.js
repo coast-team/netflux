@@ -1,35 +1,182 @@
 import { Util } from 'src/Util'
 import { create } from 'src/index.browser'
+import chunk50kb from 'util/50kb.txt'
 
 // Main signaling server for all tests
-// const SIGNALING_URL = 'ws://localhost:8000'
-const SIGNALING_URL = 'ws://localhost:8000'
-export const SIGNALING_URL_EVENT_SOURCE = 'http://localhost:8001'
-const BOT = 'ws://localhost:9000'
-const CHROME_WC_ID = 11111
-const FIREFOX_WC_ID = 11111
-// const SIGNALING_URL = 'wss://sigver-coastteam.rhcloud.com:8443'
-// const signaling = 'ws://sigver-coastteam.rhcloud.com:8000'
+export const SIGNALING_URL = 'ws://localhost:8000'
+
+// Configuration for bot server
+export const BOT_HOST = 'localhost'
+export const BOT_PORT = 10001
+export const BOT_URL = `ws://${BOT_HOST}:${BOT_PORT}`
+const BOT_FETCH_URL = `http://${BOT_HOST}:${BOT_PORT}`
+
 // Used to test send/receive a lot of messages
-const MSG_NUMBER = 100
+export const MSG_NUMBER = 100
 
-const LEAVE_CODE = 1
+export const LEAVE_CODE = 1
 
-const INSTANCES = [
+export const INSTANCES = [
   String,
-  ArrayBuffer,
-  Int8Array,
-  Uint8Array,
-  Uint8ClampedArray,
-  Int16Array,
-  Uint16Array,
-  Int32Array,
-  Uint32Array,
-  Float32Array,
-  Float64Array
+  ArrayBuffer
 ]
 
-function randData (Instance) {
+export function createWebChannels (numberOfPeers) {
+  const wcs = []
+  for (let i = 0; i < numberOfPeers; i++) {
+    wcs[i] = create({signalingURL: SIGNALING_URL})
+  }
+  return wcs
+}
+
+export function createAndConnectWebChannels (numberOfPeers) {
+  const wcs = []
+  const resPromises = []
+
+  // Create web channels
+  for (let i = 0; i < numberOfPeers; i++) {
+    wcs[i] = create({signalingURL: SIGNALING_URL})
+    resPromises[i] = new Promise((resolve, reject) => {
+      wcs[i].onPeerJoin = () => {
+        if (wcs[i].members.length === numberOfPeers - 1) {
+          resolve(wcs[i])
+        }
+      }
+    })
+  }
+
+  // Connect peers successively
+  let tmp = wcs[0].open()
+    .then(data => {
+      for (let i = 1; i < numberOfPeers; i++) {
+        tmp = tmp.then(() => wcs[i].join(data.key))
+      }
+    })
+
+  // Resolve when all peers are connected
+  return Promise.all(resPromises)
+}
+
+export function expectAndSpyOnPeerJoin (wcs) {
+  wcs.forEach(wc => {
+    wc.onPeerJoin = id => {
+      // Joined peer's id should be among WebChannel members ids
+      expect(wc.members.includes(id)).toBeTruthy()
+
+      // Its id should be included only ONCE
+      expect(wc.members.indexOf(id)).toEqual(wc.members.lastIndexOf(id))
+    }
+    spyOn(wc, 'onPeerJoin')
+  })
+}
+
+export function expectAndSpyOnPeerLeave (wcs) {
+  wcs.forEach(wc => {
+    wc.onPeerLeave = id => {
+      expect(wc.members.includes(id)).toBeFalsy()
+    }
+    spyOn(wc, 'onPeerLeave')
+  })
+}
+
+export function expectMembers (wcs, totalNumberOfPeers) {
+  for (let i = 0; i < wcs.length; i++) {
+    expect(wcs[i].members.length).toEqual(totalNumberOfPeers - 1)
+    for (let j = i + 1; j < wcs.length; j++) {
+      // Each peer should detect each other and only ONCE
+      let firstIndex = wcs[j].members.indexOf(wcs[i].myId)
+      let lastIndex = wcs[j].members.lastIndexOf(wcs[i].myId)
+      expect(firstIndex).not.toEqual(-1)
+      expect(firstIndex).toEqual(lastIndex)
+      firstIndex = wcs[i].members.indexOf(wcs[j].myId)
+      lastIndex = wcs[i].members.lastIndexOf(wcs[j].myId)
+      expect(firstIndex).not.toEqual(-1)
+      expect(firstIndex).toEqual(lastIndex)
+    }
+  }
+}
+
+export function expectBotMembers (wcId, wcs, totalNumberOfPeers) {
+  return fetch(`${BOT_FETCH_URL}/members/${wcId}`)
+    .then(res => res.json())
+    .then(({ id, members }) => {
+      expect(members.length).toEqual(totalNumberOfPeers - 1)
+      wcs.forEach(wc => {
+        expect(wc.members.includes(id)).toBeTruthy()
+        expect(members.includes(wc.myId)).toBeTruthy()
+      })
+    })
+}
+
+export function sendAndExpectOnMessage (wcs, isBroadcast, withBot = false) {
+  const promises = []
+
+  promises.push(new Promise((resolve, reject) => {
+    // Run through each agent
+    wcs.forEach(wc => {
+      // Prepare message flags for check
+      const flags = new Map()
+      wc.members.forEach(id => flags.set(id, {
+        string: false,
+        arraybuffer: false,
+        chunk: false
+      }))
+
+      // Handle message event
+      wc.onMessage = (id, msg, broadcasted) => {
+        expect(broadcasted).toEqual(isBroadcast)
+        let msgId
+        const flag = flags.get(id)
+        if (typeof msg === 'string' || msg instanceof String) {
+          let msgObj = JSON.parse(msg)
+          msgId = msgObj.id
+          if (msgObj.data) {
+            expect(flag.chunk).toBeFalsy()
+            flag.chunk = true
+          } else {
+            expect(flag.string).toBeFalsy()
+            flag.string = true
+          }
+        } else if (msg instanceof ArrayBuffer) {
+          expect(flag.arraybuffer).toBeFalsy()
+          flag.arraybuffer = true
+          msgId = (new Uint32Array(msg))[0]
+        }
+        expect(msgId).toBeDefined()
+        expect(msgId).toEqual(id)
+        expect(flags.has(msgId)).toBeTruthy()
+        if (flag.string && flag.arraybuffer && flag.chunk) {
+          flags.delete(id)
+        }
+
+        // resolve when all messages are received
+        if (flags.size === 0) {
+          resolve()
+        }
+      }
+
+      // Send messages
+      sendMessages(wc, isBroadcast)
+    })
+  }))
+
+  if (withBot) {
+    promises.push(new Promise((resolve, reject) => {
+      // Tell bot to send messages
+      tellBotToSend(wcs[0].id)
+        .then(res => {
+          if (!res.ok) {
+            reject(res.statusText)
+          } else {
+            resolve()
+          }
+        })
+    }))
+  }
+  return Promise.all(promises)
+}
+
+export function randData (Instance) {
   let res
   if (Instance === String) {
     res = randStr()
@@ -56,7 +203,7 @@ function randData (Instance) {
   return res
 }
 
-function randKey () {
+export function randKey () {
   const MIN_LENGTH = 5
   const DELTA_LENGTH = 0
   const MASK = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
@@ -67,95 +214,6 @@ function randKey () {
     result += MASK[Math.round(Math.random() * (MASK.length - 1))]
   }
   return result
-}
-
-function isEqual (msg1, msg2, Instance) {
-  if (Instance === String) return msg1 === msg2
-  else {
-    if (msg1.byteLength !== msg2.byteLength) return false
-    if (Instance === ArrayBuffer) {
-      msg1 = new Int8Array(msg1)
-      msg2 = new Int8Array(msg2)
-    }
-    for (let i in msg1) if (msg1[i] !== msg2[i]) return false
-    return true
-  }
-}
-
-function allMessagesAreSentAndReceived (groups, Instance, isBroadcast = true) {
-  return Promise.all(groups.map(
-    group => new Promise((resolve, reject) => {
-      const tab = new Map()
-      for (let g of groups) if (g.wc.myId !== group.wc.myId) tab.set(g.wc.myId, g.get(Instance))
-      group.wc.onMessage = (id, msg, isBroadcast) => {
-        expect(isBroadcast).toEqual(isBroadcast)
-        if (typeof msg === 'string') expect(Instance).toEqual(String)
-        else expect(msg instanceof Instance).toBeTruthy()
-        expect(tab.has(id)).toBeTruthy()
-        expect(isEqual(msg, tab.get(id), Instance)).toBeTruthy()
-        tab.delete(id)
-        if (tab.size === 0) resolve()
-      }
-    })
-  ))
-}
-
-function checkMembers (wcs) {
-  for (let wc of wcs) {
-    expect(wc.members.length).toEqual(wcs.length - 1)
-    for (let wc2 of wcs) {
-      if (wc.myId !== wc2.myId) {
-        const firstIndex = wc2.members.indexOf(wc.myId)
-        const lastIndex = wc2.members.lastIndexOf(wc.myId)
-        expect(firstIndex).not.toEqual(-1)
-        expect(firstIndex).toEqual(lastIndex)
-      }
-    }
-  }
-}
-
-export function createWebChannels (amount, options) {
-  if (amount >= 2) {
-    return new Promise((resolve, reject) => {
-      const wcs = []
-      const counts = []
-      const resPromises = []
-
-      for (let i = 0; i < amount; i++) {
-        wcs[i] = create(options)
-        counts[i] = 1
-        resPromises[i] = new Promise((resolve, reject) => {
-          wcs[i].onPeerJoin = () => { if (++counts[i] === amount) resolve() }
-        })
-      }
-      let resPromise = wcs[0].open()
-      for (let i = 1; i < amount; i++) {
-        resPromise = resPromise.then(() => wcs[i].join(wcs[0].getOpenData().key))
-      }
-      Promise.all(resPromises)
-        .then(() => resolve(wcs))
-      setTimeout(() => reject('createWebChannels timeout'), 4900)
-    })
-  }
-  return Promise.reject('createWebChannels accepts only 2 or more number of web channels')
-}
-
-class TestGroup {
-  constructor (wc, instances = INSTANCES) {
-    this.wc = wc
-    this.msg = []
-    if (instances && instances instanceof Array) {
-      for (let i of instances) this.msg[i] = randData(i)
-    }
-  }
-
-  get (Instance) {
-    return this.msg[Instance]
-  }
-
-  set (Instance, value) {
-    this.msg[Instance] = value
-  }
 }
 
 function randStr () {
@@ -170,29 +228,29 @@ function randStr () {
   return res
 }
 
-function itBrowser (shouldSkip, ...args) {
+export function itBrowser (shouldSkip, ...args) {
   if (Util.isBrowser()) Reflect.apply(it, undefined, args)
   else if (shouldSkip) Reflect.apply(xit, undefined, args)
 }
 
-function xitBrowser (shouldSkip, ...args) {
+export function xitBrowser (shouldSkip, ...args) {
   if (Util.isBrowser()) Reflect.apply(xit, undefined, args)
   else if (shouldSkip) Reflect.apply(xit, undefined, args)
 }
 
-function itNode (shouldSkip, ...args) {
+export function itNode (shouldSkip, ...args) {
   if (Util.isBrowser()) {
     if (shouldSkip) Reflect.apply(xit, undefined, args)
   } else Reflect.apply(it, undefined, args)
 }
 
-function xitNode (shouldSkip, ...args) {
+export function xitNode (shouldSkip, ...args) {
   if (Util.isBrowser()) {
     if (shouldSkip) Reflect.apply(xit, undefined, args)
   } else Reflect.apply(xit, undefined, args)
 }
 
-function env () {
+export function env () {
   if (Util.isBrowser()) {
     const sUsrAg = navigator.userAgent
     if (sUsrAg.indexOf('Chrome') > -1) {
@@ -204,22 +262,7 @@ function env () {
   return 'NODE'
 }
 
-function sendReceive (wc, data, done, id) {
-  wc.onMessage = (id, msg, isBroadcast) => {
-    if (typeof data === 'string') expect(typeof msg).toEqual('string')
-    else {
-      expect(Reflect.getPrototypeOf(msg)).toEqual(Reflect.getPrototypeOf(data))
-    }
-    // expect(id).toEqual(wc.members[0])
-    expect(msg).toEqual(data)
-    expect(isBroadcast).toEqual(isBroadcast)
-    done()
-  }
-  if (id) wc.sendTo(id, data)
-  else wc.send(data)
-}
-
-function onMessageForBot (wc, id, msg, isBroadcast) {
+export function onMessageForBot (wc, id, msg, isBroadcast) {
   try {
     const data = JSON.parse(msg)
     switch (data.code) {
@@ -233,25 +276,55 @@ function onMessageForBot (wc, id, msg, isBroadcast) {
   }
 }
 
-export {
-  SIGNALING_URL,
-  BOT,
-  MSG_NUMBER,
-  INSTANCES,
-  LEAVE_CODE,
-  CHROME_WC_ID,
-  FIREFOX_WC_ID,
-  randKey,
-  randStr,
-  randData,
-  sendReceive,
-  env,
-  allMessagesAreSentAndReceived,
-  checkMembers,
-  onMessageForBot,
-  TestGroup,
-  itBrowser,
-  xitBrowser,
-  itNode,
-  xitNode
+function tellBotToSend (wcId) {
+  return fetch(`${BOT_FETCH_URL}/send/${wcId}`)
+}
+
+function sendMessages (wc, isBroadcast) {
+  // Create messages
+  // String
+  const msgString = JSON.stringify({ id: wc.myId })
+  // String chunk of 50Kb
+  const msgChunk = JSON.stringify({ id: wc.myId, data: chunk50kb })
+  // ArrayBuffer
+  const msgArrayBuffer = new Uint32Array(1)
+  msgArrayBuffer[0] = wc.myId
+
+  // Broadcast the messages
+  if (isBroadcast) {
+    wc.send(msgString)
+    wc.send(msgChunk)
+    wc.send(msgArrayBuffer.buffer)
+  // Send the messages privately to each peer
+  } else {
+    wc.members.forEach(id => {
+      wc.sendTo(id, msgString)
+      wc.sendTo(id, msgChunk)
+      wc.sendTo(id, msgArrayBuffer.buffer)
+    })
+  }
+}
+
+export class Scenario {
+  constructor (nbAgents, botPosition) {
+    this.nbAgents = nbAgents
+    this.botPosition = botPosition || -1
+    this.nbBots = botPosition === undefined ? 0 : 1
+  }
+
+  get nbPeers () {
+    return this.nbAgents + this.nbBots
+  }
+
+  get smiles () {
+    let smiles = ''
+    for (let i = 0; i < this.nbPeers; i++) {
+      smiles += i === this.botPosition ? '🤖 ' : '🙂 '
+    }
+    return smiles
+  }
+
+  hasBot () {
+    return this.botPosition !== -1
+  }
 }

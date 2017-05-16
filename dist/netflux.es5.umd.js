@@ -16,27 +16,28 @@ function createCommonjsModule(fn, module) {
 	return module = { exports: {} }, fn(module, module.exports), module.exports;
 }
 
-var root = createCommonjsModule(function (module, exports) {
-"use strict";
-if (typeof window == 'object' && window.window === window) {
-    exports.root = window;
-}
-else if (typeof self == 'object' && self.self === self) {
-    exports.root = self;
-}
-else if (typeof commonjsGlobal == 'object' && commonjsGlobal.global === commonjsGlobal) {
-    exports.root = commonjsGlobal;
-}
-else {
-    // Workaround Closure Compiler restriction: The body of a goog.module cannot use throw.
-    // This is needed when used with angular/tsickle which inserts a goog.module statement.
-    // Wrap in IIFE
-    (function () {
+// CommonJS / Node have global context exposed as "global" variable.
+// We don't want to include the whole node.d.ts this this compilation unit so we'll just fake
+// the global "global" var for now.
+var __window = typeof window !== 'undefined' && window;
+var __self = typeof self !== 'undefined' && typeof WorkerGlobalScope !== 'undefined' &&
+    self instanceof WorkerGlobalScope && self;
+var __global = typeof commonjsGlobal !== 'undefined' && commonjsGlobal;
+var _root = __window || __global || __self;
+var root_1 = _root;
+// Workaround Closure Compiler restriction: The body of a goog.module cannot use throw.
+// This is needed when used with angular/tsickle which inserts a goog.module statement.
+// Wrap in IIFE
+(function () {
+    if (!_root) {
         throw new Error('RxJS could not find any global context (window, self, global)');
-    })();
-}
+    }
+})();
 
-});
+
+var root = {
+	root: root_1
+};
 
 function isFunction(x) {
     return typeof x === 'function';
@@ -555,15 +556,17 @@ var SafeSubscriber = (function (_super) {
         }
     };
     SafeSubscriber.prototype.complete = function () {
+        var _this = this;
         if (!this.isStopped) {
             var _parentSubscriber = this._parentSubscriber;
             if (this._complete) {
+                var wrappedComplete = function () { return _this._complete.call(_this._context); };
                 if (!_parentSubscriber.syncErrorThrowable) {
-                    this.__tryOrUnsub(this._complete);
+                    this.__tryOrUnsub(wrappedComplete);
                     this.unsubscribe();
                 }
                 else {
-                    this.__tryOrSetError(_parentSubscriber, this._complete);
+                    this.__tryOrSetError(_parentSubscriber, wrappedComplete);
                     this.unsubscribe();
                 }
             }
@@ -1199,6 +1202,28 @@ var slicedToArray = function () {
   };
 }();
 
+
+
+
+
+
+
+
+
+
+
+
+
+var toConsumableArray = function (arr) {
+  if (Array.isArray(arr)) {
+    for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
+
+    return arr2;
+  } else {
+    return Array.from(arr);
+  }
+};
+
 /**
  * Default timeout for any pending request.
  * @type {number}
@@ -1495,6 +1520,248 @@ var TopologyInterface = function (_Service) {
   return TopologyInterface;
 }(Service);
 
+var NodeCloseEvent = function CloseEvent(name) {
+  var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  classCallCheck(this, CloseEvent);
+
+  this.name = name;
+  this.wasClean = options.wasClean || false;
+  this.code = options.code || 0;
+  this.reason = options.reason || '';
+};
+
+/**
+ * Utility class contains some helper static methods.
+ */
+var Util = function () {
+  function Util() {
+    classCallCheck(this, Util);
+  }
+
+  createClass(Util, null, [{
+    key: 'isBrowser',
+
+    /**
+     * Check execution environment.
+     *
+     * @returns {boolean} Description
+     */
+    value: function isBrowser() {
+      if (typeof window === 'undefined' || typeof process !== 'undefined' && process.title === 'node') {
+        return false;
+      }
+      return true;
+    }
+
+    /**
+     * Check whether the channel is a socket.
+     *
+     * @param {WebSocket|RTCDataChannel} channel
+     *
+     * @returns {boolean}
+     */
+
+  }, {
+    key: 'isSocket',
+    value: function isSocket(channel) {
+      return channel.constructor.name === 'WebSocket';
+    }
+
+    /**
+     * Check whether the string is a valid URL.
+     *
+     * @param {string} str
+     *
+     * @returns {type} Description
+     */
+
+  }, {
+    key: 'isURL',
+    value: function isURL(str) {
+      var regex = '^' +
+      // protocol identifier
+      '(?:wss|ws)://' +
+      // Host name/IP
+      '[^\\s]+' +
+      // port number
+      '(?::\\d{2,5})?' + '$';
+
+      return new RegExp(regex, 'i').test(str);
+    }
+  }, {
+    key: 'require',
+    value: function (_require) {
+      function require(_x2) {
+        return _require.apply(this, arguments);
+      }
+
+      require.toString = function () {
+        return _require.toString();
+      };
+
+      return require;
+    }(function (libConst) {
+      try {
+        switch (libConst) {
+          case Util.WEB_RTC:
+            return Util.isBrowser() ? window : require('wrtc');
+          case Util.WEB_SOCKET:
+            return Util.isBrowser() ? window.WebSocket : require('ws');
+          case Util.TEXT_ENCODING:
+            return Util.isBrowser() ? window : require('text-encoding');
+          case Util.EVENT_SOURCE:
+            return Util.isBrowser() ? window.EventSource : require('eventsource');
+          case Util.FETCH:
+            return Util.isBrowser() ? window.fetch : require('node-fetch');
+          case Util.CLOSE_EVENT:
+            return Util.isBrowser() ? window.CloseEvent : NodeCloseEvent;
+          default:
+            console.error(libConst + ' is unknown library');
+            return undefined;
+        }
+      } catch (err) {
+        console.error(err.message);
+        return undefined;
+      }
+    })
+  }, {
+    key: 'WEB_RTC',
+    get: function get$$1() {
+      return 1;
+    }
+  }, {
+    key: 'WEB_SOCKET',
+    get: function get$$1() {
+      return 2;
+    }
+  }, {
+    key: 'TEXT_ENCODING',
+    get: function get$$1() {
+      return 3;
+    }
+  }, {
+    key: 'EVENT_SOURCE',
+    get: function get$$1() {
+      return 4;
+    }
+  }, {
+    key: 'FETCH',
+    get: function get$$1() {
+      return 5;
+    }
+  }, {
+    key: 'CLOSE_EVENT',
+    get: function get$$1() {
+      return 6;
+    }
+  }]);
+  return Util;
+}();
+
+var info = Util.isBrowser() ? function (msg) {
+  var _console;
+
+  for (var _len = arguments.length, rest = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+    rest[_key - 1] = arguments[_key];
+  }
+
+  (_console = console).info.apply(_console, ['%c\u2139 ' + msg, 'background-color: #bbdefb; padding: 2px'].concat(rest));
+} : function (msg) {
+  var _console2;
+
+  for (var _len2 = arguments.length, rest = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+    rest[_key2 - 1] = arguments[_key2];
+  }
+
+  (_console2 = console).info.apply(_console2, ['INFO | ' + msg].concat(rest));
+};
+
+var debug = Util.isBrowser() ? function (msg) {
+  var _console3;
+
+  for (var _len3 = arguments.length, rest = Array(_len3 > 1 ? _len3 - 1 : 0), _key3 = 1; _key3 < _len3; _key3++) {
+    rest[_key3 - 1] = arguments[_key3];
+  }
+
+  (_console3 = console).log.apply(_console3, ['%c' + msg, 'color: white; height: 30px; background-color: #3949ab; font-size: 1.1rem; padding: 0 3px;'].concat(rest));
+} : function (msg) {
+  var _console4;
+
+  for (var _len4 = arguments.length, rest = Array(_len4 > 1 ? _len4 - 1 : 0), _key4 = 1; _key4 < _len4; _key4++) {
+    rest[_key4 - 1] = arguments[_key4];
+  }
+
+  (_console4 = console).log.apply(_console4, ['DEBUG| ' + msg].concat(rest));
+};
+
+var error$1 = Util.isBrowser() ? function (msg) {
+  var _console5;
+
+  for (var _len5 = arguments.length, rest = Array(_len5 > 1 ? _len5 - 1 : 0), _key5 = 1; _key5 < _len5; _key5++) {
+    rest[_key5 - 1] = arguments[_key5];
+  }
+
+  (_console5 = console).error.apply(_console5, ['%c' + msg, 'color: black; background-color: #ef5350; padding: 2px'].concat(rest));
+} : function (msg) {
+  var _console6;
+
+  for (var _len6 = arguments.length, rest = Array(_len6 > 1 ? _len6 - 1 : 0), _key6 = 1; _key6 < _len6; _key6++) {
+    rest[_key6 - 1] = arguments[_key6];
+  }
+
+  (_console6 = console).error.apply(_console6, ['ERROR| ' + msg].concat(rest));
+};
+
+var warn = Util.isBrowser() ? function (msg) {
+  var _console7;
+
+  for (var _len7 = arguments.length, rest = Array(_len7 > 1 ? _len7 - 1 : 0), _key7 = 1; _key7 < _len7; _key7++) {
+    rest[_key7 - 1] = arguments[_key7];
+  }
+
+  (_console7 = console).warn.apply(_console7, ['%c' + msg, 'color: black; background-color: #ffe082; padding: 2px'].concat(rest));
+} : function (msg) {
+  var _console8;
+
+  for (var _len8 = arguments.length, rest = Array(_len8 > 1 ? _len8 - 1 : 0), _key8 = 1; _key8 < _len8; _key8++) {
+    rest[_key8 - 1] = arguments[_key8];
+  }
+
+  (_console8 = console).warn.apply(_console8, ['WARN | ' + msg].concat(rest));
+};
+
+var trace = Util.isBrowser() ? function (msg) {
+  var _console9;
+
+  for (var _len9 = arguments.length, rest = Array(_len9 > 1 ? _len9 - 1 : 0), _key9 = 1; _key9 < _len9; _key9++) {
+    rest[_key9 - 1] = arguments[_key9];
+  }
+
+  (_console9 = console).trace.apply(_console9, ['%c' + msg, 'color: black; background-color: #b0bec5; padding: 2px'].concat(rest));
+} : function (msg) {
+  var _console10;
+
+  for (var _len10 = arguments.length, rest = Array(_len10 > 1 ? _len10 - 1 : 0), _key10 = 1; _key10 < _len10; _key10++) {
+    rest[_key10 - 1] = arguments[_key10];
+  }
+
+  (_console10 = console).trace.apply(_console10, ['TRACE| ' + msg].concat(rest));
+};
+
+var group = Util.isBrowser() ? function (msg, args) {
+  console.group(msg);
+  for (var argName in args) {
+    if (args[argName] !== undefined) {
+      console.log('%c' + argName + ' =', 'color: #0f6717; font-weight: bold; padding: 3px', args[argName]);
+    } else {
+      console.log('%c' + argName + ' =', 'color: #e20000; font-weight: bold; padding: 3px', args[argName]);
+    }
+  }
+  console.groupEnd();
+} : function (msg, args) {
+  console.log('GROUP| ' + msg, args);
+};
+
 /**
  * One of the internal message type. The message is intended for the `WebChannel`
  * members to notify them about the joining peer.
@@ -1571,6 +1838,7 @@ var FullyConnectedService = function (_TopologyInterface) {
 
       this.setJP(wc, channel.peerId, channel);
       wc.sendInner(this.id, { code: SHOULD_ADD_NEW_JOINING_PEER, jpId: channel.peerId });
+      group('FullyConnectedService SHOULD_CONNECT_TO', [{ wc: wc.id, ME: wc.myId, TO: channel.peerId }].concat(toConsumableArray(peers)));
       wc.sendInnerTo(channel, this.id, { code: SHOULD_CONNECT_TO, peers: peers });
       return new Promise(function (resolve, reject) {
         get(FullyConnectedService.prototype.__proto__ || Object.getPrototypeOf(FullyConnectedService.prototype), 'setPendingRequest', _this2).call(_this2, wc, channel.peerId, { resolve: resolve, reject: reject });
@@ -1972,6 +2240,8 @@ var JoiningPeer = function JoiningPeer(channel, onJoin) {
       // Export to the adapter global object visible in the browser.
       module.exports.browserShim = safariShim;
 
+      safariShim.shimCallbacksAPI();
+      safariShim.shimAddStream();
       safariShim.shimOnAddStream();
       safariShim.shimGetUserMedia();
       break;
@@ -2017,16 +2287,33 @@ var chromeShim = {
             // onaddstream does not fire when a track is added to an existing
             // stream. But stream.onaddtrack is implemented so we use that.
             e.stream.addEventListener('addtrack', function(te) {
+              var receiver;
+              if (RTCPeerConnection.prototype.getReceivers) {
+                receiver = self.getReceivers().find(function(r) {
+                  return r.track.id === te.track.id;
+                });
+              } else {
+                receiver = {track: te.track};
+              }
+
               var event = new Event('track');
               event.track = te.track;
-              event.receiver = {track: te.track};
+              event.receiver = receiver;
               event.streams = [e.stream];
               self.dispatchEvent(event);
             });
             e.stream.getTracks().forEach(function(track) {
+              var receiver;
+              if (RTCPeerConnection.prototype.getReceivers) {
+                receiver = self.getReceivers().find(function(r) {
+                  return r.track.id === track.id;
+                });
+              } else {
+                receiver = {track: track};
+              }
               var event = new Event('track');
               event.track = track;
-              event.receiver = {track: track};
+              event.receiver = receiver;
               event.streams = [e.stream];
               this.dispatchEvent(event);
             }.bind(this));
@@ -2041,11 +2328,70 @@ var chromeShim = {
         !('getSenders' in RTCPeerConnection.prototype) &&
         'createDTMFSender' in RTCPeerConnection.prototype) {
       RTCPeerConnection.prototype.getSenders = function() {
-        return this._senders;
+        return this._senders || [];
       };
       var origAddStream = RTCPeerConnection.prototype.addStream;
       var origRemoveStream = RTCPeerConnection.prototype.removeStream;
 
+      if (!RTCPeerConnection.prototype.addTrack) {
+        RTCPeerConnection.prototype.addTrack = function(track, stream) {
+          var pc = this;
+          if (pc.signalingState === 'closed') {
+            throw new DOMException(
+              'The RTCPeerConnection\'s signalingState is \'closed\'.',
+              'InvalidStateError');
+          }
+          var streams = [].slice.call(arguments, 1);
+          if (streams.length !== 1 ||
+              !streams[0].getTracks().find(function(t) {
+                return t === track;
+              })) {
+            // this is not fully correct but all we can manage without
+            // [[associated MediaStreams]] internal slot.
+            throw new DOMException(
+              'The adapter.js addTrack polyfill only supports a single ' +
+              ' stream which is associated with the specified track.',
+              'NotSupportedError');
+          }
+
+          pc._senders = pc._senders || [];
+          var alreadyExists = pc._senders.find(function(t) {
+            return t.track === track;
+          });
+          if (alreadyExists) {
+            throw new DOMException('Track already exists.',
+                'InvalidAccessError');
+          }
+
+          pc._streams = pc._streams || {};
+          var oldStream = pc._streams[stream.id];
+          if (oldStream) {
+            oldStream.addTrack(track);
+            pc.removeStream(oldStream);
+            pc.addStream(oldStream);
+          } else {
+            var newStream = new MediaStream([track]);
+            pc._streams[stream.id] = newStream;
+            pc.addStream(newStream);
+          }
+
+          var sender = {
+            track: track,
+            get dtmf() {
+              if (this._dtmf === undefined) {
+                if (track.kind === 'audio') {
+                  this._dtmf = pc.createDTMFSender(track);
+                } else {
+                  this._dtmf = null;
+                }
+              }
+              return this._dtmf;
+            }
+          };
+          pc._senders.push(sender);
+          return sender;
+        };
+      }
       RTCPeerConnection.prototype.addStream = function(stream) {
         var pc = this;
         pc._senders = pc._senders || [];
@@ -2222,7 +2568,7 @@ var chromeShim = {
       // shim getStats with maplike support
       var makeMapStats = function(stats) {
         return new Map(Object.keys(stats).map(function(key) {
-          return[key, stats[key]];
+          return [key, stats[key]];
         }));
       };
 
@@ -2232,7 +2578,7 @@ var chromeShim = {
         };
 
         return origGetStats.apply(this, [successCallbackWrapper_,
-            arguments[0]]);
+          arguments[0]]);
       }
 
       // promise-support
@@ -2449,8 +2795,9 @@ module.exports = function() {
   var shimError_ = function(e) {
     return {
       name: {
+        ConstraintNotSatisfiedError: 'OverconstrainedError',
         PermissionDeniedError: 'NotAllowedError',
-        ConstraintNotSatisfiedError: 'OverconstrainedError'
+        TrackStartError: 'NotReadableError'
       }[e.name] || e.name,
       message: e.message,
       constraint: e.constraintName,
@@ -2486,9 +2833,9 @@ module.exports = function() {
           return MediaStreamTrack.getSources(function(devices) {
             resolve(devices.map(function(device) {
               return {label: device.label,
-                      kind: kinds[device.kind],
-                      deviceId: device.id,
-                      groupId: ''};
+                kind: kinds[device.kind],
+                deviceId: device.id,
+                groupId: ''};
             }));
           });
         });
@@ -2757,9 +3104,10 @@ module.exports = function() {
   var shimError_ = function(e) {
     return {
       name: {
+        InternalError: 'NotReadableError',
         NotSupportedError: 'TypeError',
-        SecurityError: 'NotAllowedError',
-        PermissionDeniedError: 'NotAllowedError'
+        PermissionDeniedError: 'NotAllowedError',
+        SecurityError: 'NotAllowedError'
       }[e.name] || e.name,
       message: {
         'The operation is insecure.': 'The request is not allowed by the ' +
@@ -2918,6 +3266,17 @@ var safariShim = {
   // TODO: check for webkitGTK+
   // shimPeerConnection: function() { },
 
+  shimAddStream: function() {
+    if (typeof window === 'object' && window.RTCPeerConnection &&
+        !('addStream' in window.RTCPeerConnection.prototype)) {
+      RTCPeerConnection.prototype.addStream = function(stream) {
+        var self = this;
+        stream.getTracks().forEach(function(track) {
+          self.addTrack(track, stream);
+        });
+      };
+    }
+  },
   shimOnAddStream: function() {
     if (typeof window === 'object' && window.RTCPeerConnection &&
         !('onaddstream' in window.RTCPeerConnection.prototype)) {
@@ -2948,7 +3307,67 @@ var safariShim = {
       });
     }
   },
+  shimCallbacksAPI: function() {
+    if (typeof window !== 'object' || !window.RTCPeerConnection) {
+      return;
+    }
+    var prototype = RTCPeerConnection.prototype;
+    var createOffer = prototype.createOffer;
+    var createAnswer = prototype.createAnswer;
+    var setLocalDescription = prototype.setLocalDescription;
+    var setRemoteDescription = prototype.setRemoteDescription;
+    var addIceCandidate = prototype.addIceCandidate;
 
+    prototype.createOffer = function(successCallback, failureCallback) {
+      var options = (arguments.length >= 2) ? arguments[2] : arguments[0];
+      var promise = createOffer.apply(this, [options]);
+      if (!failureCallback) {
+        return promise;
+      }
+      promise.then(successCallback, failureCallback);
+      return Promise.resolve();
+    };
+
+    prototype.createAnswer = function(successCallback, failureCallback) {
+      var options = (arguments.length >= 2) ? arguments[2] : arguments[0];
+      var promise = createAnswer.apply(this, [options]);
+      if (!failureCallback) {
+        return promise;
+      }
+      promise.then(successCallback, failureCallback);
+      return Promise.resolve();
+    };
+
+    var withCallback = function(description, successCallback, failureCallback) {
+      var promise = setLocalDescription.apply(this, [description]);
+      if (!failureCallback) {
+        return promise;
+      }
+      promise.then(successCallback, failureCallback);
+      return Promise.resolve();
+    };
+    prototype.setLocalDescription = withCallback;
+
+    withCallback = function(description, successCallback, failureCallback) {
+      var promise = setRemoteDescription.apply(this, [description]);
+      if (!failureCallback) {
+        return promise;
+      }
+      promise.then(successCallback, failureCallback);
+      return Promise.resolve();
+    };
+    prototype.setRemoteDescription = withCallback;
+
+    withCallback = function(candidate, successCallback, failureCallback) {
+      var promise = addIceCandidate.apply(this, [candidate]);
+      if (!failureCallback) {
+        return promise;
+      }
+      promise.then(successCallback, failureCallback);
+      return Promise.resolve();
+    };
+    prototype.addIceCandidate = withCallback;
+  },
   shimGetUserMedia: function() {
     if (!navigator.getUserMedia) {
       if (navigator.webkitGetUserMedia) {
@@ -2966,6 +3385,8 @@ var safariShim = {
 
 // Expose public methods.
 module.exports = {
+  shimCallbacksAPI: safariShim.shimCallbacksAPI,
+  shimAddStream: safariShim.shimAddStream,
   shimOnAddStream: safariShim.shimOnAddStream,
   shimGetUserMedia: safariShim.shimGetUserMedia
   // TODO
@@ -3724,11 +4145,48 @@ var __extends$11 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, 
 
 
 /**
- * @see {@link Notification}
  *
- * @param scheduler
- * @param delay
- * @return {Observable<R>|WebSocketSubject<T>|Observable<T>}
+ * Re-emits all notifications from source Observable with specified scheduler.
+ *
+ * <span class="informal">Ensure a specific scheduler is used, from outside of an Observable.</span>
+ *
+ * `observeOn` is an operator that accepts a scheduler as a first parameter, which will be used to reschedule
+ * notifications emitted by the source Observable. It might be useful, if you do not have control over
+ * internal scheduler of a given Observable, but want to control when its values are emitted nevertheless.
+ *
+ * Returned Observable emits the same notifications (nexted values, complete and error events) as the source Observable,
+ * but rescheduled with provided scheduler. Note that this doesn't mean that source Observables internal
+ * scheduler will be replaced in any way. Original scheduler still will be used, but when the source Observable emits
+ * notification, it will be immediately scheduled again - this time with scheduler passed to `observeOn`.
+ * An anti-pattern would be calling `observeOn` on Observable that emits lots of values synchronously, to split
+ * that emissions into asynchronous chunks. For this to happen, scheduler would have to be passed into the source
+ * Observable directly (usually into the operator that creates it). `observeOn` simply delays notifications a
+ * little bit more, to ensure that they are emitted at expected moments.
+ *
+ * As a matter of fact, `observeOn` accepts second parameter, which specifies in milliseconds with what delay notifications
+ * will be emitted. The main difference between {@link delay} operator and `observeOn` is that `observeOn`
+ * will delay all notifications - including error notifications - while `delay` will pass through error
+ * from source Observable immediately when it is emitted. In general it is highly recommended to use `delay` operator
+ * for any kind of delaying of values in the stream, while using `observeOn` to specify which scheduler should be used
+ * for notification emissions in general.
+ *
+ * @example <caption>Ensure values in subscribe are called just before browser repaint.</caption>
+ * const intervals = Rx.Observable.interval(10); // Intervals are scheduled
+ *                                               // with async scheduler by default...
+ *
+ * intervals
+ * .observeOn(Rx.Scheduler.animationFrame)       // ...but we will observe on animationFrame
+ * .subscribe(val => {                           // scheduler to ensure smooth animation.
+ *   someDiv.style.height = val + 'px';
+ * });
+ *
+ * @see {@link delay}
+ *
+ * @param {IScheduler} scheduler Scheduler that will be used to reschedule notifications from source Observable.
+ * @param {number} [delay] Number of milliseconds that states with what delay every notification should be rescheduled.
+ * @return {Observable<T>} Observable that emits the same notifications as the source Observable,
+ * but with provided scheduler.
+ *
  * @method observeOn
  * @owner Observable
  */
@@ -3993,144 +4451,6 @@ var map_1 = {
 };
 
 Observable_1.Observable.prototype.map = map_1.map;
-
-var NodeCloseEvent = function CloseEvent(name) {
-  var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-  classCallCheck(this, CloseEvent);
-
-  this.name = name;
-  this.wasClean = options.wasClean || false;
-  this.code = options.code || 0;
-  this.reason = options.reason || '';
-};
-
-/**
- * Utility class contains some helper static methods.
- */
-var Util = function () {
-  function Util() {
-    classCallCheck(this, Util);
-  }
-
-  createClass(Util, null, [{
-    key: 'isBrowser',
-
-    /**
-     * Check execution environment.
-     *
-     * @returns {boolean} Description
-     */
-    value: function isBrowser() {
-      if (typeof window === 'undefined' || typeof process !== 'undefined' && process.title === 'node') {
-        return false;
-      }
-      return true;
-    }
-
-    /**
-     * Check whether the channel is a socket.
-     *
-     * @param {WebSocket|RTCDataChannel} channel
-     *
-     * @returns {boolean}
-     */
-
-  }, {
-    key: 'isSocket',
-    value: function isSocket(channel) {
-      return channel.constructor.name === 'WebSocket';
-    }
-
-    /**
-     * Check whether the string is a valid URL.
-     *
-     * @param {string} str
-     *
-     * @returns {type} Description
-     */
-
-  }, {
-    key: 'isURL',
-    value: function isURL(str) {
-      var regex = '^' +
-      // protocol identifier
-      '(?:wss|ws)://' +
-      // Host name/IP
-      '[^\\s]+' +
-      // port number
-      '(?::\\d{2,5})?' + '$';
-
-      return new RegExp(regex, 'i').test(str);
-    }
-  }, {
-    key: 'require',
-    value: function (_require) {
-      function require(_x2) {
-        return _require.apply(this, arguments);
-      }
-
-      require.toString = function () {
-        return _require.toString();
-      };
-
-      return require;
-    }(function (libConst) {
-      try {
-        switch (libConst) {
-          case Util.WEB_RTC:
-            return Util.isBrowser() ? window : require('wrtc');
-          case Util.WEB_SOCKET:
-            return Util.isBrowser() ? window.WebSocket : require('ws');
-          case Util.TEXT_ENCODING:
-            return Util.isBrowser() ? window : require('text-encoding');
-          case Util.EVENT_SOURCE:
-            return Util.isBrowser() ? window.EventSource : require('eventsource');
-          case Util.FETCH:
-            return Util.isBrowser() ? window.fetch : require('node-fetch');
-          case Util.CLOSE_EVENT:
-            return Util.isBrowser() ? window.CloseEvent : NodeCloseEvent;
-          default:
-            console.error(libConst + ' is unknown library');
-            return undefined;
-        }
-      } catch (err) {
-        console.error(err.message);
-        return undefined;
-      }
-    })
-  }, {
-    key: 'WEB_RTC',
-    get: function get$$1() {
-      return 1;
-    }
-  }, {
-    key: 'WEB_SOCKET',
-    get: function get$$1() {
-      return 2;
-    }
-  }, {
-    key: 'TEXT_ENCODING',
-    get: function get$$1() {
-      return 3;
-    }
-  }, {
-    key: 'EVENT_SOURCE',
-    get: function get$$1() {
-      return 4;
-    }
-  }, {
-    key: 'FETCH',
-    get: function get$$1() {
-      return 5;
-    }
-  }, {
-    key: 'CLOSE_EVENT',
-    get: function get$$1() {
-      return 6;
-    }
-  }]);
-  return Util;
-}();
 
 var wrtc = Util.require(Util.WEB_RTC);
 var CloseEvent = Util.require(Util.CLOSE_EVENT);
@@ -4948,10 +5268,10 @@ var RichEventSource = function () {
 }();
 
 var ListenFlags = {
-  none: 0,
-  ws: 1,
-  wrtc: 2,
-  all: 3
+  none: 0, // 0
+  ws: 1, // 1
+  wrtc: 2, // 2
+  all: 3 // 4
 };
 
 var iListenOn = ListenFlags.none;
@@ -5049,7 +5369,9 @@ var ChannelBuilderService = function (_Service) {
 
       wc.initChannel(channel, senderId).then(function (channel) {
         var pendReq = get(ChannelBuilderService.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilderService.prototype), 'getPendingRequest', _this4).call(_this4, wc, senderId);
-        if (pendReq) pendReq.resolve(channel);
+        if (pendReq) {
+          pendReq.resolve(channel);
+        }
       });
     }
 
@@ -5066,7 +5388,6 @@ var ChannelBuilderService = function (_Service) {
       var _this5 = this;
 
       var wc = channel.webChannel;
-
       if ('failedReason' in msg) {
         get(ChannelBuilderService.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilderService.prototype), 'getPendingRequest', this).call(this, wc, senderId).reject(new Error(msg.failedReason));
       } else if ('shouldConnect' in msg) {
@@ -5335,7 +5656,7 @@ var MessageBuilderService = function (_Service) {
       var dataView = new DataView(data);
       var msgSize = dataView.getUint32(HEADER_OFFSET);
       var dataType = dataView.getUint8(13);
-      var isBroadcast = dataView.getUint8(14);
+      var isBroadcast = dataView.getUint8(14) === 1;
       if (msgSize > MAX_USER_MSG_SIZE) {
         var msgId = dataView.getUint16(15);
         var chunk = dataView.getUint16(17);
@@ -6888,23 +7209,16 @@ var BotServer = function () {
     this.botSettings = Object.assign({}, botDefaults.bot, options.bot);
     this.serverSettings = {
       perMessageDeflate: this.botSettings.perMessageDeflate,
-      verifyClient: function verifyClient(info) {
-        return _this.validateConnection(info);
+      verifyClient: function verifyClient(info$$1) {
+        return _this.validateConnection(info$$1);
       }
     };
-    var host = void 0;
-    var port = void 0;
     if (this.botSettings.server) {
       this.serverSettings.server = this.botSettings.server;
-      host = this.settings.bot.server.address().address;
-      port = this.settings.bot.server.address().port;
     } else {
-      host = this.botSettings.host;
-      port = this.botSettings.port;
-      this.serverSettings.host = host;
-      this.serverSettings.port = port;
+      this.serverSettings.host = this.botSettings.host;
+      this.serverSettings.port = this.botSettings.port;
     }
-    this.url = this.botSettings.protocol + '://' + host + ':' + port;
 
     /**
      * @type {WebSocketServer}
@@ -6920,84 +7234,61 @@ var BotServer = function () {
      * @type {function(wc: WebChannel)}
      */
     this.onWebChannel = function () {};
+
+    this.onWebChannelReady = function () {};
+
+    this.onError = function () {};
+
+    this.init();
   }
 
-  /**
-   * Starts listen on socket.
-   *
-   * @returns {Promise<undefined,string>}
-   */
-
-
   createClass(BotServer, [{
-    key: 'start',
-    value: function start() {
+    key: 'init',
+    value: function init() {
       var _this2 = this;
 
-      return new Promise(function (resolve, reject) {
-        var WebSocketServer = void 0;
-        try {
-          WebSocketServer = require('uws').Server;
-        } catch (err) {
-          try {
-            console.log(err.message + '. ws module will be used for Bot server instead');
-            WebSocketServer = Util.require('ws').Server;
-          } catch (err) {
-            console.log(err.message + '. Bot server cannot be run');
-            reject(err);
-          }
-        }
+      var WebSocketServer = this.selectWebSocketServer();
+      this.server = new WebSocketServer(this.serverSettings);
+      var serverListening = this.serverSettings.server || this.server;
+      serverListening.on('listening', function () {
+        return BotHelper.listen(_this2.url);
+      });
 
-        try {
-          _this2.server = new WebSocketServer(_this2.serverSettings);
-          BotHelper.listen(_this2.url);
+      this.server.on('error', function (err) {
+        BotHelper.listen('');
+        _this2.onError(err);
+      });
 
-          _this2.server.on('error', function (err) {
-            BotHelper.listen('');
-            reject(err);
-          });
+      this.server.on('connection', function (ws) {
+        var _url$parse = url$1.parse(ws.upgradeReq.url, true),
+            pathname = _url$parse.pathname,
+            query = _url$parse.query;
 
-          _this2.server.on('connection', function (ws) {
-            var _url$parse = url$1.parse(ws.upgradeReq.url, true),
-                pathname = _url$parse.pathname,
-                query = _url$parse.query;
-
-            var wcId = Number(query.wcId);
-            var wc = _this2.getWebChannel(wcId);
-            switch (pathname) {
-              case '/invite':
-                console.log('Inviting to ' + wcId);
-                if (wc && wc.members.length === 0) {
-                  _this2.removeWebChannel(wc);
-                }
-                wc = new WebChannel(_this2.wcSettings);
-                wc.id = wcId;
-                _this2.addWebChannel(wc);
-                wc.join(ws).then(function () {
-                  return _this2.onWebChannel(wc);
-                });
-                break;
-              case '/internalChannel':
-                BotHelper.wsStream.next({ wc: wc, ws: ws, senderId: query.senderId });
-                break;
+        var wcId = Number(query.wcId);
+        var wc = _this2.getWebChannel(wcId);
+        switch (pathname) {
+          case '/invite':
+            {
+              if (wc && wc.members.length === 0) {
+                _this2.removeWebChannel(wc);
+              }
+              wc = new WebChannel(_this2.wcSettings);
+              wc.id = wcId;
+              _this2.addWebChannel(wc);
+              _this2.onWebChannel(wc);
+              wc.join(ws).then(function () {
+                _this2.onWebChannelReady(wc);
+              });
+              break;
             }
-          });
-        } catch (err) {
-          console.log('Bot server Error: ' + err.message);
-          reject(err);
+          case '/internalChannel':
+            {
+              var senderId = Number(query.senderId);
+              BotHelper.wsStream.next({ wc: wc, ws: ws, senderId: senderId });
+              break;
+            }
         }
       });
-    }
-
-    /**
-     * Stops listen on web socket.
-     */
-
-  }, {
-    key: 'stop',
-    value: function stop() {
-      BotHelper.listen('');
-      this.server.close();
     }
 
     /**
@@ -7064,8 +7355,8 @@ var BotServer = function () {
     }
   }, {
     key: 'validateConnection',
-    value: function validateConnection(info) {
-      var _url$parse2 = url$1.parse(info.req.url, true),
+    value: function validateConnection(info$$1) {
+      var _url$parse2 = url$1.parse(info$$1.req.url, true),
           pathname = _url$parse2.pathname,
           query = _url$parse2.query;
 
@@ -7081,6 +7372,42 @@ var BotServer = function () {
           return query.senderId && wcId && this.getWebChannel(wcId);
         default:
           return false;
+      }
+    }
+  }, {
+    key: 'selectWebSocketServer',
+    value: function selectWebSocketServer() {
+      var WebSocketServer = void 0;
+      try {
+        WebSocketServer = require('uws').Server;
+        return WebSocketServer;
+      } catch (err) {
+        console.log(err.message + '. Try to use ws module.');
+        WebSocketServer = Util.require('ws').Server;
+        return WebSocketServer;
+      }
+    }
+  }, {
+    key: 'url',
+    get: function get$$1() {
+      return this.botSettings.protocol + '://' + this.host + ':' + this.port;
+    }
+  }, {
+    key: 'host',
+    get: function get$$1() {
+      if (this.serverSettings.server) {
+        return this.serverSettings.server.address().address;
+      } else {
+        return this.serverSettings.host;
+      }
+    }
+  }, {
+    key: 'port',
+    get: function get$$1() {
+      if (this.serverSettings.server) {
+        return this.serverSettings.server.address().port;
+      } else {
+        return this.serverSettings.port;
       }
     }
   }]);

@@ -2,6 +2,7 @@ import { BotHelper } from 'service/WebSocketService'
 import { WebChannel } from 'WebChannel'
 import { Util } from 'Util'
 import { defaults } from 'defaults'
+import * as log from 'log'
 
 const url = require('url')
 
@@ -46,19 +47,12 @@ export class BotServer {
       perMessageDeflate: this.botSettings.perMessageDeflate,
       verifyClient: (info) => this.validateConnection(info)
     }
-    let host
-    let port
     if (this.botSettings.server) {
       this.serverSettings.server = this.botSettings.server
-      host = this.settings.bot.server.address().address
-      port = this.settings.bot.server.address().port
     } else {
-      host = this.botSettings.host
-      port = this.botSettings.port
-      this.serverSettings.host = host
-      this.serverSettings.port = port
+      this.serverSettings.host = this.botSettings.host
+      this.serverSettings.port = this.botSettings.port
     }
-    this.url = `${this.botSettings.protocol}://${host}:${port}`
 
     /**
      * @type {WebSocketServer}
@@ -74,70 +68,73 @@ export class BotServer {
      * @type {function(wc: WebChannel)}
      */
     this.onWebChannel = () => {}
+
+    this.onWebChannelReady = () => {}
+
+    this.onError = () => {}
+
+    this.init()
   }
 
-  /**
-   * Starts listen on socket.
-   *
-   * @returns {Promise<undefined,string>}
-   */
-  start () {
-    return new Promise((resolve, reject) => {
-      let WebSocketServer
-      try {
-        WebSocketServer = require('uws').Server
-      } catch (err) {
-        try {
-          console.log(`${err.message}. ws module will be used for Bot server instead`)
-          WebSocketServer = Util.require('ws').Server
-        } catch (err) {
-          console.log(`${err.message}. Bot server cannot be run`)
-          reject(err)
+  get url () {
+    return `${this.botSettings.protocol}://${this.host}:${this.port}`
+  }
+
+  get host () {
+    if (this.serverSettings.server) {
+      return this.serverSettings.server.address().address
+    } else {
+      return this.serverSettings.host
+    }
+  }
+
+  get port () {
+    if (this.serverSettings.server) {
+      return this.serverSettings.server.address().port
+    } else {
+      return this.serverSettings.port
+    }
+  }
+
+  init () {
+    let WebSocketServer = this.selectWebSocketServer()
+    this.server = new WebSocketServer(this.serverSettings)
+    const serverListening = this.serverSettings.server || this.server
+    serverListening.on('listening', () => BotHelper.listen(this.url))
+
+    this.server.on('error', err => {
+      BotHelper.listen('')
+      this.onError(err)
+    })
+
+    this.server.on('connection', ws => {
+      const {pathname, query} = url.parse(ws.upgradeReq.url, true)
+      const wcId = Number(query.wcId)
+      let wc = this.getWebChannel(wcId)
+      switch (pathname) {
+        case '/invite': {
+          if (wc && wc.members.length === 0) {
+            this.removeWebChannel(wc)
+          }
+          wc = new WebChannel(this.wcSettings)
+          wc.id = wcId
+          log.info('Bot invitation', {wcId})
+          this.addWebChannel(wc)
+          this.onWebChannel(wc)
+          wc.join(ws).then(() => {
+            log.info('Bot successfully joined', {wcId})
+            this.onWebChannelReady(wc)
+          })
+          break
+        }
+        case '/internalChannel': {
+          const senderId = Number(query.senderId)
+          log.info('Bot internal channel', {wcId, senderId})
+          BotHelper.wsStream.next({wc, ws, senderId})
+          break
         }
       }
-
-      try {
-        this.server = new WebSocketServer(this.serverSettings)
-        BotHelper.listen(this.url)
-
-        this.server.on('error', err => {
-          BotHelper.listen('')
-          reject(err)
-        })
-
-        this.server.on('connection', ws => {
-          const {pathname, query} = url.parse(ws.upgradeReq.url, true)
-          const wcId = Number(query.wcId)
-          let wc = this.getWebChannel(wcId)
-          switch (pathname) {
-            case '/invite':
-              console.log('Inviting to ' + wcId)
-              if (wc && wc.members.length === 0) {
-                this.removeWebChannel(wc)
-              }
-              wc = new WebChannel(this.wcSettings)
-              wc.id = wcId
-              this.addWebChannel(wc)
-              wc.join(ws).then(() => this.onWebChannel(wc))
-              break
-            case '/internalChannel':
-              BotHelper.wsStream.next({wc, ws, senderId: query.senderId})
-              break
-          }
-        })
-      } catch (err) {
-        console.log('Bot server Error: ' + err.message)
-        reject(err)
-      }
     })
-  }
-
-  /**
-   * Stops listen on web socket.
-   */
-  stop () {
-    BotHelper.listen('')
-    this.server.close()
   }
 
   /**
@@ -186,6 +183,18 @@ export class BotServer {
         return query.senderId && wcId && this.getWebChannel(wcId)
       default:
         return false
+    }
+  }
+
+  selectWebSocketServer () {
+    let WebSocketServer
+    try {
+      WebSocketServer = require('uws').Server
+      return WebSocketServer
+    } catch (err) {
+      console.log(`${err.message}. Try to use ws module.`)
+      WebSocketServer = Util.require('ws').Server
+      return WebSocketServer
     }
   }
 }

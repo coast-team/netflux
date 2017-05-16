@@ -1,6 +1,0 @@
-apps:
-  - script: node_modules/.bin/sigver
-    name: '1sigver-ws'
-    args: '--port 8000'
-  - script: test/util/scripts/.rolledup/botServer.js
-  - script: test/util/scripts/.rolledup/botForNode.js

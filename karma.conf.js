@@ -18,13 +18,10 @@ module.exports = (config) => {
 
     // list of files / patterns to load in the browser
     files: [
-      'node_modules/webrtc-adapter/out/adapter_no_edge_no_global.js',
+      {pattern: 'src/**/!(log).js', included: false},
+      'src/log.js',
       'test/unit/**/*.test.js',
-      'test/e2e/fullyConnected/1peer.test.js',
-      'test/e2e/fullyConnected/2peers/2humans.test.js',
-      'test/e2e/fullyConnected/2peers/humanBot.test.js',
-      'test/e2e/fullyConnected/3peers/*.test.js',
-      'test/e2e/fullyConnected/manyPeers.test.js'
+      'test/e2e/fullyConnected/join.test.js'
     ],
 
     // list of files to exclude
@@ -33,7 +30,24 @@ module.exports = (config) => {
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
     preprocessors: {
+      'src/log.js': ['log_rollup'],
       'test/**/*.test.js': ['rollup']
+    },
+
+    customPreprocessors: {
+      log_rollup: {
+        base: 'rollup',
+        options: {
+          plugins: [
+            require('rollup-plugin-includepaths')({
+              paths: ['', 'src/', 'test/', 'dist/'],
+              extensions: ['.js', '.txt']
+            })
+          ],
+          format: 'iife',
+          moduleName: 'log'
+        }
+      }
     },
 
     rollupPreprocessor: {

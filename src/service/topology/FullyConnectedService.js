@@ -1,4 +1,5 @@
 import { TopologyInterface } from 'service/topology/TopologyInterface'
+import * as log from 'log'
 
 /**
  * One of the internal message type. The message is intended for the `WebChannel`
@@ -41,6 +42,7 @@ export class FullyConnectedService extends TopologyInterface {
     for (let jpId of super.getItems(wc).keys()) peers[peers.length] = jpId
     this.setJP(wc, channel.peerId, channel)
     wc.sendInner(this.id, {code: SHOULD_ADD_NEW_JOINING_PEER, jpId: channel.peerId})
+    log.group('FullyConnectedService SHOULD_CONNECT_TO', [{wc: wc.id, ME: wc.myId, TO: channel.peerId}, ...peers])
     wc.sendInnerTo(channel, this.id, {code: SHOULD_CONNECT_TO, peers})
     return new Promise((resolve, reject) => {
       super.setPendingRequest(wc, channel.peerId, {resolve, reject})

@@ -3,12 +3,16 @@ const rollup = require('rollup')
 const filesize = require('rollup-plugin-filesize')
 const includePaths = require('rollup-plugin-includepaths')
 const babel = require('rollup-plugin-babel')
+const strip = require('rollup-plugin-strip')
 const commonjs = require('rollup-plugin-commonjs')
 
 // netflux.es5.umd.js
 rollup.rollup({
   entry: 'src/index.node.js',
   plugins: [
+    strip({
+      functions: [ 'log.info', 'log.debug', 'log.error', 'log.warn', 'log.trace', 'log.goupe' ]
+    }),
     filesize({
       format: {
         round: 0

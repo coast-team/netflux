@@ -5,6 +5,7 @@ import { ServiceFactory, WEB_RTC, WEB_SOCKET, MESSAGE_BUILDER, CHANNEL_BUILDER }
 import { Channel } from 'Channel'
 import { SignalingGate } from 'SignalingGate'
 import { Util } from 'Util'
+import * as log from 'log'
 
 /**
  * Maximum identifier number for {@link WebChannel#generateId} function.
@@ -344,6 +345,7 @@ export class WebChannel {
   addChannel (channel) {
     return this.initChannel(channel)
       .then(channel => {
+        log.info('WebChannel addChannel->initChannel: ', {myId: this.myId, hisId: channel.peerId})
         const msg = this.msgBld.msg(INITIALIZATION, this.myId, channel.peerId, {
           topology: this[topologyService].id,
           wcId: this.id
@@ -422,6 +424,7 @@ export class WebChannel {
           this.myId = header.recepientId
           this.id = msg.wcId
           channel.peerId = header.senderId
+          log.info('New peer initialized', {wc: this.id, FROM: header.senderId, ME: header.recepientId})
           break
         }
         case INNER_DATA: {
