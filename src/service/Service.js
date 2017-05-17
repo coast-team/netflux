@@ -1,5 +1,3 @@
-import { services } from 'symbols'
-
 /**
  * Default timeout for any pending request.
  * @type {number}
@@ -31,11 +29,11 @@ export class Service {
   }
 
   init (wc) {
-    if (!wc[services]) {
-      wc[services] = {}
+    if (!wc._servicesData) {
+      wc._servicesData = {}
     }
-    if (!wc[services][this.id]) {
-      wc[services][this.id] = {
+    if (!wc._servicesData[this.id]) {
+      wc._servicesData[this.id] = {
         /**
          * Pending request map. Pending request is when a service uses a Promise
          * which will be fulfilled or rejected somewhere else in code. For exemple when
@@ -55,7 +53,7 @@ export class Service {
    * @param {number} [timeout=DEFAULT_REQUEST_TIMEOUT] Timeout in milliseconds
    */
   setPendingRequest (obj, id, data, timeout = DEFAULT_REQUEST_TIMEOUT) {
-    obj[services][this.id].pendingRequests.set(id, data)
+    obj._servicesData[this.id].pendingRequests.set(id, data)
     setTimeout(() => { data.reject('Pending request timeout') }, timeout)
   }
 
@@ -67,7 +65,7 @@ export class Service {
    * @returns {{resolve: Promise.resolve, reject:Promise.reject}}
    */
   getPendingRequest (obj, id) {
-    return obj[services][this.id].pendingRequests.get(id)
+    return obj._servicesData[this.id].pendingRequests.get(id)
   }
 
   /**

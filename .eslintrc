@@ -4,6 +4,7 @@
     "standard"
   ],
   "rules": {
+    "no-underscore-dangle": 0,
     "default-case": 0,
     "no-console": 0,
     "no-continue": 0,

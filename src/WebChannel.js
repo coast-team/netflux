@@ -1,6 +1,5 @@
 import { Subject } from 'node_modules/rxjs/Subject'
 
-import { msgStream, topologyService } from 'symbols'
 import { ServiceFactory, WEB_RTC, WEB_SOCKET, MESSAGE_BUILDER, CHANNEL_BUILDER } from 'ServiceFactory'
 import { Channel } from 'Channel'
 import { SignalingGate } from 'SignalingGate'
@@ -182,7 +181,7 @@ export class WebChannel {
      */
     this.onClose = () => {}
 
-    this[msgStream] = new Subject()
+    this._msgStream = new Subject()
     const channelBuilder = ServiceFactory.get(CHANNEL_BUILDER)
     channelBuilder.init(this, {iceServers: this.settings.iceServers})
 
@@ -283,11 +282,11 @@ export class WebChannel {
     this.pingTime = 0
     if (this.channels.size !== 0) {
       this.members = []
-      this[topologyService].leave(this)
+      this._topologyService.leave(this)
     }
     this.onInitChannel = new Map()
     this.onJoin = () => {}
-    this[msgStream].complete()
+    this._msgStream.complete()
     this.gate.close()
   }
 
@@ -298,7 +297,7 @@ export class WebChannel {
   send (data) {
     if (this.channels.size !== 0) {
       this.msgBld.handleUserMessage(data, this.myId, null, dataChunk => {
-        this[topologyService].broadcast(this, dataChunk)
+        this._topologyService.broadcast(this, dataChunk)
       })
     }
   }
@@ -311,7 +310,7 @@ export class WebChannel {
   sendTo (id, data) {
     if (this.channels.size !== 0) {
       this.msgBld.handleUserMessage(data, this.myId, id, dataChunk => {
-        this[topologyService].sendTo(id, this, dataChunk)
+        this._topologyService.sendTo(id, this, dataChunk)
       }, false)
     }
   }
@@ -329,7 +328,7 @@ export class WebChannel {
           this.maxTime = 0
           this.pongNb = 0
           this.pingFinish = delay => resolve(delay)
-          this[topologyService].broadcast(this, this.msgBld.msg(PING, this.myId))
+          this._topologyService.broadcast(this, this.msgBld.msg(PING, this.myId))
           setTimeout(() => resolve(PING_TIMEOUT), PING_TIMEOUT)
         }
       })
@@ -347,11 +346,11 @@ export class WebChannel {
       .then(channel => {
         log.info('WebChannel addChannel->initChannel: ', {myId: this.myId, hisId: channel.peerId})
         const msg = this.msgBld.msg(INITIALIZATION, this.myId, channel.peerId, {
-          topology: this[topologyService].id,
+          topology: this._topologyService.id,
           wcId: this.id
         })
         channel.send(msg)
-        return this[topologyService].add(channel)
+        return this._topologyService.add(channel)
       })
   }
 
@@ -384,11 +383,11 @@ export class WebChannel {
    */
   sendInnerTo (recepient, serviceId, data, forward = false) {
     if (forward) {
-      this[topologyService].sendInnerTo(recepient, this, data)
+      this._topologyService.sendInnerTo(recepient, this, data)
     } else {
       if (Number.isInteger(recepient)) {
         const msg = this.msgBld.msg(INNER_DATA, this.myId, recepient, {serviceId, data})
-        this[topologyService].sendInnerTo(recepient, this, msg)
+        this._topologyService.sendInnerTo(recepient, this, msg)
       } else {
         recepient.send(this.msgBld.msg(INNER_DATA, this.myId, recepient.peerId, {serviceId, data}))
       }
@@ -401,7 +400,7 @@ export class WebChannel {
    * @param {Object} data
    */
   sendInner (serviceId, data) {
-    this[topologyService].sendInner(this, this.msgBld.msg(INNER_DATA, this.myId, null, {serviceId, data}))
+    this._topologyService.sendInner(this, this.msgBld.msg(INNER_DATA, this.myId, null, {serviceId, data}))
   }
 
   /**
@@ -437,7 +436,7 @@ export class WebChannel {
                 msg.data
               )
             } else {
-              this[msgStream].next({
+              this._msgStream.next({
                 channel,
                 serviceId: msg.serviceId,
                 senderId: header.senderId,
@@ -461,7 +460,7 @@ export class WebChannel {
           break
         }
         case PING:
-          this[topologyService].sendTo(header.senderId, this, this.msgBld.msg(PONG, this.myId))
+          this._topologyService.sendTo(header.senderId, this, this.msgBld.msg(PONG, this.myId))
           break
         case PONG: {
           const now = Date.now()
@@ -496,8 +495,8 @@ export class WebChannel {
       channel.peerId = id
       channel.webChannel = this
       channel.onMessage = data => this.onChannelMessage(channel, data)
-      channel.onClose = closeEvt => this[topologyService].onChannelClose(closeEvt, channel)
-      channel.onError = evt => this[topologyService].onChannelError(evt, channel)
+      channel.onClose = closeEvt => this._topologyService.onChannelClose(closeEvt, channel)
+      channel.onError = evt => this._topologyService.onChannelError(evt, channel)
       this.onInitChannel.set(channel.peerId, {resolve: () => {
         this.onInitChannel.delete(channel.peerId)
         resolve(channel)
@@ -543,8 +542,8 @@ export class WebChannel {
 
   setTopology (topology) {
     this.settings.topology = topology
-    this[topologyService] = ServiceFactory.get(topology)
-    this[topologyService].init(this)
+    this._topologyService = ServiceFactory.get(topology)
+    this._topologyService.init(this)
   }
 
   /**

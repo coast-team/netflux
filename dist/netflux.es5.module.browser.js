@@ -1045,10 +1045,6 @@ var Subject_1 = {
 	AnonymousSubject: AnonymousSubject_1
 };
 
-var msgStream = Symbol('msgStream');
-var services = Symbol('services');
-var topologyService = Symbol('topologyService');
-
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
   return typeof obj;
 } : function (obj) {
@@ -1253,11 +1249,11 @@ var Service = function () {
   createClass(Service, [{
     key: 'init',
     value: function init(wc) {
-      if (!wc[services]) {
-        wc[services] = {};
+      if (!wc._servicesData) {
+        wc._servicesData = {};
       }
-      if (!wc[services][this.id]) {
-        wc[services][this.id] = {
+      if (!wc._servicesData[this.id]) {
+        wc._servicesData[this.id] = {
           /**
            * Pending request map. Pending request is when a service uses a Promise
            * which will be fulfilled or rejected somewhere else in code. For exemple when
@@ -1282,7 +1278,7 @@ var Service = function () {
     value: function setPendingRequest(obj, id, data) {
       var timeout = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : DEFAULT_REQUEST_TIMEOUT;
 
-      obj[services][this.id].pendingRequests.set(id, data);
+      obj._servicesData[this.id].pendingRequests.set(id, data);
       setTimeout(function () {
         data.reject('Pending request timeout');
       }, timeout);
@@ -1299,7 +1295,7 @@ var Service = function () {
   }, {
     key: 'getPendingRequest',
     value: function getPendingRequest(obj, id) {
-      return obj[services][this.id].pendingRequests.get(id);
+      return obj._servicesData[this.id].pendingRequests.get(id);
     }
 
     /**
@@ -4460,7 +4456,7 @@ var WebRTCService = function (_Service) {
       var _this2 = this;
 
       if (WebRTCChecker.isSupported) {
-        return this.onDataChannel(wc[msgStream].filter(function (msg) {
+        return this.onDataChannel(wc._msgStream.filter(function (msg) {
           return msg.serviceId === _this2.id;
         }).map(function (msg) {
           return { msg: msg.content, id: msg.senderId };
@@ -4487,7 +4483,7 @@ var WebRTCService = function (_Service) {
     value: function connectOverWebChannel(wc, id, rtcConfiguration) {
       var _this3 = this;
 
-      return this.createDataChannel(wc[msgStream].filter(function (msg) {
+      return this.createDataChannel(wc._msgStream.filter(function (msg) {
         return msg.serviceId === _this3.id && msg.senderId === id;
       }).map(function (msg) {
         return msg.content;
@@ -5313,7 +5309,7 @@ var ChannelBuilderService = function (_Service) {
       }
 
       // Subscribe to WebChannel internal message stream for this service
-      webChannel[msgStream].filter(function (msg) {
+      webChannel._msgStream.filter(function (msg) {
         return msg.serviceId === _this2.id;
       }).subscribe(function (msg) {
         return _this2.onMessage(msg.channel, msg.senderId, msg.recepientId, msg.content);
@@ -5945,7 +5941,7 @@ var MESSAGE_BUILDER = 4;
  * Contains singletons services.
  * @type {Map}
  */
-var services$1 = new Map();
+var services = new Map();
 
 /**
  * It is a factory helper class which is responsible to instantiate any service class.
@@ -5966,34 +5962,34 @@ var ServiceFactory = function () {
      * @returns {Service}
      */
     value: function get$$1(id) {
-      if (services$1.has(id)) {
-        return services$1.get(id);
+      if (services.has(id)) {
+        return services.get(id);
       }
       var service = void 0;
       switch (id) {
         case WEB_RTC:
           service = new WebRTCService(WEB_RTC);
-          services$1.set(id, service);
+          services.set(id, service);
           return service;
         case WEB_SOCKET:
           service = new WebSocketService(WEB_SOCKET);
-          services$1.set(id, service);
+          services.set(id, service);
           return service;
         case EVENT_SOURCE:
           service = new EventSourceService(EVENT_SOURCE);
-          services$1.set(id, service);
+          services.set(id, service);
           return service;
         case CHANNEL_BUILDER:
           service = new ChannelBuilderService(CHANNEL_BUILDER);
-          services$1.set(id, service);
+          services.set(id, service);
           return service;
         case FULLY_CONNECTED:
           service = new FullyConnectedService(FULLY_CONNECTED);
-          services$1.set(id, service);
+          services.set(id, service);
           return service;
         case MESSAGE_BUILDER:
           service = new MessageBuilderService(MESSAGE_BUILDER);
-          services$1.set(id, service);
+          services.set(id, service);
           return service;
         default:
           throw new Error(id + ' is an Unknown service id');
@@ -6617,7 +6613,7 @@ var WebChannel = function () {
      */
     this.onClose = function () {};
 
-    this[msgStream] = new Subject_2();
+    this._msgStream = new Subject_2();
     var channelBuilder = ServiceFactory.get(CHANNEL_BUILDER);
     channelBuilder.init(this, { iceServers: this.settings.iceServers });
 
@@ -6754,11 +6750,11 @@ var WebChannel = function () {
       this.pingTime = 0;
       if (this.channels.size !== 0) {
         this.members = [];
-        this[topologyService].leave(this);
+        this._topologyService.leave(this);
       }
       this.onInitChannel = new Map();
       this.onJoin = function () {};
-      this[msgStream].complete();
+      this._msgStream.complete();
       this.gate.close();
     }
 
@@ -6774,7 +6770,7 @@ var WebChannel = function () {
 
       if (this.channels.size !== 0) {
         this.msgBld.handleUserMessage(data, this.myId, null, function (dataChunk) {
-          _this4[topologyService].broadcast(_this4, dataChunk);
+          _this4._topologyService.broadcast(_this4, dataChunk);
         });
       }
     }
@@ -6792,7 +6788,7 @@ var WebChannel = function () {
 
       if (this.channels.size !== 0) {
         this.msgBld.handleUserMessage(data, this.myId, id, function (dataChunk) {
-          _this5[topologyService].sendTo(id, _this5, dataChunk);
+          _this5._topologyService.sendTo(id, _this5, dataChunk);
         }, false);
       }
     }
@@ -6817,7 +6813,7 @@ var WebChannel = function () {
             _this6.pingFinish = function (delay) {
               return resolve(delay);
             };
-            _this6[topologyService].broadcast(_this6, _this6.msgBld.msg(PING, _this6.myId));
+            _this6._topologyService.broadcast(_this6, _this6.msgBld.msg(PING, _this6.myId));
             setTimeout(function () {
               return resolve(PING_TIMEOUT);
             }, PING_TIMEOUT);
@@ -6841,11 +6837,11 @@ var WebChannel = function () {
       return this.initChannel(channel).then(function (channel) {
         info('WebChannel addChannel->initChannel: ', { myId: _this7.myId, hisId: channel.peerId });
         var msg = _this7.msgBld.msg(INITIALIZATION, _this7.myId, channel.peerId, {
-          topology: _this7[topologyService].id,
+          topology: _this7._topologyService.id,
           wcId: _this7.id
         });
         channel.send(msg);
-        return _this7[topologyService].add(channel);
+        return _this7._topologyService.add(channel);
       });
     }
 
@@ -6889,11 +6885,11 @@ var WebChannel = function () {
       var forward = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
 
       if (forward) {
-        this[topologyService].sendInnerTo(recepient, this, data);
+        this._topologyService.sendInnerTo(recepient, this, data);
       } else {
         if (Number.isInteger(recepient)) {
           var msg = this.msgBld.msg(INNER_DATA, this.myId, recepient, { serviceId: serviceId, data: data });
-          this[topologyService].sendInnerTo(recepient, this, msg);
+          this._topologyService.sendInnerTo(recepient, this, msg);
         } else {
           recepient.send(this.msgBld.msg(INNER_DATA, this.myId, recepient.peerId, { serviceId: serviceId, data: data }));
         }
@@ -6909,7 +6905,7 @@ var WebChannel = function () {
   }, {
     key: 'sendInner',
     value: function sendInner(serviceId, data) {
-      this[topologyService].sendInner(this, this.msgBld.msg(INNER_DATA, this.myId, null, { serviceId: serviceId, data: data }));
+      this._topologyService.sendInner(this, this.msgBld.msg(INNER_DATA, this.myId, null, { serviceId: serviceId, data: data }));
     }
 
     /**
@@ -6947,7 +6943,7 @@ var WebChannel = function () {
                 if (msg.serviceId !== WEB_RTC && msg.serviceId !== CHANNEL_BUILDER) {
                   ServiceFactory.get(msg.serviceId).onMessage(channel, header.senderId, header.recepientId, msg.data);
                 } else {
-                  this[msgStream].next({
+                  this._msgStream.next({
                     channel: channel,
                     serviceId: msg.serviceId,
                     senderId: header.senderId,
@@ -6973,7 +6969,7 @@ var WebChannel = function () {
               break;
             }
           case PING:
-            this[topologyService].sendTo(header.senderId, this, this.msgBld.msg(PONG, this.myId));
+            this._topologyService.sendTo(header.senderId, this, this.msgBld.msg(PONG, this.myId));
             break;
           case PONG:
             {
@@ -7019,10 +7015,10 @@ var WebChannel = function () {
           return _this9.onChannelMessage(channel, data);
         };
         channel.onClose = function (closeEvt) {
-          return _this9[topologyService].onChannelClose(closeEvt, channel);
+          return _this9._topologyService.onChannelClose(closeEvt, channel);
         };
         channel.onError = function (evt) {
-          return _this9[topologyService].onChannelError(evt, channel);
+          return _this9._topologyService.onChannelError(evt, channel);
         };
         _this9.onInitChannel.set(channel.peerId, { resolve: function resolve() {
             _this9.onInitChannel.delete(channel.peerId);
@@ -7078,8 +7074,8 @@ var WebChannel = function () {
     key: 'setTopology',
     value: function setTopology(topology) {
       this.settings.topology = topology;
-      this[topologyService] = ServiceFactory.get(topology);
-      this[topologyService].init(this);
+      this._topologyService = ServiceFactory.get(topology);
+      this._topologyService.init(this);
     }
 
     /**
