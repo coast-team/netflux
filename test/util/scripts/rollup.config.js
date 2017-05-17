@@ -24,7 +24,8 @@ export default {
       WEB_SOCKET_MODULE: `require('uws')`,
       TEXT_ENCODING_MODULE: `require('text-encoding')`,
       EVENT_SOURCE_MODULE: `require('eventsource')`,
-      FETCH_MODULE: `require('node-fetch')`
+      FETCH_MODULE: `require('node-fetch')`,
+      LOG_LEVEL: `Level.TRACE`
     })
   ],
   dest: 'test/util/scripts/.rolledup/botServer.js'

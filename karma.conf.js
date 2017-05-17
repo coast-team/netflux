@@ -39,9 +39,8 @@ module.exports = (config) => {
         base: 'rollup',
         options: {
           plugins: [
-            require('rollup-plugin-includepaths')({
-              paths: ['', 'src/', 'test/', 'dist/'],
-              extensions: ['.js', '.txt']
+            require('rollup-plugin-replace')({
+              LOG_LEVEL: `Level.TRACE`
             })
           ],
           format: 'iife',
@@ -69,7 +68,8 @@ module.exports = (config) => {
           WEB_SOCKET_MODULE: `window.WebSocket`,
           TEXT_ENCODING_MODULE: `window`,
           EVENT_SOURCE_MODULE: `window.EventSource`,
-          FETCH_MODULE: `window.fetch`
+          FETCH_MODULE: `window.fetch`,
+          LOG_LEVEL: `Level.TRACE`
         })
       ],
       format: 'iife'
@@ -165,7 +165,8 @@ module.exports = (config) => {
             WEB_SOCKET_MODULE: `window.WebSocket`,
             TEXT_ENCODING_MODULE: `window`,
             EVENT_SOURCE_MODULE: `window.EventSource`,
-            FETCH_MODULE: `window.fetch`
+            FETCH_MODULE: `window.fetch`,
+            LOG_LEVEL: `Level.TRACE`
           })
         ],
         format: 'iife'

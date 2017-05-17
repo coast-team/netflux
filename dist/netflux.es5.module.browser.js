@@ -1192,28 +1192,6 @@ var slicedToArray = function () {
   };
 }();
 
-
-
-
-
-
-
-
-
-
-
-
-
-var toConsumableArray = function (arr) {
-  if (Array.isArray(arr)) {
-    for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
-
-    return arr2;
-  } else {
-    return Array.from(arr);
-  }
-};
-
 /**
  * Default timeout for any pending request.
  * @type {number}
@@ -1510,237 +1488,70 @@ var TopologyInterface = function (_Service) {
   return TopologyInterface;
 }(Service);
 
-var NodeCloseEvent = function CloseEvent(name) {
-  var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-  classCallCheck(this, CloseEvent);
-
-  this.name = name;
-  this.wasClean = options.wasClean || false;
-  this.code = options.code || 0;
-  this.reason = options.reason || '';
+var Level = {
+  TRACE: 1,
+  DEBUG: 2,
+  INFO: 3,
+  WARN: 4,
+  ERROR: 5
 };
 
-/**
- * Utility class contains some helper static methods.
- */
-var Util = function () {
-  function Util() {
-    classCallCheck(this, Util);
-  }
+var logLevel = LOG_LEVEL;
 
-  createClass(Util, null, [{
-    key: 'isBrowser',
 
-    /**
-     * Check execution environment.
-     *
-     * @returns {boolean} Description
-     */
-    value: function isBrowser() {
-      if (typeof window === 'undefined' || typeof process !== 'undefined' && process.title === 'node') {
-        return false;
-      }
-      return true;
-    }
 
-    /**
-     * Check whether the channel is a socket.
-     *
-     * @param {WebSocket|RTCDataChannel} channel
-     *
-     * @returns {boolean}
-     */
-
-  }, {
-    key: 'isSocket',
-    value: function isSocket(channel) {
-      return channel.constructor.name === 'WebSocket';
-    }
-
-    /**
-     * Check whether the string is a valid URL.
-     *
-     * @param {string} str
-     *
-     * @returns {type} Description
-     */
-
-  }, {
-    key: 'isURL',
-    value: function isURL(str) {
-      var regex = '^' +
-      // protocol identifier
-      '(?:wss|ws)://' +
-      // Host name/IP
-      '[^\\s]+' +
-      // port number
-      '(?::\\d{2,5})?' + '$';
-
-      return new RegExp(regex, 'i').test(str);
-    }
-  }, {
-    key: 'require',
-    value: function require(libConst) {
-      try {
-        switch (libConst) {
-          case Util.WEB_RTC:
-            return window;
-          case Util.WEB_SOCKET:
-            return window.WebSocket;
-          case Util.TEXT_ENCODING:
-            return window;
-          case Util.EVENT_SOURCE:
-            return window.EventSource;
-          case Util.FETCH:
-            return window.fetch;
-          case Util.CLOSE_EVENT:
-            return Util.isBrowser() ? window.CloseEvent : NodeCloseEvent;
-          default:
-            console.error(libConst + ' is unknown library');
-            return undefined;
-        }
-      } catch (err) {
-        console.error(err.message);
-        return undefined;
-      }
-    }
-  }, {
-    key: 'WEB_RTC',
-    get: function get$$1() {
-      return 1;
-    }
-  }, {
-    key: 'WEB_SOCKET',
-    get: function get$$1() {
-      return 2;
-    }
-  }, {
-    key: 'TEXT_ENCODING',
-    get: function get$$1() {
-      return 3;
-    }
-  }, {
-    key: 'EVENT_SOURCE',
-    get: function get$$1() {
-      return 4;
-    }
-  }, {
-    key: 'FETCH',
-    get: function get$$1() {
-      return 5;
-    }
-  }, {
-    key: 'CLOSE_EVENT',
-    get: function get$$1() {
-      return 6;
-    }
-  }]);
-  return Util;
-}();
-
-var info = Util.isBrowser() ? function (msg) {
-  var _console;
-
-  for (var _len = arguments.length, rest = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-    rest[_key - 1] = arguments[_key];
-  }
-
-  (_console = console).info.apply(_console, ['%c\u2139 ' + msg, 'background-color: #bbdefb; padding: 2px'].concat(rest));
-} : function (msg) {
-  var _console2;
-
+var debug = logLevel <= Level.DEBUG ? function (msg) {
   for (var _len2 = arguments.length, rest = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
     rest[_key2 - 1] = arguments[_key2];
   }
 
-  (_console2 = console).info.apply(_console2, ['INFO | ' + msg].concat(rest));
-};
+  console.group('DEBUG| ' + msg);
+  rest.forEach(function (param) {
+    return logRecursive(param);
+  });
+  console.groupEnd();
+} : function () {};
 
-var debug = Util.isBrowser() ? function (msg) {
-  var _console3;
+var info = logLevel <= Level.INFO ? function (msg) {
+  var _console2;
 
   for (var _len3 = arguments.length, rest = Array(_len3 > 1 ? _len3 - 1 : 0), _key3 = 1; _key3 < _len3; _key3++) {
     rest[_key3 - 1] = arguments[_key3];
   }
 
-  (_console3 = console).log.apply(_console3, ['%c' + msg, 'color: white; height: 30px; background-color: #3949ab; font-size: 1.1rem; padding: 0 3px;'].concat(rest));
-} : function (msg) {
-  var _console4;
+  (_console2 = console).info.apply(_console2, ['INFO | ' + msg].concat(rest));
+} : function () {};
 
-  for (var _len4 = arguments.length, rest = Array(_len4 > 1 ? _len4 - 1 : 0), _key4 = 1; _key4 < _len4; _key4++) {
-    rest[_key4 - 1] = arguments[_key4];
+
+
+
+
+function logObject(obj) {
+  for (var prop in obj) {
+    console.log(prop + ' = ', obj[prop]);
   }
+}
 
-  (_console4 = console).log.apply(_console4, ['DEBUG| ' + msg].concat(rest));
-};
-
-var error$1 = Util.isBrowser() ? function (msg) {
-  var _console5;
-
-  for (var _len5 = arguments.length, rest = Array(_len5 > 1 ? _len5 - 1 : 0), _key5 = 1; _key5 < _len5; _key5++) {
-    rest[_key5 - 1] = arguments[_key5];
+function logRecursive(obj) {
+  switch (obj.constructor.name) {
+    case 'Array':
+      obj.forEach(function (value, index) {
+        if (value.constructor.name === 'Object') {
+          console.groupCollapsed(index + ' object');
+          logRecursive(value);
+          console.groupEnd();
+        } else {
+          logRecursive(value);
+        }
+      });
+      break;
+    case 'Object':
+      logObject(obj);
+      break;
+    default:
+      console.log(obj);
   }
-
-  (_console5 = console).error.apply(_console5, ['%c' + msg, 'color: black; background-color: #ef5350; padding: 2px'].concat(rest));
-} : function (msg) {
-  var _console6;
-
-  for (var _len6 = arguments.length, rest = Array(_len6 > 1 ? _len6 - 1 : 0), _key6 = 1; _key6 < _len6; _key6++) {
-    rest[_key6 - 1] = arguments[_key6];
-  }
-
-  (_console6 = console).error.apply(_console6, ['ERROR| ' + msg].concat(rest));
-};
-
-var warn = Util.isBrowser() ? function (msg) {
-  var _console7;
-
-  for (var _len7 = arguments.length, rest = Array(_len7 > 1 ? _len7 - 1 : 0), _key7 = 1; _key7 < _len7; _key7++) {
-    rest[_key7 - 1] = arguments[_key7];
-  }
-
-  (_console7 = console).warn.apply(_console7, ['%c' + msg, 'color: black; background-color: #ffe082; padding: 2px'].concat(rest));
-} : function (msg) {
-  var _console8;
-
-  for (var _len8 = arguments.length, rest = Array(_len8 > 1 ? _len8 - 1 : 0), _key8 = 1; _key8 < _len8; _key8++) {
-    rest[_key8 - 1] = arguments[_key8];
-  }
-
-  (_console8 = console).warn.apply(_console8, ['WARN | ' + msg].concat(rest));
-};
-
-var trace = Util.isBrowser() ? function (msg) {
-  var _console9;
-
-  for (var _len9 = arguments.length, rest = Array(_len9 > 1 ? _len9 - 1 : 0), _key9 = 1; _key9 < _len9; _key9++) {
-    rest[_key9 - 1] = arguments[_key9];
-  }
-
-  (_console9 = console).trace.apply(_console9, ['%c' + msg, 'color: black; background-color: #b0bec5; padding: 2px'].concat(rest));
-} : function (msg) {
-  var _console10;
-
-  for (var _len10 = arguments.length, rest = Array(_len10 > 1 ? _len10 - 1 : 0), _key10 = 1; _key10 < _len10; _key10++) {
-    rest[_key10 - 1] = arguments[_key10];
-  }
-
-  (_console10 = console).trace.apply(_console10, ['TRACE| ' + msg].concat(rest));
-};
-
-var group = Util.isBrowser() ? function (msg, args) {
-  console.group(msg);
-  for (var argName in args) {
-    if (args[argName] !== undefined) {
-      console.log('%c' + argName + ' =', 'color: #0f6717; font-weight: bold; padding: 3px', args[argName]);
-    } else {
-      console.log('%c' + argName + ' =', 'color: #e20000; font-weight: bold; padding: 3px', args[argName]);
-    }
-  }
-  console.groupEnd();
-} : function (msg, args) {
-  console.log('GROUP| ' + msg, args);
-};
+}
 
 /**
  * One of the internal message type. The message is intended for the `WebChannel`
@@ -1818,7 +1629,7 @@ var FullyConnectedService = function (_TopologyInterface) {
 
       this.setJP(wc, channel.peerId, channel);
       wc.sendInner(this.id, { code: SHOULD_ADD_NEW_JOINING_PEER, jpId: channel.peerId });
-      group('FullyConnectedService SHOULD_CONNECT_TO', [{ wc: wc.id, ME: wc.myId, TO: channel.peerId }].concat(toConsumableArray(peers)));
+      debug('FullyConnectedService SHOULD_CONNECT_TO', { wc: wc.id, ME: wc.myId, TO: channel.peerId, peers: peers });
       wc.sendInnerTo(channel, this.id, { code: SHOULD_CONNECT_TO, peers: peers });
       return new Promise(function (resolve, reject) {
         get(FullyConnectedService.prototype.__proto__ || Object.getPrototypeOf(FullyConnectedService.prototype), 'setPendingRequest', _this2).call(_this2, wc, channel.peerId, { resolve: resolve, reject: reject });
@@ -4431,6 +4242,134 @@ var map_1 = {
 };
 
 Observable_1.Observable.prototype.map = map_1.map;
+
+var NodeCloseEvent = function CloseEvent(name) {
+  var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  classCallCheck(this, CloseEvent);
+
+  this.name = name;
+  this.wasClean = options.wasClean || false;
+  this.code = options.code || 0;
+  this.reason = options.reason || '';
+};
+
+/**
+ * Utility class contains some helper static methods.
+ */
+var Util = function () {
+  function Util() {
+    classCallCheck(this, Util);
+  }
+
+  createClass(Util, null, [{
+    key: 'isBrowser',
+
+    /**
+     * Check execution environment.
+     *
+     * @returns {boolean} Description
+     */
+    value: function isBrowser() {
+      if (typeof window === 'undefined' || typeof process !== 'undefined' && process.title === 'node') {
+        return false;
+      }
+      return true;
+    }
+
+    /**
+     * Check whether the channel is a socket.
+     *
+     * @param {WebSocket|RTCDataChannel} channel
+     *
+     * @returns {boolean}
+     */
+
+  }, {
+    key: 'isSocket',
+    value: function isSocket(channel) {
+      return channel.constructor.name === 'WebSocket';
+    }
+
+    /**
+     * Check whether the string is a valid URL.
+     *
+     * @param {string} str
+     *
+     * @returns {type} Description
+     */
+
+  }, {
+    key: 'isURL',
+    value: function isURL(str) {
+      var regex = '^' +
+      // protocol identifier
+      '(?:wss|ws)://' +
+      // Host name/IP
+      '[^\\s]+' +
+      // port number
+      '(?::\\d{2,5})?' + '$';
+
+      return new RegExp(regex, 'i').test(str);
+    }
+  }, {
+    key: 'require',
+    value: function require(libConst) {
+      try {
+        switch (libConst) {
+          case Util.WEB_RTC:
+            return window;
+          case Util.WEB_SOCKET:
+            return window.WebSocket;
+          case Util.TEXT_ENCODING:
+            return window;
+          case Util.EVENT_SOURCE:
+            return window.EventSource;
+          case Util.FETCH:
+            return window.fetch;
+          case Util.CLOSE_EVENT:
+            return Util.isBrowser() ? window.CloseEvent : NodeCloseEvent;
+          default:
+            console.error(libConst + ' is unknown library');
+            return undefined;
+        }
+      } catch (err) {
+        console.error(err.message);
+        return undefined;
+      }
+    }
+  }, {
+    key: 'WEB_RTC',
+    get: function get$$1() {
+      return 1;
+    }
+  }, {
+    key: 'WEB_SOCKET',
+    get: function get$$1() {
+      return 2;
+    }
+  }, {
+    key: 'TEXT_ENCODING',
+    get: function get$$1() {
+      return 3;
+    }
+  }, {
+    key: 'EVENT_SOURCE',
+    get: function get$$1() {
+      return 4;
+    }
+  }, {
+    key: 'FETCH',
+    get: function get$$1() {
+      return 5;
+    }
+  }, {
+    key: 'CLOSE_EVENT',
+    get: function get$$1() {
+      return 6;
+    }
+  }]);
+  return Util;
+}();
 
 var wrtc = Util.require(Util.WEB_RTC);
 var CloseEvent = Util.require(Util.CLOSE_EVENT);

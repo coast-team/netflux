@@ -4,6 +4,7 @@
     "standard"
   ],
   "rules": {
+    "guard-for-in": 0,
     "no-underscore-dangle": 0,
     "default-case": 0,
     "no-console": 0,
@@ -48,6 +49,7 @@
     "WEB_SOCKET_MODULE": true,
     "TEXT_ENCODING_MODULE": true,
     "EVENT_SOURCE_MODULE": true,
-    "FETCH_MODULE": true
+    "FETCH_MODULE": true,
+    "LOG_LEVEL": true
   }
 }

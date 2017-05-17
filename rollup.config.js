@@ -32,7 +32,8 @@ rollup.rollup({
       WEB_SOCKET_MODULE: `Util.isBrowser() ? window.WebSocket : require('ws')`,
       TEXT_ENCODING_MODULE: `Util.isBrowser() ? window : require('text-encoding')`,
       EVENT_SOURCE_MODULE: `Util.isBrowser() ? window.EventSource : require('eventsource')`,
-      FETCH_MODULE: `Util.isBrowser() ? window.fetch : require('node-fetch')`
+      FETCH_MODULE: `Util.isBrowser() ? window.fetch : require('node-fetch')`,
+      LOG_LEVEL: `Level.WARN`
     }),
     babel({
       exclude: 'node_modules/**'

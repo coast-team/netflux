@@ -1,57 +1,68 @@
-import { Util } from 'Util'
-
-export const info = Util.isBrowser()
-? (msg, ...rest) => {
-  console.info(`%cℹ ${msg}`, 'background-color: #bbdefb; padding: 2px', ...rest)
-}
-: (msg, ...rest) => {
-  console.info(`INFO | ${msg}`, ...rest)
+const Level = {
+  TRACE: 1,
+  DEBUG: 2,
+  INFO: 3,
+  WARN: 4,
+  ERROR: 5
 }
 
-export const debug = Util.isBrowser()
-? (msg, ...rest) => {
-  console.log(`%c${msg}`, 'color: white; height: 30px; background-color: #3949ab; font-size: 1.1rem; padding: 0 3px;', ...rest)
-}
-: (msg, ...rest) => {
-  console.log(`DEBUG| ${msg}`, ...rest)
-}
+const logLevel = LOG_LEVEL
 
-export const error = Util.isBrowser()
+export const trace = logLevel <= Level.TRACE
 ? (msg, ...rest) => {
-  console.error(`%c${msg}`, 'color: black; background-color: #ef5350; padding: 2px', ...rest)
-}
-: (msg, ...rest) => {
-  console.error(`ERROR| ${msg}`, ...rest)
-}
-
-export const warn = Util.isBrowser()
-? (msg, ...rest) => {
-  console.warn(`%c${msg}`, 'color: black; background-color: #ffe082; padding: 2px', ...rest)
-}
-: (msg, ...rest) => {
-  console.warn(`WARN | ${msg}`, ...rest)
-}
-
-export const trace = Util.isBrowser()
-? (msg, ...rest) => {
-  console.trace(`%c${msg}`, 'color: black; background-color: #b0bec5; padding: 2px', ...rest)
-}
-: (msg, ...rest) => {
   console.trace(`TRACE| ${msg}`, ...rest)
 }
+: () => {}
 
-export const group = Util.isBrowser()
-? (msg, args) => {
-  console.group(msg)
-  for (let argName in args) {
-    if (args[argName] !== undefined) {
-      console.log(`%c${argName} =`, 'color: #0f6717; font-weight: bold; padding: 3px', args[argName])
-    } else {
-      console.log(`%c${argName} =`, 'color: #e20000; font-weight: bold; padding: 3px', args[argName])
-    }
-  }
+export const debug = logLevel <= Level.DEBUG
+? (msg, ...rest) => {
+  console.group(`DEBUG| ${msg}`)
+  rest.forEach(param => logRecursive(param))
   console.groupEnd()
 }
-: (msg, args) => {
-  console.log(`GROUP| ${msg}`, args)
+: () => {}
+
+export const info = logLevel <= Level.INFO
+? (msg, ...rest) => {
+  console.info(`INFO | ${msg}`, ...rest)
+}
+: () => {}
+
+export const warn = logLevel <= Level.WARN
+? (msg, ...rest) => {
+  console.warn(`WARN | ${msg}`, ...rest)
+}
+: () => {}
+
+export const error = logLevel <= Level.ERROR
+? (msg, ...rest) => {
+  console.error(`ERROR| ${msg}`, ...rest)
+}
+: () => {}
+
+function logObject (obj) {
+  for (let prop in obj) {
+    console.log(`${prop} = `, obj[prop])
+  }
+}
+
+function logRecursive (obj) {
+  switch (obj.constructor.name) {
+    case 'Array':
+      obj.forEach((value, index) => {
+        if (value.constructor.name === 'Object') {
+          console.groupCollapsed(`${index} object`)
+          logRecursive(value)
+          console.groupEnd()
+        } else {
+          logRecursive(value)
+        }
+      })
+      break
+    case 'Object':
+      logObject(obj)
+      break
+    default:
+      console.log(obj)
+  }
 }

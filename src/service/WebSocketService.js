@@ -3,7 +3,6 @@ import { BehaviorSubject } from 'node_modules/rxjs/BehaviorSubject'
 import 'node_modules/rxjs/add/operator/filter'
 
 import { Util } from 'Util'
-import * as log from 'log'
 import { Service } from 'service/Service'
 const WebSocket = Util.require(Util.WEB_SOCKET)
 
