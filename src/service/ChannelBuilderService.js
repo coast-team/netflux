@@ -34,13 +34,13 @@ export class ChannelBuilderService extends Service {
     }
   }
 
-  init (webChannel, rtcConfiguration) {
+  init (webChannel) {
     super.init(webChannel)
 
     // Listen on RTCDataChannel
     if (iListenOn & ListenFlags.wrtc) {
       ServiceFactory.get(WEB_RTC)
-        .onChannelFromWebChannel(webChannel, rtcConfiguration)
+        .onChannelFromWebChannel(webChannel, {iceServers: webChannel.settings.iceServers})
         .subscribe(dc => this.onChannel(webChannel, dc, Number(dc.label)))
     }
 
@@ -53,11 +53,14 @@ export class ChannelBuilderService extends Service {
     }
 
     // Subscribe to WebChannel internal message stream for this service
-    webChannel._msgStream
-      .filter(msg => msg.serviceId === this.id)
-      .subscribe(
-        msg => this.onMessage(msg.channel, msg.senderId, msg.recepientId, msg.content)
-      )
+    super.addSubscription(
+      webChannel,
+      webChannel._msgStream
+        .filter(msg => msg.serviceId === this.id)
+        .subscribe(
+          msg => this.handleSvcMsg(msg.channel, msg.senderId, msg.recepientId, msg.content)
+        )
+    )
   }
 
   /**
@@ -97,9 +100,9 @@ export class ChannelBuilderService extends Service {
    * @param {number} recepientId
    * @param {Object} msg
    */
-  onMessage (channel, senderId, recepientId, msg) {
+  handleSvcMsg (channel, senderId, recepientId, msg) {
     const wc = channel.webChannel
-    log.info('ChannelBuilderService onMessage', {wc: wc.id, ME: wc.myId, FROM: senderId, VIA: channel.peerId, msg})
+    log.info('ChannelBuilderService handleSvcMsg', {wc: wc.id, ME: wc.myId, FROM: senderId, VIA: channel.peerId, msg})
     if ('failedReason' in msg) {
       super.getPendingRequest(wc, senderId).reject(new Error(msg.failedReason))
     } else if ('shouldConnect' in msg) {

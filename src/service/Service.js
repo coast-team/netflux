@@ -29,20 +29,19 @@ export class Service {
   }
 
   init (wc) {
-    if (!wc._servicesData) {
-      wc._servicesData = {}
-    }
     if (!wc._servicesData[this.id]) {
-      wc._servicesData[this.id] = {
-        /**
-         * Pending request map. Pending request is when a service uses a Promise
-         * which will be fulfilled or rejected somewhere else in code. For exemple when
-         * a peer is waiting for a feedback from another peer before Promise has completed.
-         * @type {Map}
-         */
-        pendingRequests: new Map()
-      }
+      wc._servicesData[this.id] = new ServiceData()
+    } else {
+      wc._servicesData[this.id].pendingRequests.forEach(value => {
+        value.reject(new Error(`The service ${this.id} has been reinitialized.`))
+      })
+      wc._servicesData[this.id].subscriptions.forEach(subs => subs.unsubscribe())
+      wc._servicesData[this.id] = new ServiceData()
     }
+  }
+
+  addSubscription (wc, subs) {
+    wc._servicesData[this.id].subscriptions.push(subs)
   }
 
   /**
@@ -152,5 +151,18 @@ export class Service {
       currentServiceTemp.set(obj, idMap)
     }
     if (!idMap.has(id)) idMap.set(id, data)
+  }
+}
+
+class ServiceData {
+  constructor () {
+    /**
+     * Pending request map. Pending request is when a service uses a Promise
+     * which will be fulfilled or rejected somewhere else in code. For exemple when
+     * a peer is waiting for a feedback from another peer before Promise has completed.
+     * @type {Map}
+     */
+    this.pendingRequests = new Map()
+    this.subscriptions = []
   }
 }

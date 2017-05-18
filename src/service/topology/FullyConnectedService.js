@@ -29,6 +29,19 @@ const TOCK = 5
  * @extends module:webChannelManager~WebChannelTopologyInterface
  */
 export class FullyConnectedService extends TopologyInterface {
+  init (webChannel) {
+    super.init(webChannel)
+    super.addSubscription(
+      webChannel,
+      webChannel._msgStream
+        .filter(msg => msg.serviceId === this.id)
+        .subscribe(
+          msg => this.handleSvcMsg(msg.channel, msg.senderId, msg.recepientId, msg.content),
+          err => log.error('FullyConnectedService Message Stream Error', err, webChannel)
+        )
+    )
+  }
+
   /**
    * Add a peer to the `WebChannel`.
    *
@@ -42,7 +55,6 @@ export class FullyConnectedService extends TopologyInterface {
     for (let jpId of super.getItems(wc).keys()) peers[peers.length] = jpId
     this.setJP(wc, channel.peerId, channel)
     wc.sendInner(this.id, {code: SHOULD_ADD_NEW_JOINING_PEER, jpId: channel.peerId})
-    log.debug('FullyConnectedService SHOULD_CONNECT_TO', {wc: wc.id, ME: wc.myId, TO: channel.peerId, peers})
     wc.sendInnerTo(channel, this.id, {code: SHOULD_CONNECT_TO, peers})
     return new Promise((resolve, reject) => {
       super.setPendingRequest(wc, channel.peerId, {resolve, reject})
@@ -134,7 +146,7 @@ export class FullyConnectedService extends TopologyInterface {
     console.error(`Channel error with id: ${channel.peerId}: `, evt)
   }
 
-  onMessage (channel, senderId, recepientId, msg) {
+  handleSvcMsg (channel, senderId, recepientId, msg) {
     const wc = channel.webChannel
     switch (msg.code) {
       case SHOULD_CONNECT_TO: {
