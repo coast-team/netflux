@@ -4,11 +4,11 @@ import bigStr from 'util/4mb.txt'
 const USE_CASES = [2, 3, 7]
 const scenarios = [
   new helper.Scenario(2),
-  // new helper.Scenario(1, 1),
-  // new helper.Scenario(3),
-  // new helper.Scenario(2, 2),
-  // new helper.Scenario(7),
-  // new helper.Scenario(6, 3)
+  new helper.Scenario(1, 1),
+  new helper.Scenario(3),
+  new helper.Scenario(2, 2),
+  new helper.Scenario(7),
+  new helper.Scenario(6, 3)
 ]
 const PEER_FACE = '🙂 '
 const faces = length => {
@@ -30,21 +30,17 @@ describe('Fully connected', () => {
         const key = helper.randKey()
         wcs = helper.createWebChannels(scenario.nbAgents)
         helper.expectAndSpyOnPeerJoin(wcs)
-        log.debug('wcs: ', wcs.map(wc => wc.myId))
-        log.debug('wcs 1: ', wcs[0])
-        log.debug('wcs 2: ', wcs)
 
-        // First peer opens a door with Signaling server.
-        // Other peers join successively through the first peer.
         let joinQueue = Promise.resolve()
         if (scenario.hasBot()) {
+          // First peer opens a door with Signaling server.
           joinQueue = joinQueue.then(() => wcs[0].join(key))
 
           // Join all peers before bot
           for (let i = 1; i < scenario.botPosition; i++) {
             joinQueue = joinQueue.then(() => wcs[i].join(key, {open: false}))
           }
-          log.debug('wcs length: ' + wcs.length, scenario.botPosition)
+
           // Invite bot
           joinQueue = joinQueue.then(() => wcs[scenario.botPosition - 1].invite(helper.BOT_URL))
 
@@ -60,6 +56,7 @@ describe('Fully connected', () => {
             }
           })
         } else {
+          // Peers join successively through the first peer.
           joinQueue = wcs.reduce((acc, wc, index) => {
             return acc.then(() => wc.join(key, index !== 0 ? {open: false} : {}))
           }, joinQueue)
