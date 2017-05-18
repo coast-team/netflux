@@ -1601,8 +1601,8 @@ var FullyConnectedService = function (_TopologyInterface) {
       }
 
       this.setJP(wc, channel.peerId, channel);
-      wc.sendInner(this.id, { code: SHOULD_ADD_NEW_JOINING_PEER, jpId: channel.peerId });
-      wc.sendInnerTo(channel, this.id, { code: SHOULD_CONNECT_TO, peers: peers });
+      wc._sendInner(this.id, { code: SHOULD_ADD_NEW_JOINING_PEER, jpId: channel.peerId });
+      wc._sendInnerTo(channel, this.id, { code: SHOULD_CONNECT_TO, peers: peers });
       return new Promise(function (resolve, reject) {
         get(FullyConnectedService.prototype.__proto__ || Object.getPrototypeOf(FullyConnectedService.prototype), 'setPendingRequest', _this3).call(_this3, wc, channel.peerId, { resolve: resolve, reject: reject });
       });
@@ -1623,7 +1623,7 @@ var FullyConnectedService = function (_TopologyInterface) {
       var _iteratorError2 = undefined;
 
       try {
-        for (var _iterator2 = webChannel.channels[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+        for (var _iterator2 = webChannel._channels[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
           var c = _step2.value;
           c.send(data);
         }
@@ -1650,7 +1650,7 @@ var FullyConnectedService = function (_TopologyInterface) {
       var _iteratorError3 = undefined;
 
       try {
-        for (var _iterator3 = webChannel.channels[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+        for (var _iterator3 = webChannel._channels[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
           var c = _step3.value;
 
           if (c.peerId === id) {
@@ -1677,7 +1677,7 @@ var FullyConnectedService = function (_TopologyInterface) {
     key: 'sendInnerTo',
     value: function sendInnerTo(recepient, wc, data) {
       // If the peer sent a message to himself
-      if (recepient === wc.myId) wc.onChannelMessage(null, data);else {
+      if (recepient === wc.myId) wc._onMessage(null, data);else {
         var jp = get(FullyConnectedService.prototype.__proto__ || Object.getPrototypeOf(FullyConnectedService.prototype), 'getItem', this).call(this, wc, wc.myId);
         if (jp === null) jp = get(FullyConnectedService.prototype.__proto__ || Object.getPrototypeOf(FullyConnectedService.prototype), 'getItem', this).call(this, wc, recepient);
 
@@ -1704,7 +1704,7 @@ var FullyConnectedService = function (_TopologyInterface) {
       var _iteratorError4 = undefined;
 
       try {
-        for (var _iterator4 = wc.channels[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+        for (var _iterator4 = wc._channels[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
           var c = _step4.value;
 
           c.clearHandlers();
@@ -1725,7 +1725,7 @@ var FullyConnectedService = function (_TopologyInterface) {
         }
       }
 
-      wc.channels.clear();
+      wc._channels.clear();
     }
   }, {
     key: 'onChannel',
@@ -1734,7 +1734,7 @@ var FullyConnectedService = function (_TopologyInterface) {
 
       return new Promise(function (resolve, reject) {
         get(FullyConnectedService.prototype.__proto__ || Object.getPrototypeOf(FullyConnectedService.prototype), 'setPendingRequest', _this4).call(_this4, channel.webChannel, channel.peerId, { resolve: resolve, reject: reject });
-        channel.webChannel.sendInnerTo(channel, _this4.id, { code: TICK });
+        channel.webChannel._sendInnerTo(channel, _this4.id, { code: TICK });
       });
     }
 
@@ -1758,10 +1758,10 @@ var FullyConnectedService = function (_TopologyInterface) {
       var _iteratorError5 = undefined;
 
       try {
-        for (var _iterator5 = wc.channels[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+        for (var _iterator5 = wc._channels[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
           var c = _step5.value;
 
-          if (c.peerId === channel.peerId) return wc.channels.delete(c);
+          if (c.peerId === channel.peerId) return wc._channels.delete(c);
         }
       } catch (err) {
         _didIteratorError5 = true;
@@ -1811,15 +1811,15 @@ var FullyConnectedService = function (_TopologyInterface) {
             get(FullyConnectedService.prototype.__proto__ || Object.getPrototypeOf(FullyConnectedService.prototype), 'connectTo', this).call(this, wc, msg.peers).then(function (failed) {
               var msg = { code: PEER_JOINED };
               jpMe.channels.forEach(function (ch) {
-                wc.sendInnerTo(ch, _this5.id, msg);
-                wc.channels.add(ch);
-                wc.onPeerJoin$(ch.peerId);
+                wc._sendInnerTo(ch, _this5.id, msg);
+                wc._channels.add(ch);
+                wc._onPeerJoin(ch.peerId);
               });
               get(FullyConnectedService.prototype.__proto__ || Object.getPrototypeOf(FullyConnectedService.prototype), 'removeItem', _this5).call(_this5, wc, wc.myId);
               get(FullyConnectedService.prototype.__proto__ || Object.getPrototypeOf(FullyConnectedService.prototype), 'getItems', _this5).call(_this5, wc).forEach(function (jp) {
-                return wc.sendInnerTo(jp.channel, _this5.id, msg);
+                return wc._sendInnerTo(jp.channel, _this5.id, msg);
               });
-              wc.onJoin();
+              wc._joinSucceed();
             });
             break;
           }case PEER_JOINED:
@@ -1829,8 +1829,8 @@ var FullyConnectedService = function (_TopologyInterface) {
             if (_jpMe !== null) {
               _jpMe.channels.add(channel);
             } else {
-              wc.channels.add(channel);
-              wc.onPeerJoin$(senderId);
+              wc._channels.add(channel);
+              wc._onPeerJoin(senderId);
               var request = get(FullyConnectedService.prototype.__proto__ || Object.getPrototypeOf(FullyConnectedService.prototype), 'getPendingRequest', this).call(this, wc, senderId);
               if (request !== undefined) request.resolve(senderId);
             }
@@ -1839,7 +1839,7 @@ var FullyConnectedService = function (_TopologyInterface) {
           {
             this.setJP(wc, senderId, channel);
             var isJoining = get(FullyConnectedService.prototype.__proto__ || Object.getPrototypeOf(FullyConnectedService.prototype), 'getItem', this).call(this, wc, wc.myId) !== null;
-            wc.sendInnerTo(channel, this.id, { code: TOCK, isJoining: isJoining });
+            wc._sendInnerTo(channel, this.id, { code: TOCK, isJoining: isJoining });
             break;
           }
         case TOCK:
@@ -1890,7 +1890,7 @@ var FullyConnectedService = function (_TopologyInterface) {
  * regardless of success, these instances will be deleted.
  */
 
-var JoiningPeer = function JoiningPeer(channel, onJoin) {
+var JoiningPeer = function JoiningPeer(channel) {
   classCallCheck(this, JoiningPeer);
 
   /**
@@ -4382,7 +4382,7 @@ var WebRTCService = function (_Service) {
         }).map(function (msg) {
           return { msg: msg.content, id: msg.senderId };
         }), function (msg, id) {
-          return wc.sendInnerTo(id, _this2.id, msg);
+          return wc._sendInnerTo(id, _this2.id, msg);
         });
       }
       throw new Error('Peer is not listening on RTCDataChannel');
@@ -4409,7 +4409,7 @@ var WebRTCService = function (_Service) {
       }).map(function (msg) {
         return msg.content;
       }), function (msg) {
-        return wc.sendInnerTo(id, _this3.id, msg);
+        return wc._sendInnerTo(id, _this3.id, msg);
       }, wc.myId, rtcConfiguration);
     }
 
@@ -5253,7 +5253,7 @@ var ChannelBuilderService = function (_Service) {
 
       return new Promise(function (resolve, reject) {
         get(ChannelBuilderService.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilderService.prototype), 'setPendingRequest', _this3).call(_this3, wc, id, { resolve: resolve, reject: reject });
-        wc.sendInnerTo(id, _this3.id, { connectors: iListenOn, url: WebSocketChecker.url });
+        wc._sendInnerTo(id, _this3.id, { connectors: iListenOn, url: WebSocketChecker.url });
       });
     }
 
@@ -5268,7 +5268,7 @@ var ChannelBuilderService = function (_Service) {
     value: function onChannel(wc, channel, senderId) {
       var _this4 = this;
 
-      wc.initChannel(channel, senderId).then(function (channel) {
+      wc._initChannel(channel, senderId).then(function (channel) {
         var pendReq = get(ChannelBuilderService.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilderService.prototype), 'getPendingRequest', _this4).call(_this4, wc, senderId);
         if (pendReq) {
           pendReq.resolve(channel);
@@ -5307,9 +5307,9 @@ var ChannelBuilderService = function (_Service) {
           }).catch(function (reason) {
             // If failed to connect to the remote peer by WebSocket, ask him to connect to me via WebSocket
             if (iListenOn & ListenFlags.ws) {
-              wc.sendInnerTo(senderId, _this5.id, { shouldConnect: ListenFlags.ws, url: WebSocketChecker.url });
+              wc._sendInnerTo(senderId, _this5.id, { shouldConnect: ListenFlags.ws, url: WebSocketChecker.url });
             } else {
-              wc.sendInnerTo(senderId, _this5.id, {
+              wc._sendInnerTo(senderId, _this5.id, {
                 failedReason: 'Failed to establish a socket: ' + reason
               });
             }
@@ -5318,22 +5318,22 @@ var ChannelBuilderService = function (_Service) {
           // If remote peer is able to connect over RTCDataChannel, verify first if I am listening on WebSocket
         } else if (msg.connectors & ListenFlags.wrtc) {
           if (iListenOn & ListenFlags.ws) {
-            wc.sendInnerTo(senderId, this.id, { shouldConnect: ListenFlags.ws, url: WebSocketChecker.url });
+            wc._sendInnerTo(senderId, this.id, { shouldConnect: ListenFlags.ws, url: WebSocketChecker.url });
           } else if (iListenOn & ListenFlags.wrtc) {
             ServiceFactory.get(WEB_RTC).connectOverWebChannel(wc, senderId, { iceServers: wc.settings.iceServers }).then(function (channel) {
               return _this5.onChannel(wc, channel, senderId);
             }).catch(function (reason) {
-              wc.sendInnerTo(senderId, _this5.id, { failedReason: 'Failed establish a data channel: ' + reason });
+              wc._sendInnerTo(senderId, _this5.id, { failedReason: 'Failed establish a data channel: ' + reason });
             });
           } else {
-            wc.sendInnerTo(senderId, this.id, { failedReason: 'No common connectors' });
+            wc._sendInnerTo(senderId, this.id, { failedReason: 'No common connectors' });
           }
           // If peer is not listening on WebSocket and is not able to connect over RTCDataChannel
         } else if (msg.connectors & ListenFlags.none) {
           if (iListenOn & ListenFlags.ws) {
-            wc.sendInnerTo(senderId, this.id, { shouldConnect: ListenFlags.ws, url: WebSocketChecker.url });
+            wc._sendInnerTo(senderId, this.id, { shouldConnect: ListenFlags.ws, url: WebSocketChecker.url });
           } else {
-            wc.sendInnerTo(senderId, this.id, { failedReason: 'No common connectors' });
+            wc._sendInnerTo(senderId, this.id, { failedReason: 'No common connectors' });
           }
         }
       }
@@ -6078,8 +6078,7 @@ var Channel = function () {
 
       this.channel.onclose = function (closeEvt) {
         if (_this.webChannel !== null && handler(closeEvt)) {
-          _this.webChannel.members.splice(_this.webChannel.members.indexOf(_this.peerId), 1);
-          _this.webChannel.onPeerLeave(_this.peerId);
+          _this.webChannel._onPeerLeave(_this.peerId);
         } else handler(closeEvt);
       };
     }
@@ -6352,7 +6351,7 @@ var SignalingGate = function () {
 }();
 
 /**
- * Maximum identifier number for {@link WebChannel#generateId} function.
+ * Maximum identifier number for {@link WebChannel#_generateId} function.
  * @type {number}
  */
 var MAX_ID = 2147483647;
@@ -6431,13 +6430,13 @@ var WebChannel = function () {
      * @private
      * @type {external:Set}
      */
-    this.channels = new Set();
+    this._channels = new Set();
 
     /**
      * This event handler is used to resolve *Promise* in {@link WebChannel#join}.
      * @private
      */
-    this.onJoin = function () {};
+    this._joinSucceed = function () {};
 
     /**
      * Message builder service instance.
@@ -6457,48 +6456,48 @@ var WebChannel = function () {
      * @private
      * @type {Set<number>}
      */
-    this.generatedIds = new Set();
+    this._generatedIds = new Set();
 
     /**
      * @private
      * @type {Date}
      */
-    this.pingTime = 0;
+    this._pingTime = 0;
 
     /**
      * @private
      * @type {number}
      */
-    this.maxTime = 0;
+    this._maxTime = 0;
 
     /**
      * @private
      * @type {function(delay: number)}
      */
-    this.pingFinish = function () {};
+    this._pingFinish = function () {};
 
     /**
      * @private
      * @type {number}
      */
-    this.pongNb = 0;
+    this._pongNb = 0;
 
     /**
      * The `WebChannel` gate.
      * @private
      * @type {SignalingGate}
      */
-    this.gate = new SignalingGate(this, function (ch) {
-      return _this.addChannel(ch);
+    this._signalingGate = new SignalingGate(this, function (ch) {
+      return _this._addChannel(ch);
     });
 
-    this.onInitChannel = new Map();
+    this._initChannelPendingRequests = new Map();
 
     /**
      * Unique `WebChannel` identifier. Its value is the same for all `WebChannel` members.
      * @type {number}
      */
-    this.id = this.generateId();
+    this.id = this._generateId();
 
     /**
      * Unique peer identifier of you in this `WebChannel`. After each `join` function call
@@ -6506,7 +6505,7 @@ var WebChannel = function () {
      * you join.
      * @type {number}
      */
-    this.myId = this.generateId();
+    this.myId = this._generateId();
 
     /**
      * Is the event handler called when a new peer has  joined the `WebChannel`.
@@ -6534,15 +6533,14 @@ var WebChannel = function () {
 
     this._servicesData = {};
     this._msgStream = new Subject_2();
-    var channelBuilder = ServiceFactory.get(CHANNEL_BUILDER);
-    channelBuilder.init(this);
+    ServiceFactory.get(CHANNEL_BUILDER).init(this);
 
     /**
      * `WebChannel` topology.
      * @private
      * @type {Service}
      */
-    this.setTopology(this.settings.topology);
+    this._setTopology(this.settings.topology);
   }
 
   /**
@@ -6570,16 +6568,16 @@ var WebChannel = function () {
       Object.assign(settings, options);
       return new Promise(function (resolve, reject) {
         if (keyOrSocket.constructor.name !== 'WebSocket') {
-          _this2.joinRecursively(keyOrSocket, settings, function () {
+          _this2._joinRecursively(keyOrSocket, settings, function () {
             return resolve();
           }, function (err) {
             return reject(err);
           }, 0);
         } else {
-          _this2.onJoin = function () {
+          _this2._joinSucceed = function () {
             return resolve();
           };
-          _this2.initChannel(keyOrSocket).catch(reject);
+          _this2._initChannel(keyOrSocket).catch(reject);
         }
       });
     }
@@ -6599,7 +6597,7 @@ var WebChannel = function () {
 
       if (Util.isURL(url)) {
         return ServiceFactory.get(WEB_SOCKET).connect(url + '/invite?wcId=' + this.id).then(function (ws) {
-          return _this3.addChannel(ws);
+          return _this3._addChannel(ws);
         });
       } else {
         return Promise.reject(new Error(url + ' is not a valid URL'));
@@ -6620,9 +6618,9 @@ var WebChannel = function () {
       var key = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 
       if (key !== null) {
-        return this.gate.open(this.settings.signalingURL, key);
+        return this._signalingGate.open(this.settings.signalingURL, key);
       } else {
-        return this.gate.open(this.settings.signalingURL);
+        return this._signalingGate.open(this.settings.signalingURL);
       }
     }
 
@@ -6633,7 +6631,7 @@ var WebChannel = function () {
   }, {
     key: 'close',
     value: function close() {
-      this.gate.close();
+      this._signalingGate.close();
     }
 
     /**
@@ -6645,7 +6643,7 @@ var WebChannel = function () {
   }, {
     key: 'isOpen',
     value: function isOpen() {
-      return this.gate.isOpen();
+      return this._signalingGate.isOpen();
     }
 
     /**
@@ -6657,7 +6655,7 @@ var WebChannel = function () {
   }, {
     key: 'getOpenData',
     value: function getOpenData() {
-      return this.gate.getOpenData();
+      return this._signalingGate.getOpenData();
     }
 
     /**
@@ -6667,15 +6665,15 @@ var WebChannel = function () {
   }, {
     key: 'leave',
     value: function leave() {
-      this.pingTime = 0;
-      if (this.channels.size !== 0) {
+      this._pingTime = 0;
+      if (this._channels.size !== 0) {
         this.members = [];
         this._topologySvc.leave(this);
       }
-      this.onInitChannel = new Map();
-      this.onJoin = function () {};
+      this._initChannelPendingRequests = new Map();
+      this._joinSucceed = function () {};
       this._msgStream.complete();
-      this.gate.close();
+      this._signalingGate.close();
     }
 
     /**
@@ -6688,7 +6686,7 @@ var WebChannel = function () {
     value: function send(data) {
       var _this4 = this;
 
-      if (this.channels.size !== 0) {
+      if (this._channels.size !== 0) {
         this._msgSvc.handleUserMessage(data, this.myId, null, function (dataChunk) {
           _this4._topologySvc.broadcast(_this4, dataChunk);
         });
@@ -6706,7 +6704,7 @@ var WebChannel = function () {
     value: function sendTo(id, data) {
       var _this5 = this;
 
-      if (this.channels.size !== 0) {
+      if (this._channels.size !== 0) {
         this._msgSvc.handleUserMessage(data, this.myId, id, function (dataChunk) {
           _this5._topologySvc.sendTo(id, _this5, dataChunk);
         }, false);
@@ -6724,13 +6722,13 @@ var WebChannel = function () {
     value: function ping() {
       var _this6 = this;
 
-      if (this.channels.size !== 0 && this.pingTime === 0) {
+      if (this._channels.size !== 0 && this._pingTime === 0) {
         return new Promise(function (resolve, reject) {
-          if (_this6.pingTime === 0) {
-            _this6.pingTime = Date.now();
-            _this6.maxTime = 0;
-            _this6.pongNb = 0;
-            _this6.pingFinish = function (delay) {
+          if (_this6._pingTime === 0) {
+            _this6._pingTime = Date.now();
+            _this6._maxTime = 0;
+            _this6._pongNb = 0;
+            _this6._pingFinish = function (delay) {
               return resolve(delay);
             };
             _this6._topologySvc.broadcast(_this6, _this6._msgSvc.msg(PING, _this6.myId));
@@ -6750,11 +6748,11 @@ var WebChannel = function () {
      */
 
   }, {
-    key: 'addChannel',
-    value: function addChannel(channel) {
+    key: '_addChannel',
+    value: function _addChannel(channel) {
       var _this7 = this;
 
-      return this.initChannel(channel).then(function (channel) {
+      return this._initChannel(channel).then(function (channel) {
         var msg = _this7._msgSvc.msg(INITIALIZATION, _this7.myId, channel.peerId, {
           topology: _this7._topologySvc.id,
           wcId: _this7.id
@@ -6770,8 +6768,8 @@ var WebChannel = function () {
      */
 
   }, {
-    key: 'onPeerJoin$',
-    value: function onPeerJoin$(peerId) {
+    key: '_onPeerJoin',
+    value: function _onPeerJoin(peerId) {
       this.members[this.members.length] = peerId;
       this.onPeerJoin(peerId);
     }
@@ -6782,8 +6780,8 @@ var WebChannel = function () {
      */
 
   }, {
-    key: 'onPeerLeave$',
-    value: function onPeerLeave$(peerId) {
+    key: '_onPeerLeave',
+    value: function _onPeerLeave(peerId) {
       this.members.splice(this.members.indexOf(peerId), 1);
       this.onPeerLeave(peerId);
     }
@@ -6799,8 +6797,8 @@ var WebChannel = function () {
      */
 
   }, {
-    key: 'sendInnerTo',
-    value: function sendInnerTo(recepient, serviceId, data) {
+    key: '_sendInnerTo',
+    value: function _sendInnerTo(recepient, serviceId, data) {
       var forward = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
 
       if (forward) {
@@ -6822,8 +6820,8 @@ var WebChannel = function () {
      */
 
   }, {
-    key: 'sendInner',
-    value: function sendInner(serviceId, data) {
+    key: '_sendInner',
+    value: function _sendInner(serviceId, data) {
       this._topologySvc.sendInner(this, this._msgSvc.msg(INNER_DATA, this.myId, null, { serviceId: serviceId, data: data }));
     }
 
@@ -6835,8 +6833,8 @@ var WebChannel = function () {
      */
 
   }, {
-    key: 'onChannelMessage',
-    value: function onChannelMessage(channel, data) {
+    key: '_onMessage',
+    value: function _onMessage(channel, data) {
       var _this8 = this;
 
       var header = this._msgSvc.readHeader(data);
@@ -6849,7 +6847,7 @@ var WebChannel = function () {
         switch (header.code) {
           case INITIALIZATION:
             {
-              this.setTopology(msg.topology);
+              this._setTopology(msg.topology);
               this.myId = header.recepientId;
               this.id = msg.wcId;
               channel.peerId = header.senderId;
@@ -6865,18 +6863,18 @@ var WebChannel = function () {
                   recepientId: header.recepientId,
                   content: msg.data
                 });
-              } else this.sendInnerTo(header.recepientId, null, data, true);
+              } else this._sendInnerTo(header.recepientId, null, data, true);
               break;
             }
           case INIT_CHANNEL:
             {
-              this.onInitChannel.get(channel.peerId).resolve();
+              this._initChannelPendingRequests.get(channel.peerId).resolve();
               channel.send(this._msgSvc.msg(INIT_CHANNEL_BIS, this.myId, channel.peerId));
               break;
             }
           case INIT_CHANNEL_BIS:
             {
-              var resolver = this.onInitChannel.get(channel.peerId);
+              var resolver = this._initChannelPendingRequests.get(channel.peerId);
               if (resolver) {
                 resolver.resolve();
               }
@@ -6888,11 +6886,11 @@ var WebChannel = function () {
           case PONG:
             {
               var now = Date.now();
-              this.pongNb++;
-              this.maxTime = Math.max(this.maxTime, now - this.pingTime);
-              if (this.pongNb === this.members.length) {
-                this.pingFinish(this.maxTime);
-                this.pingTime = 0;
+              this._pongNb++;
+              this._maxTime = Math.max(this._maxTime, now - this._pingTime);
+              if (this._pongNb === this.members.length) {
+                this._pingFinish(this._maxTime);
+                this._pingTime = 0;
               }
               break;
             }
@@ -6914,19 +6912,19 @@ var WebChannel = function () {
      */
 
   }, {
-    key: 'initChannel',
-    value: function initChannel(ch) {
+    key: '_initChannel',
+    value: function _initChannel(ch) {
       var _this9 = this;
 
       var id = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : -1;
 
       return new Promise(function (_resolve, reject) {
-        if (id === -1) id = _this9.generateId();
+        if (id === -1) id = _this9._generateId();
         var channel = new Channel(ch);
         channel.peerId = id;
         channel.webChannel = _this9;
         channel.onMessage = function (data) {
-          return _this9.onChannelMessage(channel, data);
+          return _this9._onMessage(channel, data);
         };
         channel.onClose = function (closeEvt) {
           return _this9._topologySvc.onChannelClose(closeEvt, channel);
@@ -6934,8 +6932,8 @@ var WebChannel = function () {
         channel.onError = function (evt) {
           return _this9._topologySvc.onChannelError(evt, channel);
         };
-        _this9.onInitChannel.set(channel.peerId, { resolve: function resolve() {
-            _this9.onInitChannel.delete(channel.peerId);
+        _this9._initChannelPendingRequests.set(channel.peerId, { resolve: function resolve() {
+            _this9._initChannelPendingRequests.delete(channel.peerId);
             _resolve(channel);
           } });
         channel.send(_this9._msgSvc.msg(INIT_CHANNEL, _this9.myId, channel.peerId));
@@ -6954,16 +6952,16 @@ var WebChannel = function () {
      */
 
   }, {
-    key: 'joinRecursively',
-    value: function joinRecursively(key, options, resolve, reject, attempt) {
+    key: '_joinRecursively',
+    value: function _joinRecursively(key, options, resolve, reject, attempt) {
       var _this10 = this;
 
-      this.gate.join(key, options.url, options.open).then(function (connection) {
+      this._signalingGate.join(key, options.url, options.open).then(function (connection) {
         if (connection) {
-          _this10.onJoin = function () {
+          _this10._joinSucceed = function () {
             return resolve();
           };
-          _this10.initChannel(connection).catch(reject);
+          _this10._initChannel(connection).catch(reject);
         } else {
           resolve();
         }
@@ -6975,7 +6973,7 @@ var WebChannel = function () {
         } else {
           console.log('Trying to rejoin in ' + options.rejoinTimeout + ' the ' + attempt + ' time... ');
           setTimeout(function () {
-            _this10.joinRecursively(key, options, function () {
+            _this10._joinRecursively(key, options, function () {
               return resolve();
             }, function (err) {
               return reject(err);
@@ -6985,8 +6983,8 @@ var WebChannel = function () {
       });
     }
   }, {
-    key: 'setTopology',
-    value: function setTopology(topology) {
+    key: '_setTopology',
+    value: function _setTopology(topology) {
       this.settings.topology = topology;
       this._topologySvc = ServiceFactory.get(topology);
       this._topologySvc.init(this);
@@ -6999,18 +6997,18 @@ var WebChannel = function () {
      */
 
   }, {
-    key: 'generateId',
-    value: function generateId() {
+    key: '_generateId',
+    value: function _generateId() {
       var _this11 = this;
 
       var _loop = function _loop() {
         var id = Math.ceil(Math.random() * MAX_ID);
         if (id === _this11.myId) return 'continue';
         if (_this11.members.includes(id)) return 'continue';
-        if (_this11.generatedIds.has(id)) return 'continue';
-        _this11.generatedIds.add(id);
+        if (_this11._generatedIds.has(id)) return 'continue';
+        _this11._generatedIds.add(id);
         setTimeout(function () {
-          return _this11.generatedIds.delete(id);
+          return _this11._generatedIds.delete(id);
         }, ID_TIMEOUT);
         return {
           v: id

@@ -22,7 +22,7 @@ export class WebRTCService extends Service {
         wc._msgStream
           .filter(msg => msg.serviceId === this.id)
           .map(msg => ({msg: msg.content, id: msg.senderId})),
-        (msg, id) => wc.sendInnerTo(id, this.id, msg)
+        (msg, id) => wc._sendInnerTo(id, this.id, msg)
       )
     }
     throw new Error('Peer is not listening on RTCDataChannel')
@@ -43,7 +43,7 @@ export class WebRTCService extends Service {
       wc._msgStream
         .filter(msg => msg.serviceId === this.id && msg.senderId === id)
         .map(msg => msg.content),
-      msg => wc.sendInnerTo(id, this.id, msg),
+      msg => wc._sendInnerTo(id, this.id, msg),
       wc.myId,
       rtcConfiguration
     )

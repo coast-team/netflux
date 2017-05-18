@@ -75,7 +75,7 @@ export class ChannelBuilderService extends Service {
     log.info('ChannelBuilderService connecTo', {wc: wc.id, ME: wc.myId, TO: id, iListenOn})
     return new Promise((resolve, reject) => {
       super.setPendingRequest(wc, id, {resolve, reject})
-      wc.sendInnerTo(id, this.id, {connectors: iListenOn, url: WebSocketChecker.url})
+      wc._sendInnerTo(id, this.id, {connectors: iListenOn, url: WebSocketChecker.url})
     })
   }
 
@@ -85,7 +85,7 @@ export class ChannelBuilderService extends Service {
    * @param {number} senderId
    */
   onChannel (wc, channel, senderId) {
-    wc.initChannel(channel, senderId)
+    wc._initChannel(channel, senderId)
       .then(channel => {
         const pendReq = super.getPendingRequest(wc, senderId)
         if (pendReq) {
@@ -124,9 +124,9 @@ export class ChannelBuilderService extends Service {
           .catch(reason => {
             // If failed to connect to the remote peer by WebSocket, ask him to connect to me via WebSocket
             if (iListenOn & ListenFlags.ws) {
-              wc.sendInnerTo(senderId, this.id, {shouldConnect: ListenFlags.ws, url: WebSocketChecker.url})
+              wc._sendInnerTo(senderId, this.id, {shouldConnect: ListenFlags.ws, url: WebSocketChecker.url})
             } else {
-              wc.sendInnerTo(senderId, this.id, {
+              wc._sendInnerTo(senderId, this.id, {
                 failedReason: `Failed to establish a socket: ${reason}`
               })
             }
@@ -135,23 +135,23 @@ export class ChannelBuilderService extends Service {
       // If remote peer is able to connect over RTCDataChannel, verify first if I am listening on WebSocket
       } else if (msg.connectors & ListenFlags.wrtc) {
         if (iListenOn & ListenFlags.ws) {
-          wc.sendInnerTo(senderId, this.id, {shouldConnect: ListenFlags.ws, url: WebSocketChecker.url})
+          wc._sendInnerTo(senderId, this.id, {shouldConnect: ListenFlags.ws, url: WebSocketChecker.url})
         } else if (iListenOn & ListenFlags.wrtc) {
           ServiceFactory.get(WEB_RTC)
             .connectOverWebChannel(wc, senderId, {iceServers: wc.settings.iceServers})
             .then(channel => this.onChannel(wc, channel, senderId))
             .catch(reason => {
-              wc.sendInnerTo(senderId, this.id, {failedReason: `Failed establish a data channel: ${reason}`})
+              wc._sendInnerTo(senderId, this.id, {failedReason: `Failed establish a data channel: ${reason}`})
             })
         } else {
-          wc.sendInnerTo(senderId, this.id, {failedReason: 'No common connectors'})
+          wc._sendInnerTo(senderId, this.id, {failedReason: 'No common connectors'})
         }
       // If peer is not listening on WebSocket and is not able to connect over RTCDataChannel
       } else if (msg.connectors & ListenFlags.none) {
         if (iListenOn & ListenFlags.ws) {
-          wc.sendInnerTo(senderId, this.id, {shouldConnect: ListenFlags.ws, url: WebSocketChecker.url})
+          wc._sendInnerTo(senderId, this.id, {shouldConnect: ListenFlags.ws, url: WebSocketChecker.url})
         } else {
-          wc.sendInnerTo(senderId, this.id, {failedReason: 'No common connectors'})
+          wc._sendInnerTo(senderId, this.id, {failedReason: 'No common connectors'})
         }
       }
     }

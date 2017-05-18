@@ -54,8 +54,8 @@ export class FullyConnectedService extends TopologyInterface {
     const peers = wc.members.slice()
     for (let jpId of super.getItems(wc).keys()) peers[peers.length] = jpId
     this.setJP(wc, channel.peerId, channel)
-    wc.sendInner(this.id, {code: SHOULD_ADD_NEW_JOINING_PEER, jpId: channel.peerId})
-    wc.sendInnerTo(channel, this.id, {code: SHOULD_CONNECT_TO, peers})
+    wc._sendInner(this.id, {code: SHOULD_ADD_NEW_JOINING_PEER, jpId: channel.peerId})
+    wc._sendInnerTo(channel, this.id, {code: SHOULD_CONNECT_TO, peers})
     return new Promise((resolve, reject) => {
       super.setPendingRequest(wc, channel.peerId, {resolve, reject})
     })
@@ -68,11 +68,11 @@ export class FullyConnectedService extends TopologyInterface {
    * @param {ArrayBuffer} data
    */
   broadcast (webChannel, data) {
-    for (let c of webChannel.channels) c.send(data)
+    for (let c of webChannel._channels) c.send(data)
   }
 
   sendTo (id, webChannel, data) {
-    for (let c of webChannel.channels) {
+    for (let c of webChannel._channels) {
       if (c.peerId === id) {
         c.send(data)
         return
@@ -82,7 +82,7 @@ export class FullyConnectedService extends TopologyInterface {
 
   sendInnerTo (recepient, wc, data) {
     // If the peer sent a message to himself
-    if (recepient === wc.myId) wc.onChannelMessage(null, data)
+    if (recepient === wc.myId) wc._onMessage(null, data)
     else {
       let jp = super.getItem(wc, wc.myId)
       if (jp === null) jp = super.getItem(wc, recepient)
@@ -102,17 +102,17 @@ export class FullyConnectedService extends TopologyInterface {
   }
 
   leave (wc) {
-    for (let c of wc.channels) {
+    for (let c of wc._channels) {
       c.clearHandlers()
       c.close()
     }
-    wc.channels.clear()
+    wc._channels.clear()
   }
 
   onChannel (channel) {
     return new Promise((resolve, reject) => {
       super.setPendingRequest(channel.webChannel, channel.peerId, {resolve, reject})
-      channel.webChannel.sendInnerTo(channel, this.id, {code: TICK})
+      channel.webChannel._sendInnerTo(channel, this.id, {code: TICK})
     })
   }
 
@@ -128,8 +128,8 @@ export class FullyConnectedService extends TopologyInterface {
     // TODO: need to check if this is a peer leaving and thus he closed channels
     // with all WebChannel members or this is abnormal channel closing
     const wc = channel.webChannel
-    for (let c of wc.channels) {
-      if (c.peerId === channel.peerId) return wc.channels.delete(c)
+    for (let c of wc._channels) {
+      if (c.peerId === channel.peerId) return wc._channels.delete(c)
     }
     const jps = super.getItems(wc)
     jps.forEach(jp => jp.channels.delete(channel))
@@ -156,13 +156,13 @@ export class FullyConnectedService extends TopologyInterface {
           .then(failed => {
             const msg = {code: PEER_JOINED}
             jpMe.channels.forEach(ch => {
-              wc.sendInnerTo(ch, this.id, msg)
-              wc.channels.add(ch)
-              wc.onPeerJoin$(ch.peerId)
+              wc._sendInnerTo(ch, this.id, msg)
+              wc._channels.add(ch)
+              wc._onPeerJoin(ch.peerId)
             })
             super.removeItem(wc, wc.myId)
-            super.getItems(wc).forEach(jp => wc.sendInnerTo(jp.channel, this.id, msg))
-            wc.onJoin()
+            super.getItems(wc).forEach(jp => wc._sendInnerTo(jp.channel, this.id, msg))
+            wc._joinSucceed()
           })
         break
       } case PEER_JOINED: {
@@ -171,8 +171,8 @@ export class FullyConnectedService extends TopologyInterface {
         if (jpMe !== null) {
           jpMe.channels.add(channel)
         } else {
-          wc.channels.add(channel)
-          wc.onPeerJoin$(senderId)
+          wc._channels.add(channel)
+          wc._onPeerJoin(senderId)
           const request = super.getPendingRequest(wc, senderId)
           if (request !== undefined) request.resolve(senderId)
         }
@@ -180,7 +180,7 @@ export class FullyConnectedService extends TopologyInterface {
       } case TICK: {
         this.setJP(wc, senderId, channel)
         const isJoining = super.getItem(wc, wc.myId) !== null
-        wc.sendInnerTo(channel, this.id, {code: TOCK, isJoining})
+        wc._sendInnerTo(channel, this.id, {code: TOCK, isJoining})
         break
       }
       case TOCK:
@@ -226,7 +226,7 @@ export class FullyConnectedService extends TopologyInterface {
  * regardless of success, these instances will be deleted.
  */
 class JoiningPeer {
-  constructor (channel, onJoin) {
+  constructor (channel) {
     /**
      * The channel between the joining peer and intermediary peer. It is null
      * for every peer, but the joining and intermediary peers.

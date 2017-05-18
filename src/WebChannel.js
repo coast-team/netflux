@@ -1,13 +1,13 @@
 import { Subject } from 'node_modules/rxjs/Subject'
 
-import { ServiceFactory, WEB_RTC, WEB_SOCKET, MESSAGE_BUILDER, CHANNEL_BUILDER } from 'ServiceFactory'
+import { ServiceFactory, WEB_SOCKET, MESSAGE_BUILDER, CHANNEL_BUILDER } from 'ServiceFactory'
 import { Channel } from 'Channel'
 import { SignalingGate } from 'SignalingGate'
 import { Util } from 'Util'
 import * as log from 'log'
 
 /**
- * Maximum identifier number for {@link WebChannel#generateId} function.
+ * Maximum identifier number for {@link WebChannel#_generateId} function.
  * @type {number}
  */
 const MAX_ID = 2147483647
@@ -82,13 +82,13 @@ export class WebChannel {
      * @private
      * @type {external:Set}
      */
-    this.channels = new Set()
+    this._channels = new Set()
 
     /**
      * This event handler is used to resolve *Promise* in {@link WebChannel#join}.
      * @private
      */
-    this.onJoin = () => {}
+    this._joinSucceed = () => {}
 
     /**
      * Message builder service instance.
@@ -108,46 +108,46 @@ export class WebChannel {
      * @private
      * @type {Set<number>}
      */
-    this.generatedIds = new Set()
+    this._generatedIds = new Set()
 
     /**
      * @private
      * @type {Date}
      */
-    this.pingTime = 0
+    this._pingTime = 0
 
     /**
      * @private
      * @type {number}
      */
-    this.maxTime = 0
+    this._maxTime = 0
 
     /**
      * @private
      * @type {function(delay: number)}
      */
-    this.pingFinish = () => {}
+    this._pingFinish = () => {}
 
     /**
      * @private
      * @type {number}
      */
-    this.pongNb = 0
+    this._pongNb = 0
 
     /**
      * The `WebChannel` gate.
      * @private
      * @type {SignalingGate}
      */
-    this.gate = new SignalingGate(this, ch => this.addChannel(ch))
+    this._signalingGate = new SignalingGate(this, ch => this._addChannel(ch))
 
-    this.onInitChannel = new Map()
+    this._initChannelPendingRequests = new Map()
 
     /**
      * Unique `WebChannel` identifier. Its value is the same for all `WebChannel` members.
      * @type {number}
      */
-    this.id = this.generateId()
+    this.id = this._generateId()
 
     /**
      * Unique peer identifier of you in this `WebChannel`. After each `join` function call
@@ -155,7 +155,7 @@ export class WebChannel {
      * you join.
      * @type {number}
      */
-    this.myId = this.generateId()
+    this.myId = this._generateId()
 
     /**
      * Is the event handler called when a new peer has  joined the `WebChannel`.
@@ -183,15 +183,14 @@ export class WebChannel {
 
     this._servicesData = {}
     this._msgStream = new Subject()
-    const channelBuilder = ServiceFactory.get(CHANNEL_BUILDER)
-    channelBuilder.init(this)
+    ServiceFactory.get(CHANNEL_BUILDER).init(this)
 
     /**
      * `WebChannel` topology.
      * @private
      * @type {Service}
      */
-    this.setTopology(this.settings.topology)
+    this._setTopology(this.settings.topology)
   }
 
   /**
@@ -211,10 +210,10 @@ export class WebChannel {
     Object.assign(settings, options)
     return new Promise((resolve, reject) => {
       if (keyOrSocket.constructor.name !== 'WebSocket') {
-        this.joinRecursively(keyOrSocket, settings, () => resolve(), err => reject(err), 0)
+        this._joinRecursively(keyOrSocket, settings, () => resolve(), err => reject(err), 0)
       } else {
-        this.onJoin = () => resolve()
-        this.initChannel(keyOrSocket).catch(reject)
+        this._joinSucceed = () => resolve()
+        this._initChannel(keyOrSocket).catch(reject)
       }
     })
   }
@@ -230,7 +229,7 @@ export class WebChannel {
     if (Util.isURL(url)) {
       return ServiceFactory.get(WEB_SOCKET)
         .connect(`${url}/invite?wcId=${this.id}`)
-        .then(ws => this.addChannel(ws))
+        .then(ws => this._addChannel(ws))
     } else {
       return Promise.reject(new Error(`${url} is not a valid URL`))
     }
@@ -245,9 +244,9 @@ export class WebChannel {
    */
   open (key = null) {
     if (key !== null) {
-      return this.gate.open(this.settings.signalingURL, key)
+      return this._signalingGate.open(this.settings.signalingURL, key)
     } else {
-      return this.gate.open(this.settings.signalingURL)
+      return this._signalingGate.open(this.settings.signalingURL)
     }
   }
 
@@ -255,7 +254,7 @@ export class WebChannel {
    * Prevent clients to join the `WebChannel` even if they possesses a key.
    */
   close () {
-    this.gate.close()
+    this._signalingGate.close()
   }
 
   /**
@@ -264,7 +263,7 @@ export class WebChannel {
    * @returns {boolean} True if the `WebChannel` is open, false otherwise
    */
   isOpen () {
-    return this.gate.isOpen()
+    return this._signalingGate.isOpen()
   }
 
   /**
@@ -273,22 +272,22 @@ export class WebChannel {
    * @returns {OpenData|null} - Data to join the `WebChannel` or null is the `WebChannel` is closed
    */
   getOpenData () {
-    return this.gate.getOpenData()
+    return this._signalingGate.getOpenData()
   }
 
   /**
    * Leave the `WebChannel`. No longer can receive and send messages to the group.
    */
   leave () {
-    this.pingTime = 0
-    if (this.channels.size !== 0) {
+    this._pingTime = 0
+    if (this._channels.size !== 0) {
       this.members = []
       this._topologySvc.leave(this)
     }
-    this.onInitChannel = new Map()
-    this.onJoin = () => {}
+    this._initChannelPendingRequests = new Map()
+    this._joinSucceed = () => {}
     this._msgStream.complete()
-    this.gate.close()
+    this._signalingGate.close()
   }
 
   /**
@@ -296,7 +295,7 @@ export class WebChannel {
    * @param  {UserMessage} data - Message
    */
   send (data) {
-    if (this.channels.size !== 0) {
+    if (this._channels.size !== 0) {
       this._msgSvc.handleUserMessage(data, this.myId, null, dataChunk => {
         this._topologySvc.broadcast(this, dataChunk)
       })
@@ -309,7 +308,7 @@ export class WebChannel {
    * @param  {UserMessage} data - Message
    */
   sendTo (id, data) {
-    if (this.channels.size !== 0) {
+    if (this._channels.size !== 0) {
       this._msgSvc.handleUserMessage(data, this.myId, id, dataChunk => {
         this._topologySvc.sendTo(id, this, dataChunk)
       }, false)
@@ -322,13 +321,13 @@ export class WebChannel {
    * @returns {Promise}
    */
   ping () {
-    if (this.channels.size !== 0 && this.pingTime === 0) {
+    if (this._channels.size !== 0 && this._pingTime === 0) {
       return new Promise((resolve, reject) => {
-        if (this.pingTime === 0) {
-          this.pingTime = Date.now()
-          this.maxTime = 0
-          this.pongNb = 0
-          this.pingFinish = delay => resolve(delay)
+        if (this._pingTime === 0) {
+          this._pingTime = Date.now()
+          this._maxTime = 0
+          this._pongNb = 0
+          this._pingFinish = delay => resolve(delay)
           this._topologySvc.broadcast(this, this._msgSvc.msg(PING, this.myId))
           setTimeout(() => resolve(PING_TIMEOUT), PING_TIMEOUT)
         }
@@ -342,10 +341,10 @@ export class WebChannel {
    *
    * @returns {Promise<undefined,string>}
    */
-  addChannel (channel) {
-    return this.initChannel(channel)
+  _addChannel (channel) {
+    return this._initChannel(channel)
       .then(channel => {
-        log.info('WebChannel addChannel->initChannel: ', {myId: this.myId, hisId: channel.peerId})
+        log.info('WebChannel _addChannel->initChannel: ', {myId: this.myId, hisId: channel.peerId})
         const msg = this._msgSvc.msg(INITIALIZATION, this.myId, channel.peerId, {
           topology: this._topologySvc.id,
           wcId: this.id
@@ -359,7 +358,7 @@ export class WebChannel {
    * @private
    * @param {number} peerId
    */
-  onPeerJoin$ (peerId) {
+  _onPeerJoin (peerId) {
     this.members[this.members.length] = peerId
     this.onPeerJoin(peerId)
   }
@@ -368,7 +367,7 @@ export class WebChannel {
    * @private
    * @param {number} peerId
    */
-  onPeerLeave$ (peerId) {
+  _onPeerLeave (peerId) {
     this.members.splice(this.members.indexOf(peerId), 1)
     this.onPeerLeave(peerId)
   }
@@ -382,7 +381,7 @@ export class WebChannel {
    * @param {Object} data - Message to send
    * @param {boolean} [forward=false] - SHould the message be forwarded?
    */
-  sendInnerTo (recepient, serviceId, data, forward = false) {
+  _sendInnerTo (recepient, serviceId, data, forward = false) {
     if (forward) {
       this._topologySvc.sendInnerTo(recepient, this, data)
     } else {
@@ -400,7 +399,7 @@ export class WebChannel {
    * @param {number} serviceId
    * @param {Object} data
    */
-  sendInner (serviceId, data) {
+  _sendInner (serviceId, data) {
     this._topologySvc.sendInner(this, this._msgSvc.msg(INNER_DATA, this.myId, null, {serviceId, data}))
   }
 
@@ -410,7 +409,7 @@ export class WebChannel {
    * @param {Channel} channel - The channel the message came from
    * @param {external:ArrayBuffer} data - Message
    */
-  onChannelMessage (channel, data) {
+  _onMessage (channel, data) {
     const header = this._msgSvc.readHeader(data)
     if (header.code === USER_DATA) {
       this._msgSvc.readUserMessage(this, header.senderId, data, (fullData, isBroadcast) => {
@@ -420,7 +419,7 @@ export class WebChannel {
       const msg = this._msgSvc.readInternalMessage(data)
       switch (header.code) {
         case INITIALIZATION: {
-          this.setTopology(msg.topology)
+          this._setTopology(msg.topology)
           this.myId = header.recepientId
           this.id = msg.wcId
           channel.peerId = header.senderId
@@ -436,16 +435,16 @@ export class WebChannel {
               recepientId: header.recepientId,
               content: msg.data
             })
-          } else this.sendInnerTo(header.recepientId, null, data, true)
+          } else this._sendInnerTo(header.recepientId, null, data, true)
           break
         }
         case INIT_CHANNEL: {
-          this.onInitChannel.get(channel.peerId).resolve()
+          this._initChannelPendingRequests.get(channel.peerId).resolve()
           channel.send(this._msgSvc.msg(INIT_CHANNEL_BIS, this.myId, channel.peerId))
           break
         }
         case INIT_CHANNEL_BIS: {
-          const resolver = this.onInitChannel.get(channel.peerId)
+          const resolver = this._initChannelPendingRequests.get(channel.peerId)
           if (resolver) {
             resolver.resolve()
           }
@@ -456,11 +455,11 @@ export class WebChannel {
           break
         case PONG: {
           const now = Date.now()
-          this.pongNb++
-          this.maxTime = Math.max(this.maxTime, now - this.pingTime)
-          if (this.pongNb === this.members.length) {
-            this.pingFinish(this.maxTime)
-            this.pingTime = 0
+          this._pongNb++
+          this._maxTime = Math.max(this._maxTime, now - this._pingTime)
+          if (this._pongNb === this.members.length) {
+            this._pingFinish(this._maxTime)
+            this._pingTime = 0
           }
           break
         }
@@ -480,17 +479,17 @@ export class WebChannel {
    * if not provided
    * @returns {Promise} - Resolved once the channel is initialized on both sides
    */
-  initChannel (ch, id = -1) {
+  _initChannel (ch, id = -1) {
     return new Promise((resolve, reject) => {
-      if (id === -1) id = this.generateId()
+      if (id === -1) id = this._generateId()
       const channel = new Channel(ch)
       channel.peerId = id
       channel.webChannel = this
-      channel.onMessage = data => this.onChannelMessage(channel, data)
+      channel.onMessage = data => this._onMessage(channel, data)
       channel.onClose = closeEvt => this._topologySvc.onChannelClose(closeEvt, channel)
       channel.onError = evt => this._topologySvc.onChannelError(evt, channel)
-      this.onInitChannel.set(channel.peerId, {resolve: () => {
-        this.onInitChannel.delete(channel.peerId)
+      this._initChannelPendingRequests.set(channel.peerId, {resolve: () => {
+        this._initChannelPendingRequests.delete(channel.peerId)
         resolve(channel)
       }})
       channel.send(this._msgSvc.msg(INIT_CHANNEL, this.myId, channel.peerId))
@@ -507,12 +506,12 @@ export class WebChannel {
  * @param  {[type]} attempt
  * @return {void}
  */
-  joinRecursively (key, options, resolve, reject, attempt) {
-    this.gate.join(key, options.url, options.open)
+  _joinRecursively (key, options, resolve, reject, attempt) {
+    this._signalingGate.join(key, options.url, options.open)
       .then(connection => {
         if (connection) {
-          this.onJoin = () => resolve()
-          this.initChannel(connection)
+          this._joinSucceed = () => resolve()
+          this._initChannel(connection)
             .catch(reject)
         } else {
           resolve()
@@ -526,13 +525,13 @@ export class WebChannel {
         } else {
           console.log(`Trying to rejoin in ${options.rejoinTimeout} the ${attempt} time... `)
           setTimeout(() => {
-            this.joinRecursively(key, options, () => resolve(), err => reject(err), attempt)
+            this._joinRecursively(key, options, () => resolve(), err => reject(err), attempt)
           }, options.rejoinTimeout)
         }
       })
   }
 
-  setTopology (topology) {
+  _setTopology (topology) {
     this.settings.topology = topology
     this._topologySvc = ServiceFactory.get(topology)
     this._topologySvc.init(this)
@@ -543,14 +542,14 @@ export class WebChannel {
    * @private
    * @returns {number} - Generated id
    */
-  generateId () {
+  _generateId () {
     do {
       const id = Math.ceil(Math.random() * MAX_ID)
       if (id === this.myId) continue
       if (this.members.includes(id)) continue
-      if (this.generatedIds.has(id)) continue
-      this.generatedIds.add(id)
-      setTimeout(() => this.generatedIds.delete(id), ID_TIMEOUT)
+      if (this._generatedIds.has(id)) continue
+      this._generatedIds.add(id)
+      setTimeout(() => this._generatedIds.delete(id), ID_TIMEOUT)
       return id
     } while (true)
   }
