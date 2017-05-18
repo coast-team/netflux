@@ -47,22 +47,17 @@ function logObject (obj) {
 }
 
 function logRecursive (obj) {
-  switch (obj.constructor.name) {
-    case 'Array':
+  if (typeof obj === 'object') {
+    if ('forEach' in obj) {
       obj.forEach((value, index) => {
-        if (value.constructor.name === 'Object') {
-          console.groupCollapsed(`${index} object`)
-          logRecursive(value)
-          console.groupEnd()
-        } else {
-          logRecursive(value)
-        }
+        console.groupCollapsed(`${index} ${value.constructor.name}`)
+        logRecursive(value)
+        console.groupEnd()
       })
-      break
-    case 'Object':
+    } else {
       logObject(obj)
-      break
-    default:
-      console.log(obj)
+    }
+  } else {
+    console.log(obj)
   }
 }
