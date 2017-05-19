@@ -3,7 +3,7 @@ import { WebRTCService } from 'service/WebRTCService'
 import { WebSocketService } from 'service/WebSocketService'
 import { EventSourceService } from 'service/EventSourceService'
 import { ChannelBuilderService } from 'service/ChannelBuilderService'
-import { MessageBuilderService } from 'service/MessageBuilderService'
+import { MessageService } from 'service/MessageService'
 
 /**
  * {@link WebRTCService} identifier.
@@ -38,11 +38,11 @@ export const CHANNEL_BUILDER = 2
 export const FULLY_CONNECTED = 3
 
 /**
- * {@link MessageBuilderService} identifier
+ * {@link MessageService} identifier
  * @ignore
  * @type {number}
  */
-export const MESSAGE_BUILDER = 4
+export const MESSAGE = 4
 
 /**
  * Contains singletons services.
@@ -58,7 +58,7 @@ export class ServiceFactory {
    * Provides the service instance specified by `id`.
    *
    * @throws {Error} If the service `id` is unknown
-   * @param  {MESSAGE_BUILDER|WEB_RTC|WEB_SOCKET|FULLY_CONNECTED|CHANNEL_BUILDER} id The service identifier
+   * @param  {MESSAGE|WEB_RTC|WEB_SOCKET|FULLY_CONNECTED|CHANNEL_BUILDER} id The service identifier
    * @returns {Service}
    */
   static get (id) {
@@ -87,8 +87,8 @@ export class ServiceFactory {
         service = new FullyConnectedService(FULLY_CONNECTED)
         services.set(id, service)
         return service
-      case MESSAGE_BUILDER:
-        service = new MessageBuilderService(MESSAGE_BUILDER)
+      case MESSAGE:
+        service = new MessageService(MESSAGE)
         services.set(id, service)
         return service
       default:

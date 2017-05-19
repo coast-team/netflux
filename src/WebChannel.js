@@ -1,6 +1,6 @@
 import { Subject } from 'node_modules/rxjs/Subject'
 
-import { ServiceFactory, WEB_SOCKET, MESSAGE_BUILDER, CHANNEL_BUILDER } from 'ServiceFactory'
+import { ServiceFactory, WEB_SOCKET, MESSAGE, CHANNEL_BUILDER } from 'ServiceFactory'
 import { Channel } from 'Channel'
 import { SignalingGate } from 'SignalingGate'
 import { Util } from 'Util'
@@ -94,9 +94,9 @@ export class WebChannel {
      * Message builder service instance.
      *
      * @private
-     * @type {MessageBuilderService}
+     * @type {MessageService}
      */
-    this._msgSvc = ServiceFactory.get(MESSAGE_BUILDER)
+    this._msgSvc = ServiceFactory.get(MESSAGE)
 
     /**
      * An array of all peer ids except this.

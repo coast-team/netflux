@@ -104,9 +104,9 @@ const buffers = new WeakMap()
  * big messages (more then 16ko) sent by users. Internal messages are always less
  * 16ko.
  */
-export class MessageBuilderService extends Service {
+export class MessageService extends Service {
   /**
-   * @callback MessageBuilderService~Send
+   * @callback MessageService~Send
    * @param {ArrayBuffer} dataChunk - If the message is too big this
    * action would be executed for each data chunk until send whole message
    */
@@ -192,7 +192,7 @@ export class MessageBuilderService extends Service {
 
   /**
    * Read user message which was prepared by another peer with
-   * {@link MessageBuilderService#handleUserMessage} and sent.
+   * {@link MessageService#handleUserMessage} and sent.
    * @param {WebChannel} wc WebChannel
    * @param {number} senderId Id of the peer who sent this message
    * @param {ArrayBuffer} data Message

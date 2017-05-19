@@ -5445,19 +5445,19 @@ var buffers = new WeakMap();
  * big messages (more then 16ko) sent by users. Internal messages are always less
  * 16ko.
  */
-var MessageBuilderService = function (_Service) {
-  inherits(MessageBuilderService, _Service);
+var MessageService = function (_Service) {
+  inherits(MessageService, _Service);
 
-  function MessageBuilderService() {
-    classCallCheck(this, MessageBuilderService);
-    return possibleConstructorReturn(this, (MessageBuilderService.__proto__ || Object.getPrototypeOf(MessageBuilderService)).apply(this, arguments));
+  function MessageService() {
+    classCallCheck(this, MessageService);
+    return possibleConstructorReturn(this, (MessageService.__proto__ || Object.getPrototypeOf(MessageService)).apply(this, arguments));
   }
 
-  createClass(MessageBuilderService, [{
+  createClass(MessageService, [{
     key: 'handleUserMessage',
 
     /**
-     * @callback MessageBuilderService~Send
+     * @callback MessageService~Send
      * @param {ArrayBuffer} dataChunk - If the message is too big this
      * action would be executed for each data chunk until send whole message
      */
@@ -5542,7 +5542,7 @@ var MessageBuilderService = function (_Service) {
 
     /**
      * Read user message which was prepared by another peer with
-     * {@link MessageBuilderService#handleUserMessage} and sent.
+     * {@link MessageService#handleUserMessage} and sent.
      * @param {WebChannel} wc WebChannel
      * @param {number} senderId Id of the peer who sent this message
      * @param {ArrayBuffer} data Message
@@ -5764,7 +5764,7 @@ var MessageBuilderService = function (_Service) {
       peerBuffer.set(msgId, buffer);
     }
   }]);
-  return MessageBuilderService;
+  return MessageService;
 }(Service);
 
 /**
@@ -5850,11 +5850,11 @@ var CHANNEL_BUILDER = 2;
 var FULLY_CONNECTED = 3;
 
 /**
- * {@link MessageBuilderService} identifier
+ * {@link MessageService} identifier
  * @ignore
  * @type {number}
  */
-var MESSAGE_BUILDER = 4;
+var MESSAGE = 4;
 
 /**
  * Contains singletons services.
@@ -5877,7 +5877,7 @@ var ServiceFactory = function () {
      * Provides the service instance specified by `id`.
      *
      * @throws {Error} If the service `id` is unknown
-     * @param  {MESSAGE_BUILDER|WEB_RTC|WEB_SOCKET|FULLY_CONNECTED|CHANNEL_BUILDER} id The service identifier
+     * @param  {MESSAGE|WEB_RTC|WEB_SOCKET|FULLY_CONNECTED|CHANNEL_BUILDER} id The service identifier
      * @returns {Service}
      */
     value: function get$$1(id) {
@@ -5906,8 +5906,8 @@ var ServiceFactory = function () {
           service = new FullyConnectedService(FULLY_CONNECTED);
           services.set(id, service);
           return service;
-        case MESSAGE_BUILDER:
-          service = new MessageBuilderService(MESSAGE_BUILDER);
+        case MESSAGE:
+          service = new MessageService(MESSAGE);
           services.set(id, service);
           return service;
         default:
@@ -5970,8 +5970,8 @@ var Channel = function () {
 
   /**
    * Send message over this channel. The message should be prepared beforhand by
-   * the {@link MessageBuilderService} (see{@link MessageBuilderService#msg},
-   * {@link MessageBuilderService#handleUserMessage}).
+   * the {@link MessageService} (see{@link MessageService#msg},
+   * {@link MessageService#handleUserMessage}).
    *
    * @private
    * @param {ArrayBuffer} data Message
@@ -6442,9 +6442,9 @@ var WebChannel = function () {
      * Message builder service instance.
      *
      * @private
-     * @type {MessageBuilderService}
+     * @type {MessageService}
      */
-    this._msgSvc = ServiceFactory.get(MESSAGE_BUILDER);
+    this._msgSvc = ServiceFactory.get(MESSAGE);
 
     /**
      * An array of all peer ids except this.

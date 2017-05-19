@@ -50,8 +50,8 @@ export class Channel {
 
   /**
    * Send message over this channel. The message should be prepared beforhand by
-   * the {@link MessageBuilderService} (see{@link MessageBuilderService#msg},
-   * {@link MessageBuilderService#handleUserMessage}).
+   * the {@link MessageService} (see{@link MessageService#msg},
+   * {@link MessageService#handleUserMessage}).
    *
    * @private
    * @param {ArrayBuffer} data Message
