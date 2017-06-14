@@ -27,6 +27,7 @@ export class TopologyInterface extends Service {
             .then(channel => this.onChannel(channel))
             .then(() => { if (++counter === peerIds.length) resolve(failed) })
             .catch(reason => {
+              log.error('Failed connect to ', reason)
               failed.push({id, reason})
               if (++counter === peerIds.length) resolve(failed)
             })

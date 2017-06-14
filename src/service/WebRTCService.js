@@ -8,7 +8,7 @@ import { Service } from 'service/Service'
 const wrtc = Util.require(Util.WEB_RTC)
 const CloseEvent = Util.require(Util.CLOSE_EVENT)
 
-const CONNECTION_TIMEOUT = 5000
+const CONNECTION_TIMEOUT = 10000
 
 /**
  * Service class responsible to establish `RTCDataChannel` between two clients via

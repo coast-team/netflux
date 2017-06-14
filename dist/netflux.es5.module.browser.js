@@ -1436,6 +1436,7 @@ var TopologyInterface = function (_Service) {
             }).then(function () {
               if (++counter === peerIds.length) resolve(failed);
             }).catch(function (reason) {
+              log.error('Failed connect to ', reason);
               failed.push({ id: id, reason: reason });
               if (++counter === peerIds.length) resolve(failed);
             });
@@ -1513,7 +1514,7 @@ var Level = {
   ERROR: 5
 };
 
-var logLevel = LOG_LEVEL;
+var logLevel = Level.TRACE;
 
 
 
@@ -4376,7 +4377,7 @@ var Util = function () {
 var wrtc = Util.require(Util.WEB_RTC);
 var CloseEvent = Util.require(Util.CLOSE_EVENT);
 
-var CONNECTION_TIMEOUT = 5000;
+var CONNECTION_TIMEOUT = 10000;
 
 /**
  * Service class responsible to establish `RTCDataChannel` between two clients via

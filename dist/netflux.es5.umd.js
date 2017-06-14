@@ -4356,7 +4356,7 @@ var Util = function () {
 var wrtc = Util.require(Util.WEB_RTC);
 var CloseEvent = Util.require(Util.CLOSE_EVENT);
 
-var CONNECTION_TIMEOUT = 5000;
+var CONNECTION_TIMEOUT = 10000;
 
 /**
  * Service class responsible to establish `RTCDataChannel` between two clients via

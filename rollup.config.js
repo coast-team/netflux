@@ -74,7 +74,7 @@ rollup.rollup({
       TEXT_ENCODING_MODULE: `window`,
       EVENT_SOURCE_MODULE: `window.EventSource`,
       FETCH_MODULE: `window.fetch`,
-      LOG_LEVEL: `Level.WARN`
+      LOG_LEVEL: `Level.TRACE`
     }),
     babel({
       exclude: 'node_modules/**'
