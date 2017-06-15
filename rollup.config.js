@@ -33,7 +33,7 @@ rollup.rollup({
       TEXT_ENCODING_MODULE: `Util.isBrowser() ? window : require('text-encoding')`,
       EVENT_SOURCE_MODULE: `Util.isBrowser() ? window.EventSource : require('eventsource')`,
       FETCH_MODULE: `Util.isBrowser() ? window.fetch : require('node-fetch')`,
-      LOG_LEVEL: `Level.WARN`
+      LOG_LEVEL: `Level.TRACE`
     }),
     babel({
       exclude: 'node_modules/**'
@@ -114,7 +114,7 @@ rollup.rollup({
       TEXT_ENCODING_MODULE: `require('text-encoding')`,
       EVENT_SOURCE_MODULE: `require('eventsource')`,
       FETCH_MODULE: `require('node-fetch')`,
-      LOG_LEVEL: `Level.WARN`
+      LOG_LEVEL: `Level.TRACE`
     }),
     babel({
       exclude: 'node_modules/**'

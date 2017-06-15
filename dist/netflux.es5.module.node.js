@@ -1628,7 +1628,7 @@ var Level = {
   ERROR: 5
 };
 
-var logLevel = Level.WARN;
+var logLevel = Level.TRACE;
 
 
 
