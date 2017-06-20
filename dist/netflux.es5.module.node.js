@@ -2098,7 +2098,8 @@ module.exports = function(dependencies) {
   var adapter = {
     browserDetails: browserDetails,
     extractVersion: utils.extractVersion,
-    disableLog: utils.disableLog
+    disableLog: utils.disableLog,
+    disableWarnings: utils.disableWarnings
   };
 
   // Uncomment the line below if you want logging to occur, including logging
@@ -2171,6 +2172,7 @@ module.exports = function(dependencies) {
       adapter.browserShim = safariShim;
       // shim window.URL.createObjectURL Safari (technical preview)
       utils.shimCreateObjectURL(window);
+      safariShim.shimRTCIceServerUrls(window);
       safariShim.shimCallbacksAPI(window);
       safariShim.shimLocalStreamsAPI(window);
       safariShim.shimRemoteStreamsAPI(window);
@@ -3296,6 +3298,8 @@ module.exports = function(window) {
  *  tree.
  */
 'use strict';
+var utils = require('../utils');
+
 var safariShim = {
   // TODO: DrAlex, should be here, double check against LayoutTests
 
@@ -3493,6 +3497,37 @@ var safariShim = {
         }.bind(navigator);
       }
     }
+  },
+  shimRTCIceServerUrls: function(window) {
+    // migrate from non-spec RTCIceServer.url to RTCIceServer.urls
+    var OrigPeerConnection = window.RTCPeerConnection;
+    window.RTCPeerConnection = function(pcConfig, pcConstraints) {
+      if (pcConfig && pcConfig.iceServers) {
+        var newIceServers = [];
+        for (var i = 0; i < pcConfig.iceServers.length; i++) {
+          var server = pcConfig.iceServers[i];
+          if (!server.hasOwnProperty('urls') &&
+              server.hasOwnProperty('url')) {
+            utils.deprecated('RTCIceServer.url', 'RTCIceServer.urls');
+            server = JSON.parse(JSON.stringify(server));
+            server.urls = server.url;
+            delete server.url;
+            newIceServers.push(server);
+          } else {
+            newIceServers.push(pcConfig.iceServers[i]);
+          }
+        }
+        pcConfig.iceServers = newIceServers;
+      }
+      return new OrigPeerConnection(pcConfig, pcConstraints);
+    };
+    window.RTCPeerConnection.prototype = OrigPeerConnection.prototype;
+    // wrap static methods. Currently just generateCertificate.
+    Object.defineProperty(window.RTCPeerConnection, 'generateCertificate', {
+      get: function() {
+        return OrigPeerConnection.generateCertificate;
+      }
+    });
   }
 };
 
@@ -3501,12 +3536,13 @@ module.exports = {
   shimCallbacksAPI: safariShim.shimCallbacksAPI,
   shimLocalStreamsAPI: safariShim.shimLocalStreamsAPI,
   shimRemoteStreamsAPI: safariShim.shimRemoteStreamsAPI,
-  shimGetUserMedia: safariShim.shimGetUserMedia
+  shimGetUserMedia: safariShim.shimGetUserMedia,
+  shimRTCIceServerUrls: safariShim.shimRTCIceServerUrls
   // TODO
   // shimPeerConnection: safariShim.shimPeerConnection
 };
 
-},{}],9:[function(require,module,exports){
+},{"../utils":9}],9:[function(require,module,exports){
 /*
  *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
  *
@@ -3518,6 +3554,7 @@ module.exports = {
 'use strict';
 
 var logDisabled_ = true;
+var deprecationWarnings_ = true;
 
 // Utility methods.
 var utils = {
@@ -3531,6 +3568,19 @@ var utils = {
         'adapter.js logging enabled';
   },
 
+  /**
+   * Disable or enable deprecation warnings
+   * @param {!boolean} bool set to true to disable warnings.
+   */
+  disableWarnings: function(bool) {
+    if (typeof bool !== 'boolean') {
+      return new Error('Argument type: ' + typeof bool +
+          '. Please use a boolean.');
+    }
+    deprecationWarnings_ = !bool;
+    return 'adapter.js deprecation warnings ' + (bool ? 'disabled' : 'enabled');
+  },
+
   log: function() {
     if (typeof window === 'object') {
       if (logDisabled_) {
@@ -3540,6 +3590,17 @@ var utils = {
         console.log.apply(console, arguments);
       }
     }
+  },
+
+  /**
+   * Shows a deprecation warning suggesting the modern and spec-compatible API.
+   */
+  deprecated: function(oldMethod, newMethod) {
+    if (!deprecationWarnings_) {
+      return;
+    }
+    console.warn(oldMethod + ' is deprecated, please use ' + newMethod +
+        ' instead.');
   },
 
   /**
@@ -3635,8 +3696,8 @@ var utils = {
       if ('getTracks' in stream) {
         var url = 'polyblob:' + (++newId);
         streams.set(url, stream);
-        console.log('URL.createObjectURL(stream) is deprecated! ' +
-                    'Use elem.srcObject = stream instead!');
+        utils.deprecated('URL.createObjectURL(stream)',
+            'elem.srcObject = stream');
         return url;
       }
       return nativeCreateObjectURL(stream);
@@ -3672,7 +3733,9 @@ var utils = {
 // Export.
 module.exports = {
   log: utils.log,
+  deprecated: utils.deprecated,
   disableLog: utils.disableLog,
+  disableWarnings: utils.disableWarnings,
   extractVersion: utils.extractVersion,
   shimCreateObjectURL: utils.shimCreateObjectURL,
   detectBrowser: utils.detectBrowser.bind(utils)
@@ -5362,165 +5425,6 @@ var BotHelper = function () {
   return BotHelper;
 }();
 
-var EventSource = Util.require(Util.EVENT_SOURCE);
-var fetch = Util.require(Util.FETCH);
-var CloseEvent$1 = Util.require(Util.CLOSE_EVENT);
-
-var CONNECT_TIMEOUT$1 = 5000;
-
-/**
- * Service class responsible to establish connections between peers via
- * `WebSocket`.
- */
-var EventSourceService = function (_Service) {
-  inherits(EventSourceService, _Service);
-
-  function EventSourceService() {
-    classCallCheck(this, EventSourceService);
-    return possibleConstructorReturn(this, (EventSourceService.__proto__ || Object.getPrototypeOf(EventSourceService)).apply(this, arguments));
-  }
-
-  createClass(EventSourceService, [{
-    key: 'connect',
-
-    /**
-     * Creates RichEventSource object.
-     *
-     * @param {string} url - Server url
-     * @returns {Promise<EventSource, string>} It is resolved once the WebSocket has been created and rejected otherwise
-     */
-    value: function connect(url) {
-      return new Promise(function (resolve, reject) {
-        try {
-          var res = new RichEventSource(url);
-          res.onopen = function () {
-            return resolve(res);
-          };
-          res.onerror = function (err) {
-            return reject(err.message
-            // Timeout if "auth" event has not been received.
-            );
-          };setTimeout(function () {
-            reject(new Error('Authentication event has not been received from ' + url + ' within ' + CONNECT_TIMEOUT$1 + 'ms'));
-          }, CONNECT_TIMEOUT$1);
-        } catch (err) {
-          reject(err.message);
-        }
-      });
-    }
-  }]);
-  return EventSourceService;
-}(Service);
-
-var RichEventSource = function () {
-  function RichEventSource(url) {
-    var _this2 = this;
-
-    classCallCheck(this, RichEventSource);
-
-    this.auth = '';
-    this._onopen = function () {};
-    this._onerror = function () {};
-    this._onclose = function () {};
-    this.es = new EventSource(url);
-    this.es.addEventListener('auth', function (evtMsg) {
-      _this2.auth = evtMsg.data;
-      _this2._onopen();
-    });
-    this.es.addEventListener('close', function (evtMsg) {
-      var data = JSON.parse(evtMsg.data);
-      _this2.es.close();
-      _this2._onclose(new CloseEvent$1('close', {
-        wasClean: true,
-        code: data.code,
-        reason: data.reason
-      }));
-    });
-    this.es.onerror = this._onerror;
-  }
-
-  createClass(RichEventSource, [{
-    key: 'close',
-    value: function close() {
-      this.es.close();
-      this._onclose(new CloseEvent$1('close', { wasClean: true, code: 1000 }));
-    }
-  }, {
-    key: 'send',
-    value: function send() {
-      var _this3 = this;
-
-      var str = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-
-      fetch(this.url, { method: 'POST', body: this.auth + '@' + str }).then(function (response) {
-        if (response.status !== 200) {
-          _this3._onerror(new Error(response.status + ': ' + response.statusText));
-        }
-      }).catch(function (err) {
-        return _this3._onerror(err);
-      });
-    }
-  }, {
-    key: 'CONNECTING',
-    get: function get$$1() {
-      return this.es.OPEN !== undefined ? this.es.OPEN : 0;
-    }
-  }, {
-    key: 'OPEN',
-    get: function get$$1() {
-      return this.es.OPEN !== undefined ? this.es.OPEN : 1;
-    }
-  }, {
-    key: 'CLOSED',
-    get: function get$$1() {
-      return this.es.OPEN !== undefined ? this.es.OPEN : 2;
-    }
-  }, {
-    key: 'url',
-    get: function get$$1() {
-      return this.es.url;
-    }
-  }, {
-    key: 'readyState',
-    get: function get$$1() {
-      return this.es.readyState;
-    }
-  }, {
-    key: 'onopen',
-    get: function get$$1() {
-      return this._onopen;
-    },
-    set: function set$$1(cb) {
-      this._onopen = cb;
-    }
-  }, {
-    key: 'onmessage',
-    get: function get$$1() {
-      return this.es.onmessage;
-    },
-    set: function set$$1(cb) {
-      this.es.onmessage = cb;
-    }
-  }, {
-    key: 'onclose',
-    get: function get$$1() {
-      return this._onclose;
-    },
-    set: function set$$1(cb) {
-      this._onclose = cb;
-    }
-  }, {
-    key: 'onerror',
-    get: function get$$1() {
-      return this._onerror;
-    },
-    set: function set$$1(cb) {
-      this._onerror = cb;
-    }
-  }]);
-  return RichEventSource;
-}();
-
 var ListenFlags = {
   none: 0, // 0
   ws: 1, // 1
@@ -6173,6 +6077,7 @@ var Buffer = function () {
   return Buffer;
 }();
 
+// import { EventSourceService } from 'service/EventSourceService'
 /**
  * {@link WebRTCService} identifier.
  * @type {number}
@@ -6250,10 +6155,10 @@ var ServiceFactory = function () {
           service = new WebSocketService(WEB_SOCKET);
           services.set(id, service);
           return service;
-        case EVENT_SOURCE:
-          service = new EventSourceService(EVENT_SOURCE);
-          services.set(id, service);
-          return service;
+        // case EVENT_SOURCE:
+        //   service = new EventSourceService(EVENT_SOURCE)
+        //   services.set(id, service)
+        //   return service
         case CHANNEL_BUILDER:
           service = new ChannelBuilderService(CHANNEL_BUILDER);
           services.set(id, service);
@@ -7430,12 +7335,10 @@ var url$1 = require('url'
    *
    * @param {Object} options
    * @param {FULLY_CONNECTED} [options.topology=FULLY_CONNECTED] Fully connected topology is the only one available for now
-   * @param {string} [options.signalingURL='wss://www.coedit.re:10473'] Signaling server url
+   * @param {string} [options.signalingURL='wss://www.coedit.re:10443'] Signaling server url
    * @param {RTCIceServer} [options.iceServers=[{urls:'stun3.l.google.com:19302'}]] Set of ice servers for WebRTC
    * @param {Object} [options.bot] Options for bot server
-   * @param {string} [options.bot.protocol='wss'] Bot protocol to be transmitted to other peers to connect to bot
-   * @param {string} [options.bot.host='127.0.0.1'] Bot hostname where to bing the server
-   * @param {number} [options.bot.port=8080] Bot port where to bind the server
+   * @param {string} [options.bot.url=''] Bot public URL to be shared on the p2p network
    * @param {Object} [options.bot.server=null] A pre-created Node.js HTTP server
    */
   function BotServer() {
@@ -7446,9 +7349,7 @@ var url$1 = require('url'
 
     var botDefaults = {
       bot: {
-        protocol: 'wss',
-        host: '127.0.0.1',
-        port: 8080,
+        url: '',
         server: undefined,
         perMessageDeflate: false
       }
@@ -7465,19 +7366,13 @@ var url$1 = require('url'
       perMessageDeflate: this.botSettings.perMessageDeflate,
       verifyClient: function verifyClient(info$$1) {
         return _this.validateConnection(info$$1);
-      }
-    };
-    if (this.botSettings.server) {
-      this.serverSettings.server = this.botSettings.server;
-    } else {
-      this.serverSettings.host = this.botSettings.host;
-      this.serverSettings.port = this.botSettings.port;
-    }
+      },
+      server: this.botSettings.server
 
-    /**
-     * @type {WebSocketServer}
-     */
-    this.server = null;
+      /**
+       * @type {WebSocketServer}
+       */
+    };this.server = null;
 
     /**
      * @type {WebChannel[]}
@@ -7501,7 +7396,7 @@ var url$1 = require('url'
     value: function init() {
       var _this2 = this;
 
-      var WebSocketServer = this.selectWebSocketServer();
+      var WebSocketServer = require('uws').Server;
       this.server = new WebSocketServer(this.serverSettings);
       var serverListening = this.serverSettings.server || this.server;
       serverListening.on('listening', function () {
@@ -7632,39 +7527,13 @@ var url$1 = require('url'
       }
     }
   }, {
-    key: 'selectWebSocketServer',
-    value: function selectWebSocketServer() {
-      var WebSocketServer = void 0;
-      try {
-        WebSocketServer = require('uws').Server;
-        return WebSocketServer;
-      } catch (err) {
-        console.log(err.message + '. Try to use ws module.');
-        WebSocketServer = Util.require('ws').Server;
-        return WebSocketServer;
-      }
-    }
-  }, {
     key: 'url',
     get: function get$$1() {
-      return this.botSettings.protocol + '://' + this.host + ':' + this.port;
-    }
-  }, {
-    key: 'host',
-    get: function get$$1() {
-      if (this.serverSettings.server) {
-        return this.serverSettings.server.address().address;
+      if (this.botSettings.url !== '') {
+        return this.botSettings.url;
       } else {
-        return this.serverSettings.host;
-      }
-    }
-  }, {
-    key: 'port',
-    get: function get$$1() {
-      if (this.serverSettings.server) {
-        return this.serverSettings.server.address().port;
-      } else {
-        return this.serverSettings.port;
+        var address = this.serverSettings.server.address();
+        return 'ws://' + address.address + ':' + address.port;
       }
     }
   }]);

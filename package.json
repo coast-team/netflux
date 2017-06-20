@@ -1,7 +1,7 @@
 {
   "name": "netflux",
   "description": "Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done.",
-  "version": "1.1.0-beta.4",
+  "version": "1.1.0-beta.5",
   "license": "AGPL-3.0",
   "main": "dist/netflux.es5.umd.js",
   "module": "dist/netflux.es5.module.node.js",
@@ -44,7 +44,6 @@
     "cz": "git-cz"
   },
   "dependencies": {
-    "eventsource": "^1.0.0",
     "node-fetch": "^1.6.3",
     "rxjs": "^5.2.0",
     "text-encoding": "^0.6.4",

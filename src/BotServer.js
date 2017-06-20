@@ -17,20 +17,16 @@ export class BotServer {
    *
    * @param {Object} options
    * @param {FULLY_CONNECTED} [options.topology=FULLY_CONNECTED] Fully connected topology is the only one available for now
-   * @param {string} [options.signalingURL='wss://www.coedit.re:10473'] Signaling server url
+   * @param {string} [options.signalingURL='wss://www.coedit.re:10443'] Signaling server url
    * @param {RTCIceServer} [options.iceServers=[{urls:'stun3.l.google.com:19302'}]] Set of ice servers for WebRTC
    * @param {Object} [options.bot] Options for bot server
-   * @param {string} [options.bot.protocol='wss'] Bot protocol to be transmitted to other peers to connect to bot
-   * @param {string} [options.bot.host='127.0.0.1'] Bot hostname where to bing the server
-   * @param {number} [options.bot.port=8080] Bot port where to bind the server
+   * @param {string} [options.bot.url=''] Bot public URL to be shared on the p2p network
    * @param {Object} [options.bot.server=null] A pre-created Node.js HTTP server
    */
   constructor (options = {}) {
     const botDefaults = {
       bot: {
-        protocol: 'wss',
-        host: '127.0.0.1',
-        port: 8080,
+        url: '',
         server: undefined,
         perMessageDeflate: false
       }
@@ -45,13 +41,8 @@ export class BotServer {
     this.botSettings = Object.assign({}, botDefaults.bot, options.bot)
     this.serverSettings = {
       perMessageDeflate: this.botSettings.perMessageDeflate,
-      verifyClient: (info) => this.validateConnection(info)
-    }
-    if (this.botSettings.server) {
-      this.serverSettings.server = this.botSettings.server
-    } else {
-      this.serverSettings.host = this.botSettings.host
-      this.serverSettings.port = this.botSettings.port
+      verifyClient: (info) => this.validateConnection(info),
+      server: this.botSettings.server
     }
 
     /**
@@ -77,27 +68,16 @@ export class BotServer {
   }
 
   get url () {
-    return `${this.botSettings.protocol}://${this.host}:${this.port}`
-  }
-
-  get host () {
-    if (this.serverSettings.server) {
-      return this.serverSettings.server.address().address
+    if (this.botSettings.url !== '') {
+      return this.botSettings.url
     } else {
-      return this.serverSettings.host
-    }
-  }
-
-  get port () {
-    if (this.serverSettings.server) {
-      return this.serverSettings.server.address().port
-    } else {
-      return this.serverSettings.port
+      const address = this.serverSettings.server.address()
+      return `ws://${address.address}:${address.port}`
     }
   }
 
   init () {
-    let WebSocketServer = this.selectWebSocketServer()
+    let WebSocketServer = require('uws').Server
     this.server = new WebSocketServer(this.serverSettings)
     const serverListening = this.serverSettings.server || this.server
     serverListening.on('listening', () => BotHelper.listen(this.url))
@@ -183,18 +163,6 @@ export class BotServer {
         return query.senderId && wcId && this.getWebChannel(wcId)
       default:
         return false
-    }
-  }
-
-  selectWebSocketServer () {
-    let WebSocketServer
-    try {
-      WebSocketServer = require('uws').Server
-      return WebSocketServer
-    } catch (err) {
-      console.log(`${err.message}. Try to use ws module.`)
-      WebSocketServer = Util.require('ws').Server
-      return WebSocketServer
     }
   }
 }

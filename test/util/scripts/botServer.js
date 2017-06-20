@@ -13,7 +13,7 @@ try {
   const app = new Koa()
   const router = new Router()
   const server = http.createServer(app.callback())
-  const bot = new BotServer({ bot: { protocol: 'ws', server } })
+  const bot = new BotServer({ bot: { server } })
 
   // Configure router
   router

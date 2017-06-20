@@ -1,7 +1,7 @@
 import { FullyConnectedService } from 'service/topology/FullyConnectedService'
 import { WebRTCService } from 'service/WebRTCService'
 import { WebSocketService } from 'service/WebSocketService'
-import { EventSourceService } from 'service/EventSourceService'
+// import { EventSourceService } from 'service/EventSourceService'
 import { ChannelBuilderService } from 'service/ChannelBuilderService'
 import { MessageService } from 'service/MessageService'
 
@@ -75,10 +75,10 @@ export class ServiceFactory {
         service = new WebSocketService(WEB_SOCKET)
         services.set(id, service)
         return service
-      case EVENT_SOURCE:
-        service = new EventSourceService(EVENT_SOURCE)
-        services.set(id, service)
-        return service
+      // case EVENT_SOURCE:
+      //   service = new EventSourceService(EVENT_SOURCE)
+      //   services.set(id, service)
+      //   return service
       case CHANNEL_BUILDER:
         service = new ChannelBuilderService(CHANNEL_BUILDER)
         services.set(id, service)
