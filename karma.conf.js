@@ -18,9 +18,8 @@ module.exports = (config) => {
 
     // list of files / patterns to load in the browser
     files: [
-      {pattern: 'src/**/!(log).js', included: false},
       'src/log.js',
-      'test/unit/**/*.test.js',
+      // 'test/unit/**/*.test.js',
       'test/e2e/fullyConnected/join.test.js'
     ],
 
@@ -58,10 +57,10 @@ module.exports = (config) => {
           paths: ['', 'src/', 'test/', 'dist/'],
           extensions: ['.js', '.txt']
         }),
+        require('rollup-plugin-node-resolve')({}),
         require('rollup-plugin-commonjs')({
-          extensions: [ '.js' ],
-          sourceMap: false,
-          ignoreGlobal: false
+          include: 'node_modules/**',
+          namedExports: { 'node_modules/protobufjs/minimal.js': [ 'Reader', 'Writer', 'util', 'roots' ] }
         }),
         require('rollup-plugin-replace')({
           WEB_RTC_MODULE: `window`,
@@ -146,10 +145,10 @@ module.exports = (config) => {
             paths: ['', 'src/', 'test/'],
             extensions: ['.js', '.txt']
           }),
+          require('rollup-plugin-node-resolve')({}),
           require('rollup-plugin-commonjs')({
-            extensions: [ '.js' ],
-            sourceMap: false,
-            ignoreGlobal: false
+            include: 'node_modules/**',
+            namedExports: { 'node_modules/protobufjs/minimal.js': [ 'Reader', 'Writer', 'util', 'roots' ] }
           }),
           require('rollup-plugin-istanbul')({
             include: [

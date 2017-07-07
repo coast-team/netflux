@@ -1,0 +1,10 @@
+syntax = "proto3";
+import "user.proto";
+import "service/inner.proto";
+
+message Message {
+  uint32 senderId = 1;
+  uint32 recipientId = 2;
+  bool isInner = 3;
+  bytes content = 4;
+}

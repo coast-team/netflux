@@ -1,6 +1,3 @@
-import { ServiceFactory, WEB_RTC, WEB_SOCKET, EVENT_SOURCE } from 'ServiceFactory'
-import { Util } from 'Util'
-
 /**
  * This class represents a door of the `WebChannel` for the current peer. If the door
  * is open, then clients can join the `WebChannel` through this peer. There are as
@@ -15,25 +12,25 @@ export class SignalingGate {
     /**
      * @type {WebChannel}
      */
-    this.webChannel = wc
+    this.wc = wc
     /**
      * Signaling server url.
      * @private
      * @type {string}
      */
-    this.url = null
+    this.url = undefined
     /**
      * Key related to the `url`.
      * @private
      * @type {string}
      */
-    this.key = null
+    this.key = undefined
     /**
      * Connection with the signaling server.
      * @private
      * @type {external:WebSocket|external:ws/WebSocket|external:EventSource}
      */
-    this.stream = null
+    this.stream = undefined
 
     this.onChannel = onChannel
   }
@@ -43,14 +40,14 @@ export class SignalingGate {
    *
    * @param {string} url Signaling server url
    * @param {string} [key = this.generateKey()]
+   * @param {Object} signaling
    * @returns {Promise<OpenData, string>}
    */
   open (url, key = this.generateKey(), signaling) {
     if (signaling) {
       return this.listenOnOpen(url, key, signaling)
     } else {
-      return this.getConnectionService(url)
-        .subject(url)
+      return this.wc.webSocketSvc.connectToSignaling(url)
         .then(signaling => {
           signaling.filter(msg => 'ping' in msg)
             .subscribe(() => signaling.send(JSON.stringify({pong: true})))
@@ -80,17 +77,15 @@ export class SignalingGate {
             reject(new Error(''))
           }
         )
-      ServiceFactory.get(WEB_RTC)
-        .onChannelFromSignaling(signaling, {iceServers: this.webChannel.settings.iceServers})
-        .subscribe(dc => this.onChannel(dc))
+      this.wc.webRTCSvc.channelsFromSignaling(signaling)
+        .subscribe(ch => this.onChannel(ch))
       signaling.send(JSON.stringify({open: key}))
     })
   }
 
   join (key, url, shouldOpen) {
     return new Promise((resolve, reject) => {
-      this.getConnectionService(url)
-        .subject(url)
+      this.wc.webSocketSvc.connectToSignaling(url)
         .then(signaling => {
           signaling.filter(msg => 'ping' in msg)
             .subscribe(() => signaling.send(JSON.stringify({pong: true})))
@@ -108,17 +103,16 @@ export class SignalingGate {
                     resolve()
                   }
                 } else {
-                  ServiceFactory.get(WEB_RTC)
-                    .connectOverSignaling(signaling, key, {iceServers: this.webChannel.settings.iceServers})
-                    .then(dc => {
+                  this.wc.webRTCSvc.connectOverSignaling(signaling)
+                    .then(ch => {
                       subs.unsubscribe()
                       if (shouldOpen) {
                         this.open(url, key, signaling)
-                          .then(() => resolve(dc))
+                          .then(() => resolve(ch))
                           .catch(err => reject(err))
                       } else {
                         signaling.close(1000)
-                        resolve(dc)
+                        resolve(ch)
                       }
                     })
                     .catch(err => {
@@ -142,13 +136,13 @@ export class SignalingGate {
    * closed
    */
   isOpen () {
-    return this.stream !== null
+    return this.stream !== undefined
   }
 
   /**
    * Get open data.
    *
-   * @returns {OpenData|null} Open data if the door is open and null otherwise
+   * @returns {OpenData|undefined} Open data if the door is open and null otherwise
    */
   getOpenData () {
     if (this.isOpen()) {
@@ -157,7 +151,7 @@ export class SignalingGate {
         key: this.key
       }
     }
-    return null
+    return undefined
   }
 
   /**
@@ -169,31 +163,12 @@ export class SignalingGate {
     }
   }
 
-  /**
-   * Get the connection service for signaling server.
-   *
-   * @private
-   * @param {string} url Signaling server url
-   *
-   * @returns {Service}
-   */
-  getConnectionService (url) {
-    if (Util.isURL(url)) {
-      if (url.search(/^wss?/) !== -1) {
-        return ServiceFactory.get(WEB_SOCKET)
-      } else {
-        return ServiceFactory.get(EVENT_SOURCE)
-      }
-    }
-    throw new Error(`${url} is not a valid URL`)
-  }
-
   onClose () {
     if (this.isOpen()) {
-      this.key = null
-      this.stream = null
-      this.url = null
-      this.webChannel.onClose()
+      this.key = undefined
+      this.stream = undefined
+      this.url = undefined
+      this.wc.onClose()
     }
   }
 

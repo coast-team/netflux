@@ -2,6 +2,7 @@ import includePaths from 'rollup-plugin-includepaths'
 import commonjs from 'rollup-plugin-commonjs'
 import replace from 'rollup-plugin-replace'
 import string from 'rollup-plugin-string'
+import resolve from 'rollup-plugin-node-resolve'
 
 export default {
   entry: 'test/util/scripts/botServer.js',
@@ -14,10 +15,13 @@ export default {
       paths: ['', 'src', 'test'],
       extensions: ['.js']
     }),
+    resolve({}),
     commonjs({
       extensions: [ '.js' ],
       sourceMap: false,
-      ignoreGlobal: false
+      ignoreGlobal: false,
+      include: 'node_modules/**',
+      namedExports: { 'node_modules/protobufjs/minimal.js': [ 'Reader', 'Writer', 'util', 'roots' ] }
     }),
     replace({
       WEB_RTC_MODULE: `require('wrtc')`,

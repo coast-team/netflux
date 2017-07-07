@@ -3,19 +3,29 @@ import { BehaviorSubject } from 'node_modules/rxjs/BehaviorSubject'
 import 'node_modules/rxjs/add/operator/filter'
 
 import { Util } from 'Util'
-import { Service } from 'service/Service'
 const WebSocket = Util.require(Util.WEB_SOCKET)
 
 const CONNECT_TIMEOUT = 3000
-const isListening = new BehaviorSubject(false)
-const wsStream = new Subject()
-let url = ''
+const listenSubject = new BehaviorSubject('')
 
 /**
  * Service class responsible to establish connections between peers via
  * `WebSocket`.
  */
-export class WebSocketService extends Service {
+export class WebSocketService {
+  constructor (wc) {
+    this.wc = wc
+    this.channelStream = new Subject()
+  }
+
+  static listen () {
+    return listenSubject
+  }
+
+  static newIncomingSocket (wc, ws, senderId) {
+    wc.webSocketSvc.channelStream.next(wc._initConnection(ws, senderId))
+  }
+
   /**
    * Creates WebSocket with server.
    *
@@ -39,14 +49,30 @@ export class WebSocketService extends Service {
     })
   }
 
-  onWebSocket (wc) {
-    if (url) {
-      return wsStream.asObservable()
-    }
-    throw new Error('Peer is not listening on WebSocket')
+  connectTo (url, id) {
+    const fullUrl = `${url}/internalChannel?wcId=${this.wc.id}&senderId=${this.wc.myId}`
+    return new Promise((resolve, reject) => {
+      if (Util.isURL(url) && url.search(/^wss?/) !== -1) {
+        const ws = new WebSocket(fullUrl)
+        const channel = this.wc._initConnection(ws, id)
+        ws.onopen = () => resolve(channel)
+        // Timeout for node (otherwise it will loop forever if incorrect address)
+        setTimeout(() => {
+          if (ws.readyState !== ws.OPEN) {
+            reject(new Error(`WebSocket ${CONNECT_TIMEOUT}ms connection timeout with ${url}`))
+          }
+        }, CONNECT_TIMEOUT)
+      } else {
+        throw new Error(`${url} is not a valid URL`)
+      }
+    })
   }
 
-  subject (url) {
+  channels () {
+    return this.channelStream.asObservable()
+  }
+
+  connectToSignaling (url) {
     return this.connect(url)
       .then(socket => {
         const subject = new Subject()
@@ -72,27 +98,4 @@ export class WebSocketService extends Service {
         return subject
       })
   }
-}
-
-export class WebSocketChecker {
-  static isListening () {
-    return isListening.asObservable()
-  }
-
-  static get url () {
-    return url
-  }
-}
-
-export class BotHelper {
-  static listen (serverUrl) {
-    url = serverUrl
-    if (serverUrl) {
-      isListening.next(true)
-    } else {
-      isListening.next(false)
-    }
-  }
-
-  static get wsStream () { return wsStream }
 }

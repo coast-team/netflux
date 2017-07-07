@@ -33,7 +33,9 @@ for (let entry of entries) {
       commonjs({
         extensions: [ '.js' ],
         sourceMap: false,
-        ignoreGlobal: false
+        ignoreGlobal: false,
+        include: 'node_modules/**',
+        namedExports: { 'node_modules/protobufjs/minimal.js': [ 'Reader', 'Writer', 'util', 'roots' ] }
       }),
       replace({
         WEB_RTC_MODULE: `require('wrtc')`,

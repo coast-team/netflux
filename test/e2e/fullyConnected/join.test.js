@@ -1,14 +1,14 @@
 import * as helper from 'util/helper'
 import bigStr from 'util/4mb.txt'
 
-const USE_CASES = [2, 3, 7]
+const USE_CASES = [3]
 const scenarios = [
-  new helper.Scenario(2),
-  new helper.Scenario(1, 1),
-  new helper.Scenario(3),
-  new helper.Scenario(2, 2),
-  new helper.Scenario(7),
-  new helper.Scenario(6, 3)
+  // new helper.Scenario(2),
+  // new helper.Scenario(1, 1),
+  new helper.Scenario(3)
+  // new helper.Scenario(2, 2),
+  // new helper.Scenario(7),
+  // new helper.Scenario(6, 3)
 ]
 const PEER_FACE = '🙂 '
 const faces = length => {
@@ -20,9 +20,8 @@ const faces = length => {
 }
 
 describe('Fully connected', () => {
-  describe('Should establish a p2p network successively via join/join', () => {
+  fdescribe('Should establish a p2p network successively via join/join', () => {
     let wcs
-    log.info('Hello wolrd')
     afterEach(() => wcs.forEach(wc => wc.leave()))
 
     scenarios.forEach(scenario => {

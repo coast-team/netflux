@@ -1,0 +1,15 @@
+syntax = "proto3";
+package webRTC;
+
+message Message {
+  oneof type {
+    SDP offer = 1;
+    SDP answer = 2;
+    string candidate = 3;
+  }
+}
+
+message SDP {
+  string type = 1;
+  string sdp = 2;
+}

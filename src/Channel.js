@@ -6,24 +6,22 @@ import { Util } from 'Util'
 export class Channel {
   /**
    * Creates a channel from existing `RTCDataChannel` or `WebSocket`.
-   * @param {WebSocket|RTCDataChannel} channel Data channel or web socket
-   * @param {WebChannel} webChannel The `WebChannel` this channel will be part of
-   * @param {number} peerId Identifier of the peer who is at the other end of
-   * this channel
+   * @param {WebSocket|RTCDataChannel} connection Data channel or web socket
+   * @param {WebChannel} wc The `WebChannel` this channel will be part of
    */
-  constructor (channel, webChannel, peerId) {
+  constructor (connection, wc) {
     /**
      * Data channel or web socket.
      * @private
      * @type {external:WebSocket|external:RTCDataChannel}
      */
-    this.channel = channel
+    this.connection = connection
 
     /**
      * The `WebChannel` which this channel belongs to.
      * @type {WebChannel}
      */
-    this.webChannel = null
+    this.webChannel = wc
 
     /**
      * Identifier of the peer who is at the other end of this channel
@@ -35,15 +33,15 @@ export class Channel {
      * Send message.
      * @type {function(message: ArrayBuffer)}
      */
-    this.send = null
+    this.send = undefined
 
     if (Util.isBrowser()) {
-      channel.binaryType = 'arraybuffer'
+      connection.binaryType = 'arraybuffer'
       this.send = this.sendBrowser
-    } else if (Util.isSocket(channel)) {
+    } else if (Util.isSocket(connection)) {
       this.send = this.sendInNodeThroughSocket
     } else {
-      channel.binaryType = 'arraybuffer'
+      connection.binaryType = 'arraybuffer'
       this.send = this.sendInNodeThroughDataChannel
     }
   }
@@ -57,10 +55,10 @@ export class Channel {
    * @param {ArrayBuffer} data Message
    */
   sendBrowser (data) {
-    // if (this.channel.readyState !== 'closed' && new Int8Array(data).length !== 0) {
+    // if (this.connection.readyState !== 'closed' && new Int8Array(data).length !== 0) {
     if (this.isOpen()) {
       try {
-        this.channel.send(data)
+        this.connection.send(data)
       } catch (err) {
         console.error(`Channel send: ${err.message}`)
       }
@@ -74,7 +72,7 @@ export class Channel {
   sendInNodeThroughSocket (data) {
     if (this.isOpen()) {
       try {
-        this.channel.send(data, {binary: true})
+        this.connection.send(data, {binary: true})
       } catch (err) {
         console.error(`Channel send: ${err.message}`)
       }
@@ -93,21 +91,23 @@ export class Channel {
    * @param {function(msg: ArrayBuffer)} handler
    */
   set onMessage (handler) {
-    if (!Util.isBrowser() && Util.isSocket(this.channel)) {
-      this.channel.onmessage = msgEvt => {
+    if (!Util.isBrowser() && Util.isSocket(this.connection)) {
+      this.connection.onmessage = msgEvt => {
         handler(new Uint8Array(msgEvt.data).buffer)
       }
-    } else this.channel.onmessage = msgEvt => handler(msgEvt.data)
+    } else this.connection.onmessage = msgEvt => handler(msgEvt.data)
   }
 
   /**
    * @param {function(message: CloseEvent)} handler
    */
   set onClose (handler) {
-    this.channel.onclose = closeEvt => {
-      if (this.webChannel !== null && handler(closeEvt)) {
+    this.connection.onclose = closeEvt => {
+      if (handler(closeEvt)) {
         this.webChannel._onPeerLeave(this.peerId)
-      } else handler(closeEvt)
+      } else {
+        handler(closeEvt)
+      }
     }
   }
 
@@ -115,7 +115,7 @@ export class Channel {
    * @param {function(message: Event)} handler
    */
   set onError (handler) {
-    this.channel.onerror = evt => handler(evt)
+    this.connection.onerror = evt => handler(evt)
   }
 
   /**
@@ -130,7 +130,7 @@ export class Channel {
    * @returns {boolean}
    */
   isOpen () {
-    const state = this.channel.readyState
+    const state = this.connection.readyState
     return state === 1 || state === 'open'
   }
 
@@ -138,6 +138,6 @@ export class Channel {
    * Close the channel.
    */
   close () {
-    this.channel.close()
+    this.connection.close()
   }
 }

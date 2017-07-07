@@ -1,6 +1,5 @@
-import { BotHelper } from 'service/WebSocketService'
+import { WebSocketService } from 'service/WebSocketService'
 import { WebChannel } from 'WebChannel'
-import { Util } from 'Util'
 import { defaults } from 'defaults'
 import * as log from 'log'
 
@@ -80,10 +79,10 @@ export class BotServer {
     let WebSocketServer = require('uws').Server
     this.server = new WebSocketServer(this.serverSettings)
     const serverListening = this.serverSettings.server || this.server
-    serverListening.on('listening', () => BotHelper.listen(this.url))
+    serverListening.on('listening', () => WebSocketService.listen().next(this.url))
 
     this.server.on('error', err => {
-      BotHelper.listen('')
+      WebSocketService.listen().next('')
       this.onError(err)
     })
 
@@ -91,26 +90,30 @@ export class BotServer {
       const {pathname, query} = url.parse(ws.upgradeReq.url, true)
       const wcId = Number(query.wcId)
       let wc = this.getWebChannel(wcId)
+      const senderId = Number(query.senderId)
       switch (pathname) {
         case '/invite': {
           if (wc && wc.members.length === 0) {
             this.removeWebChannel(wc)
           }
           wc = new WebChannel(this.wcSettings)
+          const channel = wc._initConnection(ws, senderId)
           wc.id = wcId
           log.info('Bot invitation', {wcId})
           this.addWebChannel(wc)
           this.onWebChannel(wc)
-          wc.join(ws).then(() => {
+          wc.join(channel).then(() => {
             log.info('Bot successfully joined', {wcId})
             this.onWebChannelReady(wc)
           })
           break
         }
         case '/internalChannel': {
-          const senderId = Number(query.senderId)
-          log.info('Bot internal channel', {wcId, senderId})
-          BotHelper.wsStream.next({wc, ws, senderId})
+          if (wc !== undefined) {
+            WebSocketService.newIncomingSocket(wc, ws, senderId)
+          } else {
+            log.error('Cannot find WebChannel for a new internal channel')
+          }
           break
         }
       }
@@ -156,7 +159,7 @@ export class BotServer {
       case '/invite':
         if (wcId) {
           const wc = this.getWebChannel(wcId)
-          return wc === undefined || wc.members.length === 0
+          return (wc === undefined || wc.members.length === 0) && query.senderId
         }
         return false
       case '/internalChannel':

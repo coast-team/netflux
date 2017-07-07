@@ -1,5 +1,4 @@
-import { Service } from 'service/Service'
-import { ServiceFactory, CHANNEL_BUILDER } from 'ServiceFactory'
+import { InnerMessageMixin } from 'service/InnerMessageMixin'
 
 /**
  * It is responsible to preserve Web Channel
@@ -14,34 +13,12 @@ import { ServiceFactory, CHANNEL_BUILDER } from 'ServiceFactory'
  * @see FullyConnectedService
  * @interface
  */
-export class TopologyInterface extends Service {
-  connectTo (wc, peerIds) {
-    const failed = []
-    if (peerIds.length === 0) return Promise.resolve(failed)
-    else {
-      return new Promise((resolve, reject) => {
-        let counter = 0
-        const cBuilder = ServiceFactory.get(CHANNEL_BUILDER)
-        peerIds.forEach(id => {
-          cBuilder.connectTo(wc, id)
-            .then(channel => this.onChannel(channel))
-            .then(() => { if (++counter === peerIds.length) resolve(failed) })
-            .catch(reason => {
-              log.error('Failed connect to ', reason)
-              failed.push({id, reason})
-              if (++counter === peerIds.length) resolve(failed)
-            })
-        })
-      })
-    }
-  }
-
+export class TopologyInterface extends InnerMessageMixin {
   /**
-   * Adds a new peer into Web Channel.
+   * Add a new peer into WebChannel.
    *
    * @abstract
-   * @param  {Channel} ch - Channel to be added (it should has
-   * the `webChannel` property).
+   * @param  {Channel} ch - Channel with the new peer
    * @return {Promise} - Resolved once the channel has been succesfully added,
    * rejected otherwise.
    */
@@ -50,25 +27,66 @@ export class TopologyInterface extends Service {
   }
 
   /**
-   * Send a message to all peers in Web Channel.
+   * Broadcast a message to all network members.
    *
    * @abstract
-   * @param  {WebChannel} wc - Web Channel where the message will be propagated.
-   * @param  {string} data - Data in stringified JSON format to be send.
+   * @param  {Object} msg - Message to be send
+   * @param  {number} [msg.senderId] - Id of the sender peer
+   * @param  {number} [msg.recipientId] - Id of the recipient peer
+   * @param  {boolean} [msg.isInner] - True is it is an Netflux internal message and false
+   *   means that is is a user message.
+   * @param  {ArrayBuffer} [msg.content] - Message main content
    */
-  broadcast (wc, data) {
+  send (msg) {
     throw new Error('Must be implemented by subclass!')
   }
 
   /**
-   * Send a message to a particular peer in Web Channel.
+   * Send a message to a particular peer in the network.
    *
    * @abstract
-   * @param  {string} id - Peer id.
-   * @param  {WebChannel} wc - Web Channel where the message will be propagated.
-   * @param  {string} data - Data in stringified JSON format to be send.
+   * @param  {Object} msg - Message to be send
+   * @param  {number} [msg.senderId] - Id of the sender peer
+   * @param  {number} [msg.recipientId] - Id of the recipient peer
+   * @param  {boolean} [msg.isInner] - True is it is an Netflux internal message and false
+   *   means that is is a user message.
+   * @param  {ArrayBuffer} [msg.content] - Message main content
    */
-  sendTo (id, wc, data) {
+  sendTo (msg) {
+    throw new Error('Must be implemented by subclass!')
+  }
+
+  /**
+   * Forward a broadcasted message. This method will be called onces
+   * the peer receives a broadcasted message.
+   *
+   * @abstract
+   * @param  {Object} msg
+   * @param  {number} [msg.senderId] - Id of the sender peer
+   * @param  {number} [msg.recipientId] - Id of the recipient peer
+   * @param  {boolean} [msg.isInner] - True if it is Netflux internal message
+   *    and false if it is a user message.
+   * @param  {ArrayBuffer} [msg.content] - Message main content
+   */
+  forward (msg) {
+    throw new Error('Must be implemented by subclass!')
+  }
+
+  /**
+   * Forward the message to its recipient or to some peer who knowns
+   * how to forward this message to its recipient. This method
+   * will be called onces the peer receives a private message
+   * which is intended to someone else.
+   *
+   * @abstract
+   * @param  {Object} msg
+   * @param  {number} [msg.senderId] - Id of the sender peer
+   * @param  {number} [msg.recipientId] - Id of the recipient peer
+   * @param  {boolean} [msg.isInner] - True if it is a Netflux internal message
+   *    and false if it is a user message.
+   * @param  {ArrayBuffer} [msg.content] - Message main content
+   */
+  forwardTo (msg) {
     throw new Error('Must be implemented by subclass!')
   }
 
@@ -76,9 +94,28 @@ export class TopologyInterface extends Service {
    * Leave Web Channel.
    *
    * @abstract
-   * @param  {WebChannel} wc - Web Channel to leave.
    */
-  leave (wc) {
+  leave () {
+    throw new Error('Must be implemented by subclass!')
+  }
+
+  /**
+   * Close event handler for each `Channel` in the `WebChannel`.
+   *
+   * @param {CloseEvent} closeEvt
+   * @param {Channel} channel
+   */
+  onChannelClose (closeEvt, channel) {
+    throw new Error('Must be implemented by subclass!')
+  }
+
+  /**
+   * Error event handler for each `Channel` in the `WebChannel`.
+   *
+   * @param {Event} evt
+   * @param {Channel} channel
+   */
+  onChannelError (evt, channel) {
     throw new Error('Must be implemented by subclass!')
   }
 }

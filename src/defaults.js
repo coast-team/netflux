@@ -1,4 +1,4 @@
-import { FULLY_CONNECTED } from 'ServiceFactory'
+import { FULLY_CONNECTED } from 'service/topology/FullyConnectedService'
 
 /**
  * @type {Object}

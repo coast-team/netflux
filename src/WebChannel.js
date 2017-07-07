@@ -1,8 +1,14 @@
 import { Subject } from 'node_modules/rxjs/Subject'
 
-import { ServiceFactory, WEB_SOCKET, MESSAGE, CHANNEL_BUILDER } from 'ServiceFactory'
 import { Channel } from 'Channel'
+import { FullyConnectedService } from 'service/topology/FullyConnectedService'
+import { InnerMessageMixin } from 'service/InnerMessageMixin'
 import { SignalingGate } from 'SignalingGate'
+import { ChannelBuilderService } from 'service/ChannelBuilderService'
+import { WebSocketService } from 'service/WebSocketService'
+import { WebRTCService } from 'service/WebRTCService'
+import { Message, webChannel, inner } from 'Protobuf.js'
+import { UserMessage } from 'UserMessage'
 import { Util } from 'Util'
 import * as log from 'log'
 
@@ -23,37 +29,7 @@ const PING_TIMEOUT = 5000
 
 const ID_TIMEOUT = 10000
 
-/**
- * One of the internal message type. It's a peer message.
- * @ignore
- * @type {number}
- */
-const USER_DATA = 1
-
-/**
- * One of the internal message type. This message should be threated by a
- * specific service class.
- * @type {number}
- */
-const INNER_DATA = 2
-
-const INITIALIZATION = 3
-
-/**
- * One of the internal message type. Ping message.
- * @type {number}
- */
-const PING = 4
-
-/**
- * One of the internal message type. Pong message, response to the ping message.
- * @type {number}
- */
-const PONG = 5
-
-const INIT_CHANNEL = 6
-
-const INIT_CHANNEL_BIS = 7
+const INNER_ID = 100
 
 /**
  * This class is an API starting point. It represents a group of collaborators
@@ -62,11 +38,12 @@ const INIT_CHANNEL_BIS = 7
  * the `WebChannel` and he also possess enough information to be able to add it
  * preserving the current `WebChannel` structure (network topology).
  */
-export class WebChannel {
+export class WebChannel extends InnerMessageMixin {
   /**
    * @param {WebChannelSettings} settings Web channel settings
    */
   constructor (settings) {
+    super(INNER_ID, webChannel.Message)
     /**
      * @private
      * @type {WebChannelSettings}
@@ -74,29 +51,10 @@ export class WebChannel {
     this.settings = settings
 
     /**
-     * Channels through which this peer is connected with other peers. This
-     * attribute depends on the `WebChannel` topology. E. g. in fully connected
-     * `WebChannel` you are connected to each other peer in the group, however
-     * in the star structure this attribute contains only the connection to
-     * the central peer.
-     * @private
-     * @type {external:Set}
-     */
-    this._channels = new Set()
-
-    /**
      * This event handler is used to resolve *Promise* in {@link WebChannel#join}.
      * @private
      */
     this._joinSucceed = () => {}
-
-    /**
-     * Message builder service instance.
-     *
-     * @private
-     * @type {MessageService}
-     */
-    this._msgSvc = ServiceFactory.get(MESSAGE)
 
     /**
      * An array of all peer ids except this.
@@ -135,15 +93,6 @@ export class WebChannel {
     this._pongNb = 0
 
     /**
-     * The `WebChannel` gate.
-     * @private
-     * @type {SignalingGate}
-     */
-    this._signalingGate = new SignalingGate(this, ch => this._addChannel(ch))
-
-    this._initChannelPendingRequests = new Map()
-
-    /**
      * Unique `WebChannel` identifier. Its value is the same for all `WebChannel` members.
      * @type {number}
      */
@@ -156,6 +105,7 @@ export class WebChannel {
      * @type {number}
      */
     this.myId = this._generateId()
+    log.debug('myId', this.myId)
 
     /**
      * Is the event handler called when a new peer has  joined the `WebChannel`.
@@ -181,9 +131,25 @@ export class WebChannel {
      */
     this.onClose = () => {}
 
-    this._servicesData = {}
+    /**
+     * Message builder service instance.
+     *
+     * @private
+     * @type {MessageService}
+     */
+    this._userMsg = new UserMessage()
+
     this._msgStream = new Subject()
-    ServiceFactory.get(CHANNEL_BUILDER).init(this)
+    this.webRTCSvc = new WebRTCService(this, this.settings.iceServers, this._msgStream)
+    this.webSocketSvc = new WebSocketService(this)
+    this._signalingGate = new SignalingGate(this, ch => this._addChannel(ch))
+    this.channelBuilderSvc = new ChannelBuilderService(this)
+    super.setInnerStream(this._msgStream)
+    this.innerMessageSubscritption = this.innerStream.subscribe(
+        (msg) => this._handleInnerMessage(msg),
+        (err) => log.error('WebChannel inner message error', err),
+        (complete) => log.info('Webchannel inner message completed')
+      )
 
     /**
      * `WebChannel` topology.
@@ -196,11 +162,11 @@ export class WebChannel {
   /**
    * Join the `WebChannel`.
    *
-   * @param  {string|WebSocket} keyOrSocket The key provided by one of the `WebChannel` members or a socket
+   * @param  {string|WebSocket} keyOrChannel The key provided by one of the `WebChannel` members or a socket
    * @param  {string} [options] Join options
    * @returns {Promise<undefined,string>} It resolves once you became a `WebChannel` member.
    */
-  join (keyOrSocket, options = {}) {
+  join (keyOrChannel, options = {}) {
     let settings = {
       url: this.settings.signalingURL,
       open: true,
@@ -209,11 +175,10 @@ export class WebChannel {
     }
     Object.assign(settings, options)
     return new Promise((resolve, reject) => {
-      if (keyOrSocket.constructor.name !== 'WebSocket') {
-        this._joinRecursively(keyOrSocket, settings, () => resolve(), err => reject(err), 0)
+      if (keyOrChannel.constructor.name !== 'Channel') {
+        this._joinRecursively(keyOrChannel, settings, () => resolve(), err => reject(err), 0)
       } else {
         this._joinSucceed = () => resolve()
-        this._initChannel(keyOrSocket).catch(reject)
       }
     })
   }
@@ -227,9 +192,8 @@ export class WebChannel {
    */
   invite (url) {
     if (Util.isURL(url)) {
-      return ServiceFactory.get(WEB_SOCKET)
-        .connect(`${url}/invite?wcId=${this.id}`)
-        .then(ws => this._addChannel(ws))
+      return this.webSocketSvc.connect(`${url}/invite?wcId=${this.id}&senderId=${this.myId}`)
+        .then(connection => this._addChannel(this._initConnection(connection)))
     } else {
       return Promise.reject(new Error(`${url} is not a valid URL`))
     }
@@ -242,8 +206,8 @@ export class WebChannel {
    * @returns {Promise} It is resolved once the `WebChannel` is open. The
    * callback function take a parameter of type {@link SignalingGate~AccessData}.
    */
-  open (key = null) {
-    if (key !== null) {
+  open (key = undefined) {
+    if (key !== undefined) {
       return this._signalingGate.open(this.settings.signalingURL, key)
     } else {
       return this._signalingGate.open(this.settings.signalingURL)
@@ -280,14 +244,14 @@ export class WebChannel {
    */
   leave () {
     this._pingTime = 0
-    if (this._channels.size !== 0) {
+    if (this.members.length !== 0) {
       this.members = []
-      this._topologySvc.leave(this)
+      this._topologySvc.leave()
     }
-    this._initChannelPendingRequests = new Map()
     this._joinSucceed = () => {}
     this._msgStream.complete()
     this._signalingGate.close()
+    this.innerMessageSubscritption.unsubscribe()
   }
 
   /**
@@ -295,9 +259,12 @@ export class WebChannel {
    * @param  {UserMessage} data - Message
    */
   send (data) {
-    if (this._channels.size !== 0) {
-      this._msgSvc.handleUserMessage(data, this.myId, null, dataChunk => {
-        this._topologySvc.broadcast(this, dataChunk)
+    if (this.members.length !== 0) {
+      this._topologySvc.send({
+        senderId: this.myId,
+        recipientId: 0,
+        isInner: false,
+        content: this._userMsg.encode(data)
       })
     }
   }
@@ -308,10 +275,13 @@ export class WebChannel {
    * @param  {UserMessage} data - Message
    */
   sendTo (id, data) {
-    if (this._channels.size !== 0) {
-      this._msgSvc.handleUserMessage(data, this.myId, id, dataChunk => {
-        this._topologySvc.sendTo(id, this, dataChunk)
-      }, false)
+    if (this.members.length !== 0) {
+      this._topologySvc.sendTo({
+        senderId: this.myId,
+        recipientId: id,
+        isInner: false,
+        content: this._userMsg.encode(data)
+      })
     }
   }
 
@@ -321,14 +291,14 @@ export class WebChannel {
    * @returns {Promise}
    */
   ping () {
-    if (this._channels.size !== 0 && this._pingTime === 0) {
+    if (this.members.length !== 0 && this._pingTime === 0) {
       return new Promise((resolve, reject) => {
         if (this._pingTime === 0) {
           this._pingTime = Date.now()
           this._maxTime = 0
           this._pongNb = 0
           this._pingFinish = delay => resolve(delay)
-          this._topologySvc.broadcast(this, this._msgSvc.msg(PING, this.myId))
+          this._send({ content: super.encode({ ping: true }) })
           setTimeout(() => resolve(PING_TIMEOUT), PING_TIMEOUT)
         }
       })
@@ -337,21 +307,23 @@ export class WebChannel {
 
   /**
    * @private
-   * @param {WebSocket|RTCDataChannel} channel
+   * @param {Channel} ch
    *
    * @returns {Promise<undefined,string>}
    */
-  _addChannel (channel) {
-    return this._initChannel(channel)
-      .then(channel => {
-        log.info('WebChannel _addChannel->initChannel: ', {myId: this.myId, hisId: channel.peerId})
-        const msg = this._msgSvc.msg(INITIALIZATION, this.myId, channel.peerId, {
-          topology: this._topologySvc.id,
-          wcId: this.id
-        })
-        channel.send(msg)
-        return this._topologySvc.add(channel)
-      })
+  _addChannel (ch) {
+    ch.peerId = this._generateId()
+    log.info(this.myId + ' - WebChannel _addChannel->initChannel: ', ch.peerId)
+    const msg = this._encodeMain({
+      recipientId: 1,
+      content: super.encode({initWebChannel: {
+        topology: this._topologySvc.id,
+        wcId: this.id,
+        peerId: ch.peerId
+      }})
+    })
+    ch.send(msg)
+    return this._topologySvc.add(ch)
   }
 
   /**
@@ -359,6 +331,7 @@ export class WebChannel {
    * @param {number} peerId
    */
   _onPeerJoin (peerId) {
+    log.debug(this.myId + ' join ' + peerId)
     this.members[this.members.length] = peerId
     this.onPeerJoin(peerId)
   }
@@ -376,96 +349,127 @@ export class WebChannel {
    * Send a message to a service of the same peer, joining peer or any peer in
    * the `WebChannel`.
    * @private
-   * @param {number} recepient - Identifier of recepient peer id
-   * @param {string} serviceId - Service id
-   * @param {Object} data - Message to send
-   * @param {boolean} [forward=false] - SHould the message be forwarded?
+   * @param {Object} msg
+   * @param {string} [msg.serviceId] - Service id
+   * @param {number} [msg.recipientId] - Identifier of recipient peer id
+   * @param {boolean} [msg.isInner] - SHould the message be forwarded?
+   * @param {Object} [msg.content] - Message to send
    */
-  _sendInnerTo (recepient, serviceId, data, forward = false) {
-    if (forward) {
-      this._topologySvc.sendInnerTo(recepient, this, data)
+  _sendTo ({
+    senderId = this.myId,
+    recipientId = this.myId,
+    isInner = true,
+    content = new Uint8Array()
+  } = {}) {
+    const msg = {senderId, recipientId, isInner, content}
+    if (msg.recipientId === this.myId) {
+      this._handleMessageToMe(undefined, msg)
     } else {
-      if (Number.isInteger(recepient)) {
-        const msg = this._msgSvc.msg(INNER_DATA, this.myId, recepient, {serviceId, data})
-        this._topologySvc.sendInnerTo(recepient, this, msg)
-      } else {
-        recepient.send(this._msgSvc.msg(INNER_DATA, this.myId, recepient.peerId, {serviceId, data}))
-      }
+      this._topologySvc.sendTo(msg)
     }
   }
 
   /**
    * @private
-   * @param {number} serviceId
-   * @param {Object} data
+   * @param {Object} msg
+   * @param {boolean} isMeIncluded
    */
-  _sendInner (serviceId, data) {
-    this._topologySvc.sendInner(this, this._msgSvc.msg(INNER_DATA, this.myId, null, {serviceId, data}))
+  _send ({
+    senderId = this.myId,
+    recipientId = 0,
+    isInner = true,
+    content = new Uint8Array(),
+    isMeIncluded = false
+  } = {}) {
+    const msg = {senderId, recipientId, isInner, content}
+    if (isMeIncluded) {
+      this._handleMessageToMe(undefined, msg)
+    }
+    this._topologySvc.send(msg)
   }
 
   /**
    * Message event handler (`WebChannel` mediator). All messages arrive here first.
    * @private
    * @param {Channel} channel - The channel the message came from
-   * @param {external:ArrayBuffer} data - Message
+   * @param {external:ArrayBuffer} bytes - Message
    */
-  _onMessage (channel, data) {
-    const header = this._msgSvc.readHeader(data)
-    if (header.code === USER_DATA) {
-      this._msgSvc.readUserMessage(this, header.senderId, data, (fullData, isBroadcast) => {
-        this.onMessage(header.senderId, fullData, isBroadcast)
-      })
+  _onMessage (channel, bytes) {
+    const msg = this._decodeMain(bytes)
+
+    switch (msg.recipientId) {
+      // If the message is broadcasted
+      case 0:
+        this._handleMessageToMe(channel, msg)
+        this._topologySvc.forward(msg)
+        break
+
+      // If it is a private message to me
+      case this.myId:
+        this._handleMessageToMe(channel, msg)
+        break
+
+      // If is is a message to me from a peer who does not know yet my ID
+      case 1:
+        // log.debug('UNDEFINED')
+        this._handleMessageToMe(channel, msg)
+        break
+
+      // Otherwise the message should be forwarded to the intended peer
+      default:
+        // log.debug('_onMessage topology.sendTo')
+        this._topologySvc.forwardTo(msg)
+    }
+  }
+
+  _handleMessageToMe (channel, msg) {
+    if (!msg.isInner) {
+      // User Message
+      this.onMessage(
+        msg.senderId,
+        this._userMsg.decode(msg.content),
+        msg.recipientId === 0
+      )
     } else {
-      const msg = this._msgSvc.readInternalMessage(data)
-      switch (header.code) {
-        case INITIALIZATION: {
-          this._setTopology(msg.topology)
-          this.myId = header.recepientId
-          this.id = msg.wcId
-          channel.peerId = header.senderId
-          log.info('New peer initialized', {wc: this.id, FROM: header.senderId, ME: header.recepientId})
-          break
-        }
-        case INNER_DATA: {
-          if (header.recepientId === 0 || this.myId === header.recepientId) {
-            this._msgStream.next({
-              channel,
-              serviceId: msg.serviceId,
-              senderId: header.senderId,
-              recepientId: header.recepientId,
-              content: msg.data
-            })
-          } else this._sendInnerTo(header.recepientId, null, data, true)
-          break
-        }
-        case INIT_CHANNEL: {
-          this._initChannelPendingRequests.get(channel.peerId).resolve()
-          channel.send(this._msgSvc.msg(INIT_CHANNEL_BIS, this.myId, channel.peerId))
-          break
-        }
-        case INIT_CHANNEL_BIS: {
-          const resolver = this._initChannelPendingRequests.get(channel.peerId)
-          if (resolver) {
-            resolver.resolve()
-          }
-          break
-        }
-        case PING:
-          this._topologySvc.sendTo(header.senderId, this, this._msgSvc.msg(PONG, this.myId))
-          break
-        case PONG: {
-          const now = Date.now()
-          this._pongNb++
-          this._maxTime = Math.max(this._maxTime, now - this._pingTime)
-          if (this._pongNb === this.members.length) {
-            this._pingFinish(this._maxTime)
-            this._pingTime = 0
-          }
-          break
-        }
-        default:
-          throw new Error(`Unknown message type code: "${header.code}"`)
+      // Inner Message
+      this._msgStream.next(Object.assign({
+        channel,
+        senderId: msg.senderId,
+        recipientId: msg.recipientId
+      }, inner.Message.decode(msg.content)))
+    }
+  }
+
+  _handleInnerMessage ({channel, senderId, recipientId, msg}) {
+    switch (msg.type) {
+      case 'initWebChannel': {
+        const { topology, wcId, peerId } = msg.initWebChannel
+        this._setTopology(topology)
+        this.myId = peerId
+        this.id = wcId
+        channel.peerId = senderId
+        log.info('New peer initialized', {wc: this.id, FROM: senderId, ME: recipientId})
+        break
       }
+      case 'ping': {
+        this._sendTo({
+          recipientId: channel.peerId,
+          content: super.encode({ pong: true })
+        })
+        break
+      }
+      case 'pong': {
+        const now = Date.now()
+        this._pongNb++
+        this._maxTime = Math.max(this._maxTime, now - this._pingTime)
+        if (this._pongNb === this.members.length) {
+          this._pingFinish(this._maxTime)
+          this._pingTime = 0
+        }
+        break
+      }
+      default:
+        throw new Error(`Unknown message type: "${msg.type}"`)
     }
   }
 
@@ -473,46 +477,37 @@ export class WebChannel {
    * Initialize channel. The *Channel* object is a facade for *WebSocket* and
    * *RTCDataChannel*.
    * @private
-   * @param {external:WebSocket|external:RTCDataChannel} ch - Channel to
+   * @param {external:WebSocket|external:RTCDataChannel} connection - Channel to
    * initialize
-   * @param {number} [id] - Assign an id to this channel. It would be generated
-   * if not provided
+   * @param {number} id
    * @returns {Promise} - Resolved once the channel is initialized on both sides
    */
-  _initChannel (ch, id = -1) {
-    return new Promise((resolve, reject) => {
-      if (id === -1) id = this._generateId()
-      const channel = new Channel(ch)
+  _initConnection (connection, id) {
+    const channel = new Channel(connection, this)
+    if (id !== undefined) {
       channel.peerId = id
-      channel.webChannel = this
-      channel.onMessage = data => this._onMessage(channel, data)
-      channel.onClose = closeEvt => this._topologySvc.onChannelClose(closeEvt, channel)
-      channel.onError = evt => this._topologySvc.onChannelError(evt, channel)
-      this._initChannelPendingRequests.set(channel.peerId, {resolve: () => {
-        this._initChannelPendingRequests.delete(channel.peerId)
-        resolve(channel)
-      }})
-      channel.send(this._msgSvc.msg(INIT_CHANNEL, this.myId, channel.peerId))
-    })
+    }
+    channel.onMessage = data => this._onMessage(channel, data)
+    channel.onClose = closeEvt => this._topologySvc.onChannelClose(closeEvt, channel)
+    channel.onError = evt => this._topologySvc.onChannelError(evt, channel)
+    return channel
   }
 
-/**
- *
- * @private
- * @param  {[type]} key
- * @param  {[type]} options
- * @param  {[type]} resolve
- * @param  {[type]} reject
- * @param  {[type]} attempt
- * @return {void}
- */
+  /**
+   *
+   * @private
+   * @param  {[type]} key
+   * @param  {[type]} options
+   * @param  {[type]} resolve
+   * @param  {[type]} reject
+   * @param  {[type]} attempt
+   * @return {void}
+   */
   _joinRecursively (key, options, resolve, reject, attempt) {
     this._signalingGate.join(key, options.url, options.open)
-      .then(connection => {
-        if (connection) {
+      .then(ch => {
+        if (ch) {
           this._joinSucceed = () => resolve()
-          this._initChannel(connection)
-            .catch(reject)
         } else {
           resolve()
         }
@@ -532,9 +527,16 @@ export class WebChannel {
   }
 
   _setTopology (topology) {
-    this.settings.topology = topology
-    this._topologySvc = ServiceFactory.get(topology)
-    this._topologySvc.init(this)
+    if (this._topologySvc !== undefined) {
+      if (this.settings.topology !== topology) {
+        this.settings.topology = topology
+        this._topologySvc.clean()
+        this._topologySvc = new FullyConnectedService(this)
+      }
+    } else {
+      this.settings.topology = topology
+      this._topologySvc = new FullyConnectedService(this)
+    }
   }
 
   /**
@@ -553,6 +555,18 @@ export class WebChannel {
       return id
     } while (true)
   }
-}
 
-export { USER_DATA }
+  _encodeMain ({
+    senderId = this.myId,
+    recipientId = 0,
+    isInner = true,
+    content = new Uint8Array()
+  } = {}) {
+    const msg = {senderId, recipientId, isInner, content}
+    return Message.encode(Message.create(msg)).finish()
+  }
+
+  _decodeMain (bytes) {
+    return Message.decode(new Uint8Array(bytes))
+  }
+}
