@@ -18,7 +18,7 @@ export const LEAVE_CODE = 1
 
 export const INSTANCES = [
   String,
-  ArrayBuffer
+  Uint8Array
 ]
 
 export function createWebChannels (numberOfPeers) {
@@ -130,17 +130,25 @@ export function sendAndExpectOnMessage (wcs, isBroadcast, withBot = false) {
         if (typeof msg === 'string' || msg instanceof String) {
           let msgObj = JSON.parse(msg)
           msgId = msgObj.id
+
+          // Receive Chunk
           if (msgObj.data) {
             expect(flag.chunk).toBeFalsy()
             flag.chunk = true
+
+          // Receive String
           } else {
             expect(flag.string).toBeFalsy()
             flag.string = true
           }
-        } else if (msg instanceof ArrayBuffer) {
+
+        // Receive Binary
+        } else if (msg instanceof Uint8Array) {
           expect(flag.arraybuffer).toBeFalsy()
           flag.arraybuffer = true
-          msgId = (new Uint32Array(msg))[0]
+          msgId = (new Uint32Array(msg.slice().buffer))[0]
+        } else {
+          log.error('Unknown message type')
         }
         expect(msgId).toBeDefined()
         expect(msgId).toEqual(id)
@@ -159,6 +167,35 @@ export function sendAndExpectOnMessage (wcs, isBroadcast, withBot = false) {
       sendMessages(wc, isBroadcast)
     })
   }))
+
+  function sendMessages (wc, isBroadcast) {
+    // Create messages
+
+    // String
+    const msgString = JSON.stringify({ id: wc.myId })
+
+    // String chunk of 50Kb
+    const msgChunk = JSON.stringify({ id: wc.myId, data: chunk50kb })
+
+    // ArrayBuffer
+    const msgArrayBuffer = new Uint32Array(1)
+    msgArrayBuffer[0] = wc.myId
+
+    // Broadcast the messages
+    if (isBroadcast) {
+      wc.send(msgString)
+      wc.send(msgChunk)
+      wc.send(msgArrayBuffer)
+
+    // Send the messages privately to each peer
+    } else {
+      wc.members.forEach(id => {
+        wc.sendTo(id, msgString)
+        wc.sendTo(id, msgChunk)
+        wc.sendTo(id, msgArrayBuffer)
+      })
+    }
+  }
 
   if (withBot) {
     promises.push(new Promise((resolve, reject) => {
@@ -183,21 +220,8 @@ export function randData (Instance) {
   } else {
     const lengthBuf = 64 + 64 * Math.ceil(Math.random() * 100)
     const buffer = new ArrayBuffer(lengthBuf)
-    if (Instance === ArrayBuffer) return buffer
-    else if ([Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array].includes(Instance)) {
-      res = new Instance(buffer)
-      let sign = -1
-      for (let i of res) {
-        res[i] = Math.round(Math.random() * 255) * sign
-        sign *= sign
-      }
-    } else if ([Float32Array, Float64Array].includes(Instance)) {
-      res = new Instance(buffer)
-      let sign = -1
-      for (let i of res) {
-        res[i] = Math.random() * 255 * sign
-        sign *= sign
-      }
+    if (Instance === ArrayBuffer) {
+      return buffer
     }
   }
   return res
@@ -278,31 +302,6 @@ export function onMessageForBot (wc, id, msg, isBroadcast) {
 
 function tellBotToSend (wcId) {
   return fetch(`${BOT_FETCH_URL}/send/${wcId}`)
-}
-
-function sendMessages (wc, isBroadcast) {
-  // Create messages
-  // String
-  const msgString = JSON.stringify({ id: wc.myId })
-  // String chunk of 50Kb
-  const msgChunk = JSON.stringify({ id: wc.myId, data: chunk50kb })
-  // ArrayBuffer
-  const msgArrayBuffer = new Uint32Array(1)
-  msgArrayBuffer[0] = wc.myId
-
-  // Broadcast the messages
-  if (isBroadcast) {
-    wc.send(msgString)
-    wc.send(msgChunk)
-    wc.send(msgArrayBuffer.buffer)
-  // Send the messages privately to each peer
-  } else {
-    wc.members.forEach(id => {
-      wc.sendTo(id, msgString)
-      wc.sendTo(id, msgChunk)
-      wc.sendTo(id, msgArrayBuffer.buffer)
-    })
-  }
 }
 
 export class Scenario {

@@ -12,11 +12,11 @@ message Message {
   message Chunk {
     uint32 id = 1;
     uint32 number = 2;
-    bytes content = 3;
+    bytes content = 4;
   }
 
   enum Type {
     STRING = 0;
-    ARRAY_BUFFER = 1;
+    U_INT_8_ARRAY = 1;
   }
 }

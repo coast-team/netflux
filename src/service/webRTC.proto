@@ -3,13 +3,14 @@ package webRTC;
 
 message Message {
   oneof type {
-    SDP offer = 1;
-    SDP answer = 2;
-    string candidate = 3;
+    string offer = 1;
+    string answer = 2;
+    Candidate candidate = 3;
   }
 }
 
-message SDP {
-  string type = 1;
-  string sdp = 2;
+message Candidate {
+  string candidate = 1;
+  string sdpMid = 2;
+  uint32 sdpMLineIndex = 3;
 }

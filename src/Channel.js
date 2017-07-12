@@ -102,13 +102,7 @@ export class Channel {
    * @param {function(message: CloseEvent)} handler
    */
   set onClose (handler) {
-    this.connection.onclose = closeEvt => {
-      if (handler(closeEvt)) {
-        this.webChannel._onPeerLeave(this.peerId)
-      } else {
-        handler(closeEvt)
-      }
-    }
+    this.connection.onclose = closeEvt => handler(closeEvt)
   }
 
   /**

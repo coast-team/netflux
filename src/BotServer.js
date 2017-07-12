@@ -99,11 +99,9 @@ export class BotServer {
           wc = new WebChannel(this.wcSettings)
           const channel = wc._initConnection(ws, senderId)
           wc.id = wcId
-          log.info('Bot invitation', {wcId})
           this.addWebChannel(wc)
           this.onWebChannel(wc)
           wc.join(channel).then(() => {
-            log.info('Bot successfully joined', {wcId})
             this.onWebChannelReady(wc)
           })
           break

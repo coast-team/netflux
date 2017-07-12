@@ -20,72 +20,48 @@ export class FullyConnectedService extends TopologyInterface {
     super(FULLY_CONNECTED, fullyConnected.Message, wc._msgStream)
     this.wc = wc
     this.init()
-    this.innerMessageSubscritption = this.innerStream.subscribe(
-      msg => this._handleSvcMsg(msg),
-      err => log.error('FullyConnectedService Message Stream Error', err, wc),
-      () => {
-        this.init()
-        this.clean()
-      }
-    )
   }
 
   init () {
     this.channels = new Set()
-    this.joiningPeers = new Map()
-    this.pendingRequests = new Map()
+    this.jps = new Map()
+    this.innerStream.subscribe(
+      msg => this._handleSvcMsg(msg),
+      err => log.error('FullyConnectedService Message Stream Error', err)
+    )
+    this.channelsSubscription = this.wc.channelBuilderSvc.channels().subscribe(
+      ch => (this.jps.set(ch.peerId, ch)),
+      err => log.error('FullyConnectedService set joining peer Error', err)
+    )
   }
 
-  clean () {
-    this.innerMessageSubscritption.unsubscribe()
-  }
-
-  connectTo (peerIds) {
-    const failed = []
-    if (peerIds.length === 0) {
-      return Promise.resolve(failed)
-    } else {
-      return new Promise((resolve, reject) => {
-        let counter = 0
-        peerIds.forEach(id => {
-          this.wc.channelBuilderSvc.connectTo(id)
-            .then(ch => this.onChannel(ch))
-            .then(() => { if (++counter === peerIds.length) resolve(failed) })
-            .catch(reason => {
-              log.error('Failed connect to ', reason)
-              failed.push({id, reason})
-              if (++counter === peerIds.length) resolve(failed)
-            })
-        })
-      })
-    }
+  iJoin () {
+    return this.jps.has(this.wc.myId)
   }
 
   /**
    * Add a peer to the `WebChannel`.
    *
    * @param {WebSocket|RTCDataChannel} channel
-   *
-   * @returns {Promise<number, string>}
    */
-  add (channel) {
-    log.debug(this.wc.myId + ' ADD ' + channel.peerId)
-    const wc = channel.webChannel
-    const peers = wc.members.slice()
-    for (let jpId of this.joiningPeers.keys()) {
-      peers[peers.length] = jpId
+  addJoining (channel) {
+    const peers = this.wc.members.slice()
+    this.jps.set(channel.peerId, channel)
+    if (peers.length === 0) {
+      this.sendJoinedPeerId(channel, channel.peerId)
+    } else {
+      this.wc._send({ content: super.encode({ joiningPeerId: channel.peerId }) })
+      channel.send(this.wc._encodeMain({
+        recipientId: channel.peerId,
+        content: super.encode({ connectTo: { peers } })
+      }))
     }
-    this.setJP(channel.peerId, channel)
-    wc._send({
-      content: super.encode({newJoiningPeer: {jpId: channel.peerId}})
-    })
-    channel.send(wc._encodeMain({
-      recipientId: channel.peerId,
-      content: super.encode({ shouldConnectTo: { peers } })
-    }))
-    return new Promise((resolve, reject) => {
-      this.pendingRequests.set(channel.peerId, {resolve, reject})
-    })
+  }
+
+  initJoining (ch) {
+    this.jps.set(this.wc.myId, ch)
+    this.channels.add(ch)
+    this.wc._onPeerJoin(ch.peerId)
   }
 
   /**
@@ -95,111 +71,71 @@ export class FullyConnectedService extends TopologyInterface {
    */
   send (msg) {
     const bytes = this.wc._encodeMain(msg)
-    if (!msg.isInner) {
-      // User Message
-      for (let c of this.channels) {
-        c.send(bytes)
-      }
-    } else {
-      // Inner Message
-      // Send to all network members
-      for (let c of this.channels) {
-        c.send(bytes)
-      }
-      // Send to all joining peers
-      for (let jp of this.joiningPeers) {
-        jp.channel.send(bytes)
-      }
+    for (let ch of this.channels) {
+      ch.send(bytes)
     }
   }
+
+  forward (msg) { /* Nothing to do for this topology */ }
 
   sendTo (msg) {
     const bytes = this.wc._encodeMain(msg)
-    if (!msg.isInner) {
-      // User Message
-      for (let c of this.channels) {
-        if (c.peerId === msg.recipientId) {
-          c.send(bytes)
-          return
-        }
-      }
-    } else {
-      // Inner Message
-      let jp = this.joiningPeers.get(this.wc.myId)
-      if (jp === undefined) {
-        jp = this.joiningPeers.get(msg.recipientId)
-        log.debug(this.wc.myId + ' Recipient is JOINING', jp)
-      } else {
-        log.debug(this.wc.myId + ' ME is JOINING')
-      }
-
-      // If me or the recipient is joining the WebChannel,
-      // then send data via intermediary passway
-      if (jp !== undefined) {
-        jp.channel.send(bytes)
-      } else {
-        // Otherwise me and the recipient are network
-        // members, thus send data directly
-        for (let c of this.channels) {
-          if (c.peerId === msg.recipientId) {
-            c.send(bytes)
-            return
-          }
-        }
-        log.error(this.wc.myId + ' The recipient could not be found', msg)
+    for (let ch of this.channels) {
+      if (ch.peerId === msg.recipientId) {
+        return ch.send(bytes)
       }
     }
-  }
-
-  forward (msg) {
-    const bytes = this.wc._encodeMain(msg)
-    // If the message comes from a joining peer, then
-    // forward it to all network members
-    if (this.joiningPeers.has(msg.senderId)) {
-      for (let c of this.channels) {
-        c.send(bytes)
+    for (let [id, ch] of this.jps) {
+      if (id === msg.recipientId || id === this.wc.myId) {
+        return ch.send(bytes)
       }
     }
-    // Forward message to all joining peers except sender
-    for (let jp of this.joiningPeers) {
-      if (jp.channel.peerId !== msg.senderId) {
-        jp.channel.send(bytes)
-      }
-    }
+    return log.error(this.wc.myId + ' The recipient could not be found', msg)
   }
 
-  forwardTo () {
-    // Do nothing
-  }
+  forwardTo (msg) { this.sendTo(msg) }
 
   leave () {
-    for (let c of this.channels) {
-      c.clearHandlers()
-      c.close()
+    for (let ch of this.channels) {
+      ch.clearHandlers()
+      ch.close()
+    }
+    for (let ch of this.jps.values()) {
+      ch.clearHandlers()
+      ch.close()
     }
     this.channels.clear()
-  }
-
-  onChannel (channel) {
-    return new Promise((resolve, reject) => {
-      this.pendingRequests(channel.peerId, {resolve, reject})
-      channel.send(channel.webChannel._encodeMain({
-        recipientId: channel.peerId,
-        content: super.encode({ tick: true })
-      }))
-    })
+    this.jps.clear()
+    this.channelsSubscription.unsubscribe()
   }
 
   onChannelClose (closeEvt, channel) {
-    // TODO: need to check if this is a peer leaving and thus he closed channels
-    // with all WebChannel members or this is abnormal channel closing
-    for (let c of this.channels) {
-      if (c.peerId === channel.peerId) {
-        return this.channels.delete(c)
+    if (this.iJoin()) {
+      const firstChannel = this.channels.values().next().value
+      if (firstChannel.peerId === channel.peerId) {
+        this.wc._joinFailed('Intermediary peer has gone: ' + closeEvt.reason)
+        for (let ch of this.channels) {
+          ch.clearHandlers()
+          ch.close()
+        }
+        this.channels.clear()
+        this.jps.clear()
+      } else {
+        this.channels.delete(channel)
+        this.wc._onPeerLeave(channel.peerId)
+      }
+    } else {
+      for (let [id] of this.jps) {
+        if (id === channel.peerId) {
+          this.jps.delete(id)
+          return
+        }
+      }
+      if (this.channels.has(channel)) {
+        this.channels.delete(channel)
+        this.wc._onPeerLeave(channel.peerId)
       }
     }
-    this.joiningPeers.forEach(jp => jp.channels.delete(channel))
-    return false
   }
 
   /**
@@ -213,112 +149,77 @@ export class FullyConnectedService extends TopologyInterface {
   }
 
   _handleSvcMsg ({channel, senderId, recipientId, msg}) {
-    const wc = channel.webChannel
     switch (msg.type) {
-      case 'shouldConnectTo': {
-        const jpMe = this.setJP(wc.myId, channel)
-        jpMe.channels.add(channel)
-        this.connectTo(msg.shouldConnectTo.peers)
-          .then(failed => {
-            log.debug(this.wc.myId + ' shouldConnectTo ', failed)
-            const msg = { peerJoined: true }
-            jpMe.channels.forEach(ch => {
-              ch.send(wc._encodeMain({
-                recipientId: ch.peerId,
-                content: super.encode(msg)
-              }))
+      case 'connectTo': {
+        const { peers } = msg.connectTo
+
+        const promises = []
+        for (let id of peers) {
+          promises[promises.length] = this.wc.channelBuilderSvc.connectTo(id)
+        }
+        Promise.all(promises)
+          .then(channels => {
+            for (let ch of channels) {
               this.channels.add(ch)
-              wc._onPeerJoin(ch.peerId)
-            })
-            this.joiningPeers.delete(wc.myId)
-            this.joiningPeers.forEach(jp => wc._sendTo(jp.channel, this.id, msg))
-            wc._joinSucceed()
+              this.wc._onPeerJoin(ch.peerId)
+            }
+            channel.send(this.wc._encodeMain({
+              recipientId: channel.peerId,
+              content: super.encode({ connectedTo: { peers } })
+            }))
+          })
+          .catch(err => {
+            log.error('Failed to join', err)
+            channel.send(this.wc._encodeMain({
+              recipientId: channel.peerId,
+              content: super.encode({ connectedTo: { peers: [] } })
+            }))
+            this.clean()
+            this.wc._joinFailed(err)
           })
         break
       }
-      case 'peerJoined': {
-        const jpMe = this.joiningPeers.get(wc.myId)
-        this.joiningPeers.delete(senderId)
-        if (jpMe !== undefined) {
-          jpMe.channels.add(channel)
-        } else {
-          this.channels.add(channel)
-          wc._onPeerJoin(senderId)
-          const request = this.pendingRequests.get(senderId)
-          if (request !== undefined) request.resolve(senderId)
-        }
-        break
-      }
-      case 'tick': {
-        this.setJP(senderId, channel)
-        wc._sendTo({
-          recipientId: channel.peerId,
-          content: super.encode({ tock: {
-            isJoining: this.joiningPeers.get(wc.myId) !== undefined
-          } })
-        })
-        break
-      }
-      case 'tock': {
-        if (msg.isJoining) {
-          this.setJP(senderId, channel)
-        } else {
-          let jp = this.joiningPeers.get(wc.myId)
-          if (jp !== undefined) {
-            jp.channels.add(channel)
+      case 'connectedTo': {
+        const { peers } = msg.connectedTo
+        const missingPeers = []
+        for (let id of this.wc.members) {
+          if (!peers.includes(id)) {
+            missingPeers[missingPeers.length] = id
           }
         }
-        this.pendingRequests.get(senderId).resolve()
+        if (missingPeers.length === 0) {
+          this.sendJoinedPeerId(channel, senderId)
+        } else {
+          // TODO
+        }
         break
       }
-      case 'newJoiningPeer':
-        log.debug(this.wc.myId + ' newJoiningPeer ', msg.jpId)
-        this.setJP(msg.jpId, channel)
+      case 'joiningPeerId': {
+        this.jps.set(msg.joiningPeerId, channel)
         break
+      }
+      case 'joinedPeerId': {
+        const ch = this.jps.get(msg.joinedPeerId)
+        if (ch === undefined) {
+          // Throw error
+        } else {
+          this.jps.delete(msg.joinedPeerId)
+          if (this.wc.myId === msg.joinedPeerId) {
+            this.wc._joinSucceed()
+          } else {
+            this.channels.add(ch)
+            this.wc._onPeerJoin(msg.joinedPeerId)
+          }
+        }
+        break
+      }
     }
   }
 
-  /**
-   * @private
-   * @param {number} jpId
-   * @param {WebSocket|RTCDataChannel} channel
-   *
-   * @returns {type} Description
-   */
-  setJP (jpId, channel) {
-    let jp = this.joiningPeers.get(jpId)
-    if (!jp) {
-      jp = new JoiningPeer(channel)
-      this.joiningPeers.set(jpId, jp)
-    } else {
-      jp.channel = channel
-    }
-    return jp
-  }
-}
-
-/**
- * This class represents a temporary state of a peer, while he is about to join
- * the web channel. During the joining process every peer in the web channel
- * and the joining peer have an instance of this class with the same `id` and
- * `intermediaryId` attribute values. After the joining process has been finished
- * regardless of success, these instances will be deleted.
- */
-class JoiningPeer {
-  constructor (channel) {
-    /**
-     * The channel between the joining peer and intermediary peer. It is null
-     * for every peer, but the joining and intermediary peers.
-     *
-     * @type {Channel}
-     */
-    this.channel = channel
-
-    /**
-     * This attribute is proper to each peer. Array of channels which will be
-     * added to the current peer once it becomes the member of the web channel.
-     * @type {Channel[]}
-     */
-    this.channels = new Set()
+  sendJoinedPeerId (ch, joinedPeerId) {
+    this.wc._send({
+      isMeIncluded: true,
+      content: super.encode({ joinedPeerId })
+    })
   }
 }
