@@ -3,6 +3,7 @@ package inner;
 import "../webChannel.proto";
 import "channelBuilder.proto";
 import "topology/fullyConnected.proto";
+import "topology/spray/spray.proto";
 import "webRTC.proto";
 
 message Message {

@@ -1,0 +1,22 @@
+syntax = "proto3";
+package spray;
+
+message Message {
+  oneof type {
+    ShouldAdd shouldAdd = 1;
+    ExchangeInit exchangeInit = 2;
+    ExchangeResp exchangeResp = 3;
+  }
+}
+
+message ShouldAdd {
+  uint32 peerId = 1;
+}
+
+message ExchangeInit {
+  repeated bytes sample = 1;
+}
+
+message ExchangeResp {
+  repeated bytes respSample = 1;
+}
