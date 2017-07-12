@@ -51,31 +51,31 @@ export class UserMessage {
    */
   encode (data) {
     const {type, bytes} = this.userDataToType(data)
-    const msg = { length: bytes.byteLength, type }
-    if (bytes.byteLength <= MAX_USER_MSG_SIZE) {
-      msg.full = new Uint8Array(bytes)
+    const msg = { length: bytes.length, type }
+    if (bytes.length <= MAX_USER_MSG_SIZE) {
+      msg.full = bytes
+      return [user.Message.encode(user.Message.create(msg)).finish()]
     } else {
-      const numberOfChunks = Math.ceil(bytes.byteLength / MAX_USER_MSG_SIZE)
-      const msgId = Math.ceil(Math.random() * MAX_MSG_ID_SIZE)
-      for (let chunkNumber = 0; chunkNumber < numberOfChunks; chunkNumber++) {
-        const chunkLength = Math.min(
+      msg.chunk = { id: Math.ceil(Math.random() * MAX_MSG_ID_SIZE) }
+      const numberOfChunks = Math.ceil(bytes.length / MAX_USER_MSG_SIZE)
+      const res = new Array(numberOfChunks)
+      for (let number = 0; number < numberOfChunks; number++) {
+        const length = Math.min(
           MAX_USER_MSG_SIZE,
-          bytes.byteLength - MAX_USER_MSG_SIZE * chunkNumber
+          bytes.length - MAX_USER_MSG_SIZE * number
         )
-        const begin = MAX_USER_MSG_SIZE * chunkNumber
-        const end = begin + chunkLength
-        msg.chunk = {
-          id: msgId,
-          number: chunkNumber,
-          content: new Uint8Array(bytes.slice(begin, end))
-        }
+        const begin = MAX_USER_MSG_SIZE * number
+        const end = begin + length
+        msg.chunk.number = number
+        msg.chunk.content = new Uint8Array(bytes.slice(begin, end))
+        res[number] = user.Message.encode(user.Message.create(msg)).finish()
       }
+      return res
     }
-    return user.Message.encode(user.Message.create(msg)).finish()
   }
 
   decode (bytes, senderId) {
-    const msg = user.Message.decode(new Uint8Array(bytes))
+    const msg = user.Message.decode(bytes)
     let content
     switch (msg.content) {
       case 'full': {
@@ -83,10 +83,10 @@ export class UserMessage {
         break
       }
       case 'chunk': {
-        let buffer = super.getItem(senderId, msg.chunk.id)
+        let buffer = this.getBuffer(senderId, msg.chunk.id)
         if (buffer === undefined) {
           buffer = new Buffer(msg.length, msg.chunk.content, msg.chunk.number)
-          super.setItem(senderId, msg.chunk.id, buffer)
+          this.setBuffer(senderId, msg.chunk.id, buffer)
           content = undefined
         } else {
           content = buffer.append(msg.chunk.content, msg.chunk.number)
@@ -97,26 +97,17 @@ export class UserMessage {
         throw new Error('Unknown message integrity')
       }
     }
-    return content !== undefined ? this.typeToUserData(content, msg.type) : undefined
-  }
-
-  /**
-   * Netflux sends data in `ArrayBuffer`, but the user can send data in different
-   * types. This function retrieve the inital message sent by the user.
-   * @private
-   * @param {ArrayBuffer} buffer Message as it was received by the `WebChannel`
-   * @param {MessageTypeEnum} type Message type as it was defined by the user
-   * @returns {ArrayBuffer|TypedArray} Initial user message
-   */
-  typeToUserData (buffer, type) {
-    switch (type) {
-      case user.Message.Type.ARRAY_BUFFER:
-        return buffer
-      case user.Message.Type.STRING:
-        return stringDecoder.decode(buffer)
-      default:
-        throw new Error('Unknown message type')
+    if (content !== undefined) {
+      switch (msg.type) {
+        case user.Message.Type.U_INT_8_ARRAY:
+          return content
+        case user.Message.Type.STRING:
+          return stringDecoder.decode(content)
+        default:
+          throw new Error('Unknown message type')
+      }
     }
+    return content
   }
 
   /**
@@ -130,18 +121,35 @@ export class UserMessage {
     let type
     let bytes
     if (data instanceof ArrayBuffer) {
-      type = user.Message.Type.ARRAY_BUFFER
+      type = user.Message.Type.U_INT_8_ARRAY
       bytes = data
     } else if (typeof data === 'string' || data instanceof String) {
       type = user.Message.Type.STRING
       bytes = stringEncoder.encode(data)
     } else if (ArrayBuffer.isView(data)) {
-      type = user.Message.Type.ARRAY_BUFFER
+      type = user.Message.Type.U_INT_8_ARRAY
       bytes = data.buffer
     } else {
       throw new Error('Unknown message object')
     }
     return {type, bytes: new Uint8Array(bytes)}
+  }
+
+  getBuffer (peerId, msgId) {
+    const buffers = this.buffers.get(peerId)
+    if (buffers !== undefined) {
+      return buffers.get(msgId)
+    }
+    return undefined
+  }
+
+  setBuffer (peerId, msgId, buffer) {
+    let buffers = this.buffers.get(peerId)
+    if (buffers === undefined) {
+      buffers = new Map()
+    }
+    buffers.set(msgId, buffer)
+    this.buffers.set(peerId, buffers)
   }
 }
 
@@ -154,16 +162,16 @@ export class UserMessage {
  */
 class Buffer {
   /**
-   * @param {number} fullDataSize The total user message size
+   * @param {number} totalLength The total user message size
    * @param {ArrayBuffer} data The first chunk of the user message
    * @param {number} chunkNb Number of the chunk
    * @param {function(buffer: ArrayBuffer)} action Callback to be executed when all
    * message chunks are received and thus the message is ready
    */
-  constructor (fullDataSize, data, chunkNb) {
-    this.fullData = new Uint8Array(fullDataSize)
-    this.currentSize = 0
-    this.add(data, chunkNb)
+  constructor (totalLength, data, chunkNb) {
+    this.fullData = new Uint8Array(totalLength)
+    this.currentLength = 0
+    this.append(data, chunkNb)
   }
 
   /**
@@ -173,16 +181,11 @@ class Buffer {
    * @return {undefined|ArrayBuffer}
    */
   append (data, chunkNb) {
-    const dataChunk = new Uint8Array(data)
-    this.currentSize += data.byteLength
-    let index = chunkNb * MAX_USER_MSG_SIZE
-    for (let i = 0; i < data.byteLength; i++) {
-      this.fullData[index++] = dataChunk[i]
+    let i = chunkNb * MAX_USER_MSG_SIZE
+    this.currentLength += data.length
+    for (let d of data) {
+      this.fullData[i++] = d
     }
-    if (this.currentSize === this.fullData.byteLength) {
-      return this.fullData.buffer
-    } else {
-      return undefined
-    }
+    return this.currentLength === this.fullData.length ? this.fullData : undefined
   }
 }

@@ -32,7 +32,7 @@ export class WebRTCService extends InnerMessageMixin {
   channelsFromWebChannel () {
     if (WebRTCService.isSupported) {
       return this._channels(
-        this.innerStream.map(({ msg, senderId }) => ({ msg, id: senderId })),
+        this.innerStream.map(({ msg, senderId }) => ({ offer: msg.offer, id: senderId, candidate: msg.candidate })),
         (msg, id) => this.wc._sendTo({ recipientId: id, content: super.encode(msg) })
       )
     }
@@ -51,7 +51,8 @@ export class WebRTCService extends InnerMessageMixin {
     if (WebRTCService.isSupported) {
       return this._establishChannel(
         this.innerStream
-          .filter(({ senderId }) => senderId === id),
+          .filter(({ senderId }) => senderId === id)
+          .map(({ msg }) => ({ answer: msg.answer, candidate: msg.candidate })),
         msg => this.wc._sendTo({ recipientId: id, content: super.encode(msg) }),
         id
       )
@@ -70,7 +71,7 @@ export class WebRTCService extends InnerMessageMixin {
     if (WebRTCService.isSupported) {
       return this._channels(
         signalingStream.filter(msg => 'id' in msg && 'data' in msg)
-          .map(({ data, id }) => ({ msg: data, id })),
+          .map(({ data, id }) => ({ offer: data.offer, id, candidate: data.candidate })),
         (msg, id) => signalingStream.send(JSON.stringify({id, data: msg}))
       )
     }
@@ -89,7 +90,7 @@ export class WebRTCService extends InnerMessageMixin {
     if (WebRTCService.isSupported) {
       return this._establishChannel(
         signalingStream.filter(msg => 'data' in msg)
-          .map(msg => msg.data),
+          .map(({ data }) => ({ answer: data.answer, candidate: data.candidate })),
         msg => signalingStream.send(JSON.stringify({data: msg}))
       )
     }
@@ -107,16 +108,16 @@ export class WebRTCService extends InnerMessageMixin {
     const pc = new wrtc.RTCPeerConnection(this.rtcConfiguration)
     const remoteCandidateStream = new ReplaySubject()
     this._localCandidates(pc).subscribe(
-      candidate => send({candidate}),
+      candidate => send({ candidate }),
       err => console.warn(err),
-      () => send({candidate: ''})
+      () => send({})
     )
 
     return new Promise((resolve, reject) => {
       const subs = stream.subscribe(
-        msg => {
-          if (msg.answer !== undefined) {
-            pc.setRemoteDescription(msg.answer)
+        ({ answer, candidate }) => {
+          if (answer) {
+            pc.setRemoteDescription({ type: 'answer', sdp: answer })
               .then(() => {
                 remoteCandidateStream.subscribe(
                   candidate => {
@@ -128,12 +129,10 @@ export class WebRTCService extends InnerMessageMixin {
                 )
               })
               .catch(reject)
+          } else if (candidate) {
+            remoteCandidateStream.next(candidate)
           } else {
-            if (msg.candidate !== '') {
-              remoteCandidateStream.next(msg.candidate)
-            } else {
-              remoteCandidateStream.complete()
-            }
+            remoteCandidateStream.complete()
           }
         },
         reject,
@@ -146,10 +145,7 @@ export class WebRTCService extends InnerMessageMixin {
 
       pc.createOffer()
         .then(offer => pc.setLocalDescription(offer))
-        .then(() => send({offer: {
-          type: pc.localDescription.type,
-          sdp: pc.localDescription.sdp
-        }}))
+        .then(() => send({offer: pc.localDescription.sdp}))
         .catch(reject)
     })
   }
@@ -166,7 +162,7 @@ export class WebRTCService extends InnerMessageMixin {
     return Observable.create(observer => {
       const clients = new Map()
       stream.subscribe(
-        ({msg, id}) => {
+        ({ offer, candidate, id }) => {
           let client = clients.get(id)
           let pc
           let remoteCandidateStream
@@ -178,47 +174,37 @@ export class WebRTCService extends InnerMessageMixin {
             this._localCandidates(pc).subscribe(
               candidate => send({candidate}, id),
               err => console.warn(err),
-              () => send({candidate: ''}, id)
+              () => send({}, id)
             )
             clients.set(id, [pc, remoteCandidateStream])
           }
-          if (msg.offer !== undefined) {
+          if (offer) {
             this._openChannel(pc, false)
               .then(ch => observer.next(ch))
               .catch(err => {
                 clients.delete(id)
-                console.log('error', err)
-                log.debug('errorm essage', err.message)
-                console.warn(`Client "${id}" failed to establish RTCDataChannel with you: ${err.message}`)
+                console.error(`Client "${id}" failed to establish RTCDataChannel with you: ${err.message}`)
               })
-            pc.setRemoteDescription(msg.offer)
+            pc.setRemoteDescription({ type: 'offer', sdp: offer })
               .then(() => remoteCandidateStream.subscribe(
-                  candidate => {
-                    pc.addIceCandidate(new wrtc.RTCIceCandidate(candidate))
-                      .catch(err => console.warn(err))
-                  },
-                  err => console.warn(err),
-                  () => clients.delete(id)
-                )
-              )
+                candidate => {
+                  pc.addIceCandidate(new wrtc.RTCIceCandidate(candidate))
+                    .catch(err => console.warn(err))
+                },
+                err => console.warn(err),
+                () => clients.delete(id)
+              ))
               .then(() => pc.createAnswer())
               .then(answer => pc.setLocalDescription(answer))
-              .then(() => {
-                send({answer: {
-                  type: pc.localDescription.type,
-                  sdp: pc.localDescription.sdp
-                }}, id)
-              })
+              .then(() => send({answer: pc.localDescription.sdp}, id))
               .catch(err => {
                 clients.delete(id)
-                console.warn(err)
+                console.error(err)
               })
+          } else if (candidate) {
+            remoteCandidateStream.next(candidate)
           } else {
-            if (msg.candidate !== '') {
-              remoteCandidateStream.next(msg.candidate)
-            } else {
-              remoteCandidateStream.complete()
-            }
+            remoteCandidateStream.complete()
           }
         },
         err => observer.error(err),

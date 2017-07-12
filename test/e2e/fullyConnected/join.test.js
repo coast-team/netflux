@@ -1,13 +1,24 @@
 import * as helper from 'util/helper'
 import bigStr from 'util/4mb.txt'
 
-const USE_CASES = [3]
+// s: 🤖 server
+// b: 🙂 browser
+// const scenarios2 = [
+//   'bb',
+//   'bs',
+//   'bbb',
+//   'bbs',
+//   'bbbbbbb',
+//   'bbbsbbb'
+// ]
+
+const USE_CASES = [2, 3, 7]
 const scenarios = [
-  // new helper.Scenario(2),
+  new helper.Scenario(2),
   // new helper.Scenario(1, 1),
-  new helper.Scenario(3)
+  new helper.Scenario(3),
   // new helper.Scenario(2, 2),
-  // new helper.Scenario(7),
+  new helper.Scenario(7)
   // new helper.Scenario(6, 3)
 ]
 const PEER_FACE = '🙂 '
@@ -20,7 +31,7 @@ const faces = length => {
 }
 
 describe('Fully connected', () => {
-  fdescribe('Should establish a p2p network successively via join/join', () => {
+  describe('Should establish a p2p network successively via join/join', () => {
     let wcs
     afterEach(() => wcs.forEach(wc => wc.leave()))
 
@@ -64,14 +75,14 @@ describe('Fully connected', () => {
         // After all peers has been joined (set a small timeout hack, because
         // of async execution), check members and onPeerJoin for all agents (not bot)
         joinQueue
-        .then(() => {
-          setTimeout(() => {
-            helper.expectMembers(wcs, scenario.nbPeers)
-            wcs.forEach(wc => expect(wc.onPeerJoin).toHaveBeenCalledTimes(scenario.nbPeers - 1))
-            done()
-          }, 100)
-        })
-        .catch(done.fail)
+          .then(() => {
+            setTimeout(() => {
+              helper.expectMembers(wcs, scenario.nbPeers)
+              wcs.forEach(wc => expect(wc.onPeerJoin).toHaveBeenCalledTimes(scenario.nbPeers - 1))
+              done()
+            }, 100)
+          })
+          .catch(done.fail)
       })
     })
   })
@@ -81,7 +92,8 @@ describe('Fully connected', () => {
 
     afterEach(() => wcs.forEach(wc => wc.leave()))
     USE_CASES.forEach(numberOfPeers => {
-      it(`${faces(numberOfPeers)}`, done => {
+      it(`${
+        (numberOfPeers)}`, done => {
         helper.createAndConnectWebChannels(2)
           .then(webChannels => (wcs = webChannels))
           .then(() => wcs.map(
@@ -94,7 +106,7 @@ describe('Fully connected', () => {
     })
   })
 
-  describe('Should send/receive', () => {
+  fdescribe('Should send/receive', () => {
     let wcs
 
     afterEach(() => wcs.forEach(wc => wc.leave()))

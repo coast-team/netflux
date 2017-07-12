@@ -5,28 +5,20 @@ message Message {
   oneof type {
     // Connection service of the peer who received a message of this type should
     // establish connection with one or several peers.
-    ShouldConnectTo shouldConnectTo = 1;
+    Peers connectTo = 1;
+
+    Peers connectedTo = 2;
 
     // One of the internal message type. The message is intended for the `WebChannel`
     // members to notify them about the joining peer
-    NewJoiningPeer newJoiningPeer = 2;
+    uint32 joiningPeerId = 3;
 
      // One of the internal message type. The message sent by the joining peer to
      // notify all `WebChannel` members about his arrivel.
-    bool peerJoined = 3;
-    bool tick = 4;
-    Tock tock = 5;
+    uint32 joinedPeerId = 4;
   }
 }
 
-message ShouldConnectTo {
+message Peers {
   repeated uint32 peers = 1;
-}
-
-message Tock {
-  bool isJoining = 1;
-}
-
-message NewJoiningPeer {
-  uint32 jpId = 1;
 }

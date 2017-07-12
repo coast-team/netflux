@@ -55,6 +55,7 @@ export class WebChannel extends InnerMessageMixin {
      * @private
      */
     this._joinSucceed = () => {}
+    this._joinFailed = () => {}
 
     /**
      * An array of all peer ids except this.
@@ -105,7 +106,6 @@ export class WebChannel extends InnerMessageMixin {
      * @type {number}
      */
     this.myId = this._generateId()
-    log.debug('myId', this.myId)
 
     /**
      * Is the event handler called when a new peer has  joined the `WebChannel`.
@@ -146,10 +146,9 @@ export class WebChannel extends InnerMessageMixin {
     this.channelBuilderSvc = new ChannelBuilderService(this)
     super.setInnerStream(this._msgStream)
     this.innerMessageSubscritption = this.innerStream.subscribe(
-        (msg) => this._handleInnerMessage(msg),
-        (err) => log.error('WebChannel inner message error', err),
-        (complete) => log.info('Webchannel inner message completed')
-      )
+      (msg) => this._handleInnerMessage(msg),
+      (err) => log.error('WebChannel inner message error', err)
+    )
 
     /**
      * `WebChannel` topology.
@@ -179,6 +178,7 @@ export class WebChannel extends InnerMessageMixin {
         this._joinRecursively(keyOrChannel, settings, () => resolve(), err => reject(err), 0)
       } else {
         this._joinSucceed = () => resolve()
+        this._joinFailed = err => reject(err)
       }
     })
   }
@@ -244,14 +244,12 @@ export class WebChannel extends InnerMessageMixin {
    */
   leave () {
     this._pingTime = 0
-    if (this.members.length !== 0) {
-      this.members = []
-      this._topologySvc.leave()
-    }
+    this.members = []
+    this._topologySvc.leave()
     this._joinSucceed = () => {}
+    this._joinFailed = () => {}
     this._msgStream.complete()
     this._signalingGate.close()
-    this.innerMessageSubscritption.unsubscribe()
   }
 
   /**
@@ -260,12 +258,16 @@ export class WebChannel extends InnerMessageMixin {
    */
   send (data) {
     if (this.members.length !== 0) {
-      this._topologySvc.send({
+      const msg = {
         senderId: this.myId,
         recipientId: 0,
-        isInner: false,
-        content: this._userMsg.encode(data)
-      })
+        isInner: false
+      }
+      const chunkedData = this._userMsg.encode(data)
+      for (let chunk of chunkedData) {
+        msg.content = chunk
+        this._topologySvc.send(msg)
+      }
     }
   }
 
@@ -276,12 +278,16 @@ export class WebChannel extends InnerMessageMixin {
    */
   sendTo (id, data) {
     if (this.members.length !== 0) {
-      this._topologySvc.sendTo({
+      const msg = {
         senderId: this.myId,
         recipientId: id,
-        isInner: false,
-        content: this._userMsg.encode(data)
-      })
+        isInner: false
+      }
+      const chunkedData = this._userMsg.encode(data)
+      for (let chunk of chunkedData) {
+        msg.content = chunk
+        this._topologySvc.send(msg)
+      }
     }
   }
 
@@ -313,17 +319,16 @@ export class WebChannel extends InnerMessageMixin {
    */
   _addChannel (ch) {
     ch.peerId = this._generateId()
-    log.info(this.myId + ' - WebChannel _addChannel->initChannel: ', ch.peerId)
     const msg = this._encodeMain({
       recipientId: 1,
       content: super.encode({initWebChannel: {
-        topology: this._topologySvc.id,
+        topology: this._topologySvc.serviceId,
         wcId: this.id,
         peerId: ch.peerId
       }})
     })
     ch.send(msg)
-    return this._topologySvc.add(ch)
+    return this._topologySvc.addJoining(ch)
   }
 
   /**
@@ -331,7 +336,6 @@ export class WebChannel extends InnerMessageMixin {
    * @param {number} peerId
    */
   _onPeerJoin (peerId) {
-    log.debug(this.myId + ' join ' + peerId)
     this.members[this.members.length] = peerId
     this.onPeerJoin(peerId)
   }
@@ -411,13 +415,11 @@ export class WebChannel extends InnerMessageMixin {
 
       // If is is a message to me from a peer who does not know yet my ID
       case 1:
-        // log.debug('UNDEFINED')
         this._handleMessageToMe(channel, msg)
         break
 
       // Otherwise the message should be forwarded to the intended peer
       default:
-        // log.debug('_onMessage topology.sendTo')
         this._topologySvc.forwardTo(msg)
     }
   }
@@ -425,11 +427,10 @@ export class WebChannel extends InnerMessageMixin {
   _handleMessageToMe (channel, msg) {
     if (!msg.isInner) {
       // User Message
-      this.onMessage(
-        msg.senderId,
-        this._userMsg.decode(msg.content),
-        msg.recipientId === 0
-      )
+      const data = this._userMsg.decode(msg.content, msg.senderId)
+      if (data !== undefined) {
+        this.onMessage(msg.senderId, data, msg.recipientId === 0)
+      }
     } else {
       // Inner Message
       this._msgStream.next(Object.assign({
@@ -448,7 +449,7 @@ export class WebChannel extends InnerMessageMixin {
         this.myId = peerId
         this.id = wcId
         channel.peerId = senderId
-        log.info('New peer initialized', {wc: this.id, FROM: senderId, ME: recipientId})
+        this._topologySvc.initJoining(channel)
         break
       }
       case 'ping': {
@@ -508,6 +509,7 @@ export class WebChannel extends InnerMessageMixin {
       .then(ch => {
         if (ch) {
           this._joinSucceed = () => resolve()
+          this._joinFailed = err => reject(err)
         } else {
           resolve()
         }

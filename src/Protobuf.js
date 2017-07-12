@@ -162,7 +162,7 @@ export const user = $root.user = (() => {
                 if (message.number != null && message.hasOwnProperty("number"))
                     writer.uint32(16).uint32(message.number);
                 if (message.content != null && message.hasOwnProperty("content"))
-                    writer.uint32(26).bytes(message.content);
+                    writer.uint32(34).bytes(message.content);
                 return writer;
             };
 
@@ -179,7 +179,7 @@ export const user = $root.user = (() => {
                     case 2:
                         message.number = reader.uint32();
                         break;
-                    case 3:
+                    case 4:
                         message.content = reader.bytes();
                         break;
                     default:
@@ -196,7 +196,7 @@ export const user = $root.user = (() => {
         Message.Type = (function() {
             const valuesById = {}, values = Object.create(valuesById);
             values[valuesById[0] = "STRING"] = 0;
-            values[valuesById[1] = "ARRAY_BUFFER"] = 1;
+            values[valuesById[1] = "U_INT_8_ARRAY"] = 1;
             return values;
         })();
 
@@ -522,16 +522,15 @@ export const fullyConnected = $root.fullyConnected = (() => {
                         this[keys[i]] = properties[keys[i]];
         }
 
-        Message.prototype.shouldConnectTo = null;
-        Message.prototype.newJoiningPeer = null;
-        Message.prototype.peerJoined = false;
-        Message.prototype.tick = false;
-        Message.prototype.tock = null;
+        Message.prototype.connectTo = null;
+        Message.prototype.connectedTo = null;
+        Message.prototype.joiningPeerId = 0;
+        Message.prototype.joinedPeerId = 0;
 
         let $oneOfFields;
 
         Object.defineProperty(Message.prototype, "type", {
-            get: $util.oneOfGetter($oneOfFields = ["shouldConnectTo", "newJoiningPeer", "peerJoined", "tick", "tock"]),
+            get: $util.oneOfGetter($oneOfFields = ["connectTo", "connectedTo", "joiningPeerId", "joinedPeerId"]),
             set: $util.oneOfSetter($oneOfFields)
         });
 
@@ -542,16 +541,14 @@ export const fullyConnected = $root.fullyConnected = (() => {
         Message.encode = function encode(message, writer) {
             if (!writer)
                 writer = $Writer.create();
-            if (message.shouldConnectTo != null && message.hasOwnProperty("shouldConnectTo"))
-                $root.fullyConnected.ShouldConnectTo.encode(message.shouldConnectTo, writer.uint32(10).fork()).ldelim();
-            if (message.newJoiningPeer != null && message.hasOwnProperty("newJoiningPeer"))
-                $root.fullyConnected.NewJoiningPeer.encode(message.newJoiningPeer, writer.uint32(18).fork()).ldelim();
-            if (message.peerJoined != null && message.hasOwnProperty("peerJoined"))
-                writer.uint32(24).bool(message.peerJoined);
-            if (message.tick != null && message.hasOwnProperty("tick"))
-                writer.uint32(32).bool(message.tick);
-            if (message.tock != null && message.hasOwnProperty("tock"))
-                $root.fullyConnected.Tock.encode(message.tock, writer.uint32(42).fork()).ldelim();
+            if (message.connectTo != null && message.hasOwnProperty("connectTo"))
+                $root.fullyConnected.Peers.encode(message.connectTo, writer.uint32(10).fork()).ldelim();
+            if (message.connectedTo != null && message.hasOwnProperty("connectedTo"))
+                $root.fullyConnected.Peers.encode(message.connectedTo, writer.uint32(18).fork()).ldelim();
+            if (message.joiningPeerId != null && message.hasOwnProperty("joiningPeerId"))
+                writer.uint32(24).uint32(message.joiningPeerId);
+            if (message.joinedPeerId != null && message.hasOwnProperty("joinedPeerId"))
+                writer.uint32(32).uint32(message.joinedPeerId);
             return writer;
         };
 
@@ -563,19 +560,16 @@ export const fullyConnected = $root.fullyConnected = (() => {
                 let tag = reader.uint32();
                 switch (tag >>> 3) {
                 case 1:
-                    message.shouldConnectTo = $root.fullyConnected.ShouldConnectTo.decode(reader, reader.uint32());
+                    message.connectTo = $root.fullyConnected.Peers.decode(reader, reader.uint32());
                     break;
                 case 2:
-                    message.newJoiningPeer = $root.fullyConnected.NewJoiningPeer.decode(reader, reader.uint32());
+                    message.connectedTo = $root.fullyConnected.Peers.decode(reader, reader.uint32());
                     break;
                 case 3:
-                    message.peerJoined = reader.bool();
+                    message.joiningPeerId = reader.uint32();
                     break;
                 case 4:
-                    message.tick = reader.bool();
-                    break;
-                case 5:
-                    message.tock = $root.fullyConnected.Tock.decode(reader, reader.uint32());
+                    message.joinedPeerId = reader.uint32();
                     break;
                 default:
                     reader.skipType(tag & 7);
@@ -588,9 +582,9 @@ export const fullyConnected = $root.fullyConnected = (() => {
         return Message;
     })();
 
-    fullyConnected.ShouldConnectTo = (function() {
+    fullyConnected.Peers = (function() {
 
-        function ShouldConnectTo(properties) {
+        function Peers(properties) {
             this.peers = [];
             if (properties)
                 for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
@@ -598,13 +592,13 @@ export const fullyConnected = $root.fullyConnected = (() => {
                         this[keys[i]] = properties[keys[i]];
         }
 
-        ShouldConnectTo.prototype.peers = $util.emptyArray;
+        Peers.prototype.peers = $util.emptyArray;
 
-        ShouldConnectTo.create = function create(properties) {
-            return new ShouldConnectTo(properties);
+        Peers.create = function create(properties) {
+            return new Peers(properties);
         };
 
-        ShouldConnectTo.encode = function encode(message, writer) {
+        Peers.encode = function encode(message, writer) {
             if (!writer)
                 writer = $Writer.create();
             if (message.peers != null && message.peers.length) {
@@ -616,10 +610,10 @@ export const fullyConnected = $root.fullyConnected = (() => {
             return writer;
         };
 
-        ShouldConnectTo.decode = function decode(reader, length) {
+        Peers.decode = function decode(reader, length) {
             if (!(reader instanceof $Reader))
                 reader = $Reader.create(reader);
-            let end = length === undefined ? reader.len : reader.pos + length, message = new $root.fullyConnected.ShouldConnectTo();
+            let end = length === undefined ? reader.len : reader.pos + length, message = new $root.fullyConnected.Peers();
             while (reader.pos < end) {
                 let tag = reader.uint32();
                 switch (tag >>> 3) {
@@ -641,95 +635,7 @@ export const fullyConnected = $root.fullyConnected = (() => {
             return message;
         };
 
-        return ShouldConnectTo;
-    })();
-
-    fullyConnected.Tock = (function() {
-
-        function Tock(properties) {
-            if (properties)
-                for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                    if (properties[keys[i]] != null)
-                        this[keys[i]] = properties[keys[i]];
-        }
-
-        Tock.prototype.isJoining = false;
-
-        Tock.create = function create(properties) {
-            return new Tock(properties);
-        };
-
-        Tock.encode = function encode(message, writer) {
-            if (!writer)
-                writer = $Writer.create();
-            if (message.isJoining != null && message.hasOwnProperty("isJoining"))
-                writer.uint32(8).bool(message.isJoining);
-            return writer;
-        };
-
-        Tock.decode = function decode(reader, length) {
-            if (!(reader instanceof $Reader))
-                reader = $Reader.create(reader);
-            let end = length === undefined ? reader.len : reader.pos + length, message = new $root.fullyConnected.Tock();
-            while (reader.pos < end) {
-                let tag = reader.uint32();
-                switch (tag >>> 3) {
-                case 1:
-                    message.isJoining = reader.bool();
-                    break;
-                default:
-                    reader.skipType(tag & 7);
-                    break;
-                }
-            }
-            return message;
-        };
-
-        return Tock;
-    })();
-
-    fullyConnected.NewJoiningPeer = (function() {
-
-        function NewJoiningPeer(properties) {
-            if (properties)
-                for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                    if (properties[keys[i]] != null)
-                        this[keys[i]] = properties[keys[i]];
-        }
-
-        NewJoiningPeer.prototype.jpId = 0;
-
-        NewJoiningPeer.create = function create(properties) {
-            return new NewJoiningPeer(properties);
-        };
-
-        NewJoiningPeer.encode = function encode(message, writer) {
-            if (!writer)
-                writer = $Writer.create();
-            if (message.jpId != null && message.hasOwnProperty("jpId"))
-                writer.uint32(8).uint32(message.jpId);
-            return writer;
-        };
-
-        NewJoiningPeer.decode = function decode(reader, length) {
-            if (!(reader instanceof $Reader))
-                reader = $Reader.create(reader);
-            let end = length === undefined ? reader.len : reader.pos + length, message = new $root.fullyConnected.NewJoiningPeer();
-            while (reader.pos < end) {
-                let tag = reader.uint32();
-                switch (tag >>> 3) {
-                case 1:
-                    message.jpId = reader.uint32();
-                    break;
-                default:
-                    reader.skipType(tag & 7);
-                    break;
-                }
-            }
-            return message;
-        };
-
-        return NewJoiningPeer;
+        return Peers;
     })();
 
     return fullyConnected;
@@ -748,9 +654,9 @@ export const webRTC = $root.webRTC = (() => {
                         this[keys[i]] = properties[keys[i]];
         }
 
-        Message.prototype.offer = null;
-        Message.prototype.answer = null;
-        Message.prototype.candidate = "";
+        Message.prototype.offer = "";
+        Message.prototype.answer = "";
+        Message.prototype.candidate = null;
 
         let $oneOfFields;
 
@@ -767,11 +673,11 @@ export const webRTC = $root.webRTC = (() => {
             if (!writer)
                 writer = $Writer.create();
             if (message.offer != null && message.hasOwnProperty("offer"))
-                $root.webRTC.SDP.encode(message.offer, writer.uint32(10).fork()).ldelim();
+                writer.uint32(10).string(message.offer);
             if (message.answer != null && message.hasOwnProperty("answer"))
-                $root.webRTC.SDP.encode(message.answer, writer.uint32(18).fork()).ldelim();
+                writer.uint32(18).string(message.answer);
             if (message.candidate != null && message.hasOwnProperty("candidate"))
-                writer.uint32(26).string(message.candidate);
+                $root.webRTC.Candidate.encode(message.candidate, writer.uint32(26).fork()).ldelim();
             return writer;
         };
 
@@ -783,13 +689,13 @@ export const webRTC = $root.webRTC = (() => {
                 let tag = reader.uint32();
                 switch (tag >>> 3) {
                 case 1:
-                    message.offer = $root.webRTC.SDP.decode(reader, reader.uint32());
+                    message.offer = reader.string();
                     break;
                 case 2:
-                    message.answer = $root.webRTC.SDP.decode(reader, reader.uint32());
+                    message.answer = reader.string();
                     break;
                 case 3:
-                    message.candidate = reader.string();
+                    message.candidate = $root.webRTC.Candidate.decode(reader, reader.uint32());
                     break;
                 default:
                     reader.skipType(tag & 7);
@@ -802,44 +708,50 @@ export const webRTC = $root.webRTC = (() => {
         return Message;
     })();
 
-    webRTC.SDP = (function() {
+    webRTC.Candidate = (function() {
 
-        function SDP(properties) {
+        function Candidate(properties) {
             if (properties)
                 for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                     if (properties[keys[i]] != null)
                         this[keys[i]] = properties[keys[i]];
         }
 
-        SDP.prototype.type = "";
-        SDP.prototype.sdp = "";
+        Candidate.prototype.candidate = "";
+        Candidate.prototype.sdpMid = "";
+        Candidate.prototype.sdpMLineIndex = 0;
 
-        SDP.create = function create(properties) {
-            return new SDP(properties);
+        Candidate.create = function create(properties) {
+            return new Candidate(properties);
         };
 
-        SDP.encode = function encode(message, writer) {
+        Candidate.encode = function encode(message, writer) {
             if (!writer)
                 writer = $Writer.create();
-            if (message.type != null && message.hasOwnProperty("type"))
-                writer.uint32(10).string(message.type);
-            if (message.sdp != null && message.hasOwnProperty("sdp"))
-                writer.uint32(18).string(message.sdp);
+            if (message.candidate != null && message.hasOwnProperty("candidate"))
+                writer.uint32(10).string(message.candidate);
+            if (message.sdpMid != null && message.hasOwnProperty("sdpMid"))
+                writer.uint32(18).string(message.sdpMid);
+            if (message.sdpMLineIndex != null && message.hasOwnProperty("sdpMLineIndex"))
+                writer.uint32(24).uint32(message.sdpMLineIndex);
             return writer;
         };
 
-        SDP.decode = function decode(reader, length) {
+        Candidate.decode = function decode(reader, length) {
             if (!(reader instanceof $Reader))
                 reader = $Reader.create(reader);
-            let end = length === undefined ? reader.len : reader.pos + length, message = new $root.webRTC.SDP();
+            let end = length === undefined ? reader.len : reader.pos + length, message = new $root.webRTC.Candidate();
             while (reader.pos < end) {
                 let tag = reader.uint32();
                 switch (tag >>> 3) {
                 case 1:
-                    message.type = reader.string();
+                    message.candidate = reader.string();
                     break;
                 case 2:
-                    message.sdp = reader.string();
+                    message.sdpMid = reader.string();
+                    break;
+                case 3:
+                    message.sdpMLineIndex = reader.uint32();
                     break;
                 default:
                     reader.skipType(tag & 7);
@@ -849,7 +761,7 @@ export const webRTC = $root.webRTC = (() => {
             return message;
         };
 
-        return SDP;
+        return Candidate;
     })();
 
     return webRTC;

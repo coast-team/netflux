@@ -19,10 +19,18 @@ export class TopologyInterface extends InnerMessageMixin {
    *
    * @abstract
    * @param  {Channel} ch - Channel with the new peer
-   * @return {Promise} - Resolved once the channel has been succesfully added,
-   * rejected otherwise.
    */
-  add (ch) {
+  addJoining (ch) {
+    throw new Error('Must be implemented by subclass!')
+  }
+
+  /**
+   * As a joining peer initializes the intermediary channel
+   *
+   * @abstract
+   * @param  {Channel} ch - intermediary channel with one of the network member
+   */
+  initJoining (ch) {
     throw new Error('Must be implemented by subclass!')
   }
 
@@ -42,21 +50,6 @@ export class TopologyInterface extends InnerMessageMixin {
   }
 
   /**
-   * Send a message to a particular peer in the network.
-   *
-   * @abstract
-   * @param  {Object} msg - Message to be send
-   * @param  {number} [msg.senderId] - Id of the sender peer
-   * @param  {number} [msg.recipientId] - Id of the recipient peer
-   * @param  {boolean} [msg.isInner] - True is it is an Netflux internal message and false
-   *   means that is is a user message.
-   * @param  {ArrayBuffer} [msg.content] - Message main content
-   */
-  sendTo (msg) {
-    throw new Error('Must be implemented by subclass!')
-  }
-
-  /**
    * Forward a broadcasted message. This method will be called onces
    * the peer receives a broadcasted message.
    *
@@ -69,6 +62,21 @@ export class TopologyInterface extends InnerMessageMixin {
    * @param  {ArrayBuffer} [msg.content] - Message main content
    */
   forward (msg) {
+    throw new Error('Must be implemented by subclass!')
+  }
+
+  /**
+   * Send a message to a particular peer in the network.
+   *
+   * @abstract
+   * @param  {Object} msg - Message to be send
+   * @param  {number} [msg.senderId] - Id of the sender peer
+   * @param  {number} [msg.recipientId] - Id of the recipient peer
+   * @param  {boolean} [msg.isInner] - True is it is an Netflux internal message and false
+   *   means that is is a user message.
+   * @param  {ArrayBuffer} [msg.content] - Message main content
+   */
+  sendTo (msg) {
     throw new Error('Must be implemented by subclass!')
   }
 

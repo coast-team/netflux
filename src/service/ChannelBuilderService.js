@@ -68,14 +68,13 @@ export class ChannelBuilderService extends InnerMessageMixin {
    * @returns {Promise<Channel, string>}
    */
   connectTo (id) {
-    log.info('ChannelBuilderService connecTo', {wc: this.wc.id, ME: this.wc.myId, TO: id})
     return new Promise((resolve, reject) => {
       this.pendingRequests.set(id, {resolve, reject})
       this.wc._sendTo({ recipientId: id, content: request })
     })
   }
 
-  incomingChannels () {
+  channels () {
     return this.channelStream.asObservable()
   }
 
@@ -95,7 +94,6 @@ export class ChannelBuilderService extends InnerMessageMixin {
    * @param {Object} msg
    */
   _handleInnerMessage ({ channel, senderId, recipientId, msg }) {
-    log.debug(this.wc.myId + ' ChannelBuilderService message received', {senderId, recipientId, msg})
     const wc = channel.webChannel
 
     switch (msg.type) {
@@ -128,7 +126,6 @@ export class ChannelBuilderService extends InnerMessageMixin {
             // Ask him to connect to me via WebSocket
             wc._sendTo({ recipientId: senderId, content: response })
           } else if (ME.isWrtcSupport) {
-            log.debug(this.wc.myId + ' Will CONNECT TO ', senderId)
             this.wc.webRTCSvc.connectOverWebChannel(senderId)
               .then(ch => this._handleChannel(ch))
               .catch(reason => {
