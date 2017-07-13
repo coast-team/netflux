@@ -8,10 +8,11 @@ export class Channel {
    * Creates a channel from existing `RTCDataChannel` or `WebSocket`.
    * @param {WebSocket|RTCDataChannel} connection Data channel or web socket
    * @param {WebChannel} wc The `WebChannel` this channel will be part of
+   * @param {number} id Peer id
    */
-  constructor (connection, wc) {
+  constructor (connection, wc, id) {
     /**
-     * Data channel or web socket.
+     * DataChannel or WebSocket.
      * @private
      * @type {external:WebSocket|external:RTCDataChannel}
      */
@@ -27,7 +28,7 @@ export class Channel {
      * Identifier of the peer who is at the other end of this channel
      * @type {WebChannel}
      */
-    this.peerId = -1
+    this.peerId = id || -1
 
     /**
      * Send message.
@@ -35,15 +36,27 @@ export class Channel {
      */
     this.send = undefined
 
+    // Configure `send` function
     if (Util.isBrowser()) {
       connection.binaryType = 'arraybuffer'
       this.send = this.sendBrowser
     } else if (Util.isSocket(connection)) {
-      this.send = this.sendInNodeThroughSocket
+      this.send = this.sendInNodeViaWebSocket
     } else {
       connection.binaryType = 'arraybuffer'
-      this.send = this.sendInNodeThroughDataChannel
+      this.send = this.sendInNodeViaDataChannel
     }
+
+    // Configure handlers
+    if (!Util.isBrowser() && Util.isSocket(this.connection)) {
+      this.connection.onmessage = msgEvt => {
+        wc._onMessage(this, new Uint8Array(msgEvt.data))
+      }
+    } else {
+      this.connection.onmessage = msgEvt => wc._onMessage(this, msgEvt.data)
+    }
+    this.connection.onclose = closeEvt => wc._topology.onChannelClose(closeEvt, this)
+    this.connection.onerror = evt => wc._topology.onChannelError(evt, this)
   }
 
   /**
@@ -69,7 +82,7 @@ export class Channel {
    * @private
    * @param {ArrayBuffer} data
    */
-  sendInNodeThroughSocket (data) {
+  sendInNodeViaWebSocket (data) {
     if (this.isOpen()) {
       try {
         this.connection.send(data, {binary: true})
@@ -83,33 +96,8 @@ export class Channel {
    * @private
    * @param {ArrayBuffer} data
    */
-  sendInNodeThroughDataChannel (data) {
+  sendInNodeViaDataChannel (data) {
     this.sendBrowser(data.slice(0))
-  }
-
-  /**
-   * @param {function(msg: ArrayBuffer)} handler
-   */
-  set onMessage (handler) {
-    if (!Util.isBrowser() && Util.isSocket(this.connection)) {
-      this.connection.onmessage = msgEvt => {
-        handler(new Uint8Array(msgEvt.data).buffer)
-      }
-    } else this.connection.onmessage = msgEvt => handler(msgEvt.data)
-  }
-
-  /**
-   * @param {function(message: CloseEvent)} handler
-   */
-  set onClose (handler) {
-    this.connection.onclose = closeEvt => handler(closeEvt)
-  }
-
-  /**
-   * @param {function(message: Event)} handler
-   */
-  set onError (handler) {
-    this.connection.onerror = evt => handler(evt)
   }
 
   /**

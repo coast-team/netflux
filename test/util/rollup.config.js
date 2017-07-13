@@ -5,8 +5,9 @@ import string from 'rollup-plugin-string'
 import resolve from 'rollup-plugin-node-resolve'
 
 export default {
-  entry: 'test/util/scripts/botServer.js',
+  entry: 'test/util/botServer.js',
   format: 'cjs',
+  dest: 'test/util/.botServer.js',
   plugins: [
     string({
       include: 'test/**/*.txt'
@@ -31,6 +32,5 @@ export default {
       FETCH_MODULE: `require('node-fetch')`,
       LOG_LEVEL: `Level.TRACE`
     })
-  ],
-  dest: 'test/util/scripts/.rolledup/botServer.js'
+  ]
 }

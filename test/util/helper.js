@@ -144,6 +144,7 @@ export function sendAndExpectOnMessage (wcs, isBroadcast, withBot = false) {
 
         // Receive Binary
         } else if (msg instanceof Uint8Array) {
+          // log.debug(wc.myId + ' received Uint8Array from ' + id + ' is broadcast ' + broadcasted)
           expect(flag.arraybuffer).toBeFalsy()
           flag.arraybuffer = true
           msgId = (new Uint32Array(msg.slice().buffer))[0]
@@ -168,35 +169,6 @@ export function sendAndExpectOnMessage (wcs, isBroadcast, withBot = false) {
     })
   }))
 
-  function sendMessages (wc, isBroadcast) {
-    // Create messages
-
-    // String
-    const msgString = JSON.stringify({ id: wc.myId })
-
-    // String chunk of 50Kb
-    const msgChunk = JSON.stringify({ id: wc.myId, data: chunk50kb })
-
-    // ArrayBuffer
-    const msgArrayBuffer = new Uint32Array(1)
-    msgArrayBuffer[0] = wc.myId
-
-    // Broadcast the messages
-    if (isBroadcast) {
-      wc.send(msgString)
-      wc.send(msgChunk)
-      wc.send(msgArrayBuffer)
-
-    // Send the messages privately to each peer
-    } else {
-      wc.members.forEach(id => {
-        wc.sendTo(id, msgString)
-        wc.sendTo(id, msgChunk)
-        wc.sendTo(id, msgArrayBuffer)
-      })
-    }
-  }
-
   if (withBot) {
     promises.push(new Promise((resolve, reject) => {
       // Tell bot to send messages
@@ -211,6 +183,35 @@ export function sendAndExpectOnMessage (wcs, isBroadcast, withBot = false) {
     }))
   }
   return Promise.all(promises)
+}
+
+function sendMessages (wc, isBroadcast) {
+  // Create messages
+
+  // String
+  const msgString = JSON.stringify({ id: wc.myId })
+
+  // String chunk of 50Kb
+  const msgChunk = JSON.stringify({ id: wc.myId, data: chunk50kb })
+
+  // ArrayBuffer
+  const msgArrayBuffer = new Uint32Array(1)
+  msgArrayBuffer[0] = wc.myId
+
+  // Broadcast the messages
+  if (isBroadcast) {
+    wc.send(msgString)
+    wc.send(msgChunk)
+    wc.send(msgArrayBuffer)
+
+  // Send the messages privately to each peer
+  } else {
+    wc.members.forEach(id => {
+      wc.sendTo(id, msgString)
+      wc.sendTo(id, msgChunk)
+      wc.sendTo(id, msgArrayBuffer)
+    })
+  }
 }
 
 export function randData (Instance) {

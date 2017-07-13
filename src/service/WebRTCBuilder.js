@@ -4,8 +4,9 @@ import { Observable } from 'node_modules/rxjs/Observable'
 import 'node_modules/rxjs/add/operator/map'
 
 import { Util } from 'Util'
-import { InnerMessageMixin } from 'service/InnerMessageMixin'
-import { webRTC } from 'Protobuf.js'
+import { Service } from 'service/Service'
+import { webRTCBuilder } from 'Protobuf.js'
+import { Channel } from 'Channel'
 const wrtc = Util.require(Util.WEB_RTC)
 const CloseEvent = Util.require(Util.CLOSE_EVENT)
 
@@ -18,9 +19,9 @@ const CONNECTION_TIMEOUT = 10000
  * signaling server or `WebChannel`.
  *
  */
-export class WebRTCService extends InnerMessageMixin {
+export class WebRTCBuilder extends Service {
   constructor (wc, iceServers) {
-    super(ID, webRTC.Message, wc._msgStream)
+    super(ID, webRTCBuilder.Message, wc._msgStream)
     this.wc = wc
     this.rtcConfiguration = { iceServers }
   }
@@ -30,7 +31,7 @@ export class WebRTCService extends InnerMessageMixin {
   }
 
   channelsFromWebChannel () {
-    if (WebRTCService.isSupported) {
+    if (WebRTCBuilder.isSupported) {
       return this._channels(
         this.innerStream.map(({ msg, senderId }) => ({ offer: msg.offer, id: senderId, candidate: msg.candidate })),
         (msg, id) => this.wc._sendTo({ recipientId: id, content: super.encode(msg) })
@@ -48,7 +49,7 @@ export class WebRTCService extends InnerMessageMixin {
    * @returns {Promise<RTCDataChannel>} Data channel between you and `id` peer
    */
   connectOverWebChannel (id) {
-    if (WebRTCService.isSupported) {
+    if (WebRTCBuilder.isSupported) {
       return this._establishChannel(
         this.innerStream
           .filter(({ senderId }) => senderId === id)
@@ -68,7 +69,7 @@ export class WebRTCService extends InnerMessageMixin {
    * @returns {Observable<RTCDataChannel>} Observable emitting `RTCDataChannel`. Can emit errors and completes when the stream with Signaling server has completed.
    */
   channelsFromSignaling (signalingStream) {
-    if (WebRTCService.isSupported) {
+    if (WebRTCBuilder.isSupported) {
       return this._channels(
         signalingStream.filter(msg => 'id' in msg && 'data' in msg)
           .map(({ data, id }) => ({ offer: data.offer, id, candidate: data.candidate })),
@@ -87,7 +88,7 @@ export class WebRTCService extends InnerMessageMixin {
    * @returns {Promise<RTCDataChannel>} Data channel between you and `id` peer
    */
   connectOverSignaling (signalingStream) {
-    if (WebRTCService.isSupported) {
+    if (WebRTCBuilder.isSupported) {
       return this._establishChannel(
         signalingStream.filter(msg => 'data' in msg)
           .map(({ data }) => ({ answer: data.answer, candidate: data.candidate })),
@@ -247,7 +248,7 @@ export class WebRTCService extends InnerMessageMixin {
         const dc = pc.createDataChannel(this.wc.myId)
 
         // Initialize dataChannel for WebChannel
-        const channel = this.wc._initConnection(dc, peerId)
+        const channel = new Channel(dc, this.wc, peerId)
 
         // Configure disconnection
         this._configOnDisconnect(pc, dc)
@@ -275,7 +276,7 @@ export class WebRTCService extends InnerMessageMixin {
             clearTimeout(timeout)
 
             // Initialize dataChannel for WebChannel
-            resolve(this.wc._initConnection(dcEvt.channel, Number(dcEvt.channel.label)))
+            resolve(new Channel(dcEvt.channel, this.wc, Number(dcEvt.channel.label)))
           }
         }
       })

@@ -1,10 +1,11 @@
 syntax = "proto3";
-package inner;
-import "../webChannel.proto";
+package service;
+
+import "webChannel.proto";
 import "channelBuilder.proto";
-import "topology/fullyConnected.proto";
+import "topology/fullMesh.proto";
 import "topology/spray/spray.proto";
-import "webRTC.proto";
+import "webRTCBuilder.proto";
 
 message Message {
   uint32 id = 1;

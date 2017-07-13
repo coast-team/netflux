@@ -14,7 +14,7 @@
  * WebChannel settings
  * @typedef {Object} WebChannelSettings
  * @property {WEB_RTC|WEB_SOCKET} connector Which connector is preferable during connection establishment
- * @property {FULLY_CONNECTED} topology Fully connected topology is the only one available for now
+ * @property {FULL_MESH} topology Fully connected topology is the only one available for now
  * @property {string} signalingURL Signaling server url
  * @property {RTCIceServer} iceServers Set of ice servers for WebRTC
  * @property {string} listenOn Server url when the peer is listen on web socket

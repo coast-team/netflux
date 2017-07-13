@@ -1,9 +1,8 @@
-const fs = require('fs')
-const rollup = require('rollup')
-const includePaths = require('rollup-plugin-includepaths')
-const string = require('rollup-plugin-string')
-const replace = require('rollup-plugin-replace')
-const commonjs = require('rollup-plugin-commonjs')
+import fs from 'fs'
+import includePaths from 'rollup-plugin-includepaths'
+import string from 'rollup-plugin-string'
+import replace from 'rollup-plugin-replace'
+import commonjs from 'rollup-plugin-commonjs'
 
 const entries = []
 function read (path) {
@@ -18,10 +17,12 @@ function read (path) {
 }
 read('test')
 
+const configs = []
 for (let entry of entries) {
-  const dest = entry.replace(/^test/, 'test/.rolledup')
-  rollup.rollup({
+  configs.push({
     entry,
+    format: 'cjs',
+    dest: entry.replace(/^test/, 'test/.rolledup'),
     plugins: [
       string({
         include: 'test/**/*.txt'
@@ -46,6 +47,7 @@ for (let entry of entries) {
         LOG_LEVEL: `Level.TRACE`
       })
     ]
-  }).then(bundle => bundle.write({format: 'cjs', dest}))
-    .catch(err => console.log(err))
+  })
 }
+
+export default configs

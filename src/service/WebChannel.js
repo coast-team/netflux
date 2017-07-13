@@ -1,13 +1,13 @@
 import { Subject } from 'node_modules/rxjs/Subject'
 
 import { Channel } from 'Channel'
-import { FullyConnectedService } from 'service/topology/FullyConnectedService'
-import { InnerMessageMixin } from 'service/InnerMessageMixin'
+import { FullMesh } from 'service/topology/FullMesh'
+import { Service } from 'service/Service'
 import { SignalingGate } from 'SignalingGate'
-import { ChannelBuilderService } from 'service/ChannelBuilderService'
-import { WebSocketService } from 'service/WebSocketService'
-import { WebRTCService } from 'service/WebRTCService'
-import { Message, webChannel, inner } from 'Protobuf.js'
+import { ChannelBuilder } from 'service/ChannelBuilder'
+import { WebSocketBuilder } from 'WebSocketBuilder'
+import { WebRTCBuilder } from 'service/WebRTCBuilder'
+import { Message, webChannel, service } from 'Protobuf.js'
 import { UserMessage } from 'UserMessage'
 import { Util } from 'Util'
 import * as log from 'log'
@@ -38,7 +38,7 @@ const INNER_ID = 100
  * the `WebChannel` and he also possess enough information to be able to add it
  * preserving the current `WebChannel` structure (network topology).
  */
-export class WebChannel extends InnerMessageMixin {
+export class WebChannel extends Service {
   /**
    * @param {WebChannelSettings} settings Web channel settings
    */
@@ -140,14 +140,14 @@ export class WebChannel extends InnerMessageMixin {
     this._userMsg = new UserMessage()
 
     this._msgStream = new Subject()
-    this.webRTCSvc = new WebRTCService(this, this.settings.iceServers, this._msgStream)
-    this.webSocketSvc = new WebSocketService(this)
+    this.webRTCSvc = new WebRTCBuilder(this, this.settings.iceServers, this._msgStream)
+    this.webSocketSvc = new WebSocketBuilder(this)
     this._signalingGate = new SignalingGate(this, ch => this._addChannel(ch))
-    this.channelBuilderSvc = new ChannelBuilderService(this)
+    this.channelBuilderSvc = new ChannelBuilder(this)
     super.setInnerStream(this._msgStream)
     this.innerMessageSubscritption = this.innerStream.subscribe(
-      (msg) => this._handleInnerMessage(msg),
-      (err) => log.error('WebChannel inner message error', err)
+      (msg) => this._handleServiceMessage(msg),
+      (err) => log.error('service/WebChannel inner message error', err)
     )
 
     /**
@@ -193,7 +193,7 @@ export class WebChannel extends InnerMessageMixin {
   invite (url) {
     if (Util.isURL(url)) {
       return this.webSocketSvc.connect(`${url}/invite?wcId=${this.id}&senderId=${this.myId}`)
-        .then(connection => this._addChannel(this._initConnection(connection)))
+        .then(connection => this._addChannel(new Channel(connection, this)))
     } else {
       return Promise.reject(new Error(`${url} is not a valid URL`))
     }
@@ -245,7 +245,7 @@ export class WebChannel extends InnerMessageMixin {
   leave () {
     this._pingTime = 0
     this.members = []
-    this._topologySvc.leave()
+    this._topology.leave()
     this._joinSucceed = () => {}
     this._joinFailed = () => {}
     this._msgStream.complete()
@@ -261,12 +261,12 @@ export class WebChannel extends InnerMessageMixin {
       const msg = {
         senderId: this.myId,
         recipientId: 0,
-        isInner: false
+        isService: false
       }
       const chunkedData = this._userMsg.encode(data)
       for (let chunk of chunkedData) {
         msg.content = chunk
-        this._topologySvc.send(msg)
+        this._topology.send(msg)
       }
     }
   }
@@ -281,12 +281,12 @@ export class WebChannel extends InnerMessageMixin {
       const msg = {
         senderId: this.myId,
         recipientId: id,
-        isInner: false
+        isService: false
       }
       const chunkedData = this._userMsg.encode(data)
       for (let chunk of chunkedData) {
         msg.content = chunk
-        this._topologySvc.send(msg)
+        this._topology.sendTo(msg)
       }
     }
   }
@@ -319,16 +319,16 @@ export class WebChannel extends InnerMessageMixin {
    */
   _addChannel (ch) {
     ch.peerId = this._generateId()
-    const msg = this._encodeMain({
+    const msg = this._encode({
       recipientId: 1,
       content: super.encode({initWebChannel: {
-        topology: this._topologySvc.serviceId,
+        topology: this._topology.serviceId,
         wcId: this.id,
         peerId: ch.peerId
       }})
     })
     ch.send(msg)
-    return this._topologySvc.addJoining(ch)
+    return this._topology.addJoining(ch)
   }
 
   /**
@@ -356,20 +356,20 @@ export class WebChannel extends InnerMessageMixin {
    * @param {Object} msg
    * @param {string} [msg.serviceId] - Service id
    * @param {number} [msg.recipientId] - Identifier of recipient peer id
-   * @param {boolean} [msg.isInner] - SHould the message be forwarded?
+   * @param {boolean} [msg.isService] - SHould the message be forwarded?
    * @param {Object} [msg.content] - Message to send
    */
   _sendTo ({
     senderId = this.myId,
     recipientId = this.myId,
-    isInner = true,
+    isService = true,
     content = new Uint8Array()
   } = {}) {
-    const msg = {senderId, recipientId, isInner, content}
+    const msg = {senderId, recipientId, isService, content}
     if (msg.recipientId === this.myId) {
-      this._handleMessageToMe(undefined, msg)
+      this._handleMyMessage(undefined, msg)
     } else {
-      this._topologySvc.sendTo(msg)
+      this._topology.sendTo(msg)
     }
   }
 
@@ -381,15 +381,15 @@ export class WebChannel extends InnerMessageMixin {
   _send ({
     senderId = this.myId,
     recipientId = 0,
-    isInner = true,
+    isService = true,
     content = new Uint8Array(),
     isMeIncluded = false
   } = {}) {
-    const msg = {senderId, recipientId, isInner, content}
+    const msg = {senderId, recipientId, isService, content}
     if (isMeIncluded) {
-      this._handleMessageToMe(undefined, msg)
+      this._handleMyMessage(undefined, msg)
     }
-    this._topologySvc.send(msg)
+    this._topology.send(msg)
   }
 
   /**
@@ -399,33 +399,33 @@ export class WebChannel extends InnerMessageMixin {
    * @param {external:ArrayBuffer} bytes - Message
    */
   _onMessage (channel, bytes) {
-    const msg = this._decodeMain(bytes)
+    const msg = this._decode(bytes)
 
     switch (msg.recipientId) {
       // If the message is broadcasted
       case 0:
-        this._handleMessageToMe(channel, msg)
-        this._topologySvc.forward(msg)
+        this._handleMyMessage(channel, msg)
+        this._topology.forward(msg)
         break
 
       // If it is a private message to me
       case this.myId:
-        this._handleMessageToMe(channel, msg)
+        this._handleMyMessage(channel, msg)
         break
 
       // If is is a message to me from a peer who does not know yet my ID
       case 1:
-        this._handleMessageToMe(channel, msg)
+        this._handleMyMessage(channel, msg)
         break
 
       // Otherwise the message should be forwarded to the intended peer
       default:
-        this._topologySvc.forwardTo(msg)
+        this._topology.forwardTo(msg)
     }
   }
 
-  _handleMessageToMe (channel, msg) {
-    if (!msg.isInner) {
+  _handleMyMessage (channel, msg) {
+    if (!msg.isService) {
       // User Message
       const data = this._userMsg.decode(msg.content, msg.senderId)
       if (data !== undefined) {
@@ -437,11 +437,11 @@ export class WebChannel extends InnerMessageMixin {
         channel,
         senderId: msg.senderId,
         recipientId: msg.recipientId
-      }, inner.Message.decode(msg.content)))
+      }, service.Message.decode(msg.content)))
     }
   }
 
-  _handleInnerMessage ({channel, senderId, recipientId, msg}) {
+  _handleServiceMessage ({channel, senderId, recipientId, msg}) {
     switch (msg.type) {
       case 'initWebChannel': {
         const { topology, wcId, peerId } = msg.initWebChannel
@@ -449,7 +449,7 @@ export class WebChannel extends InnerMessageMixin {
         this.myId = peerId
         this.id = wcId
         channel.peerId = senderId
-        this._topologySvc.initJoining(channel)
+        this._topology.initJoining(channel)
         break
       }
       case 'ping': {
@@ -472,26 +472,6 @@ export class WebChannel extends InnerMessageMixin {
       default:
         throw new Error(`Unknown message type: "${msg.type}"`)
     }
-  }
-
-  /**
-   * Initialize channel. The *Channel* object is a facade for *WebSocket* and
-   * *RTCDataChannel*.
-   * @private
-   * @param {external:WebSocket|external:RTCDataChannel} connection - Channel to
-   * initialize
-   * @param {number} id
-   * @returns {Promise} - Resolved once the channel is initialized on both sides
-   */
-  _initConnection (connection, id) {
-    const channel = new Channel(connection, this)
-    if (id !== undefined) {
-      channel.peerId = id
-    }
-    channel.onMessage = data => this._onMessage(channel, data)
-    channel.onClose = closeEvt => this._topologySvc.onChannelClose(closeEvt, channel)
-    channel.onError = evt => this._topologySvc.onChannelError(evt, channel)
-    return channel
   }
 
   /**
@@ -529,15 +509,15 @@ export class WebChannel extends InnerMessageMixin {
   }
 
   _setTopology (topology) {
-    if (this._topologySvc !== undefined) {
+    if (this._topology !== undefined) {
       if (this.settings.topology !== topology) {
         this.settings.topology = topology
-        this._topologySvc.clean()
-        this._topologySvc = new FullyConnectedService(this)
+        this._topology.clean()
+        this._topology = new FullMesh(this)
       }
     } else {
       this.settings.topology = topology
-      this._topologySvc = new FullyConnectedService(this)
+      this._topology = new FullMesh(this)
     }
   }
 
@@ -558,17 +538,17 @@ export class WebChannel extends InnerMessageMixin {
     } while (true)
   }
 
-  _encodeMain ({
+  _encode ({
     senderId = this.myId,
     recipientId = 0,
-    isInner = true,
+    isService = true,
     content = new Uint8Array()
   } = {}) {
-    const msg = {senderId, recipientId, isInner, content}
+    const msg = {senderId, recipientId, isService, content}
     return Message.encode(Message.create(msg)).finish()
   }
 
-  _decodeMain (bytes) {
+  _decode (bytes) {
     return Message.decode(new Uint8Array(bytes))
   }
 }

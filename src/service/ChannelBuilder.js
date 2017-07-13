@@ -1,9 +1,9 @@
 import { Subject } from 'node_modules/rxjs/Subject'
 
-import { InnerMessageMixin } from 'service/InnerMessageMixin'
+import { Service } from 'service/Service'
 import { channelBuilder } from 'Protobuf.js'
-import { WebSocketService } from 'service/WebSocketService'
-import { WebRTCService } from 'service/WebRTCService'
+import { WebSocketBuilder } from 'WebSocketBuilder'
+import { WebRTCBuilder } from 'service/WebRTCBuilder'
 import * as log from 'log'
 
 const ID = 2
@@ -16,25 +16,25 @@ let request
 let response
 
 /**
- * It is responsible to build a channel between two peers with a help of `WebSocketService` and `WebRTCService`.
+ * It is responsible to build a channel between two peers with a help of `WebSocketBuilder` and `WebRTCBuilder`.
  * Its algorithm determine which channel (socket or dataChannel) should be created
  * based on the services availability and peers' preferences.
  */
-export class ChannelBuilderService extends InnerMessageMixin {
+export class ChannelBuilder extends Service {
   constructor (wc) {
     super(ID, channelBuilder.Message, wc._msgStream)
     this.wc = wc
     this.init()
 
     // Listen on Channels as RTCDataChannels if WebRTC is supported
-    ME.isWrtcSupport = WebRTCService.isSupported
+    ME.isWrtcSupport = WebRTCBuilder.isSupported
     if (ME.isWrtcSupport) {
       wc.webRTCSvc.channelsFromWebChannel()
         .subscribe(ch => this._handleChannel(ch))
     }
 
     // Listen on Channels as WebSockets if the peer is listening on WebSockets
-    WebSocketService.listen().subscribe(url => {
+    WebSocketBuilder.listen().subscribe(url => {
       ME.wsUrl = url
       if (url) {
         wc.webSocketSvc.channels()
@@ -50,7 +50,7 @@ export class ChannelBuilderService extends InnerMessageMixin {
     // Subscribe to WebChannel internal messages
     this.innerStream.subscribe(
       msg => this._handleInnerMessage(msg),
-      err => log.error('ChannelBuilderService Message Stream Error', err, wc),
+      err => log.error('ChannelBuilder Message Stream Error', err, wc),
       () => this.init()
     )
   }

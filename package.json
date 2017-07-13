@@ -26,10 +26,10 @@
     "dist/"
   ],
   "scripts": {
-    "build": "rm -rf dist && node rollup.config.js",
-    "build:testscripts": "rm -rf test/util/scripts/.rolledup && rollup -c test/util/scripts/rollup.config.js",
-    "start:testscripts": "pm2 gracefulReload test/util/scripts/process.yml",
-    "pretest": "npm run build && npm run build:testscripts && npm run start:testscripts",
+    "build": "rm -rf dist && rollup --config",
+    "build:testbot": "rollup -c test/util/rollup.config.js",
+    "start:testbot": "pm2 gracefulReload test/util/process.yml",
+    "pretest": "npm run build && npm run build:testbot && npm run start:testbot",
     "test": "karma start",
     "test:chrome": "npm run test -- --browsers Chrome",
     "test:firefox": "npm run test -- --browsers Firefox",
@@ -86,7 +86,7 @@
     "koa-router": "^7.1.1",
     "pm2": "^2.0.12",
     "protobufjs": "^6.8.0",
-    "rollup": "^0.43.0",
+    "rollup": "^0.44.0",
     "rollup-plugin-babel": "^2.6.1",
     "rollup-plugin-commonjs": "^8.0.2",
     "rollup-plugin-filesize": "^1.0.0",

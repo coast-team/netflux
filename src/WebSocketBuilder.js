@@ -3,6 +3,7 @@ import { BehaviorSubject } from 'node_modules/rxjs/BehaviorSubject'
 import 'node_modules/rxjs/add/operator/filter'
 
 import { Util } from 'Util'
+import { Channel } from 'Channel'
 const WebSocket = Util.require(Util.WEB_SOCKET)
 
 const CONNECT_TIMEOUT = 3000
@@ -12,7 +13,7 @@ const listenSubject = new BehaviorSubject('')
  * Service class responsible to establish connections between peers via
  * `WebSocket`.
  */
-export class WebSocketService {
+export class WebSocketBuilder {
   constructor (wc) {
     this.wc = wc
     this.channelStream = new Subject()
@@ -23,7 +24,7 @@ export class WebSocketService {
   }
 
   static newIncomingSocket (wc, ws, senderId) {
-    wc.webSocketSvc.channelStream.next(wc._initConnection(ws, senderId))
+    wc.webSocketSvc.channelStream.next(new Channel(ws, wc, senderId))
   }
 
   /**
@@ -54,7 +55,7 @@ export class WebSocketService {
     return new Promise((resolve, reject) => {
       if (Util.isURL(url) && url.search(/^wss?/) !== -1) {
         const ws = new WebSocket(fullUrl)
-        const channel = this.wc._initConnection(ws, id)
+        const channel = new Channel(ws, this.wc, id)
         ws.onopen = () => resolve(channel)
         // Timeout for node (otherwise it will loop forever if incorrect address)
         setTimeout(() => {

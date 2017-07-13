@@ -16,7 +16,7 @@ export const Message = $root.Message = (() => {
 
     Message.prototype.senderId = 0;
     Message.prototype.recipientId = 0;
-    Message.prototype.isInner = false;
+    Message.prototype.isService = false;
     Message.prototype.content = $util.newBuffer([]);
 
     Message.create = function create(properties) {
@@ -30,8 +30,8 @@ export const Message = $root.Message = (() => {
             writer.uint32(8).uint32(message.senderId);
         if (message.recipientId != null && message.hasOwnProperty("recipientId"))
             writer.uint32(16).uint32(message.recipientId);
-        if (message.isInner != null && message.hasOwnProperty("isInner"))
-            writer.uint32(24).bool(message.isInner);
+        if (message.isService != null && message.hasOwnProperty("isService"))
+            writer.uint32(24).bool(message.isService);
         if (message.content != null && message.hasOwnProperty("content"))
             writer.uint32(34).bytes(message.content);
         return writer;
@@ -51,7 +51,7 @@ export const Message = $root.Message = (() => {
                 message.recipientId = reader.uint32();
                 break;
             case 3:
-                message.isInner = reader.bool();
+                message.isService = reader.bool();
                 break;
             case 4:
                 message.content = reader.bytes();
@@ -206,11 +206,11 @@ export const user = $root.user = (() => {
     return user;
 })();
 
-export const inner = $root.inner = (() => {
+export const service = $root.service = (() => {
 
-    const inner = {};
+    const service = {};
 
-    inner.Message = (function() {
+    service.Message = (function() {
 
         function Message(properties) {
             if (properties)
@@ -239,7 +239,7 @@ export const inner = $root.inner = (() => {
         Message.decode = function decode(reader, length) {
             if (!(reader instanceof $Reader))
                 reader = $Reader.create(reader);
-            let end = length === undefined ? reader.len : reader.pos + length, message = new $root.inner.Message();
+            let end = length === undefined ? reader.len : reader.pos + length, message = new $root.service.Message();
             while (reader.pos < end) {
                 let tag = reader.uint32();
                 switch (tag >>> 3) {
@@ -260,7 +260,7 @@ export const inner = $root.inner = (() => {
         return Message;
     })();
 
-    return inner;
+    return service;
 })();
 
 export const webChannel = $root.webChannel = (() => {
@@ -509,11 +509,11 @@ export const channelBuilder = $root.channelBuilder = (() => {
     return channelBuilder;
 })();
 
-export const fullyConnected = $root.fullyConnected = (() => {
+export const fullMesh = $root.fullMesh = (() => {
 
-    const fullyConnected = {};
+    const fullMesh = {};
 
-    fullyConnected.Message = (function() {
+    fullMesh.Message = (function() {
 
         function Message(properties) {
             if (properties)
@@ -542,9 +542,9 @@ export const fullyConnected = $root.fullyConnected = (() => {
             if (!writer)
                 writer = $Writer.create();
             if (message.connectTo != null && message.hasOwnProperty("connectTo"))
-                $root.fullyConnected.Peers.encode(message.connectTo, writer.uint32(10).fork()).ldelim();
+                $root.fullMesh.Peers.encode(message.connectTo, writer.uint32(10).fork()).ldelim();
             if (message.connectedTo != null && message.hasOwnProperty("connectedTo"))
-                $root.fullyConnected.Peers.encode(message.connectedTo, writer.uint32(18).fork()).ldelim();
+                $root.fullMesh.Peers.encode(message.connectedTo, writer.uint32(18).fork()).ldelim();
             if (message.joiningPeerId != null && message.hasOwnProperty("joiningPeerId"))
                 writer.uint32(24).uint32(message.joiningPeerId);
             if (message.joinedPeerId != null && message.hasOwnProperty("joinedPeerId"))
@@ -555,15 +555,15 @@ export const fullyConnected = $root.fullyConnected = (() => {
         Message.decode = function decode(reader, length) {
             if (!(reader instanceof $Reader))
                 reader = $Reader.create(reader);
-            let end = length === undefined ? reader.len : reader.pos + length, message = new $root.fullyConnected.Message();
+            let end = length === undefined ? reader.len : reader.pos + length, message = new $root.fullMesh.Message();
             while (reader.pos < end) {
                 let tag = reader.uint32();
                 switch (tag >>> 3) {
                 case 1:
-                    message.connectTo = $root.fullyConnected.Peers.decode(reader, reader.uint32());
+                    message.connectTo = $root.fullMesh.Peers.decode(reader, reader.uint32());
                     break;
                 case 2:
-                    message.connectedTo = $root.fullyConnected.Peers.decode(reader, reader.uint32());
+                    message.connectedTo = $root.fullMesh.Peers.decode(reader, reader.uint32());
                     break;
                 case 3:
                     message.joiningPeerId = reader.uint32();
@@ -582,7 +582,7 @@ export const fullyConnected = $root.fullyConnected = (() => {
         return Message;
     })();
 
-    fullyConnected.Peers = (function() {
+    fullMesh.Peers = (function() {
 
         function Peers(properties) {
             this.peers = [];
@@ -613,7 +613,7 @@ export const fullyConnected = $root.fullyConnected = (() => {
         Peers.decode = function decode(reader, length) {
             if (!(reader instanceof $Reader))
                 reader = $Reader.create(reader);
-            let end = length === undefined ? reader.len : reader.pos + length, message = new $root.fullyConnected.Peers();
+            let end = length === undefined ? reader.len : reader.pos + length, message = new $root.fullMesh.Peers();
             while (reader.pos < end) {
                 let tag = reader.uint32();
                 switch (tag >>> 3) {
@@ -638,7 +638,7 @@ export const fullyConnected = $root.fullyConnected = (() => {
         return Peers;
     })();
 
-    return fullyConnected;
+    return fullMesh;
 })();
 
 export const spray = $root.spray = (() => {
@@ -851,11 +851,11 @@ export const spray = $root.spray = (() => {
     return spray;
 })();
 
-export const webRTC = $root.webRTC = (() => {
+export const webRTCBuilder = $root.webRTCBuilder = (() => {
 
-    const webRTC = {};
+    const webRTCBuilder = {};
 
-    webRTC.Message = (function() {
+    webRTCBuilder.Message = (function() {
 
         function Message(properties) {
             if (properties)
@@ -887,14 +887,14 @@ export const webRTC = $root.webRTC = (() => {
             if (message.answer != null && message.hasOwnProperty("answer"))
                 writer.uint32(18).string(message.answer);
             if (message.candidate != null && message.hasOwnProperty("candidate"))
-                $root.webRTC.Candidate.encode(message.candidate, writer.uint32(26).fork()).ldelim();
+                $root.webRTCBuilder.Candidate.encode(message.candidate, writer.uint32(26).fork()).ldelim();
             return writer;
         };
 
         Message.decode = function decode(reader, length) {
             if (!(reader instanceof $Reader))
                 reader = $Reader.create(reader);
-            let end = length === undefined ? reader.len : reader.pos + length, message = new $root.webRTC.Message();
+            let end = length === undefined ? reader.len : reader.pos + length, message = new $root.webRTCBuilder.Message();
             while (reader.pos < end) {
                 let tag = reader.uint32();
                 switch (tag >>> 3) {
@@ -905,7 +905,7 @@ export const webRTC = $root.webRTC = (() => {
                     message.answer = reader.string();
                     break;
                 case 3:
-                    message.candidate = $root.webRTC.Candidate.decode(reader, reader.uint32());
+                    message.candidate = $root.webRTCBuilder.Candidate.decode(reader, reader.uint32());
                     break;
                 default:
                     reader.skipType(tag & 7);
@@ -918,7 +918,7 @@ export const webRTC = $root.webRTC = (() => {
         return Message;
     })();
 
-    webRTC.Candidate = (function() {
+    webRTCBuilder.Candidate = (function() {
 
         function Candidate(properties) {
             if (properties)
@@ -950,7 +950,7 @@ export const webRTC = $root.webRTC = (() => {
         Candidate.decode = function decode(reader, length) {
             if (!(reader instanceof $Reader))
                 reader = $Reader.create(reader);
-            let end = length === undefined ? reader.len : reader.pos + length, message = new $root.webRTC.Candidate();
+            let end = length === undefined ? reader.len : reader.pos + length, message = new $root.webRTCBuilder.Candidate();
             while (reader.pos < end) {
                 let tag = reader.uint32();
                 switch (tag >>> 3) {
@@ -974,7 +974,7 @@ export const webRTC = $root.webRTC = (() => {
         return Candidate;
     })();
 
-    return webRTC;
+    return webRTCBuilder;
 })();
 
 export { $root as default };

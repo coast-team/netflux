@@ -1,13 +1,13 @@
 import { TopologyInterface } from 'service/topology/TopologyInterface'
-import { fullyConnected } from 'Protobuf.js'
+import { fullMesh } from 'Protobuf.js'
 import * as log from 'log'
 
 /**
- * {@link FullyConnectedService} identifier.
+ * {@link FullMesh} identifier.
  * @ignore
  * @type {number}
  */
-export const FULLY_CONNECTED = 3
+export const FULL_MESH = 3
 
 /**
  * Fully connected web channel manager. Implements fully connected topology
@@ -15,9 +15,9 @@ export const FULLY_CONNECTED = 3
  *
  * @extends module:webChannelManager~WebChannelTopologyInterface
  */
-export class FullyConnectedService extends TopologyInterface {
+export class FullMesh extends TopologyInterface {
   constructor (wc) {
-    super(FULLY_CONNECTED, fullyConnected.Message, wc._msgStream)
+    super(FULL_MESH, fullMesh.Message, wc._msgStream)
     this.wc = wc
     this.init()
   }
@@ -27,11 +27,11 @@ export class FullyConnectedService extends TopologyInterface {
     this.jps = new Map()
     this.innerStream.subscribe(
       msg => this._handleSvcMsg(msg),
-      err => log.error('FullyConnectedService Message Stream Error', err)
+      err => log.error('FullMesh Message Stream Error', err)
     )
     this.channelsSubscription = this.wc.channelBuilderSvc.channels().subscribe(
       ch => (this.jps.set(ch.peerId, ch)),
-      err => log.error('FullyConnectedService set joining peer Error', err)
+      err => log.error('FullMesh set joining peer Error', err)
     )
   }
 
@@ -45,13 +45,22 @@ export class FullyConnectedService extends TopologyInterface {
    * @param {WebSocket|RTCDataChannel} channel
    */
   addJoining (channel) {
+    log.info(this.wc.myId + ' addJoining ' + channel.peerId)
     const peers = this.wc.members.slice()
-    this.jps.set(channel.peerId, channel)
+
+    // First joining peer
     if (peers.length === 0) {
-      this.sendJoinedPeerId(channel, channel.peerId)
+      channel.send(this.wc._encode({
+        recipientId: channel.peerId,
+        content: super.encode({ joinedPeerId: channel.peerId })
+      }))
+      this.peerJoined(channel)
+
+    // There are at least 2 members in the network
     } else {
+      this.jps.set(channel.peerId, channel)
       this.wc._send({ content: super.encode({ joiningPeerId: channel.peerId }) })
-      channel.send(this.wc._encodeMain({
+      channel.send(this.wc._encode({
         recipientId: channel.peerId,
         content: super.encode({ connectTo: { peers } })
       }))
@@ -62,6 +71,7 @@ export class FullyConnectedService extends TopologyInterface {
     this.jps.set(this.wc.myId, ch)
     this.channels.add(ch)
     this.wc._onPeerJoin(ch.peerId)
+    log.info(this.wc.myId + ' _onPeerJoin ' + ch.peerId)
   }
 
   /**
@@ -70,7 +80,7 @@ export class FullyConnectedService extends TopologyInterface {
    * @param {ArrayBuffer} msg
    */
   send (msg) {
-    const bytes = this.wc._encodeMain(msg)
+    const bytes = this.wc._encode(msg)
     for (let ch of this.channels) {
       ch.send(bytes)
     }
@@ -79,7 +89,7 @@ export class FullyConnectedService extends TopologyInterface {
   forward (msg) { /* Nothing to do for this topology */ }
 
   sendTo (msg) {
-    const bytes = this.wc._encodeMain(msg)
+    const bytes = this.wc._encode(msg)
     for (let ch of this.channels) {
       if (ch.peerId === msg.recipientId) {
         return ch.send(bytes)
@@ -87,10 +97,10 @@ export class FullyConnectedService extends TopologyInterface {
     }
     for (let [id, ch] of this.jps) {
       if (id === msg.recipientId || id === this.wc.myId) {
-        return ch.send(bytes)
+        return ch.send((bytes))
       }
     }
-    return log.error(this.wc.myId + ' The recipient could not be found', msg)
+    return log.error(this.wc.myId + ' The recipient could not be found', msg.recipientId)
   }
 
   forwardTo (msg) { this.sendTo(msg) }
@@ -107,6 +117,7 @@ export class FullyConnectedService extends TopologyInterface {
     this.channels.clear()
     this.jps.clear()
     this.channelsSubscription.unsubscribe()
+    log.info(this.wc.myId + ' HAS LEFT ')
   }
 
   onChannelClose (closeEvt, channel) {
@@ -122,6 +133,7 @@ export class FullyConnectedService extends TopologyInterface {
         this.jps.clear()
       } else {
         this.channels.delete(channel)
+        log.info(this.wc.myId + ' _onPeerLeave when iJoin ' + channel.peerId)
         this.wc._onPeerLeave(channel.peerId)
       }
     } else {
@@ -133,6 +145,7 @@ export class FullyConnectedService extends TopologyInterface {
       }
       if (this.channels.has(channel)) {
         this.channels.delete(channel)
+        log.info(this.wc.myId + ' _onPeerLeave ' + channel.peerId)
         this.wc._onPeerLeave(channel.peerId)
       }
     }
@@ -160,17 +173,16 @@ export class FullyConnectedService extends TopologyInterface {
         Promise.all(promises)
           .then(channels => {
             for (let ch of channels) {
-              this.channels.add(ch)
-              this.wc._onPeerJoin(ch.peerId)
+              this.peerJoined(ch)
             }
-            channel.send(this.wc._encodeMain({
+            channel.send(this.wc._encode({
               recipientId: channel.peerId,
               content: super.encode({ connectedTo: { peers } })
             }))
           })
           .catch(err => {
             log.error('Failed to join', err)
-            channel.send(this.wc._encodeMain({
+            channel.send(this.wc._encode({
               recipientId: channel.peerId,
               content: super.encode({ connectedTo: { peers: [] } })
             }))
@@ -188,7 +200,11 @@ export class FullyConnectedService extends TopologyInterface {
           }
         }
         if (missingPeers.length === 0) {
-          this.sendJoinedPeerId(channel, senderId)
+          this.jps.delete(channel.peerId)
+          this.peerJoined(channel)
+          this.wc._send({
+            content: super.encode({ joinedPeerId: channel.peerId })
+          })
         } else {
           // TODO
         }
@@ -199,27 +215,21 @@ export class FullyConnectedService extends TopologyInterface {
         break
       }
       case 'joinedPeerId': {
-        const ch = this.jps.get(msg.joinedPeerId)
-        if (ch === undefined) {
-          // Throw error
+        if (this.iJoin()) {
+          this.wc._joinSucceed()
+          log.info(this.wc.myId + ' _joinSucceed ')
         } else {
-          this.jps.delete(msg.joinedPeerId)
-          if (this.wc.myId === msg.joinedPeerId) {
-            this.wc._joinSucceed()
-          } else {
-            this.channels.add(ch)
-            this.wc._onPeerJoin(msg.joinedPeerId)
-          }
+          this.peerJoined(this.jps.get(msg.joinedPeerId))
         }
+        this.jps.delete(msg.joinedPeerId)
         break
       }
     }
   }
 
-  sendJoinedPeerId (ch, joinedPeerId) {
-    this.wc._send({
-      isMeIncluded: true,
-      content: super.encode({ joinedPeerId })
-    })
+  peerJoined (ch) {
+    this.channels.add(ch)
+    this.wc._onPeerJoin(ch.peerId)
+    log.info(this.wc.myId + ' _onPeerJoin ' + ch.peerID)
   }
 }
