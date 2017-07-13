@@ -1,16 +1,16 @@
-import { Subject } from 'node_modules/rxjs/Subject'
+import { Subject } from 'rxjs/Subject'
 
-import { Channel } from 'Channel'
-import { FullMesh } from 'service/topology/FullMesh'
-import { Service } from 'service/Service'
-import { SignalingGate } from 'SignalingGate'
-import { ChannelBuilder } from 'service/ChannelBuilder'
-import { WebSocketBuilder } from 'WebSocketBuilder'
-import { WebRTCBuilder } from 'service/WebRTCBuilder'
-import { Message, webChannel, service } from 'Protobuf.js'
-import { UserMessage } from 'UserMessage'
-import { Util } from 'Util'
-import * as log from 'log'
+import { Channel } from '../Channel'
+import { FullMesh } from './topology/FullMesh'
+import { Service } from './Service'
+import { SignalingGate } from '../SignalingGate'
+import { ChannelBuilder } from './ChannelBuilder'
+import { WebSocketBuilder } from '../WebSocketBuilder'
+import { WebRTCBuilder } from './WebRTCBuilder'
+import { Message, webChannel, service } from '../Protobuf'
+import { UserMessage } from '../UserMessage'
+import { Util } from '../Util'
+import * as log from '../log'
 
 /**
  * Maximum identifier number for {@link WebChannel#_generateId} function.

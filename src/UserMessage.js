@@ -1,5 +1,5 @@
-import { Util } from 'Util'
-import { user } from 'Protobuf.js'
+import { Util } from './Util'
+import { user } from './Protobuf'
 const ted = Util.require(Util.TEXT_ENCODING)
 
 /**

@@ -10,3 +10,6 @@ coverage
 
 # Documentation
 esdoc
+
+# Cache
+.rpt2_cache

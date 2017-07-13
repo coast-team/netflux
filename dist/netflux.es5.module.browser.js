@@ -5116,53 +5116,52 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
 }();
 
 var Service = function () {
-  function Service(id, Message$$1) {
-    var msgStream = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : undefined;
-    classCallCheck(this, Service);
+    function Service(id, Message$$1, msgStream) {
+        classCallCheck(this, Service);
 
-    this.serviceId = id;
-    this.Message = Message$$1;
-    if (msgStream !== undefined) {
-      this.setInnerStream(msgStream);
+        this.serviceId = id;
+        this.Message = Message$$1;
+        if (msgStream !== undefined) {
+            this.setInnerStream(msgStream);
+        }
     }
-  }
 
-  createClass(Service, [{
-    key: 'setInnerStream',
-    value: function setInnerStream(msgStream) {
-      var _this = this;
+    createClass(Service, [{
+        key: 'encode',
+        value: function encode(msg) {
+            return service.Message.encode(service.Message.create({
+                id: this.serviceId,
+                content: this.Message.encode(this.Message.create(msg)).finish()
+            })).finish();
+        }
+    }, {
+        key: 'decode',
+        value: function decode(bytes) {
+            return this.Message.decode(bytes);
+        }
+    }, {
+        key: 'setInnerStream',
+        value: function setInnerStream(msgStream) {
+            var _this = this;
 
-      this.innerStream = msgStream.filter(function (_ref) {
-        var id = _ref.id;
-        return id === _this.serviceId;
-      }).map(function (_ref2) {
-        var channel = _ref2.channel,
-            senderId = _ref2.senderId,
-            recipientId = _ref2.recipientId,
-            content = _ref2.content;
-        return {
-          channel: channel,
-          senderId: senderId,
-          recipientId: recipientId,
-          msg: _this.Message.decode(content)
-        };
-      });
-    }
-  }, {
-    key: 'encode',
-    value: function encode(msg) {
-      return service.Message.encode(service.Message.create({
-        id: this.serviceId,
-        content: this.Message.encode(this.Message.create(msg)).finish()
-      })).finish();
-    }
-  }, {
-    key: 'decode',
-    value: function decode(bytes) {
-      return this.Message.decode(bytes);
-    }
-  }]);
-  return Service;
+            this.innerStream = msgStream.filter(function (_ref) {
+                var id = _ref.id;
+                return id === _this.serviceId;
+            }).map(function (_ref2) {
+                var channel = _ref2.channel,
+                    senderId = _ref2.senderId,
+                    recipientId = _ref2.recipientId,
+                    content = _ref2.content;
+                return {
+                    channel: channel,
+                    senderId: senderId,
+                    recipientId: recipientId,
+                    msg: _this.Message.decode(content)
+                };
+            });
+        }
+    }]);
+    return Service;
 }();
 
 /**
@@ -5186,148 +5185,68 @@ var TopologyInterface = function (_Service) {
     return possibleConstructorReturn(this, (TopologyInterface.__proto__ || Object.getPrototypeOf(TopologyInterface)).apply(this, arguments));
   }
 
-  createClass(TopologyInterface, [{
-    key: 'addJoining',
-
-    /**
-     * Add a new peer into WebChannel.
-     *
-     * @abstract
-     * @param  {Channel} ch - Channel with the new peer
-     */
-    value: function addJoining(ch) {
-      throw new Error('Must be implemented by subclass!');
-    }
-
-    /**
-     * As a joining peer initializes the intermediary channel
-     *
-     * @abstract
-     * @param  {Channel} ch - intermediary channel with one of the network member
-     */
-
-  }, {
-    key: 'initJoining',
-    value: function initJoining(ch) {
-      throw new Error('Must be implemented by subclass!');
-    }
-
-    /**
-     * Broadcast a message to all network members.
-     *
-     * @abstract
-     * @param  {Object} msg - Message to be send
-     * @param  {number} [msg.senderId] - Id of the sender peer
-     * @param  {number} [msg.recipientId] - Id of the recipient peer
-     * @param  {boolean} [msg.isService] - True is it is an Netflux internal message and false
-     *   means that is is a user message.
-     * @param  {ArrayBuffer} [msg.content] - Message main content
-     */
-
-  }, {
-    key: 'send',
-    value: function send(msg) {
-      throw new Error('Must be implemented by subclass!');
-    }
-
-    /**
-     * Forward a broadcasted message. This method will be called onces
-     * the peer receives a broadcasted message.
-     *
-     * @abstract
-     * @param  {Object} msg
-     * @param  {number} [msg.senderId] - Id of the sender peer
-     * @param  {number} [msg.recipientId] - Id of the recipient peer
-     * @param  {boolean} [msg.isService] - True if it is Netflux internal message
-     *    and false if it is a user message.
-     * @param  {ArrayBuffer} [msg.content] - Message main content
-     */
-
-  }, {
-    key: 'forward',
-    value: function forward(msg) {
-      throw new Error('Must be implemented by subclass!');
-    }
-
-    /**
-     * Send a message to a particular peer in the network.
-     *
-     * @abstract
-     * @param  {Object} msg - Message to be send
-     * @param  {number} [msg.senderId] - Id of the sender peer
-     * @param  {number} [msg.recipientId] - Id of the recipient peer
-     * @param  {boolean} [msg.isService] - True is it is an Netflux internal message and false
-     *   means that is is a user message.
-     * @param  {ArrayBuffer} [msg.content] - Message main content
-     */
-
-  }, {
-    key: 'sendTo',
-    value: function sendTo(msg) {
-      throw new Error('Must be implemented by subclass!');
-    }
-
-    /**
-     * Forward the message to its recipient or to some peer who knowns
-     * how to forward this message to its recipient. This method
-     * will be called onces the peer receives a private message
-     * which is intended to someone else.
-     *
-     * @abstract
-     * @param  {Object} msg
-     * @param  {number} [msg.senderId] - Id of the sender peer
-     * @param  {number} [msg.recipientId] - Id of the recipient peer
-     * @param  {boolean} [msg.isService] - True if it is a Netflux internal message
-     *    and false if it is a user message.
-     * @param  {ArrayBuffer} [msg.content] - Message main content
-     */
-
-  }, {
-    key: 'forwardTo',
-    value: function forwardTo(msg) {
-      throw new Error('Must be implemented by subclass!');
-    }
-
-    /**
-     * Leave Web Channel.
-     *
-     * @abstract
-     */
-
-  }, {
-    key: 'leave',
-    value: function leave() {
-      throw new Error('Must be implemented by subclass!');
-    }
-
-    /**
-     * Close event handler for each `Channel` in the `WebChannel`.
-     *
-     * @param {CloseEvent} closeEvt
-     * @param {Channel} channel
-     */
-
-  }, {
-    key: 'onChannelClose',
-    value: function onChannelClose(closeEvt, channel) {
-      throw new Error('Must be implemented by subclass!');
-    }
-
-    /**
-     * Error event handler for each `Channel` in the `WebChannel`.
-     *
-     * @param {Event} evt
-     * @param {Channel} channel
-     */
-
-  }, {
-    key: 'onChannelError',
-    value: function onChannelError(evt, channel) {
-      throw new Error('Must be implemented by subclass!');
-    }
-  }]);
   return TopologyInterface;
 }(Service);
+
+var Level = {
+  TRACE: 1,
+  DEBUG: 2,
+  INFO: 3,
+  WARN: 4,
+  ERROR: 5
+};
+
+var logLevel = Level.WARN;
+
+
+
+var debug = logLevel <= Level.DEBUG ? function (msg) {
+  for (var _len2 = arguments.length, rest = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+    rest[_key2 - 1] = arguments[_key2];
+  }
+
+  console.group('DEBUG| ' + msg);
+  rest.forEach(function (param) {
+    return logRecursive(param);
+  });
+  console.groupEnd();
+} : function () {};
+
+
+
+
+
+var error = logLevel <= Level.ERROR ? function (msg) {
+  var _console4;
+
+  for (var _len5 = arguments.length, rest = Array(_len5 > 1 ? _len5 - 1 : 0), _key5 = 1; _key5 < _len5; _key5++) {
+    rest[_key5 - 1] = arguments[_key5];
+  }
+
+  (_console4 = console).error.apply(_console4, ['ERROR| ' + msg].concat(rest));
+} : function () {};
+
+function logObject(obj) {
+  for (var prop in obj) {
+    console.log(prop + ' = ', obj[prop]);
+  }
+}
+
+function logRecursive(obj) {
+  if ((typeof obj === 'undefined' ? 'undefined' : _typeof(obj)) === 'object') {
+    if ('forEach' in obj) {
+      obj.forEach(function (value, index) {
+        console.groupCollapsed(index + ' ' + value.constructor.name);
+        logRecursive(value);
+        console.groupEnd();
+      });
+    } else {
+      logObject(obj);
+    }
+  } else {
+    console.log(obj);
+  }
+}
 
 /**
  * {@link FullMesh} identifier.
@@ -10573,6 +10492,575 @@ var WebChannel = function (_Service) {
   return WebChannel;
 }(Service);
 
+/*! *****************************************************************************
+Copyright (c) Microsoft Corporation. All rights reserved.
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+this file except in compliance with the License. You may obtain a copy of the
+License at http://www.apache.org/licenses/LICENSE-2.0
+
+THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED
+WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE,
+MERCHANTABLITY OR NON-INFRINGEMENT.
+
+See the Apache Version 2.0 License for specific language governing permissions
+and limitations under the License.
+***************************************************************************** */
+/* global Reflect, Promise */
+
+
+
+
+
+
+
+
+
+
+
+
+
+function __awaiter(thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator.throw(value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+}
+
+var PartialView = function (_Array) {
+    inherits(PartialView, _Array);
+
+    function PartialView() {
+        classCallCheck(this, PartialView);
+        return possibleConstructorReturn(this, (PartialView.__proto__ || Object.getPrototypeOf(PartialView)).call(this));
+    }
+    /**
+    * Returns the oldest arc in the partial view
+    *
+    * @return {Array<number>} the oldest arc [peerId: number, age: number]
+    */
+
+
+    createClass(PartialView, [{
+        key: "add",
+
+        /**
+        * Adds a node with the age of 0 to the partial view
+        *
+        * @param {number} peerId
+        * @param {number} age
+        */
+        value: function add(peerId) {
+            var age = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+
+            this.push([peerId, age]);
+        }
+        /**
+        * Returns the index of an arc in the partial view
+        * -1 if not in the partial view
+        *
+        * @param {number} peerId
+        * @param {number} age
+        * @return {number} index of the arc in the partial view
+        */
+
+    }, {
+        key: "_indexArc",
+        value: function _indexArc(peerId, age) {
+            for (var i = 0; i < this.length; i++) {
+                var elem = this[i];
+                if (elem[0] == peerId && elem[1] == age) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+        /**
+        * Removes a node from the partial view
+        *
+        * @param {number} peerId
+        * @param {number} age
+        */
+
+    }, {
+        key: "remove",
+        value: function remove(peerId, age) {
+            var index = this._indexArc(peerId, age);
+            if (index >= 0) {
+                this.splice(index, 1);
+            }
+        }
+        /**
+        * Increments the age of each arc
+        */
+
+    }, {
+        key: "incrementAge",
+        value: function incrementAge() {
+            for (var i = 0; i < this.length; i++) {
+                this[i][1]++;
+            }
+        }
+    }, {
+        key: "oldest",
+        get: function get$$1() {
+            if (this.length <= 0) {
+                throw new Error("Empty partial view");
+            }
+            return this[0];
+        }
+    }]);
+    return PartialView;
+}(Array);
+
+/**
+ * Delay in milliseconds between two exchanges
+ */
+var delay = 1000 * 60 * 2;
+/**
+ * Timeout value in milliseconds for exchanges
+ */
+var timeout = 1000 * 60;
+var SPRAY = 15;
+var SprayService = function (_TopologyInterface) {
+    inherits(SprayService, _TopologyInterface);
+
+    function SprayService(wc) {
+        classCallCheck(this, SprayService);
+
+        var _this = possibleConstructorReturn(this, (SprayService.__proto__ || Object.getPrototypeOf(SprayService)).call(this, SPRAY, spray.Message, wc._msgStream));
+
+        _this.wc = wc; // <any> to delete error "property 'wc' does not exist on type 'SprayService'"
+        _this.init();
+        _this.innerMessageSubscritption = _this.innerStream.subscribe(function (msg) {
+            return _this._handleSvcMsg(msg);
+        }, function (err) {
+            return error('SprayService Message Stream Error', err, wc);
+        }, function () {
+            _this.init();
+        });
+        return _this;
+    }
+
+    createClass(SprayService, [{
+        key: 'init',
+        value: function init() {
+            this.channels = new Set();
+            this.joiningPeers = new Map();
+            this.pendingRequests = new Map();
+            this.p = new PartialView();
+        }
+    }, {
+        key: 'connectTo',
+        value: function connectTo(peerId) {
+            var _this2 = this;
+
+            return new Promise(function (resolve, reject) {
+                _this2.wc.channelBuilderSvc.connectTo(peerId).then(function (ch) {
+                    return _this2.onChannel(ch);
+                }).then(function () {
+                    resolve();
+                });
+            });
+        }
+        /**
+         * Add a peer to the WebChannel
+         *
+         * @param  {Channel}            channel
+         *
+         * @return {Promise<number, string>}
+         */
+
+    }, {
+        key: 'addJoining',
+        value: function addJoining(channel) {
+            var _this3 = this;
+
+            debug(this.wc.myId + ' ADD ' + channel.peerId);
+            var wc = channel.webChannel;
+            var peers = [];
+            for (var i = 0; i < this.p.length; i++) {
+                peers.push(this.p[i][0]);
+            }
+            if (peers.length == 0) {
+                peers.push(wc.myId);
+            }
+            peers.forEach(function (peer) {
+                wc._sendTo({
+                    senderId: wc.myId,
+                    recipientId: peer,
+                    content: get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'encode', _this3).call(_this3, { shouldAdd: { peerId: channel.peerId } })
+                });
+            });
+            return new Promise(function (resolve, reject) {
+                _this3.pendingRequests.set(channel.peerId, { resolve: resolve, reject: reject });
+            });
+        }
+    }, {
+        key: 'initJoining',
+        value: function initJoining(ch) {}
+        // TODO
+
+        /**
+         * Send message to all WebChannel members
+         *
+         * @param {ArrayBuffer} msg
+         */
+
+    }, {
+        key: 'send',
+        value: function send(msg) {}
+        // TODO
+
+        /**
+         * Send message to a specific peer (recipientId)
+         *
+         * @param {ArrayBuffer} msg
+         */
+
+    }, {
+        key: 'sendTo',
+        value: function sendTo(msg) {
+            // TODO
+            var peersId = [];
+            this.p.forEach(function (arc) {
+                peersId.push(arc[0]);
+            });
+            if (msg.recipientId in peersId) {
+                // Send to recipientId
+            } else {
+                    // I don't know... forwardTo...
+                }
+        }
+    }, {
+        key: 'forwardTo',
+        value: function forwardTo(msg) {
+            // TODO
+        }
+    }, {
+        key: 'forward',
+        value: function forward(msg) {
+            // TODO
+        }
+    }, {
+        key: 'leave',
+        value: function leave() {
+            // TODO
+            var _iteratorNormalCompletion = true;
+            var _didIteratorError = false;
+            var _iteratorError = undefined;
+
+            try {
+                for (var _iterator = this.channels[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                    var c = _step.value;
+
+                    c.clearHandlers();
+                    c.close();
+                }
+            } catch (err) {
+                _didIteratorError = true;
+                _iteratorError = err;
+            } finally {
+                try {
+                    if (!_iteratorNormalCompletion && _iterator.return) {
+                        _iterator.return();
+                    }
+                } finally {
+                    if (_didIteratorError) {
+                        throw _iteratorError;
+                    }
+                }
+            }
+
+            this.channels.clear();
+        }
+    }, {
+        key: 'onChannel',
+        value: function onChannel(channel) {
+            // TODO
+            return new Promise(function (resolve, reject) {
+                return;
+            });
+        }
+    }, {
+        key: 'onChannelClose',
+        value: function onChannelClose(closeEvt, channel) {
+            // TODO ?
+            var _iteratorNormalCompletion2 = true;
+            var _didIteratorError2 = false;
+            var _iteratorError2 = undefined;
+
+            try {
+                for (var _iterator2 = this.channels[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+                    var c = _step2.value;
+
+                    if (c.peerId === channel.peerId) {
+                        return this.channels.delete(c);
+                    }
+                }
+            } catch (err) {
+                _didIteratorError2 = true;
+                _iteratorError2 = err;
+            } finally {
+                try {
+                    if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                        _iterator2.return();
+                    }
+                } finally {
+                    if (_didIteratorError2) {
+                        throw _iteratorError2;
+                    }
+                }
+            }
+
+            this.joiningPeers.forEach(function (jp) {
+                return jp.channels.delete(channel);
+            });
+            return false;
+        }
+    }, {
+        key: 'onChannelError',
+        value: function onChannelError(evt, channel) {
+            console.error('Channel error with id: ' + channel.peerId + ': ', evt);
+        }
+        /**
+         * Executes actions depending on the message stream
+         *
+         * @param {ServiceMessage} M {channel, senderId, recipientId, msg}
+         */
+
+    }, {
+        key: '_handleSvcMsg',
+        value: function _handleSvcMsg(M) {
+            var _this4 = this;
+
+            var wc = M.channel.webChannel;
+            var msg = M.msg;
+            switch (msg.type) {
+                case 'shouldAdd':
+                    {
+                        this.p.add(get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'decode', this).call(this, msg).peerId);
+                        this.connectTo(get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'decode', this).call(this, msg).peerId).then(function (failed) {
+                            debug(_this4.wc.myId + ' shouldConnectTo ', failed);
+                        });
+                        setInterval(function () {
+                            _this4._exchange(wc);
+                        }, delay);
+                        break;
+                    }
+                case 'exchangeInit':
+                    {
+                        debug(wc.peerId + ' exchanging with ' + wc.myId);
+                        this._onExchange(wc, wc.peedId, get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'decode', this).call(this, msg).sample);
+                        break;
+                    }
+            }
+        }
+        /**
+         * Periodic procedure of exchange (active thread)
+         *
+         * @param  {WebChannel}    wc
+         *
+         * @return {Promise<void>}
+         */
+
+    }, {
+        key: '_exchange',
+        value: function _exchange(wc) {
+            var _this5 = this;
+
+            var _super = function _super(name) {
+                return get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), name, _this5);
+            };
+            return __awaiter(this, void 0, void 0, regeneratorRuntime.mark(function _callee() {
+                var _this6 = this;
+
+                var oldestArc, cloneP, sample;
+                return regeneratorRuntime.wrap(function _callee$(_context) {
+                    while (1) {
+                        switch (_context.prev = _context.next) {
+                            case 0:
+                                this.p.incrementAge();
+                                oldestArc = this.p.oldest;
+                                cloneP = new PartialView();
+
+                                this.p.forEach(function (arc) {
+                                    cloneP.add(arc[0], arc[1]);
+                                });
+                                cloneP.remove(oldestArc[0], oldestArc[1]);
+                                sample = this._getSample(cloneP, Math.ceil(this.p.length / 2) - 1);
+
+                                sample.add(wc.myId);
+                                this._replace(sample, oldestArc[0], wc.myId);
+                                wc._sendTo({
+                                    senderId: wc.myId,
+                                    recipientId: oldestArc[0],
+                                    content: _super("encode").call(this, { exchangeInit: { sample: sample } })
+                                });
+                                // async/await response... with timeout
+                                // let respSample = await new PartialView();
+                                _context.next = 11;
+                                return new Promise(function (resolve, reject) {
+                                    wc._msgStream.filter(function (msg) {
+                                        return msg.recipientId === wc.myId && msg.type == 'exchangeResp';
+                                    }).subscribe(function (msg) {
+                                        resolve(_super("decode").call(_this6, msg).respSample);
+                                    }, function (err) {
+                                        error('SprayService Message Stream Error', err, wc);
+                                        reject();
+                                    });
+                                    setTimeout(function () {
+                                        return reject('Exchange response timed out');
+                                    }, timeout);
+                                }).then(function (respSample) {
+                                    if (Array.isArray(respSample)) {
+                                        respSample.forEach(function (arc) {
+                                            _this6.p.add(arc[0], arc[1]);
+                                        });
+                                    } else {
+                                        error('SprayService Exchange response typeof ', typeof respSample === 'undefined' ? 'undefined' : _typeof(respSample));
+                                    }
+                                }).catch(function (err) {
+                                    error('Failed waiting exchange response ', err);
+                                });
+
+                            case 11:
+                                this._replace(sample, wc.myId, oldestArc[0]);
+                                sample.forEach(function (arc) {
+                                    _this6.p.remove(arc[0], arc[1]);
+                                });
+
+                            case 13:
+                            case 'end':
+                                return _context.stop();
+                        }
+                    }
+                }, _callee, this);
+            }));
+        }
+        /**
+         * Periodic procedure of exchange (passive thread)
+         *
+         * @param {WebChannel}  wc
+         * @param {number}      origineId  peerId
+         * @param {PartialView} sample
+         */
+
+    }, {
+        key: '_onExchange',
+        value: function _onExchange(wc, origineId, sample) {
+            var _this7 = this;
+
+            var respSample = this._getSample(this.p, Math.ceil(this.p.length / 2));
+            this._replace(respSample, origineId, wc.myId);
+            wc._sendTo({
+                senderId: wc.myId,
+                recipientId: origineId,
+                content: get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'encode', this).call(this, { exchangeResp: { respSample: respSample } })
+            });
+            this._replace(respSample, wc.myId, origineId);
+            respSample.forEach(function (arc) {
+                _this7.p.remove(arc[0], arc[1]);
+            });
+            sample.forEach(function (arc) {
+                _this7.p.add(arc[0], arc[1]);
+            });
+        }
+        /**
+         * Get n random arcs in the partial view p
+         *
+         * @param  {PartialView} p
+         * @param  {number}      n
+         *
+         * @return {PartialView}   partial view of n arcs from p
+         */
+
+    }, {
+        key: '_getSample',
+        value: function _getSample(p, n) {
+            var cloneP = p.slice();
+            var arcs = new PartialView();
+            while (arcs.length < n && cloneP.length > 0) {
+                var randomIndex = Math.floor(Math.random() * cloneP.length);
+                var arc = cloneP.splice(randomIndex, 1)[0];
+                // TODO verification peer is up
+                // if peer is up
+                arcs.add(arc[0], arc[1]);
+                // else launch this._onPeerDown (or this._onArcDown ?)
+            }
+            return arcs;
+        }
+        /**
+         * Replace a peerId in a PartialView by another
+         *
+         * @param {PartialView} p
+         * @param {number}      oldId
+         * @param {number}      newId
+         */
+
+    }, {
+        key: '_replace',
+        value: function _replace(p, oldId, newId) {
+            p.forEach(function (arc) {
+                if (arc[0] == oldId) {
+                    arc[0] = newId;
+                }
+            });
+        }
+        /**
+         * When a peer is down, we count occurences
+         * and duplicate arcs in the partial view
+         *
+         * @param {number} peerDownId
+         */
+
+    }, {
+        key: '_onPeerDown',
+        value: function _onPeerDown(peerDownId) {
+            var _this8 = this;
+
+            // Count and delete
+            var occ = 0;
+            var toRemove = [];
+            this.p.forEach(function (arc) {
+                if (arc[0] == peerDownId) {
+                    toRemove.push(arc);
+                    occ++;
+                }
+            });
+            toRemove.forEach(function (arc) {
+                _this8.p.remove(arc[0], arc[1]);
+            });
+            // Duplicate arcs
+            for (var i = 0; i < occ; i++) {
+                if (Math.random() > 1 / (this.p.length + occ)) {
+                    var newArcId = this.p[Math.floor(Math.random() * this.p.length)][0];
+                    this.p.add(newArcId);
+                }
+            }
+        }
+        /**
+         * When an arc is down but not the peer,
+         * we duplicate a random arc of the
+         * partial view
+         *
+         * @param {number} peerId
+         * @param {number} age
+         */
+
+    }, {
+        key: '_onArcDown',
+        value: function _onArcDown(peerId, age) {
+            this.p.remove(peerId, age);
+            var newArcId = this.p[Math.floor(Math.random() * this.p.length)][0];
+            this.p.add(newArcId);
+        }
+    }]);
+    return SprayService;
+}(TopologyInterface);
+
 /**
  * @type {Object}
  * @property {FULL_MESH} defaults.topology Fully connected topology is the only one available for now
@@ -10600,5 +11088,6 @@ function create(options) {
   var mySettings = Object.assign({}, defaults$1, options);
   return new WebChannel(mySettings);
 }
+console.log('SPRAY: ', SprayService.constructor.name);
 
 export { create };

@@ -3,7 +3,8 @@
     "outDir": "./built",
     "allowJs": true,
     "target": "es6",
-    "lib": [ "es6", "dom" ]
+    "lib": [ "es6", "dom" ],
+    "moduleResolution": "node"
   },
   "include": [
     "./src/**/*.ts"

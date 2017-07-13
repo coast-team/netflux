@@ -1,6 +1,6 @@
-import { TopologyInterface } from 'service/topology/TopologyInterface'
-import { fullMesh } from 'Protobuf.js'
-import * as log from 'log'
+import { TopologyInterface } from './TopologyInterface'
+import { fullMesh } from '../../Protobuf.js'
+import * as log from '../../log'
 
 /**
  * {@link FullMesh} identifier.

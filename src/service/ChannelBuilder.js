@@ -1,10 +1,10 @@
-import { Subject } from 'node_modules/rxjs/Subject'
+import { Subject } from 'rxjs/Subject'
 
-import { Service } from 'service/Service'
-import { channelBuilder } from 'Protobuf.js'
-import { WebSocketBuilder } from 'WebSocketBuilder'
-import { WebRTCBuilder } from 'service/WebRTCBuilder'
-import * as log from 'log'
+import { Service } from './Service'
+import { channelBuilder } from '../Protobuf'
+import { WebSocketBuilder } from '../WebSocketBuilder'
+import { WebRTCBuilder } from './WebRTCBuilder'
+import * as log from '../log'
 
 const ID = 2
 const ME = {

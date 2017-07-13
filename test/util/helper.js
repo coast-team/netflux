@@ -1,6 +1,6 @@
-import { Util } from 'src/Util'
-import { create } from 'src/index.browser'
-import chunk50kb from 'util/50kb.txt'
+import { Util } from '../../src/Util'
+import { create } from '../../src/index.browser'
+import chunk50kb from './50kb.txt'
 
 // Main signaling server for all tests
 export const SIGNALING_URL = 'ws://localhost:8000'

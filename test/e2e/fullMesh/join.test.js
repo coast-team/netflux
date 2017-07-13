@@ -1,5 +1,5 @@
-import * as helper from 'util/helper'
-import bigStr from 'util/4mb.txt'
+import * as helper from '../../util/helper'
+import bigStr from '../../util/4mb.txt'
 
 // s: 🤖 server
 // b: 🙂 browser

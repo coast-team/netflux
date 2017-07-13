@@ -1,5 +1,3 @@
-"use strict"
-
 export class PartialView extends Array {
   constructor() {
     super();

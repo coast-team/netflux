@@ -1,20 +1,17 @@
-import includePaths from 'rollup-plugin-includepaths'
 import commonjs from 'rollup-plugin-commonjs'
 import replace from 'rollup-plugin-replace'
 import string from 'rollup-plugin-string'
 import resolve from 'rollup-plugin-node-resolve'
+import typescript from 'rollup-plugin-typescript2'
 
 export default {
-  entry: 'test/util/botServer.js',
+  entry: './test/util/botServer.js',
   format: 'cjs',
-  dest: 'test/util/.botServer.js',
+  dest: './test/util/.botServer.js',
   plugins: [
+    typescript(),
     string({
-      include: 'test/**/*.txt'
-    }),
-    includePaths({
-      paths: ['', 'src', 'test'],
-      extensions: ['.js']
+      include: './test/util/*.txt'
     }),
     resolve({}),
     commonjs({

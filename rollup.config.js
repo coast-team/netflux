@@ -1,10 +1,10 @@
 import replace from 'rollup-plugin-replace'
 import filesize from 'rollup-plugin-filesize'
-import includePaths from 'rollup-plugin-includepaths'
 import babel from 'rollup-plugin-babel'
 import strip from 'rollup-plugin-strip'
 import commonjs from 'rollup-plugin-commonjs'
 import resolve from 'rollup-plugin-node-resolve'
+import typescript from 'rollup-plugin-typescript2'
 
 export default [
   // netflux.es5.umd.js
@@ -14,6 +14,7 @@ export default [
     moduleName: 'netflux',
     dest: 'dist/netflux.es5.umd.js',
     plugins: [
+      typescript(),
       replace({
         WEB_RTC_MODULE: `Util.isBrowser() ? window : require('wrtc')`,
         WEB_SOCKET_MODULE: `Util.isBrowser() ? window.WebSocket : require('ws')`,
@@ -25,10 +26,6 @@ export default [
       }),
       strip({
         functions: [ 'log.info', 'log.debug', 'log.error', 'log.warn', 'log.trace', 'log.goupe' ]
-      }),
-      includePaths({
-        paths: ['', 'src/'],
-        extensions: ['.js']
       }),
       resolve({}),
       commonjs({
@@ -51,6 +48,7 @@ export default [
     format: 'es',
     dest: 'dist/netflux.es5.module.browser.js',
     plugins: [
+      typescript(),
       replace({
         WEB_RTC_MODULE: `window`,
         WEB_SOCKET_MODULE: `window.WebSocket`,
@@ -61,10 +59,6 @@ export default [
       }),
       strip({
         functions: [ 'log.info', 'log.debug', 'log.error', 'log.warn', 'log.trace', 'log.goupe' ]
-      }),
-      includePaths({
-        paths: ['', 'src/'],
-        extensions: ['.js']
       }),
       resolve({}),
       commonjs({
@@ -88,6 +82,7 @@ export default [
     format: 'es',
     dest: 'dist/netflux.es5.module.node.js',
     plugins: [
+      typescript(),
       replace({
         WEB_RTC_MODULE: `require('wrtc')`,
         WEB_SOCKET_MODULE: `require('uws')`,
@@ -98,10 +93,6 @@ export default [
       }),
       strip({
         functions: [ 'log.info', 'log.debug', 'log.error', 'log.warn', 'log.trace', 'log.goupe' ]
-      }),
-      includePaths({
-        paths: ['', 'src/'],
-        extensions: ['.js']
       }),
       resolve({}),
       commonjs({

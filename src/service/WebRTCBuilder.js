@@ -1,12 +1,12 @@
 import '../../node_modules/webrtc-adapter/out/adapter_no_edge_no_global'
-import { ReplaySubject } from 'node_modules/rxjs/ReplaySubject'
-import { Observable } from 'node_modules/rxjs/Observable'
-import 'node_modules/rxjs/add/operator/map'
+import { ReplaySubject } from 'rxjs/ReplaySubject'
+import { Observable } from 'rxjs/Observable'
+import 'rxjs/add/operator/map'
 
-import { Util } from 'Util'
-import { Service } from 'service/Service'
-import { webRTCBuilder } from 'Protobuf.js'
-import { Channel } from 'Channel'
+import { Util } from '../Util'
+import { Service } from './Service'
+import { webRTCBuilder } from '../Protobuf'
+import { Channel } from '../Channel'
 const wrtc = Util.require(Util.WEB_RTC)
 const CloseEvent = Util.require(Util.CLOSE_EVENT)
 

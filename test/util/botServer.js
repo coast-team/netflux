@@ -1,6 +1,6 @@
-import {create, BotServer} from 'index.node.js'
-import * as helper from 'test/util/helper'
-import * as log from 'src/log'
+import {create, BotServer} from '../../src/index.node.js'
+import * as helper from './helper'
+import * as log from '../../src/log'
 
 // Require dependencies
 const http = require('http')

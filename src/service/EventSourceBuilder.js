@@ -1,5 +1,5 @@
-import { Util } from 'Util'
-import { Service } from 'service/Service'
+import { Util } from '../Util'
+import { Service } from './Service'
 
 const EventSource = Util.require(Util.EVENT_SOURCE)
 const fetch = Util.require(Util.FETCH)

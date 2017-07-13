@@ -1,5 +1,6 @@
-import { WebChannel } from 'service/WebChannel'
-import { defaults } from 'defaults'
+import { WebChannel } from './service/WebChannel'
+import { SprayService } from './service/topology/spray/SprayService.ts'
+import { defaults } from './defaults'
 
 /**
  * Create `WebChannel`.
@@ -16,5 +17,5 @@ function create (options) {
   const mySettings = Object.assign({}, defaults, options)
   return new WebChannel(mySettings)
 }
-
+console.log('SPRAY: ', SprayService.constructor.name)
 export { create }

@@ -1,11 +1,10 @@
-"use strict"
-
 import { PartialView } from './PartialView'
 import { TopologyInterface } from '../TopologyInterface'
-import { WebChannel } from 'WebChannel'
-import { Channel } from 'Channel'
-import { spray } from 'Protobuf'
-import * as log from 'log'
+import { ServiceMessage } from '../../Service'
+import { WebChannel } from '../../WebChannel'
+import { Channel } from '../../../Channel'
+import { spray } from '../../../Protobuf'
+import * as log from '../../../log'
 
 /**
  * Delay in milliseconds between two exchanges
@@ -18,13 +17,6 @@ const delay = 1000 * 60 * 2;
 const timeout = 1000 * 60;
 
 export const SPRAY = 15;
-
-type IncommingMessage = {
-  channel: Channel,
-  senderId: number,
-  recepientId: number,
-  content: ArrayBuffer
-};
 
 export class SprayService extends TopologyInterface {
   constructor (wc: WebChannel) {
@@ -62,7 +54,7 @@ export class SprayService extends TopologyInterface {
    *
    * @return {Promise<number, string>}
    */
-  add (channel: Channel): Promise<{}> {
+  addJoining (channel: Channel): Promise<{}> {
     log.debug((<any> this).wc.myId + ' ADD ' + channel.peerId);
     const wc = channel.webChannel;
     const peers = [];
@@ -85,6 +77,10 @@ export class SprayService extends TopologyInterface {
     return new Promise((resolve, reject) => {
       (<any> this).pendingRequests.set(channel.peerId, {resolve, reject})
     });
+  }
+
+  initJoining (ch: object): void {
+    // TODO
   }
 
   /**
@@ -115,7 +111,11 @@ export class SprayService extends TopologyInterface {
     }
   }
 
-  forwardTo(msg: object): void {
+  forwardTo (msg: object): void {
+    // TODO
+  }
+
+  forward (msg: object): void {
     // TODO
   }
 
@@ -153,11 +153,11 @@ export class SprayService extends TopologyInterface {
   /**
    * Executes actions depending on the message stream
    *
-   * @param {IncommingMessage} M {channel, senderId, recipientId, msg}
+   * @param {ServiceMessage} M {channel, senderId, recipientId, msg}
    */
-  private _handleSvcMsg (M: IncommingMessage): void {
+  private _handleSvcMsg (M: ServiceMessage): void {
     const wc = M.channel.webChannel;
-    const msg = M.content;
+    const msg = M.msg;
     switch ((<any> msg).type) {
       case 'shouldAdd': {
         (<any> this).p.add(super.decode(msg).peerId);
