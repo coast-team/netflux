@@ -1,5 +1,5 @@
 syntax = "proto3";
-package fullyConnected;
+package fullMesh;
 
 message Message {
   oneof type {

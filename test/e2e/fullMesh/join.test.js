@@ -106,10 +106,10 @@ describe('Fully connected', () => {
     })
   })
 
-  fdescribe('Should send/receive', () => {
+  describe('Should send/receive', () => {
     let wcs
 
-    afterEach(() => wcs.forEach(wc => wc.leave()))
+    // afterEach(() => wcs.forEach(wc => wc.leave()))
 
     USE_CASES.forEach(numberOfPeers => {
       describe(`${faces(numberOfPeers)}`, () => {

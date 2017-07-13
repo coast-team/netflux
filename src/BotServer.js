@@ -1,5 +1,6 @@
-import { WebSocketService } from 'service/WebSocketService'
-import { WebChannel } from 'WebChannel'
+import { WebSocketBuilder } from 'WebSocketBuilder'
+import { WebChannel } from 'service/WebChannel'
+import { Channel } from 'Channel'
 import { defaults } from 'defaults'
 import * as log from 'log'
 
@@ -15,7 +16,7 @@ export class BotServer {
    * plus `host` and `port` parameters.
    *
    * @param {Object} options
-   * @param {FULLY_CONNECTED} [options.topology=FULLY_CONNECTED] Fully connected topology is the only one available for now
+   * @param {FULL_MESH} [options.topology=FULL_MESH] Fully connected topology is the only one available for now
    * @param {string} [options.signalingURL='wss://www.coedit.re:10443'] Signaling server url
    * @param {RTCIceServer} [options.iceServers=[{urls:'stun3.l.google.com:19302'}]] Set of ice servers for WebRTC
    * @param {Object} [options.bot] Options for bot server
@@ -79,10 +80,10 @@ export class BotServer {
     let WebSocketServer = require('uws').Server
     this.server = new WebSocketServer(this.serverSettings)
     const serverListening = this.serverSettings.server || this.server
-    serverListening.on('listening', () => WebSocketService.listen().next(this.url))
+    serverListening.on('listening', () => WebSocketBuilder.listen().next(this.url))
 
     this.server.on('error', err => {
-      WebSocketService.listen().next('')
+      WebSocketBuilder.listen().next('')
       this.onError(err)
     })
 
@@ -97,18 +98,17 @@ export class BotServer {
             this.removeWebChannel(wc)
           }
           wc = new WebChannel(this.wcSettings)
-          const channel = wc._initConnection(ws, senderId)
           wc.id = wcId
           this.addWebChannel(wc)
           this.onWebChannel(wc)
-          wc.join(channel).then(() => {
+          wc.join(new Channel(ws, wc, senderId)).then(() => {
             this.onWebChannelReady(wc)
           })
           break
         }
         case '/internalChannel': {
           if (wc !== undefined) {
-            WebSocketService.newIncomingSocket(wc, ws, senderId)
+            WebSocketBuilder.newIncomingSocket(wc, ws, senderId)
           } else {
             log.error('Cannot find WebChannel for a new internal channel')
           }

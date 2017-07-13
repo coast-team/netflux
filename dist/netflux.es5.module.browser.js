@@ -1442,12 +1442,15 @@ var Channel = function () {
    * Creates a channel from existing `RTCDataChannel` or `WebSocket`.
    * @param {WebSocket|RTCDataChannel} connection Data channel or web socket
    * @param {WebChannel} wc The `WebChannel` this channel will be part of
+   * @param {number} id Peer id
    */
-  function Channel(connection, wc) {
+  function Channel(connection, wc, id) {
+    var _this = this;
+
     classCallCheck(this, Channel);
 
     /**
-     * Data channel or web socket.
+     * DataChannel or WebSocket.
      * @private
      * @type {external:WebSocket|external:RTCDataChannel}
      */
@@ -1463,7 +1466,7 @@ var Channel = function () {
      * Identifier of the peer who is at the other end of this channel
      * @type {WebChannel}
      */
-    this.peerId = -1;
+    this.peerId = id || -1;
 
     /**
      * Send message.
@@ -1471,15 +1474,33 @@ var Channel = function () {
      */
     this.send = undefined;
 
+    // Configure `send` function
     if (Util.isBrowser()) {
       connection.binaryType = 'arraybuffer';
       this.send = this.sendBrowser;
     } else if (Util.isSocket(connection)) {
-      this.send = this.sendInNodeThroughSocket;
+      this.send = this.sendInNodeViaWebSocket;
     } else {
       connection.binaryType = 'arraybuffer';
-      this.send = this.sendInNodeThroughDataChannel;
+      this.send = this.sendInNodeViaDataChannel;
     }
+
+    // Configure handlers
+    if (!Util.isBrowser() && Util.isSocket(this.connection)) {
+      this.connection.onmessage = function (msgEvt) {
+        wc._onMessage(_this, new Uint8Array(msgEvt.data));
+      };
+    } else {
+      this.connection.onmessage = function (msgEvt) {
+        return wc._onMessage(_this, msgEvt.data);
+      };
+    }
+    this.connection.onclose = function (closeEvt) {
+      return wc._topology.onChannelClose(closeEvt, _this);
+    };
+    this.connection.onerror = function (evt) {
+      return wc._topology.onChannelError(evt, _this);
+    };
   }
 
   /**
@@ -1511,8 +1532,8 @@ var Channel = function () {
      */
 
   }, {
-    key: 'sendInNodeThroughSocket',
-    value: function sendInNodeThroughSocket(data) {
+    key: 'sendInNodeViaWebSocket',
+    value: function sendInNodeViaWebSocket(data) {
       if (this.isOpen()) {
         try {
           this.connection.send(data, { binary: true });
@@ -1528,21 +1549,16 @@ var Channel = function () {
      */
 
   }, {
-    key: 'sendInNodeThroughDataChannel',
-    value: function sendInNodeThroughDataChannel(data) {
+    key: 'sendInNodeViaDataChannel',
+    value: function sendInNodeViaDataChannel(data) {
       this.sendBrowser(data.slice(0));
     }
 
     /**
-     * @param {function(msg: ArrayBuffer)} handler
      */
 
   }, {
     key: 'clearHandlers',
-
-
-    /**
-     */
     value: function clearHandlers() {
       this.onMessage = function () {};
       this.onClose = function () {};
@@ -1568,41 +1584,6 @@ var Channel = function () {
     key: 'close',
     value: function close() {
       this.connection.close();
-    }
-  }, {
-    key: 'onMessage',
-    set: function set$$1(handler) {
-      if (!Util.isBrowser() && Util.isSocket(this.connection)) {
-        this.connection.onmessage = function (msgEvt) {
-          handler(new Uint8Array(msgEvt.data).buffer);
-        };
-      } else this.connection.onmessage = function (msgEvt) {
-        return handler(msgEvt.data);
-      };
-    }
-
-    /**
-     * @param {function(message: CloseEvent)} handler
-     */
-
-  }, {
-    key: 'onClose',
-    set: function set$$1(handler) {
-      this.connection.onclose = function (closeEvt) {
-        return handler(closeEvt);
-      };
-    }
-
-    /**
-     * @param {function(message: Event)} handler
-     */
-
-  }, {
-    key: 'onError',
-    set: function set$$1(handler) {
-      this.connection.onerror = function (evt) {
-        return handler(evt);
-      };
     }
   }]);
   return Channel;
@@ -3984,12 +3965,12 @@ BufferReader$1.prototype.string = function read_string_buffer() {
  * @returns {Buffer} Value read
  */
 
-var service = Service;
+var service$1 = Service$1;
 
 
 
 // Extends EventEmitter
-(Service.prototype = Object.create(minimal$2.EventEmitter.prototype)).constructor = Service;
+(Service$1.prototype = Object.create(minimal$2.EventEmitter.prototype)).constructor = Service$1;
 
 /**
  * A service method callback as used by {@link rpc.ServiceMethod|ServiceMethod}.
@@ -4024,7 +4005,7 @@ var service = Service;
  * @param {boolean} [requestDelimited=false] Whether requests are length-delimited
  * @param {boolean} [responseDelimited=false] Whether responses are length-delimited
  */
-function Service(rpcImpl, requestDelimited, responseDelimited) {
+function Service$1(rpcImpl, requestDelimited, responseDelimited) {
 
     if (typeof rpcImpl !== "function")
         throw TypeError("rpcImpl must be a function");
@@ -4061,7 +4042,7 @@ function Service(rpcImpl, requestDelimited, responseDelimited) {
  * @template TReq extends Message<TReq>
  * @template TRes extends Message<TRes>
  */
-Service.prototype.rpcCall = function rpcCall(method, requestCtor, responseCtor, request, callback) {
+Service$1.prototype.rpcCall = function rpcCall(method, requestCtor, responseCtor, request, callback) {
 
     if (!request)
         throw TypeError("request must be specified");
@@ -4116,7 +4097,7 @@ Service.prototype.rpcCall = function rpcCall(method, requestCtor, responseCtor, 
  * @param {boolean} [endedByRPC=false] Whether the service has been ended by the RPC implementation.
  * @returns {rpc.Service} `this`
  */
-Service.prototype.end = function end(endedByRPC) {
+Service$1.prototype.end = function end(endedByRPC) {
     if (this.rpcImpl) {
         if (!endedByRPC) // signal end to rpcImpl
             this.rpcImpl(null, null, null);
@@ -4162,7 +4143,7 @@ var rpc = exports;
  * @returns {undefined}
  */
 
-rpc.Service = service;
+rpc.Service = service$1;
 });
 
 var roots = {};
@@ -4246,7 +4227,7 @@ var Message = $root.Message = function () {
 
     Message.prototype.senderId = 0;
     Message.prototype.recipientId = 0;
-    Message.prototype.isInner = false;
+    Message.prototype.isService = false;
     Message.prototype.content = $util.newBuffer([]);
 
     Message.create = function create(properties) {
@@ -4257,7 +4238,7 @@ var Message = $root.Message = function () {
         if (!writer) writer = $Writer.create();
         if (message.senderId != null && message.hasOwnProperty("senderId")) writer.uint32(8).uint32(message.senderId);
         if (message.recipientId != null && message.hasOwnProperty("recipientId")) writer.uint32(16).uint32(message.recipientId);
-        if (message.isInner != null && message.hasOwnProperty("isInner")) writer.uint32(24).bool(message.isInner);
+        if (message.isService != null && message.hasOwnProperty("isService")) writer.uint32(24).bool(message.isService);
         if (message.content != null && message.hasOwnProperty("content")) writer.uint32(34).bytes(message.content);
         return writer;
     };
@@ -4276,7 +4257,7 @@ var Message = $root.Message = function () {
                     message.recipientId = reader.uint32();
                     break;
                 case 3:
-                    message.isInner = reader.bool();
+                    message.isService = reader.bool();
                     break;
                 case 4:
                     message.content = reader.bytes();
@@ -4421,11 +4402,11 @@ var user = $root.user = function () {
     return user;
 }();
 
-var inner = $root.inner = function () {
+var service = $root.service = function () {
 
-    var inner = {};
+    var service = {};
 
-    inner.Message = function () {
+    service.Message = function () {
 
         function Message(properties) {
             if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
@@ -4450,7 +4431,7 @@ var inner = $root.inner = function () {
         Message.decode = function decode(reader, length) {
             if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
             var end = length === undefined ? reader.len : reader.pos + length,
-                message = new $root.inner.Message();
+                message = new $root.service.Message();
             while (reader.pos < end) {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
@@ -4471,7 +4452,7 @@ var inner = $root.inner = function () {
         return Message;
     }();
 
-    return inner;
+    return service;
 }();
 
 var webChannel = $root.webChannel = function () {
@@ -4701,11 +4682,11 @@ var channelBuilder = $root.channelBuilder = function () {
     return channelBuilder;
 }();
 
-var fullyConnected = $root.fullyConnected = function () {
+var fullMesh = $root.fullMesh = function () {
 
-    var fullyConnected = {};
+    var fullMesh = {};
 
-    fullyConnected.Message = function () {
+    fullMesh.Message = function () {
 
         function Message(properties) {
             if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
@@ -4731,8 +4712,8 @@ var fullyConnected = $root.fullyConnected = function () {
 
         Message.encode = function encode(message, writer) {
             if (!writer) writer = $Writer.create();
-            if (message.connectTo != null && message.hasOwnProperty("connectTo")) $root.fullyConnected.Peers.encode(message.connectTo, writer.uint32(10).fork()).ldelim();
-            if (message.connectedTo != null && message.hasOwnProperty("connectedTo")) $root.fullyConnected.Peers.encode(message.connectedTo, writer.uint32(18).fork()).ldelim();
+            if (message.connectTo != null && message.hasOwnProperty("connectTo")) $root.fullMesh.Peers.encode(message.connectTo, writer.uint32(10).fork()).ldelim();
+            if (message.connectedTo != null && message.hasOwnProperty("connectedTo")) $root.fullMesh.Peers.encode(message.connectedTo, writer.uint32(18).fork()).ldelim();
             if (message.joiningPeerId != null && message.hasOwnProperty("joiningPeerId")) writer.uint32(24).uint32(message.joiningPeerId);
             if (message.joinedPeerId != null && message.hasOwnProperty("joinedPeerId")) writer.uint32(32).uint32(message.joinedPeerId);
             return writer;
@@ -4741,15 +4722,15 @@ var fullyConnected = $root.fullyConnected = function () {
         Message.decode = function decode(reader, length) {
             if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
             var end = length === undefined ? reader.len : reader.pos + length,
-                message = new $root.fullyConnected.Message();
+                message = new $root.fullMesh.Message();
             while (reader.pos < end) {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
                     case 1:
-                        message.connectTo = $root.fullyConnected.Peers.decode(reader, reader.uint32());
+                        message.connectTo = $root.fullMesh.Peers.decode(reader, reader.uint32());
                         break;
                     case 2:
-                        message.connectedTo = $root.fullyConnected.Peers.decode(reader, reader.uint32());
+                        message.connectedTo = $root.fullMesh.Peers.decode(reader, reader.uint32());
                         break;
                     case 3:
                         message.joiningPeerId = reader.uint32();
@@ -4768,7 +4749,7 @@ var fullyConnected = $root.fullyConnected = function () {
         return Message;
     }();
 
-    fullyConnected.Peers = function () {
+    fullMesh.Peers = function () {
 
         function Peers(properties) {
             this.peers = [];
@@ -4797,7 +4778,7 @@ var fullyConnected = $root.fullyConnected = function () {
         Peers.decode = function decode(reader, length) {
             if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
             var end = length === undefined ? reader.len : reader.pos + length,
-                message = new $root.fullyConnected.Peers();
+                message = new $root.fullMesh.Peers();
             while (reader.pos < end) {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
@@ -4821,14 +4802,14 @@ var fullyConnected = $root.fullyConnected = function () {
         return Peers;
     }();
 
-    return fullyConnected;
+    return fullMesh;
 }();
 
-var webRTC = $root.webRTC = function () {
+var webRTCBuilder = $root.webRTCBuilder = function () {
 
-    var webRTC = {};
+    var webRTCBuilder = {};
 
-    webRTC.Message = function () {
+    webRTCBuilder.Message = function () {
 
         function Message(properties) {
             if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
@@ -4855,14 +4836,14 @@ var webRTC = $root.webRTC = function () {
             if (!writer) writer = $Writer.create();
             if (message.offer != null && message.hasOwnProperty("offer")) writer.uint32(10).string(message.offer);
             if (message.answer != null && message.hasOwnProperty("answer")) writer.uint32(18).string(message.answer);
-            if (message.candidate != null && message.hasOwnProperty("candidate")) $root.webRTC.Candidate.encode(message.candidate, writer.uint32(26).fork()).ldelim();
+            if (message.candidate != null && message.hasOwnProperty("candidate")) $root.webRTCBuilder.Candidate.encode(message.candidate, writer.uint32(26).fork()).ldelim();
             return writer;
         };
 
         Message.decode = function decode(reader, length) {
             if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
             var end = length === undefined ? reader.len : reader.pos + length,
-                message = new $root.webRTC.Message();
+                message = new $root.webRTCBuilder.Message();
             while (reader.pos < end) {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
@@ -4873,7 +4854,7 @@ var webRTC = $root.webRTC = function () {
                         message.answer = reader.string();
                         break;
                     case 3:
-                        message.candidate = $root.webRTC.Candidate.decode(reader, reader.uint32());
+                        message.candidate = $root.webRTCBuilder.Candidate.decode(reader, reader.uint32());
                         break;
                     default:
                         reader.skipType(tag & 7);
@@ -4886,7 +4867,7 @@ var webRTC = $root.webRTC = function () {
         return Message;
     }();
 
-    webRTC.Candidate = function () {
+    webRTCBuilder.Candidate = function () {
 
         function Candidate(properties) {
             if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
@@ -4913,7 +4894,7 @@ var webRTC = $root.webRTC = function () {
         Candidate.decode = function decode(reader, length) {
             if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
             var end = length === undefined ? reader.len : reader.pos + length,
-                message = new $root.webRTC.Candidate();
+                message = new $root.webRTCBuilder.Candidate();
             while (reader.pos < end) {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
@@ -4937,22 +4918,22 @@ var webRTC = $root.webRTC = function () {
         return Candidate;
     }();
 
-    return webRTC;
+    return webRTCBuilder;
 }();
 
-var InnerMessageMixin = function () {
-  function InnerMessageMixin(id, EncoderDecoder) {
+var Service = function () {
+  function Service(id, Message$$1) {
     var msgStream = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : undefined;
-    classCallCheck(this, InnerMessageMixin);
+    classCallCheck(this, Service);
 
     this.serviceId = id;
-    this.EncoderDecoder = EncoderDecoder;
+    this.Message = Message$$1;
     if (msgStream !== undefined) {
       this.setInnerStream(msgStream);
     }
   }
 
-  createClass(InnerMessageMixin, [{
+  createClass(Service, [{
     key: 'setInnerStream',
     value: function setInnerStream(msgStream) {
       var _this = this;
@@ -4969,23 +4950,25 @@ var InnerMessageMixin = function () {
           channel: channel,
           senderId: senderId,
           recipientId: recipientId,
-          msg: _this.EncoderDecoder.decode(content)
+          msg: _this.Message.decode(content)
         };
       });
     }
   }, {
     key: 'encode',
     value: function encode(msg) {
-      var content = this.EncoderDecoder.encode(this.EncoderDecoder.create(msg)).finish();
-      return inner.Message.encode(inner.Message.create({ id: this.serviceId, content: content })).finish();
+      return service.Message.encode(service.Message.create({
+        id: this.serviceId,
+        content: this.Message.encode(this.Message.create(msg)).finish()
+      })).finish();
     }
   }, {
     key: 'decode',
     value: function decode(bytes) {
-      return this.EncoderDecoder.decode(bytes);
+      return this.Message.decode(bytes);
     }
   }]);
-  return InnerMessageMixin;
+  return Service;
 }();
 
 /**
@@ -4998,11 +4981,11 @@ var InnerMessageMixin = function () {
  * - Send a broadcast message.
  * - Send a message to a particular peer.
  *
- * @see FullyConnectedService
+ * @see FullMesh
  * @interface
  */
-var TopologyInterface = function (_InnerMessageMixin) {
-  inherits(TopologyInterface, _InnerMessageMixin);
+var TopologyInterface = function (_Service) {
+  inherits(TopologyInterface, _Service);
 
   function TopologyInterface() {
     classCallCheck(this, TopologyInterface);
@@ -5042,7 +5025,7 @@ var TopologyInterface = function (_InnerMessageMixin) {
      * @param  {Object} msg - Message to be send
      * @param  {number} [msg.senderId] - Id of the sender peer
      * @param  {number} [msg.recipientId] - Id of the recipient peer
-     * @param  {boolean} [msg.isInner] - True is it is an Netflux internal message and false
+     * @param  {boolean} [msg.isService] - True is it is an Netflux internal message and false
      *   means that is is a user message.
      * @param  {ArrayBuffer} [msg.content] - Message main content
      */
@@ -5061,7 +5044,7 @@ var TopologyInterface = function (_InnerMessageMixin) {
      * @param  {Object} msg
      * @param  {number} [msg.senderId] - Id of the sender peer
      * @param  {number} [msg.recipientId] - Id of the recipient peer
-     * @param  {boolean} [msg.isInner] - True if it is Netflux internal message
+     * @param  {boolean} [msg.isService] - True if it is Netflux internal message
      *    and false if it is a user message.
      * @param  {ArrayBuffer} [msg.content] - Message main content
      */
@@ -5079,7 +5062,7 @@ var TopologyInterface = function (_InnerMessageMixin) {
      * @param  {Object} msg - Message to be send
      * @param  {number} [msg.senderId] - Id of the sender peer
      * @param  {number} [msg.recipientId] - Id of the recipient peer
-     * @param  {boolean} [msg.isInner] - True is it is an Netflux internal message and false
+     * @param  {boolean} [msg.isService] - True is it is an Netflux internal message and false
      *   means that is is a user message.
      * @param  {ArrayBuffer} [msg.content] - Message main content
      */
@@ -5100,7 +5083,7 @@ var TopologyInterface = function (_InnerMessageMixin) {
      * @param  {Object} msg
      * @param  {number} [msg.senderId] - Id of the sender peer
      * @param  {number} [msg.recipientId] - Id of the recipient peer
-     * @param  {boolean} [msg.isInner] - True if it is a Netflux internal message
+     * @param  {boolean} [msg.isService] - True if it is a Netflux internal message
      *    and false if it is a user message.
      * @param  {ArrayBuffer} [msg.content] - Message main content
      */
@@ -5150,14 +5133,14 @@ var TopologyInterface = function (_InnerMessageMixin) {
     }
   }]);
   return TopologyInterface;
-}(InnerMessageMixin);
+}(Service);
 
 /**
- * {@link FullyConnectedService} identifier.
+ * {@link FullMesh} identifier.
  * @ignore
  * @type {number}
  */
-var FULLY_CONNECTED = 3;
+var FULL_MESH = 3;
 
 /**
  * Fully connected web channel manager. Implements fully connected topology
@@ -5165,20 +5148,20 @@ var FULLY_CONNECTED = 3;
  *
  * @extends module:webChannelManager~WebChannelTopologyInterface
  */
-var FullyConnectedService = function (_TopologyInterface) {
-  inherits(FullyConnectedService, _TopologyInterface);
+var FullMesh = function (_TopologyInterface) {
+  inherits(FullMesh, _TopologyInterface);
 
-  function FullyConnectedService(wc) {
-    classCallCheck(this, FullyConnectedService);
+  function FullMesh(wc) {
+    classCallCheck(this, FullMesh);
 
-    var _this = possibleConstructorReturn(this, (FullyConnectedService.__proto__ || Object.getPrototypeOf(FullyConnectedService)).call(this, FULLY_CONNECTED, fullyConnected.Message, wc._msgStream));
+    var _this = possibleConstructorReturn(this, (FullMesh.__proto__ || Object.getPrototypeOf(FullMesh)).call(this, FULL_MESH, fullMesh.Message, wc._msgStream));
 
     _this.wc = wc;
     _this.init();
     return _this;
   }
 
-  createClass(FullyConnectedService, [{
+  createClass(FullMesh, [{
     key: 'init',
     value: function init() {
       var _this2 = this;
@@ -5212,14 +5195,22 @@ var FullyConnectedService = function (_TopologyInterface) {
     key: 'addJoining',
     value: function addJoining(channel) {
       var peers = this.wc.members.slice();
-      this.jps.set(channel.peerId, channel);
+
+      // First joining peer
       if (peers.length === 0) {
-        this.sendJoinedPeerId(channel, channel.peerId);
-      } else {
-        this.wc._send({ content: get(FullyConnectedService.prototype.__proto__ || Object.getPrototypeOf(FullyConnectedService.prototype), 'encode', this).call(this, { joiningPeerId: channel.peerId }) });
-        channel.send(this.wc._encodeMain({
+        channel.send(this.wc._encode({
           recipientId: channel.peerId,
-          content: get(FullyConnectedService.prototype.__proto__ || Object.getPrototypeOf(FullyConnectedService.prototype), 'encode', this).call(this, { connectTo: { peers: peers } })
+          content: get(FullMesh.prototype.__proto__ || Object.getPrototypeOf(FullMesh.prototype), 'encode', this).call(this, { joinedPeerId: channel.peerId })
+        }));
+        this.peerJoined(channel);
+
+        // There are at least 2 members in the network
+      } else {
+        this.jps.set(channel.peerId, channel);
+        this.wc._send({ content: get(FullMesh.prototype.__proto__ || Object.getPrototypeOf(FullMesh.prototype), 'encode', this).call(this, { joiningPeerId: channel.peerId }) });
+        channel.send(this.wc._encode({
+          recipientId: channel.peerId,
+          content: get(FullMesh.prototype.__proto__ || Object.getPrototypeOf(FullMesh.prototype), 'encode', this).call(this, { connectTo: { peers: peers } })
         }));
       }
     }
@@ -5240,7 +5231,7 @@ var FullyConnectedService = function (_TopologyInterface) {
   }, {
     key: 'send',
     value: function send(msg) {
-      var bytes = this.wc._encodeMain(msg);
+      var bytes = this.wc._encode(msg);
       var _iteratorNormalCompletion = true;
       var _didIteratorError = false;
       var _iteratorError = undefined;
@@ -5272,7 +5263,7 @@ var FullyConnectedService = function (_TopologyInterface) {
   }, {
     key: 'sendTo',
     value: function sendTo(msg) {
-      var bytes = this.wc._encodeMain(msg);
+      var bytes = this.wc._encode(msg);
       var _iteratorNormalCompletion2 = true;
       var _didIteratorError2 = false;
       var _iteratorError2 = undefined;
@@ -5534,8 +5525,7 @@ var FullyConnectedService = function (_TopologyInterface) {
                 for (var _iterator9 = channels[Symbol.iterator](), _step9; !(_iteratorNormalCompletion9 = (_step9 = _iterator9.next()).done); _iteratorNormalCompletion9 = true) {
                   var ch = _step9.value;
 
-                  _this3.channels.add(ch);
-                  _this3.wc._onPeerJoin(ch.peerId);
+                  _this3.peerJoined(ch);
                 }
               } catch (err) {
                 _didIteratorError9 = true;
@@ -5552,14 +5542,14 @@ var FullyConnectedService = function (_TopologyInterface) {
                 }
               }
 
-              channel.send(_this3.wc._encodeMain({
+              channel.send(_this3.wc._encode({
                 recipientId: channel.peerId,
-                content: get(FullyConnectedService.prototype.__proto__ || Object.getPrototypeOf(FullyConnectedService.prototype), 'encode', _this3).call(_this3, { connectedTo: { peers: peers } })
+                content: get(FullMesh.prototype.__proto__ || Object.getPrototypeOf(FullMesh.prototype), 'encode', _this3).call(_this3, { connectedTo: { peers: peers } })
               }));
             }).catch(function (err) {
-              channel.send(_this3.wc._encodeMain({
+              channel.send(_this3.wc._encode({
                 recipientId: channel.peerId,
-                content: get(FullyConnectedService.prototype.__proto__ || Object.getPrototypeOf(FullyConnectedService.prototype), 'encode', _this3).call(_this3, { connectedTo: { peers: [] } })
+                content: get(FullMesh.prototype.__proto__ || Object.getPrototypeOf(FullMesh.prototype), 'encode', _this3).call(_this3, { connectedTo: { peers: [] } })
               }));
               _this3.clean();
               _this3.wc._joinFailed(err);
@@ -5599,7 +5589,11 @@ var FullyConnectedService = function (_TopologyInterface) {
             }
 
             if (missingPeers.length === 0) {
-              this.sendJoinedPeerId(channel, senderId);
+              this.jps.delete(channel.peerId);
+              this.peerJoined(channel);
+              this.wc._send({
+                content: get(FullMesh.prototype.__proto__ || Object.getPrototypeOf(FullMesh.prototype), 'encode', this).call(this, { joinedPeerId: channel.peerId })
+              });
             } else {
               // TODO
             }
@@ -5612,32 +5606,24 @@ var FullyConnectedService = function (_TopologyInterface) {
           }
         case 'joinedPeerId':
           {
-            var ch = this.jps.get(msg.joinedPeerId);
-            if (ch === undefined) {
-              // Throw error
+            if (this.iJoin()) {
+              this.wc._joinSucceed();
             } else {
-              this.jps.delete(msg.joinedPeerId);
-              if (this.wc.myId === msg.joinedPeerId) {
-                this.wc._joinSucceed();
-              } else {
-                this.channels.add(ch);
-                this.wc._onPeerJoin(msg.joinedPeerId);
-              }
+              this.peerJoined(this.jps.get(msg.joinedPeerId));
             }
+            this.jps.delete(msg.joinedPeerId);
             break;
           }
       }
     }
   }, {
-    key: 'sendJoinedPeerId',
-    value: function sendJoinedPeerId(ch, joinedPeerId) {
-      this.wc._send({
-        isMeIncluded: true,
-        content: get(FullyConnectedService.prototype.__proto__ || Object.getPrototypeOf(FullyConnectedService.prototype), 'encode', this).call(this, { joinedPeerId: joinedPeerId })
-      });
+    key: 'peerJoined',
+    value: function peerJoined(ch) {
+      this.channels.add(ch);
+      this.wc._onPeerJoin(ch.peerId);
     }
   }]);
-  return FullyConnectedService;
+  return FullMesh;
 }(TopologyInterface);
 
 /**
@@ -6027,15 +6013,15 @@ var listenSubject = new BehaviorSubject_2('');
  * Service class responsible to establish connections between peers via
  * `WebSocket`.
  */
-var WebSocketService = function () {
-  function WebSocketService(wc) {
-    classCallCheck(this, WebSocketService);
+var WebSocketBuilder = function () {
+  function WebSocketBuilder(wc) {
+    classCallCheck(this, WebSocketBuilder);
 
     this.wc = wc;
     this.channelStream = new Subject_2();
   }
 
-  createClass(WebSocketService, [{
+  createClass(WebSocketBuilder, [{
     key: 'connect',
 
 
@@ -6072,7 +6058,7 @@ var WebSocketService = function () {
       return new Promise(function (resolve, reject) {
         if (Util.isURL(url) && url.search(/^wss?/) !== -1) {
           var ws = new WebSocket(fullUrl);
-          var channel = _this.wc._initConnection(ws, id);
+          var channel = new Channel(ws, _this.wc, id);
           ws.onopen = function () {
             return resolve(channel);
           };
@@ -6133,10 +6119,10 @@ var WebSocketService = function () {
   }, {
     key: 'newIncomingSocket',
     value: function newIncomingSocket(wc, ws, senderId) {
-      wc.webSocketSvc.channelStream.next(wc._initConnection(ws, senderId));
+      wc.webSocketSvc.channelStream.next(new Channel(ws, wc, senderId));
     }
   }]);
-  return WebSocketService;
+  return WebSocketBuilder;
 }();
 
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof commonjsRequire=="function"&&commonjsRequire;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r);}return n[o].exports}var i=typeof commonjsRequire=="function"&&commonjsRequire;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
@@ -6230,7 +6216,7 @@ module.exports = function(dependencies, opts) {
       chromeShim.shimSourceObject(window);
       chromeShim.shimPeerConnection(window);
       chromeShim.shimOnTrack(window);
-      chromeShim.shimAddTrack(window);
+      chromeShim.shimAddTrackRemoveTrack(window);
       chromeShim.shimGetSendersWithDtmf(window);
       break;
     case 'firefox':
@@ -6314,19 +6300,24 @@ var chromeShim = {
           return this._ontrack;
         },
         set: function(f) {
-          var self = this;
           if (this._ontrack) {
             this.removeEventListener('track', this._ontrack);
-            this.removeEventListener('addstream', this._ontrackpoly);
           }
           this.addEventListener('track', this._ontrack = f);
-          this.addEventListener('addstream', this._ontrackpoly = function(e) {
+        }
+      });
+      var origSetRemoteDescription =
+          window.RTCPeerConnection.prototype.setRemoteDescription;
+      window.RTCPeerConnection.prototype.setRemoteDescription = function() {
+        var pc = this;
+        if (!pc._ontrackpoly) {
+          pc._ontrackpoly = function(e) {
             // onaddstream does not fire when a track is added to an existing
             // stream. But stream.onaddtrack is implemented so we use that.
             e.stream.addEventListener('addtrack', function(te) {
               var receiver;
               if (window.RTCPeerConnection.prototype.getReceivers) {
-                receiver = self.getReceivers().find(function(r) {
+                receiver = pc.getReceivers().find(function(r) {
                   return r.track.id === te.track.id;
                 });
               } else {
@@ -6337,12 +6328,12 @@ var chromeShim = {
               event.track = te.track;
               event.receiver = receiver;
               event.streams = [e.stream];
-              self.dispatchEvent(event);
+              pc.dispatchEvent(event);
             });
             e.stream.getTracks().forEach(function(track) {
               var receiver;
               if (window.RTCPeerConnection.prototype.getReceivers) {
-                receiver = self.getReceivers().find(function(r) {
+                receiver = pc.getReceivers().find(function(r) {
                   return r.track.id === track.id;
                 });
               } else {
@@ -6352,15 +6343,18 @@ var chromeShim = {
               event.track = track;
               event.receiver = receiver;
               event.streams = [e.stream];
-              this.dispatchEvent(event);
-            }.bind(this));
-          }.bind(this));
+              pc.dispatchEvent(event);
+            });
+          };
+          pc.addEventListener('addstream', pc._ontrackpoly);
         }
-      });
+        return origSetRemoteDescription.apply(pc, arguments);
+      };
     }
   },
 
   shimGetSendersWithDtmf: function(window) {
+    // Overrides addTrack/removeTrack, depends on shimAddTrackRemoveTrack.
     if (typeof window === 'object' && window.RTCPeerConnection &&
         !('getSenders' in window.RTCPeerConnection.prototype) &&
         'createDTMFSender' in window.RTCPeerConnection.prototype) {
@@ -6376,14 +6370,16 @@ var chromeShim = {
               }
             }
             return this._dtmf;
-          }
+          },
+          _pc: pc
         };
       };
 
-      // shim addTrack when getSenders is not available.
+      // augment addTrack when getSenders is not available.
       if (!window.RTCPeerConnection.prototype.getSenders) {
         window.RTCPeerConnection.prototype.getSenders = function() {
-          return this._senders || [];
+          this._senders = this._senders || [];
+          return this._senders.slice(); // return a copy of the internal state.
         };
         var origAddTrack = window.RTCPeerConnection.prototype.addTrack;
         window.RTCPeerConnection.prototype.addTrack = function(track, stream) {
@@ -6394,6 +6390,16 @@ var chromeShim = {
             pc._senders.push(sender);
           }
           return sender;
+        };
+
+        var origRemoveTrack = window.RTCPeerConnection.prototype.removeTrack;
+        window.RTCPeerConnection.prototype.removeTrack = function(sender) {
+          var pc = this;
+          origRemoveTrack.apply(pc, arguments);
+          var idx = pc._senders.indexOf(sender);
+          if (idx !== -1) {
+            pc._senders.splice(idx, 1);
+          }
         };
       }
       var origAddStream = window.RTCPeerConnection.prototype.addStream;
@@ -6446,7 +6452,7 @@ var chromeShim = {
             }
           }
           return this._dtmf;
-        },
+        }
       });
     }
   },
@@ -6495,8 +6501,8 @@ var chromeShim = {
     }
   },
 
-  shimAddTrack: function(window) {
-    // shim addTrack (when getSenders is available)
+  shimAddTrackRemoveTrack: function(window) {
+    // shim addTrack and removeTrack.
     if (window.RTCPeerConnection.prototype.addTrack) {
       return;
     }
@@ -6520,11 +6526,22 @@ var chromeShim = {
       pc._streams = pc._streams || {};
       pc._reverseStreams = pc._reverseStreams || {};
 
+      stream.getTracks().forEach(function(track) {
+        var alreadyExists = pc.getSenders().find(function(s) {
+          return s.track === track;
+        });
+        if (alreadyExists) {
+          throw new DOMException('Track already exists.',
+              'InvalidAccessError');
+        }
+      });
       // Add identity mapping for consistency with addTrack.
       // Unless this is being used with a stream from addTrack.
       if (!pc._reverseStreams[stream.id]) {
-        pc._streams[stream.id] = stream;
-        pc._reverseStreams[stream.id] = stream;
+        var newStream = new window.MediaStream(stream.getTracks());
+        pc._streams[stream.id] = newStream;
+        pc._reverseStreams[newStream.id] = stream;
+        stream = newStream;
       }
       origAddStream.apply(pc, [stream]);
     };
@@ -6575,6 +6592,8 @@ var chromeShim = {
       if (oldStream) {
         // this is using odd Chrome behaviour, use with caution:
         // https://bugs.chromium.org/p/webrtc/issues/detail?id=7815
+        // Note: we rely on the high-level addTrack/dtmf shim to
+        // create the sender with a dtmf sender.
         oldStream.addTrack(track);
         pc.dispatchEvent(new Event('negotiationneeded'));
       } else {
@@ -6586,6 +6605,44 @@ var chromeShim = {
       return pc.getSenders().find(function(s) {
         return s.track === track;
       });
+    };
+
+    window.RTCPeerConnection.prototype.removeTrack = function(sender) {
+      var pc = this;
+      if (pc.signalingState === 'closed') {
+        throw new DOMException(
+          'The RTCPeerConnection\'s signalingState is \'closed\'.',
+          'InvalidStateError');
+      }
+      var isLocal = sender._pc === pc;
+      if (!isLocal) {
+        throw new DOMException('Sender was not created by this connection.',
+            'InvalidAccessError');
+      }
+
+      // Search for the native stream the senders track belongs to.
+      pc._streams = pc._streams || {};
+      var stream;
+      Object.keys(pc._streams).forEach(function(streamid) {
+        var hasTrack = pc._streams[streamid].getTracks().find(function(track) {
+          return sender.track === track;
+        });
+        if (hasTrack) {
+          stream = pc._streams[streamid];
+        }
+      });
+
+      if (stream) {
+        if (stream.getTracks().length === 1) {
+          // if this is the last track of the stream, remove the stream. This
+          // takes care of any shimmed _senders.
+          pc.removeStream(stream);
+        } else {
+          // relying on the same odd chrome behaviour as above.
+          stream.removeTrack(sender.track);
+        }
+        pc.dispatchEvent(new Event('negotiationneeded'));
+      }
     };
   },
 
@@ -6788,7 +6845,7 @@ var chromeShim = {
 module.exports = {
   shimMediaStream: chromeShim.shimMediaStream,
   shimOnTrack: chromeShim.shimOnTrack,
-  shimAddTrack: chromeShim.shimAddTrack,
+  shimAddTrackRemoveTrack: chromeShim.shimAddTrackRemoveTrack,
   shimGetSendersWithDtmf: chromeShim.shimGetSendersWithDtmf,
   shimSourceObject: chromeShim.shimSourceObject,
   shimPeerConnection: chromeShim.shimPeerConnection,
@@ -8797,31 +8854,31 @@ var CONNECTION_TIMEOUT = 10000;
  * signaling server or `WebChannel`.
  *
  */
-var WebRTCService = function (_InnerMessageMixin) {
-  inherits(WebRTCService, _InnerMessageMixin);
+var WebRTCBuilder = function (_Service) {
+  inherits(WebRTCBuilder, _Service);
 
-  function WebRTCService(wc, iceServers) {
-    classCallCheck(this, WebRTCService);
+  function WebRTCBuilder(wc, iceServers) {
+    classCallCheck(this, WebRTCBuilder);
 
-    var _this = possibleConstructorReturn(this, (WebRTCService.__proto__ || Object.getPrototypeOf(WebRTCService)).call(this, ID$1, webRTC.Message, wc._msgStream));
+    var _this = possibleConstructorReturn(this, (WebRTCBuilder.__proto__ || Object.getPrototypeOf(WebRTCBuilder)).call(this, ID$1, webRTCBuilder.Message, wc._msgStream));
 
     _this.wc = wc;
     _this.rtcConfiguration = { iceServers: iceServers };
     return _this;
   }
 
-  createClass(WebRTCService, [{
+  createClass(WebRTCBuilder, [{
     key: 'channelsFromWebChannel',
     value: function channelsFromWebChannel() {
       var _this2 = this;
 
-      if (WebRTCService.isSupported) {
+      if (WebRTCBuilder.isSupported) {
         return this._channels(this.innerStream.map(function (_ref) {
           var msg = _ref.msg,
               senderId = _ref.senderId;
           return { offer: msg.offer, id: senderId, candidate: msg.candidate };
         }), function (msg, id) {
-          return _this2.wc._sendTo({ recipientId: id, content: get(WebRTCService.prototype.__proto__ || Object.getPrototypeOf(WebRTCService.prototype), 'encode', _this2).call(_this2, msg) });
+          return _this2.wc._sendTo({ recipientId: id, content: get(WebRTCBuilder.prototype.__proto__ || Object.getPrototypeOf(WebRTCBuilder.prototype), 'encode', _this2).call(_this2, msg) });
         });
       }
       throw new Error('WebRTC is not supported');
@@ -8841,7 +8898,7 @@ var WebRTCService = function (_InnerMessageMixin) {
     value: function connectOverWebChannel(id) {
       var _this3 = this;
 
-      if (WebRTCService.isSupported) {
+      if (WebRTCBuilder.isSupported) {
         return this._establishChannel(this.innerStream.filter(function (_ref2) {
           var senderId = _ref2.senderId;
           return senderId === id;
@@ -8849,7 +8906,7 @@ var WebRTCService = function (_InnerMessageMixin) {
           var msg = _ref3.msg;
           return { answer: msg.answer, candidate: msg.candidate };
         }), function (msg) {
-          return _this3.wc._sendTo({ recipientId: id, content: get(WebRTCService.prototype.__proto__ || Object.getPrototypeOf(WebRTCService.prototype), 'encode', _this3).call(_this3, msg) });
+          return _this3.wc._sendTo({ recipientId: id, content: get(WebRTCBuilder.prototype.__proto__ || Object.getPrototypeOf(WebRTCBuilder.prototype), 'encode', _this3).call(_this3, msg) });
         }, id);
       }
       throw new Error('WebRTC is not supported');
@@ -8866,7 +8923,7 @@ var WebRTCService = function (_InnerMessageMixin) {
   }, {
     key: 'channelsFromSignaling',
     value: function channelsFromSignaling(signalingStream) {
-      if (WebRTCService.isSupported) {
+      if (WebRTCBuilder.isSupported) {
         return this._channels(signalingStream.filter(function (msg) {
           return 'id' in msg && 'data' in msg;
         }).map(function (_ref4) {
@@ -8892,7 +8949,7 @@ var WebRTCService = function (_InnerMessageMixin) {
   }, {
     key: 'connectOverSignaling',
     value: function connectOverSignaling(signalingStream) {
-      if (WebRTCService.isSupported) {
+      if (WebRTCBuilder.isSupported) {
         return this._establishChannel(signalingStream.filter(function (msg) {
           return 'data' in msg;
         }).map(function (_ref5) {
@@ -9087,7 +9144,7 @@ var WebRTCService = function (_InnerMessageMixin) {
           var dc = pc.createDataChannel(this.wc.myId);
 
           // Initialize dataChannel for WebChannel
-          var channel = this.wc._initConnection(dc, peerId);
+          var channel = new Channel(dc, this.wc, peerId);
 
           // Configure disconnection
           this._configOnDisconnect(pc, dc);
@@ -9115,7 +9172,7 @@ var WebRTCService = function (_InnerMessageMixin) {
               clearTimeout(timeout);
 
               // Initialize dataChannel for WebChannel
-              resolve(_this6.wc._initConnection(dcEvt.channel, Number(dcEvt.channel.label)));
+              resolve(new Channel(dcEvt.channel, _this6.wc, Number(dcEvt.channel.label)));
             };
           };
         });
@@ -9146,8 +9203,8 @@ var WebRTCService = function (_InnerMessageMixin) {
       return wrtc !== undefined;
     }
   }]);
-  return WebRTCService;
-}(InnerMessageMixin);
+  return WebRTCBuilder;
+}(Service);
 
 var ID = 2;
 var ME = {
@@ -9159,23 +9216,23 @@ var request = void 0;
 var response = void 0;
 
 /**
- * It is responsible to build a channel between two peers with a help of `WebSocketService` and `WebRTCService`.
+ * It is responsible to build a channel between two peers with a help of `WebSocketBuilder` and `WebRTCBuilder`.
  * Its algorithm determine which channel (socket or dataChannel) should be created
  * based on the services availability and peers' preferences.
  */
-var ChannelBuilderService = function (_InnerMessageMixin) {
-  inherits(ChannelBuilderService, _InnerMessageMixin);
+var ChannelBuilder = function (_Service) {
+  inherits(ChannelBuilder, _Service);
 
-  function ChannelBuilderService(wc) {
-    classCallCheck(this, ChannelBuilderService);
+  function ChannelBuilder(wc) {
+    classCallCheck(this, ChannelBuilder);
 
-    var _this = possibleConstructorReturn(this, (ChannelBuilderService.__proto__ || Object.getPrototypeOf(ChannelBuilderService)).call(this, ID, channelBuilder.Message, wc._msgStream));
+    var _this = possibleConstructorReturn(this, (ChannelBuilder.__proto__ || Object.getPrototypeOf(ChannelBuilder)).call(this, ID, channelBuilder.Message, wc._msgStream));
 
     _this.wc = wc;
     _this.init();
 
     // Listen on Channels as RTCDataChannels if WebRTC is supported
-    ME.isWrtcSupport = WebRTCService.isSupported;
+    ME.isWrtcSupport = WebRTCBuilder.isSupported;
     if (ME.isWrtcSupport) {
       wc.webRTCSvc.channelsFromWebChannel().subscribe(function (ch) {
         return _this._handleChannel(ch);
@@ -9183,7 +9240,7 @@ var ChannelBuilderService = function (_InnerMessageMixin) {
     }
 
     // Listen on Channels as WebSockets if the peer is listening on WebSockets
-    WebSocketService.listen().subscribe(function (url) {
+    WebSocketBuilder.listen().subscribe(function (url) {
       ME.wsUrl = url;
       if (url) {
         wc.webSocketSvc.channels().subscribe(function (ch) {
@@ -9193,8 +9250,8 @@ var ChannelBuilderService = function (_InnerMessageMixin) {
 
       // Update preconstructed messages (for performance only)
       var content = { wsUrl: url, isWrtcSupport: ME.isWrtcSupport };
-      request = get(ChannelBuilderService.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilderService.prototype), 'encode', _this).call(_this, { request: content });
-      response = get(ChannelBuilderService.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilderService.prototype), 'encode', _this).call(_this, { response: content });
+      request = get(ChannelBuilder.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilder.prototype), 'encode', _this).call(_this, { request: content });
+      response = get(ChannelBuilder.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilder.prototype), 'encode', _this).call(_this, { response: content });
     });
 
     // Subscribe to WebChannel internal messages
@@ -9208,7 +9265,7 @@ var ChannelBuilderService = function (_InnerMessageMixin) {
     return _this;
   }
 
-  createClass(ChannelBuilderService, [{
+  createClass(ChannelBuilder, [{
     key: 'init',
     value: function init(wc) {
       this.pendingRequests = new Map();
@@ -9292,7 +9349,7 @@ var ChannelBuilderService = function (_InnerMessageMixin) {
                   // Send failed reason
                   wc._sendTo({
                     recipientId: senderId,
-                    content: get(ChannelBuilderService.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilderService.prototype), 'encode', _this3).call(_this3, { failed: 'Failed to establish a socket: ' + reason })
+                    content: get(ChannelBuilder.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilder.prototype), 'encode', _this3).call(_this3, { failed: 'Failed to establish a socket: ' + reason })
                   });
                 }
               });
@@ -9309,14 +9366,14 @@ var ChannelBuilderService = function (_InnerMessageMixin) {
                   // Send failed reason
                   wc._sendTo({
                     recipientId: senderId,
-                    content: get(ChannelBuilderService.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilderService.prototype), 'encode', _this3).call(_this3, { failed: 'Failed establish a data channel: ' + reason })
+                    content: get(ChannelBuilder.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilder.prototype), 'encode', _this3).call(_this3, { failed: 'Failed establish a data channel: ' + reason })
                   });
                 });
               } else {
                 // Send failed reason
                 wc._sendTo({
                   recipientId: senderId,
-                  content: get(ChannelBuilderService.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilderService.prototype), 'encode', this).call(this, { failed: 'No common connectors' })
+                  content: get(ChannelBuilder.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilder.prototype), 'encode', this).call(this, { failed: 'No common connectors' })
                 });
               }
               // If peer is not listening on WebSocket and is not able to connect over RTCDataChannel
@@ -9328,7 +9385,7 @@ var ChannelBuilderService = function (_InnerMessageMixin) {
                 // Send failed reason
                 wc._sendTo({
                   recipientId: senderId,
-                  content: get(ChannelBuilderService.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilderService.prototype), 'encode', this).call(this, { failed: 'No common connectors' })
+                  content: get(ChannelBuilder.prototype.__proto__ || Object.getPrototypeOf(ChannelBuilder.prototype), 'encode', this).call(this, { failed: 'No common connectors' })
                 });
               }
             }
@@ -9350,8 +9407,8 @@ var ChannelBuilderService = function (_InnerMessageMixin) {
       }
     }
   }]);
-  return ChannelBuilderService;
-}(InnerMessageMixin);
+  return ChannelBuilder;
+}(Service);
 
 var ted = Util.require(Util.TEXT_ENCODING);
 
@@ -9617,8 +9674,8 @@ var INNER_ID = 100;
  * the `WebChannel` and he also possess enough information to be able to add it
  * preserving the current `WebChannel` structure (network topology).
  */
-var WebChannel = function (_InnerMessageMixin) {
-  inherits(WebChannel, _InnerMessageMixin);
+var WebChannel = function (_Service) {
+  inherits(WebChannel, _Service);
 
   /**
    * @param {WebChannelSettings} settings Web channel settings
@@ -9724,15 +9781,15 @@ var WebChannel = function (_InnerMessageMixin) {
     _this._userMsg = new UserMessage();
 
     _this._msgStream = new Subject_2();
-    _this.webRTCSvc = new WebRTCService(_this, _this.settings.iceServers, _this._msgStream);
-    _this.webSocketSvc = new WebSocketService(_this);
+    _this.webRTCSvc = new WebRTCBuilder(_this, _this.settings.iceServers, _this._msgStream);
+    _this.webSocketSvc = new WebSocketBuilder(_this);
     _this._signalingGate = new SignalingGate(_this, function (ch) {
       return _this._addChannel(ch);
     });
-    _this.channelBuilderSvc = new ChannelBuilderService(_this);
+    _this.channelBuilderSvc = new ChannelBuilder(_this);
     get(WebChannel.prototype.__proto__ || Object.getPrototypeOf(WebChannel.prototype), 'setInnerStream', _this).call(_this, _this._msgStream);
     _this.innerMessageSubscritption = _this.innerStream.subscribe(function (msg) {
-      return _this._handleInnerMessage(msg);
+      return _this._handleServiceMessage(msg);
     }, function (err) {
       return void 0;
     });
@@ -9802,7 +9859,7 @@ var WebChannel = function (_InnerMessageMixin) {
 
       if (Util.isURL(url)) {
         return this.webSocketSvc.connect(url + '/invite?wcId=' + this.id + '&senderId=' + this.myId).then(function (connection) {
-          return _this3._addChannel(_this3._initConnection(connection));
+          return _this3._addChannel(new Channel(connection, _this3));
         });
       } else {
         return Promise.reject(new Error(url + ' is not a valid URL'));
@@ -9872,7 +9929,7 @@ var WebChannel = function (_InnerMessageMixin) {
     value: function leave() {
       this._pingTime = 0;
       this.members = [];
-      this._topologySvc.leave();
+      this._topology.leave();
       this._joinSucceed = function () {};
       this._joinFailed = function () {};
       this._msgStream.complete();
@@ -9891,7 +9948,7 @@ var WebChannel = function (_InnerMessageMixin) {
         var msg = {
           senderId: this.myId,
           recipientId: 0,
-          isInner: false
+          isService: false
         };
         var chunkedData = this._userMsg.encode(data);
         var _iteratorNormalCompletion = true;
@@ -9903,7 +9960,7 @@ var WebChannel = function (_InnerMessageMixin) {
             var chunk = _step.value;
 
             msg.content = chunk;
-            this._topologySvc.send(msg);
+            this._topology.send(msg);
           }
         } catch (err) {
           _didIteratorError = true;
@@ -9935,7 +9992,7 @@ var WebChannel = function (_InnerMessageMixin) {
         var msg = {
           senderId: this.myId,
           recipientId: id,
-          isInner: false
+          isService: false
         };
         var chunkedData = this._userMsg.encode(data);
         var _iteratorNormalCompletion2 = true;
@@ -9947,7 +10004,7 @@ var WebChannel = function (_InnerMessageMixin) {
             var chunk = _step2.value;
 
             msg.content = chunk;
-            this._topologySvc.send(msg);
+            this._topology.sendTo(msg);
           }
         } catch (err) {
           _didIteratorError2 = true;
@@ -10006,16 +10063,16 @@ var WebChannel = function (_InnerMessageMixin) {
     key: '_addChannel',
     value: function _addChannel(ch) {
       ch.peerId = this._generateId();
-      var msg = this._encodeMain({
+      var msg = this._encode({
         recipientId: 1,
         content: get(WebChannel.prototype.__proto__ || Object.getPrototypeOf(WebChannel.prototype), 'encode', this).call(this, { initWebChannel: {
-            topology: this._topologySvc.serviceId,
+            topology: this._topology.serviceId,
             wcId: this.id,
             peerId: ch.peerId
           } })
       });
       ch.send(msg);
-      return this._topologySvc.addJoining(ch);
+      return this._topology.addJoining(ch);
     }
 
     /**
@@ -10049,7 +10106,7 @@ var WebChannel = function (_InnerMessageMixin) {
      * @param {Object} msg
      * @param {string} [msg.serviceId] - Service id
      * @param {number} [msg.recipientId] - Identifier of recipient peer id
-     * @param {boolean} [msg.isInner] - SHould the message be forwarded?
+     * @param {boolean} [msg.isService] - SHould the message be forwarded?
      * @param {Object} [msg.content] - Message to send
      */
 
@@ -10061,16 +10118,16 @@ var WebChannel = function (_InnerMessageMixin) {
           senderId = _ref$senderId === undefined ? this.myId : _ref$senderId,
           _ref$recipientId = _ref.recipientId,
           recipientId = _ref$recipientId === undefined ? this.myId : _ref$recipientId,
-          _ref$isInner = _ref.isInner,
-          isInner = _ref$isInner === undefined ? true : _ref$isInner,
+          _ref$isService = _ref.isService,
+          isService = _ref$isService === undefined ? true : _ref$isService,
           _ref$content = _ref.content,
           content = _ref$content === undefined ? new Uint8Array() : _ref$content;
 
-      var msg = { senderId: senderId, recipientId: recipientId, isInner: isInner, content: content };
+      var msg = { senderId: senderId, recipientId: recipientId, isService: isService, content: content };
       if (msg.recipientId === this.myId) {
-        this._handleMessageToMe(undefined, msg);
+        this._handleMyMessage(undefined, msg);
       } else {
-        this._topologySvc.sendTo(msg);
+        this._topology.sendTo(msg);
       }
     }
 
@@ -10088,18 +10145,18 @@ var WebChannel = function (_InnerMessageMixin) {
           senderId = _ref2$senderId === undefined ? this.myId : _ref2$senderId,
           _ref2$recipientId = _ref2.recipientId,
           recipientId = _ref2$recipientId === undefined ? 0 : _ref2$recipientId,
-          _ref2$isInner = _ref2.isInner,
-          isInner = _ref2$isInner === undefined ? true : _ref2$isInner,
+          _ref2$isService = _ref2.isService,
+          isService = _ref2$isService === undefined ? true : _ref2$isService,
           _ref2$content = _ref2.content,
           content = _ref2$content === undefined ? new Uint8Array() : _ref2$content,
           _ref2$isMeIncluded = _ref2.isMeIncluded,
           isMeIncluded = _ref2$isMeIncluded === undefined ? false : _ref2$isMeIncluded;
 
-      var msg = { senderId: senderId, recipientId: recipientId, isInner: isInner, content: content };
+      var msg = { senderId: senderId, recipientId: recipientId, isService: isService, content: content };
       if (isMeIncluded) {
-        this._handleMessageToMe(undefined, msg);
+        this._handleMyMessage(undefined, msg);
       }
-      this._topologySvc.send(msg);
+      this._topology.send(msg);
     }
 
     /**
@@ -10112,34 +10169,34 @@ var WebChannel = function (_InnerMessageMixin) {
   }, {
     key: '_onMessage',
     value: function _onMessage(channel, bytes) {
-      var msg = this._decodeMain(bytes);
+      var msg = this._decode(bytes);
 
       switch (msg.recipientId) {
         // If the message is broadcasted
         case 0:
-          this._handleMessageToMe(channel, msg);
-          this._topologySvc.forward(msg);
+          this._handleMyMessage(channel, msg);
+          this._topology.forward(msg);
           break;
 
         // If it is a private message to me
         case this.myId:
-          this._handleMessageToMe(channel, msg);
+          this._handleMyMessage(channel, msg);
           break;
 
         // If is is a message to me from a peer who does not know yet my ID
         case 1:
-          this._handleMessageToMe(channel, msg);
+          this._handleMyMessage(channel, msg);
           break;
 
         // Otherwise the message should be forwarded to the intended peer
         default:
-          this._topologySvc.forwardTo(msg);
+          this._topology.forwardTo(msg);
       }
     }
   }, {
-    key: '_handleMessageToMe',
-    value: function _handleMessageToMe(channel, msg) {
-      if (!msg.isInner) {
+    key: '_handleMyMessage',
+    value: function _handleMyMessage(channel, msg) {
+      if (!msg.isService) {
         // User Message
         var data = this._userMsg.decode(msg.content, msg.senderId);
         if (data !== undefined) {
@@ -10151,12 +10208,12 @@ var WebChannel = function (_InnerMessageMixin) {
           channel: channel,
           senderId: msg.senderId,
           recipientId: msg.recipientId
-        }, inner.Message.decode(msg.content)));
+        }, service.Message.decode(msg.content)));
       }
     }
   }, {
-    key: '_handleInnerMessage',
-    value: function _handleInnerMessage(_ref3) {
+    key: '_handleServiceMessage',
+    value: function _handleServiceMessage(_ref3) {
       var channel = _ref3.channel,
           senderId = _ref3.senderId,
           recipientId = _ref3.recipientId,
@@ -10174,7 +10231,7 @@ var WebChannel = function (_InnerMessageMixin) {
             this.myId = peerId;
             this.id = wcId;
             channel.peerId = senderId;
-            this._topologySvc.initJoining(channel);
+            this._topology.initJoining(channel);
             break;
           }
         case 'ping':
@@ -10202,37 +10259,6 @@ var WebChannel = function (_InnerMessageMixin) {
     }
 
     /**
-     * Initialize channel. The *Channel* object is a facade for *WebSocket* and
-     * *RTCDataChannel*.
-     * @private
-     * @param {external:WebSocket|external:RTCDataChannel} connection - Channel to
-     * initialize
-     * @param {number} id
-     * @returns {Promise} - Resolved once the channel is initialized on both sides
-     */
-
-  }, {
-    key: '_initConnection',
-    value: function _initConnection(connection, id) {
-      var _this5 = this;
-
-      var channel = new Channel(connection, this);
-      if (id !== undefined) {
-        channel.peerId = id;
-      }
-      channel.onMessage = function (data) {
-        return _this5._onMessage(channel, data);
-      };
-      channel.onClose = function (closeEvt) {
-        return _this5._topologySvc.onChannelClose(closeEvt, channel);
-      };
-      channel.onError = function (evt) {
-        return _this5._topologySvc.onChannelError(evt, channel);
-      };
-      return channel;
-    }
-
-    /**
      *
      * @private
      * @param  {[type]} key
@@ -10246,14 +10272,14 @@ var WebChannel = function (_InnerMessageMixin) {
   }, {
     key: '_joinRecursively',
     value: function _joinRecursively(key, options, resolve, reject, attempt) {
-      var _this6 = this;
+      var _this5 = this;
 
       this._signalingGate.join(key, options.url, options.open).then(function (ch) {
         if (ch) {
-          _this6._joinSucceed = function () {
+          _this5._joinSucceed = function () {
             return resolve();
           };
-          _this6._joinFailed = function (err) {
+          _this5._joinFailed = function (err) {
             return reject(err);
           };
         } else {
@@ -10267,7 +10293,7 @@ var WebChannel = function (_InnerMessageMixin) {
         } else {
           console.log('Trying to rejoin in ' + options.rejoinTimeout + ' the ' + attempt + ' time... ');
           setTimeout(function () {
-            _this6._joinRecursively(key, options, function () {
+            _this5._joinRecursively(key, options, function () {
               return resolve();
             }, function (err) {
               return reject(err);
@@ -10279,15 +10305,15 @@ var WebChannel = function (_InnerMessageMixin) {
   }, {
     key: '_setTopology',
     value: function _setTopology(topology) {
-      if (this._topologySvc !== undefined) {
+      if (this._topology !== undefined) {
         if (this.settings.topology !== topology) {
           this.settings.topology = topology;
-          this._topologySvc.clean();
-          this._topologySvc = new FullyConnectedService(this);
+          this._topology.clean();
+          this._topology = new FullMesh(this);
         }
       } else {
         this.settings.topology = topology;
-        this._topologySvc = new FullyConnectedService(this);
+        this._topology = new FullMesh(this);
       }
     }
 
@@ -10300,16 +10326,16 @@ var WebChannel = function (_InnerMessageMixin) {
   }, {
     key: '_generateId',
     value: function _generateId() {
-      var _this7 = this;
+      var _this6 = this;
 
       var _loop = function _loop() {
         var id = Math.ceil(Math.random() * MAX_ID);
-        if (id === _this7.myId) return 'continue';
-        if (_this7.members.includes(id)) return 'continue';
-        if (_this7._generatedIds.has(id)) return 'continue';
-        _this7._generatedIds.add(id);
+        if (id === _this6.myId) return 'continue';
+        if (_this6.members.includes(id)) return 'continue';
+        if (_this6._generatedIds.has(id)) return 'continue';
+        _this6._generatedIds.add(id);
         setTimeout(function () {
-          return _this7._generatedIds.delete(id);
+          return _this6._generatedIds.delete(id);
         }, ID_TIMEOUT);
         return {
           v: id
@@ -10329,38 +10355,38 @@ var WebChannel = function (_InnerMessageMixin) {
       } while (true);
     }
   }, {
-    key: '_encodeMain',
-    value: function _encodeMain() {
+    key: '_encode',
+    value: function _encode() {
       var _ref4 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
           _ref4$senderId = _ref4.senderId,
           senderId = _ref4$senderId === undefined ? this.myId : _ref4$senderId,
           _ref4$recipientId = _ref4.recipientId,
           recipientId = _ref4$recipientId === undefined ? 0 : _ref4$recipientId,
-          _ref4$isInner = _ref4.isInner,
-          isInner = _ref4$isInner === undefined ? true : _ref4$isInner,
+          _ref4$isService = _ref4.isService,
+          isService = _ref4$isService === undefined ? true : _ref4$isService,
           _ref4$content = _ref4.content,
           content = _ref4$content === undefined ? new Uint8Array() : _ref4$content;
 
-      var msg = { senderId: senderId, recipientId: recipientId, isInner: isInner, content: content };
+      var msg = { senderId: senderId, recipientId: recipientId, isService: isService, content: content };
       return Message.encode(Message.create(msg)).finish();
     }
   }, {
-    key: '_decodeMain',
-    value: function _decodeMain(bytes) {
+    key: '_decode',
+    value: function _decode(bytes) {
       return Message.decode(new Uint8Array(bytes));
     }
   }]);
   return WebChannel;
-}(InnerMessageMixin);
+}(Service);
 
 /**
  * @type {Object}
- * @property {FULLY_CONNECTED} defaults.topology Fully connected topology is the only one available for now
+ * @property {FULL_MESH} defaults.topology Fully connected topology is the only one available for now
  * @property {string} defaults.signalingURL Signaling server url
  * @property {RTCIceServer} defaults.iceServers Set of ice servers for WebRTC
  */
 var defaults$1 = {
-  topology: FULLY_CONNECTED,
+  topology: FULL_MESH,
   signalingURL: 'wss://www.coedit.re:10473',
   iceServers: [{ urls: 'stun:stun3.l.google.com:19302' }]
 };
@@ -10369,7 +10395,7 @@ var defaults$1 = {
  * Create `WebChannel`.
  *
  * @param {WebChannelSettings} options
- * @param {FULLY_CONNECTED} [options.topology=FULLY_CONNECTED] Fully connected topology is the only one available for now
+ * @param {FULL_MESH} [options.topology=FULL_MESH] Fully connected topology is the only one available for now
  * @param {string} [options.signalingURL='wss://www.coedit.re:10473'] Signaling server url
  * @param {RTCIceServer} [options.iceServers=[{urls:'stun3.l.google.com:19302'}]] Set of ice servers for WebRTC
  * @param {string} [options.listenOn=''] Server url when the peer is listen on web socket

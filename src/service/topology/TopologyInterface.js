@@ -1,4 +1,4 @@
-import { InnerMessageMixin } from 'service/InnerMessageMixin'
+import { Service } from 'service/Service'
 
 /**
  * It is responsible to preserve Web Channel
@@ -10,10 +10,10 @@ import { InnerMessageMixin } from 'service/InnerMessageMixin'
  * - Send a broadcast message.
  * - Send a message to a particular peer.
  *
- * @see FullyConnectedService
+ * @see FullMesh
  * @interface
  */
-export class TopologyInterface extends InnerMessageMixin {
+export class TopologyInterface extends Service {
   /**
    * Add a new peer into WebChannel.
    *
@@ -41,7 +41,7 @@ export class TopologyInterface extends InnerMessageMixin {
    * @param  {Object} msg - Message to be send
    * @param  {number} [msg.senderId] - Id of the sender peer
    * @param  {number} [msg.recipientId] - Id of the recipient peer
-   * @param  {boolean} [msg.isInner] - True is it is an Netflux internal message and false
+   * @param  {boolean} [msg.isService] - True is it is an Netflux internal message and false
    *   means that is is a user message.
    * @param  {ArrayBuffer} [msg.content] - Message main content
    */
@@ -57,7 +57,7 @@ export class TopologyInterface extends InnerMessageMixin {
    * @param  {Object} msg
    * @param  {number} [msg.senderId] - Id of the sender peer
    * @param  {number} [msg.recipientId] - Id of the recipient peer
-   * @param  {boolean} [msg.isInner] - True if it is Netflux internal message
+   * @param  {boolean} [msg.isService] - True if it is Netflux internal message
    *    and false if it is a user message.
    * @param  {ArrayBuffer} [msg.content] - Message main content
    */
@@ -72,7 +72,7 @@ export class TopologyInterface extends InnerMessageMixin {
    * @param  {Object} msg - Message to be send
    * @param  {number} [msg.senderId] - Id of the sender peer
    * @param  {number} [msg.recipientId] - Id of the recipient peer
-   * @param  {boolean} [msg.isInner] - True is it is an Netflux internal message and false
+   * @param  {boolean} [msg.isService] - True is it is an Netflux internal message and false
    *   means that is is a user message.
    * @param  {ArrayBuffer} [msg.content] - Message main content
    */
@@ -90,7 +90,7 @@ export class TopologyInterface extends InnerMessageMixin {
    * @param  {Object} msg
    * @param  {number} [msg.senderId] - Id of the sender peer
    * @param  {number} [msg.recipientId] - Id of the recipient peer
-   * @param  {boolean} [msg.isInner] - True if it is a Netflux internal message
+   * @param  {boolean} [msg.isService] - True if it is a Netflux internal message
    *    and false if it is a user message.
    * @param  {ArrayBuffer} [msg.content] - Message main content
    */

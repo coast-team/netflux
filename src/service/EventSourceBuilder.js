@@ -11,7 +11,7 @@ const CONNECT_TIMEOUT = 5000
  * Service class responsible to establish connections between peers via
  * `WebSocket`.
  */
-export class EventSourceService extends Service {
+export class EventSourceBuilder extends Service {
   /**
    * Creates RichEventSource object.
    *

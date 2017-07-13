@@ -20,7 +20,7 @@ module.exports = (config) => {
     files: [
       'src/log.js',
       // 'test/unit/**/*.test.js',
-      'test/e2e/fullyConnected/join.test.js'
+      'test/e2e/fullMesh/join.test.js'
     ],
 
     // list of files to exclude
