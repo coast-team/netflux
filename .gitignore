@@ -3,6 +3,7 @@ npm-debug*
 
 # Rollup output folders
 .rolledup*
+.botServer.js
 
 # Code coverage
 coverage
