@@ -1,8 +1,8 @@
-import { WebSocketBuilder } from 'WebSocketBuilder'
-import { WebChannel } from 'service/WebChannel'
-import { Channel } from 'Channel'
-import { defaults } from 'defaults'
-import * as log from 'log'
+import { WebSocketBuilder } from './WebSocketBuilder'
+import { WebChannel } from './service/WebChannel'
+import { Channel } from './Channel'
+import { defaults } from './defaults'
+import * as log from './log'
 
 const url = require('url')
 

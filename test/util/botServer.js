@@ -1,5 +1,6 @@
-import { WebChannel, BotServer } from '../../src/index.node.js'
-import * as helper from 'helper'
+import { WebChannel } from '../../src/service/WebChannel'
+import { BotServer } from '../../src/BotServer'
+import * as helper from './helper'
 import * as log from '../../src/log'
 
 // Require dependencies

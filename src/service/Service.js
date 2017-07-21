@@ -1,4 +1,4 @@
-import { service } from 'Protobuf.js'
+import { service } from '../Protobuf'
 
 export class Service {
   constructor (id, Message, msgStream = undefined) {

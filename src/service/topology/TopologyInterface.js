@@ -1,4 +1,4 @@
-import { Service } from 'service/Service'
+import { Service } from '../Service'
 
 /**
  * It is responsible to preserve Web Channel

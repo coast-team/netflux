@@ -1,6 +1,5 @@
-import { Util } from 'Util'
-import { user } from 'Protobuf.js'
-const ted = Util.require(Util.TEXT_ENCODING)
+import { user } from './Protobuf'
+import { TextEncoder, TextDecoder } from './polyfills'
 
 /**
  * Maximum size of the user message sent over `Channel`. Is meant without metadata.
@@ -14,8 +13,8 @@ const MAX_USER_MSG_SIZE = 15000
  */
 const MAX_MSG_ID_SIZE = 65535
 
-const stringEncoder = new ted.TextEncoder()
-const stringDecoder = new ted.TextDecoder()
+const stringEncoder = new TextEncoder()
+const stringDecoder = new TextDecoder()
 
 /**
  * Message builder service is responsible to build messages to send them over the

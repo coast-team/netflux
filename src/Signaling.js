@@ -1,4 +1,4 @@
-import { Subject } from 'node_modules/rxjs/Subject'
+import { Subject } from 'rxjs/Subject'
 
 import { signaling } from './Protobuf'
 

@@ -1,10 +1,10 @@
-import { Subject } from 'node_modules/rxjs/Subject'
-import { BehaviorSubject } from 'node_modules/rxjs/BehaviorSubject'
-import 'node_modules/rxjs/add/operator/filter'
+import { Subject } from 'rxjs/Subject'
+import { BehaviorSubject } from 'rxjs/BehaviorSubject'
+import 'rxjs/add/operator/filter'
 
-import { Util } from 'Util'
-import { Channel } from 'Channel'
-const WebSocket = Util.require(Util.WEB_SOCKET)
+import { Util } from './Util'
+import { Channel } from './Channel'
+import { WebSocket } from './polyfills'
 
 const CONNECT_TIMEOUT = 3000
 const listenSubject = new BehaviorSubject('')

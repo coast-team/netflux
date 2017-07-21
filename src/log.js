@@ -6,7 +6,7 @@ const Level = {
   ERROR: 5
 }
 
-const logLevel = LOG_LEVEL
+const logLevel = Level.TRACE
 
 export const trace = logLevel <= Level.TRACE
 ? (msg, ...rest) => {

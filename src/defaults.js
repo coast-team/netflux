@@ -1,4 +1,4 @@
-import { FULL_MESH } from 'service/topology/FullMesh'
+import { FULL_MESH } from './service/topology/FullMesh'
 
 /**
  * @type {Object}

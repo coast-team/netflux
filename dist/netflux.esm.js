@@ -1306,16 +1306,6 @@ var slicedToArray = function () {
   };
 }();
 
-var NodeCloseEvent = function CloseEvent(name) {
-  var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-  classCallCheck(this, CloseEvent);
-
-  this.name = name;
-  this.wasClean = options.wasClean || false;
-  this.code = options.code || 0;
-  this.reason = options.reason || '';
-};
-
 /**
  * Utility class contains some helper static methods.
  */
@@ -1373,62 +1363,6 @@ var Util = function () {
       '(?::\\d{2,5})?' + '$';
 
       return new RegExp(regex, 'i').test(str);
-    }
-  }, {
-    key: 'require',
-    value: function require(libConst) {
-      try {
-        switch (libConst) {
-          case Util.WEB_RTC:
-            return window;
-          case Util.WEB_SOCKET:
-            return window.WebSocket;
-          case Util.TEXT_ENCODING:
-            return window;
-          case Util.EVENT_SOURCE:
-            return window.EventSource;
-          case Util.FETCH:
-            return window.fetch;
-          case Util.CLOSE_EVENT:
-            return Util.isBrowser() ? window.CloseEvent : NodeCloseEvent;
-          default:
-            console.error(libConst + ' is unknown library');
-            return undefined;
-        }
-      } catch (err) {
-        console.error(err.message);
-        return undefined;
-      }
-    }
-  }, {
-    key: 'WEB_RTC',
-    get: function get$$1() {
-      return 1;
-    }
-  }, {
-    key: 'WEB_SOCKET',
-    get: function get$$1() {
-      return 2;
-    }
-  }, {
-    key: 'TEXT_ENCODING',
-    get: function get$$1() {
-      return 3;
-    }
-  }, {
-    key: 'EVENT_SOURCE',
-    get: function get$$1() {
-      return 4;
-    }
-  }, {
-    key: 'FETCH',
-    get: function get$$1() {
-      return 5;
-    }
-  }, {
-    key: 'CLOSE_EVENT',
-    get: function get$$1() {
-      return 6;
     }
   }]);
   return Util;
@@ -2295,16 +2229,14 @@ var index$8 = inquire;
  * @param {string} moduleName Module to require
  * @returns {?Object} Required module if available and not empty, otherwise `null`
  */
- function inquire(moduleName) {
-     try {
-         var mod = commonjsRequire(moduleName);
-         if (mod && (mod.length || Object.keys(mod).length))
-             return mod;
-     } catch (e) {
-       return null;
-     } // eslint-disable-line no-empty
-     return null;
- }
+function inquire(moduleName) {
+    try {
+        var mod = eval("quire".replace(/^/,"re"))(moduleName); // eslint-disable-line no-eval
+        if (mod && (mod.length || Object.keys(mod).length))
+            return mod;
+    } catch (e) {} // eslint-disable-line no-empty
+    return null;
+}
 
 var index$10 = createCommonjsModule(function (module, exports) {
 "use strict";
@@ -5427,6 +5359,34 @@ var TopologyInterface = function (_Service) {
   return TopologyInterface;
 }(Service);
 
+var Level = {
+  TRACE: 1,
+  DEBUG: 2,
+  INFO: 3,
+  WARN: 4,
+  ERROR: 5
+};
+
+var logLevel = Level.TRACE;
+
+
+
+
+
+
+
+
+
+var error = logLevel <= Level.ERROR ? function (msg) {
+  var _console4;
+
+  for (var _len5 = arguments.length, rest = Array(_len5 > 1 ? _len5 - 1 : 0), _key5 = 1; _key5 < _len5; _key5++) {
+    rest[_key5 - 1] = arguments[_key5];
+  }
+
+  (_console4 = console).error.apply(_console4, ['ERROR| ' + msg].concat(rest));
+} : function () {};
+
 /**
  * {@link FullMesh} identifier.
  * @ignore
@@ -5463,14 +5423,14 @@ var FullMesh = function (_TopologyInterface) {
       this.svcMsgStream.subscribe(function (msg) {
         return _this2._handleSvcMsg(msg);
       }, function (err) {
-        return void 0;
+        return error('FullMesh Message Stream Error', err);
       }, function () {
         return _this2.leave();
       });
       this.channelsSubscription = this.wc.channelBuilder.channels().subscribe(function (ch) {
         return _this2.jps.set(ch.peerId, ch);
       }, function (err) {
-        return void 0;
+        return error('FullMesh set joining peer Error', err);
       });
     }
   }, {
@@ -5614,7 +5574,7 @@ var FullMesh = function (_TopologyInterface) {
         }
       }
 
-      return void 0;
+      return error(this.wc.myId + ' The recipient could not be found', msg.recipientId);
     }
   }, {
     key: 'forwardTo',
@@ -5841,6 +5801,7 @@ var FullMesh = function (_TopologyInterface) {
                 content: get(FullMesh.prototype.__proto__ || Object.getPrototypeOf(FullMesh.prototype), 'encode', _this3).call(_this3, { connectedTo: { peers: peers } })
               }));
             }).catch(function (err) {
+              error('Failed to join', err);
               channel.send(_this3.wc._encode({
                 recipientId: channel.peerId,
                 content: get(FullMesh.prototype.__proto__ || Object.getPrototypeOf(FullMesh.prototype), 'encode', _this3).call(_this3, { connectedTo: { peers: [] } })
@@ -6260,94 +6221,6 @@ var filter_1 = {
 };
 
 Observable_1.Observable.prototype.filter = filter_1.filter;
-
-var WebSocket = Util.require(Util.WEB_SOCKET);
-
-var CONNECT_TIMEOUT = 3000;
-var listenSubject = new BehaviorSubject_2('');
-
-/**
- * Service class responsible to establish connections between peers via
- * `WebSocket`.
- */
-var WebSocketBuilder = function () {
-  function WebSocketBuilder(wc) {
-    classCallCheck(this, WebSocketBuilder);
-
-    this.wc = wc;
-    this.channelStream = new Subject_2();
-  }
-
-  createClass(WebSocketBuilder, [{
-    key: 'connect',
-
-
-    /**
-     * Creates WebSocket with server.
-     *
-     * @param {string} url - Server url
-     * @returns {Promise<WebSocket, string>} It is resolved once the WebSocket has been created and rejected otherwise
-     */
-    value: function connect(url) {
-      return new Promise(function (resolve, reject) {
-        if (Util.isURL(url) && url.search(/^wss?/) !== -1) {
-          var ws = new WebSocket(url);
-          ws.onopen = function () {
-            return resolve(ws);
-          };
-          // Timeout for node (otherwise it will loop forever if incorrect address)
-          setTimeout(function () {
-            if (ws.readyState !== ws.OPEN) {
-              reject(new Error('WebSocket ' + CONNECT_TIMEOUT + 'ms connection timeout with ' + url));
-            }
-          }, CONNECT_TIMEOUT);
-        } else {
-          throw new Error(url + ' is not a valid URL');
-        }
-      });
-    }
-  }, {
-    key: 'connectTo',
-    value: function connectTo(url, id) {
-      var _this = this;
-
-      var fullUrl = url + '/internalChannel?wcId=' + this.wc.id + '&senderId=' + this.wc.myId;
-      return new Promise(function (resolve, reject) {
-        if (Util.isURL(url) && url.search(/^wss?/) !== -1) {
-          var ws = new WebSocket(fullUrl);
-          var channel = new Channel(ws, _this.wc, id);
-          ws.onopen = function () {
-            return resolve(channel);
-          };
-          // Timeout for node (otherwise it will loop forever if incorrect address)
-          setTimeout(function () {
-            if (ws.readyState !== ws.OPEN) {
-              reject(new Error('WebSocket ' + CONNECT_TIMEOUT + 'ms connection timeout with ' + url));
-            }
-          }, CONNECT_TIMEOUT);
-        } else {
-          throw new Error(url + ' is not a valid URL');
-        }
-      });
-    }
-  }, {
-    key: 'channels',
-    value: function channels() {
-      return this.channelStream.asObservable();
-    }
-  }], [{
-    key: 'listen',
-    value: function listen() {
-      return listenSubject;
-    }
-  }, {
-    key: 'newIncomingSocket',
-    value: function newIncomingSocket(wc, ws, senderId) {
-      wc.webSocketBuilder.channelStream.next(new Channel(ws, wc, senderId));
-    }
-  }]);
-  return WebSocketBuilder;
-}();
 
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof commonjsRequire=="function"&&commonjsRequire;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r);}return n[o].exports}var i=typeof commonjsRequire=="function"&&commonjsRequire;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 
@@ -8184,6 +8057,108 @@ module.exports = {
 
 },{}]},{},[2]);
 
+var NodeCloseEvent = function CloseEvent(name) {
+  var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  classCallCheck(this, CloseEvent);
+
+  this.name = name;
+  this.wasClean = options.wasClean || false;
+  this.code = options.code || 0;
+  this.reason = options.reason || '';
+};
+
+var WebRTC = Util.isBrowser() ? window : require('wrtc');
+var WebSocket = Util.isBrowser() ? window.WebSocket : require('uws');
+var TextEncoder = Util.isBrowser() ? window.TextEncoder : require('text-encoding').TextEncoder;
+var TextDecoder = Util.isBrowser() ? window.TextDecoder : require('text-encoding').TextDecoder;
+var CloseEvent = Util.isBrowser() ? window.CloseEvent : NodeCloseEvent;
+
+var CONNECT_TIMEOUT = 3000;
+var listenSubject = new BehaviorSubject_2('');
+
+/**
+ * Service class responsible to establish connections between peers via
+ * `WebSocket`.
+ */
+var WebSocketBuilder = function () {
+  function WebSocketBuilder(wc) {
+    classCallCheck(this, WebSocketBuilder);
+
+    this.wc = wc;
+    this.channelStream = new Subject_2();
+  }
+
+  createClass(WebSocketBuilder, [{
+    key: 'connect',
+
+
+    /**
+     * Creates WebSocket with server.
+     *
+     * @param {string} url - Server url
+     * @returns {Promise<WebSocket, string>} It is resolved once the WebSocket has been created and rejected otherwise
+     */
+    value: function connect(url) {
+      return new Promise(function (resolve, reject) {
+        if (Util.isURL(url) && url.search(/^wss?/) !== -1) {
+          var ws = new WebSocket(url);
+          ws.onopen = function () {
+            return resolve(ws);
+          };
+          // Timeout for node (otherwise it will loop forever if incorrect address)
+          setTimeout(function () {
+            if (ws.readyState !== ws.OPEN) {
+              reject(new Error('WebSocket ' + CONNECT_TIMEOUT + 'ms connection timeout with ' + url));
+            }
+          }, CONNECT_TIMEOUT);
+        } else {
+          throw new Error(url + ' is not a valid URL');
+        }
+      });
+    }
+  }, {
+    key: 'connectTo',
+    value: function connectTo(url, id) {
+      var _this = this;
+
+      var fullUrl = url + '/internalChannel?wcId=' + this.wc.id + '&senderId=' + this.wc.myId;
+      return new Promise(function (resolve, reject) {
+        if (Util.isURL(url) && url.search(/^wss?/) !== -1) {
+          var ws = new WebSocket(fullUrl);
+          var channel = new Channel(ws, _this.wc, id);
+          ws.onopen = function () {
+            return resolve(channel);
+          };
+          // Timeout for node (otherwise it will loop forever if incorrect address)
+          setTimeout(function () {
+            if (ws.readyState !== ws.OPEN) {
+              reject(new Error('WebSocket ' + CONNECT_TIMEOUT + 'ms connection timeout with ' + url));
+            }
+          }, CONNECT_TIMEOUT);
+        } else {
+          throw new Error(url + ' is not a valid URL');
+        }
+      });
+    }
+  }, {
+    key: 'channels',
+    value: function channels() {
+      return this.channelStream.asObservable();
+    }
+  }], [{
+    key: 'listen',
+    value: function listen() {
+      return listenSubject;
+    }
+  }, {
+    key: 'newIncomingSocket',
+    value: function newIncomingSocket(wc, ws, senderId) {
+      wc.webSocketBuilder.channelStream.next(new Channel(ws, wc, senderId));
+    }
+  }]);
+  return WebSocketBuilder;
+}();
+
 var __extends$11 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -8978,9 +8953,6 @@ var ReplayEvent = (function () {
     return ReplayEvent;
 }());
 
-var wrtc = Util.require(Util.WEB_RTC);
-var CloseEvent = Util.require(Util.CLOSE_EVENT);
-
 var ID$1 = 0;
 
 var CONNECTION_TIMEOUT = 10000;
@@ -9117,7 +9089,7 @@ var WebRTCBuilder = function (_Service) {
 
       var peerId = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 1;
 
-      var pc = new wrtc.RTCPeerConnection(this.rtcConfiguration);
+      var pc = new WebRTC.RTCPeerConnection(this.rtcConfiguration);
       var remoteCandidateStream = new ReplaySubject_2();
       this._localCandidates(pc).subscribe(function (candidate) {
         return send({ candidate: candidate });
@@ -9135,7 +9107,7 @@ var WebRTCBuilder = function (_Service) {
           if (answer) {
             pc.setRemoteDescription({ type: 'answer', sdp: answer }).then(function () {
               remoteCandidateStream.subscribe(function (candidate) {
-                pc.addIceCandidate(new wrtc.RTCIceCandidate(candidate)).catch(reject);
+                pc.addIceCandidate(new WebRTC.RTCIceCandidate(candidate)).catch(reject);
               }, function (err) {
                 return console.warn(err);
               }, function () {
@@ -9191,7 +9163,7 @@ var WebRTCBuilder = function (_Service) {
             pc = _client[0];
             remoteCandidateStream = _client[1];
           } else {
-            pc = new wrtc.RTCPeerConnection(_this7.rtcConfiguration);
+            pc = new WebRTC.RTCPeerConnection(_this7.rtcConfiguration);
             remoteCandidateStream = new ReplaySubject_2();
             _this7._localCandidates(pc).subscribe(function (candidate) {
               return send({ candidate: candidate }, id);
@@ -9211,7 +9183,7 @@ var WebRTCBuilder = function (_Service) {
             });
             pc.setRemoteDescription({ type: 'offer', sdp: offer }).then(function () {
               return remoteCandidateStream.subscribe(function (candidate) {
-                pc.addIceCandidate(new wrtc.RTCIceCandidate(candidate)).catch(function (err) {
+                pc.addIceCandidate(new WebRTC.RTCIceCandidate(candidate)).catch(function (err) {
                   return console.warn(err);
                 });
               }, function (err) {
@@ -9340,7 +9312,7 @@ var WebRTCBuilder = function (_Service) {
   }], [{
     key: 'isSupported',
     get: function get$$1() {
-      return wrtc !== undefined;
+      return WebRTC !== undefined;
     }
   }]);
   return WebRTCBuilder;
@@ -9398,7 +9370,7 @@ var ChannelBuilder = function (_Service) {
     _this.svcMsgStream.subscribe(function (msg) {
       return _this._handleInnerMessage(msg);
     }, function (err) {
-      return void 0;
+      return error('ChannelBuilder Message Stream Error', err, wc);
     }, function () {
       return _this.init();
     });
@@ -9550,8 +9522,6 @@ var ChannelBuilder = function (_Service) {
   return ChannelBuilder;
 }(Service);
 
-var ted = Util.require(Util.TEXT_ENCODING);
-
 /**
  * Maximum size of the user message sent over `Channel`. Is meant without metadata.
  * @type {number}
@@ -9564,8 +9534,8 @@ var MAX_USER_MSG_SIZE = 15000;
  */
 var MAX_MSG_ID_SIZE = 65535;
 
-var stringEncoder = new ted.TextEncoder();
-var stringDecoder = new ted.TextDecoder();
+var stringEncoder = new TextEncoder();
+var stringDecoder = new TextDecoder();
 
 /**
  * Message builder service is responsible to build messages to send them over the
@@ -9960,7 +9930,7 @@ var WebChannel = function (_Service) {
     _this.svcMsgStream.subscribe(function (msg) {
       return _this._handleServiceMessage(msg);
     }, function (err) {
-      return void 0;
+      return error('service/WebChannel inner message error', err);
     });
 
     /**
@@ -10582,4 +10552,223 @@ var WebChannel = function (_Service) {
   return WebChannel;
 }(Service);
 
-export { WebChannel, FULL_MESH };
+var url = require('url');
+
+/**
+ * BotServer can listen on web socket. A peer can invite bot to join his `WebChannel`.
+ * He can also join one of the bot's `WebChannel`.
+ */
+var BotServer = function () {
+  /**
+   * Bot server settings are the same as for `WebChannel` (see {@link WebChannelSettings}),
+   * plus `host` and `port` parameters.
+   *
+   * @param {Object} options
+   * @param {FULL_MESH} [options.topology=FULL_MESH] Fully connected topology is the only one available for now
+   * @param {string} [options.signalingURL='wss://www.coedit.re:10443'] Signaling server url
+   * @param {RTCIceServer} [options.iceServers=[{urls:'stun3.l.google.com:19302'}]] Set of ice servers for WebRTC
+   * @param {Object} [options.bot] Options for bot server
+   * @param {string} [options.bot.url=''] Bot public URL to be shared on the p2p network
+   * @param {Object} [options.bot.server=null] A pre-created Node.js HTTP server
+   */
+  function BotServer() {
+    var _this = this;
+
+    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+    classCallCheck(this, BotServer);
+
+    var botDefaults = {
+      bot: {
+        url: '',
+        server: undefined,
+        perMessageDeflate: false
+      }
+    };
+
+    var wcOptions = Object.assign({}, defaults$1, options);
+    this.wcSettings = {
+      topology: wcOptions.topology,
+      signalingURL: wcOptions.signalingURL,
+      iceServers: wcOptions.iceServers
+    };
+    this.botSettings = Object.assign({}, botDefaults.bot, options.bot);
+    this.serverSettings = {
+      perMessageDeflate: this.botSettings.perMessageDeflate,
+      verifyClient: function verifyClient(info$$1) {
+        return _this.validateConnection(info$$1);
+      },
+      server: this.botSettings.server
+
+      /**
+       * @type {WebSocketServer}
+       */
+    };this.server = null;
+
+    /**
+     * @type {WebChannel[]}
+     */
+    this.webChannels = [];
+
+    /**
+     * @type {function(wc: WebChannel)}
+     */
+    this.onWebChannel = function () {};
+
+    this.onWebChannelReady = function () {};
+
+    this.onError = function () {};
+
+    this.init();
+  }
+
+  createClass(BotServer, [{
+    key: 'init',
+    value: function init() {
+      var _this2 = this;
+
+      var WebSocketServer = require('uws').Server;
+      this.server = new WebSocketServer(this.serverSettings);
+      var serverListening = this.serverSettings.server || this.server;
+      serverListening.on('listening', function () {
+        return WebSocketBuilder.listen().next(_this2.url);
+      });
+
+      this.server.on('error', function (err) {
+        WebSocketBuilder.listen().next('');
+        _this2.onError(err);
+      });
+
+      this.server.on('connection', function (ws) {
+        var _url$parse = url.parse(ws.upgradeReq.url, true),
+            pathname = _url$parse.pathname,
+            query = _url$parse.query;
+
+        var wcId = Number(query.wcId);
+        var wc = _this2.getWebChannel(wcId);
+        var senderId = Number(query.senderId);
+        switch (pathname) {
+          case '/invite':
+            {
+              if (wc && wc.members.length === 0) {
+                _this2.removeWebChannel(wc);
+              }
+              wc = new WebChannel(_this2.wcSettings);
+              wc.id = wcId;
+              _this2.addWebChannel(wc);
+              _this2.onWebChannel(wc);
+              wc.join(new Channel(ws, wc, senderId)).then(function () {
+                _this2.onWebChannelReady(wc);
+              });
+              break;
+            }
+          case '/internalChannel':
+            {
+              if (wc !== undefined) {
+                WebSocketBuilder.newIncomingSocket(wc, ws, senderId);
+              } else {
+                error('Cannot find WebChannel for a new internal channel');
+              }
+              break;
+            }
+        }
+      });
+    }
+
+    /**
+     * Get `WebChannel` identified by its `id`.
+     *
+     * @param {number} id
+     *
+     * @returns {WebChannel|null}
+     */
+
+  }, {
+    key: 'getWebChannel',
+    value: function getWebChannel(id) {
+      var _iteratorNormalCompletion = true;
+      var _didIteratorError = false;
+      var _iteratorError = undefined;
+
+      try {
+        for (var _iterator = this.webChannels[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var wc = _step.value;
+
+          if (id === wc.id) return wc;
+        }
+      } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion && _iterator.return) {
+            _iterator.return();
+          }
+        } finally {
+          if (_didIteratorError) {
+            throw _iteratorError;
+          }
+        }
+      }
+
+      return undefined;
+    }
+
+    /**
+     * Add `WebChannel`.
+     *
+     * @param {WebChannel} wc
+     */
+
+  }, {
+    key: 'addWebChannel',
+    value: function addWebChannel(wc) {
+      this.webChannels[this.webChannels.length] = wc;
+    }
+
+    /**
+     * Remove `WebChannel`
+     *
+     * @param {WebChannel} wc
+     */
+
+  }, {
+    key: 'removeWebChannel',
+    value: function removeWebChannel(wc) {
+      this.webChannels.splice(this.webChannels.indexOf(wc), 1);
+    }
+  }, {
+    key: 'validateConnection',
+    value: function validateConnection(info$$1) {
+      var _url$parse2 = url.parse(info$$1.req.url, true),
+          pathname = _url$parse2.pathname,
+          query = _url$parse2.query;
+
+      var wcId = query.wcId ? Number(query.wcId) : undefined;
+      switch (pathname) {
+        case '/invite':
+          if (wcId) {
+            var wc = this.getWebChannel(wcId);
+            return (wc === undefined || wc.members.length === 0) && query.senderId;
+          }
+          return false;
+        case '/internalChannel':
+          return query.senderId && wcId && this.getWebChannel(wcId);
+        default:
+          return false;
+      }
+    }
+  }, {
+    key: 'url',
+    get: function get$$1() {
+      if (this.botSettings.url !== '') {
+        return this.botSettings.url;
+      } else {
+        var address = this.serverSettings.server.address();
+        return 'ws://' + address.address + ':' + address.port;
+      }
+    }
+  }]);
+  return BotServer;
+}();
+
+export { WebChannel, FULL_MESH, BotServer };

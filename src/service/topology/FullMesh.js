@@ -1,8 +1,8 @@
-import 'node_modules/rxjs/add/operator/map'
+import 'rxjs/add/operator/map'
 
-import { TopologyInterface } from 'service/topology/TopologyInterface'
-import { fullMesh } from 'Protobuf'
-import * as log from 'log'
+import { TopologyInterface } from './TopologyInterface'
+import { fullMesh } from '../../Protobuf'
+import * as log from '../../log'
 
 /**
  * {@link FullMesh} identifier.

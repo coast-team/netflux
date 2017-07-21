@@ -3,9 +3,9 @@
   "description": "Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done.",
   "version": "1.1.0-beta.5",
   "license": "AGPL-3.0",
-  "main": "dist/netflux.es5.umd.js",
-  "module": "dist/netflux.es5.module.node.js",
-  "browser": "dist/netflux.es5.module.browser.js",
+  "main": "dist/netflux.cjs.js",
+  "module": "dist/netflux.esm.js",
+  "browser": "dist/netflux.umd.js",
   "homepage": "https://doc.esdoc.org/github.com/coast-team/netflux",
   "repository": {
     "type": "git",
@@ -14,6 +14,9 @@
   "author": "Philippe Kalitine <philippe.kalitine@gmail.com> (http://philippe.kalitine.name/)",
   "bugs": {
     "url": "https://github.com/coast-team/netflux/issues"
+  },
+  "engines": {
+    "node": ">=8.1.4"
   },
   "keywords": [
     "netflux",
@@ -45,11 +48,10 @@
     "cz": "git-cz"
   },
   "dependencies": {
-    "node-fetch": "^1.6.3",
     "rxjs": "^5.2.0",
     "text-encoding": "^0.6.4",
     "webrtc-adapter": "^4.0.1",
-    "uws": "^0.14.0"
+    "uws": "^8.14.0"
   },
   "peerDependencies": {
     "wrtc": "0.0.x"
