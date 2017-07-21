@@ -68,7 +68,7 @@ module.exports = (config) => {
           TEXT_ENCODING_MODULE: `window`,
           EVENT_SOURCE_MODULE: `window.EventSource`,
           FETCH_MODULE: `window.fetch`,
-          LOG_LEVEL: `Level.TRACE`
+          LOG_LEVEL: `Level.WARN`
         })
       ],
       format: 'iife'

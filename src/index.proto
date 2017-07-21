@@ -1,6 +1,7 @@
 syntax = "proto3";
 import "user.proto";
 import "service/service.proto";
+import "signaling.proto";
 
 message Message {
   uint32 senderId = 1;

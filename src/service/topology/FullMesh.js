@@ -1,5 +1,7 @@
+import 'node_modules/rxjs/add/operator/map'
+
 import { TopologyInterface } from 'service/topology/TopologyInterface'
-import { fullMesh } from 'Protobuf.js'
+import { fullMesh } from 'Protobuf'
 import * as log from 'log'
 
 /**
@@ -17,7 +19,7 @@ export const FULL_MESH = 3
  */
 export class FullMesh extends TopologyInterface {
   constructor (wc) {
-    super(FULL_MESH, fullMesh.Message, wc._msgStream)
+    super(FULL_MESH, fullMesh.Message, wc._svcMsgStream)
     this.wc = wc
     this.init()
   }
@@ -25,11 +27,12 @@ export class FullMesh extends TopologyInterface {
   init () {
     this.channels = new Set()
     this.jps = new Map()
-    this.innerStream.subscribe(
+    this.svcMsgStream.subscribe(
       msg => this._handleSvcMsg(msg),
-      err => log.error('FullMesh Message Stream Error', err)
+      err => log.error('FullMesh Message Stream Error', err),
+      () => this.leave()
     )
-    this.channelsSubscription = this.wc.channelBuilderSvc.channels().subscribe(
+    this.channelsSubscription = this.wc.channelBuilder.channels().subscribe(
       ch => (this.jps.set(ch.peerId, ch)),
       err => log.error('FullMesh set joining peer Error', err)
     )
@@ -117,7 +120,6 @@ export class FullMesh extends TopologyInterface {
     this.channels.clear()
     this.jps.clear()
     this.channelsSubscription.unsubscribe()
-    log.info(this.wc.myId + ' HAS LEFT ')
   }
 
   onChannelClose (closeEvt, channel) {
@@ -168,7 +170,7 @@ export class FullMesh extends TopologyInterface {
 
         const promises = []
         for (let id of peers) {
-          promises[promises.length] = this.wc.channelBuilderSvc.connectTo(id)
+          promises[promises.length] = this.wc.channelBuilder.connectTo(id)
         }
         Promise.all(promises)
           .then(channels => {

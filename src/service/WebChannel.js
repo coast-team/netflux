@@ -3,13 +3,14 @@ import { Subject } from 'node_modules/rxjs/Subject'
 import { Channel } from 'Channel'
 import { FullMesh } from 'service/topology/FullMesh'
 import { Service } from 'service/Service'
-import { SignalingGate } from 'SignalingGate'
+import { Signaling, CONNECTING, CONNECTED, OPEN, CLOSED } from 'Signaling'
 import { ChannelBuilder } from 'service/ChannelBuilder'
 import { WebSocketBuilder } from 'WebSocketBuilder'
 import { WebRTCBuilder } from 'service/WebRTCBuilder'
 import { Message, webChannel, service } from 'Protobuf.js'
 import { UserMessage } from 'UserMessage'
 import { Util } from 'Util'
+import { defaults } from 'defaults'
 import * as log from 'log'
 
 /**
@@ -18,7 +19,7 @@ import * as log from 'log'
  */
 const MAX_ID = 2147483647
 
-const REJOIN_MAX_ATTEMPTS = 10
+const REJOIN_MAX_ATTEMPTS = 0
 const REJOIN_TIMEOUT = 2000
 
 /**
@@ -31,6 +32,10 @@ const ID_TIMEOUT = 10000
 
 const INNER_ID = 100
 
+const JOINING = 0
+const JOINED = 1
+const DISCONNECTED = 2
+
 /**
  * This class is an API starting point. It represents a group of collaborators
  * also called peers. Each peer can send/receive broadcast as well as personal
@@ -42,32 +47,51 @@ export class WebChannel extends Service {
   /**
    * @param {WebChannelSettings} settings Web channel settings
    */
-  constructor (settings) {
+  constructor ({
+    topology = defaults.topology,
+    signalingURL = defaults.signalingURL,
+    iceServers = defaults.iceServers
+  } = {}) {
     super(INNER_ID, webChannel.Message)
-    /**
-     * @private
-     * @type {WebChannelSettings}
-     */
-    this.settings = settings
-
-    /**
-     * This event handler is used to resolve *Promise* in {@link WebChannel#join}.
-     * @private
-     */
-    this._joinSucceed = () => {}
-    this._joinFailed = () => {}
-
     /**
      * An array of all peer ids except this.
      * @type {number[]}
      */
     this.members = []
 
+    this.topology = topology
+
     /**
      * @private
      * @type {Set<number>}
      */
     this._generatedIds = new Set()
+
+    /**
+     * Unique `WebChannel` identifier. Its value is the same for all `WebChannel` members.
+     * @type {number}
+     */
+    this.id = this._generateId()
+
+    /**
+     * Unique peer identifier of you in this `WebChannel`. After each `join` function call
+     * this id will change, because it is up to the `WebChannel` to assign it when
+     * you join.
+     * @type {number}
+     */
+    this.myId = this._generateId()
+
+    this.key = undefined
+
+    this._state = DISCONNECTED
+
+    this._signaling = new Signaling(this, ch => this._addChannel(ch), signalingURL)
+    this._signaling.onStateChanged = state => {
+      if (state === CLOSED && this.members.length === 0) {
+        this._setState(DISCONNECTED)
+      }
+      this.onSignalingStateChanged(state)
+    }
 
     /**
      * @private
@@ -94,20 +118,6 @@ export class WebChannel extends Service {
     this._pongNb = 0
 
     /**
-     * Unique `WebChannel` identifier. Its value is the same for all `WebChannel` members.
-     * @type {number}
-     */
-    this.id = this._generateId()
-
-    /**
-     * Unique peer identifier of you in this `WebChannel`. After each `join` function call
-     * this id will change, because it is up to the `WebChannel` to assign it when
-     * you join.
-     * @type {number}
-     */
-    this.myId = this._generateId()
-
-    /**
      * Is the event handler called when a new peer has  joined the `WebChannel`.
      * @type {function(id: number)}
      */
@@ -125,11 +135,16 @@ export class WebChannel extends Service {
      */
     this.onMessage = () => {}
 
+    this.onStateChanged = () => {}
+
+    this.onSignalingStateChanged = () => {}
+
     /**
-     * Is the event handler called when the `WebChannel` has been closed.
-     * @type {function(closeEvt: CloseEvent)}
+     * This event handler is used to resolve *Promise* in {@link WebChannel#join}.
+     * @private
      */
-    this.onClose = () => {}
+    this._joinSucceed = () => {}
+    this._joinFailed = () => {}
 
     /**
      * Message builder service instance.
@@ -139,15 +154,14 @@ export class WebChannel extends Service {
      */
     this._userMsg = new UserMessage()
 
-    this._msgStream = new Subject()
-    this.webRTCSvc = new WebRTCBuilder(this, this.settings.iceServers, this._msgStream)
-    this.webSocketSvc = new WebSocketBuilder(this)
-    this._signalingGate = new SignalingGate(this, ch => this._addChannel(ch))
-    this.channelBuilderSvc = new ChannelBuilder(this)
-    super.setInnerStream(this._msgStream)
-    this.innerMessageSubscritption = this.innerStream.subscribe(
-      (msg) => this._handleServiceMessage(msg),
-      (err) => log.error('service/WebChannel inner message error', err)
+    this._svcMsgStream = new Subject()
+    super.setSvcMsgStream(this._svcMsgStream)
+    this.webRTCBuilder = new WebRTCBuilder(this, iceServers)
+    this.webSocketBuilder = new WebSocketBuilder(this)
+    this.channelBuilder = new ChannelBuilder(this)
+    this.svcMsgStream.subscribe(
+      msg => this._handleServiceMessage(msg),
+      err => log.error('service/WebChannel inner message error', err)
     )
 
     /**
@@ -155,32 +169,68 @@ export class WebChannel extends Service {
      * @private
      * @type {Service}
      */
-    this._setTopology(this.settings.topology)
+    this._setTopology(topology)
+  }
+
+  _setState (state) {
+    if (this._state !== state) {
+      this._state = state
+      this.onStateChanged(state)
+    }
+  }
+
+  static get JOINING () { return JOINING }
+
+  static get JOINED () { return JOINED }
+
+  static get DISCONNECTED () { return DISCONNECTED }
+
+  static get SIGNALING_CONNECTING () { return CONNECTING }
+
+  static get SIGNALING_CONNECTED () { return CONNECTED }
+
+  static get SIGNALING_OPEN () { return OPEN }
+
+  static get SIGNALING_CLOSED () { return CLOSED }
+
+  get state () {
+    return this._state
+  }
+
+  get signalingState () {
+    return this._signaling.state
+  }
+
+  get signalingURL () {
+    return this._signaling.url
   }
 
   /**
    * Join the `WebChannel`.
    *
-   * @param  {string|WebSocket} keyOrChannel The key provided by one of the `WebChannel` members or a socket
-   * @param  {string} [options] Join options
+   * @param  {string|WebSocket} value The key provided by one of the `WebChannel` members or a socket
    * @returns {Promise<undefined,string>} It resolves once you became a `WebChannel` member.
    */
-  join (keyOrChannel, options = {}) {
-    let settings = {
-      url: this.settings.signalingURL,
-      open: true,
-      rejoinAttempts: REJOIN_MAX_ATTEMPTS,
-      rejoinTimeout: REJOIN_TIMEOUT
+  join (value) {
+    if (this._state === DISCONNECTED) {
+      this._setState(JOINING)
+      return new Promise((resolve, reject) => {
+        if (value instanceof Channel) {
+          this._joinSucceed = () => resolve()
+          this._joinFailed = err => reject(err)
+        } else {
+          if (value === undefined) {
+            this.key = this.generateKey()
+          } else if ((typeof value === 'string' || value instanceof String) && value.length < 512) {
+            this.key = value
+          } else {
+            throw new Error('Parameter of the join function should be either a Channel or a string')
+          }
+          this._joinRecursively(() => resolve(), err => reject(err), 0)
+        }
+      })
     }
-    Object.assign(settings, options)
-    return new Promise((resolve, reject) => {
-      if (keyOrChannel.constructor.name !== 'Channel') {
-        this._joinRecursively(keyOrChannel, settings, () => resolve(), err => reject(err), 0)
-      } else {
-        this._joinSucceed = () => resolve()
-        this._joinFailed = err => reject(err)
-      }
-    })
+    return Promise.reject(new Error('Could not join: already joining or joined'))
   }
 
   /**
@@ -192,7 +242,7 @@ export class WebChannel extends Service {
    */
   invite (url) {
     if (Util.isURL(url)) {
-      return this.webSocketSvc.connect(`${url}/invite?wcId=${this.id}&senderId=${this.myId}`)
+      return this.webSocketBuilder.connect(`${url}/invite?wcId=${this.id}&senderId=${this.myId}`)
         .then(connection => this._addChannel(new Channel(connection, this)))
     } else {
       return Promise.reject(new Error(`${url} is not a valid URL`))
@@ -202,54 +252,33 @@ export class WebChannel extends Service {
   /**
    * Enable other peers to join the `WebChannel` with your help as an
    * intermediary peer.
-   * @param  {string} [key] Key to use. If none provide, then generate one.
-   * @returns {Promise} It is resolved once the `WebChannel` is open. The
-   * callback function take a parameter of type {@link SignalingGate~AccessData}.
    */
-  open (key = undefined) {
-    if (key !== undefined) {
-      return this._signalingGate.open(this.settings.signalingURL, key)
-    } else {
-      return this._signalingGate.open(this.settings.signalingURL)
-    }
+  openSignaling () {
+    // if (key !== undefined) {
+    //   return this._signaling.open(this.settings.signalingURL, key)
+    // } else {
+    //   return this._signaling.open(this.settings.signalingURL)
+    // }
   }
 
   /**
    * Prevent clients to join the `WebChannel` even if they possesses a key.
    */
-  close () {
-    this._signalingGate.close()
-  }
-
-  /**
-   * If the `WebChannel` is open, the clients can join it through you, otherwise
-   * it is not possible.
-   * @returns {boolean} True if the `WebChannel` is open, false otherwise
-   */
-  isOpen () {
-    return this._signalingGate.isOpen()
-  }
-
-  /**
-   * Get the data allowing to join the `WebChannel`. It is the same data which
-   * {@link WebChannel#open} callback function provides.
-   * @returns {OpenData|null} - Data to join the `WebChannel` or null is the `WebChannel` is closed
-   */
-  getOpenData () {
-    return this._signalingGate.getOpenData()
+  closeSignaling () {
+    this._signaling.close()
   }
 
   /**
    * Leave the `WebChannel`. No longer can receive and send messages to the group.
    */
-  leave () {
+  disconnect () {
     this._pingTime = 0
     this.members = []
-    this._topology.leave()
     this._joinSucceed = () => {}
     this._joinFailed = () => {}
-    this._msgStream.complete()
-    this._signalingGate.close()
+    this._svcMsgStream.complete()
+    this._setState(DISCONNECTED)
+    this._signaling.close()
   }
 
   /**
@@ -347,6 +376,9 @@ export class WebChannel extends Service {
   _onPeerLeave (peerId) {
     this.members.splice(this.members.indexOf(peerId), 1)
     this.onPeerLeave(peerId)
+    if (this.members.length === 0 && this._signaling.state === CLOSED) {
+      this._setState(DISCONNECTED)
+    }
   }
 
   /**
@@ -433,7 +465,7 @@ export class WebChannel extends Service {
       }
     } else {
       // Inner Message
-      this._msgStream.next(Object.assign({
+      this.svcMsgStream.next(Object.assign({
         channel,
         senderId: msg.senderId,
         recipientId: msg.recipientId
@@ -477,46 +509,51 @@ export class WebChannel extends Service {
   /**
    *
    * @private
-   * @param  {[type]} key
-   * @param  {[type]} options
    * @param  {[type]} resolve
    * @param  {[type]} reject
    * @param  {[type]} attempt
    * @return {void}
    */
-  _joinRecursively (key, options, resolve, reject, attempt) {
-    this._signalingGate.join(key, options.url, options.open)
+  _joinRecursively (resolve, reject, attempt) {
+    this._signaling.join(this.key)
       .then(ch => {
         if (ch) {
-          this._joinSucceed = () => resolve()
-          this._joinFailed = err => reject(err)
+          this._joinSucceed = () => {
+            this._signaling.open()
+            this._setState(JOINED)
+            resolve()
+          }
+          this._joinFailed = err => {
+            this._setState(DISCONNECTED)
+            reject(err)
+          }
         } else {
+          this._setState(JOINED)
           resolve()
         }
       })
       .catch(err => {
-        attempt++
-        console.log(`Failed to join via ${options.url} with ${key} key: ${err.message}`)
-        if (attempt === options.rejoinAttempts) {
-          reject(new Error(`Failed to join via ${options.url} with ${key} key: reached maximum rejoin attempts (${REJOIN_MAX_ATTEMPTS})`))
+        console.log(`Failed to join via ${this.signalingURL} with ${this.key} key: ${err.message}`)
+        if (attempt === REJOIN_MAX_ATTEMPTS) {
+          reject(new Error(`Failed to join via ${this.signalingURL} with ${this.key} key: reached maximum rejoin attempts (${REJOIN_MAX_ATTEMPTS})`))
         } else {
-          console.log(`Trying to rejoin in ${options.rejoinTimeout} the ${attempt} time... `)
+          console.log(`Trying to rejoin in ${REJOIN_TIMEOUT} the ${attempt + 1} time... `)
           setTimeout(() => {
-            this._joinRecursively(key, options, () => resolve(), err => reject(err), attempt)
-          }, options.rejoinTimeout)
+            this._joinRecursively(() => resolve(), err => reject(err), ++attempt)
+          }, REJOIN_TIMEOUT)
         }
       })
   }
 
   _setTopology (topology) {
     if (this._topology !== undefined) {
-      if (this.settings.topology !== topology) {
-        this.settings.topology = topology
+      if (this.topology !== topology) {
+        this.topology = topology
         this._topology.clean()
         this._topology = new FullMesh(this)
       }
     } else {
-      this.settings.topology = topology
+      this.topology = topology
       this._topology = new FullMesh(this)
     }
   }

@@ -97,7 +97,7 @@
     "rollup-plugin-string": "^2.0.2",
     "rollup-plugin-strip": "^1.1.1",
     "semantic-release": "^6.3.2",
-    "sigver": "^14.0.0",
+    "sigver": "^15.0.0",
     "validate-commit-msg": "^2.8.2"
   },
   "config": {

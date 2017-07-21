@@ -1,6 +1,6 @@
-import {create, BotServer} from 'index.node.js'
-import * as helper from 'test/util/helper'
-import * as log from 'src/log'
+import { WebChannel, BotServer } from '../../src/index.node.js'
+import * as helper from 'helper'
+import * as log from '../../src/log'
 
 // Require dependencies
 const http = require('http')
@@ -86,14 +86,14 @@ try {
 
 function createWebChannel (env) {
   // Add specific web channel to the bot for tests in Firefox
-  const wc = create({signalingURL: helper.SIGNALING_URL})
+  const wc = new WebChannel({signalingURL: helper.SIGNALING_URL})
   wc.onMessage = (id, msg, isBroadcast) => {
     helper.onMessageForBot(wc, id, msg, isBroadcast)
   }
-  wc.onClose = closeEvt => {
+  wc.onDisconnect = closeEvt => {
     log.warn(`${env} bot has disconnected from: ${helper.SIGNALING_URL}`)
   }
-  wc.open('FIREFOX')
+  wc.join('FIREFOX')
     .then(() => log.info(`${env} bot is ready`))
     .catch(reason => log.error(`${env} bot WebChannel open error: ${reason}`))
   return wc

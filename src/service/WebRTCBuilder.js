@@ -21,7 +21,7 @@ const CONNECTION_TIMEOUT = 10000
  */
 export class WebRTCBuilder extends Service {
   constructor (wc, iceServers) {
-    super(ID, webRTCBuilder.Message, wc._msgStream)
+    super(ID, webRTCBuilder.Message, wc._svcMsgStream)
     this.wc = wc
     this.rtcConfiguration = { iceServers }
   }
@@ -33,7 +33,7 @@ export class WebRTCBuilder extends Service {
   channelsFromWebChannel () {
     if (WebRTCBuilder.isSupported) {
       return this._channels(
-        this.innerStream.map(({ msg, senderId }) => ({ offer: msg.offer, id: senderId, candidate: msg.candidate })),
+        this.svcMsgStream.map(({ msg, senderId }) => ({ offer: msg.offer, id: senderId, candidate: msg.candidate })),
         (msg, id) => this.wc._sendTo({ recipientId: id, content: super.encode(msg) })
       )
     }
@@ -51,7 +51,7 @@ export class WebRTCBuilder extends Service {
   connectOverWebChannel (id) {
     if (WebRTCBuilder.isSupported) {
       return this._establishChannel(
-        this.innerStream
+        this.svcMsgStream
           .filter(({ senderId }) => senderId === id)
           .map(({ msg }) => ({ answer: msg.answer, candidate: msg.candidate })),
         msg => this.wc._sendTo({ recipientId: id, content: super.encode(msg) }),
@@ -64,16 +64,24 @@ export class WebRTCBuilder extends Service {
   /**
    * Listen on `RTCDataChannel` from Signaling server. Starts to listen on **SDP answer**.
    *
-   * @param {Subject} signalingStream Specific to Netflux RxJs Subject connection with Signaling server
+   * @param {Subject} signaling Specific to Netflux RxJs Subject connection with Signaling server
    *
    * @returns {Observable<RTCDataChannel>} Observable emitting `RTCDataChannel`. Can emit errors and completes when the stream with Signaling server has completed.
    */
-  channelsFromSignaling (signalingStream) {
+  channelsFromSignaling (signaling) {
     if (WebRTCBuilder.isSupported) {
       return this._channels(
-        signalingStream.filter(msg => 'id' in msg && 'data' in msg)
-          .map(({ data, id }) => ({ offer: data.offer, id, candidate: data.candidate })),
-        (msg, id) => signalingStream.send(JSON.stringify({id, data: msg}))
+        signaling.stream.filter(msg => msg.id !== 0)
+          .map(msg => {
+            const data = super.decode(msg.data)
+            return Object.assign(data, { id: msg.id })
+          }),
+        (msg, id) => {
+          const bytes = webRTCBuilder.Message
+            .encode(webRTCBuilder.Message.create(msg))
+            .finish()
+          signaling.send({ id, data: bytes })
+        }
       )
     }
     throw new Error('WebRTC is not supported')
@@ -83,16 +91,21 @@ export class WebRTCBuilder extends Service {
    * Establish an `RTCDataChannel` with a peer identified by `id` trough Signaling server.
    * Starts by sending an **SDP offer**.
    *
-   * @param {Subject} signalingStream Specific to Netflux RxJs Subject connection with Signaling server
+   * @param {Subject} signaling Specific to Netflux RxJs Subject connection with Signaling server
    *
    * @returns {Promise<RTCDataChannel>} Data channel between you and `id` peer
    */
-  connectOverSignaling (signalingStream) {
+  connectOverSignaling (signaling) {
     if (WebRTCBuilder.isSupported) {
       return this._establishChannel(
-        signalingStream.filter(msg => 'data' in msg)
-          .map(({ data }) => ({ answer: data.answer, candidate: data.candidate })),
-        msg => signalingStream.send(JSON.stringify({data: msg}))
+        signaling.stream.filter(msg => msg.id === 0)
+          .map(msg => super.decode(msg.data)),
+        msg => {
+          const bytes = webRTCBuilder.Message
+            .encode(webRTCBuilder.Message.create(msg))
+            .finish()
+          signaling.send({ data: bytes })
+        }
       )
     }
     throw new Error('WebRTC is not supported')
@@ -111,7 +124,7 @@ export class WebRTCBuilder extends Service {
     this._localCandidates(pc).subscribe(
       candidate => send({ candidate }),
       err => console.warn(err),
-      () => send({})
+      () => send({ isEnd: true })
     )
 
     return new Promise((resolve, reject) => {
@@ -146,7 +159,7 @@ export class WebRTCBuilder extends Service {
 
       pc.createOffer()
         .then(offer => pc.setLocalDescription(offer))
-        .then(() => send({offer: pc.localDescription.sdp}))
+        .then(() => send({ offer: pc.localDescription.sdp }))
         .catch(reject)
     })
   }
@@ -173,9 +186,9 @@ export class WebRTCBuilder extends Service {
             pc = new wrtc.RTCPeerConnection(this.rtcConfiguration)
             remoteCandidateStream = new ReplaySubject()
             this._localCandidates(pc).subscribe(
-              candidate => send({candidate}, id),
+              candidate => send({ candidate }, id),
               err => console.warn(err),
-              () => send({}, id)
+              () => send({ isEnd: true }, id)
             )
             clients.set(id, [pc, remoteCandidateStream])
           }
@@ -197,7 +210,7 @@ export class WebRTCBuilder extends Service {
               ))
               .then(() => pc.createAnswer())
               .then(answer => pc.setLocalDescription(answer))
-              .then(() => send({answer: pc.localDescription.sdp}, id))
+              .then(() => send({ answer: pc.localDescription.sdp }, id))
               .catch(err => {
                 clients.delete(id)
                 console.error(err)

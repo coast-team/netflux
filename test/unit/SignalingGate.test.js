@@ -1,7 +1,7 @@
-import { SignalingGate } from 'src/SignalingGate'
+import { Signaling } from 'src/Signaling'
 import * as helper from 'util/helper'
 
-describe('SignalingGate', () => {
+describe('Signaling', () => {
   const WebChannelMock = class {
     constructor (onClose = () => {}) {
       this.onClose = onClose
@@ -15,7 +15,7 @@ describe('SignalingGate', () => {
 
     describe(title, () => {
       it('Gate should be closed after construction', () => {
-        const signalingGate = new SignalingGate(new WebChannelMock(), () => {})
+        const signalingGate = new Signaling(new WebChannelMock(), () => {})
         expect(signalingGate.isOpen()).toBeFalsy()
         expect(signalingGate.stream).toBeNull()
         expect(signalingGate.key).toBeNull()
@@ -23,15 +23,15 @@ describe('SignalingGate', () => {
       })
 
       it('Should generate different keys', () => {
-        const signalingGate = new SignalingGate(new WebChannelMock(), () => {})
+        const signalingGate = new Signaling(new WebChannelMock(), () => {})
         const key1 = signalingGate.generateKey()
         const key2 = signalingGate.generateKey()
         expect(key1).not.toEqual(key2)
       })
 
       it('Should open 2 gates with the same key', done => {
-        const sg1 = new SignalingGate(new WebChannelMock(), () => {})
-        const sg2 = new SignalingGate(new WebChannelMock(), () => {})
+        const sg1 = new Signaling(new WebChannelMock(), () => {})
+        const sg2 = new Signaling(new WebChannelMock(), () => {})
         sg1.open(signalingURL)
           .then(openData => sg2.open(signalingURL, openData.key))
           .then(() => {
@@ -44,7 +44,7 @@ describe('SignalingGate', () => {
 
       describe('Open with auto generated key', () => {
         const webChannelMock = new WebChannelMock()
-        const sg = new SignalingGate(webChannelMock, () => {})
+        const sg = new Signaling(webChannelMock, () => {})
         let openData
 
         it('Should open the gate', done => {
@@ -79,7 +79,7 @@ describe('SignalingGate', () => {
 
       describe('Open with the specified key', () => {
         const webChannelMock = new WebChannelMock()
-        const sg = new SignalingGate(webChannelMock, () => {})
+        const sg = new Signaling(webChannelMock, () => {})
         let openData
 
         it('Should open the gate', done => {

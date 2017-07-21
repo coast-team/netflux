@@ -1,5 +1,4 @@
 import fs from 'fs'
-import includePaths from 'rollup-plugin-includepaths'
 import string from 'rollup-plugin-string'
 import replace from 'rollup-plugin-replace'
 import commonjs from 'rollup-plugin-commonjs'
@@ -26,10 +25,6 @@ for (let entry of entries) {
     plugins: [
       string({
         include: 'test/**/*.txt'
-      }),
-      includePaths({
-        paths: ['', 'test/', 'src/'],
-        extensions: ['.js', '.txt']
       }),
       commonjs({
         extensions: [ '.js' ],

@@ -24,7 +24,7 @@ export class WebSocketBuilder {
   }
 
   static newIncomingSocket (wc, ws, senderId) {
-    wc.webSocketSvc.channelStream.next(new Channel(ws, wc, senderId))
+    wc.webSocketBuilder.channelStream.next(new Channel(ws, wc, senderId))
   }
 
   /**
@@ -71,32 +71,5 @@ export class WebSocketBuilder {
 
   channels () {
     return this.channelStream.asObservable()
-  }
-
-  connectToSignaling (url) {
-    return this.connect(url)
-      .then(socket => {
-        const subject = new Subject()
-        socket.onmessage = evt => {
-          try {
-            subject.next(JSON.parse(evt.data))
-          } catch (err) {
-            console.error(`WebSocket message error from ${socket.url}: ${err.message}` + evt.data)
-            socket.close(4000, err.message)
-          }
-        }
-        socket.onerror = err => subject.error(err)
-        socket.onclose = closeEvt => {
-          if (closeEvt.code === 1000) {
-            subject.complete()
-          } else {
-            subject.error(new Error(`${closeEvt.code}: ${closeEvt.reason}`))
-          }
-        }
-        subject.send = msg => socket.send(msg)
-        subject.close = (code, reason) => socket.close(code, reason)
-        subject.socket = socket
-        return subject
-      })
   }
 }

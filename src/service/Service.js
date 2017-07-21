@@ -5,12 +5,12 @@ export class Service {
     this.serviceId = id
     this.Message = Message
     if (msgStream !== undefined) {
-      this.setInnerStream(msgStream)
+      this.setSvcMsgStream(msgStream)
     }
   }
 
-  setInnerStream (msgStream) {
-    this.innerStream = msgStream
+  setSvcMsgStream (msgStream) {
+    this.svcMsgStream = msgStream
       .filter(({ id }) => id === this.serviceId)
       .map(({ channel, senderId, recipientId, content }) => ({
         channel,
