@@ -60,7 +60,7 @@
     "cz-conventional-changelog": "^2.0.0",
     "esdoc": "^0.5.2",
     "eslint": "^4.0.0",
-    "eslint-config-conaclos": "^1.2.0",
+    "eslint-config-conaclos": "^2.0.0",
     "eslint-config-standard": "^10.0.0",
     "eslint-plugin-import": "^2.2.0",
     "eslint-plugin-node": "^5.0.0",
