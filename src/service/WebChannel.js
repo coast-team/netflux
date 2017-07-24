@@ -271,12 +271,12 @@ export class WebChannel extends Service {
    * Leave the `WebChannel`. No longer can receive and send messages to the group.
    */
   disconnect () {
+    this._setState(DISCONNECTED)
     this._pingTime = 0
     this.members = []
     this._joinSucceed = () => {}
     this._joinFailed = () => {}
     this._svcMsgStream.complete()
-    this._setState(DISCONNECTED)
     this._signaling.close()
   }
 
@@ -532,11 +532,11 @@ export class WebChannel extends Service {
         }
       })
       .catch(err => {
-        console.log(`Failed to join via ${this.signalingURL} with ${this.key} key: ${err.message}`)
+        console.warn(`Failed to join via ${this.signalingURL} with ${this.key} key: ${err.message}`)
         if (attempt === REJOIN_MAX_ATTEMPTS) {
           reject(new Error(`Failed to join via ${this.signalingURL} with ${this.key} key: reached maximum rejoin attempts (${REJOIN_MAX_ATTEMPTS})`))
         } else {
-          console.log(`Trying to rejoin in ${REJOIN_TIMEOUT} the ${attempt + 1} time... `)
+          console.info(`Trying to rejoin in ${REJOIN_TIMEOUT} the ${attempt + 1} time... `)
           setTimeout(() => {
             this._joinRecursively(() => resolve(), err => reject(err), ++attempt)
           }, REJOIN_TIMEOUT)

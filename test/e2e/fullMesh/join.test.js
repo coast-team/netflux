@@ -103,7 +103,7 @@ describe('Fully connected', () => {
             done()
           })
           .catch(done.fail)
-      })
+      }, scenario.nbAgents * 2000)
     })
   })
 

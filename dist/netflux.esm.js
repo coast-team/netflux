@@ -5400,7 +5400,7 @@ var FullMesh = function (_TopologyInterface) {
         return _this2.leave();
       });
       this.channelsSubscription = this.wc.channelBuilder.channels().subscribe(function (ch) {
-        return _this2.jps.set(ch.peerId, ch);
+        return _this2.peerJoined(ch);
       }, function (err) {
         return console.error('FullMesh set joining peer Error', err);
       });
@@ -5422,6 +5422,7 @@ var FullMesh = function (_TopologyInterface) {
     value: function addJoining(channel) {
       console.info(this.wc.myId + ' addJoining ' + channel.peerId);
       var peers = this.wc.members.slice();
+      this.peerJoined(channel);
 
       // First joining peer
       if (peers.length === 0) {
@@ -5429,7 +5430,6 @@ var FullMesh = function (_TopologyInterface) {
           recipientId: channel.peerId,
           content: get(FullMesh.prototype.__proto__ || Object.getPrototypeOf(FullMesh.prototype), 'encode', this).call(this, { joinedPeerId: channel.peerId })
         }));
-        this.peerJoined(channel);
 
         // There are at least 2 members in the network
       } else {
@@ -5444,10 +5444,9 @@ var FullMesh = function (_TopologyInterface) {
   }, {
     key: 'initJoining',
     value: function initJoining(ch) {
+      console.info(this.wc.myId + ' initJoining ' + ch.peerId);
       this.jps.set(this.wc.myId, ch);
-      this.channels.add(ch);
-      this.wc._onPeerJoin(ch.peerId);
-      console.info(this.wc.myId + ' _onPeerJoin ' + ch.peerId);
+      this.peerJoined(ch);
     }
 
     /**
@@ -5719,71 +5718,56 @@ var FullMesh = function (_TopologyInterface) {
           {
             var peers = msg.connectTo.peers;
 
-
-            var promises = [];
-            var _iteratorNormalCompletion8 = true;
-            var _didIteratorError8 = false;
-            var _iteratorError8 = undefined;
-
-            try {
-              for (var _iterator8 = peers[Symbol.iterator](), _step8; !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
-                var id = _step8.value;
-
-                promises[promises.length] = this.wc.channelBuilder.connectTo(id);
-              }
-            } catch (err) {
-              _didIteratorError8 = true;
-              _iteratorError8 = err;
-            } finally {
-              try {
-                if (!_iteratorNormalCompletion8 && _iterator8.return) {
-                  _iterator8.return();
-                }
-              } finally {
-                if (_didIteratorError8) {
-                  throw _iteratorError8;
-                }
-              }
-            }
-
-            Promise.all(promises).then(function (channels) {
-              var _iteratorNormalCompletion9 = true;
-              var _didIteratorError9 = false;
-              var _iteratorError9 = undefined;
+            var counter = 0;
+            var connected = [];
+            var allCompleted = new Promise(function (resolve) {
+              var _iteratorNormalCompletion8 = true;
+              var _didIteratorError8 = false;
+              var _iteratorError8 = undefined;
 
               try {
-                for (var _iterator9 = channels[Symbol.iterator](), _step9; !(_iteratorNormalCompletion9 = (_step9 = _iterator9.next()).done); _iteratorNormalCompletion9 = true) {
-                  var ch = _step9.value;
+                var _loop = function _loop() {
+                  var id = _step8.value;
 
-                  _this3.peerJoined(ch);
+                  _this3.wc.channelBuilder.connectTo(id).then(function (ch) {
+                    console.log(_this3.wc.myId + ' connected to ' + id);
+                    _this3.peerJoined(ch);
+                    connected[connected.length] = id;
+                    if (++counter === peers.length) {
+                      resolve();
+                    }
+                  }).catch(function (err) {
+                    console.warn(_this3.wc.myId + ' could not connect to ' + id, err);
+                    if (++counter === peers.length) {
+                      resolve();
+                    }
+                  });
+                };
+
+                for (var _iterator8 = peers[Symbol.iterator](), _step8; !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
+                  _loop();
                 }
               } catch (err) {
-                _didIteratorError9 = true;
-                _iteratorError9 = err;
+                _didIteratorError8 = true;
+                _iteratorError8 = err;
               } finally {
                 try {
-                  if (!_iteratorNormalCompletion9 && _iterator9.return) {
-                    _iterator9.return();
+                  if (!_iteratorNormalCompletion8 && _iterator8.return) {
+                    _iterator8.return();
                   }
                 } finally {
-                  if (_didIteratorError9) {
-                    throw _iteratorError9;
+                  if (_didIteratorError8) {
+                    throw _iteratorError8;
                   }
                 }
               }
-
+            });
+            allCompleted.then(function () {
+              console.log(_this3.wc.myId + 'SEND ', { connectedTo: { peers: connected } });
               channel.send(_this3.wc._encode({
                 recipientId: channel.peerId,
-                content: get(FullMesh.prototype.__proto__ || Object.getPrototypeOf(FullMesh.prototype), 'encode', _this3).call(_this3, { connectedTo: { peers: peers } })
+                content: get(FullMesh.prototype.__proto__ || Object.getPrototypeOf(FullMesh.prototype), 'encode', _this3).call(_this3, { connectedTo: { peers: connected } })
               }));
-            }).catch(function (err) {
-              console.error('Failed to join', err);
-              channel.send(_this3.wc._encode({
-                recipientId: channel.peerId,
-                content: get(FullMesh.prototype.__proto__ || Object.getPrototypeOf(FullMesh.prototype), 'encode', _this3).call(_this3, { connectedTo: { peers: [] } })
-              }));
-              _this3.clean();
-              _this3.wc._joinFailed(err);
             });
             break;
           }
@@ -5792,39 +5776,38 @@ var FullMesh = function (_TopologyInterface) {
             var _peers = msg.connectedTo.peers;
 
             var missingPeers = [];
-            var _iteratorNormalCompletion10 = true;
-            var _didIteratorError10 = false;
-            var _iteratorError10 = undefined;
+            var _iteratorNormalCompletion9 = true;
+            var _didIteratorError9 = false;
+            var _iteratorError9 = undefined;
 
             try {
-              for (var _iterator10 = this.wc.members[Symbol.iterator](), _step10; !(_iteratorNormalCompletion10 = (_step10 = _iterator10.next()).done); _iteratorNormalCompletion10 = true) {
-                var _id = _step10.value;
+              for (var _iterator9 = this.wc.members[Symbol.iterator](), _step9; !(_iteratorNormalCompletion9 = (_step9 = _iterator9.next()).done); _iteratorNormalCompletion9 = true) {
+                var _id = _step9.value;
 
                 if (!_peers.includes(_id)) {
                   missingPeers[missingPeers.length] = _id;
                 }
               }
             } catch (err) {
-              _didIteratorError10 = true;
-              _iteratorError10 = err;
+              _didIteratorError9 = true;
+              _iteratorError9 = err;
             } finally {
               try {
-                if (!_iteratorNormalCompletion10 && _iterator10.return) {
-                  _iterator10.return();
+                if (!_iteratorNormalCompletion9 && _iterator9.return) {
+                  _iterator9.return();
                 }
               } finally {
-                if (_didIteratorError10) {
-                  throw _iteratorError10;
+                if (_didIteratorError9) {
+                  throw _iteratorError9;
                 }
               }
             }
 
             if (missingPeers.length === 0) {
-              this.jps.delete(channel.peerId);
-              this.peerJoined(channel);
-              this.wc._send({
+              channel.send(this.wc._encode({
+                recipientId: channel.peerId,
                 content: get(FullMesh.prototype.__proto__ || Object.getPrototypeOf(FullMesh.prototype), 'encode', this).call(this, { joinedPeerId: channel.peerId })
-              });
+              }));
             } else {
               // TODO
             }
@@ -5837,13 +5820,9 @@ var FullMesh = function (_TopologyInterface) {
           }
         case 'joinedPeerId':
           {
-            if (this.iJoin()) {
-              this.wc._joinSucceed();
-              console.info(this.wc.myId + ' _joinSucceed ');
-            } else {
-              this.peerJoined(this.jps.get(msg.joinedPeerId));
-            }
-            this.jps.delete(msg.joinedPeerId);
+            this.jps.delete(this.wc.myId);
+            this.wc._joinSucceed();
+            console.info(this.wc.myId + ' _joinSucceed ');
             break;
           }
       }
@@ -5852,8 +5831,9 @@ var FullMesh = function (_TopologyInterface) {
     key: 'peerJoined',
     value: function peerJoined(ch) {
       this.channels.add(ch);
+      this.jps.delete(ch.peerId);
       this.wc._onPeerJoin(ch.peerId);
-      console.info(this.wc.myId + ' _onPeerJoin ' + ch.peerID);
+      console.info(this.wc.myId + ' _onPeerJoin ' + ch.peerId);
     }
   }]);
   return FullMesh;
@@ -10388,11 +10368,11 @@ var WebChannel = function (_Service) {
           resolve();
         }
       }).catch(function (err) {
-        console.log('Failed to join via ' + _this5.signalingURL + ' with ' + _this5.key + ' key: ' + err.message);
+        console.warn('Failed to join via ' + _this5.signalingURL + ' with ' + _this5.key + ' key: ' + err.message);
         if (attempt === REJOIN_MAX_ATTEMPTS) {
           reject(new Error('Failed to join via ' + _this5.signalingURL + ' with ' + _this5.key + ' key: reached maximum rejoin attempts (' + REJOIN_MAX_ATTEMPTS + ')'));
         } else {
-          console.log('Trying to rejoin in ' + REJOIN_TIMEOUT + ' the ' + (attempt + 1) + ' time... ');
+          console.info('Trying to rejoin in ' + REJOIN_TIMEOUT + ' the ' + (attempt + 1) + ' time... ');
           setTimeout(function () {
             _this5._joinRecursively(function () {
               return resolve();

@@ -32,7 +32,7 @@ export class FullMesh extends TopologyInterface {
       () => this.leave()
     )
     this.channelsSubscription = this.wc.channelBuilder.channels().subscribe(
-      ch => (this.jps.set(ch.peerId, ch)),
+      ch => this.peerJoined(ch),
       err => console.error('FullMesh set joining peer Error', err)
     )
   }
@@ -49,6 +49,7 @@ export class FullMesh extends TopologyInterface {
   addJoining (channel) {
     console.info(this.wc.myId + ' addJoining ' + channel.peerId)
     const peers = this.wc.members.slice()
+    this.peerJoined(channel)
 
     // First joining peer
     if (peers.length === 0) {
@@ -56,7 +57,6 @@ export class FullMesh extends TopologyInterface {
         recipientId: channel.peerId,
         content: super.encode({ joinedPeerId: channel.peerId })
       }))
-      this.peerJoined(channel)
 
     // There are at least 2 members in the network
     } else {
@@ -70,10 +70,9 @@ export class FullMesh extends TopologyInterface {
   }
 
   initJoining (ch) {
+    console.info(this.wc.myId + ' initJoining ' + ch.peerId)
     this.jps.set(this.wc.myId, ch)
-    this.channels.add(ch)
-    this.wc._onPeerJoin(ch.peerId)
-    console.info(this.wc.myId + ' _onPeerJoin ' + ch.peerId)
+    this.peerJoined(ch)
   }
 
   /**
@@ -166,46 +165,49 @@ export class FullMesh extends TopologyInterface {
     switch (msg.type) {
       case 'connectTo': {
         const { peers } = msg.connectTo
-
-        const promises = []
-        for (let id of peers) {
-          promises[promises.length] = this.wc.channelBuilder.connectTo(id)
-        }
-        Promise.all(promises)
-          .then(channels => {
-            for (let ch of channels) {
-              this.peerJoined(ch)
-            }
-            channel.send(this.wc._encode({
-              recipientId: channel.peerId,
-              content: super.encode({ connectedTo: { peers } })
-            }))
-          })
-          .catch(err => {
-            console.error('Failed to join', err)
-            channel.send(this.wc._encode({
-              recipientId: channel.peerId,
-              content: super.encode({ connectedTo: { peers: [] } })
-            }))
-            this.clean()
-            this.wc._joinFailed(err)
-          })
+        let counter = 0
+        const connected = []
+        const allCompleted = new Promise(resolve => {
+          for (let id of peers) {
+            this.wc.channelBuilder.connectTo(id)
+              .then(ch => {
+                console.log(this.wc.myId + ' connected to ' + id)
+                this.peerJoined(ch)
+                connected[connected.length] = id
+                if (++counter === peers.length) {
+                  resolve()
+                }
+              })
+              .catch(err => {
+                console.warn(this.wc.myId + ' could not connect to ' + id, err)
+                if (++counter === peers.length) {
+                  resolve()
+                }
+              })
+          }
+        })
+        allCompleted.then(() => {
+          console.log(this.wc.myId + 'SEND ', { connectedTo: { peers: connected } })
+          channel.send(this.wc._encode({
+            recipientId: channel.peerId,
+            content: super.encode({ connectedTo: { peers: connected } })
+          }))
+        })
         break
       }
       case 'connectedTo': {
         const { peers } = msg.connectedTo
         const missingPeers = []
         for (let id of this.wc.members) {
-          if (!peers.includes(id)) {
+          if (!peers.includes(id) && id !== channel.peerId) {
             missingPeers[missingPeers.length] = id
           }
         }
         if (missingPeers.length === 0) {
-          this.jps.delete(channel.peerId)
-          this.peerJoined(channel)
-          this.wc._send({
+          channel.send(this.wc._encode({
+            recipientId: channel.peerId,
             content: super.encode({ joinedPeerId: channel.peerId })
-          })
+          }))
         } else {
           // TODO
         }
@@ -216,13 +218,9 @@ export class FullMesh extends TopologyInterface {
         break
       }
       case 'joinedPeerId': {
-        if (this.iJoin()) {
-          this.wc._joinSucceed()
-          console.info(this.wc.myId + ' _joinSucceed ')
-        } else {
-          this.peerJoined(this.jps.get(msg.joinedPeerId))
-        }
-        this.jps.delete(msg.joinedPeerId)
+        this.jps.delete(this.wc.myId)
+        this.wc._joinSucceed()
+        console.info(this.wc.myId + ' _joinSucceed ')
         break
       }
     }
@@ -230,7 +228,8 @@ export class FullMesh extends TopologyInterface {
 
   peerJoined (ch) {
     this.channels.add(ch)
+    this.jps.delete(ch.peerId)
     this.wc._onPeerJoin(ch.peerId)
-    console.info(this.wc.myId + ' _onPeerJoin ' + ch.peerID)
+    console.info(this.wc.myId + ' _onPeerJoin ' + ch.peerId)
   }
 }
