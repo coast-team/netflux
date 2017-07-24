@@ -11,8 +11,17 @@ const NodeCloseEvent = class CloseEvent {
   }
 }
 
-export const WebRTC = Util.isBrowser() ? window : require('wrtc')
+export const WebRTC = Util.isBrowser() ? window : getWrtc('wrtc')
 export const WebSocket = Util.isBrowser() ? window.WebSocket : require('uws')
 export const TextEncoder = Util.isBrowser() ? window.TextEncoder : require('text-encoding').TextEncoder
 export const TextDecoder = Util.isBrowser() ? window.TextDecoder : require('text-encoding').TextDecoder
 export const CloseEvent = Util.isBrowser() ? window.CloseEvent : NodeCloseEvent
+
+function getWrtc () {
+  try {
+    return require('wrtc')
+  } catch (err) {
+    console.warn(err.message)
+    return undefined
+  }
+}

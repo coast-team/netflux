@@ -90,9 +90,6 @@ function createWebChannel (env) {
   wc.onMessage = (id, msg, isBroadcast) => {
     onMessageForBot(wc, id, msg, isBroadcast)
   }
-  wc.onDisconnect = closeEvt => {
-    console.warn(`${env} bot has disconnected from: ${SIGNALING_URL}`)
-  }
   wc.join('FIREFOX')
     .then(() => console.info(`${env} bot is ready`))
     .catch(reason => console.error(`${env} bot WebChannel open error: ${reason}`))
