@@ -18,6 +18,7 @@ export const Message = $root.Message = (() => {
     Message.prototype.recipientId = 0;
     Message.prototype.isService = false;
     Message.prototype.content = $util.newBuffer([]);
+    Message.prototype.meta = null;
 
     Message.create = function create(properties) {
         return new Message(properties);
@@ -34,6 +35,8 @@ export const Message = $root.Message = (() => {
             writer.uint32(24).bool(message.isService);
         if (message.content != null && message.hasOwnProperty("content"))
             writer.uint32(34).bytes(message.content);
+        if (message.meta != null && message.hasOwnProperty("meta"))
+            $root.Meta.encode(message.meta, writer.uint32(42).fork()).ldelim();
         return writer;
     };
 
@@ -56,6 +59,9 @@ export const Message = $root.Message = (() => {
             case 4:
                 message.content = reader.bytes();
                 break;
+            case 5:
+                message.meta = $root.Meta.decode(reader, reader.uint32());
+                break;
             default:
                 reader.skipType(tag & 7);
                 break;
@@ -65,6 +71,50 @@ export const Message = $root.Message = (() => {
     };
 
     return Message;
+})();
+
+export const Meta = $root.Meta = (() => {
+
+    function Meta(properties) {
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    Meta.prototype.timestamp = 0;
+
+    Meta.create = function create(properties) {
+        return new Meta(properties);
+    };
+
+    Meta.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.timestamp != null && message.hasOwnProperty("timestamp"))
+            writer.uint32(8).uint32(message.timestamp);
+        return writer;
+    };
+
+    Meta.decode = function decode(reader, length) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.Meta();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            switch (tag >>> 3) {
+            case 1:
+                message.timestamp = reader.uint32();
+                break;
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    return Meta;
 })();
 
 export const user = $root.user = (() => {
@@ -654,14 +704,18 @@ export const spray = $root.spray = (() => {
                         this[keys[i]] = properties[keys[i]];
         }
 
-        Message.prototype.shouldAdd = null;
+        Message.prototype.shouldAdd = 0;
         Message.prototype.exchangeInit = null;
         Message.prototype.exchangeResp = null;
+        Message.prototype.connectTo = null;
+        Message.prototype.connectedTo = null;
+        Message.prototype.joiningPeerId = 0;
+        Message.prototype.joinedPeerId = 0;
 
         let $oneOfFields;
 
         Object.defineProperty(Message.prototype, "type", {
-            get: $util.oneOfGetter($oneOfFields = ["shouldAdd", "exchangeInit", "exchangeResp"]),
+            get: $util.oneOfGetter($oneOfFields = ["shouldAdd", "exchangeInit", "exchangeResp", "connectTo", "connectedTo", "joiningPeerId", "joinedPeerId"]),
             set: $util.oneOfSetter($oneOfFields)
         });
 
@@ -673,11 +727,19 @@ export const spray = $root.spray = (() => {
             if (!writer)
                 writer = $Writer.create();
             if (message.shouldAdd != null && message.hasOwnProperty("shouldAdd"))
-                $root.spray.ShouldAdd.encode(message.shouldAdd, writer.uint32(10).fork()).ldelim();
+                writer.uint32(8).uint32(message.shouldAdd);
             if (message.exchangeInit != null && message.hasOwnProperty("exchangeInit"))
-                $root.spray.ExchangeInit.encode(message.exchangeInit, writer.uint32(18).fork()).ldelim();
+                $root.spray.Sample.encode(message.exchangeInit, writer.uint32(18).fork()).ldelim();
             if (message.exchangeResp != null && message.hasOwnProperty("exchangeResp"))
-                $root.spray.ExchangeResp.encode(message.exchangeResp, writer.uint32(26).fork()).ldelim();
+                $root.spray.Sample.encode(message.exchangeResp, writer.uint32(26).fork()).ldelim();
+            if (message.connectTo != null && message.hasOwnProperty("connectTo"))
+                $root.spray.Peers.encode(message.connectTo, writer.uint32(34).fork()).ldelim();
+            if (message.connectedTo != null && message.hasOwnProperty("connectedTo"))
+                $root.spray.Peers.encode(message.connectedTo, writer.uint32(42).fork()).ldelim();
+            if (message.joiningPeerId != null && message.hasOwnProperty("joiningPeerId"))
+                writer.uint32(48).uint32(message.joiningPeerId);
+            if (message.joinedPeerId != null && message.hasOwnProperty("joinedPeerId"))
+                writer.uint32(56).uint32(message.joinedPeerId);
             return writer;
         };
 
@@ -689,13 +751,25 @@ export const spray = $root.spray = (() => {
                 let tag = reader.uint32();
                 switch (tag >>> 3) {
                 case 1:
-                    message.shouldAdd = $root.spray.ShouldAdd.decode(reader, reader.uint32());
+                    message.shouldAdd = reader.uint32();
                     break;
                 case 2:
-                    message.exchangeInit = $root.spray.ExchangeInit.decode(reader, reader.uint32());
+                    message.exchangeInit = $root.spray.Sample.decode(reader, reader.uint32());
                     break;
                 case 3:
-                    message.exchangeResp = $root.spray.ExchangeResp.decode(reader, reader.uint32());
+                    message.exchangeResp = $root.spray.Sample.decode(reader, reader.uint32());
+                    break;
+                case 4:
+                    message.connectTo = $root.spray.Peers.decode(reader, reader.uint32());
+                    break;
+                case 5:
+                    message.connectedTo = $root.spray.Peers.decode(reader, reader.uint32());
+                    break;
+                case 6:
+                    message.joiningPeerId = reader.uint32();
+                    break;
+                case 7:
+                    message.joinedPeerId = reader.uint32();
                     break;
                 default:
                     reader.skipType(tag & 7);
@@ -708,53 +782,9 @@ export const spray = $root.spray = (() => {
         return Message;
     })();
 
-    spray.ShouldAdd = (function() {
+    spray.Sample = (function() {
 
-        function ShouldAdd(properties) {
-            if (properties)
-                for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                    if (properties[keys[i]] != null)
-                        this[keys[i]] = properties[keys[i]];
-        }
-
-        ShouldAdd.prototype.peerId = 0;
-
-        ShouldAdd.create = function create(properties) {
-            return new ShouldAdd(properties);
-        };
-
-        ShouldAdd.encode = function encode(message, writer) {
-            if (!writer)
-                writer = $Writer.create();
-            if (message.peerId != null && message.hasOwnProperty("peerId"))
-                writer.uint32(8).uint32(message.peerId);
-            return writer;
-        };
-
-        ShouldAdd.decode = function decode(reader, length) {
-            if (!(reader instanceof $Reader))
-                reader = $Reader.create(reader);
-            let end = length === undefined ? reader.len : reader.pos + length, message = new $root.spray.ShouldAdd();
-            while (reader.pos < end) {
-                let tag = reader.uint32();
-                switch (tag >>> 3) {
-                case 1:
-                    message.peerId = reader.uint32();
-                    break;
-                default:
-                    reader.skipType(tag & 7);
-                    break;
-                }
-            }
-            return message;
-        };
-
-        return ShouldAdd;
-    })();
-
-    spray.ExchangeInit = (function() {
-
-        function ExchangeInit(properties) {
+        function Sample(properties) {
             this.sample = [];
             if (properties)
                 for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
@@ -762,32 +792,40 @@ export const spray = $root.spray = (() => {
                         this[keys[i]] = properties[keys[i]];
         }
 
-        ExchangeInit.prototype.sample = $util.emptyArray;
+        Sample.prototype.sample = $util.emptyArray;
 
-        ExchangeInit.create = function create(properties) {
-            return new ExchangeInit(properties);
+        Sample.create = function create(properties) {
+            return new Sample(properties);
         };
 
-        ExchangeInit.encode = function encode(message, writer) {
+        Sample.encode = function encode(message, writer) {
             if (!writer)
                 writer = $Writer.create();
-            if (message.sample != null && message.sample.length)
+            if (message.sample != null && message.sample.length) {
+                writer.uint32(10).fork();
                 for (let i = 0; i < message.sample.length; ++i)
-                    writer.uint32(10).bytes(message.sample[i]);
+                    writer.uint32(message.sample[i]);
+                writer.ldelim();
+            }
             return writer;
         };
 
-        ExchangeInit.decode = function decode(reader, length) {
+        Sample.decode = function decode(reader, length) {
             if (!(reader instanceof $Reader))
                 reader = $Reader.create(reader);
-            let end = length === undefined ? reader.len : reader.pos + length, message = new $root.spray.ExchangeInit();
+            let end = length === undefined ? reader.len : reader.pos + length, message = new $root.spray.Sample();
             while (reader.pos < end) {
                 let tag = reader.uint32();
                 switch (tag >>> 3) {
                 case 1:
                     if (!(message.sample && message.sample.length))
                         message.sample = [];
-                    message.sample.push(reader.bytes());
+                    if ((tag & 7) === 2) {
+                        let end2 = reader.uint32() + reader.pos;
+                        while (reader.pos < end2)
+                            message.sample.push(reader.uint32());
+                    } else
+                        message.sample.push(reader.uint32());
                     break;
                 default:
                     reader.skipType(tag & 7);
@@ -797,45 +835,53 @@ export const spray = $root.spray = (() => {
             return message;
         };
 
-        return ExchangeInit;
+        return Sample;
     })();
 
-    spray.ExchangeResp = (function() {
+    spray.Peers = (function() {
 
-        function ExchangeResp(properties) {
-            this.respSample = [];
+        function Peers(properties) {
+            this.peers = [];
             if (properties)
                 for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                     if (properties[keys[i]] != null)
                         this[keys[i]] = properties[keys[i]];
         }
 
-        ExchangeResp.prototype.respSample = $util.emptyArray;
+        Peers.prototype.peers = $util.emptyArray;
 
-        ExchangeResp.create = function create(properties) {
-            return new ExchangeResp(properties);
+        Peers.create = function create(properties) {
+            return new Peers(properties);
         };
 
-        ExchangeResp.encode = function encode(message, writer) {
+        Peers.encode = function encode(message, writer) {
             if (!writer)
                 writer = $Writer.create();
-            if (message.respSample != null && message.respSample.length)
-                for (let i = 0; i < message.respSample.length; ++i)
-                    writer.uint32(10).bytes(message.respSample[i]);
+            if (message.peers != null && message.peers.length) {
+                writer.uint32(10).fork();
+                for (let i = 0; i < message.peers.length; ++i)
+                    writer.uint32(message.peers[i]);
+                writer.ldelim();
+            }
             return writer;
         };
 
-        ExchangeResp.decode = function decode(reader, length) {
+        Peers.decode = function decode(reader, length) {
             if (!(reader instanceof $Reader))
                 reader = $Reader.create(reader);
-            let end = length === undefined ? reader.len : reader.pos + length, message = new $root.spray.ExchangeResp();
+            let end = length === undefined ? reader.len : reader.pos + length, message = new $root.spray.Peers();
             while (reader.pos < end) {
                 let tag = reader.uint32();
                 switch (tag >>> 3) {
                 case 1:
-                    if (!(message.respSample && message.respSample.length))
-                        message.respSample = [];
-                    message.respSample.push(reader.bytes());
+                    if (!(message.peers && message.peers.length))
+                        message.peers = [];
+                    if ((tag & 7) === 2) {
+                        let end2 = reader.uint32() + reader.pos;
+                        while (reader.pos < end2)
+                            message.peers.push(reader.uint32());
+                    } else
+                        message.peers.push(reader.uint32());
                     break;
                 default:
                     reader.skipType(tag & 7);
@@ -845,7 +891,7 @@ export const spray = $root.spray = (() => {
             return message;
         };
 
-        return ExchangeResp;
+        return Peers;
     })();
 
     return spray;

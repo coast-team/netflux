@@ -7,4 +7,9 @@ message Message {
   uint32 recipientId = 2;
   bool isService = 3;
   bytes content = 4;
+  Meta meta = 5;
+}
+
+message Meta {
+  uint32 timestamp = 1;
 }

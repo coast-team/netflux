@@ -12,13 +12,14 @@ import bigStr from '../../util/4mb.txt'
 //   'bbbsbbb'
 // ]
 
-const USE_CASES = [2, 3, 7]
+// const USE_CASES = [2, 3, 7]
+const USE_CASES = [2]
 const scenarios = [
-  new helper.Scenario(2),
+  new helper.Scenario(2)/*,
   // new helper.Scenario(1, 1),
   new helper.Scenario(3),
   // new helper.Scenario(2, 2),
-  new helper.Scenario(7)
+  new helper.Scenario(7) */
   // new helper.Scenario(6, 3)
 ]
 const PEER_FACE = '🙂 '
@@ -30,7 +31,7 @@ const faces = length => {
   return faces
 }
 
-describe('Fully connected', () => {
+fdescribe('Spray connected', () => {
   describe('Should establish a p2p network successively via join/join', () => {
     let wcs
     afterEach(() => wcs.forEach(wc => wc.leave()))
@@ -87,7 +88,7 @@ describe('Fully connected', () => {
     })
   })
 
-  describe('Should ping', () => {
+  fdescribe('Should ping', () => {
     let wcs
 
     afterEach(() => wcs.forEach(wc => wc.leave()))

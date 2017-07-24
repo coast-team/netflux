@@ -6,7 +6,8 @@ export interface ServiceMessage {
   channel: any,
   senderId: number,
   recipientId: number,
-  msg: any
+  msg: any,
+  timestamp: number
 }
 
 export abstract class Service {
@@ -39,11 +40,12 @@ export abstract class Service {
   private setInnerStream (msgStream) {
     this.innerStream = msgStream
       .filter(({ id }) => id === this.serviceId)
-      .map(({ channel, senderId, recipientId, content }) => ({
+      .map(({ channel, senderId, recipientId, content, timestamp }) => ({
         channel,
         senderId,
         recipientId,
-        msg: this.Message.decode(content)
+        msg: this.Message.decode(content),
+        timestamp
       }))
   }
 }

@@ -3,20 +3,26 @@ package spray;
 
 message Message {
   oneof type {
-    ShouldAdd shouldAdd = 1;
-    ExchangeInit exchangeInit = 2;
-    ExchangeResp exchangeResp = 3;
+    uint32 shouldAdd = 1;
+
+    Sample exchangeInit = 2;
+
+    Sample exchangeResp = 3;
+
+    Peers connectTo = 4;
+
+    Peers connectedTo = 5;
+
+    uint32 joiningPeerId = 6;
+
+    uint32 joinedPeerId = 7;
   }
 }
 
-message ShouldAdd {
-  uint32 peerId = 1;
+message Sample {
+  repeated uint32 sample = 1;
 }
 
-message ExchangeInit {
-  repeated bytes sample = 1;
-}
-
-message ExchangeResp {
-  repeated bytes respSample = 1;
+message Peers {
+  repeated uint32 peers = 1;
 }

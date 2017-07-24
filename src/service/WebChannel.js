@@ -1,13 +1,14 @@
 import { Subject } from 'rxjs/Subject'
 
 import { Channel } from '../Channel'
-import { FullMesh } from './topology/FullMesh'
+// import { FullMesh } from './topology/FullMesh'
+import { SprayService } from './topology/spray/SprayService'
 import { Service } from './Service'
 import { SignalingGate } from '../SignalingGate'
 import { ChannelBuilder } from './ChannelBuilder'
 import { WebSocketBuilder } from '../WebSocketBuilder'
 import { WebRTCBuilder } from './WebRTCBuilder'
-import { Message, webChannel, service } from '../Protobuf'
+import { Message, webChannel, service, spray } from '../Protobuf'
 import { UserMessage } from '../UserMessage'
 import { Util } from '../Util'
 import * as log from '../log'
@@ -363,9 +364,10 @@ export class WebChannel extends Service {
     senderId = this.myId,
     recipientId = this.myId,
     isService = true,
-    content = new Uint8Array()
+    content = new Uint8Array(),
+    meta = undefined
   } = {}) {
-    const msg = {senderId, recipientId, isService, content}
+    const msg = {senderId, recipientId, isService, content, meta}
     if (msg.recipientId === this.myId) {
       this._handleMyMessage(undefined, msg)
     } else {
@@ -383,9 +385,10 @@ export class WebChannel extends Service {
     recipientId = 0,
     isService = true,
     content = new Uint8Array(),
+    meta = undefined,
     isMeIncluded = false
   } = {}) {
-    const msg = {senderId, recipientId, isService, content}
+    const msg = {senderId, recipientId, isService, content, meta}
     if (isMeIncluded) {
       this._handleMyMessage(undefined, msg)
     }
@@ -410,11 +413,13 @@ export class WebChannel extends Service {
 
       // If it is a private message to me
       case this.myId:
+        log.info(this.myId + ' message for me')
         this._handleMyMessage(channel, msg)
         break
 
       // If is is a message to me from a peer who does not know yet my ID
       case 1:
+        log.info(this.myId + ' message for me but other peer does not know my ID')
         this._handleMyMessage(channel, msg)
         break
 
@@ -427,17 +432,40 @@ export class WebChannel extends Service {
   _handleMyMessage (channel, msg) {
     if (!msg.isService) {
       // User Message
+      log.debug(this.myId + ' User Message ' + JSON.stringify(msg))
       const data = this._userMsg.decode(msg.content, msg.senderId)
       if (data !== undefined) {
         this.onMessage(msg.senderId, data, msg.recipientId === 0)
       }
     } else {
       // Inner Message
-      this._msgStream.next(Object.assign({
-        channel,
-        senderId: msg.senderId,
-        recipientId: msg.recipientId
-      }, service.Message.decode(msg.content)))
+      log.debug(this.myId + ' Inner message : ' + JSON.stringify(msg))
+      try {
+        log.debug(this.myId + ' content1 : ' + JSON.stringify(spray.Message.decode(service.Message.decode(msg.content).content)))
+      } catch (e) {
+        try {
+          log.debug(this.myId + ' content2 : ' + JSON.stringify(super.decode(service.Message.decode(msg.content).content)))
+        } catch (e2) {
+          log.info(this.myId + ' undecodable ' + e2)
+        }
+      }
+      if (msg.hasOwnProperty('meta')) {
+        log.debug(this.myId + ' meta found ' + JSON.stringify(msg.meta))
+        this._msgStream.next(Object.assign({
+          channel,
+          senderId: msg.senderId,
+          recipientId: msg.recipientId,
+          timestamp: msg.meta.timestamp
+        }, service.Message.decode(msg.content)))
+      } else {
+        log.debug(this.myId + ' meta not found ')
+        this._msgStream.next(Object.assign({
+          channel,
+          senderId: msg.senderId,
+          recipientId: msg.recipientId,
+          timestamp: undefined
+        }, service.Message.decode(msg.content)))
+      }
     }
   }
 
@@ -513,11 +541,13 @@ export class WebChannel extends Service {
       if (this.settings.topology !== topology) {
         this.settings.topology = topology
         this._topology.clean()
-        this._topology = new FullMesh(this)
+        // this._topology = new FullMesh(this)
+        this._topology = new SprayService(this)
       }
     } else {
       this.settings.topology = topology
-      this._topology = new FullMesh(this)
+      // this._topology = new FullMesh(this)
+      this._topology = new SprayService(this)
     }
   }
 
@@ -542,9 +572,10 @@ export class WebChannel extends Service {
     senderId = this.myId,
     recipientId = 0,
     isService = true,
-    content = new Uint8Array()
+    content = new Uint8Array(),
+    meta = undefined
   } = {}) {
-    const msg = {senderId, recipientId, isService, content}
+    const msg = {senderId, recipientId, isService, content, meta}
     return Message.encode(Message.create(msg)).finish()
   }
 

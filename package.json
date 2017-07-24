@@ -48,8 +48,8 @@
     "node-fetch": "^1.6.3",
     "rxjs": "^5.2.0",
     "text-encoding": "^0.6.4",
-    "webrtc-adapter": "^4.0.1",
-    "uws": "^0.14.0"
+    "uws": "^8.14.0",
+    "webrtc-adapter": "^4.0.1"
   },
   "peerDependencies": {
     "wrtc": "0.0.x"

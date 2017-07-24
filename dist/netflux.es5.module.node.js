@@ -1599,6 +1599,142 @@ var Channel = function () {
   return Channel;
 }();
 
+/*! *****************************************************************************
+Copyright (c) Microsoft Corporation. All rights reserved.
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+this file except in compliance with the License. You may obtain a copy of the
+License at http://www.apache.org/licenses/LICENSE-2.0
+
+THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED
+WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE,
+MERCHANTABLITY OR NON-INFRINGEMENT.
+
+See the Apache Version 2.0 License for specific language governing permissions
+and limitations under the License.
+***************************************************************************** */
+/* global Reflect, Promise */
+
+
+
+
+
+
+
+
+
+
+
+
+
+function __awaiter(thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator.throw(value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+}
+
+var PartialView = function (_Array) {
+    inherits(PartialView, _Array);
+
+    function PartialView() {
+        classCallCheck(this, PartialView);
+        return possibleConstructorReturn(this, (PartialView.__proto__ || Object.getPrototypeOf(PartialView)).call(this));
+    }
+    /**
+    * Returns the oldest arc in the partial view
+    *
+    * @return {Array<number>} the oldest arc [peerId: number, age: number]
+    */
+
+
+    createClass(PartialView, [{
+        key: "add",
+
+        /**
+        * Adds a node with the age of 0 to the partial view
+        *
+        * @param {number} peerId
+        * @param {number} age
+        */
+        value: function add(peerId) {
+            var age = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+
+            this.push([peerId, age]);
+        }
+        /**
+        * Returns the index of an arc in the partial view
+        * -1 if not in the partial view
+        *
+        * @param {number} peerId
+        * @param {number} age
+        * @return {number} index of the arc in the partial view
+        */
+
+    }, {
+        key: "_indexArc",
+        value: function _indexArc(peerId, age) {
+            for (var i = 0; i < this.length; i++) {
+                var elem = this[i];
+                if (elem[0] == peerId && elem[1] == age) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+        /**
+        * Removes a node from the partial view
+        *
+        * @param {number} peerId
+        * @param {number} age
+        */
+
+    }, {
+        key: "remove",
+        value: function remove(peerId, age) {
+            var index = this._indexArc(peerId, age);
+            if (index >= 0) {
+                this.splice(index, 1);
+            }
+        }
+        /**
+        * Increments the age of each arc
+        */
+
+    }, {
+        key: "incrementAge",
+        value: function incrementAge() {
+            for (var i = 0; i < this.length; i++) {
+                this[i][1]++;
+            }
+        }
+    }, {
+        key: "toString",
+        value: function toString() {
+            var s = "[";
+            this.forEach(function (arc) {
+                if (s.length != 1) {
+                    s.concat(', ');
+                }
+                s = s.concat("[" + arc[0] + "," + arc[1] + "]");
+            });
+            s = s.concat("]");
+            return s;
+        }
+    }, {
+        key: "oldest",
+        get: function get$$1() {
+            if (this.length <= 0) {
+                throw new Error("Empty partial view");
+            }
+            return this[0];
+        }
+    }]);
+    return PartialView;
+}(Array);
+
 var index = asPromise;
 
 /**
@@ -4239,6 +4375,7 @@ var Message = $root.Message = function () {
     Message.prototype.recipientId = 0;
     Message.prototype.isService = false;
     Message.prototype.content = $util.newBuffer([]);
+    Message.prototype.meta = null;
 
     Message.create = function create(properties) {
         return new Message(properties);
@@ -4250,6 +4387,7 @@ var Message = $root.Message = function () {
         if (message.recipientId != null && message.hasOwnProperty("recipientId")) writer.uint32(16).uint32(message.recipientId);
         if (message.isService != null && message.hasOwnProperty("isService")) writer.uint32(24).bool(message.isService);
         if (message.content != null && message.hasOwnProperty("content")) writer.uint32(34).bytes(message.content);
+        if (message.meta != null && message.hasOwnProperty("meta")) $root.Meta.encode(message.meta, writer.uint32(42).fork()).ldelim();
         return writer;
     };
 
@@ -4272,6 +4410,9 @@ var Message = $root.Message = function () {
                 case 4:
                     message.content = reader.bytes();
                     break;
+                case 5:
+                    message.meta = $root.Meta.decode(reader, reader.uint32());
+                    break;
                 default:
                     reader.skipType(tag & 7);
                     break;
@@ -4281,6 +4422,47 @@ var Message = $root.Message = function () {
     };
 
     return Message;
+}();
+
+var Meta = $root.Meta = function () {
+
+    function Meta(properties) {
+        if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
+            if (properties[keys[i]] != null) this[keys[i]] = properties[keys[i]];
+        }
+    }
+
+    Meta.prototype.timestamp = 0;
+
+    Meta.create = function create(properties) {
+        return new Meta(properties);
+    };
+
+    Meta.encode = function encode(message, writer) {
+        if (!writer) writer = $Writer.create();
+        if (message.timestamp != null && message.hasOwnProperty("timestamp")) writer.uint32(8).uint32(message.timestamp);
+        return writer;
+    };
+
+    Meta.decode = function decode(reader, length) {
+        if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
+        var end = length === undefined ? reader.len : reader.pos + length,
+            message = new $root.Meta();
+        while (reader.pos < end) {
+            var tag = reader.uint32();
+            switch (tag >>> 3) {
+                case 1:
+                    message.timestamp = reader.uint32();
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+            }
+        }
+        return message;
+    };
+
+    return Meta;
 }();
 
 var user = $root.user = function () {
@@ -4827,14 +5009,18 @@ var spray = $root.spray = function () {
             }
         }
 
-        Message.prototype.shouldAdd = null;
+        Message.prototype.shouldAdd = 0;
         Message.prototype.exchangeInit = null;
         Message.prototype.exchangeResp = null;
+        Message.prototype.connectTo = null;
+        Message.prototype.connectedTo = null;
+        Message.prototype.joiningPeerId = 0;
+        Message.prototype.joinedPeerId = 0;
 
         var $oneOfFields = void 0;
 
         Object.defineProperty(Message.prototype, "type", {
-            get: $util.oneOfGetter($oneOfFields = ["shouldAdd", "exchangeInit", "exchangeResp"]),
+            get: $util.oneOfGetter($oneOfFields = ["shouldAdd", "exchangeInit", "exchangeResp", "connectTo", "connectedTo", "joiningPeerId", "joinedPeerId"]),
             set: $util.oneOfSetter($oneOfFields)
         });
 
@@ -4844,9 +5030,13 @@ var spray = $root.spray = function () {
 
         Message.encode = function encode(message, writer) {
             if (!writer) writer = $Writer.create();
-            if (message.shouldAdd != null && message.hasOwnProperty("shouldAdd")) $root.spray.ShouldAdd.encode(message.shouldAdd, writer.uint32(10).fork()).ldelim();
-            if (message.exchangeInit != null && message.hasOwnProperty("exchangeInit")) $root.spray.ExchangeInit.encode(message.exchangeInit, writer.uint32(18).fork()).ldelim();
-            if (message.exchangeResp != null && message.hasOwnProperty("exchangeResp")) $root.spray.ExchangeResp.encode(message.exchangeResp, writer.uint32(26).fork()).ldelim();
+            if (message.shouldAdd != null && message.hasOwnProperty("shouldAdd")) writer.uint32(8).uint32(message.shouldAdd);
+            if (message.exchangeInit != null && message.hasOwnProperty("exchangeInit")) $root.spray.Sample.encode(message.exchangeInit, writer.uint32(18).fork()).ldelim();
+            if (message.exchangeResp != null && message.hasOwnProperty("exchangeResp")) $root.spray.Sample.encode(message.exchangeResp, writer.uint32(26).fork()).ldelim();
+            if (message.connectTo != null && message.hasOwnProperty("connectTo")) $root.spray.Peers.encode(message.connectTo, writer.uint32(34).fork()).ldelim();
+            if (message.connectedTo != null && message.hasOwnProperty("connectedTo")) $root.spray.Peers.encode(message.connectedTo, writer.uint32(42).fork()).ldelim();
+            if (message.joiningPeerId != null && message.hasOwnProperty("joiningPeerId")) writer.uint32(48).uint32(message.joiningPeerId);
+            if (message.joinedPeerId != null && message.hasOwnProperty("joinedPeerId")) writer.uint32(56).uint32(message.joinedPeerId);
             return writer;
         };
 
@@ -4858,13 +5048,25 @@ var spray = $root.spray = function () {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
                     case 1:
-                        message.shouldAdd = $root.spray.ShouldAdd.decode(reader, reader.uint32());
+                        message.shouldAdd = reader.uint32();
                         break;
                     case 2:
-                        message.exchangeInit = $root.spray.ExchangeInit.decode(reader, reader.uint32());
+                        message.exchangeInit = $root.spray.Sample.decode(reader, reader.uint32());
                         break;
                     case 3:
-                        message.exchangeResp = $root.spray.ExchangeResp.decode(reader, reader.uint32());
+                        message.exchangeResp = $root.spray.Sample.decode(reader, reader.uint32());
+                        break;
+                    case 4:
+                        message.connectTo = $root.spray.Peers.decode(reader, reader.uint32());
+                        break;
+                    case 5:
+                        message.connectedTo = $root.spray.Peers.decode(reader, reader.uint32());
+                        break;
+                    case 6:
+                        message.joiningPeerId = reader.uint32();
+                        break;
+                    case 7:
+                        message.joinedPeerId = reader.uint32();
                         break;
                     default:
                         reader.skipType(tag & 7);
@@ -4877,79 +5079,47 @@ var spray = $root.spray = function () {
         return Message;
     }();
 
-    spray.ShouldAdd = function () {
+    spray.Sample = function () {
 
-        function ShouldAdd(properties) {
-            if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
-                if (properties[keys[i]] != null) this[keys[i]] = properties[keys[i]];
-            }
-        }
-
-        ShouldAdd.prototype.peerId = 0;
-
-        ShouldAdd.create = function create(properties) {
-            return new ShouldAdd(properties);
-        };
-
-        ShouldAdd.encode = function encode(message, writer) {
-            if (!writer) writer = $Writer.create();
-            if (message.peerId != null && message.hasOwnProperty("peerId")) writer.uint32(8).uint32(message.peerId);
-            return writer;
-        };
-
-        ShouldAdd.decode = function decode(reader, length) {
-            if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
-            var end = length === undefined ? reader.len : reader.pos + length,
-                message = new $root.spray.ShouldAdd();
-            while (reader.pos < end) {
-                var tag = reader.uint32();
-                switch (tag >>> 3) {
-                    case 1:
-                        message.peerId = reader.uint32();
-                        break;
-                    default:
-                        reader.skipType(tag & 7);
-                        break;
-                }
-            }
-            return message;
-        };
-
-        return ShouldAdd;
-    }();
-
-    spray.ExchangeInit = function () {
-
-        function ExchangeInit(properties) {
+        function Sample(properties) {
             this.sample = [];
             if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
                 if (properties[keys[i]] != null) this[keys[i]] = properties[keys[i]];
             }
         }
 
-        ExchangeInit.prototype.sample = $util.emptyArray;
+        Sample.prototype.sample = $util.emptyArray;
 
-        ExchangeInit.create = function create(properties) {
-            return new ExchangeInit(properties);
+        Sample.create = function create(properties) {
+            return new Sample(properties);
         };
 
-        ExchangeInit.encode = function encode(message, writer) {
+        Sample.encode = function encode(message, writer) {
             if (!writer) writer = $Writer.create();
-            if (message.sample != null && message.sample.length) for (var i = 0; i < message.sample.length; ++i) {
-                writer.uint32(10).bytes(message.sample[i]);
-            }return writer;
+            if (message.sample != null && message.sample.length) {
+                writer.uint32(10).fork();
+                for (var i = 0; i < message.sample.length; ++i) {
+                    writer.uint32(message.sample[i]);
+                }writer.ldelim();
+            }
+            return writer;
         };
 
-        ExchangeInit.decode = function decode(reader, length) {
+        Sample.decode = function decode(reader, length) {
             if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
             var end = length === undefined ? reader.len : reader.pos + length,
-                message = new $root.spray.ExchangeInit();
+                message = new $root.spray.Sample();
             while (reader.pos < end) {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
                     case 1:
                         if (!(message.sample && message.sample.length)) message.sample = [];
-                        message.sample.push(reader.bytes());
+                        if ((tag & 7) === 2) {
+                            var end2 = reader.uint32() + reader.pos;
+                            while (reader.pos < end2) {
+                                message.sample.push(reader.uint32());
+                            }
+                        } else message.sample.push(reader.uint32());
                         break;
                     default:
                         reader.skipType(tag & 7);
@@ -4959,41 +5129,50 @@ var spray = $root.spray = function () {
             return message;
         };
 
-        return ExchangeInit;
+        return Sample;
     }();
 
-    spray.ExchangeResp = function () {
+    spray.Peers = function () {
 
-        function ExchangeResp(properties) {
-            this.respSample = [];
+        function Peers(properties) {
+            this.peers = [];
             if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
                 if (properties[keys[i]] != null) this[keys[i]] = properties[keys[i]];
             }
         }
 
-        ExchangeResp.prototype.respSample = $util.emptyArray;
+        Peers.prototype.peers = $util.emptyArray;
 
-        ExchangeResp.create = function create(properties) {
-            return new ExchangeResp(properties);
+        Peers.create = function create(properties) {
+            return new Peers(properties);
         };
 
-        ExchangeResp.encode = function encode(message, writer) {
+        Peers.encode = function encode(message, writer) {
             if (!writer) writer = $Writer.create();
-            if (message.respSample != null && message.respSample.length) for (var i = 0; i < message.respSample.length; ++i) {
-                writer.uint32(10).bytes(message.respSample[i]);
-            }return writer;
+            if (message.peers != null && message.peers.length) {
+                writer.uint32(10).fork();
+                for (var i = 0; i < message.peers.length; ++i) {
+                    writer.uint32(message.peers[i]);
+                }writer.ldelim();
+            }
+            return writer;
         };
 
-        ExchangeResp.decode = function decode(reader, length) {
+        Peers.decode = function decode(reader, length) {
             if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
             var end = length === undefined ? reader.len : reader.pos + length,
-                message = new $root.spray.ExchangeResp();
+                message = new $root.spray.Peers();
             while (reader.pos < end) {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
                     case 1:
-                        if (!(message.respSample && message.respSample.length)) message.respSample = [];
-                        message.respSample.push(reader.bytes());
+                        if (!(message.peers && message.peers.length)) message.peers = [];
+                        if ((tag & 7) === 2) {
+                            var end2 = reader.uint32() + reader.pos;
+                            while (reader.pos < end2) {
+                                message.peers.push(reader.uint32());
+                            }
+                        } else message.peers.push(reader.uint32());
                         break;
                     default:
                         reader.skipType(tag & 7);
@@ -5003,7 +5182,7 @@ var spray = $root.spray = function () {
             return message;
         };
 
-        return ExchangeResp;
+        return Peers;
     }();
 
     return spray;
@@ -5161,12 +5340,14 @@ var Service = function () {
                 var channel = _ref2.channel,
                     senderId = _ref2.senderId,
                     recipientId = _ref2.recipientId,
-                    content = _ref2.content;
+                    content = _ref2.content,
+                    timestamp = _ref2.timestamp;
                 return {
                     channel: channel,
                     senderId: senderId,
                     recipientId: recipientId,
-                    msg: _this.Message.decode(content)
+                    msg: _this.Message.decode(content),
+                    timestamp: timestamp
                 };
             });
         }
@@ -5222,7 +5403,15 @@ var debug = logLevel <= Level.DEBUG ? function (msg) {
   console.groupEnd();
 } : function () {};
 
+var info = logLevel <= Level.INFO ? function (msg) {
+  var _console2;
 
+  for (var _len3 = arguments.length, rest = Array(_len3 > 1 ? _len3 - 1 : 0), _key3 = 1; _key3 < _len3; _key3++) {
+    rest[_key3 - 1] = arguments[_key3];
+  }
+
+  (_console2 = console).info.apply(_console2, ['INFO | ' + msg].concat(rest));
+} : function () {};
 
 
 
@@ -5259,494 +5448,827 @@ function logRecursive(obj) {
 }
 
 /**
- * {@link FullMesh} identifier.
- * @ignore
- * @type {number}
+ * Delay in milliseconds between two exchanges
  */
-var FULL_MESH = 3;
-
+var delay = 1000 * 60 * 2;
 /**
- * Fully connected web channel manager. Implements fully connected topology
- * network, when each peer is connected to each other.
- *
- * @extends module:webChannelManager~WebChannelTopologyInterface
+ * Timeout value in milliseconds for exchanges
  */
-var FullMesh = function (_TopologyInterface) {
-  inherits(FullMesh, _TopologyInterface);
+var timeout = 1000 * 60;
+/**
+ * Value in milliseconds representing the maximum time expected
+ * of message traveling between two peers (used by _clearReceived)
+ */
+var delayPerConnection = 100 * 600;
+var SPRAY = 15;
+var SprayService = function (_TopologyInterface) {
+    inherits(SprayService, _TopologyInterface);
 
-  function FullMesh(wc) {
-    classCallCheck(this, FullMesh);
+    function SprayService(wc) {
+        classCallCheck(this, SprayService);
 
-    var _this = possibleConstructorReturn(this, (FullMesh.__proto__ || Object.getPrototypeOf(FullMesh)).call(this, FULL_MESH, fullMesh.Message, wc._msgStream));
+        var _this = possibleConstructorReturn(this, (SprayService.__proto__ || Object.getPrototypeOf(SprayService)).call(this, SPRAY, spray.Message, wc._msgStream));
 
-    _this.wc = wc;
-    _this.init();
-    return _this;
-  }
-
-  createClass(FullMesh, [{
-    key: 'init',
-    value: function init() {
-      var _this2 = this;
-
-      this.channels = new Set();
-      this.jps = new Map();
-      this.innerStream.subscribe(function (msg) {
-        return _this2._handleSvcMsg(msg);
-      }, function (err) {
-        return void 0;
-      });
-      this.channelsSubscription = this.wc.channelBuilderSvc.channels().subscribe(function (ch) {
-        return _this2.jps.set(ch.peerId, ch);
-      }, function (err) {
-        return void 0;
-      });
-    }
-  }, {
-    key: 'iJoin',
-    value: function iJoin() {
-      return this.jps.has(this.wc.myId);
+        _this.wc = wc;
+        _this.init();
+        info(_this.wc.myId + ' constructor ');
+        return _this;
     }
 
-    /**
-     * Add a peer to the `WebChannel`.
-     *
-     * @param {WebSocket|RTCDataChannel} channel
-     */
+    createClass(SprayService, [{
+        key: 'init',
+        value: function init() {
+            var _this2 = this;
 
-  }, {
-    key: 'addJoining',
-    value: function addJoining(channel) {
-      var peers = this.wc.members.slice();
-
-      // First joining peer
-      if (peers.length === 0) {
-        channel.send(this.wc._encode({
-          recipientId: channel.peerId,
-          content: get(FullMesh.prototype.__proto__ || Object.getPrototypeOf(FullMesh.prototype), 'encode', this).call(this, { joinedPeerId: channel.peerId })
-        }));
-        this.peerJoined(channel);
-
-        // There are at least 2 members in the network
-      } else {
-        this.jps.set(channel.peerId, channel);
-        this.wc._send({ content: get(FullMesh.prototype.__proto__ || Object.getPrototypeOf(FullMesh.prototype), 'encode', this).call(this, { joiningPeerId: channel.peerId }) });
-        channel.send(this.wc._encode({
-          recipientId: channel.peerId,
-          content: get(FullMesh.prototype.__proto__ || Object.getPrototypeOf(FullMesh.prototype), 'encode', this).call(this, { connectTo: { peers: peers } })
-        }));
-      }
-    }
-  }, {
-    key: 'initJoining',
-    value: function initJoining(ch) {
-      this.jps.set(this.wc.myId, ch);
-      this.channels.add(ch);
-      this.wc._onPeerJoin(ch.peerId);
-    }
-
-    /**
-     * Send message to all `WebChannel` members.
-     *
-     * @param {ArrayBuffer} msg
-     */
-
-  }, {
-    key: 'send',
-    value: function send(msg) {
-      var bytes = this.wc._encode(msg);
-      var _iteratorNormalCompletion = true;
-      var _didIteratorError = false;
-      var _iteratorError = undefined;
-
-      try {
-        for (var _iterator = this.channels[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-          var ch = _step.value;
-
-          ch.send(bytes);
-        }
-      } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion && _iterator.return) {
-            _iterator.return();
-          }
-        } finally {
-          if (_didIteratorError) {
-            throw _iteratorError;
-          }
-        }
-      }
-    }
-  }, {
-    key: 'forward',
-    value: function forward(msg) {/* Nothing to do for this topology */}
-  }, {
-    key: 'sendTo',
-    value: function sendTo(msg) {
-      var bytes = this.wc._encode(msg);
-      var _iteratorNormalCompletion2 = true;
-      var _didIteratorError2 = false;
-      var _iteratorError2 = undefined;
-
-      try {
-        for (var _iterator2 = this.channels[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-          var ch = _step2.value;
-
-          if (ch.peerId === msg.recipientId) {
-            return ch.send(bytes);
-          }
-        }
-      } catch (err) {
-        _didIteratorError2 = true;
-        _iteratorError2 = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion2 && _iterator2.return) {
-            _iterator2.return();
-          }
-        } finally {
-          if (_didIteratorError2) {
-            throw _iteratorError2;
-          }
-        }
-      }
-
-      var _iteratorNormalCompletion3 = true;
-      var _didIteratorError3 = false;
-      var _iteratorError3 = undefined;
-
-      try {
-        for (var _iterator3 = this.jps[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-          var _step3$value = slicedToArray(_step3.value, 2),
-              id = _step3$value[0],
-              _ch = _step3$value[1];
-
-          if (id === msg.recipientId || id === this.wc.myId) {
-            return _ch.send(bytes);
-          }
-        }
-      } catch (err) {
-        _didIteratorError3 = true;
-        _iteratorError3 = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion3 && _iterator3.return) {
-            _iterator3.return();
-          }
-        } finally {
-          if (_didIteratorError3) {
-            throw _iteratorError3;
-          }
-        }
-      }
-
-      return void 0;
-    }
-  }, {
-    key: 'forwardTo',
-    value: function forwardTo(msg) {
-      this.sendTo(msg);
-    }
-  }, {
-    key: 'leave',
-    value: function leave() {
-      var _iteratorNormalCompletion4 = true;
-      var _didIteratorError4 = false;
-      var _iteratorError4 = undefined;
-
-      try {
-        for (var _iterator4 = this.channels[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-          var ch = _step4.value;
-
-          ch.clearHandlers();
-          ch.close();
-        }
-      } catch (err) {
-        _didIteratorError4 = true;
-        _iteratorError4 = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion4 && _iterator4.return) {
-            _iterator4.return();
-          }
-        } finally {
-          if (_didIteratorError4) {
-            throw _iteratorError4;
-          }
-        }
-      }
-
-      var _iteratorNormalCompletion5 = true;
-      var _didIteratorError5 = false;
-      var _iteratorError5 = undefined;
-
-      try {
-        for (var _iterator5 = this.jps.values()[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-          var _ch2 = _step5.value;
-
-          _ch2.clearHandlers();
-          _ch2.close();
-        }
-      } catch (err) {
-        _didIteratorError5 = true;
-        _iteratorError5 = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion5 && _iterator5.return) {
-            _iterator5.return();
-          }
-        } finally {
-          if (_didIteratorError5) {
-            throw _iteratorError5;
-          }
-        }
-      }
-
-      this.channels.clear();
-      this.jps.clear();
-      this.channelsSubscription.unsubscribe();
-    }
-  }, {
-    key: 'onChannelClose',
-    value: function onChannelClose(closeEvt, channel) {
-      if (this.iJoin()) {
-        var firstChannel = this.channels.values().next().value;
-        if (firstChannel.peerId === channel.peerId) {
-          this.wc._joinFailed('Intermediary peer has gone: ' + closeEvt.reason);
-          var _iteratorNormalCompletion6 = true;
-          var _didIteratorError6 = false;
-          var _iteratorError6 = undefined;
-
-          try {
-            for (var _iterator6 = this.channels[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
-              var ch = _step6.value;
-
-              ch.clearHandlers();
-              ch.close();
-            }
-          } catch (err) {
-            _didIteratorError6 = true;
-            _iteratorError6 = err;
-          } finally {
-            try {
-              if (!_iteratorNormalCompletion6 && _iterator6.return) {
-                _iterator6.return();
-              }
-            } finally {
-              if (_didIteratorError6) {
-                throw _iteratorError6;
-              }
-            }
-          }
-
-          this.channels.clear();
-          this.jps.clear();
-        } else {
-          this.channels.delete(channel);
-          this.wc._onPeerLeave(channel.peerId);
-        }
-      } else {
-        var _iteratorNormalCompletion7 = true;
-        var _didIteratorError7 = false;
-        var _iteratorError7 = undefined;
-
-        try {
-          for (var _iterator7 = this.jps[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
-            var _step7$value = slicedToArray(_step7.value, 1),
-                id = _step7$value[0];
-
-            if (id === channel.peerId) {
-              this.jps.delete(id);
-              return;
-            }
-          }
-        } catch (err) {
-          _didIteratorError7 = true;
-          _iteratorError7 = err;
-        } finally {
-          try {
-            if (!_iteratorNormalCompletion7 && _iterator7.return) {
-              _iterator7.return();
-            }
-          } finally {
-            if (_didIteratorError7) {
-              throw _iteratorError7;
-            }
-          }
-        }
-
-        if (this.channels.has(channel)) {
-          this.channels.delete(channel);
-          this.wc._onPeerLeave(channel.peerId);
-        }
-      }
-    }
-
-    /**
-     * Error event handler for each `Channel` in the `WebChannel`.
-     *
-     * @param {Event} evt
-     * @param {Channel} channel
-     */
-
-  }, {
-    key: 'onChannelError',
-    value: function onChannelError(evt, channel) {
-      console.error('Channel error with id: ' + channel.peerId + ': ', evt);
-    }
-  }, {
-    key: '_handleSvcMsg',
-    value: function _handleSvcMsg(_ref) {
-      var _this3 = this;
-
-      var channel = _ref.channel,
-          senderId = _ref.senderId,
-          recipientId = _ref.recipientId,
-          msg = _ref.msg;
-
-      switch (msg.type) {
-        case 'connectTo':
-          {
-            var peers = msg.connectTo.peers;
-
-
-            var promises = [];
-            var _iteratorNormalCompletion8 = true;
-            var _didIteratorError8 = false;
-            var _iteratorError8 = undefined;
-
-            try {
-              for (var _iterator8 = peers[Symbol.iterator](), _step8; !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
-                var id = _step8.value;
-
-                promises[promises.length] = this.wc.channelBuilderSvc.connectTo(id);
-              }
-            } catch (err) {
-              _didIteratorError8 = true;
-              _iteratorError8 = err;
-            } finally {
-              try {
-                if (!_iteratorNormalCompletion8 && _iterator8.return) {
-                  _iterator8.return();
-                }
-              } finally {
-                if (_didIteratorError8) {
-                  throw _iteratorError8;
-                }
-              }
-            }
-
-            Promise.all(promises).then(function (channels) {
-              var _iteratorNormalCompletion9 = true;
-              var _didIteratorError9 = false;
-              var _iteratorError9 = undefined;
-
-              try {
-                for (var _iterator9 = channels[Symbol.iterator](), _step9; !(_iteratorNormalCompletion9 = (_step9 = _iterator9.next()).done); _iteratorNormalCompletion9 = true) {
-                  var ch = _step9.value;
-
-                  _this3.peerJoined(ch);
-                }
-              } catch (err) {
-                _didIteratorError9 = true;
-                _iteratorError9 = err;
-              } finally {
-                try {
-                  if (!_iteratorNormalCompletion9 && _iterator9.return) {
-                    _iterator9.return();
-                  }
-                } finally {
-                  if (_didIteratorError9) {
-                    throw _iteratorError9;
-                  }
-                }
-              }
-
-              channel.send(_this3.wc._encode({
-                recipientId: channel.peerId,
-                content: get(FullMesh.prototype.__proto__ || Object.getPrototypeOf(FullMesh.prototype), 'encode', _this3).call(_this3, { connectedTo: { peers: peers } })
-              }));
-            }).catch(function (err) {
-              channel.send(_this3.wc._encode({
-                recipientId: channel.peerId,
-                content: get(FullMesh.prototype.__proto__ || Object.getPrototypeOf(FullMesh.prototype), 'encode', _this3).call(_this3, { connectedTo: { peers: [] } })
-              }));
-              _this3.clean();
-              _this3.wc._joinFailed(err);
+            this.channels = new Set();
+            this.jps = new Map();
+            this.p = new PartialView();
+            this.received = []; // [senderId, timestamp] couples of received messages
+            setTimeout(function () {
+                _this2.interval = setInterval(function () {
+                    _this2._exchange(_this2.wc);
+                }, delay);
+            }, 1000 * 10);
+            this.innerStream.subscribe(function (msg) {
+                return _this2._handleSvcMsg(msg);
+            }, function (err) {
+                return error('Spray Message Stream Error', err);
             });
-            break;
-          }
-        case 'connectedTo':
-          {
-            var _peers = msg.connectedTo.peers;
+            this.channelsSubscription = this.wc.channelBuilderSvc.channels().subscribe(function (ch) {
+                return _this2.jps.set(ch.peerId, ch);
+            }, function (err) {
+                return error('Spray set joining peer Error', err);
+            });
+            setTimeout(function () {
+                return _this2._clearReceived();
+            }, 5000);
+        }
+    }, {
+        key: 'iJoin',
+        value: function iJoin() {
+            return this.jps.has(this.wc.myId);
+        }
+        /**
+         * Add a peer to the WebChannel
+         *
+         * @param  {Channel}            channel
+         */
 
-            var missingPeers = [];
-            var _iteratorNormalCompletion10 = true;
-            var _didIteratorError10 = false;
-            var _iteratorError10 = undefined;
+    }, {
+        key: 'addJoining',
+        value: function addJoining(channel) {
+            info(this.wc.myId + ' addJoining ' + channel.peerId);
+            var peers = this.wc.members.slice();
+            // First joining peer
+            if (this.wc.members.slice().length == 0) {
+                channel.send(this.wc._encode({
+                    recipientId: channel.peerId,
+                    content: get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'encode', this).call(this, { joinedPeerId: channel.peerId }),
+                    meta: { timestamp: Date.now() }
+                }));
+                this.peerJoined(channel);
+                debug(this.wc.myId + ' shouldAdd ' + channel.peerId);
+                this.p.add(channel.peerId);
+                debug(this.wc.myId + ' partialView increased : ' + this.p.toString());
+                channel.send(this.wc._encode({
+                    recipientId: channel.peerId,
+                    content: get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'encode', this).call(this, { shouldAdd: this.wc.myId }),
+                    meta: { timestamp: Date.now() }
+                }));
+                // There are at least 2 members in the network
+            } else {
+                // TODO : modify for spray algo
+                error(this.wc.myId + ' addJoining with several members ');
+                this.jps.set(channel.peerId, channel);
+                this.wc._send({ content: get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'encode', this).call(this, { joiningPeerId: channel.peerId }) });
+                channel.send(this.wc._encode({
+                    recipientId: channel.peerId,
+                    content: get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'encode', this).call(this, { connectTo: { peers: peers } }),
+                    meta: { timestamp: Date.now() }
+                }));
+            }
+            // if (peers.length == 0) { // Case of two peers in the network
+            //   log.debug(this.wc.myId + ' there is nobody in partialView ');
+            //
+            //   let M1: ServiceMessage = {
+            //                             channel: channel,
+            //                             senderId: this.wc.myId,
+            //                             recipientId: this.wc.myId,
+            //                             msg: super.decode(service.Message.decode(super.encode({ shouldAdd: channel.peerId })).content), // decode of encode otherwise the type is not detected
+            //                             timestamp: Date.now()
+            //                            }
+            //   log.debug(this.wc.myId + ' sending first shouldAdd to me ');
+            //   this._handleSvcMsg(M1);
+            //
+            //   let M2 = {
+            //     recipientId: channel.peerId,
+            //     content: super.encode({ shouldAdd: this.wc.myId }),
+            //     meta: { timestamp: Date.now() }
+            //   }
+            //   log.debug(this.wc.myId + ' sending first shouldAdd to ' + M2.recipientId + "\n" + JSON.stringify(M2) + "\n content : " + JSON.stringify(super.decode(service.Message.decode(M2.content).content)));
+            //   channel.send(this.wc._encode(M2));
+            //
+            // } else {
+            //   peers.forEach( (peer) => {
+            //     log.info(this.wc.myId + ' sending shouldAdd message to ' + peer);
+            //
+            //     let M = this.wc._encode({
+            //               recipientId: peer,
+            //               content: super.encode({ shouldAdd: channel.peerId }),
+            //               meta: { timestamp: Date.now() }
+            //             });
+            //     channel.send(M);
+            //   });
+            // }
+            info(this.wc.myId + ' addJoining finished ' + channel.peerId);
+        }
+    }, {
+        key: 'initJoining',
+        value: function initJoining(ch) {
+            info(this.wc.myId + ' initJoining ');
+            this.jps.set(this.wc.myId, ch);
+            this.channels.add(ch);
+            this.wc._onPeerJoin(ch.peerId);
+            info(this.wc.myId + ' _onPeerJoin ' + ch.peerId);
+        }
+        /**
+         * Send message to all WebChannel members
+         */
+
+    }, {
+        key: 'send',
+        value: function send(msg) {
+            var _this3 = this;
+
+            info(this.wc.myId + ' send ' + JSON.stringify(msg));
+            try {
+                info(this.wc.myId + ' content : ' + JSON.stringify(get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'decode', this).call(this, service.Message.decode(msg.content).content)));
+            } catch (e) {
+                try {
+                    info(this.wc.myId + ' content : ' + JSON.stringify(channelBuilder.Message.decode(msg.content)));
+                } catch (e2) {}
+            }
+            if (msg.meta == undefined || msg.meta.timestamp == undefined) {
+                if (msg.meta == undefined) {
+                    msg.meta = {};
+                }
+                msg.meta.timestamp = Date.now();
+                info(this.wc.myId + ' adding timestamp before sending ' + msg.meta.timestamp, JSON.stringify(msg));
+            }
+            var bytes = this.wc._encode(msg);
+            var listChan = [];
+            info(this.wc.myId + ' partialView : ' + this.p.toString());
+            this.p.forEach(function (arc) {
+                info(_this3.wc.myId + ' arc : ' + arc + "\nthis.channels.size : " + _this3.channels.size);
+                var _iteratorNormalCompletion = true;
+                var _didIteratorError = false;
+                var _iteratorError = undefined;
+
+                try {
+                    for (var _iterator = _this3.channels[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                        var ch = _step.value;
+
+                        info(_this3.wc.myId + ' arc[0] : ' + arc[0] + "\n ch : " + ch.peerId);
+                        if (ch.peerId == arc[0]) {
+                            info(_this3.wc.myId + ' channel found ' + ch.peerId);
+                            listChan.push(ch);
+                            return;
+                        }
+                    }
+                } catch (err) {
+                    _didIteratorError = true;
+                    _iteratorError = err;
+                } finally {
+                    try {
+                        if (!_iteratorNormalCompletion && _iterator.return) {
+                            _iterator.return();
+                        }
+                    } finally {
+                        if (_didIteratorError) {
+                            throw _iteratorError;
+                        }
+                    }
+                }
+
+                error(_this3.wc.myId + ' channel not found ' + arc[0]);
+            });
+            var _iteratorNormalCompletion2 = true;
+            var _didIteratorError2 = false;
+            var _iteratorError2 = undefined;
 
             try {
-              for (var _iterator10 = this.wc.members[Symbol.iterator](), _step10; !(_iteratorNormalCompletion10 = (_step10 = _iterator10.next()).done); _iteratorNormalCompletion10 = true) {
-                var _id = _step10.value;
+                for (var _iterator2 = listChan[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+                    var ch = _step2.value;
 
-                if (!_peers.includes(_id)) {
-                  missingPeers[missingPeers.length] = _id;
+                    ch.send(bytes);
                 }
-              }
             } catch (err) {
-              _didIteratorError10 = true;
-              _iteratorError10 = err;
+                _didIteratorError2 = true;
+                _iteratorError2 = err;
             } finally {
-              try {
-                if (!_iteratorNormalCompletion10 && _iterator10.return) {
-                  _iterator10.return();
+                try {
+                    if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                        _iterator2.return();
+                    }
+                } finally {
+                    if (_didIteratorError2) {
+                        throw _iteratorError2;
+                    }
                 }
-              } finally {
-                if (_didIteratorError10) {
-                  throw _iteratorError10;
+            }
+        }
+        /**
+         * Send message to a specific peer (recipientId)
+         */
+
+    }, {
+        key: 'sendTo',
+        value: function sendTo(msg) {
+            var _this4 = this;
+
+            info(this.wc.myId + ' sendTo ' + JSON.stringify(msg));
+            try {
+                info(this.wc.myId + ' content : ' + JSON.stringify(get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'decode', this).call(this, service.Message.decode(msg.content).content)));
+            } catch (e) {
+                try {
+                    info(this.wc.myId + ' content : ' + JSON.stringify(channelBuilder.Message.decode(msg.content)));
+                } catch (e2) {}
+            }
+            if (msg.meta == undefined || msg.meta.timestamp == undefined) {
+                if (msg.meta == undefined) {
+                    msg.meta = {};
                 }
-              }
+                msg.meta.timestamp = Date.now();
+                info(this.wc.myId + ' adding timestamp before sending ' + msg.meta.timestamp, JSON.stringify(msg));
+            }
+            var bytes = this.wc._encode(msg);
+            info(this.wc.myId + ' partialView : ' + this.p);
+            if (this.p.length == 0) {
+                info(this.wc.myId + ' empty partialView ');
+                var _iteratorNormalCompletion3 = true;
+                var _didIteratorError3 = false;
+                var _iteratorError3 = undefined;
+
+                try {
+                    for (var _iterator3 = this.channels[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+                        var ch = _step3.value;
+
+                        if (ch.peerId === msg.recipientId) {
+                            return ch.send(bytes);
+                        }
+                    }
+                } catch (err) {
+                    _didIteratorError3 = true;
+                    _iteratorError3 = err;
+                } finally {
+                    try {
+                        if (!_iteratorNormalCompletion3 && _iterator3.return) {
+                            _iterator3.return();
+                        }
+                    } finally {
+                        if (_didIteratorError3) {
+                            throw _iteratorError3;
+                        }
+                    }
+                }
+            }
+            var listChan = [];
+            this.p.forEach(function (arc) {
+                var _iteratorNormalCompletion4 = true;
+                var _didIteratorError4 = false;
+                var _iteratorError4 = undefined;
+
+                try {
+                    for (var _iterator4 = _this4.channels[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+                        var _ch = _step4.value;
+
+                        if (_ch.peerId == arc[0]) {
+                            listChan.push(_ch);
+                            return;
+                        }
+                    }
+                } catch (err) {
+                    _didIteratorError4 = true;
+                    _iteratorError4 = err;
+                } finally {
+                    try {
+                        if (!_iteratorNormalCompletion4 && _iterator4.return) {
+                            _iterator4.return();
+                        }
+                    } finally {
+                        if (_didIteratorError4) {
+                            throw _iteratorError4;
+                        }
+                    }
+                }
+
+                error(_this4.wc.myId + ' channel not found ' + arc[0]);
+            });
+            var _iteratorNormalCompletion5 = true;
+            var _didIteratorError5 = false;
+            var _iteratorError5 = undefined;
+
+            try {
+                for (var _iterator5 = listChan[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+                    var _ch2 = _step5.value;
+
+                    if (_ch2.peerId === msg.recipientId) {
+                        return _ch2.send(bytes);
+                    }
+                }
+            } catch (err) {
+                _didIteratorError5 = true;
+                _iteratorError5 = err;
+            } finally {
+                try {
+                    if (!_iteratorNormalCompletion5 && _iterator5.return) {
+                        _iterator5.return();
+                    }
+                } finally {
+                    if (_didIteratorError5) {
+                        throw _iteratorError5;
+                    }
+                }
             }
 
-            if (missingPeers.length === 0) {
-              this.jps.delete(channel.peerId);
-              this.peerJoined(channel);
-              this.wc._send({
-                content: get(FullMesh.prototype.__proto__ || Object.getPrototypeOf(FullMesh.prototype), 'encode', this).call(this, { joinedPeerId: channel.peerId })
-              });
+            return error(this.wc.myId + ' The recipient could not be found ', msg.recipientId);
+        }
+    }, {
+        key: 'forwardTo',
+        value: function forwardTo(msg) {
+            info(this.wc.myId + ' forwardTo ' + JSON.stringify(msg));
+            try {
+                info(this.wc.myId + ' content : ' + JSON.stringify(get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'decode', this).call(this, service.Message.decode(msg.content).content)));
+            } catch (e) {}
+            this.forward(msg);
+        }
+    }, {
+        key: 'forward',
+        value: function forward(msg) {
+            info(this.wc.myId + ' forward ' + JSON.stringify(msg));
+            try {
+                info(this.wc.myId + ' content : ' + JSON.stringify(get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'decode', this).call(this, service.Message.decode(msg.content).content)));
+            } catch (e) {}
+            var peersId = [];
+            this.p.forEach(function (arc) {
+                peersId.push(arc[0]);
+            });
+            debug(this.wc.myId + ' peersId : ' + peersId + "\nlength : " + peersId.length);
+            debug(this.wc.myId + ' msg.recipientId : ' + msg.recipientId);
+            if (peersId.includes(msg.recipientId)) {
+                this.sendTo(msg);
             } else {
-              // TODO
+                this.send(msg);
             }
-            break;
-          }
-        case 'joiningPeerId':
-          {
-            this.jps.set(msg.joiningPeerId, channel);
-            break;
-          }
-        case 'joinedPeerId':
-          {
-            if (this.iJoin()) {
-              this.wc._joinSucceed();
-            } else {
-              this.peerJoined(this.jps.get(msg.joinedPeerId));
+        }
+    }, {
+        key: 'leave',
+        value: function leave() {
+            info(this.wc.myId + ' leave ');
+            // TODO
+            var _iteratorNormalCompletion6 = true;
+            var _didIteratorError6 = false;
+            var _iteratorError6 = undefined;
+
+            try {
+                for (var _iterator6 = this.channels[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+                    var c = _step6.value;
+
+                    c.clearHandlers();
+                    c.close();
+                }
+            } catch (err) {
+                _didIteratorError6 = true;
+                _iteratorError6 = err;
+            } finally {
+                try {
+                    if (!_iteratorNormalCompletion6 && _iterator6.return) {
+                        _iterator6.return();
+                    }
+                } finally {
+                    if (_didIteratorError6) {
+                        throw _iteratorError6;
+                    }
+                }
             }
-            this.jps.delete(msg.joinedPeerId);
-            break;
-          }
-      }
-    }
-  }, {
-    key: 'peerJoined',
-    value: function peerJoined(ch) {
-      this.channels.add(ch);
-      this.wc._onPeerJoin(ch.peerId);
-    }
-  }]);
-  return FullMesh;
+
+            this.channels.clear();
+            clearInterval(this.interval);
+        }
+    }, {
+        key: 'onChannelClose',
+        value: function onChannelClose(closeEvt, channel) {
+            info(this.wc.myId + ' onChannelClose ');
+            // TODO ?
+            var _iteratorNormalCompletion7 = true;
+            var _didIteratorError7 = false;
+            var _iteratorError7 = undefined;
+
+            try {
+                for (var _iterator7 = this.channels[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
+                    var c = _step7.value;
+
+                    if (c.peerId === channel.peerId) {
+                        return this.channels.delete(c);
+                    }
+                }
+            } catch (err) {
+                _didIteratorError7 = true;
+                _iteratorError7 = err;
+            } finally {
+                try {
+                    if (!_iteratorNormalCompletion7 && _iterator7.return) {
+                        _iterator7.return();
+                    }
+                } finally {
+                    if (_didIteratorError7) {
+                        throw _iteratorError7;
+                    }
+                }
+            }
+
+            return false;
+        }
+    }, {
+        key: 'onChannelError',
+        value: function onChannelError(evt, channel) {
+            info(this.wc.myId + ' onChannelError ');
+            console.error('Channel error with id: ' + channel.peerId + ': ', evt);
+        }
+        /**
+         * Executes actions depending on the message stream
+         *
+         * @param {ServiceMessage} M {channel, senderId, recipientId, msg, timestamp}
+         */
+
+    }, {
+        key: '_handleSvcMsg',
+        value: function _handleSvcMsg(M) {
+            var _this5 = this;
+
+            var msg = M.msg;
+            info(this.wc.myId + " new message reception : " + JSON.stringify(msg) + ", timestamp : " + M.timestamp);
+            if (M.timestamp != undefined) {
+                var alreadyReceived = false;
+                this.received.forEach(function (message) {
+                    if (!alreadyReceived && message[0] == msg.senderId && message[1] == M.timestamp) {
+                        alreadyReceived = true;
+                    }
+                });
+                if (alreadyReceived) {
+                    debug(this.wc.myId + " message already received ");
+                    return;
+                }
+                this.received.push([M.senderId, M.timestamp]);
+                info(this.wc.myId + ' received length : ' + this.received.length + "\n" + this.received);
+            }
+            if (M.recipientId != this.wc.myId) {
+                error(this.wc.myId + ' received but not for me : ' + JSON.stringify(msg));
+                this.forward(msg);
+                return;
+            }
+            debug(this.wc.myId + ' message type : ' + msg.type);
+            switch (msg.type) {
+                case 'shouldAdd':
+                    {
+                        debug(this.wc.myId + ' shouldAdd ' + msg.shouldAdd);
+                        this.p.add(msg.shouldAdd);
+                        debug(this.wc.myId + ' partialView increased : ' + this.p.toString());
+                        break;
+                    }
+                case 'exchangeInit':
+                    {
+                        debug(M.channel.peerId + ' exchanging with ' + this.wc.myId);
+                        this._onExchange(this.wc, M.channel.peerId, msg.exchangeInit.sample);
+                        break;
+                    }
+                case 'connectTo':
+                    {
+                        debug(this.wc.myId + ' connectTo ' + msg.connectTo);
+                        var peers = msg.connectTo.peers;
+
+                        var promises = [];
+                        var _iteratorNormalCompletion8 = true;
+                        var _didIteratorError8 = false;
+                        var _iteratorError8 = undefined;
+
+                        try {
+                            for (var _iterator8 = peers[Symbol.iterator](), _step8; !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
+                                var id = _step8.value;
+
+                                promises[promises.length] = this.wc.channelBuilderSvc.connectTo(id);
+                            }
+                        } catch (err) {
+                            _didIteratorError8 = true;
+                            _iteratorError8 = err;
+                        } finally {
+                            try {
+                                if (!_iteratorNormalCompletion8 && _iterator8.return) {
+                                    _iterator8.return();
+                                }
+                            } finally {
+                                if (_didIteratorError8) {
+                                    throw _iteratorError8;
+                                }
+                            }
+                        }
+
+                        Promise.all(promises).then(function (channels) {
+                            var _iteratorNormalCompletion9 = true;
+                            var _didIteratorError9 = false;
+                            var _iteratorError9 = undefined;
+
+                            try {
+                                for (var _iterator9 = channels[Symbol.iterator](), _step9; !(_iteratorNormalCompletion9 = (_step9 = _iterator9.next()).done); _iteratorNormalCompletion9 = true) {
+                                    var ch = _step9.value;
+
+                                    _this5.peerJoined(ch);
+                                }
+                                // M.channel.send(this.wc._encode({
+                                //   recipientId: M.channel.peerId,
+                                //   content: super.encode({ connectedTo: { peers } })
+                                // }))
+                            } catch (err) {
+                                _didIteratorError9 = true;
+                                _iteratorError9 = err;
+                            } finally {
+                                try {
+                                    if (!_iteratorNormalCompletion9 && _iterator9.return) {
+                                        _iterator9.return();
+                                    }
+                                } finally {
+                                    if (_didIteratorError9) {
+                                        throw _iteratorError9;
+                                    }
+                                }
+                            }
+                        }).catch(function (err) {
+                            error('Failed to join', err);
+                            // M.channel.send(this.wc._encode({
+                            //   recipientId: M.channel.peerId,
+                            //   content: super.encode({ connectedTo: { peers: [] } })
+                            // }))
+                            _this5.wc._joinFailed();
+                        });
+                        break;
+                    }
+                case 'joiningPeerId':
+                    {
+                        this.jps.set(msg.joiningPeerId, M.channel);
+                        break;
+                    }
+                case 'joinedPeerId':
+                    {
+                        if (this.iJoin()) {
+                            this.wc._joinSucceed();
+                            info(this.wc.myId + ' _joinSucceed ');
+                        } else {
+                            debug(this.wc.myId + ' peerJoined blablabla ');
+                            this.peerJoined(this.jps.get(msg.joinedPeerId));
+                        }
+                        this.jps.delete(msg.joinedPeerId);
+                        break;
+                    }
+            }
+        }
+        /**
+         * Periodic procedure of exchange (active thread)
+         *
+         * @param  {WebChannel}    wc
+         *
+         * @return {Promise<void>}
+         */
+
+    }, {
+        key: '_exchange',
+        value: function _exchange(wc) {
+            var _this6 = this;
+
+            var _super = function _super(name) {
+                return get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), name, _this6);
+            };
+            return __awaiter(this, void 0, void 0, regeneratorRuntime.mark(function _callee() {
+                var _this7 = this;
+
+                var oldestArc, cloneP, sample;
+                return regeneratorRuntime.wrap(function _callee$(_context) {
+                    while (1) {
+                        switch (_context.prev = _context.next) {
+                            case 0:
+                                debug(this.wc.myId + ' _exchange ');
+                                this.p.incrementAge();
+                                oldestArc = this.p.oldest;
+                                cloneP = new PartialView();
+
+                                this.p.forEach(function (arc) {
+                                    cloneP.add(arc[0], arc[1]);
+                                });
+                                cloneP.remove(oldestArc[0], oldestArc[1]);
+                                sample = this._getSample(cloneP, Math.ceil(this.p.length / 2) - 1);
+
+                                sample.add(wc.myId);
+                                this._replace(sample, oldestArc[0], wc.myId);
+                                wc._sendTo({
+                                    senderId: wc.myId,
+                                    recipientId: oldestArc[0],
+                                    content: _super("encode").call(this, { exchangeInit: { sample: sample } }),
+                                    meta: { timestamp: Date.now() }
+                                });
+                                // async/await response... with timeout
+                                // let respSample = await new PartialView();
+                                _context.next = 12;
+                                return new Promise(function (resolve, reject) {
+                                    wc._msgStream.filter(function (msg) {
+                                        return msg.recipientId === wc.myId && msg.type == 'exchangeResp';
+                                    }).subscribe(function (msg) {
+                                        resolve(msg.respSample);
+                                    }, function (err) {
+                                        error('SprayService Message Stream Error', err, wc);
+                                        reject();
+                                    });
+                                    setTimeout(function () {
+                                        return reject('Exchange response timed out');
+                                    }, timeout);
+                                }).then(function (respSample) {
+                                    if (Array.isArray(respSample)) {
+                                        respSample.forEach(function (arc) {
+                                            _this7.p.add(arc[0], arc[1]);
+                                        });
+                                    } else {
+                                        error('SprayService Exchange response typeof ', typeof respSample === 'undefined' ? 'undefined' : _typeof(respSample));
+                                    }
+                                }).catch(function (err) {
+                                    error('Failed waiting exchange response ', err);
+                                });
+
+                            case 12:
+                                this._replace(sample, wc.myId, oldestArc[0]);
+                                // TODO disconnection
+                                sample.forEach(function (arc) {
+                                    _this7.p.remove(arc[0], arc[1]);
+                                });
+
+                            case 14:
+                            case 'end':
+                                return _context.stop();
+                        }
+                    }
+                }, _callee, this);
+            }));
+        }
+        /**
+         * Periodic procedure of exchange (passive thread)
+         *
+         * @param {WebChannel}  wc
+         * @param {number}      origineId  peerId
+         * @param {PartialView} sample
+         */
+
+    }, {
+        key: '_onExchange',
+        value: function _onExchange(wc, origineId, sample) {
+            var _this8 = this;
+
+            debug(this.wc.myId + ' _onExchange ');
+            var respSample = this._getSample(this.p, Math.ceil(this.p.length / 2));
+            this._replace(respSample, origineId, wc.myId);
+            wc._sendTo({
+                senderId: wc.myId,
+                recipientId: origineId,
+                content: get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'encode', this).call(this, { exchangeResp: { respSample: respSample } }),
+                meta: { timestamp: Date.now() }
+            });
+            this._replace(respSample, wc.myId, origineId);
+            respSample.forEach(function (arc) {
+                _this8.p.remove(arc[0], arc[1]);
+            });
+            sample.forEach(function (arc) {
+                _this8.p.add(arc[0], arc[1]);
+            });
+        }
+        /**
+         * Get n random arcs in the partial view p
+         *
+         * @param  {PartialView} p
+         * @param  {number}      n
+         *
+         * @return {PartialView}   partial view of n arcs from p
+         */
+
+    }, {
+        key: '_getSample',
+        value: function _getSample(p, n) {
+            info(this.wc.myId + ' _getSample ');
+            var cloneP = p.slice();
+            var arcs = new PartialView();
+            while (arcs.length < n && cloneP.length > 0) {
+                var randomIndex = Math.floor(Math.random() * cloneP.length);
+                var arc = cloneP.splice(randomIndex, 1)[0];
+                // TODO verification peer is up
+                // if peer is up
+                arcs.add(arc[0], arc[1]);
+                // else launch this._onPeerDown (or this._onArcDown ?)
+            }
+            return arcs;
+        }
+        /**
+         * Replace a peerId in a PartialView by another
+         *
+         * @param {PartialView} p
+         * @param {number}      oldId
+         * @param {number}      newId
+         */
+
+    }, {
+        key: '_replace',
+        value: function _replace(p, oldId, newId) {
+            info(this.wc.myId + ' _replace ' + oldId + " by " + newId);
+            p.forEach(function (arc) {
+                if (arc[0] == oldId) {
+                    arc[0] = newId;
+                }
+            });
+        }
+        /**
+         * When a peer is down, we count occurences
+         * and duplicate arcs in the partial view
+         *
+         * @param {number} peerDownId
+         */
+
+    }, {
+        key: '_onPeerDown',
+        value: function _onPeerDown(peerDownId) {
+            var _this9 = this;
+
+            info(this.wc.myId + ' _onPeerDown ' + peerDownId);
+            // Count and delete
+            var occ = 0;
+            var toRemove = [];
+            this.p.forEach(function (arc) {
+                if (arc[0] == peerDownId) {
+                    toRemove.push(arc);
+                    occ++;
+                }
+            });
+            toRemove.forEach(function (arc) {
+                _this9.p.remove(arc[0], arc[1]);
+            });
+            // Duplicate arcs
+            for (var i = 0; i < occ; i++) {
+                if (Math.random() > 1 / (this.p.length + occ)) {
+                    var newArcId = this.p[Math.floor(Math.random() * this.p.length)][0];
+                    this.p.add(newArcId);
+                }
+            }
+        }
+        /**
+         * When an arc is down but not the peer,
+         * we duplicate a random arc of the
+         * partial view
+         *
+         * @param {number} peerId
+         * @param {number} age
+         */
+
+    }, {
+        key: '_onArcDown',
+        value: function _onArcDown(peerId, age) {
+            info(this.wc.myId + ' _onArcDown ' + peerId);
+            this.p.remove(peerId, age);
+            var newArcId = this.p[Math.floor(Math.random() * this.p.length)][0];
+            this.p.add(newArcId);
+        }
+    }, {
+        key: '_clearReceived',
+        value: function _clearReceived() {
+            var _this10 = this;
+
+            info(this.wc.myId + ' _clearReceived ');
+            var clearDelay = Math.floor(Math.exp(this.p.length)) * 2 * delayPerConnection;
+            var i = 0;
+            while (i < this.received.length) {
+                var ts = this.received[i][1];
+                if (Date.now() - ts > clearDelay) {
+                    this.received.splice(i, 1);
+                } else {
+                    i++;
+                }
+            }
+            setTimeout(function () {
+                return _this10._clearReceived();
+            }, clearDelay);
+        }
+    }, {
+        key: 'peerJoined',
+        value: function peerJoined(ch) {
+            info(this.wc.myId + ' peerJoined ');
+            this.channels.add(ch);
+            this.wc._onPeerJoin(ch.peerId);
+            // log.info(this.wc.myId + ' _onPeerJoin ' + ch.peerId);
+        }
+    }]);
+    return SprayService;
 }(TopologyInterface);
 
 /**
@@ -5980,7 +6502,7 @@ var SignalingGate = function () {
   return SignalingGate;
 }();
 
-var __extends$5 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+var __extends$6 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -5991,7 +6513,7 @@ var __extends$5 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b
  * @class BehaviorSubject<T>
  */
 var BehaviorSubject = (function (_super) {
-    __extends$5(BehaviorSubject, _super);
+    __extends$6(BehaviorSubject, _super);
     function BehaviorSubject(_value) {
         _super.call(this);
         this._value = _value;
@@ -6028,7 +6550,7 @@ var BehaviorSubject = (function (_super) {
 }(Subject_1.Subject));
 var BehaviorSubject_2 = BehaviorSubject;
 
-var __extends$6 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+var __extends$7 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -6094,7 +6616,7 @@ var FilterOperator = (function () {
  * @extends {Ignored}
  */
 var FilterSubscriber = (function (_super) {
-    __extends$6(FilterSubscriber, _super);
+    __extends$7(FilterSubscriber, _super);
     function FilterSubscriber(destination, predicate, thisArg) {
         _super.call(this, destination);
         this.predicate = predicate;
@@ -6280,21 +6802,8 @@ module.exports = adapterFactory({window: global.window});
 'use strict';
 
 // Shimming starts here.
-module.exports = function(dependencies, opts) {
+module.exports = function(dependencies) {
   var window = dependencies && dependencies.window;
-
-  var options = {
-    shimChrome: true,
-    shimFirefox: true,
-    shimEdge: true,
-    shimSafari: true,
-  };
-
-  for (var key in opts) {
-    if (hasOwnProperty.call(opts, key)) {
-      options[key] = opts[key];
-    }
-  }
 
   // Utils.
   var utils = require('./utils');
@@ -6324,8 +6833,7 @@ module.exports = function(dependencies, opts) {
   // Shim browser if found.
   switch (browserDetails.browser) {
     case 'chrome':
-      if (!chromeShim || !chromeShim.shimPeerConnection ||
-          !options.shimChrome) {
+      if (!chromeShim || !chromeShim.shimPeerConnection) {
         logging('Chrome shim is not included in this adapter release.');
         return adapter;
       }
@@ -6339,12 +6847,10 @@ module.exports = function(dependencies, opts) {
       chromeShim.shimSourceObject(window);
       chromeShim.shimPeerConnection(window);
       chromeShim.shimOnTrack(window);
-      chromeShim.shimAddTrackRemoveTrack(window);
       chromeShim.shimGetSendersWithDtmf(window);
       break;
     case 'firefox':
-      if (!firefoxShim || !firefoxShim.shimPeerConnection ||
-          !options.shimFirefox) {
+      if (!firefoxShim || !firefoxShim.shimPeerConnection) {
         logging('Firefox shim is not included in this adapter release.');
         return adapter;
       }
@@ -6359,7 +6865,7 @@ module.exports = function(dependencies, opts) {
       firefoxShim.shimOnTrack(window);
       break;
     case 'edge':
-      if (!edgeShim || !edgeShim.shimPeerConnection || !options.shimEdge) {
+      if (!edgeShim || !edgeShim.shimPeerConnection) {
         logging('MS edge shim is not included in this adapter release.');
         return adapter;
       }
@@ -6373,7 +6879,7 @@ module.exports = function(dependencies, opts) {
       edgeShim.shimReplaceTrack(window);
       break;
     case 'safari':
-      if (!safariShim || !options.shimSafari) {
+      if (!safariShim) {
         logging('Safari shim is not included in this adapter release.');
         return adapter;
       }
@@ -6423,24 +6929,19 @@ var chromeShim = {
           return this._ontrack;
         },
         set: function(f) {
+          var self = this;
           if (this._ontrack) {
             this.removeEventListener('track', this._ontrack);
+            this.removeEventListener('addstream', this._ontrackpoly);
           }
           this.addEventListener('track', this._ontrack = f);
-        }
-      });
-      var origSetRemoteDescription =
-          window.RTCPeerConnection.prototype.setRemoteDescription;
-      window.RTCPeerConnection.prototype.setRemoteDescription = function() {
-        var pc = this;
-        if (!pc._ontrackpoly) {
-          pc._ontrackpoly = function(e) {
+          this.addEventListener('addstream', this._ontrackpoly = function(e) {
             // onaddstream does not fire when a track is added to an existing
             // stream. But stream.onaddtrack is implemented so we use that.
             e.stream.addEventListener('addtrack', function(te) {
               var receiver;
               if (window.RTCPeerConnection.prototype.getReceivers) {
-                receiver = pc.getReceivers().find(function(r) {
+                receiver = self.getReceivers().find(function(r) {
                   return r.track.id === te.track.id;
                 });
               } else {
@@ -6451,12 +6952,12 @@ var chromeShim = {
               event.track = te.track;
               event.receiver = receiver;
               event.streams = [e.stream];
-              pc.dispatchEvent(event);
+              self.dispatchEvent(event);
             });
             e.stream.getTracks().forEach(function(track) {
               var receiver;
               if (window.RTCPeerConnection.prototype.getReceivers) {
-                receiver = pc.getReceivers().find(function(r) {
+                receiver = self.getReceivers().find(function(r) {
                   return r.track.id === track.id;
                 });
               } else {
@@ -6466,81 +6967,108 @@ var chromeShim = {
               event.track = track;
               event.receiver = receiver;
               event.streams = [e.stream];
-              pc.dispatchEvent(event);
-            });
-          };
-          pc.addEventListener('addstream', pc._ontrackpoly);
+              this.dispatchEvent(event);
+            }.bind(this));
+          }.bind(this));
         }
-        return origSetRemoteDescription.apply(pc, arguments);
-      };
+      });
     }
   },
 
   shimGetSendersWithDtmf: function(window) {
-    // Overrides addTrack/removeTrack, depends on shimAddTrackRemoveTrack.
     if (typeof window === 'object' && window.RTCPeerConnection &&
         !('getSenders' in window.RTCPeerConnection.prototype) &&
         'createDTMFSender' in window.RTCPeerConnection.prototype) {
-      var shimSenderWithDtmf = function(pc, track) {
-        return {
-          track: track,
-          get dtmf() {
-            if (this._dtmf === undefined) {
-              if (track.kind === 'audio') {
-                this._dtmf = pc.createDTMFSender(track);
-              } else {
-                this._dtmf = null;
-              }
-            }
-            return this._dtmf;
-          },
-          _pc: pc
-        };
+      window.RTCPeerConnection.prototype.getSenders = function() {
+        return this._senders || [];
       };
+      var origAddStream = window.RTCPeerConnection.prototype.addStream;
+      var origRemoveStream = window.RTCPeerConnection.prototype.removeStream;
 
-      // augment addTrack when getSenders is not available.
-      if (!window.RTCPeerConnection.prototype.getSenders) {
-        window.RTCPeerConnection.prototype.getSenders = function() {
-          this._senders = this._senders || [];
-          return this._senders.slice(); // return a copy of the internal state.
-        };
-        var origAddTrack = window.RTCPeerConnection.prototype.addTrack;
+      if (!window.RTCPeerConnection.prototype.addTrack) {
         window.RTCPeerConnection.prototype.addTrack = function(track, stream) {
           var pc = this;
-          var sender = origAddTrack.apply(pc, arguments);
-          if (!sender) {
-            sender = shimSenderWithDtmf(pc, track);
-            pc._senders.push(sender);
+          if (pc.signalingState === 'closed') {
+            throw new DOMException(
+              'The RTCPeerConnection\'s signalingState is \'closed\'.',
+              'InvalidStateError');
           }
+          var streams = [].slice.call(arguments, 1);
+          if (streams.length !== 1 ||
+              !streams[0].getTracks().find(function(t) {
+                return t === track;
+              })) {
+            // this is not fully correct but all we can manage without
+            // [[associated MediaStreams]] internal slot.
+            throw new DOMException(
+              'The adapter.js addTrack polyfill only supports a single ' +
+              ' stream which is associated with the specified track.',
+              'NotSupportedError');
+          }
+
+          pc._senders = pc._senders || [];
+          var alreadyExists = pc._senders.find(function(t) {
+            return t.track === track;
+          });
+          if (alreadyExists) {
+            throw new DOMException('Track already exists.',
+                'InvalidAccessError');
+          }
+
+          pc._streams = pc._streams || {};
+          var oldStream = pc._streams[stream.id];
+          if (oldStream) {
+            oldStream.addTrack(track);
+            pc.removeStream(oldStream);
+            pc.addStream(oldStream);
+          } else {
+            var newStream = new window.MediaStream([track]);
+            pc._streams[stream.id] = newStream;
+            pc.addStream(newStream);
+          }
+
+          var sender = {
+            track: track,
+            get dtmf() {
+              if (this._dtmf === undefined) {
+                if (track.kind === 'audio') {
+                  this._dtmf = pc.createDTMFSender(track);
+                } else {
+                  this._dtmf = null;
+                }
+              }
+              return this._dtmf;
+            }
+          };
+          pc._senders.push(sender);
           return sender;
         };
-
-        var origRemoveTrack = window.RTCPeerConnection.prototype.removeTrack;
-        window.RTCPeerConnection.prototype.removeTrack = function(sender) {
-          var pc = this;
-          origRemoveTrack.apply(pc, arguments);
-          var idx = pc._senders.indexOf(sender);
-          if (idx !== -1) {
-            pc._senders.splice(idx, 1);
-          }
-        };
       }
-      var origAddStream = window.RTCPeerConnection.prototype.addStream;
       window.RTCPeerConnection.prototype.addStream = function(stream) {
         var pc = this;
         pc._senders = pc._senders || [];
         origAddStream.apply(pc, [stream]);
         stream.getTracks().forEach(function(track) {
-          pc._senders.push(shimSenderWithDtmf(pc, track));
+          pc._senders.push({
+            track: track,
+            get dtmf() {
+              if (this._dtmf === undefined) {
+                if (track.kind === 'audio') {
+                  this._dtmf = pc.createDTMFSender(track);
+                } else {
+                  this._dtmf = null;
+                }
+              }
+              return this._dtmf;
+            }
+          });
         });
       };
 
-      var origRemoveStream = window.RTCPeerConnection.prototype.removeStream;
       window.RTCPeerConnection.prototype.removeStream = function(stream) {
         var pc = this;
         pc._senders = pc._senders || [];
-        origRemoveStream.apply(pc, [(pc._streams[stream.id] || stream)]);
-
+        origRemoveStream.apply(pc, [stream]);
         stream.getTracks().forEach(function(track) {
           var sender = pc._senders.find(function(s) {
             return s.track === track;
@@ -6575,7 +7103,7 @@ var chromeShim = {
             }
           }
           return this._dtmf;
-        }
+        },
       });
     }
   },
@@ -6622,151 +7150,6 @@ var chromeShim = {
         });
       }
     }
-  },
-
-  shimAddTrackRemoveTrack: function(window) {
-    // shim addTrack and removeTrack.
-    if (window.RTCPeerConnection.prototype.addTrack) {
-      return;
-    }
-
-    // also shim pc.getLocalStreams when addTrack is shimmed
-    // to return the original streams.
-    var origGetLocalStreams = window.RTCPeerConnection.prototype
-        .getLocalStreams;
-    window.RTCPeerConnection.prototype.getLocalStreams = function() {
-      var self = this;
-      var nativeStreams = origGetLocalStreams.apply(this);
-      self._reverseStreams = self._reverseStreams || {};
-      return nativeStreams.map(function(stream) {
-        return self._reverseStreams[stream.id];
-      });
-    };
-
-    var origAddStream = window.RTCPeerConnection.prototype.addStream;
-    window.RTCPeerConnection.prototype.addStream = function(stream) {
-      var pc = this;
-      pc._streams = pc._streams || {};
-      pc._reverseStreams = pc._reverseStreams || {};
-
-      stream.getTracks().forEach(function(track) {
-        var alreadyExists = pc.getSenders().find(function(s) {
-          return s.track === track;
-        });
-        if (alreadyExists) {
-          throw new DOMException('Track already exists.',
-              'InvalidAccessError');
-        }
-      });
-      // Add identity mapping for consistency with addTrack.
-      // Unless this is being used with a stream from addTrack.
-      if (!pc._reverseStreams[stream.id]) {
-        var newStream = new window.MediaStream(stream.getTracks());
-        pc._streams[stream.id] = newStream;
-        pc._reverseStreams[newStream.id] = stream;
-        stream = newStream;
-      }
-      origAddStream.apply(pc, [stream]);
-    };
-
-    var origRemoveStream = window.RTCPeerConnection.prototype.removeStream;
-    window.RTCPeerConnection.prototype.removeStream = function(stream) {
-      var pc = this;
-      pc._streams = pc._streams || {};
-      pc._reverseStreams = pc._reverseStreams || {};
-
-      origRemoveStream.apply(pc, [(pc._streams[stream.id] || stream)]);
-      delete pc._reverseStreams[(pc._streams[stream.id] ?
-          pc._streams[stream.id].id : stream.id)];
-      delete pc._streams[stream.id];
-    };
-
-    window.RTCPeerConnection.prototype.addTrack = function(track, stream) {
-      var pc = this;
-      if (pc.signalingState === 'closed') {
-        throw new DOMException(
-          'The RTCPeerConnection\'s signalingState is \'closed\'.',
-          'InvalidStateError');
-      }
-      var streams = [].slice.call(arguments, 1);
-      if (streams.length !== 1 ||
-          !streams[0].getTracks().find(function(t) {
-            return t === track;
-          })) {
-        // this is not fully correct but all we can manage without
-        // [[associated MediaStreams]] internal slot.
-        throw new DOMException(
-          'The adapter.js addTrack polyfill only supports a single ' +
-          ' stream which is associated with the specified track.',
-          'NotSupportedError');
-      }
-
-      var alreadyExists = pc.getSenders().find(function(s) {
-        return s.track === track;
-      });
-      if (alreadyExists) {
-        throw new DOMException('Track already exists.',
-            'InvalidAccessError');
-      }
-
-      pc._streams = pc._streams || {};
-      pc._reverseStreams = pc._reverseStreams || {};
-      var oldStream = pc._streams[stream.id];
-      if (oldStream) {
-        // this is using odd Chrome behaviour, use with caution:
-        // https://bugs.chromium.org/p/webrtc/issues/detail?id=7815
-        // Note: we rely on the high-level addTrack/dtmf shim to
-        // create the sender with a dtmf sender.
-        oldStream.addTrack(track);
-        pc.dispatchEvent(new Event('negotiationneeded'));
-      } else {
-        var newStream = new window.MediaStream([track]);
-        pc._streams[stream.id] = newStream;
-        pc._reverseStreams[newStream.id] = stream;
-        pc.addStream(newStream);
-      }
-      return pc.getSenders().find(function(s) {
-        return s.track === track;
-      });
-    };
-
-    window.RTCPeerConnection.prototype.removeTrack = function(sender) {
-      var pc = this;
-      if (pc.signalingState === 'closed') {
-        throw new DOMException(
-          'The RTCPeerConnection\'s signalingState is \'closed\'.',
-          'InvalidStateError');
-      }
-      var isLocal = sender._pc === pc;
-      if (!isLocal) {
-        throw new DOMException('Sender was not created by this connection.',
-            'InvalidAccessError');
-      }
-
-      // Search for the native stream the senders track belongs to.
-      pc._streams = pc._streams || {};
-      var stream;
-      Object.keys(pc._streams).forEach(function(streamid) {
-        var hasTrack = pc._streams[streamid].getTracks().find(function(track) {
-          return sender.track === track;
-        });
-        if (hasTrack) {
-          stream = pc._streams[streamid];
-        }
-      });
-
-      if (stream) {
-        if (stream.getTracks().length === 1) {
-          // if this is the last track of the stream, remove the stream. This
-          // takes care of any shimmed _senders.
-          pc.removeStream(stream);
-        } else {
-          // relying on the same odd chrome behaviour as above.
-          stream.removeTrack(sender.track);
-        }
-        pc.dispatchEvent(new Event('negotiationneeded'));
-      }
-    };
   },
 
   shimPeerConnection: function(window) {
@@ -6968,7 +7351,6 @@ var chromeShim = {
 module.exports = {
   shimMediaStream: chromeShim.shimMediaStream,
   shimOnTrack: chromeShim.shimOnTrack,
-  shimAddTrackRemoveTrack: chromeShim.shimAddTrackRemoveTrack,
   shimGetSendersWithDtmf: chromeShim.shimGetSendersWithDtmf,
   shimSourceObject: chromeShim.shimSourceObject,
   shimPeerConnection: chromeShim.shimPeerConnection,
@@ -8077,7 +8459,7 @@ module.exports = {
 
 },{}]},{},[2]);
 
-var __extends$10 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+var __extends$11 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -8098,7 +8480,7 @@ var __extends$10 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, 
  * @class Action<T>
  */
 var Action = (function (_super) {
-    __extends$10(Action, _super);
+    __extends$11(Action, _super);
     function Action(scheduler, work) {
         _super.call(this);
     }
@@ -8125,7 +8507,7 @@ var Action_1 = {
 	Action: Action_2
 };
 
-var __extends$9 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+var __extends$10 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -8138,7 +8520,7 @@ var __extends$9 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b
  * @extends {Ignored}
  */
 var AsyncAction = (function (_super) {
-    __extends$9(AsyncAction, _super);
+    __extends$10(AsyncAction, _super);
     function AsyncAction(scheduler, work) {
         _super.call(this, scheduler, work);
         this.scheduler = scheduler;
@@ -8271,7 +8653,7 @@ var AsyncAction_1 = {
 	AsyncAction: AsyncAction_2
 };
 
-var __extends$8 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+var __extends$9 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -8283,7 +8665,7 @@ var __extends$8 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b
  * @extends {Ignored}
  */
 var QueueAction = (function (_super) {
-    __extends$8(QueueAction, _super);
+    __extends$9(QueueAction, _super);
     function QueueAction(scheduler, work) {
         _super.call(this, scheduler, work);
         this.scheduler = scheduler;
@@ -8377,14 +8759,14 @@ var Scheduler_1 = {
 	Scheduler: Scheduler_2
 };
 
-var __extends$12 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+var __extends$13 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 
 var AsyncScheduler = (function (_super) {
-    __extends$12(AsyncScheduler, _super);
+    __extends$13(AsyncScheduler, _super);
     function AsyncScheduler() {
         _super.apply(this, arguments);
         this.actions = [];
@@ -8432,14 +8814,14 @@ var AsyncScheduler_1 = {
 	AsyncScheduler: AsyncScheduler_2
 };
 
-var __extends$11 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+var __extends$12 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 
 var QueueScheduler = (function (_super) {
-    __extends$11(QueueScheduler, _super);
+    __extends$12(QueueScheduler, _super);
     function QueueScheduler() {
         _super.apply(this, arguments);
     }
@@ -8620,7 +9002,7 @@ var Notification = (function () {
         if (typeof value !== 'undefined') {
             return new Notification('N', value);
         }
-        return Notification.undefinedValueNotification;
+        return this.undefinedValueNotification;
     };
     /**
      * A shortcut to create a Notification instance of the type `error` from a
@@ -8637,7 +9019,7 @@ var Notification = (function () {
      * @return {Notification<any>} The valueless "complete" Notification.
      */
     Notification.createComplete = function () {
-        return Notification.completeNotification;
+        return this.completeNotification;
     };
     Notification.completeNotification = new Notification('C');
     Notification.undefinedValueNotification = new Notification('N', undefined);
@@ -8650,7 +9032,7 @@ var Notification_1 = {
 	Notification: Notification_2
 };
 
-var __extends$13 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+var __extends$14 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -8726,7 +9108,7 @@ var ObserveOnOperator_1 = ObserveOnOperator;
  * @extends {Ignored}
  */
 var ObserveOnSubscriber = (function (_super) {
-    __extends$13(ObserveOnSubscriber, _super);
+    __extends$14(ObserveOnSubscriber, _super);
     function ObserveOnSubscriber(destination, scheduler, delay) {
         if (delay === void 0) { delay = 0; }
         _super.call(this, destination);
@@ -8770,7 +9152,7 @@ var observeOn_1 = {
 	ObserveOnMessage: ObserveOnMessage_1
 };
 
-var __extends$7 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+var __extends$8 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -8785,7 +9167,7 @@ var __extends$7 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b
  * @class ReplaySubject<T>
  */
 var ReplaySubject = (function (_super) {
-    __extends$7(ReplaySubject, _super);
+    __extends$8(ReplaySubject, _super);
     function ReplaySubject(bufferSize, windowTime, scheduler) {
         if (bufferSize === void 0) { bufferSize = Number.POSITIVE_INFINITY; }
         if (windowTime === void 0) { windowTime = Number.POSITIVE_INFINITY; }
@@ -8871,7 +9253,7 @@ var ReplayEvent = (function () {
     return ReplayEvent;
 }());
 
-var __extends$14 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+var __extends$15 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -8934,7 +9316,7 @@ var MapOperator_1 = MapOperator;
  * @extends {Ignored}
  */
 var MapSubscriber = (function (_super) {
-    __extends$14(MapSubscriber, _super);
+    __extends$15(MapSubscriber, _super);
     function MapSubscriber(destination, project, thisArg) {
         _super.call(this, destination);
         this.project = project;
@@ -9771,6 +10153,7 @@ var Buffer$1 = function () {
   return Buffer;
 }();
 
+// import { FullMesh } from './topology/FullMesh'
 /**
  * Maximum identifier number for {@link WebChannel#_generateId} function.
  * @type {number}
@@ -10244,9 +10627,11 @@ var WebChannel = function (_Service) {
           _ref$isService = _ref.isService,
           isService = _ref$isService === undefined ? true : _ref$isService,
           _ref$content = _ref.content,
-          content = _ref$content === undefined ? new Uint8Array() : _ref$content;
+          content = _ref$content === undefined ? new Uint8Array() : _ref$content,
+          _ref$meta = _ref.meta,
+          meta = _ref$meta === undefined ? undefined : _ref$meta;
 
-      var msg = { senderId: senderId, recipientId: recipientId, isService: isService, content: content };
+      var msg = { senderId: senderId, recipientId: recipientId, isService: isService, content: content, meta: meta };
       if (msg.recipientId === this.myId) {
         this._handleMyMessage(undefined, msg);
       } else {
@@ -10272,10 +10657,12 @@ var WebChannel = function (_Service) {
           isService = _ref2$isService === undefined ? true : _ref2$isService,
           _ref2$content = _ref2.content,
           content = _ref2$content === undefined ? new Uint8Array() : _ref2$content,
+          _ref2$meta = _ref2.meta,
+          meta = _ref2$meta === undefined ? undefined : _ref2$meta,
           _ref2$isMeIncluded = _ref2.isMeIncluded,
           isMeIncluded = _ref2$isMeIncluded === undefined ? false : _ref2$isMeIncluded;
 
-      var msg = { senderId: senderId, recipientId: recipientId, isService: isService, content: content };
+      var msg = { senderId: senderId, recipientId: recipientId, isService: isService, content: content, meta: meta };
       if (isMeIncluded) {
         this._handleMyMessage(undefined, msg);
       }
@@ -10327,11 +10714,24 @@ var WebChannel = function (_Service) {
         }
       } else {
         // Inner Message
-        this._msgStream.next(Object.assign({
-          channel: channel,
-          senderId: msg.senderId,
-          recipientId: msg.recipientId
-        }, service.Message.decode(msg.content)));
+        try {} catch (e) {
+          try {} catch (e2) {}
+        }
+        if (msg.hasOwnProperty('meta')) {
+          this._msgStream.next(Object.assign({
+            channel: channel,
+            senderId: msg.senderId,
+            recipientId: msg.recipientId,
+            timestamp: msg.meta.timestamp
+          }, service.Message.decode(msg.content)));
+        } else {
+          this._msgStream.next(Object.assign({
+            channel: channel,
+            senderId: msg.senderId,
+            recipientId: msg.recipientId,
+            timestamp: undefined
+          }, service.Message.decode(msg.content)));
+        }
       }
     }
   }, {
@@ -10432,11 +10832,13 @@ var WebChannel = function (_Service) {
         if (this.settings.topology !== topology) {
           this.settings.topology = topology;
           this._topology.clean();
-          this._topology = new FullMesh(this);
+          // this._topology = new FullMesh(this)
+          this._topology = new SprayService(this);
         }
       } else {
         this.settings.topology = topology;
-        this._topology = new FullMesh(this);
+        // this._topology = new FullMesh(this)
+        this._topology = new SprayService(this);
       }
     }
 
@@ -10488,9 +10890,11 @@ var WebChannel = function (_Service) {
           _ref4$isService = _ref4.isService,
           isService = _ref4$isService === undefined ? true : _ref4$isService,
           _ref4$content = _ref4.content,
-          content = _ref4$content === undefined ? new Uint8Array() : _ref4$content;
+          content = _ref4$content === undefined ? new Uint8Array() : _ref4$content,
+          _ref4$meta = _ref4.meta,
+          meta = _ref4$meta === undefined ? undefined : _ref4$meta;
 
-      var msg = { senderId: senderId, recipientId: recipientId, isService: isService, content: content };
+      var msg = { senderId: senderId, recipientId: recipientId, isService: isService, content: content, meta: meta };
       return Message.encode(Message.create(msg)).finish();
     }
   }, {
@@ -10502,575 +10906,7 @@ var WebChannel = function (_Service) {
   return WebChannel;
 }(Service);
 
-/*! *****************************************************************************
-Copyright (c) Microsoft Corporation. All rights reserved.
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use
-this file except in compliance with the License. You may obtain a copy of the
-License at http://www.apache.org/licenses/LICENSE-2.0
-
-THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED
-WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE,
-MERCHANTABLITY OR NON-INFRINGEMENT.
-
-See the Apache Version 2.0 License for specific language governing permissions
-and limitations under the License.
-***************************************************************************** */
-/* global Reflect, Promise */
-
-
-
-
-
-
-
-
-
-
-
-
-
-function __awaiter(thisArg, _arguments, P, generator) {
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator.throw(value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-}
-
-var PartialView = function (_Array) {
-    inherits(PartialView, _Array);
-
-    function PartialView() {
-        classCallCheck(this, PartialView);
-        return possibleConstructorReturn(this, (PartialView.__proto__ || Object.getPrototypeOf(PartialView)).call(this));
-    }
-    /**
-    * Returns the oldest arc in the partial view
-    *
-    * @return {Array<number>} the oldest arc [peerId: number, age: number]
-    */
-
-
-    createClass(PartialView, [{
-        key: "add",
-
-        /**
-        * Adds a node with the age of 0 to the partial view
-        *
-        * @param {number} peerId
-        * @param {number} age
-        */
-        value: function add(peerId) {
-            var age = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
-
-            this.push([peerId, age]);
-        }
-        /**
-        * Returns the index of an arc in the partial view
-        * -1 if not in the partial view
-        *
-        * @param {number} peerId
-        * @param {number} age
-        * @return {number} index of the arc in the partial view
-        */
-
-    }, {
-        key: "_indexArc",
-        value: function _indexArc(peerId, age) {
-            for (var i = 0; i < this.length; i++) {
-                var elem = this[i];
-                if (elem[0] == peerId && elem[1] == age) {
-                    return i;
-                }
-            }
-            return -1;
-        }
-        /**
-        * Removes a node from the partial view
-        *
-        * @param {number} peerId
-        * @param {number} age
-        */
-
-    }, {
-        key: "remove",
-        value: function remove(peerId, age) {
-            var index = this._indexArc(peerId, age);
-            if (index >= 0) {
-                this.splice(index, 1);
-            }
-        }
-        /**
-        * Increments the age of each arc
-        */
-
-    }, {
-        key: "incrementAge",
-        value: function incrementAge() {
-            for (var i = 0; i < this.length; i++) {
-                this[i][1]++;
-            }
-        }
-    }, {
-        key: "oldest",
-        get: function get$$1() {
-            if (this.length <= 0) {
-                throw new Error("Empty partial view");
-            }
-            return this[0];
-        }
-    }]);
-    return PartialView;
-}(Array);
-
-/**
- * Delay in milliseconds between two exchanges
- */
-var delay = 1000 * 60 * 2;
-/**
- * Timeout value in milliseconds for exchanges
- */
-var timeout = 1000 * 60;
-var SPRAY = 15;
-var SprayService = function (_TopologyInterface) {
-    inherits(SprayService, _TopologyInterface);
-
-    function SprayService(wc) {
-        classCallCheck(this, SprayService);
-
-        var _this = possibleConstructorReturn(this, (SprayService.__proto__ || Object.getPrototypeOf(SprayService)).call(this, SPRAY, spray.Message, wc._msgStream));
-
-        _this.wc = wc; // <any> to delete error "property 'wc' does not exist on type 'SprayService'"
-        _this.init();
-        _this.innerMessageSubscritption = _this.innerStream.subscribe(function (msg) {
-            return _this._handleSvcMsg(msg);
-        }, function (err) {
-            return error('SprayService Message Stream Error', err, wc);
-        }, function () {
-            _this.init();
-        });
-        return _this;
-    }
-
-    createClass(SprayService, [{
-        key: 'init',
-        value: function init() {
-            this.channels = new Set();
-            this.joiningPeers = new Map();
-            this.pendingRequests = new Map();
-            this.p = new PartialView();
-        }
-    }, {
-        key: 'connectTo',
-        value: function connectTo(peerId) {
-            var _this2 = this;
-
-            return new Promise(function (resolve, reject) {
-                _this2.wc.channelBuilderSvc.connectTo(peerId).then(function (ch) {
-                    return _this2.onChannel(ch);
-                }).then(function () {
-                    resolve();
-                });
-            });
-        }
-        /**
-         * Add a peer to the WebChannel
-         *
-         * @param  {Channel}            channel
-         *
-         * @return {Promise<number, string>}
-         */
-
-    }, {
-        key: 'addJoining',
-        value: function addJoining(channel) {
-            var _this3 = this;
-
-            debug(this.wc.myId + ' ADD ' + channel.peerId);
-            var wc = channel.webChannel;
-            var peers = [];
-            for (var i = 0; i < this.p.length; i++) {
-                peers.push(this.p[i][0]);
-            }
-            if (peers.length == 0) {
-                peers.push(wc.myId);
-            }
-            peers.forEach(function (peer) {
-                wc._sendTo({
-                    senderId: wc.myId,
-                    recipientId: peer,
-                    content: get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'encode', _this3).call(_this3, { shouldAdd: { peerId: channel.peerId } })
-                });
-            });
-            return new Promise(function (resolve, reject) {
-                _this3.pendingRequests.set(channel.peerId, { resolve: resolve, reject: reject });
-            });
-        }
-    }, {
-        key: 'initJoining',
-        value: function initJoining(ch) {}
-        // TODO
-
-        /**
-         * Send message to all WebChannel members
-         *
-         * @param {ArrayBuffer} msg
-         */
-
-    }, {
-        key: 'send',
-        value: function send(msg) {}
-        // TODO
-
-        /**
-         * Send message to a specific peer (recipientId)
-         *
-         * @param {ArrayBuffer} msg
-         */
-
-    }, {
-        key: 'sendTo',
-        value: function sendTo(msg) {
-            // TODO
-            var peersId = [];
-            this.p.forEach(function (arc) {
-                peersId.push(arc[0]);
-            });
-            if (msg.recipientId in peersId) {
-                // Send to recipientId
-            } else {
-                    // I don't know... forwardTo...
-                }
-        }
-    }, {
-        key: 'forwardTo',
-        value: function forwardTo(msg) {
-            // TODO
-        }
-    }, {
-        key: 'forward',
-        value: function forward(msg) {
-            // TODO
-        }
-    }, {
-        key: 'leave',
-        value: function leave() {
-            // TODO
-            var _iteratorNormalCompletion = true;
-            var _didIteratorError = false;
-            var _iteratorError = undefined;
-
-            try {
-                for (var _iterator = this.channels[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-                    var c = _step.value;
-
-                    c.clearHandlers();
-                    c.close();
-                }
-            } catch (err) {
-                _didIteratorError = true;
-                _iteratorError = err;
-            } finally {
-                try {
-                    if (!_iteratorNormalCompletion && _iterator.return) {
-                        _iterator.return();
-                    }
-                } finally {
-                    if (_didIteratorError) {
-                        throw _iteratorError;
-                    }
-                }
-            }
-
-            this.channels.clear();
-        }
-    }, {
-        key: 'onChannel',
-        value: function onChannel(channel) {
-            // TODO
-            return new Promise(function (resolve, reject) {
-                return;
-            });
-        }
-    }, {
-        key: 'onChannelClose',
-        value: function onChannelClose(closeEvt, channel) {
-            // TODO ?
-            var _iteratorNormalCompletion2 = true;
-            var _didIteratorError2 = false;
-            var _iteratorError2 = undefined;
-
-            try {
-                for (var _iterator2 = this.channels[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-                    var c = _step2.value;
-
-                    if (c.peerId === channel.peerId) {
-                        return this.channels.delete(c);
-                    }
-                }
-            } catch (err) {
-                _didIteratorError2 = true;
-                _iteratorError2 = err;
-            } finally {
-                try {
-                    if (!_iteratorNormalCompletion2 && _iterator2.return) {
-                        _iterator2.return();
-                    }
-                } finally {
-                    if (_didIteratorError2) {
-                        throw _iteratorError2;
-                    }
-                }
-            }
-
-            this.joiningPeers.forEach(function (jp) {
-                return jp.channels.delete(channel);
-            });
-            return false;
-        }
-    }, {
-        key: 'onChannelError',
-        value: function onChannelError(evt, channel) {
-            console.error('Channel error with id: ' + channel.peerId + ': ', evt);
-        }
-        /**
-         * Executes actions depending on the message stream
-         *
-         * @param {ServiceMessage} M {channel, senderId, recipientId, msg}
-         */
-
-    }, {
-        key: '_handleSvcMsg',
-        value: function _handleSvcMsg(M) {
-            var _this4 = this;
-
-            var wc = M.channel.webChannel;
-            var msg = M.msg;
-            switch (msg.type) {
-                case 'shouldAdd':
-                    {
-                        this.p.add(get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'decode', this).call(this, msg).peerId);
-                        this.connectTo(get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'decode', this).call(this, msg).peerId).then(function (failed) {
-                            debug(_this4.wc.myId + ' shouldConnectTo ', failed);
-                        });
-                        setInterval(function () {
-                            _this4._exchange(wc);
-                        }, delay);
-                        break;
-                    }
-                case 'exchangeInit':
-                    {
-                        debug(wc.peerId + ' exchanging with ' + wc.myId);
-                        this._onExchange(wc, wc.peedId, get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'decode', this).call(this, msg).sample);
-                        break;
-                    }
-            }
-        }
-        /**
-         * Periodic procedure of exchange (active thread)
-         *
-         * @param  {WebChannel}    wc
-         *
-         * @return {Promise<void>}
-         */
-
-    }, {
-        key: '_exchange',
-        value: function _exchange(wc) {
-            var _this5 = this;
-
-            var _super = function _super(name) {
-                return get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), name, _this5);
-            };
-            return __awaiter(this, void 0, void 0, regeneratorRuntime.mark(function _callee() {
-                var _this6 = this;
-
-                var oldestArc, cloneP, sample;
-                return regeneratorRuntime.wrap(function _callee$(_context) {
-                    while (1) {
-                        switch (_context.prev = _context.next) {
-                            case 0:
-                                this.p.incrementAge();
-                                oldestArc = this.p.oldest;
-                                cloneP = new PartialView();
-
-                                this.p.forEach(function (arc) {
-                                    cloneP.add(arc[0], arc[1]);
-                                });
-                                cloneP.remove(oldestArc[0], oldestArc[1]);
-                                sample = this._getSample(cloneP, Math.ceil(this.p.length / 2) - 1);
-
-                                sample.add(wc.myId);
-                                this._replace(sample, oldestArc[0], wc.myId);
-                                wc._sendTo({
-                                    senderId: wc.myId,
-                                    recipientId: oldestArc[0],
-                                    content: _super("encode").call(this, { exchangeInit: { sample: sample } })
-                                });
-                                // async/await response... with timeout
-                                // let respSample = await new PartialView();
-                                _context.next = 11;
-                                return new Promise(function (resolve, reject) {
-                                    wc._msgStream.filter(function (msg) {
-                                        return msg.recipientId === wc.myId && msg.type == 'exchangeResp';
-                                    }).subscribe(function (msg) {
-                                        resolve(_super("decode").call(_this6, msg).respSample);
-                                    }, function (err) {
-                                        error('SprayService Message Stream Error', err, wc);
-                                        reject();
-                                    });
-                                    setTimeout(function () {
-                                        return reject('Exchange response timed out');
-                                    }, timeout);
-                                }).then(function (respSample) {
-                                    if (Array.isArray(respSample)) {
-                                        respSample.forEach(function (arc) {
-                                            _this6.p.add(arc[0], arc[1]);
-                                        });
-                                    } else {
-                                        error('SprayService Exchange response typeof ', typeof respSample === 'undefined' ? 'undefined' : _typeof(respSample));
-                                    }
-                                }).catch(function (err) {
-                                    error('Failed waiting exchange response ', err);
-                                });
-
-                            case 11:
-                                this._replace(sample, wc.myId, oldestArc[0]);
-                                sample.forEach(function (arc) {
-                                    _this6.p.remove(arc[0], arc[1]);
-                                });
-
-                            case 13:
-                            case 'end':
-                                return _context.stop();
-                        }
-                    }
-                }, _callee, this);
-            }));
-        }
-        /**
-         * Periodic procedure of exchange (passive thread)
-         *
-         * @param {WebChannel}  wc
-         * @param {number}      origineId  peerId
-         * @param {PartialView} sample
-         */
-
-    }, {
-        key: '_onExchange',
-        value: function _onExchange(wc, origineId, sample) {
-            var _this7 = this;
-
-            var respSample = this._getSample(this.p, Math.ceil(this.p.length / 2));
-            this._replace(respSample, origineId, wc.myId);
-            wc._sendTo({
-                senderId: wc.myId,
-                recipientId: origineId,
-                content: get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'encode', this).call(this, { exchangeResp: { respSample: respSample } })
-            });
-            this._replace(respSample, wc.myId, origineId);
-            respSample.forEach(function (arc) {
-                _this7.p.remove(arc[0], arc[1]);
-            });
-            sample.forEach(function (arc) {
-                _this7.p.add(arc[0], arc[1]);
-            });
-        }
-        /**
-         * Get n random arcs in the partial view p
-         *
-         * @param  {PartialView} p
-         * @param  {number}      n
-         *
-         * @return {PartialView}   partial view of n arcs from p
-         */
-
-    }, {
-        key: '_getSample',
-        value: function _getSample(p, n) {
-            var cloneP = p.slice();
-            var arcs = new PartialView();
-            while (arcs.length < n && cloneP.length > 0) {
-                var randomIndex = Math.floor(Math.random() * cloneP.length);
-                var arc = cloneP.splice(randomIndex, 1)[0];
-                // TODO verification peer is up
-                // if peer is up
-                arcs.add(arc[0], arc[1]);
-                // else launch this._onPeerDown (or this._onArcDown ?)
-            }
-            return arcs;
-        }
-        /**
-         * Replace a peerId in a PartialView by another
-         *
-         * @param {PartialView} p
-         * @param {number}      oldId
-         * @param {number}      newId
-         */
-
-    }, {
-        key: '_replace',
-        value: function _replace(p, oldId, newId) {
-            p.forEach(function (arc) {
-                if (arc[0] == oldId) {
-                    arc[0] = newId;
-                }
-            });
-        }
-        /**
-         * When a peer is down, we count occurences
-         * and duplicate arcs in the partial view
-         *
-         * @param {number} peerDownId
-         */
-
-    }, {
-        key: '_onPeerDown',
-        value: function _onPeerDown(peerDownId) {
-            var _this8 = this;
-
-            // Count and delete
-            var occ = 0;
-            var toRemove = [];
-            this.p.forEach(function (arc) {
-                if (arc[0] == peerDownId) {
-                    toRemove.push(arc);
-                    occ++;
-                }
-            });
-            toRemove.forEach(function (arc) {
-                _this8.p.remove(arc[0], arc[1]);
-            });
-            // Duplicate arcs
-            for (var i = 0; i < occ; i++) {
-                if (Math.random() > 1 / (this.p.length + occ)) {
-                    var newArcId = this.p[Math.floor(Math.random() * this.p.length)][0];
-                    this.p.add(newArcId);
-                }
-            }
-        }
-        /**
-         * When an arc is down but not the peer,
-         * we duplicate a random arc of the
-         * partial view
-         *
-         * @param {number} peerId
-         * @param {number} age
-         */
-
-    }, {
-        key: '_onArcDown',
-        value: function _onArcDown(peerId, age) {
-            this.p.remove(peerId, age);
-            var newArcId = this.p[Math.floor(Math.random() * this.p.length)][0];
-            this.p.add(newArcId);
-        }
-    }]);
-    return SprayService;
-}(TopologyInterface);
-
+// import { FULL_MESH } from './service/topology/FullMesh'
 /**
  * @type {Object}
  * @property {FULL_MESH} defaults.topology Fully connected topology is the only one available for now
@@ -11078,7 +10914,8 @@ var SprayService = function (_TopologyInterface) {
  * @property {RTCIceServer} defaults.iceServers Set of ice servers for WebRTC
  */
 var defaults$1 = {
-  topology: FULL_MESH,
+  // topology: FULL_MESH,
+  topology: SPRAY,
   signalingURL: 'wss://www.coedit.re:10473',
   iceServers: [{ urls: 'stun:stun3.l.google.com:19302' }]
 };

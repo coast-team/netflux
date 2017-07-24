@@ -1,4 +1,5 @@
-import { FULL_MESH } from './service/topology/FullMesh'
+// import { FULL_MESH } from './service/topology/FullMesh'
+import { SPRAY } from './service/topology/spray/SprayService'
 
 /**
  * @type {Object}
@@ -7,7 +8,8 @@ import { FULL_MESH } from './service/topology/FullMesh'
  * @property {RTCIceServer} defaults.iceServers Set of ice servers for WebRTC
  */
 export const defaults = {
-  topology: FULL_MESH,
+  // topology: FULL_MESH,
+  topology: SPRAY,
   signalingURL: 'wss://www.coedit.re:10473',
   iceServers: [
     {urls: 'stun:stun3.l.google.com:19302'}

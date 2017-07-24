@@ -65,4 +65,15 @@ export class PartialView extends Array {
     }
   }
 
+  toString (): string {
+    let s = "[";
+    this.forEach((arc) => {
+      if (s.length != 1) {
+        s.concat(', ');
+      }
+      s = s.concat(`[${arc[0]},${arc[1]}]`);
+    })
+    s = s.concat("]");
+    return s;
+  }
 }

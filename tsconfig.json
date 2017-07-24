@@ -3,7 +3,7 @@
     "outDir": "./built",
     "allowJs": true,
     "target": "es6",
-    "lib": [ "es6", "dom" ],
+    "lib": [ "es6", "dom", "es7" ],
     "moduleResolution": "node"
   },
   "include": [
