@@ -2,7 +2,6 @@ import 'rxjs/add/operator/map'
 
 import { TopologyInterface } from './TopologyInterface'
 import { fullMesh } from '../../Protobuf'
-import * as log from '../../log'
 
 /**
  * {@link FullMesh} identifier.
@@ -29,12 +28,12 @@ export class FullMesh extends TopologyInterface {
     this.jps = new Map()
     this.svcMsgStream.subscribe(
       msg => this._handleSvcMsg(msg),
-      err => log.error('FullMesh Message Stream Error', err),
+      err => console.error('FullMesh Message Stream Error', err),
       () => this.leave()
     )
     this.channelsSubscription = this.wc.channelBuilder.channels().subscribe(
       ch => (this.jps.set(ch.peerId, ch)),
-      err => log.error('FullMesh set joining peer Error', err)
+      err => console.error('FullMesh set joining peer Error', err)
     )
   }
 
@@ -48,7 +47,7 @@ export class FullMesh extends TopologyInterface {
    * @param {WebSocket|RTCDataChannel} channel
    */
   addJoining (channel) {
-    log.info(this.wc.myId + ' addJoining ' + channel.peerId)
+    console.info(this.wc.myId + ' addJoining ' + channel.peerId)
     const peers = this.wc.members.slice()
 
     // First joining peer
@@ -74,7 +73,7 @@ export class FullMesh extends TopologyInterface {
     this.jps.set(this.wc.myId, ch)
     this.channels.add(ch)
     this.wc._onPeerJoin(ch.peerId)
-    log.info(this.wc.myId + ' _onPeerJoin ' + ch.peerId)
+    console.info(this.wc.myId + ' _onPeerJoin ' + ch.peerId)
   }
 
   /**
@@ -103,7 +102,7 @@ export class FullMesh extends TopologyInterface {
         return ch.send((bytes))
       }
     }
-    return log.error(this.wc.myId + ' The recipient could not be found', msg.recipientId)
+    return console.error(this.wc.myId + ' The recipient could not be found', msg.recipientId)
   }
 
   forwardTo (msg) { this.sendTo(msg) }
@@ -135,7 +134,7 @@ export class FullMesh extends TopologyInterface {
         this.jps.clear()
       } else {
         this.channels.delete(channel)
-        log.info(this.wc.myId + ' _onPeerLeave when iJoin ' + channel.peerId)
+        console.info(this.wc.myId + ' _onPeerLeave when iJoin ' + channel.peerId)
         this.wc._onPeerLeave(channel.peerId)
       }
     } else {
@@ -147,7 +146,7 @@ export class FullMesh extends TopologyInterface {
       }
       if (this.channels.has(channel)) {
         this.channels.delete(channel)
-        log.info(this.wc.myId + ' _onPeerLeave ' + channel.peerId)
+        console.info(this.wc.myId + ' _onPeerLeave ' + channel.peerId)
         this.wc._onPeerLeave(channel.peerId)
       }
     }
@@ -183,7 +182,7 @@ export class FullMesh extends TopologyInterface {
             }))
           })
           .catch(err => {
-            log.error('Failed to join', err)
+            console.error('Failed to join', err)
             channel.send(this.wc._encode({
               recipientId: channel.peerId,
               content: super.encode({ connectedTo: { peers: [] } })
@@ -219,7 +218,7 @@ export class FullMesh extends TopologyInterface {
       case 'joinedPeerId': {
         if (this.iJoin()) {
           this.wc._joinSucceed()
-          log.info(this.wc.myId + ' _joinSucceed ')
+          console.info(this.wc.myId + ' _joinSucceed ')
         } else {
           this.peerJoined(this.jps.get(msg.joinedPeerId))
         }
@@ -232,6 +231,6 @@ export class FullMesh extends TopologyInterface {
   peerJoined (ch) {
     this.channels.add(ch)
     this.wc._onPeerJoin(ch.peerId)
-    log.info(this.wc.myId + ' _onPeerJoin ' + ch.peerID)
+    console.info(this.wc.myId + ' _onPeerJoin ' + ch.peerID)
   }
 }

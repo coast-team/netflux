@@ -5363,34 +5363,6 @@ var TopologyInterface = function (_Service) {
   return TopologyInterface;
 }(Service);
 
-var Level = {
-  TRACE: 1,
-  DEBUG: 2,
-  INFO: 3,
-  WARN: 4,
-  ERROR: 5
-};
-
-var logLevel = Level.TRACE;
-
-
-
-
-
-
-
-
-
-var error = logLevel <= Level.ERROR ? function (msg) {
-  var _console4;
-
-  for (var _len5 = arguments.length, rest = Array(_len5 > 1 ? _len5 - 1 : 0), _key5 = 1; _key5 < _len5; _key5++) {
-    rest[_key5 - 1] = arguments[_key5];
-  }
-
-  (_console4 = console).error.apply(_console4, ['ERROR| ' + msg].concat(rest));
-} : function () {};
-
 /**
  * {@link FullMesh} identifier.
  * @ignore
@@ -5427,14 +5399,14 @@ var FullMesh = function (_TopologyInterface) {
       this.svcMsgStream.subscribe(function (msg) {
         return _this2._handleSvcMsg(msg);
       }, function (err) {
-        return error('FullMesh Message Stream Error', err);
+        return console.error('FullMesh Message Stream Error', err);
       }, function () {
         return _this2.leave();
       });
       this.channelsSubscription = this.wc.channelBuilder.channels().subscribe(function (ch) {
         return _this2.jps.set(ch.peerId, ch);
       }, function (err) {
-        return error('FullMesh set joining peer Error', err);
+        return console.error('FullMesh set joining peer Error', err);
       });
     }
   }, {
@@ -5452,6 +5424,7 @@ var FullMesh = function (_TopologyInterface) {
   }, {
     key: 'addJoining',
     value: function addJoining(channel) {
+      console.info(this.wc.myId + ' addJoining ' + channel.peerId);
       var peers = this.wc.members.slice();
 
       // First joining peer
@@ -5478,6 +5451,7 @@ var FullMesh = function (_TopologyInterface) {
       this.jps.set(this.wc.myId, ch);
       this.channels.add(ch);
       this.wc._onPeerJoin(ch.peerId);
+      console.info(this.wc.myId + ' _onPeerJoin ' + ch.peerId);
     }
 
     /**
@@ -5578,7 +5552,7 @@ var FullMesh = function (_TopologyInterface) {
         }
       }
 
-      return error(this.wc.myId + ' The recipient could not be found', msg.recipientId);
+      return console.error(this.wc.myId + ' The recipient could not be found', msg.recipientId);
     }
   }, {
     key: 'forwardTo',
@@ -5681,6 +5655,7 @@ var FullMesh = function (_TopologyInterface) {
           this.jps.clear();
         } else {
           this.channels.delete(channel);
+          console.info(this.wc.myId + ' _onPeerLeave when iJoin ' + channel.peerId);
           this.wc._onPeerLeave(channel.peerId);
         }
       } else {
@@ -5715,6 +5690,7 @@ var FullMesh = function (_TopologyInterface) {
 
         if (this.channels.has(channel)) {
           this.channels.delete(channel);
+          console.info(this.wc.myId + ' _onPeerLeave ' + channel.peerId);
           this.wc._onPeerLeave(channel.peerId);
         }
       }
@@ -5805,7 +5781,7 @@ var FullMesh = function (_TopologyInterface) {
                 content: get(FullMesh.prototype.__proto__ || Object.getPrototypeOf(FullMesh.prototype), 'encode', _this3).call(_this3, { connectedTo: { peers: peers } })
               }));
             }).catch(function (err) {
-              error('Failed to join', err);
+              console.error('Failed to join', err);
               channel.send(_this3.wc._encode({
                 recipientId: channel.peerId,
                 content: get(FullMesh.prototype.__proto__ || Object.getPrototypeOf(FullMesh.prototype), 'encode', _this3).call(_this3, { connectedTo: { peers: [] } })
@@ -5867,6 +5843,7 @@ var FullMesh = function (_TopologyInterface) {
           {
             if (this.iJoin()) {
               this.wc._joinSucceed();
+              console.info(this.wc.myId + ' _joinSucceed ');
             } else {
               this.peerJoined(this.jps.get(msg.joinedPeerId));
             }
@@ -5880,6 +5857,7 @@ var FullMesh = function (_TopologyInterface) {
     value: function peerJoined(ch) {
       this.channels.add(ch);
       this.wc._onPeerJoin(ch.peerId);
+      console.info(this.wc.myId + ' _onPeerJoin ' + ch.peerID);
     }
   }]);
   return FullMesh;
@@ -9374,7 +9352,7 @@ var ChannelBuilder = function (_Service) {
     _this.svcMsgStream.subscribe(function (msg) {
       return _this._handleInnerMessage(msg);
     }, function (err) {
-      return error('ChannelBuilder Message Stream Error', err, wc);
+      return console.error('ChannelBuilder Message Stream Error', err, wc);
     }, function () {
       return _this.init();
     });
@@ -9934,7 +9912,7 @@ var WebChannel = function (_Service) {
     _this.svcMsgStream.subscribe(function (msg) {
       return _this._handleServiceMessage(msg);
     }, function (err) {
-      return error('service/WebChannel inner message error', err);
+      return console.error('service/WebChannel inner message error', err);
     });
 
     /**
@@ -10598,8 +10576,8 @@ var BotServer = function () {
     this.botSettings = Object.assign({}, botDefaults.bot, options.bot);
     this.serverSettings = {
       perMessageDeflate: this.botSettings.perMessageDeflate,
-      verifyClient: function verifyClient(info$$1) {
-        return _this.validateConnection(info$$1);
+      verifyClient: function verifyClient(info) {
+        return _this.validateConnection(info);
       },
       server: this.botSettings.server
 
@@ -10670,7 +10648,7 @@ var BotServer = function () {
               if (wc !== undefined) {
                 WebSocketBuilder.newIncomingSocket(wc, ws, senderId);
               } else {
-                error('Cannot find WebChannel for a new internal channel');
+                console.error('Cannot find WebChannel for a new internal channel');
               }
               break;
             }
@@ -10742,8 +10720,8 @@ var BotServer = function () {
     }
   }, {
     key: 'validateConnection',
-    value: function validateConnection(info$$1) {
-      var _url$parse2 = url.parse(info$$1.req.url, true),
+    value: function validateConnection(info) {
+      var _url$parse2 = url.parse(info.req.url, true),
           pathname = _url$parse2.pathname,
           query = _url$parse2.query;
 

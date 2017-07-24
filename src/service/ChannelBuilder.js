@@ -4,7 +4,6 @@ import { Service } from './Service'
 import { channelBuilder } from '../Protobuf'
 import { WebSocketBuilder } from '../WebSocketBuilder'
 import { WebRTCBuilder } from './WebRTCBuilder'
-import * as log from '../log'
 
 const ID = 2
 const ME = {
@@ -50,7 +49,7 @@ export class ChannelBuilder extends Service {
     // Subscribe to WebChannel internal messages
     this.svcMsgStream.subscribe(
       msg => this._handleInnerMessage(msg),
-      err => log.error('ChannelBuilder Message Stream Error', err, wc),
+      err => console.error('ChannelBuilder Message Stream Error', err, wc),
       () => this.init()
     )
   }

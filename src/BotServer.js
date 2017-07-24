@@ -2,7 +2,6 @@ import { WebSocketBuilder } from './WebSocketBuilder'
 import { WebChannel } from './service/WebChannel'
 import { Channel } from './Channel'
 import { defaults } from './defaults'
-import * as log from './log'
 
 const url = require('url')
 
@@ -110,7 +109,7 @@ export class BotServer {
           if (wc !== undefined) {
             WebSocketBuilder.newIncomingSocket(wc, ws, senderId)
           } else {
-            log.error('Cannot find WebChannel for a new internal channel')
+            console.error('Cannot find WebChannel for a new internal channel')
           }
           break
         }

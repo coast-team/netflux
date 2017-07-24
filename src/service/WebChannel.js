@@ -11,7 +11,6 @@ import { Message, webChannel, service } from '../Protobuf'
 import { UserMessage } from '../UserMessage'
 import { Util } from '../Util'
 import { defaults } from '../defaults'
-import * as log from '../log'
 
 /**
  * Maximum identifier number for {@link WebChannel#_generateId} function.
@@ -161,7 +160,7 @@ export class WebChannel extends Service {
     this.channelBuilder = new ChannelBuilder(this)
     this.svcMsgStream.subscribe(
       msg => this._handleServiceMessage(msg),
-      err => log.error('service/WebChannel inner message error', err)
+      err => console.error('service/WebChannel inner message error', err)
     )
 
     /**
