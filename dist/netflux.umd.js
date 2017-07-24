@@ -4731,12 +4731,13 @@ var fullMesh = $root.fullMesh = function () {
         Message.prototype.connectTo = null;
         Message.prototype.connectedTo = null;
         Message.prototype.joiningPeerId = 0;
-        Message.prototype.joinedPeerId = 0;
+        Message.prototype.joinSucceed = false;
+        Message.prototype.joinFailedPeerId = 0;
 
         var $oneOfFields = void 0;
 
         Object.defineProperty(Message.prototype, "type", {
-            get: $util.oneOfGetter($oneOfFields = ["connectTo", "connectedTo", "joiningPeerId", "joinedPeerId"]),
+            get: $util.oneOfGetter($oneOfFields = ["connectTo", "connectedTo", "joiningPeerId", "joinSucceed", "joinFailedPeerId"]),
             set: $util.oneOfSetter($oneOfFields)
         });
 
@@ -4749,7 +4750,8 @@ var fullMesh = $root.fullMesh = function () {
             if (message.connectTo != null && message.hasOwnProperty("connectTo")) $root.fullMesh.Peers.encode(message.connectTo, writer.uint32(10).fork()).ldelim();
             if (message.connectedTo != null && message.hasOwnProperty("connectedTo")) $root.fullMesh.Peers.encode(message.connectedTo, writer.uint32(18).fork()).ldelim();
             if (message.joiningPeerId != null && message.hasOwnProperty("joiningPeerId")) writer.uint32(24).uint32(message.joiningPeerId);
-            if (message.joinedPeerId != null && message.hasOwnProperty("joinedPeerId")) writer.uint32(32).uint32(message.joinedPeerId);
+            if (message.joinSucceed != null && message.hasOwnProperty("joinSucceed")) writer.uint32(32).bool(message.joinSucceed);
+            if (message.joinFailedPeerId != null && message.hasOwnProperty("joinFailedPeerId")) writer.uint32(40).uint32(message.joinFailedPeerId);
             return writer;
         };
 
@@ -4770,7 +4772,10 @@ var fullMesh = $root.fullMesh = function () {
                         message.joiningPeerId = reader.uint32();
                         break;
                     case 4:
-                        message.joinedPeerId = reader.uint32();
+                        message.joinSucceed = reader.bool();
+                        break;
+                    case 5:
+                        message.joinFailedPeerId = reader.uint32();
                         break;
                     default:
                         reader.skipType(tag & 7);
@@ -5411,11 +5416,6 @@ var FullMesh = function (_TopologyInterface) {
         return console.error('FullMesh set joining peer Error', err);
       });
     }
-  }, {
-    key: 'iJoin',
-    value: function iJoin() {
-      return this.jps.has(this.wc.myId);
-    }
 
     /**
      * Add a peer to the `WebChannel`.
@@ -5434,7 +5434,7 @@ var FullMesh = function (_TopologyInterface) {
       if (peers.length === 0) {
         channel.send(this.wc._encode({
           recipientId: channel.peerId,
-          content: get(FullMesh.prototype.__proto__ || Object.getPrototypeOf(FullMesh.prototype), 'encode', this).call(this, { joinedPeerId: channel.peerId })
+          content: get(FullMesh.prototype.__proto__ || Object.getPrototypeOf(FullMesh.prototype), 'encode', this).call(this, { joinSucceed: true })
         }));
 
         // There are at least 2 members in the network
@@ -5622,52 +5622,25 @@ var FullMesh = function (_TopologyInterface) {
   }, {
     key: 'onChannelClose',
     value: function onChannelClose(closeEvt, channel) {
-      if (this.iJoin()) {
+      if (this.wc.state === this.wc.JOINING) {
         var firstChannel = this.channels.values().next().value;
         if (firstChannel.peerId === channel.peerId) {
-          this.wc._joinFailed('Intermediary peer has gone: ' + closeEvt.reason);
-          var _iteratorNormalCompletion6 = true;
-          var _didIteratorError6 = false;
-          var _iteratorError6 = undefined;
-
-          try {
-            for (var _iterator6 = this.channels[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
-              var ch = _step6.value;
-
-              ch.clearHandlers();
-              ch.close();
-            }
-          } catch (err) {
-            _didIteratorError6 = true;
-            _iteratorError6 = err;
-          } finally {
-            try {
-              if (!_iteratorNormalCompletion6 && _iterator6.return) {
-                _iterator6.return();
-              }
-            } finally {
-              if (_didIteratorError6) {
-                throw _iteratorError6;
-              }
-            }
-          }
-
-          this.channels.clear();
-          this.jps.clear();
+          this.wc._joinFailed(this.wc.myId + ' intermediary peer has gone: ' + closeEvt.reason);
+          this.leave();
         } else {
           this.channels.delete(channel);
-          console.info(this.wc.myId + ' _onPeerLeave when iJoin ' + channel.peerId);
+          console.info(this.wc.myId + ' _onPeerLeave while I am joining ' + channel.peerId);
           this.wc._onPeerLeave(channel.peerId);
         }
       } else {
-        var _iteratorNormalCompletion7 = true;
-        var _didIteratorError7 = false;
-        var _iteratorError7 = undefined;
+        var _iteratorNormalCompletion6 = true;
+        var _didIteratorError6 = false;
+        var _iteratorError6 = undefined;
 
         try {
-          for (var _iterator7 = this.jps[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
-            var _step7$value = slicedToArray(_step7.value, 1),
-                id = _step7$value[0];
+          for (var _iterator6 = this.jps[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+            var _step6$value = slicedToArray(_step6.value, 1),
+                id = _step6$value[0];
 
             if (id === channel.peerId) {
               this.jps.delete(id);
@@ -5675,16 +5648,16 @@ var FullMesh = function (_TopologyInterface) {
             }
           }
         } catch (err) {
-          _didIteratorError7 = true;
-          _iteratorError7 = err;
+          _didIteratorError6 = true;
+          _iteratorError6 = err;
         } finally {
           try {
-            if (!_iteratorNormalCompletion7 && _iterator7.return) {
-              _iterator7.return();
+            if (!_iteratorNormalCompletion6 && _iterator6.return) {
+              _iterator6.return();
             }
           } finally {
-            if (_didIteratorError7) {
-              throw _iteratorError7;
+            if (_didIteratorError6) {
+              throw _iteratorError6;
             }
           }
         }
@@ -5723,10 +5696,38 @@ var FullMesh = function (_TopologyInterface) {
         case 'connectTo':
           {
             var peers = msg.connectTo.peers;
-
             var counter = 0;
             var connected = [];
             var allCompleted = new Promise(function (resolve) {
+              var _iteratorNormalCompletion7 = true;
+              var _didIteratorError7 = false;
+              var _iteratorError7 = undefined;
+
+              try {
+                for (var _iterator7 = _this3.channels[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
+                  var ch = _step7.value;
+
+                  var index = peers.indexOf(ch.peerId);
+                  if (index !== -1) {
+                    peers.splice(index, 1);
+                  }
+                  connected[connected.length] = ch.peerId;
+                }
+              } catch (err) {
+                _didIteratorError7 = true;
+                _iteratorError7 = err;
+              } finally {
+                try {
+                  if (!_iteratorNormalCompletion7 && _iterator7.return) {
+                    _iterator7.return();
+                  }
+                } finally {
+                  if (_didIteratorError7) {
+                    throw _iteratorError7;
+                  }
+                }
+              }
+
               var _iteratorNormalCompletion8 = true;
               var _didIteratorError8 = false;
               var _iteratorError8 = undefined;
@@ -5736,14 +5737,13 @@ var FullMesh = function (_TopologyInterface) {
                   var id = _step8.value;
 
                   _this3.wc.channelBuilder.connectTo(id).then(function (ch) {
-                    console.log(_this3.wc.myId + ' connected to ' + id);
                     _this3.peerJoined(ch);
                     connected[connected.length] = id;
                     if (++counter === peers.length) {
                       resolve();
                     }
                   }).catch(function (err) {
-                    console.warn(_this3.wc.myId + ' could not connect to ' + id, err);
+                    console.warn(_this3.wc.myId + ' failed to connect to ' + id, err);
                     if (++counter === peers.length) {
                       resolve();
                     }
@@ -5769,7 +5769,6 @@ var FullMesh = function (_TopologyInterface) {
               }
             });
             allCompleted.then(function () {
-              console.log(_this3.wc.myId + 'SEND ', { connectedTo: { peers: connected } });
               channel.send(_this3.wc._encode({
                 recipientId: channel.peerId,
                 content: get(FullMesh.prototype.__proto__ || Object.getPrototypeOf(FullMesh.prototype), 'encode', _this3).call(_this3, { connectedTo: { peers: connected } })
@@ -5780,7 +5779,6 @@ var FullMesh = function (_TopologyInterface) {
         case 'connectedTo':
           {
             var _peers = msg.connectedTo.peers;
-
             var missingPeers = [];
             var _iteratorNormalCompletion9 = true;
             var _didIteratorError9 = false;
@@ -5790,7 +5788,7 @@ var FullMesh = function (_TopologyInterface) {
               for (var _iterator9 = this.wc.members[Symbol.iterator](), _step9; !(_iteratorNormalCompletion9 = (_step9 = _iterator9.next()).done); _iteratorNormalCompletion9 = true) {
                 var _id = _step9.value;
 
-                if (!_peers.includes(_id)) {
+                if (!_peers.includes(_id) && _id !== channel.peerId) {
                   missingPeers[missingPeers.length] = _id;
                 }
               }
@@ -5812,10 +5810,13 @@ var FullMesh = function (_TopologyInterface) {
             if (missingPeers.length === 0) {
               channel.send(this.wc._encode({
                 recipientId: channel.peerId,
-                content: get(FullMesh.prototype.__proto__ || Object.getPrototypeOf(FullMesh.prototype), 'encode', this).call(this, { joinedPeerId: channel.peerId })
+                content: get(FullMesh.prototype.__proto__ || Object.getPrototypeOf(FullMesh.prototype), 'encode', this).call(this, { joinSucceed: true })
               }));
             } else {
-              // TODO
+              channel.send(this.wc._encode({
+                recipientId: channel.peerId,
+                content: get(FullMesh.prototype.__proto__ || Object.getPrototypeOf(FullMesh.prototype), 'encode', this).call(this, { connectTo: { peers: missingPeers } })
+              }));
             }
             break;
           }
@@ -5824,11 +5825,17 @@ var FullMesh = function (_TopologyInterface) {
             this.jps.set(msg.joiningPeerId, channel);
             break;
           }
-        case 'joinedPeerId':
+        case 'joinSucceed':
           {
             this.jps.delete(this.wc.myId);
             this.wc._joinSucceed();
             console.info(this.wc.myId + ' _joinSucceed ');
+            break;
+          }
+        case 'joinFailedPeerId':
+          {
+            this.jps.delete(this.wc.myId);
+            console.info(this.wc.myId + ' joinFailed ' + msg.joinFailedPeerId);
             break;
           }
       }
@@ -10010,12 +10017,12 @@ var WebChannel = function (_Service) {
   }, {
     key: 'disconnect',
     value: function disconnect() {
+      this._setState(DISCONNECTED);
       this._pingTime = 0;
       this.members = [];
       this._joinSucceed = function () {};
       this._joinFailed = function () {};
       this._svcMsgStream.complete();
-      this._setState(DISCONNECTED);
       this._signaling.close();
     }
 

@@ -525,12 +525,13 @@ export const fullMesh = $root.fullMesh = (() => {
         Message.prototype.connectTo = null;
         Message.prototype.connectedTo = null;
         Message.prototype.joiningPeerId = 0;
-        Message.prototype.joinedPeerId = 0;
+        Message.prototype.joinSucceed = false;
+        Message.prototype.joinFailedPeerId = 0;
 
         let $oneOfFields;
 
         Object.defineProperty(Message.prototype, "type", {
-            get: $util.oneOfGetter($oneOfFields = ["connectTo", "connectedTo", "joiningPeerId", "joinedPeerId"]),
+            get: $util.oneOfGetter($oneOfFields = ["connectTo", "connectedTo", "joiningPeerId", "joinSucceed", "joinFailedPeerId"]),
             set: $util.oneOfSetter($oneOfFields)
         });
 
@@ -547,8 +548,10 @@ export const fullMesh = $root.fullMesh = (() => {
                 $root.fullMesh.Peers.encode(message.connectedTo, writer.uint32(18).fork()).ldelim();
             if (message.joiningPeerId != null && message.hasOwnProperty("joiningPeerId"))
                 writer.uint32(24).uint32(message.joiningPeerId);
-            if (message.joinedPeerId != null && message.hasOwnProperty("joinedPeerId"))
-                writer.uint32(32).uint32(message.joinedPeerId);
+            if (message.joinSucceed != null && message.hasOwnProperty("joinSucceed"))
+                writer.uint32(32).bool(message.joinSucceed);
+            if (message.joinFailedPeerId != null && message.hasOwnProperty("joinFailedPeerId"))
+                writer.uint32(40).uint32(message.joinFailedPeerId);
             return writer;
         };
 
@@ -569,7 +572,10 @@ export const fullMesh = $root.fullMesh = (() => {
                     message.joiningPeerId = reader.uint32();
                     break;
                 case 4:
-                    message.joinedPeerId = reader.uint32();
+                    message.joinSucceed = reader.bool();
+                    break;
+                case 5:
+                    message.joinFailedPeerId = reader.uint32();
                     break;
                 default:
                     reader.skipType(tag & 7);
