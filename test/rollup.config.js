@@ -1,8 +1,7 @@
 import fs from 'fs'
-import includePaths from 'rollup-plugin-includepaths'
 import string from 'rollup-plugin-string'
-import replace from 'rollup-plugin-replace'
 import commonjs from 'rollup-plugin-commonjs'
+import typescript from 'rollup-plugin-typescript2'
 
 const entries = []
 function read (path) {
@@ -24,27 +23,12 @@ for (let entry of entries) {
     format: 'cjs',
     dest: entry.replace(/^test/, 'test/.rolledup'),
     plugins: [
+      typescript(),
       string({
         include: 'test/**/*.txt'
       }),
-      includePaths({
-        paths: ['', 'test/', 'src/'],
-        extensions: ['.js', '.txt']
-      }),
       commonjs({
-        extensions: [ '.js' ],
-        sourceMap: false,
-        ignoreGlobal: false,
-        include: 'node_modules/**',
         namedExports: { 'node_modules/protobufjs/minimal.js': [ 'Reader', 'Writer', 'util', 'roots' ] }
-      }),
-      replace({
-        WEB_RTC_MODULE: `require('wrtc')`,
-        WEB_SOCKET_MODULE: `require('uws')`,
-        TEXT_ENCODING_MODULE: `require('text-encoding')`,
-        EVENT_SOURCE_MODULE: `require('eventsource')`,
-        FETCH_MODULE: `require('node-fetch')`,
-        LOG_LEVEL: `Level.TRACE`
       })
     ]
   })

@@ -4,7 +4,6 @@ import { ServiceMessage } from '../../Service'
 import { WebChannel } from '../../WebChannel'
 import { Channel } from '../../../Channel'
 import { spray, service, channelBuilder } from '../../../Protobuf'
-import * as log from '../../../log'
 
 /**
  * Delay in milliseconds between two exchanges
@@ -37,10 +36,10 @@ export class SprayService extends TopologyInterface {
   interval: NodeJS.Timer;
 
   constructor (wc: WebChannel) {
-    super(SPRAY, spray.Message, wc._msgStream);
+    super(SPRAY, spray.Message, wc._svcMsgStream);
     this.wc = wc;
     this.init();
-    log.info(this.wc.myId + ' constructor ');
+    console.info(this.wc.myId + ' constructor ');
   }
 
   init () {
@@ -53,12 +52,13 @@ export class SprayService extends TopologyInterface {
 
     this.innerStream.subscribe(
       msg => this._handleSvcMsg(msg),
-      err => log.error('Spray Message Stream Error', err)
+      err => console.error('Spray Message Stream Error', err),
+      () => this.leave()
     );
 
-    this.channelsSubscription = this.wc.channelBuilderSvc.channels().subscribe(
+    this.channelsSubscription = this.wc.channelBuilder.channels().subscribe(
       ch => (this.jps.set(ch.peerId, ch)),
-      err => log.error('Spray set joining peer Error', err)
+      err => console.error('Spray set joining peer Error', err)
     );
 
     setTimeout(() => this._clearReceived(), 5000);
@@ -74,7 +74,7 @@ export class SprayService extends TopologyInterface {
    * @param  {Channel}            channel
    */
   addJoining (channel: Channel): void {
-    log.info(this.wc.myId + ' addJoining ' + channel.peerId);
+    console.info(this.wc.myId + ' addJoining ' + channel.peerId);
     const peers = this.wc.members.slice();
 
     // First joining peer
@@ -86,9 +86,9 @@ export class SprayService extends TopologyInterface {
       }));
       this.peerJoined(channel);
 
-      log.debug(this.wc.myId + ' shouldAdd ' + channel.peerId);
+      console.log(this.wc.myId + ' shouldAdd ' + channel.peerId);
       this.p.add(channel.peerId);
-      log.debug(this.wc.myId + ' partialView increased : ' + this.p.toString());
+      console.log(this.wc.myId + ' partialView increased : ' + this.p.toString());
 
       channel.send(this.wc._encode({
         recipientId: channel.peerId,
@@ -99,7 +99,7 @@ export class SprayService extends TopologyInterface {
     // There are at least 2 members in the network
   } else {
     // TODO : modify for spray algo
-    log.error(this.wc.myId + ' addJoining with several members ');
+    console.error(this.wc.myId + ' addJoining with several members ');
     this.jps.set(channel.peerId, channel);
     this.wc._send({ content: super.encode({ joiningPeerId: channel.peerId }) });
     channel.send(this.wc._encode({
@@ -110,7 +110,7 @@ export class SprayService extends TopologyInterface {
   }
 
     // if (peers.length == 0) { // Case of two peers in the network
-    //   log.debug(this.wc.myId + ' there is nobody in partialView ');
+    //   console.log(this.wc.myId + ' there is nobody in partialView ');
     //
     //   let M1: ServiceMessage = {
     //                             channel: channel,
@@ -119,7 +119,7 @@ export class SprayService extends TopologyInterface {
     //                             msg: super.decode(service.Message.decode(super.encode({ shouldAdd: channel.peerId })).content), // decode of encode otherwise the type is not detected
     //                             timestamp: Date.now()
     //                            }
-    //   log.debug(this.wc.myId + ' sending first shouldAdd to me ');
+    //   console.log(this.wc.myId + ' sending first shouldAdd to me ');
     //   this._handleSvcMsg(M1);
     //
     //   let M2 = {
@@ -127,12 +127,12 @@ export class SprayService extends TopologyInterface {
     //     content: super.encode({ shouldAdd: this.wc.myId }),
     //     meta: { timestamp: Date.now() }
     //   }
-    //   log.debug(this.wc.myId + ' sending first shouldAdd to ' + M2.recipientId + "\n" + JSON.stringify(M2) + "\n content : " + JSON.stringify(super.decode(service.Message.decode(M2.content).content)));
+    //   console.log(this.wc.myId + ' sending first shouldAdd to ' + M2.recipientId + "\n" + JSON.stringify(M2) + "\n content : " + JSON.stringify(super.decode(service.Message.decode(M2.content).content)));
     //   channel.send(this.wc._encode(M2));
     //
     // } else {
     //   peers.forEach( (peer) => {
-    //     log.info(this.wc.myId + ' sending shouldAdd message to ' + peer);
+    //     console.info(this.wc.myId + ' sending shouldAdd message to ' + peer);
     //
     //     let M = this.wc._encode({
     //               recipientId: peer,
@@ -143,27 +143,27 @@ export class SprayService extends TopologyInterface {
     //   });
     // }
 
-    log.info(this.wc.myId + ' addJoining finished ' + channel.peerId);
+    console.info(this.wc.myId + ' addJoining finished ' + channel.peerId);
   }
 
   initJoining (ch: Channel): void {
-    log.info(this.wc.myId + ' initJoining ');
+    console.info(this.wc.myId + ' initJoining ');
     this.jps.set(this.wc.myId, ch)
     this.channels.add(ch);
     this.wc._onPeerJoin(ch.peerId);
-    log.info(this.wc.myId + ' _onPeerJoin ' + ch.peerId);
+    console.info(this.wc.myId + ' _onPeerJoin ' + ch.peerId);
   }
 
   /**
    * Send message to all WebChannel members
    */
   send (msg: {senderId: number, recipientId: number, isService: boolean, content: Uint8Array, meta: any}): void {
-    log.info(this.wc.myId + ' send ' + JSON.stringify(msg));
+    console.info(this.wc.myId + ' send ' + JSON.stringify(msg));
     try {
-      log.info(this.wc.myId + ' content : ' + JSON.stringify(super.decode(service.Message.decode(msg.content).content)));
+      console.info(this.wc.myId + ' content : ' + JSON.stringify(super.decode(service.Message.decode(msg.content).content)));
     } catch (e) {
       try {
-        log.info(this.wc.myId + ' content : ' + JSON.stringify(channelBuilder.Message.decode(msg.content)));
+        console.info(this.wc.myId + ' content : ' + JSON.stringify(channelBuilder.Message.decode(msg.content)));
       } catch (e2) {
 
       }
@@ -174,24 +174,24 @@ export class SprayService extends TopologyInterface {
         msg.meta = {};
       }
       msg.meta.timestamp = Date.now();
-      log.info(this.wc.myId + ' adding timestamp before sending ' + msg.meta.timestamp, JSON.stringify(msg));
+      console.info(this.wc.myId + ' adding timestamp before sending ' + msg.meta.timestamp, JSON.stringify(msg));
     }
 
     const bytes = this.wc._encode(msg);
 
     const listChan = [];
-    log.info(this.wc.myId + ' partialView : ' + this.p.toString());
+    console.info(this.wc.myId + ' partialView : ' + this.p.toString());
     this.p.forEach((arc) => {
-        log.info(this.wc.myId + ' arc : ' + arc + "\nthis.channels.size : " + this.channels.size);
+        console.info(this.wc.myId + ' arc : ' + arc + "\nthis.channels.size : " + this.channels.size);
         for (let ch of this.channels) {
-          log.info(this.wc.myId + ' arc[0] : ' + arc[0] + "\n ch : " + ch.peerId);
+          console.info(this.wc.myId + ' arc[0] : ' + arc[0] + "\n ch : " + ch.peerId);
           if (ch.peerId == arc[0]) {
-            log.info(this.wc.myId + ' channel found ' + ch.peerId);
+            console.info(this.wc.myId + ' channel found ' + ch.peerId);
             listChan.push(ch);
             return;
           }
         }
-        log.error(this.wc.myId + ' channel not found ' + arc[0]);
+        console.error(this.wc.myId + ' channel not found ' + arc[0]);
     });
 
     for (let ch of listChan) {
@@ -203,12 +203,12 @@ export class SprayService extends TopologyInterface {
    * Send message to a specific peer (recipientId)
    */
   sendTo (msg: {senderId: number, recipientId: number, isService: boolean, content: Uint8Array, meta: any}): any {
-    log.info(this.wc.myId + ' sendTo ' + JSON.stringify(msg));
+    console.info(this.wc.myId + ' sendTo ' + JSON.stringify(msg));
     try {
-      log.info(this.wc.myId + ' content : ' + JSON.stringify(super.decode(service.Message.decode(msg.content).content)));
+      console.info(this.wc.myId + ' content : ' + JSON.stringify(super.decode(service.Message.decode(msg.content).content)));
     } catch (e) {
       try {
-        log.info(this.wc.myId + ' content : ' + JSON.stringify(channelBuilder.Message.decode(msg.content)));
+        console.info(this.wc.myId + ' content : ' + JSON.stringify(channelBuilder.Message.decode(msg.content)));
       } catch (e2) {
 
       }
@@ -219,14 +219,14 @@ export class SprayService extends TopologyInterface {
         msg.meta = {};
       }
       msg.meta.timestamp = Date.now();
-      log.info(this.wc.myId + ' adding timestamp before sending ' + msg.meta.timestamp, JSON.stringify(msg));
+      console.info(this.wc.myId + ' adding timestamp before sending ' + msg.meta.timestamp, JSON.stringify(msg));
     }
 
     const bytes = this.wc._encode(msg);
 
-    log.info(this.wc.myId + ' partialView : ' + this.p);
+    console.info(this.wc.myId + ' partialView : ' + this.p);
     if (this.p.length == 0) {
-      log.info(this.wc.myId + ' empty partialView ');
+      console.info(this.wc.myId + ' empty partialView ');
       for (let ch of this.channels) {
         if (ch.peerId === msg.recipientId) {
           return ch.send(bytes);
@@ -242,7 +242,7 @@ export class SprayService extends TopologyInterface {
             return;
           }
         }
-        log.error(this.wc.myId + ' channel not found ' + arc[0]);
+        console.error(this.wc.myId + ' channel not found ' + arc[0]);
     });
 
     for (let ch of listChan) {
@@ -251,13 +251,13 @@ export class SprayService extends TopologyInterface {
       }
     }
 
-    return log.error(this.wc.myId + ' The recipient could not be found ', msg.recipientId);
+    return console.error(this.wc.myId + ' The recipient could not be found ', msg.recipientId);
   }
 
   forwardTo (msg: {senderId: number, recipientId: number, isService: boolean, content: Uint8Array, meta: any}): void {
-    log.info(this.wc.myId + ' forwardTo ' + JSON.stringify(msg));
+    console.info(this.wc.myId + ' forwardTo ' + JSON.stringify(msg));
     try {
-      log.info(this.wc.myId + ' content : ' + JSON.stringify(super.decode(service.Message.decode(msg.content).content)));
+      console.info(this.wc.myId + ' content : ' + JSON.stringify(super.decode(service.Message.decode(msg.content).content)));
     } catch (e) {
 
     }
@@ -265,9 +265,9 @@ export class SprayService extends TopologyInterface {
   }
 
   forward (msg: {senderId: number, recipientId: number, isService: boolean, content: Uint8Array, meta: any}): void {
-    log.info(this.wc.myId + ' forward ' + JSON.stringify(msg));
+    console.info(this.wc.myId + ' forward ' + JSON.stringify(msg));
     try {
-      log.info(this.wc.myId + ' content : ' + JSON.stringify(super.decode(service.Message.decode(msg.content).content)));
+      console.info(this.wc.myId + ' content : ' + JSON.stringify(super.decode(service.Message.decode(msg.content).content)));
     } catch (e) {
 
     }
@@ -276,8 +276,8 @@ export class SprayService extends TopologyInterface {
       peersId.push(arc[0]);
     });
 
-    log.debug(this.wc.myId + ' peersId : ' + peersId + "\nlength : " + peersId.length);
-    log.debug(this.wc.myId + ' msg.recipientId : ' + msg.recipientId);
+    console.log(this.wc.myId + ' peersId : ' + peersId + "\nlength : " + peersId.length);
+    console.log(this.wc.myId + ' msg.recipientId : ' + msg.recipientId);
     if (peersId.includes(msg.recipientId)) {
       this.sendTo(msg);
     } else {
@@ -286,7 +286,7 @@ export class SprayService extends TopologyInterface {
   }
 
   leave (): void {
-    log.info(this.wc.myId + ' leave ');
+    console.info(this.wc.myId + ' leave ');
     // TODO
     for (let c of this.channels) {
       c.clearHandlers();
@@ -297,7 +297,7 @@ export class SprayService extends TopologyInterface {
   }
 
   onChannelClose (closeEvt: CloseEvent, channel: Channel): boolean {
-    log.info(this.wc.myId + ' onChannelClose ');
+    console.info(this.wc.myId + ' onChannelClose ');
     // TODO ?
     for (let c of this.channels) {
       if (c.peerId === channel.peerId) {
@@ -308,7 +308,7 @@ export class SprayService extends TopologyInterface {
   }
 
   onChannelError (evt: Event, channel: Channel): void {
-    log.info(this.wc.myId + ' onChannelError ');
+    console.info(this.wc.myId + ' onChannelError ');
     console.error(`Channel error with id: ${channel.peerId}: `, evt);
   }
 
@@ -319,7 +319,7 @@ export class SprayService extends TopologyInterface {
    */
   private _handleSvcMsg (M: ServiceMessage): void {
     const msg = M.msg;
-    log.info(this.wc.myId + " new message reception : " + JSON.stringify(msg) + ", timestamp : " + M.timestamp);
+    console.info(this.wc.myId + " new message reception : " + JSON.stringify(msg) + ", timestamp : " + M.timestamp);
 
     if (M.timestamp != undefined) {
       let alreadyReceived = false;
@@ -331,47 +331,47 @@ export class SprayService extends TopologyInterface {
       });
 
       if (alreadyReceived) {
-        log.debug(this.wc.myId + " message already received ");
+        console.log(this.wc.myId + " message already received ");
         return;
       }
 
       this.received.push([M.senderId, M.timestamp]);
-      log.info(this.wc.myId + ' received length : ' + this.received.length + "\n" + this.received);
+      console.info(this.wc.myId + ' received length : ' + this.received.length + "\n" + this.received);
     }
 
 
     if (M.recipientId != this.wc.myId) {
-      log.error(this.wc.myId + ' received but not for me : ' + JSON.stringify(msg));
+      console.error(this.wc.myId + ' received but not for me : ' + JSON.stringify(msg));
       this.forward(msg);
       return;
     }
 
-    log.debug(this.wc.myId + ' message type : ' + msg.type);
+    console.log(this.wc.myId + ' message type : ' + msg.type);
     switch (msg.type) {
 
       case 'shouldAdd': {
 
-        log.debug(this.wc.myId + ' shouldAdd ' + msg.shouldAdd);
+        console.log(this.wc.myId + ' shouldAdd ' + msg.shouldAdd);
         this.p.add(msg.shouldAdd);
-        log.debug(this.wc.myId + ' partialView increased : ' + this.p.toString());
+        console.log(this.wc.myId + ' partialView increased : ' + this.p.toString());
         break;
 
       }
       case 'exchangeInit': {
 
-        log.debug(M.channel.peerId + ' exchanging with ' + this.wc.myId);
+        console.log(M.channel.peerId + ' exchanging with ' + this.wc.myId);
         this._onExchange(this.wc, M.channel.peerId, msg.exchangeInit.sample);
         break;
 
       }
       case 'connectTo': {
 
-        log.debug(this.wc.myId + ' connectTo ' + msg.connectTo);
+        console.log(this.wc.myId + ' connectTo ' + msg.connectTo);
         const { peers } = msg.connectTo;
 
         const promises = [];
         for (let id of peers) {
-          promises[promises.length] = this.wc.channelBuilderSvc.connectTo(id);
+          promises[promises.length] = this.wc.channelBuilder.connectTo(id);
         }
         Promise.all(promises)
           .then(channels => {
@@ -384,7 +384,7 @@ export class SprayService extends TopologyInterface {
             // }))
           })
           .catch(err => {
-            log.error('Failed to join', err)
+            console.error('Failed to join', err)
             // M.channel.send(this.wc._encode({
             //   recipientId: M.channel.peerId,
             //   content: super.encode({ connectedTo: { peers: [] } })
@@ -403,9 +403,9 @@ export class SprayService extends TopologyInterface {
       case 'joinedPeerId': {
         if (this.iJoin()) {
           this.wc._joinSucceed();
-          log.info(this.wc.myId + ' _joinSucceed ');
+          console.info(this.wc.myId + ' _joinSucceed ');
         } else {
-          log.debug(this.wc.myId + ' peerJoined blablabla ');
+          console.log(this.wc.myId + ' peerJoined blablabla ');
           this.peerJoined(this.jps.get(msg.joinedPeerId));
         }
         this.jps.delete(msg.joinedPeerId);
@@ -423,7 +423,7 @@ export class SprayService extends TopologyInterface {
    * @return {Promise<void>}
    */
   private async _exchange (wc: WebChannel): Promise<void> {
-    log.debug(this.wc.myId + ' _exchange ');
+    console.log(this.wc.myId + ' _exchange ');
     this.p.incrementAge();
     const oldestArc = this.p.oldest;
     let cloneP = new PartialView();
@@ -446,13 +446,13 @@ export class SprayService extends TopologyInterface {
     // async/await response... with timeout
     // let respSample = await new PartialView();
     await new Promise ((resolve, reject) => {
-      wc._msgStream
+      wc._svcMsgStream
       .filter(msg => msg.recipientId === wc.myId && msg.type == 'exchangeResp')
       .subscribe(
         msg => {
           resolve(msg.respSample);
         }, err => {
-          log.error('SprayService Message Stream Error', err, wc);
+          console.error('SprayService Message Stream Error', err, wc);
           reject();
         });
         setTimeout(() => reject('Exchange response timed out'), timeout);
@@ -463,11 +463,11 @@ export class SprayService extends TopologyInterface {
             this.p.add(arc[0], arc[1]);
           });
         } else {
-          log.error('SprayService Exchange response typeof ',typeof respSample);
+          console.error('SprayService Exchange response typeof ',typeof respSample);
         }
       })
       .catch(err => {
-        log.error('Failed waiting exchange response ', err);
+        console.error('Failed waiting exchange response ', err);
       });
     this._replace(sample, wc.myId, oldestArc[0]);
     // TODO disconnection
@@ -484,7 +484,7 @@ export class SprayService extends TopologyInterface {
    * @param {PartialView} sample
    */
   private _onExchange (wc: WebChannel, origineId: number, sample: PartialView): void {
-    log.debug(this.wc.myId + ' _onExchange ');
+    console.log(this.wc.myId + ' _onExchange ');
     let respSample = this._getSample(this.p,
        Math.ceil(this.p.length/2));
     this._replace(respSample, origineId, wc.myId);
@@ -514,7 +514,7 @@ export class SprayService extends TopologyInterface {
    * @return {PartialView}   partial view of n arcs from p
    */
   private _getSample (p: PartialView, n: number): PartialView {
-    log.info(this.wc.myId + ' _getSample ');
+    console.info(this.wc.myId + ' _getSample ');
     let cloneP = p.slice();
     let arcs = new PartialView();
 
@@ -538,7 +538,7 @@ export class SprayService extends TopologyInterface {
    * @param {number}      newId
    */
   private _replace (p: PartialView, oldId: number, newId: number): void {
-    log.info(this.wc.myId + ' _replace ' + oldId + " by " + newId);
+    console.info(this.wc.myId + ' _replace ' + oldId + " by " + newId);
     p.forEach( (arc) => {
       if (arc[0] == oldId) {
         arc[0] = newId;
@@ -553,7 +553,7 @@ export class SprayService extends TopologyInterface {
    * @param {number} peerDownId
    */
   private _onPeerDown (peerDownId: number): void {
-    log.info(this.wc.myId + ' _onPeerDown ' + peerDownId);
+    console.info(this.wc.myId + ' _onPeerDown ' + peerDownId);
     // Count and delete
     let occ = 0;
     let toRemove = [];
@@ -585,14 +585,14 @@ export class SprayService extends TopologyInterface {
    * @param {number} age
    */
   private _onArcDown (peerId: number, age: number): void {
-    log.info(this.wc.myId + ' _onArcDown ' + peerId);
+    console.info(this.wc.myId + ' _onArcDown ' + peerId);
     this.p.remove(peerId, age);
     let newArcId = this.p[Math.floor(Math.random() * this.p.length)][0];
     this.p.add(newArcId);
   }
 
   private _clearReceived() : void {
-    log.info(this.wc.myId + ' _clearReceived ');
+    console.info(this.wc.myId + ' _clearReceived ');
     let clearDelay = Math.floor(Math.exp(this.p.length)) * 2 * delayPerConnection;
 
     let i = 0;
@@ -610,9 +610,9 @@ export class SprayService extends TopologyInterface {
   }
 
   peerJoined (ch: Channel): void {
-    log.info(this.wc.myId + ' peerJoined ');
+    console.info(this.wc.myId + ' peerJoined ');
     this.channels.add(ch);
     this.wc._onPeerJoin(ch.peerId);
-    // log.info(this.wc.myId + ' _onPeerJoin ' + ch.peerId);
+    // console.info(this.wc.myId + ' _onPeerJoin ' + ch.peerId);
   }
 }

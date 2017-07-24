@@ -1,6 +1,6 @@
-import {create, BotServer} from '../../src/index.node.js'
-import * as helper from './helper'
-import * as log from '../../src/log'
+import { WebChannel } from '../../src/service/WebChannel'
+import { BotServer } from '../../src/BotServer'
+import { onMessageForBot, SIGNALING_URL, BOT_HOST, BOT_PORT } from './helper'
 
 // Require dependencies
 const http = require('http')
@@ -57,10 +57,10 @@ try {
   // Configure bot
   bot.onWebChannel = wc => {
     wc.onMessage = (id, msg, isBroadcast) => {
-      helper.onMessageForBot(wc, id, msg, isBroadcast)
+      onMessageForBot(wc, id, msg, isBroadcast)
     }
   }
-  bot.onError = err => log.error('Bot ERROR: ', err)
+  bot.onError = err => console.error('Bot ERROR: ', err)
 
   // Add specific web channel to the bot for tests in Chrome
   bot.addWebChannel(createWebChannel('CHROME'))
@@ -72,29 +72,29 @@ try {
   bot.addWebChannel(createWebChannel('NODE'))
 
   // Start the server
-  server.listen(helper.BOT_PORT, helper.BOT_HOST, () => {
+  server.listen(BOT_PORT, BOT_HOST, () => {
     const host = server.address().address
     const port = server.address().port
-    log.info('Netflux bot is listening on ' + host + ':' + port)
+    console.info('Netflux bot is listening on ' + host + ':' + port)
   })
 
   // Leave all web channels before process death
   process.on('SIGINT', () => bot.webChannels.forEach(wc => wc.leave()))
 } catch (err) {
-  log.error('BotServer script error: ', err)
+  console.error('BotServer script error: ', err)
 }
 
 function createWebChannel (env) {
   // Add specific web channel to the bot for tests in Firefox
-  const wc = create({signalingURL: helper.SIGNALING_URL})
+  const wc = new WebChannel({signalingURL: SIGNALING_URL})
   wc.onMessage = (id, msg, isBroadcast) => {
-    helper.onMessageForBot(wc, id, msg, isBroadcast)
+    onMessageForBot(wc, id, msg, isBroadcast)
   }
-  wc.onClose = closeEvt => {
-    log.warn(`${env} bot has disconnected from: ${helper.SIGNALING_URL}`)
+  wc.onDisconnect = closeEvt => {
+    console.warn(`${env} bot has disconnected from: ${SIGNALING_URL}`)
   }
-  wc.open('FIREFOX')
-    .then(() => log.info(`${env} bot is ready`))
-    .catch(reason => log.error(`${env} bot WebChannel open error: ${reason}`))
+  wc.join('FIREFOX')
+    .then(() => console.info(`${env} bot is ready`))
+    .catch(reason => console.error(`${env} bot WebChannel open error: ${reason}`))
   return wc
 }

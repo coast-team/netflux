@@ -1,114 +1,56 @@
-import replace from 'rollup-plugin-replace'
 import filesize from 'rollup-plugin-filesize'
 import babel from 'rollup-plugin-babel'
 import strip from 'rollup-plugin-strip'
 import commonjs from 'rollup-plugin-commonjs'
 import resolve from 'rollup-plugin-node-resolve'
 import typescript from 'rollup-plugin-typescript2'
+import pkg from './package.json'
 
 export default [
-  // netflux.es5.umd.js
   {
-    entry: 'src/index.node.js',
+    entry: 'src/index.js',
+    targets: [
+      { dest: pkg.main, format: 'cjs' },
+      { dest: pkg.module, format: 'es' }
+    ],
+    external: ['wrtc', 'uws', 'text-encoding'],
+    plugins: [
+      typescript(),
+      strip({
+        functions: [ 'console.info' ]
+      }),
+      resolve(),
+      commonjs({
+        namedExports: {
+          'node_modules/protobufjs/minimal.js': [ 'Reader', 'Writer', 'util', 'roots' ]
+        }
+      }),
+      babel({
+        exclude: 'node_modules/**'
+      }),
+      filesize({ format: { round: 0 } })
+    ]
+  },
+  {
+    entry: 'src/index.js',
     format: 'umd',
     moduleName: 'netflux',
-    dest: 'dist/netflux.es5.umd.js',
+    dest: pkg.browser,
     plugins: [
       typescript(),
-      replace({
-        WEB_RTC_MODULE: `Util.isBrowser() ? window : require('wrtc')`,
-        WEB_SOCKET_MODULE: `Util.isBrowser() ? window.WebSocket : require('ws')`,
-        TEXT_ENCODING_MODULE: `Util.isBrowser() ? window : require('text-encoding')`,
-        EVENT_SOURCE_MODULE: `Util.isBrowser() ? window.EventSource : require('eventsource')`,
-        FETCH_MODULE: `Util.isBrowser() ? window.fetch : require('node-fetch')`,
-        LOG_LEVEL: `Level.WARN`
-        // eval: '[eval][0]'
-      }),
       strip({
-        functions: [ 'log.info', 'log.debug', 'log.error', 'log.warn', 'log.trace', 'log.goupe' ]
+        functions: [ 'console.info' ]
       }),
-      resolve({}),
+      resolve(),
       commonjs({
-        include: 'node_modules/**',
-        namedExports: { 'node_modules/protobufjs/minimal.js': [ 'Reader', 'Writer', 'util', 'roots' ] }
+        namedExports: {
+          'node_modules/protobufjs/minimal.js': [ 'Reader', 'Writer', 'util', 'roots' ]
+        }
       }),
       babel({
         exclude: 'node_modules/**'
       }),
-      filesize({
-        format: {
-          round: 0
-        }
-      })
-    ]
-  },
-  // netflux.es5.module.browser.js
-  {
-    entry: 'src/index.browser.js',
-    format: 'es',
-    dest: 'dist/netflux.es5.module.browser.js',
-    plugins: [
-      typescript(),
-      replace({
-        WEB_RTC_MODULE: `window`,
-        WEB_SOCKET_MODULE: `window.WebSocket`,
-        TEXT_ENCODING_MODULE: `window`,
-        EVENT_SOURCE_MODULE: `window.EventSource`,
-        FETCH_MODULE: `window.fetch`,
-        LOG_LEVEL: `Level.WARN`
-      }),
-      strip({
-        functions: [ 'log.info', 'log.debug', 'log.error', 'log.warn', 'log.trace', 'log.goupe' ]
-      }),
-      resolve({}),
-      commonjs({
-        extensions: [ '.js' ],
-        sourceMap: false,
-        ignoreGlobal: false,
-        namedExports: { 'node_modules/protobufjs/minimal.js': [ 'Reader', 'Writer', 'util', 'roots' ] }
-      }),
-      babel({
-        exclude: 'node_modules/**'
-      }),
-      filesize({
-        format: {
-          round: 0
-        }
-      })
-    ]
-  },
-  {
-    entry: 'src/index.node.js',
-    format: 'es',
-    dest: 'dist/netflux.es5.module.node.js',
-    plugins: [
-      typescript(),
-      replace({
-        WEB_RTC_MODULE: `require('wrtc')`,
-        WEB_SOCKET_MODULE: `require('uws')`,
-        TEXT_ENCODING_MODULE: `require('text-encoding')`,
-        EVENT_SOURCE_MODULE: `require('eventsource')`,
-        FETCH_MODULE: `require('node-fetch')`,
-        LOG_LEVEL: `Level.WARN`
-      }),
-      strip({
-        functions: [ 'log.info', 'log.debug', 'log.error', 'log.warn', 'log.trace', 'log.goupe' ]
-      }),
-      resolve({}),
-      commonjs({
-        extensions: [ '.js' ],
-        sourceMap: false,
-        ignoreGlobal: false,
-        namedExports: { 'node_modules/protobufjs/minimal.js': [ 'Reader', 'Writer', 'util', 'roots' ] }
-      }),
-      babel({
-        exclude: 'node_modules/**'
-      }),
-      filesize({
-        format: {
-          round: 0
-        }
-      })
+      filesize({ format: { round: 0 } })
     ]
   }
 ]

@@ -1,5 +1,5 @@
 import { Util } from '../../src/Util'
-import { create } from '../../src/index.browser'
+import { WebChannel } from '../../src/service/WebChannel'
 import chunk50kb from './50kb.txt'
 
 // Main signaling server for all tests
@@ -24,7 +24,7 @@ export const INSTANCES = [
 export function createWebChannels (numberOfPeers) {
   const wcs = []
   for (let i = 0; i < numberOfPeers; i++) {
-    wcs[i] = create({signalingURL: SIGNALING_URL})
+    wcs[i] = new WebChannel({signalingURL: SIGNALING_URL})
   }
   return wcs
 }
@@ -35,10 +35,10 @@ export function createAndConnectWebChannels (numberOfPeers) {
 
   // Create web channels
   for (let i = 0; i < numberOfPeers; i++) {
-    wcs[i] = create({signalingURL: SIGNALING_URL})
+    wcs[i] = new WebChannel({signalingURL: SIGNALING_URL})
     resPromises[i] = new Promise((resolve, reject) => {
-      wcs[i].onPeerJoin = () => {
-        if (wcs[i].members.length === numberOfPeers - 1) {
+      wcs[i].onStateChanged = state => {
+        if (state === WebChannel.JOINED) {
           resolve(wcs[i])
         }
       }
@@ -46,37 +46,14 @@ export function createAndConnectWebChannels (numberOfPeers) {
   }
 
   // Connect peers successively
-  let tmp = wcs[0].open()
-    .then(data => {
-      for (let i = 1; i < numberOfPeers; i++) {
-        tmp = tmp.then(() => wcs[i].join(data.key))
-      }
-    })
+  const key = randKey()
+  let tmp = Promise.resolve()
+  for (let wc of wcs) {
+    tmp = tmp.then(() => wc.join(key))
+  }
 
   // Resolve when all peers are connected
   return Promise.all(resPromises)
-}
-
-export function expectAndSpyOnPeerJoin (wcs) {
-  wcs.forEach(wc => {
-    wc.onPeerJoin = id => {
-      // Joined peer's id should be among WebChannel members ids
-      expect(wc.members.includes(id)).toBeTruthy()
-
-      // Its id should be included only ONCE
-      expect(wc.members.indexOf(id)).toEqual(wc.members.lastIndexOf(id))
-    }
-    spyOn(wc, 'onPeerJoin')
-  })
-}
-
-export function expectAndSpyOnPeerLeave (wcs) {
-  wcs.forEach(wc => {
-    wc.onPeerLeave = id => {
-      expect(wc.members.includes(id)).toBeFalsy()
-    }
-    spyOn(wc, 'onPeerLeave')
-  })
 }
 
 export function expectMembers (wcs, totalNumberOfPeers) {
@@ -127,6 +104,7 @@ export function sendAndExpectOnMessage (wcs, isBroadcast, withBot = false) {
         expect(broadcasted).toEqual(isBroadcast)
         let msgId
         const flag = flags.get(id)
+        expect(flag).toBeDefined()
         if (typeof msg === 'string' || msg instanceof String) {
           let msgObj = JSON.parse(msg)
           msgId = msgObj.id

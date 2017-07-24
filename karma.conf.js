@@ -18,7 +18,6 @@ module.exports = (config) => {
 
     // list of files / patterns to load in the browser
     files: [
-      'src/log.js',
       // 'test/unit/**/*.test.js',
       'test/e2e/fullMesh/join.test.js'
     ],
@@ -29,43 +28,21 @@ module.exports = (config) => {
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
     preprocessors: {
-      'src/log.js': ['log_rollup'],
       'test/**/*.test.js': ['rollup']
-    },
-
-    customPreprocessors: {
-      log_rollup: {
-        base: 'rollup',
-        options: {
-          plugins: [
-            require('rollup-plugin-replace')({
-              LOG_LEVEL: `Level.TRACE`
-            })
-          ],
-          format: 'iife',
-          moduleName: 'log'
-        }
-      }
     },
 
     rollupPreprocessor: {
       plugins: [
-        require('rollup-plugin-typescript2')({}),
+        require('rollup-plugin-typescript2')(),
         require('rollup-plugin-string')({
           include: 'test/**/*.txt'
         }),
-        require('rollup-plugin-node-resolve')({}),
+        // require('rollup-plugin-strip')({
+        //   functions: [ 'console.info' ]
+        // }),
+        require('rollup-plugin-node-resolve')(),
         require('rollup-plugin-commonjs')({
-          include: 'node_modules/**',
           namedExports: { 'node_modules/protobufjs/minimal.js': [ 'Reader', 'Writer', 'util', 'roots' ] }
-        }),
-        require('rollup-plugin-replace')({
-          WEB_RTC_MODULE: `window`,
-          WEB_SOCKET_MODULE: `window.WebSocket`,
-          TEXT_ENCODING_MODULE: `window`,
-          EVENT_SOURCE_MODULE: `window.EventSource`,
-          FETCH_MODULE: `window.fetch`,
-          LOG_LEVEL: `Level.TRACE`
         })
       ],
       format: 'iife'
@@ -141,7 +118,6 @@ module.exports = (config) => {
           }),
           require('rollup-plugin-node-resolve')({}),
           require('rollup-plugin-commonjs')({
-            include: 'node_modules/**',
             namedExports: { 'node_modules/protobufjs/minimal.js': [ 'Reader', 'Writer', 'util', 'roots' ] }
           }),
           require('rollup-plugin-istanbul')({
@@ -152,14 +128,6 @@ module.exports = (config) => {
               'src/BotServer.js',
               'src/service/EventSourceService.js'
             ]
-          }),
-          require('rollup-plugin-replace')({
-            WEB_RTC_MODULE: `window`,
-            WEB_SOCKET_MODULE: `window.WebSocket`,
-            TEXT_ENCODING_MODULE: `window`,
-            EVENT_SOURCE_MODULE: `window.EventSource`,
-            FETCH_MODULE: `window.fetch`,
-            LOG_LEVEL: `Level.TRACE`
           })
         ],
         format: 'iife'
