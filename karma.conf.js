@@ -36,9 +36,8 @@ module.exports = (config) => {
         require('rollup-plugin-string')({
           include: 'test/**/*.txt'
         }),
-        require('rollup-plugin-node-resolve')({}),
+        require('rollup-plugin-node-resolve')(),
         require('rollup-plugin-commonjs')({
-          include: 'node_modules/**',
           namedExports: { 'node_modules/protobufjs/minimal.js': [ 'Reader', 'Writer', 'util', 'roots' ] }
         })
       ],
@@ -114,7 +113,6 @@ module.exports = (config) => {
           }),
           require('rollup-plugin-node-resolve')({}),
           require('rollup-plugin-commonjs')({
-            include: 'node_modules/**',
             namedExports: { 'node_modules/protobufjs/minimal.js': [ 'Reader', 'Writer', 'util', 'roots' ] }
           }),
           require('rollup-plugin-istanbul')({

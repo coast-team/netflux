@@ -1,6 +1,6 @@
 import { WebChannel } from '../../src/service/WebChannel'
 import { BotServer } from '../../src/BotServer'
-import * as helper from './helper'
+import { onMessageForBot, SIGNALING_URL, BOT_HOST, BOT_PORT } from './helper'
 import * as log from '../../src/log'
 
 // Require dependencies
@@ -58,7 +58,7 @@ try {
   // Configure bot
   bot.onWebChannel = wc => {
     wc.onMessage = (id, msg, isBroadcast) => {
-      helper.onMessageForBot(wc, id, msg, isBroadcast)
+      onMessageForBot(wc, id, msg, isBroadcast)
     }
   }
   bot.onError = err => log.error('Bot ERROR: ', err)
@@ -73,7 +73,7 @@ try {
   bot.addWebChannel(createWebChannel('NODE'))
 
   // Start the server
-  server.listen(helper.BOT_PORT, helper.BOT_HOST, () => {
+  server.listen(BOT_PORT, BOT_HOST, () => {
     const host = server.address().address
     const port = server.address().port
     log.info('Netflux bot is listening on ' + host + ':' + port)
@@ -87,12 +87,12 @@ try {
 
 function createWebChannel (env) {
   // Add specific web channel to the bot for tests in Firefox
-  const wc = new WebChannel({signalingURL: helper.SIGNALING_URL})
+  const wc = new WebChannel({signalingURL: SIGNALING_URL})
   wc.onMessage = (id, msg, isBroadcast) => {
-    helper.onMessageForBot(wc, id, msg, isBroadcast)
+    onMessageForBot(wc, id, msg, isBroadcast)
   }
   wc.onDisconnect = closeEvt => {
-    log.warn(`${env} bot has disconnected from: ${helper.SIGNALING_URL}`)
+    log.warn(`${env} bot has disconnected from: ${SIGNALING_URL}`)
   }
   wc.join('FIREFOX')
     .then(() => log.info(`${env} bot is ready`))
