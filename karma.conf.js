@@ -88,14 +88,7 @@ module.exports = (config) => {
 
   if (process.env.TRAVIS || TYPE === 'travis') {
     Object.assign(config, {
-      browsers: ['Chrome_travis_ci'],
-
-      customLaunchers: {
-        Chrome_travis_ci: {
-          base: 'Chrome',
-          flags: ['--no-sandbox']
-        }
-      },
+      browsers: ['ChromeHeadless'],
 
       coverageReporter: {
         reporters: [
