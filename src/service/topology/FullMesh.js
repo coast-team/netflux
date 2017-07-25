@@ -176,7 +176,7 @@ export class FullMesh extends TopologyInterface {
                 }
               })
               .catch(err => {
-                console.warn(this.wc.myId + ' failed to connect to ' + id, err)
+                console.warn(this.wc.myId + ' failed to connect to ' + id, err.message)
                 if (++counter === peers.length) {
                   resolve()
                 }

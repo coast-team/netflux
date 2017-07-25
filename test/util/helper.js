@@ -127,7 +127,7 @@ export function sendAndExpectOnMessage (wcs, isBroadcast, withBot = false) {
           flag.arraybuffer = true
           msgId = (new Uint32Array(msg.slice().buffer))[0]
         } else {
-          log.error('Unknown message type')
+          console.error('Unknown message type')
         }
         expect(msgId).toBeDefined()
         expect(msgId).toEqual(id)

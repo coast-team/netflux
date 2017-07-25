@@ -7,6 +7,10 @@ export const CONNECTED = 1
 export const OPEN = 3
 export const CLOSED = 4
 
+const PING_TIMEOUT = 8000
+
+const pongMsg = signaling.Message.encode(signaling.Message.create({ pong: true })).finish()
+
 /**
  * This class represents a door of the `WebChannel` for the current peer. If the door
  * is open, then clients can join the `WebChannel` through this peer. There are as
@@ -42,6 +46,8 @@ export class Signaling {
     this.rxWs = undefined
 
     this.onChannel = onChannel
+
+    this.pingTimeout = undefined
   }
 
   set state (state) {
@@ -88,7 +94,9 @@ export class Signaling {
             msg => {
               switch (msg.type) {
                 case 'ping':
-                  rxWs.send({ pong: true })
+                  rxWs.pong()
+                  clearTimeout(this.pingTimeout)
+                  this.startPingTimeout()
                   break
                 case 'isFirst':
                   if (msg.isFirst) {
@@ -114,11 +122,7 @@ export class Signaling {
                   break
               }
             },
-            err => {
-              this.state = CLOSED
-              reject(err)
-            },
-            () => (this.state = CLOSED)
+            err => reject(err)
           )
         })
       })
@@ -137,12 +141,18 @@ export class Signaling {
     }
   }
 
+  startPingTimeout () {
+    this.pingTimeout = setTimeout(() => {
+      this.rxWS.close(4002, 'Signaling ping timeout')
+    }, PING_TIMEOUT)
+  }
+
   createRxWs (ws) {
     const subject = new Subject()
     ws.binaryType = 'arraybuffer'
     ws.onmessage = evt => {
       try {
-        subject.next(signaling.Incoming.decode(new Uint8Array(evt.data)))
+        subject.next(signaling.Message.decode(new Uint8Array(evt.data)))
       } catch (err) {
         console.error(`WebSocket message error from ${ws.url}`, err)
         ws.close(4000, err.message)
@@ -150,17 +160,20 @@ export class Signaling {
     }
     ws.onerror = err => subject.error(err)
     ws.onclose = closeEvt => {
+      this.state = CLOSED
       if (closeEvt.code === 1000) {
         subject.complete()
       } else {
         subject.error(new Error(`${closeEvt.code}: ${closeEvt.reason}`))
       }
     }
+    ws.onopen = () => this.startPingTimeout()
     return {
       stream: subject,
-      send: msg => ws.send(signaling.Outcoming.encode(
-        signaling.Outcoming.create(msg)
+      send: msg => ws.send(signaling.Message.encode(
+        signaling.Message.create(msg)
       ).finish()),
+      pong: () => ws.send(pongMsg),
       close: (code, reason) => ws.close(code, reason),
       readyState: ws.readyState
     }

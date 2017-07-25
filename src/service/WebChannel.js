@@ -17,7 +17,6 @@ import { defaults } from '../defaults'
  * @type {number}
  */
 const MAX_ID = 2147483647
-
 const REJOIN_MAX_ATTEMPTS = 10
 const REJOIN_TIMEOUT = 2000
 

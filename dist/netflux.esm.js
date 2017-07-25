@@ -4850,14 +4850,15 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
             }
         }
 
+        Message.prototype.isInitiator = false;
         Message.prototype.offer = "";
         Message.prototype.answer = "";
-        Message.prototype.candidate = null;
+        Message.prototype.iceCandidate = null;
 
         var $oneOfFields = void 0;
 
         Object.defineProperty(Message.prototype, "type", {
-            get: $util.oneOfGetter($oneOfFields = ["offer", "answer", "candidate"]),
+            get: $util.oneOfGetter($oneOfFields = ["offer", "answer", "iceCandidate"]),
             set: $util.oneOfSetter($oneOfFields)
         });
 
@@ -4867,9 +4868,10 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
 
         Message.encode = function encode(message, writer) {
             if (!writer) writer = $Writer.create();
-            if (message.offer != null && message.hasOwnProperty("offer")) writer.uint32(10).string(message.offer);
-            if (message.answer != null && message.hasOwnProperty("answer")) writer.uint32(18).string(message.answer);
-            if (message.candidate != null && message.hasOwnProperty("candidate")) $root.webRTCBuilder.Candidate.encode(message.candidate, writer.uint32(26).fork()).ldelim();
+            if (message.isInitiator != null && message.hasOwnProperty("isInitiator")) writer.uint32(8).bool(message.isInitiator);
+            if (message.offer != null && message.hasOwnProperty("offer")) writer.uint32(18).string(message.offer);
+            if (message.answer != null && message.hasOwnProperty("answer")) writer.uint32(26).string(message.answer);
+            if (message.iceCandidate != null && message.hasOwnProperty("iceCandidate")) $root.webRTCBuilder.Message.IceCandidate.encode(message.iceCandidate, writer.uint32(34).fork()).ldelim();
             return writer;
         };
 
@@ -4881,13 +4883,142 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
                     case 1:
-                        message.offer = reader.string();
+                        message.isInitiator = reader.bool();
                         break;
                     case 2:
-                        message.answer = reader.string();
+                        message.offer = reader.string();
                         break;
                     case 3:
-                        message.candidate = $root.webRTCBuilder.Candidate.decode(reader, reader.uint32());
+                        message.answer = reader.string();
+                        break;
+                    case 4:
+                        message.iceCandidate = $root.webRTCBuilder.Message.IceCandidate.decode(reader, reader.uint32());
+                        break;
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                }
+            }
+            return message;
+        };
+
+        Message.IceCandidate = function () {
+
+            function IceCandidate(properties) {
+                if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
+                    if (properties[keys[i]] != null) this[keys[i]] = properties[keys[i]];
+                }
+            }
+
+            IceCandidate.prototype.candidate = "";
+            IceCandidate.prototype.sdpMid = "";
+            IceCandidate.prototype.sdpMLineIndex = 0;
+
+            IceCandidate.create = function create(properties) {
+                return new IceCandidate(properties);
+            };
+
+            IceCandidate.encode = function encode(message, writer) {
+                if (!writer) writer = $Writer.create();
+                if (message.candidate != null && message.hasOwnProperty("candidate")) writer.uint32(10).string(message.candidate);
+                if (message.sdpMid != null && message.hasOwnProperty("sdpMid")) writer.uint32(18).string(message.sdpMid);
+                if (message.sdpMLineIndex != null && message.hasOwnProperty("sdpMLineIndex")) writer.uint32(24).uint32(message.sdpMLineIndex);
+                return writer;
+            };
+
+            IceCandidate.decode = function decode(reader, length) {
+                if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
+                var end = length === undefined ? reader.len : reader.pos + length,
+                    message = new $root.webRTCBuilder.Message.IceCandidate();
+                while (reader.pos < end) {
+                    var tag = reader.uint32();
+                    switch (tag >>> 3) {
+                        case 1:
+                            message.candidate = reader.string();
+                            break;
+                        case 2:
+                            message.sdpMid = reader.string();
+                            break;
+                        case 3:
+                            message.sdpMLineIndex = reader.uint32();
+                            break;
+                        default:
+                            reader.skipType(tag & 7);
+                            break;
+                    }
+                }
+                return message;
+            };
+
+            return IceCandidate;
+        }();
+
+        return Message;
+    }();
+
+    return webRTCBuilder;
+}();
+
+var signaling = $root.signaling = function () {
+
+    var signaling = {};
+
+    signaling.Message = function () {
+
+        function Message(properties) {
+            if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
+                if (properties[keys[i]] != null) this[keys[i]] = properties[keys[i]];
+            }
+        }
+
+        Message.prototype.content = null;
+        Message.prototype.isFirst = false;
+        Message.prototype.joined = false;
+        Message.prototype.ping = false;
+        Message.prototype.pong = false;
+
+        var $oneOfFields = void 0;
+
+        Object.defineProperty(Message.prototype, "type", {
+            get: $util.oneOfGetter($oneOfFields = ["content", "isFirst", "joined", "ping", "pong"]),
+            set: $util.oneOfSetter($oneOfFields)
+        });
+
+        Message.create = function create(properties) {
+            return new Message(properties);
+        };
+
+        Message.encode = function encode(message, writer) {
+            if (!writer) writer = $Writer.create();
+            if (message.content != null && message.hasOwnProperty("content")) $root.signaling.Content.encode(message.content, writer.uint32(10).fork()).ldelim();
+            if (message.isFirst != null && message.hasOwnProperty("isFirst")) writer.uint32(16).bool(message.isFirst);
+            if (message.joined != null && message.hasOwnProperty("joined")) writer.uint32(24).bool(message.joined);
+            if (message.ping != null && message.hasOwnProperty("ping")) writer.uint32(32).bool(message.ping);
+            if (message.pong != null && message.hasOwnProperty("pong")) writer.uint32(40).bool(message.pong);
+            return writer;
+        };
+
+        Message.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length,
+                message = new $root.signaling.Message();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                    case 1:
+                        message.content = $root.signaling.Content.decode(reader, reader.uint32());
+                        break;
+                    case 2:
+                        message.isFirst = reader.bool();
+                        break;
+                    case 3:
+                        message.joined = reader.bool();
+                        break;
+                    case 4:
+                        message.ping = reader.bool();
+                        break;
+                    case 5:
+                        message.pong = reader.bool();
                         break;
                     default:
                         reader.skipType(tag & 7);
@@ -4900,190 +5031,6 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
         return Message;
     }();
 
-    webRTCBuilder.Candidate = function () {
-
-        function Candidate(properties) {
-            if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
-                if (properties[keys[i]] != null) this[keys[i]] = properties[keys[i]];
-            }
-        }
-
-        Candidate.prototype.candidate = "";
-        Candidate.prototype.sdpMid = "";
-        Candidate.prototype.sdpMLineIndex = 0;
-
-        Candidate.create = function create(properties) {
-            return new Candidate(properties);
-        };
-
-        Candidate.encode = function encode(message, writer) {
-            if (!writer) writer = $Writer.create();
-            if (message.candidate != null && message.hasOwnProperty("candidate")) writer.uint32(10).string(message.candidate);
-            if (message.sdpMid != null && message.hasOwnProperty("sdpMid")) writer.uint32(18).string(message.sdpMid);
-            if (message.sdpMLineIndex != null && message.hasOwnProperty("sdpMLineIndex")) writer.uint32(24).uint32(message.sdpMLineIndex);
-            return writer;
-        };
-
-        Candidate.decode = function decode(reader, length) {
-            if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
-            var end = length === undefined ? reader.len : reader.pos + length,
-                message = new $root.webRTCBuilder.Candidate();
-            while (reader.pos < end) {
-                var tag = reader.uint32();
-                switch (tag >>> 3) {
-                    case 1:
-                        message.candidate = reader.string();
-                        break;
-                    case 2:
-                        message.sdpMid = reader.string();
-                        break;
-                    case 3:
-                        message.sdpMLineIndex = reader.uint32();
-                        break;
-                    default:
-                        reader.skipType(tag & 7);
-                        break;
-                }
-            }
-            return message;
-        };
-
-        return Candidate;
-    }();
-
-    return webRTCBuilder;
-}();
-
-var signaling = $root.signaling = function () {
-
-    var signaling = {};
-
-    signaling.Incoming = function () {
-
-        function Incoming(properties) {
-            if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
-                if (properties[keys[i]] != null) this[keys[i]] = properties[keys[i]];
-            }
-        }
-
-        Incoming.prototype.content = null;
-        Incoming.prototype.isFirst = false;
-        Incoming.prototype.ping = false;
-        Incoming.prototype.pong = false;
-
-        var $oneOfFields = void 0;
-
-        Object.defineProperty(Incoming.prototype, "type", {
-            get: $util.oneOfGetter($oneOfFields = ["content", "isFirst", "ping", "pong"]),
-            set: $util.oneOfSetter($oneOfFields)
-        });
-
-        Incoming.create = function create(properties) {
-            return new Incoming(properties);
-        };
-
-        Incoming.encode = function encode(message, writer) {
-            if (!writer) writer = $Writer.create();
-            if (message.content != null && message.hasOwnProperty("content")) $root.signaling.Content.encode(message.content, writer.uint32(10).fork()).ldelim();
-            if (message.isFirst != null && message.hasOwnProperty("isFirst")) writer.uint32(16).bool(message.isFirst);
-            if (message.ping != null && message.hasOwnProperty("ping")) writer.uint32(24).bool(message.ping);
-            if (message.pong != null && message.hasOwnProperty("pong")) writer.uint32(32).bool(message.pong);
-            return writer;
-        };
-
-        Incoming.decode = function decode(reader, length) {
-            if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
-            var end = length === undefined ? reader.len : reader.pos + length,
-                message = new $root.signaling.Incoming();
-            while (reader.pos < end) {
-                var tag = reader.uint32();
-                switch (tag >>> 3) {
-                    case 1:
-                        message.content = $root.signaling.Content.decode(reader, reader.uint32());
-                        break;
-                    case 2:
-                        message.isFirst = reader.bool();
-                        break;
-                    case 3:
-                        message.ping = reader.bool();
-                        break;
-                    case 4:
-                        message.pong = reader.bool();
-                        break;
-                    default:
-                        reader.skipType(tag & 7);
-                        break;
-                }
-            }
-            return message;
-        };
-
-        return Incoming;
-    }();
-
-    signaling.Outcoming = function () {
-
-        function Outcoming(properties) {
-            if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
-                if (properties[keys[i]] != null) this[keys[i]] = properties[keys[i]];
-            }
-        }
-
-        Outcoming.prototype.content = null;
-        Outcoming.prototype.joined = false;
-        Outcoming.prototype.ping = false;
-        Outcoming.prototype.pong = false;
-
-        var $oneOfFields = void 0;
-
-        Object.defineProperty(Outcoming.prototype, "type", {
-            get: $util.oneOfGetter($oneOfFields = ["content", "joined", "ping", "pong"]),
-            set: $util.oneOfSetter($oneOfFields)
-        });
-
-        Outcoming.create = function create(properties) {
-            return new Outcoming(properties);
-        };
-
-        Outcoming.encode = function encode(message, writer) {
-            if (!writer) writer = $Writer.create();
-            if (message.content != null && message.hasOwnProperty("content")) $root.signaling.Content.encode(message.content, writer.uint32(10).fork()).ldelim();
-            if (message.joined != null && message.hasOwnProperty("joined")) writer.uint32(16).bool(message.joined);
-            if (message.ping != null && message.hasOwnProperty("ping")) writer.uint32(24).bool(message.ping);
-            if (message.pong != null && message.hasOwnProperty("pong")) writer.uint32(32).bool(message.pong);
-            return writer;
-        };
-
-        Outcoming.decode = function decode(reader, length) {
-            if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
-            var end = length === undefined ? reader.len : reader.pos + length,
-                message = new $root.signaling.Outcoming();
-            while (reader.pos < end) {
-                var tag = reader.uint32();
-                switch (tag >>> 3) {
-                    case 1:
-                        message.content = $root.signaling.Content.decode(reader, reader.uint32());
-                        break;
-                    case 2:
-                        message.joined = reader.bool();
-                        break;
-                    case 3:
-                        message.ping = reader.bool();
-                        break;
-                    case 4:
-                        message.pong = reader.bool();
-                        break;
-                    default:
-                        reader.skipType(tag & 7);
-                        break;
-                }
-            }
-            return message;
-        };
-
-        return Outcoming;
-    }();
-
     signaling.Content = function () {
 
         function Content(properties) {
@@ -5093,14 +5040,14 @@ var signaling = $root.signaling = function () {
         }
 
         Content.prototype.id = 0;
+        Content.prototype.isEnd = false;
         Content.prototype.data = $util.newBuffer([]);
         Content.prototype.isError = false;
-        Content.prototype.isEnd = false;
 
         var $oneOfFields = void 0;
 
         Object.defineProperty(Content.prototype, "type", {
-            get: $util.oneOfGetter($oneOfFields = ["data", "isError", "isEnd"]),
+            get: $util.oneOfGetter($oneOfFields = ["data", "isError"]),
             set: $util.oneOfSetter($oneOfFields)
         });
 
@@ -5111,9 +5058,9 @@ var signaling = $root.signaling = function () {
         Content.encode = function encode(message, writer) {
             if (!writer) writer = $Writer.create();
             if (message.id != null && message.hasOwnProperty("id")) writer.uint32(8).uint32(message.id);
-            if (message.data != null && message.hasOwnProperty("data")) writer.uint32(18).bytes(message.data);
-            if (message.isError != null && message.hasOwnProperty("isError")) writer.uint32(24).bool(message.isError);
-            if (message.isEnd != null && message.hasOwnProperty("isEnd")) writer.uint32(32).bool(message.isEnd);
+            if (message.isEnd != null && message.hasOwnProperty("isEnd")) writer.uint32(16).bool(message.isEnd);
+            if (message.data != null && message.hasOwnProperty("data")) writer.uint32(26).bytes(message.data);
+            if (message.isError != null && message.hasOwnProperty("isError")) writer.uint32(32).bool(message.isError);
             return writer;
         };
 
@@ -5128,13 +5075,13 @@ var signaling = $root.signaling = function () {
                         message.id = reader.uint32();
                         break;
                     case 2:
-                        message.data = reader.bytes();
+                        message.isEnd = reader.bool();
                         break;
                     case 3:
-                        message.isError = reader.bool();
+                        message.data = reader.bytes();
                         break;
                     case 4:
-                        message.isEnd = reader.bool();
+                        message.isError = reader.bool();
                         break;
                     default:
                         reader.skipType(tag & 7);
@@ -5420,7 +5367,6 @@ var FullMesh = function (_TopologyInterface) {
   }, {
     key: 'addJoining',
     value: function addJoining(channel) {
-      console.info(this.wc.myId + ' addJoining ' + channel.peerId);
       var peers = this.wc.members.slice();
       this.peerJoined(channel);
 
@@ -5444,7 +5390,6 @@ var FullMesh = function (_TopologyInterface) {
   }, {
     key: 'initJoining',
     value: function initJoining(ch) {
-      console.info(this.wc.myId + ' initJoining ' + ch.peerId);
       this.jps.set(this.wc.myId, ch);
       this.peerJoined(ch);
     }
@@ -5623,7 +5568,6 @@ var FullMesh = function (_TopologyInterface) {
           this.leave();
         } else {
           this.channels.delete(channel);
-          console.info(this.wc.myId + ' _onPeerLeave while I am joining ' + channel.peerId);
           this.wc._onPeerLeave(channel.peerId);
         }
       } else {
@@ -5658,7 +5602,6 @@ var FullMesh = function (_TopologyInterface) {
 
         if (this.channels.has(channel)) {
           this.channels.delete(channel);
-          console.info(this.wc.myId + ' _onPeerLeave ' + channel.peerId);
           this.wc._onPeerLeave(channel.peerId);
         }
       }
@@ -5737,7 +5680,7 @@ var FullMesh = function (_TopologyInterface) {
                       resolve();
                     }
                   }).catch(function (err) {
-                    console.warn(_this3.wc.myId + ' failed to connect to ' + id, err);
+                    console.warn(_this3.wc.myId + ' failed to connect to ' + id, err.message);
                     if (++counter === peers.length) {
                       resolve();
                     }
@@ -5823,13 +5766,11 @@ var FullMesh = function (_TopologyInterface) {
           {
             this.jps.delete(this.wc.myId);
             this.wc._joinSucceed();
-            console.info(this.wc.myId + ' _joinSucceed ');
             break;
           }
         case 'joinFailedPeerId':
           {
             this.jps.delete(this.wc.myId);
-            console.info(this.wc.myId + ' joinFailed ' + msg.joinFailedPeerId);
             break;
           }
       }
@@ -5840,7 +5781,6 @@ var FullMesh = function (_TopologyInterface) {
       this.channels.add(ch);
       this.jps.delete(ch.peerId);
       this.wc._onPeerJoin(ch.peerId);
-      console.info(this.wc.myId + ' _onPeerJoin ' + ch.peerId);
     }
   }]);
   return FullMesh;
@@ -5850,6 +5790,10 @@ var CONNECTING = 0;
 var CONNECTED = 1;
 var OPEN = 3;
 var CLOSED = 4;
+
+var PING_TIMEOUT$1 = 8000;
+
+var pongMsg = signaling.Message.encode(signaling.Message.create({ pong: true })).finish();
 
 /**
  * This class represents a door of the `WebChannel` for the current peer. If the door
@@ -5888,6 +5832,8 @@ var Signaling = function () {
     this.rxWs = undefined;
 
     this.onChannel = onChannel;
+
+    this.pingTimeout = undefined;
   }
 
   createClass(Signaling, [{
@@ -5921,7 +5867,9 @@ var Signaling = function () {
           rxWs.stream.subscribe(function (msg) {
             switch (msg.type) {
               case 'ping':
-                rxWs.send({ pong: true });
+                rxWs.pong();
+                clearTimeout(_this.pingTimeout);
+                _this.startPingTimeout();
                 break;
               case 'isFirst':
                 if (msg.isFirst) {
@@ -5951,10 +5899,7 @@ var Signaling = function () {
                 break;
             }
           }, function (err) {
-            _this.state = CLOSED;
-            reject(err);
-          }, function () {
-            return _this.state = CLOSED;
+            return reject(err);
           });
         });
       }).catch(function (err) {
@@ -5975,13 +5920,24 @@ var Signaling = function () {
       }
     }
   }, {
+    key: 'startPingTimeout',
+    value: function startPingTimeout() {
+      var _this2 = this;
+
+      this.pingTimeout = setTimeout(function () {
+        _this2.rxWS.close(4002, 'Signaling ping timeout');
+      }, PING_TIMEOUT$1);
+    }
+  }, {
     key: 'createRxWs',
     value: function createRxWs(ws) {
+      var _this3 = this;
+
       var subject = new Subject_2();
       ws.binaryType = 'arraybuffer';
       ws.onmessage = function (evt) {
         try {
-          subject.next(signaling.Incoming.decode(new Uint8Array(evt.data)));
+          subject.next(signaling.Message.decode(new Uint8Array(evt.data)));
         } catch (err) {
           console.error('WebSocket message error from ' + ws.url, err);
           ws.close(4000, err.message);
@@ -5991,16 +5947,23 @@ var Signaling = function () {
         return subject.error(err);
       };
       ws.onclose = function (closeEvt) {
+        _this3.state = CLOSED;
         if (closeEvt.code === 1000) {
           subject.complete();
         } else {
           subject.error(new Error(closeEvt.code + ': ' + closeEvt.reason));
         }
       };
+      ws.onopen = function () {
+        return _this3.startPingTimeout();
+      };
       return {
         stream: subject,
         send: function send(msg) {
-          return ws.send(signaling.Outcoming.encode(signaling.Outcoming.create(msg)).finish());
+          return ws.send(signaling.Message.encode(signaling.Message.create(msg)).finish());
+        },
+        pong: function pong() {
+          return ws.send(pongMsg);
         },
         close: function close(code, reason) {
           return ws.close(code, reason);
@@ -6011,7 +5974,7 @@ var Signaling = function () {
   }, {
     key: 'state',
     set: function set$$1(state) {
-      var _this2 = this;
+      var _this4 = this;
 
       if (this._state !== state) {
         this._state = state;
@@ -6025,10 +5988,10 @@ var Signaling = function () {
               return content;
             }),
             send: function send(msg) {
-              return _this2.rxWs.send({ content: msg });
+              return _this4.rxWs.send({ content: msg });
             }
           }).subscribe(function (ch) {
-            return _this2.onChannel(ch);
+            return _this4.onChannel(ch);
           });
         }
       }
@@ -8022,21 +7985,42 @@ module.exports = {
 
 },{}]},{},[2]);
 
-var NodeCloseEvent = function CloseEvent(name) {
-  var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-  classCallCheck(this, CloseEvent);
+var WebRTC = void 0;
+var WebSocket = void 0;
+var TextEncoder = void 0;
+var TextDecoder = void 0;
+var CloseEvent = void 0;
 
-  this.name = name;
-  this.wasClean = options.wasClean || false;
-  this.code = options.code || 0;
-  this.reason = options.reason || '';
-};
+if (Util.isBrowser()) {
+  WebRTC = window;
+  WebSocket = window.WebSocket;
+  TextEncoder = window.TextEncoder;
+  TextDecoder = window.TextDecoder;
+  CloseEvent = window.CloseEvent;
+} else {
+  // #if NODE
 
-var WebRTC = Util.isBrowser() ? window : require('wrtc');
-var WebSocket = Util.isBrowser() ? window.WebSocket : require('uws');
-var TextEncoder = Util.isBrowser() ? window.TextEncoder : require('text-encoding').TextEncoder;
-var TextDecoder = Util.isBrowser() ? window.TextDecoder : require('text-encoding').TextDecoder;
-var CloseEvent = Util.isBrowser() ? window.CloseEvent : NodeCloseEvent;
+  try {
+    WebRTC = require('wrtc');
+  } catch (err) {
+    console.warn(err.message);
+    WebRTC = undefined;
+  }
+  WebSocket = require('uws');
+  var textEncoding = require('text-encoding');
+  TextEncoder = textEncoding.TextEncoder;
+  TextDecoder = textEncoding.TextDecoder;
+  CloseEvent = function CloseEvent(name) {
+    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+    classCallCheck(this, CloseEvent);
+
+    this.name = name;
+    this.wasClean = options.wasClean || false;
+    this.code = options.code || 0;
+    this.reason = options.reason || '';
+  };
+  // #endif
+}
 
 var CONNECT_TIMEOUT = 3000;
 var listenSubject = new BehaviorSubject_2('');
@@ -8937,6 +8921,7 @@ var WebRTCBuilder = function (_Service) {
 
     _this.wc = wc;
     _this.rtcConfiguration = { iceServers: iceServers };
+    _this.clients = new Map();
     return _this;
   }
 
@@ -8946,10 +8931,15 @@ var WebRTCBuilder = function (_Service) {
       var _this2 = this;
 
       if (WebRTCBuilder.isSupported) {
-        return this._channels(this.svcMsgStream.map(function (_ref) {
-          var msg = _ref.msg,
-              senderId = _ref.senderId;
-          return { offer: msg.offer, id: senderId, candidate: msg.candidate };
+        return this._channels(this.svcMsgStream.filter(function (_ref) {
+          var msg = _ref.msg;
+          return msg.isInitiator;
+        }).map(function (_ref2) {
+          var msg = _ref2.msg,
+              senderId = _ref2.senderId;
+
+          msg.id = senderId;
+          return msg;
         }), function (msg, id) {
           return _this2.wc._sendTo({ recipientId: id, content: get(WebRTCBuilder.prototype.__proto__ || Object.getPrototypeOf(WebRTCBuilder.prototype), 'encode', _this2).call(_this2, msg) });
         });
@@ -8972,14 +8962,16 @@ var WebRTCBuilder = function (_Service) {
       var _this3 = this;
 
       if (WebRTCBuilder.isSupported) {
-        return this._establishChannel(this.svcMsgStream.filter(function (_ref2) {
-          var senderId = _ref2.senderId;
-          return senderId === id;
-        }).map(function (_ref3) {
-          var msg = _ref3.msg;
-          return { answer: msg.answer, candidate: msg.candidate };
+        return this._establishChannel(this.svcMsgStream.filter(function (_ref3) {
+          var msg = _ref3.msg,
+              senderId = _ref3.senderId;
+          return senderId === id && !msg.isInitiator;
+        }).map(function (_ref4) {
+          var msg = _ref4.msg;
+          return { answer: msg.answer, iceCandidate: msg.iceCandidate };
         }), function (msg) {
-          return _this3.wc._sendTo({ recipientId: id, content: get(WebRTCBuilder.prototype.__proto__ || Object.getPrototypeOf(WebRTCBuilder.prototype), 'encode', _this3).call(_this3, msg) });
+          msg.isInitiator = true;
+          _this3.wc._sendTo({ recipientId: id, content: get(WebRTCBuilder.prototype.__proto__ || Object.getPrototypeOf(WebRTCBuilder.prototype), 'encode', _this3).call(_this3, msg) });
         }, id);
       }
       throw new Error('WebRTC is not supported');
@@ -8999,14 +8991,21 @@ var WebRTCBuilder = function (_Service) {
       var _this4 = this;
 
       if (WebRTCBuilder.isSupported) {
-        return this._channels(signaling$$1.stream.filter(function (msg) {
-          return msg.id !== 0;
+        return this._channels(signaling$$1.stream.filter(function (_ref5) {
+          var id = _ref5.id;
+          return id !== 0;
         }).map(function (msg) {
-          var data = get(WebRTCBuilder.prototype.__proto__ || Object.getPrototypeOf(WebRTCBuilder.prototype), 'decode', _this4).call(_this4, msg.data);
-          return Object.assign(data, { id: msg.id });
+          if (msg.type === 'data') {
+            var completeData = get(WebRTCBuilder.prototype.__proto__ || Object.getPrototypeOf(WebRTCBuilder.prototype), 'decode', _this4).call(_this4, msg.data);
+            completeData.id = msg.id;
+            return completeData;
+          } else {
+            return { isError: true };
+          }
         }), function (msg, id) {
           var bytes = webRTCBuilder.Message.encode(webRTCBuilder.Message.create(msg)).finish();
-          signaling$$1.send({ id: id, data: bytes });
+          var isEnd = msg.iceCandidate !== undefined && msg.iceCandidate.candidate !== '';
+          signaling$$1.send({ id: id, isEnd: isEnd, data: bytes });
         });
       }
       throw new Error('WebRTC is not supported');
@@ -9027,13 +9026,15 @@ var WebRTCBuilder = function (_Service) {
       var _this5 = this;
 
       if (WebRTCBuilder.isSupported) {
-        return this._establishChannel(signaling$$1.stream.filter(function (msg) {
-          return msg.id === 0;
+        return this._establishChannel(signaling$$1.stream.filter(function (_ref6) {
+          var id = _ref6.id;
+          return id === 0;
         }).map(function (msg) {
-          return get(WebRTCBuilder.prototype.__proto__ || Object.getPrototypeOf(WebRTCBuilder.prototype), 'decode', _this5).call(_this5, msg.data);
+          return msg.type === 'data' ? get(WebRTCBuilder.prototype.__proto__ || Object.getPrototypeOf(WebRTCBuilder.prototype), 'decode', _this5).call(_this5, msg.data) : { isError: true };
         }), function (msg) {
           var bytes = webRTCBuilder.Message.encode(webRTCBuilder.Message.create(msg)).finish();
-          signaling$$1.send({ data: bytes });
+          var isEnd = msg.iceCandidate !== undefined && msg.iceCandidate.candidate !== '';
+          signaling$$1.send({ isEnd: isEnd, data: bytes });
         });
       }
       throw new Error('WebRTC is not supported');
@@ -9056,33 +9057,40 @@ var WebRTCBuilder = function (_Service) {
 
       var pc = new WebRTC.RTCPeerConnection(this.rtcConfiguration);
       var remoteCandidateStream = new ReplaySubject_2();
-      this._localCandidates(pc).subscribe(function (candidate) {
-        return send({ candidate: candidate });
+      this._localCandidates(pc).subscribe(function (iceCandidate) {
+        return send({ iceCandidate: iceCandidate });
       }, function (err) {
         return console.warn(err);
       }, function () {
-        return send({ isEnd: true });
+        return send({ iceCandidate: { candidate: '' } });
       });
 
       return new Promise(function (resolve, reject) {
-        var subs = stream.subscribe(function (_ref4) {
-          var answer = _ref4.answer,
-              candidate = _ref4.candidate;
+        var subs = stream.subscribe(function (_ref7) {
+          var answer = _ref7.answer,
+              iceCandidate = _ref7.iceCandidate,
+              isError = _ref7.isError;
 
           if (answer) {
             pc.setRemoteDescription({ type: 'answer', sdp: answer }).then(function () {
-              remoteCandidateStream.subscribe(function (candidate) {
-                pc.addIceCandidate(new WebRTC.RTCIceCandidate(candidate)).catch(reject);
+              remoteCandidateStream.subscribe(function (iceCandidate) {
+                pc.addIceCandidate(new WebRTC.RTCIceCandidate(iceCandidate)).catch(reject);
               }, function (err) {
                 return console.warn(err);
               }, function () {
                 return subs.unsubscribe();
               });
             }).catch(reject);
-          } else if (candidate) {
-            remoteCandidateStream.next(candidate);
+          } else if (iceCandidate) {
+            if (iceCandidate.candidate !== '') {
+              remoteCandidateStream.next(iceCandidate);
+            } else {
+              remoteCandidateStream.complete();
+            }
+          } else if (isError) {
+            reject(new Error('Remote peer no longer available via Signaling'));
           } else {
-            remoteCandidateStream.complete();
+            reject(new Error('Unknown message from a remote peer', { answer: answer, iceCandidate: iceCandidate, isError: isError }));
           }
         }, reject, function () {
           return reject(new Error('Failed to establish RTCDataChannel: the connection with Signaling server was closed'));
@@ -9113,13 +9121,13 @@ var WebRTCBuilder = function (_Service) {
       var _this7 = this;
 
       return Observable_2.create(function (observer) {
-        var clients = new Map();
-        stream.subscribe(function (_ref5) {
-          var offer = _ref5.offer,
-              candidate = _ref5.candidate,
-              id = _ref5.id;
+        stream.subscribe(function (_ref8) {
+          var offer = _ref8.offer,
+              iceCandidate = _ref8.iceCandidate,
+              id = _ref8.id,
+              isError = _ref8.isError;
 
-          var client = clients.get(id);
+          var client = _this7.clients.get(id);
           var pc = void 0;
           var remoteCandidateStream = void 0;
           if (client) {
@@ -9130,31 +9138,31 @@ var WebRTCBuilder = function (_Service) {
           } else {
             pc = new WebRTC.RTCPeerConnection(_this7.rtcConfiguration);
             remoteCandidateStream = new ReplaySubject_2();
-            _this7._localCandidates(pc).subscribe(function (candidate) {
-              return send({ candidate: candidate }, id);
+            _this7._localCandidates(pc).subscribe(function (iceCandidate) {
+              return send({ iceCandidate: iceCandidate }, id);
             }, function (err) {
               return console.warn(err);
             }, function () {
-              return send({ isEnd: true }, id);
+              return send({ iceCandidate: { candidate: '' } }, id);
             });
-            clients.set(id, [pc, remoteCandidateStream]);
+            _this7.clients.set(id, [pc, remoteCandidateStream]);
           }
           if (offer) {
             _this7._openChannel(pc, false).then(function (ch) {
               return observer.next(ch);
             }).catch(function (err) {
-              clients.delete(id);
+              _this7.clients.delete(id);
               console.error('Client "' + id + '" failed to establish RTCDataChannel with you: ' + err.message);
             });
             pc.setRemoteDescription({ type: 'offer', sdp: offer }).then(function () {
-              return remoteCandidateStream.subscribe(function (candidate) {
-                pc.addIceCandidate(new WebRTC.RTCIceCandidate(candidate)).catch(function (err) {
+              return remoteCandidateStream.subscribe(function (iceCandidate) {
+                pc.addIceCandidate(new WebRTC.RTCIceCandidate(iceCandidate)).catch(function (err) {
                   return console.warn(err);
                 });
               }, function (err) {
                 return console.warn(err);
               }, function () {
-                return clients.delete(id);
+                return _this7.clients.delete(id);
               });
             }).then(function () {
               return pc.createAnswer();
@@ -9163,13 +9171,19 @@ var WebRTCBuilder = function (_Service) {
             }).then(function () {
               return send({ answer: pc.localDescription.sdp }, id);
             }).catch(function (err) {
-              clients.delete(id);
+              _this7.clients.delete(id);
               console.error(err);
             });
-          } else if (candidate) {
-            remoteCandidateStream.next(candidate);
+          } else if (iceCandidate) {
+            if (iceCandidate.candidate !== '') {
+              remoteCandidateStream.next(iceCandidate);
+            } else {
+              remoteCandidateStream.complete();
+            }
+          } else if (isError) {
+            console.warn('Remote peer no longer available via Signaling');
           } else {
-            remoteCandidateStream.complete();
+            console.error(new Error('Unknown message from a remote peer', { offer: offer, iceCandidate: iceCandidate, isError: isError }));
           }
         }, function (err) {
           return observer.error(err);
@@ -9740,8 +9754,7 @@ var defaults$1 = {
  * @type {number}
  */
 var MAX_ID = 2147483647;
-
-var REJOIN_MAX_ATTEMPTS = 0;
+var REJOIN_MAX_ATTEMPTS = 10;
 var REJOIN_TIMEOUT = 2000;
 
 /**
@@ -10379,7 +10392,6 @@ var WebChannel = function (_Service) {
         if (attempt === REJOIN_MAX_ATTEMPTS) {
           reject(new Error('Failed to join via ' + _this5.signalingURL + ' with ' + _this5.key + ' key: reached maximum rejoin attempts (' + REJOIN_MAX_ATTEMPTS + ')'));
         } else {
-          console.info('Trying to rejoin in ' + REJOIN_TIMEOUT + ' the ' + (attempt + 1) + ' time... ');
           setTimeout(function () {
             _this5._joinRecursively(function () {
               return resolve();
@@ -10735,5 +10747,7 @@ var BotServer = function () {
   }]);
   return BotServer;
 }();
+
+// #endif
 
 export { WebChannel, FULL_MESH, BotServer };
