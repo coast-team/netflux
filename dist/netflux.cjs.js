@@ -5929,7 +5929,9 @@ var Signaling = function () {
       var _this2 = this;
 
       this.pingTimeout = setTimeout(function () {
-        _this2.rxWS.close(4002, 'Signaling ping timeout');
+        if (_this2.state !== CLOSED) {
+          _this2.rxWS.close(4002, 'Signaling ping timeout');
+        }
       }, PING_TIMEOUT$1);
     }
   }, {

@@ -143,7 +143,9 @@ export class Signaling {
 
   startPingTimeout () {
     this.pingTimeout = setTimeout(() => {
-      this.rxWS.close(4002, 'Signaling ping timeout')
+      if (this.state !== CLOSED) {
+        this.rxWS.close(4002, 'Signaling ping timeout')
+      }
     }, PING_TIMEOUT)
   }
 
