@@ -1,1 +1,10 @@
+# Folders
+dist
+coverage
+src/external
+
+# Files
 karma*.js
+Protobuf.js
+*conf*.js
+.botServer.js
