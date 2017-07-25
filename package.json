@@ -62,7 +62,7 @@
     "commitizen": "^2.4.6",
     "cz-conventional-changelog": "^2.0.0",
     "esdoc": "^0.5.2",
-    "eslint": "^4.0.0",
+    "eslint": "^4.3.0",
     "eslint-config-conaclos": "^2.0.0",
     "eslint-config-standard": "^10.0.0",
     "eslint-plugin-import": "^2.2.0",
@@ -92,15 +92,14 @@
     "rollup-plugin-babel": "^2.6.1",
     "rollup-plugin-commonjs": "^8.0.2",
     "rollup-plugin-filesize": "^1.0.0",
-    "rollup-plugin-includepaths": "^0.2.2",
     "rollup-plugin-istanbul": "^1.0.0",
     "rollup-plugin-node-resolve": "^3.0.0",
-    "rollup-plugin-replace": "^1.1.1",
+    "rollup-plugin-re": "^1.0.6",
     "rollup-plugin-string": "^2.0.2",
     "rollup-plugin-strip": "^1.1.1",
     "semantic-release": "^6.3.2",
     "sigver": "^15.0.0",
-    "validate-commit-msg": "^2.8.2"
+    "validate-commit-msg": "^2.13.1"
   },
   "config": {
     "commitizen": {
