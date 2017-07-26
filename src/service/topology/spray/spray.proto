@@ -9,7 +9,7 @@ message Message {
 
     Sample exchangeResp = 3;
 
-    Peers connectTo = 4;
+    uint32 connectTo = 4;
 
     Peers connectedTo = 5;
 

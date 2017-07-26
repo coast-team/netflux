@@ -14,13 +14,13 @@ export abstract class Service {
 
   serviceId: number
   Message: any
-  innerStream: Subject<ServiceMessage>
+  svcMsgStream: Subject<ServiceMessage>
 
   constructor (id, Message, msgStream?) {
     this.serviceId = id
     this.Message = Message
     if (msgStream !== undefined) {
-      this.setInnerStream(msgStream)
+      this.setSvcMsgStream(msgStream)
     }
   }
 
@@ -37,8 +37,8 @@ export abstract class Service {
     return this.Message.decode(bytes)
   }
 
-  private setInnerStream (msgStream) {
-    this.innerStream = msgStream
+  private setSvcMsgStream (msgStream) {
+    this.svcMsgStream = msgStream
       .filter(({ id }) => id === this.serviceId)
       .map(({ channel, senderId, recipientId, content, timestamp }) => ({
         channel,

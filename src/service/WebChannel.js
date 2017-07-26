@@ -33,7 +33,7 @@ const INNER_ID = 100
 
 const JOINING = 0
 const JOINED = 1
-const DISCONNECTED = 2
+export const DISCONNECTED = 2
 
 /**
  * This class is an API starting point. It represents a group of collaborators
@@ -443,13 +443,11 @@ export class WebChannel extends Service {
 
       // If it is a private message to me
       case this.myId:
-        console.info(this.myId + ' message for me')
         this._handleMyMessage(channel, msg)
         break
 
       // If is is a message to me from a peer who does not know yet my ID
       case 1:
-        console.info(this.myId + ' message for me but other peer does not know my ID')
         this._handleMyMessage(channel, msg)
         break
 
@@ -462,25 +460,26 @@ export class WebChannel extends Service {
   _handleMyMessage (channel, msg) {
     if (!msg.isService) {
       // User Message
-      console.log(this.myId + ' User Message ' + JSON.stringify(msg))
+      // console.log(this.myId + ' User Message ' + JSON.stringify(msg))
       const data = this._userMsg.decode(msg.content, msg.senderId)
       if (data !== undefined) {
         this.onMessage(msg.senderId, data, msg.recipientId === 0)
       }
     } else {
       // Inner Message
-      console.log(this.myId + ' Inner message : ' + JSON.stringify(msg))
+      console.info(this.myId + ' Inner message : ' + JSON.stringify(msg))
       try {
-        console.log(this.myId + ' content1 : ' + JSON.stringify(spray.Message.decode(service.Message.decode(msg.content).content)))
-      } catch (e) {
-        try {
-          console.log(this.myId + ' content2 : ' + JSON.stringify(super.decode(service.Message.decode(msg.content).content)))
-        } catch (e2) {
-          console.info(this.myId + ' undecodable ' + e2)
+        if (JSON.stringify(spray.Message.decode(service.Message.decode(msg.content).content)) !== {}) {
+          console.info(this.myId + ' content1 : ' + JSON.stringify(spray.Message.decode(service.Message.decode(msg.content).content)))
+        } else if (JSON.stringify(super.decode(service.Message.decode(msg.content).content)) !== {}) {
+          console.info(this.myId + ' content2 : ' + JSON.stringify(super.decode(service.Message.decode(msg.content).content)))
+        } else {
+          console.info(this.myId + ' undecodable ')
         }
+      } catch (e) {
+        console.info(this.myId + ' undecodable ' + e)
       }
       if (msg.hasOwnProperty('meta')) {
-        console.log(this.myId + ' meta found ' + JSON.stringify(msg.meta))
         this._svcMsgStream.next(Object.assign({
           channel,
           senderId: msg.senderId,
@@ -488,7 +487,6 @@ export class WebChannel extends Service {
           timestamp: msg.meta.timestamp
         }, service.Message.decode(msg.content)))
       } else {
-        console.log(this.myId + ' meta not found ')
         this._svcMsgStream.next(Object.assign({
           channel,
           senderId: msg.senderId,
@@ -521,8 +519,10 @@ export class WebChannel extends Service {
         const now = Date.now()
         this._pongNb++
         this._maxTime = Math.max(this._maxTime, now - this._pingTime)
+        console.warn(this.myId + ' this.members.length : ' + this.members.length + ', this._pongNb : ' + this._pongNb)
         if (this._pongNb === this.members.length) {
           this._pingFinish(this._maxTime)
+          console.warn(this.myId + ' this._maxtime : ' + this._maxTime)
           this._pingTime = 0
         }
         break

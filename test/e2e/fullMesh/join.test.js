@@ -14,11 +14,11 @@ import { WebChannel } from '../../../src/service/WebChannel'
 // ]
 
 // const USE_CASES = [2, 3, 7]
-const USE_CASES = [2]
+const USE_CASES = [3]
 const scenarios = [
-  new helper.Scenario(2)/*,
+  // new helper.Scenario(2),
   // new helper.Scenario(1, 1),
-  new helper.Scenario(3),
+  new helper.Scenario(3)/*,
   // new helper.Scenario(2, 2),
   new helper.Scenario(7) */
   // new helper.Scenario(6, 3)
@@ -33,7 +33,7 @@ const faces = length => {
 }
 
 describe('Spray connected', () => {
-  describe('Should establish a p2p network', () => {
+  fdescribe('Should establish a p2p network', () => {
     let wcs
     afterEach(() => wcs.forEach(wc => wc.disconnect()))
 
@@ -108,7 +108,7 @@ describe('Spray connected', () => {
     })
   })
 
-  fdescribe('Should ping', () => {
+  xdescribe('Should ping', () => {
     let wcs
 
     afterEach(() => wcs.forEach(wc => wc.disconnect()))

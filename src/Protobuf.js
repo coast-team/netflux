@@ -707,7 +707,7 @@ export const spray = $root.spray = (() => {
         Message.prototype.shouldAdd = 0;
         Message.prototype.exchangeInit = null;
         Message.prototype.exchangeResp = null;
-        Message.prototype.connectTo = null;
+        Message.prototype.connectTo = 0;
         Message.prototype.connectedTo = null;
         Message.prototype.joiningPeerId = 0;
         Message.prototype.joinedPeerId = 0;
@@ -733,7 +733,7 @@ export const spray = $root.spray = (() => {
             if (message.exchangeResp != null && message.hasOwnProperty("exchangeResp"))
                 $root.spray.Sample.encode(message.exchangeResp, writer.uint32(26).fork()).ldelim();
             if (message.connectTo != null && message.hasOwnProperty("connectTo"))
-                $root.spray.Peers.encode(message.connectTo, writer.uint32(34).fork()).ldelim();
+                writer.uint32(32).uint32(message.connectTo);
             if (message.connectedTo != null && message.hasOwnProperty("connectedTo"))
                 $root.spray.Peers.encode(message.connectedTo, writer.uint32(42).fork()).ldelim();
             if (message.joiningPeerId != null && message.hasOwnProperty("joiningPeerId"))
@@ -760,7 +760,7 @@ export const spray = $root.spray = (() => {
                     message.exchangeResp = $root.spray.Sample.decode(reader, reader.uint32());
                     break;
                 case 4:
-                    message.connectTo = $root.spray.Peers.decode(reader, reader.uint32());
+                    message.connectTo = reader.uint32();
                     break;
                 case 5:
                     message.connectedTo = $root.spray.Peers.decode(reader, reader.uint32());

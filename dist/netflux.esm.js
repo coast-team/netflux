@@ -4936,7 +4936,7 @@ var spray = $root.spray = function () {
         Message.prototype.shouldAdd = 0;
         Message.prototype.exchangeInit = null;
         Message.prototype.exchangeResp = null;
-        Message.prototype.connectTo = null;
+        Message.prototype.connectTo = 0;
         Message.prototype.connectedTo = null;
         Message.prototype.joiningPeerId = 0;
         Message.prototype.joinedPeerId = 0;
@@ -4957,7 +4957,7 @@ var spray = $root.spray = function () {
             if (message.shouldAdd != null && message.hasOwnProperty("shouldAdd")) writer.uint32(8).uint32(message.shouldAdd);
             if (message.exchangeInit != null && message.hasOwnProperty("exchangeInit")) $root.spray.Sample.encode(message.exchangeInit, writer.uint32(18).fork()).ldelim();
             if (message.exchangeResp != null && message.hasOwnProperty("exchangeResp")) $root.spray.Sample.encode(message.exchangeResp, writer.uint32(26).fork()).ldelim();
-            if (message.connectTo != null && message.hasOwnProperty("connectTo")) $root.spray.Peers.encode(message.connectTo, writer.uint32(34).fork()).ldelim();
+            if (message.connectTo != null && message.hasOwnProperty("connectTo")) writer.uint32(32).uint32(message.connectTo);
             if (message.connectedTo != null && message.hasOwnProperty("connectedTo")) $root.spray.Peers.encode(message.connectedTo, writer.uint32(42).fork()).ldelim();
             if (message.joiningPeerId != null && message.hasOwnProperty("joiningPeerId")) writer.uint32(48).uint32(message.joiningPeerId);
             if (message.joinedPeerId != null && message.hasOwnProperty("joinedPeerId")) writer.uint32(56).uint32(message.joinedPeerId);
@@ -4981,7 +4981,7 @@ var spray = $root.spray = function () {
                         message.exchangeResp = $root.spray.Sample.decode(reader, reader.uint32());
                         break;
                     case 4:
-                        message.connectTo = $root.spray.Peers.decode(reader, reader.uint32());
+                        message.connectTo = reader.uint32();
                         break;
                     case 5:
                         message.connectedTo = $root.spray.Peers.decode(reader, reader.uint32());
@@ -5431,7 +5431,7 @@ var Service = function () {
         this.serviceId = id;
         this.Message = Message$$1;
         if (msgStream !== undefined) {
-            this.setInnerStream(msgStream);
+            this.setSvcMsgStream(msgStream);
         }
     }
 
@@ -5449,11 +5449,11 @@ var Service = function () {
             return this.Message.decode(bytes);
         }
     }, {
-        key: 'setInnerStream',
-        value: function setInnerStream(msgStream) {
+        key: 'setSvcMsgStream',
+        value: function setSvcMsgStream(msgStream) {
             var _this = this;
 
-            this.innerStream = msgStream.filter(function (_ref) {
+            this.svcMsgStream = msgStream.filter(function (_ref) {
                 var id = _ref.id;
                 return id === _this.serviceId;
             }).map(function (_ref2) {
@@ -5536,12 +5536,12 @@ var SprayService = function (_TopologyInterface) {
             this.jps = new Map();
             this.p = new PartialView();
             this.received = []; // [senderId, timestamp] couples of received messages
-            setTimeout(function () {
+            this.timeoutExch = setTimeout(function () {
                 _this2.interval = setInterval(function () {
                     _this2._exchange(_this2.wc);
                 }, delay);
             }, 1000 * 10);
-            this.innerStream.subscribe(function (msg) {
+            this.svcMsgStream.subscribe(function (msg) {
                 return _this2._handleSvcMsg(msg);
             }, function (err) {
                 return console.error('Spray Message Stream Error', err);
@@ -5553,7 +5553,7 @@ var SprayService = function (_TopologyInterface) {
             }, function (err) {
                 return console.error('Spray set joining peer Error', err);
             });
-            setTimeout(function () {
+            this.timeoutReceived = setTimeout(function () {
                 return _this2._clearReceived();
             }, 5000);
         }
@@ -5571,70 +5571,56 @@ var SprayService = function (_TopologyInterface) {
     }, {
         key: 'addJoining',
         value: function addJoining(channel) {
-            console.info(this.wc.myId + ' addJoining ' + channel.peerId);
+            var _this3 = this;
+
+            var newPeerId = channel.peerId;
+            console.info(this.wc.myId + ' addJoining ' + newPeerId);
             var peers = this.wc.members.slice();
             // First joining peer
             if (this.wc.members.slice().length == 0) {
+                console.log(this.wc.myId + ' shouldAdd ' + newPeerId);
                 channel.send(this.wc._encode({
-                    recipientId: channel.peerId,
-                    content: get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'encode', this).call(this, { joinedPeerId: channel.peerId }),
+                    recipientId: newPeerId,
+                    content: get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'encode', this).call(this, { joinedPeerId: newPeerId }),
                     meta: { timestamp: Date.now() }
                 }));
                 this.peerJoined(channel);
-                console.log(this.wc.myId + ' shouldAdd ' + channel.peerId);
-                this.p.add(channel.peerId);
+                this.p.add(newPeerId);
                 console.log(this.wc.myId + ' partialView increased : ' + this.p.toString());
-                channel.send(this.wc._encode({
-                    recipientId: channel.peerId,
-                    content: get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'encode', this).call(this, { shouldAdd: this.wc.myId }),
-                    meta: { timestamp: Date.now() }
-                }));
                 // There are at least 2 members in the network
             } else {
                 // TODO : modify for spray algo
-                console.error(this.wc.myId + ' addJoining with several members ');
-                this.jps.set(channel.peerId, channel);
-                this.wc._send({ content: get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'encode', this).call(this, { joiningPeerId: channel.peerId }) });
-                channel.send(this.wc._encode({
-                    recipientId: channel.peerId,
-                    content: get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'encode', this).call(this, { connectTo: { peers: peers } }),
-                    meta: { timestamp: Date.now() }
-                }));
+                console.warn(this.wc.myId + ' addJoining with several members ');
+                this.jps.set(newPeerId, channel);
+                // this.wc._send({ content: super.encode({ joiningPeerId: newPeerId }) });
+                // channel.send(this.wc._encode({
+                //     recipientId: newPeerId,
+                //     content: super.encode({ connectTo: { peers } })
+                // }))
+                this.p.forEach(function (_ref) {
+                    var _ref2 = slicedToArray(_ref, 2),
+                        pId = _ref2[0],
+                        age = _ref2[1];
+
+                    console.warn(_this3.wc.myId + ' sending instructions to ' + pId);
+                    _this3.wc._sendTo({
+                        recipientId: pId,
+                        content: get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'encode', _this3).call(_this3, { shouldAdd: newPeerId }),
+                        meta: { timestamp: Date.now() }
+                    });
+                    _this3.wc._sendTo({
+                        recipientId: pId,
+                        content: get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'encode', _this3).call(_this3, { connectTo: newPeerId }),
+                        meta: { timestamp: Date.now() }
+                    });
+                });
             }
-            // if (peers.length == 0) { // Case of two peers in the network
-            //   console.log(this.wc.myId + ' there is nobody in partialView ');
-            //
-            //   let M1: ServiceMessage = {
-            //                             channel: channel,
-            //                             senderId: this.wc.myId,
-            //                             recipientId: this.wc.myId,
-            //                             msg: super.decode(service.Message.decode(super.encode({ shouldAdd: channel.peerId })).content), // decode of encode otherwise the type is not detected
-            //                             timestamp: Date.now()
-            //                            }
-            //   console.log(this.wc.myId + ' sending first shouldAdd to me ');
-            //   this._handleSvcMsg(M1);
-            //
-            //   let M2 = {
-            //     recipientId: channel.peerId,
-            //     content: super.encode({ shouldAdd: this.wc.myId }),
-            //     meta: { timestamp: Date.now() }
-            //   }
-            //   console.log(this.wc.myId + ' sending first shouldAdd to ' + M2.recipientId + "\n" + JSON.stringify(M2) + "\n content : " + JSON.stringify(super.decode(service.Message.decode(M2.content).content)));
-            //   channel.send(this.wc._encode(M2));
-            //
-            // } else {
-            //   peers.forEach( (peer) => {
-            //     console.info(this.wc.myId + ' sending shouldAdd message to ' + peer);
-            //
-            //     let M = this.wc._encode({
-            //               recipientId: peer,
-            //               content: super.encode({ shouldAdd: channel.peerId }),
-            //               meta: { timestamp: Date.now() }
-            //             });
-            //     channel.send(M);
-            //   });
-            // }
-            console.info(this.wc.myId + ' addJoining finished ' + channel.peerId);
+            channel.send(this.wc._encode({
+                recipientId: newPeerId,
+                content: get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'encode', this).call(this, { shouldAdd: this.wc.myId }),
+                meta: { timestamp: Date.now() }
+            }));
+            console.info(this.wc.myId + ' addJoining finished ' + newPeerId);
         }
     }, {
         key: 'initJoining',
@@ -5652,14 +5638,19 @@ var SprayService = function (_TopologyInterface) {
     }, {
         key: 'send',
         value: function send(msg) {
-            var _this3 = this;
+            var _this4 = this;
 
+            if (this.wc.state == DISCONNECTED) {
+                console.info(this.wc.myId + ' send break (disconnected) ');
+                return;
+            }
+            // console.info(this.wc.myId + ' send ' + msg.recipientId + "\nContent length : " + Object.keys(msg.content).length);
             console.info(this.wc.myId + ' send ' + JSON.stringify(msg));
             try {
-                console.info(this.wc.myId + ' content : ' + JSON.stringify(get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'decode', this).call(this, service.Message.decode(msg.content).content)));
+                console.info(this.wc.myId + ' content1 : ' + JSON.stringify(get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'decode', this).call(this, service.Message.decode(msg.content).content)));
             } catch (e) {
                 try {
-                    console.info(this.wc.myId + ' content : ' + JSON.stringify(channelBuilder.Message.decode(msg.content)));
+                    console.info(this.wc.myId + ' content2 : ' + JSON.stringify(channelBuilder.Message.decode(msg.content)));
                 } catch (e2) {}
             }
             if (msg.meta == undefined || msg.meta.timestamp == undefined) {
@@ -5673,18 +5664,17 @@ var SprayService = function (_TopologyInterface) {
             var listChan = [];
             console.info(this.wc.myId + ' partialView : ' + this.p.toString());
             this.p.forEach(function (arc) {
-                console.info(_this3.wc.myId + ' arc : ' + arc + "\nthis.channels.size : " + _this3.channels.size);
+                console.info(_this4.wc.myId + ' arc : ' + arc + "\nthis.channels.size : " + _this4.channels.size);
                 var _iteratorNormalCompletion = true;
                 var _didIteratorError = false;
                 var _iteratorError = undefined;
 
                 try {
-                    for (var _iterator = _this3.channels[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                    for (var _iterator = _this4.channels[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
                         var ch = _step.value;
 
-                        console.info(_this3.wc.myId + ' arc[0] : ' + arc[0] + "\n ch : " + ch.peerId);
                         if (ch.peerId == arc[0]) {
-                            console.info(_this3.wc.myId + ' channel found ' + ch.peerId);
+                            console.info(_this4.wc.myId + ' channel found ' + ch.peerId);
                             listChan.push(ch);
                             return;
                         }
@@ -5704,7 +5694,7 @@ var SprayService = function (_TopologyInterface) {
                     }
                 }
 
-                console.error(_this3.wc.myId + ' channel not found ' + arc[0]);
+                console.error(_this4.wc.myId + ' channel not found ' + arc[0]);
             });
             var _iteratorNormalCompletion2 = true;
             var _didIteratorError2 = false;
@@ -5714,6 +5704,12 @@ var SprayService = function (_TopologyInterface) {
                 for (var _iterator2 = listChan[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
                     var ch = _step2.value;
 
+                    // TODO : test without this protection
+                    if (msg.recipientId == 0 && ch.peerId == msg.senderId) {
+                        console.warn(this.wc.myId + ' message blocked : sending to the sender');
+                        // console.info(this.wc.myId + ' message blocked : ' + JSON.stringify(msg));
+                        return;
+                    }
                     ch.send(bytes);
                 }
             } catch (err) {
@@ -5730,6 +5726,9 @@ var SprayService = function (_TopologyInterface) {
                     }
                 }
             }
+
+            console.info(this.wc.myId + " message sent " + (msg.senderId + ' => ' + msg.recipientId) + ", timestamp : " + msg.meta.timestamp);
+            this.received.push([msg.senderId, msg.meta.timestamp]);
         }
         /**
          * Send message to a specific peer (recipientId)
@@ -5738,14 +5737,19 @@ var SprayService = function (_TopologyInterface) {
     }, {
         key: 'sendTo',
         value: function sendTo(msg) {
-            var _this4 = this;
+            var _this5 = this;
 
+            if (this.wc.state == DISCONNECTED) {
+                console.info(this.wc.myId + ' sendTo break (disconnected) ');
+                return;
+            }
+            // console.info(this.wc.myId + ' sendTo ' + msg.recipientId + "\nContent length : " + Object.keys(msg.content).length);
             console.info(this.wc.myId + ' sendTo ' + JSON.stringify(msg));
             try {
-                console.info(this.wc.myId + ' content : ' + JSON.stringify(get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'decode', this).call(this, service.Message.decode(msg.content).content)));
+                console.info(this.wc.myId + ' content1 : ' + JSON.stringify(get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'decode', this).call(this, service.Message.decode(msg.content).content)));
             } catch (e) {
                 try {
-                    console.info(this.wc.myId + ' content : ' + JSON.stringify(channelBuilder.Message.decode(msg.content)));
+                    console.info(this.wc.myId + ' content2 : ' + JSON.stringify(channelBuilder.Message.decode(msg.content)));
                 } catch (e2) {}
             }
             if (msg.meta == undefined || msg.meta.timestamp == undefined) {
@@ -5793,7 +5797,7 @@ var SprayService = function (_TopologyInterface) {
                 var _iteratorError4 = undefined;
 
                 try {
-                    for (var _iterator4 = _this4.channels[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+                    for (var _iterator4 = _this5.channels[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
                         var _ch = _step4.value;
 
                         if (_ch.peerId == arc[0]) {
@@ -5816,7 +5820,7 @@ var SprayService = function (_TopologyInterface) {
                     }
                 }
 
-                console.error(_this4.wc.myId + ' channel not found ' + arc[0]);
+                console.error(_this5.wc.myId + ' channel not found ' + arc[0]);
             });
             var _iteratorNormalCompletion5 = true;
             var _didIteratorError5 = false;
@@ -5827,6 +5831,8 @@ var SprayService = function (_TopologyInterface) {
                     var _ch2 = _step5.value;
 
                     if (_ch2.peerId === msg.recipientId) {
+                        this.received.push([msg.senderId, msg.meta.timestamp]);
+                        console.info(this.wc.myId + " message sent to " + msg.recipientId + ", timestamp : " + msg.meta.timestamp);
                         return _ch2.send(bytes);
                     }
                 }
@@ -5850,7 +5856,12 @@ var SprayService = function (_TopologyInterface) {
     }, {
         key: 'forwardTo',
         value: function forwardTo(msg) {
-            console.info(this.wc.myId + ' forwardTo ' + JSON.stringify(msg));
+            if (this.wc.state == DISCONNECTED) {
+                console.info(this.wc.myId + ' forwardTo break (disconnected) ');
+                return;
+            }
+            console.info(this.wc.myId + ' forwardTo ' + msg.recipientId);
+            // console.info(this.wc.myId + ' forwardTo ' + JSON.stringify(msg));
             try {
                 console.info(this.wc.myId + ' content : ' + JSON.stringify(get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'decode', this).call(this, service.Message.decode(msg.content).content)));
             } catch (e) {}
@@ -5859,7 +5870,12 @@ var SprayService = function (_TopologyInterface) {
     }, {
         key: 'forward',
         value: function forward(msg) {
-            console.info(this.wc.myId + ' forward ' + JSON.stringify(msg));
+            if (this.wc.state == DISCONNECTED) {
+                console.info(this.wc.myId + ' forward break (disconnected) ');
+                return;
+            }
+            console.info(this.wc.myId + ' forward ');
+            // console.info(this.wc.myId + ' forward ' + JSON.stringify(msg));
             try {
                 console.info(this.wc.myId + ' content : ' + JSON.stringify(get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'decode', this).call(this, service.Message.decode(msg.content).content)));
             } catch (e) {}
@@ -5868,7 +5884,6 @@ var SprayService = function (_TopologyInterface) {
                 peersId.push(arc[0]);
             });
             console.log(this.wc.myId + ' peersId : ' + peersId + "\nlength : " + peersId.length);
-            console.log(this.wc.myId + ' msg.recipientId : ' + msg.recipientId);
             if (peersId.includes(msg.recipientId)) {
                 this.sendTo(msg);
             } else {
@@ -5907,41 +5922,88 @@ var SprayService = function (_TopologyInterface) {
             }
 
             this.channels.clear();
+            clearTimeout(this.timeoutExch);
+            clearTimeout(this.timeoutReceived);
             clearInterval(this.interval);
         }
     }, {
         key: 'onChannelClose',
         value: function onChannelClose(closeEvt, channel) {
             console.info(this.wc.myId + ' onChannelClose ');
-            // TODO ?
-            var _iteratorNormalCompletion7 = true;
-            var _didIteratorError7 = false;
-            var _iteratorError7 = undefined;
+            // TODO : use _onPeerDown or _onArcDown
+            if (this.iJoin()) {
+                var firstChannel = this.channels.values().next().value;
+                if (firstChannel.peerId === channel.peerId) {
+                    this.wc._joinFailed();
+                    var _iteratorNormalCompletion7 = true;
+                    var _didIteratorError7 = false;
+                    var _iteratorError7 = undefined;
 
-            try {
-                for (var _iterator7 = this.channels[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
-                    var c = _step7.value;
+                    try {
+                        for (var _iterator7 = this.channels[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
+                            var ch = _step7.value;
 
-                    if (c.peerId === channel.peerId) {
-                        return this.channels.delete(c);
+                            ch.clearHandlers();
+                            ch.close();
+                        }
+                    } catch (err) {
+                        _didIteratorError7 = true;
+                        _iteratorError7 = err;
+                    } finally {
+                        try {
+                            if (!_iteratorNormalCompletion7 && _iterator7.return) {
+                                _iterator7.return();
+                            }
+                        } finally {
+                            if (_didIteratorError7) {
+                                throw _iteratorError7;
+                            }
+                        }
+                    }
+
+                    this.channels.clear();
+                    this.jps.clear();
+                } else {
+                    this.channels.delete(channel);
+                    console.info(this.wc.myId + ' _onPeerLeave when iJoin ' + channel.peerId);
+                    this.wc._onPeerLeave(channel.peerId);
+                }
+            } else {
+                var _iteratorNormalCompletion8 = true;
+                var _didIteratorError8 = false;
+                var _iteratorError8 = undefined;
+
+                try {
+                    for (var _iterator8 = this.jps[Symbol.iterator](), _step8; !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
+                        var _step8$value = slicedToArray(_step8.value, 1),
+                            id = _step8$value[0];
+
+                        if (id === channel.peerId) {
+                            this.jps.delete(id);
+                            return;
+                        }
+                    }
+                } catch (err) {
+                    _didIteratorError8 = true;
+                    _iteratorError8 = err;
+                } finally {
+                    try {
+                        if (!_iteratorNormalCompletion8 && _iterator8.return) {
+                            _iterator8.return();
+                        }
+                    } finally {
+                        if (_didIteratorError8) {
+                            throw _iteratorError8;
+                        }
                     }
                 }
-            } catch (err) {
-                _didIteratorError7 = true;
-                _iteratorError7 = err;
-            } finally {
-                try {
-                    if (!_iteratorNormalCompletion7 && _iterator7.return) {
-                        _iterator7.return();
-                    }
-                } finally {
-                    if (_didIteratorError7) {
-                        throw _iteratorError7;
-                    }
+
+                if (this.channels.has(channel)) {
+                    this.channels.delete(channel);
+                    console.info(this.wc.myId + ' _onPeerLeave ' + channel.peerId);
+                    this.wc._onPeerLeave(channel.peerId);
                 }
             }
-
-            return false;
         }
     }, {
         key: 'onChannelError',
@@ -5958,10 +6020,15 @@ var SprayService = function (_TopologyInterface) {
     }, {
         key: '_handleSvcMsg',
         value: function _handleSvcMsg(M) {
-            var _this5 = this;
+            var _this6 = this;
 
+            if (this.wc.state == DISCONNECTED) {
+                console.info(this.wc.myId + ' _handleSvcMsg break (disconnected) ');
+                return;
+            }
             var msg = M.msg;
-            console.info(this.wc.myId + " new message reception : " + JSON.stringify(msg) + ", timestamp : " + M.timestamp);
+            console.info(this.wc.myId + " new message reception : " + M.senderId + ", timestamp : " + M.timestamp);
+            // console.info(this.wc.myId + " new message reception : " + JSON.stringify(msg) + ", timestamp : " + M.timestamp);
             if (M.timestamp != undefined) {
                 var alreadyReceived = false;
                 this.received.forEach(function (message) {
@@ -5974,10 +6041,24 @@ var SprayService = function (_TopologyInterface) {
                     return;
                 }
                 this.received.push([M.senderId, M.timestamp]);
-                console.info(this.wc.myId + ' received length : ' + this.received.length + "\n" + this.received);
+                console.info(this.wc.myId + ' received length : ' + this.received.length);
+                var rcvd = "";
+                this.received.forEach(function (r) {
+                    if (rcvd.length == 0) {
+                        rcvd += "[";
+                    }
+                    if (rcvd.length != 1) {
+                        rcvd += ", ";
+                    }
+                    rcvd += '[' + r[0] + ',' + r[1] + ']';
+                });
+                if (rcvd.length != 0) {
+                    rcvd += "]";
+                    console.info(this.wc.myId + ' received : ' + rcvd);
+                }
             }
             if (M.recipientId != this.wc.myId) {
-                console.error(this.wc.myId + ' received but not for me : ' + JSON.stringify(msg));
+                // console.error(this.wc.myId + ' received but not for me : ' + JSON.stringify(msg));
                 this.forward(msg);
                 return;
             }
@@ -5999,34 +6080,9 @@ var SprayService = function (_TopologyInterface) {
                 case 'connectTo':
                     {
                         console.log(this.wc.myId + ' connectTo ' + msg.connectTo);
-                        var peers = msg.connectTo.peers;
-
+                        var peer = msg.connectTo;
                         var promises = [];
-                        var _iteratorNormalCompletion8 = true;
-                        var _didIteratorError8 = false;
-                        var _iteratorError8 = undefined;
-
-                        try {
-                            for (var _iterator8 = peers[Symbol.iterator](), _step8; !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
-                                var id = _step8.value;
-
-                                promises[promises.length] = this.wc.channelBuilder.connectTo(id);
-                            }
-                        } catch (err) {
-                            _didIteratorError8 = true;
-                            _iteratorError8 = err;
-                        } finally {
-                            try {
-                                if (!_iteratorNormalCompletion8 && _iterator8.return) {
-                                    _iterator8.return();
-                                }
-                            } finally {
-                                if (_didIteratorError8) {
-                                    throw _iteratorError8;
-                                }
-                            }
-                        }
-
+                        promises[promises.length] = this.wc.channelBuilder.connectTo(peer);
                         Promise.all(promises).then(function (channels) {
                             var _iteratorNormalCompletion9 = true;
                             var _didIteratorError9 = false;
@@ -6036,7 +6092,13 @@ var SprayService = function (_TopologyInterface) {
                                 for (var _iterator9 = channels[Symbol.iterator](), _step9; !(_iteratorNormalCompletion9 = (_step9 = _iterator9.next()).done); _iteratorNormalCompletion9 = true) {
                                     var ch = _step9.value;
 
-                                    _this5.peerJoined(ch);
+                                    console.warn(_this6.wc.myId + ' connection to ' + peer + ' through channel (peerId)' + ch.peerId);
+                                    ch.send(_this6.wc._encode({
+                                        recipientId: peer,
+                                        content: get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'encode', _this6).call(_this6, { joinedPeerId: peer }),
+                                        meta: { timestamp: Date.now() }
+                                    }));
+                                    _this6.peerJoined(ch);
                                 }
                                 // M.channel.send(this.wc._encode({
                                 //   recipientId: M.channel.peerId,
@@ -6062,7 +6124,7 @@ var SprayService = function (_TopologyInterface) {
                             //   recipientId: M.channel.peerId,
                             //   content: super.encode({ connectedTo: { peers: [] } })
                             // }))
-                            _this5.wc._joinFailed();
+                            _this6.wc._joinFailed();
                         });
                         break;
                     }
@@ -6096,13 +6158,13 @@ var SprayService = function (_TopologyInterface) {
     }, {
         key: '_exchange',
         value: function _exchange(wc) {
-            var _this6 = this;
+            var _this7 = this;
 
             var _super = function _super(name) {
-                return get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), name, _this6);
+                return get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), name, _this7);
             };
             return __awaiter(this, void 0, void 0, regeneratorRuntime.mark(function _callee() {
-                var _this7 = this;
+                var _this8 = this;
 
                 var oldestArc, cloneP, sample;
                 return regeneratorRuntime.wrap(function _callee$(_context) {
@@ -6146,7 +6208,7 @@ var SprayService = function (_TopologyInterface) {
                                 }).then(function (respSample) {
                                     if (Array.isArray(respSample)) {
                                         respSample.forEach(function (arc) {
-                                            _this7.p.add(arc[0], arc[1]);
+                                            _this8.p.add(arc[0], arc[1]);
                                         });
                                     } else {
                                         console.error('SprayService Exchange response typeof ', typeof respSample === 'undefined' ? 'undefined' : _typeof(respSample));
@@ -6159,7 +6221,7 @@ var SprayService = function (_TopologyInterface) {
                                 this._replace(sample, wc.myId, oldestArc[0]);
                                 // TODO disconnection
                                 sample.forEach(function (arc) {
-                                    _this7.p.remove(arc[0], arc[1]);
+                                    _this8.p.remove(arc[0], arc[1]);
                                 });
 
                             case 14:
@@ -6181,7 +6243,7 @@ var SprayService = function (_TopologyInterface) {
     }, {
         key: '_onExchange',
         value: function _onExchange(wc, origineId, sample) {
-            var _this8 = this;
+            var _this9 = this;
 
             console.log(this.wc.myId + ' _onExchange ');
             var respSample = this._getSample(this.p, Math.ceil(this.p.length / 2));
@@ -6194,10 +6256,10 @@ var SprayService = function (_TopologyInterface) {
             });
             this._replace(respSample, wc.myId, origineId);
             respSample.forEach(function (arc) {
-                _this8.p.remove(arc[0], arc[1]);
+                _this9.p.remove(arc[0], arc[1]);
             });
             sample.forEach(function (arc) {
-                _this8.p.add(arc[0], arc[1]);
+                _this9.p.add(arc[0], arc[1]);
             });
         }
         /**
@@ -6253,7 +6315,7 @@ var SprayService = function (_TopologyInterface) {
     }, {
         key: '_onPeerDown',
         value: function _onPeerDown(peerDownId) {
-            var _this9 = this;
+            var _this10 = this;
 
             console.info(this.wc.myId + ' _onPeerDown ' + peerDownId);
             // Count and delete
@@ -6266,7 +6328,7 @@ var SprayService = function (_TopologyInterface) {
                 }
             });
             toRemove.forEach(function (arc) {
-                _this9.p.remove(arc[0], arc[1]);
+                _this10.p.remove(arc[0], arc[1]);
             });
             // Duplicate arcs
             for (var i = 0; i < occ; i++) {
@@ -6296,7 +6358,7 @@ var SprayService = function (_TopologyInterface) {
     }, {
         key: '_clearReceived',
         value: function _clearReceived() {
-            var _this10 = this;
+            var _this11 = this;
 
             console.info(this.wc.myId + ' _clearReceived ');
             var clearDelay = Math.floor(Math.exp(this.p.length)) * 2 * delayPerConnection;
@@ -6310,7 +6372,7 @@ var SprayService = function (_TopologyInterface) {
                 }
             }
             setTimeout(function () {
-                return _this10._clearReceived();
+                return _this11._clearReceived();
             }, clearDelay);
         }
     }, {
@@ -6319,7 +6381,6 @@ var SprayService = function (_TopologyInterface) {
             console.info(this.wc.myId + ' peerJoined ');
             this.channels.add(ch);
             this.wc._onPeerJoin(ch.peerId);
-            // console.info(this.wc.myId + ' _onPeerJoin ' + ch.peerId);
         }
     }]);
     return SprayService;
@@ -10864,23 +10925,17 @@ var WebChannel = function (_Service) {
     value: function _handleMyMessage(channel, msg) {
       if (!msg.isService) {
         // User Message
-        console.log(this.myId + ' User Message ' + JSON.stringify(msg));
+        // console.log(this.myId + ' User Message ' + JSON.stringify(msg))
         var data = this._userMsg.decode(msg.content, msg.senderId);
         if (data !== undefined) {
           this.onMessage(msg.senderId, data, msg.recipientId === 0);
         }
       } else {
         // Inner Message
-        console.log(this.myId + ' Inner message : ' + JSON.stringify(msg));
         try {
-          console.log(this.myId + ' content1 : ' + JSON.stringify(spray.Message.decode(service.Message.decode(msg.content).content)));
-        } catch (e) {
-          try {
-            console.log(this.myId + ' content2 : ' + JSON.stringify(get(WebChannel.prototype.__proto__ || Object.getPrototypeOf(WebChannel.prototype), 'decode', this).call(this, service.Message.decode(msg.content).content)));
-          } catch (e2) {}
-        }
+          if (JSON.stringify(spray.Message.decode(service.Message.decode(msg.content).content)) !== {}) {} else if (JSON.stringify(get(WebChannel.prototype.__proto__ || Object.getPrototypeOf(WebChannel.prototype), 'decode', this).call(this, service.Message.decode(msg.content).content)) !== {}) {} else {}
+        } catch (e) {}
         if (msg.hasOwnProperty('meta')) {
-          console.log(this.myId + ' meta found ' + JSON.stringify(msg.meta));
           this._svcMsgStream.next(Object.assign({
             channel: channel,
             senderId: msg.senderId,
@@ -10888,7 +10943,6 @@ var WebChannel = function (_Service) {
             timestamp: msg.meta.timestamp
           }, service.Message.decode(msg.content)));
         } else {
-          console.log(this.myId + ' meta not found ');
           this._svcMsgStream.next(Object.assign({
             channel: channel,
             senderId: msg.senderId,
@@ -10934,8 +10988,10 @@ var WebChannel = function (_Service) {
             var now = Date.now();
             this._pongNb++;
             this._maxTime = Math.max(this._maxTime, now - this._pingTime);
+            console.warn(this.myId + ' this.members.length : ' + this.members.length + ', this._pongNb : ' + this._pongNb);
             if (this._pongNb === this.members.length) {
               this._pingFinish(this._maxTime);
+              console.warn(this.myId + ' this._maxtime : ' + this._maxTime);
               this._pingTime = 0;
             }
             break;
