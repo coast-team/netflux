@@ -2,25 +2,14 @@ import * as helper from '../../util/helper'
 import bigStr from '../../util/4mb.txt'
 import { WebChannel } from '../../../src/service/WebChannel'
 
-// s: 🤖 server
-// b: 🙂 browser
-// const scenarios2 = [
-//   'bb',
-//   'bs',
-//   'bbb',
-//   'bbs',
-//   'bbbbbbb',
-//   'bbbsbbb'
-// ]
-
 const USE_CASES = [2, 3, 7]
 const scenarios = [
-  new helper.Scenario(2),
-  // new helper.Scenario(1, 1),
-  new helper.Scenario(3),
-  // new helper.Scenario(2, 2),
-  new helper.Scenario(7)
-  // new helper.Scenario(6, 3)
+  new helper.Scenario('cc'),
+  new helper.Scenario('cb'),
+  new helper.Scenario('ccc'),
+  new helper.Scenario('ccb'),
+  new helper.Scenario('ccccccc'),
+  new helper.Scenario('cccbccc')
 ]
 const PEER_FACE = '🙂 '
 const faces = length => {
@@ -40,7 +29,7 @@ describe('Fully connected', () => {
       it(`${scenario.smiles}`, done => {
         const key = helper.randKey()
         let promises = []
-        wcs = helper.createWebChannels(scenario.nbAgents)
+        wcs = helper.createWebChannels(scenario.nbClients)
         wcs.forEach(wc => {
           expect(wc.state).toBe(WebChannel.DISCONNECTED)
           wc.onPeerJoinCalledTimes = 0
@@ -64,35 +53,26 @@ describe('Fully connected', () => {
         })
 
         let joinQueue = Promise.resolve()
-        if (scenario.hasBot()) {
-          // Join all peers before bot
-          for (let i = 0; i < scenario.botPosition; i++) {
-            joinQueue = joinQueue.then(() => wcs[i].join(key))
+        let clientCount = 0
+        for (let i = 0; i < scenario.template.length; i++) {
+          if (scenario.template[i] === 'c') {
+            joinQueue = joinQueue.then(() => wcs[clientCount++].join(key))
+          } else {
+            joinQueue = joinQueue.then(() => wcs[i - 1].invite(helper.BOT_URL))
           }
-
-          // Invite bot
-          joinQueue = joinQueue.then(() => wcs[scenario.botPosition - 1].invite(helper.BOT_URL))
-
-          // Join rest peers
-          for (let i = scenario.botPosition; i < scenario.nbAgents; i++) {
-            joinQueue = joinQueue.then(() => wcs[i].join(key))
-          }
-
-          // Check Bot members
-          joinQueue.then(() => {
-            if (scenario.hasBot()) {
-              helper.expectBotMembers(wcs[0].id, wcs, scenario.nbPeers)
-            }
-          })
-        } else {
-          // Peers join successively through the first peer.
-          joinQueue = wcs.reduce((acc, wc, index) => {
-            return acc.then(() => wc.join(key))
-          }, joinQueue)
         }
+
+        promises.push(joinQueue)
 
         // After all peers have been joined, do check
         Promise.all(promises)
+          .then(() => helper.botWaitJoin(wcs[0].id))
+          .then(() => {
+            if (scenario.hasBot()) {
+              return helper.expectBotMembers(wcs[0].id, wcs, scenario.nbPeers)
+            }
+            return true
+          })
           .then(() => {
             helper.expectMembers(wcs, scenario.nbPeers)
             wcs.forEach(wc => {
@@ -107,7 +87,7 @@ describe('Fully connected', () => {
     })
   })
 
-  describe('Should ping', () => {
+  xdescribe('Should ping', () => {
     let wcs
 
     afterEach(() => wcs.forEach(wc => wc.disconnect()))
