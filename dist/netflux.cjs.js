@@ -9952,10 +9952,12 @@ var WebChannel = function (_Service) {
         return new Promise(function (resolve, reject) {
           if (value instanceof Channel) {
             _this2._joinSucceed = function () {
-              return resolve();
+              _this2._setState(JOINED);
+              resolve();
             };
             _this2._joinFailed = function (err) {
-              return reject(err);
+              _this2._setState(DISCONNECTED);
+              reject(err);
             };
           } else {
             if (value === undefined) {

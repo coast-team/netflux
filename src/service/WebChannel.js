@@ -214,8 +214,14 @@ export class WebChannel extends Service {
       this._setState(JOINING)
       return new Promise((resolve, reject) => {
         if (value instanceof Channel) {
-          this._joinSucceed = () => resolve()
-          this._joinFailed = err => reject(err)
+          this._joinSucceed = () => {
+            this._setState(JOINED)
+            resolve()
+          }
+          this._joinFailed = err => {
+            this._setState(DISCONNECTED)
+            reject(err)
+          }
         } else {
           if (value === undefined) {
             this.key = this.generateKey()
