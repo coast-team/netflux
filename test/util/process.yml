@@ -1,5 +1,6 @@
 apps:
   - script: node_modules/.bin/sigver
-    name: '1sigver-ws'
+    name: 'testsignaling'
     args: '--port 8000'
   - script: test/util/.botServer.js
+    name: 'testbot'

@@ -30,6 +30,28 @@ try {
       }
       ctx.body = {id, members}
     })
+    .get('/waitJoin/:wcId', async (ctx, next) => {
+      const wcId = Number(ctx.params.wcId)
+      let id
+      for (let wc of bot.webChannels) {
+        if (wc.id === wcId) {
+          if (wc.state === WebChannel.JOINED) {
+            break
+          } else {
+            await new Promise(resolve => {
+              wc.onStateChanged = state => {
+                if (state === WebChannel.JOINED) {
+                  resolve()
+                }
+              }
+            })
+          }
+          id = wc.myId
+          break
+        }
+      }
+      ctx.body = {id}
+    })
     .get('/send/:wcId', (ctx, next) => {
       const wcId = Number(ctx.params.wcId)
       for (let wc of bot.webChannels) {
@@ -63,13 +85,13 @@ try {
   bot.onError = err => console.error('Bot ERROR: ', err)
 
   // Add specific web channel to the bot for tests in Chrome
-  bot.addWebChannel(createWebChannel('CHROME'))
-
-  // Add specific web channel to the bot for tests in Firefox
-  bot.addWebChannel(createWebChannel('FIREFOX'))
-
-  // Add specific web channel to the bot for tests in NodeJS
-  bot.addWebChannel(createWebChannel('NODE'))
+  // bot.addWebChannel(createWebChannel('CHROME'))
+  //
+  // // Add specific web channel to the bot for tests in Firefox
+  // bot.addWebChannel(createWebChannel('FIREFOX'))
+  //
+  // // Add specific web channel to the bot for tests in NodeJS
+  // bot.addWebChannel(createWebChannel('NODE'))
 
   // Start the server
   server.listen(BOT_PORT, BOT_HOST, () => {
@@ -79,7 +101,7 @@ try {
   })
 
   // Leave all web channels before process death
-  process.on('SIGINT', () => bot.webChannels.forEach(wc => wc.leave()))
+  process.on('SIGINT', () => bot.webChannels.forEach(wc => wc.disconnect()))
 } catch (err) {
   console.error('BotServer script error: ', err)
 }
@@ -89,9 +111,6 @@ function createWebChannel (env) {
   const wc = new WebChannel({signalingURL: SIGNALING_URL})
   wc.onMessage = (id, msg, isBroadcast) => {
     onMessageForBot(wc, id, msg, isBroadcast)
-  }
-  wc.onDisconnect = closeEvt => {
-    console.warn(`${env} bot has disconnected from: ${SIGNALING_URL}`)
   }
   wc.join('FIREFOX')
     .then(() => console.info(`${env} bot is ready`))

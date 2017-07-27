@@ -17,8 +17,7 @@ import { defaults } from '../defaults'
  * @type {number}
  */
 const MAX_ID = 2147483647
-
-const REJOIN_MAX_ATTEMPTS = 0
+const REJOIN_MAX_ATTEMPTS = 10
 const REJOIN_TIMEOUT = 2000
 
 /**
@@ -215,8 +214,14 @@ export class WebChannel extends Service {
       this._setState(JOINING)
       return new Promise((resolve, reject) => {
         if (value instanceof Channel) {
-          this._joinSucceed = () => resolve()
-          this._joinFailed = err => reject(err)
+          this._joinSucceed = () => {
+            this._setState(JOINED)
+            resolve()
+          }
+          this._joinFailed = err => {
+            this._setState(DISCONNECTED)
+            reject(err)
+          }
         } else {
           if (value === undefined) {
             this.key = this.generateKey()
@@ -453,6 +458,7 @@ export class WebChannel extends Service {
 
       // Otherwise the message should be forwarded to the intended peer
       default:
+        console.warn(this.myId + ' forwardTo wc ' + msg.senderId + ' => ' + msg.recipientId)
         this._topology.forwardTo(msg)
     }
   }
@@ -473,11 +479,31 @@ export class WebChannel extends Service {
           console.info(this.myId + ' content1 : ' + JSON.stringify(spray.Message.decode(service.Message.decode(msg.content).content)))
         } else if (JSON.stringify(super.decode(service.Message.decode(msg.content).content)) !== {}) {
           console.info(this.myId + ' content2 : ' + JSON.stringify(super.decode(service.Message.decode(msg.content).content)))
+        } else if (JSON.stringify(this.decode(service.Message.decode(msg.content).content)) !== {}) {
+          console.info(this.myId + ' content3 : ' + JSON.stringify(this.decode(service.Message.decode(msg.content).content)))
         } else {
           console.info(this.myId + ' undecodable ')
         }
       } catch (e) {
-        console.info(this.myId + ' undecodable ' + e)
+        try {
+          if (JSON.stringify(super.decode(service.Message.decode(msg.content).content)) !== {}) {
+            console.info(this.myId + ' content2 : ' + JSON.stringify(super.decode(service.Message.decode(msg.content).content)))
+          } else if (JSON.stringify(this.decode(service.Message.decode(msg.content).content)) !== {}) {
+            console.info(this.myId + ' content3 : ' + JSON.stringify(this.decode(service.Message.decode(msg.content).content)))
+          } else {
+            console.info(this.myId + ' undecodable ')
+          }
+        } catch (e2) {
+          try {
+            if (JSON.stringify(this.decode(service.Message.decode(msg.content).content)) !== {}) {
+              console.info(this.myId + ' content3 : ' + JSON.stringify(this.decode(service.Message.decode(msg.content).content)))
+            } else {
+              console.info(this.myId + ' undecodable ')
+            }
+          } catch (e3) {
+            console.info(this.myId + ' undecodable ' + e)
+          }
+        }
       }
       if (msg.hasOwnProperty('meta')) {
         this._svcMsgStream.next(Object.assign({

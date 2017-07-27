@@ -6,4 +6,6 @@ export {
   // Topologies
   SPRAY
 }
+// #if NODE
 export { BotServer } from './BotServer'
+// #endif

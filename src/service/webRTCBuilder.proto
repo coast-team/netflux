@@ -2,15 +2,16 @@ syntax = "proto3";
 package webRTCBuilder;
 
 message Message {
+  bool isInitiator = 1;
   oneof type {
-    string offer = 1;
-    string answer = 2;
-    Candidate candidate = 3;
+    string offer = 2;
+    string answer = 3;
+    IceCandidate iceCandidate = 4;
   }
-}
 
-message Candidate {
-  string candidate = 1;
-  string sdpMid = 2;
-  uint32 sdpMLineIndex = 3;
+  message IceCandidate {
+    string candidate = 1;
+    string sdpMid = 2;
+    uint32 sdpMLineIndex = 3;
+  }
 }

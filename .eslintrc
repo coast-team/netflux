@@ -18,38 +18,9 @@
     "no-catch-shadow": 0,
     "no-bitwise": 0
   },
-  "globals": {
-    "log": true,
-    "fetch": true,
-    "netflux": true,
+  "env": {
+    "browser": true,
     "jasmine": true,
-    "describe": true,
-    "xdescribe": true,
-    "fdescribe": true,
-    "it": true,
-    "xit": true,
-    "fit": true,
-    "expect": true,
-    "beforeEach": true,
-    "afterEach": true,
-    "beforeAll": true,
-    "afterAll": true,
-    "spyOn": true,
-    "DOMException": true,
-    "RTCPeerConnection": true,
-    "RTCSessionDescription": true,
-    "RTCDataChannel": true,
-    "RTCIceCandidate": true,
-    "WebSocket": true,
-    "TextEncoder": true,
-    "TextDecoder": true,
-    "Event": true,
-    "CloseEvent": true,
-    "WEB_RTC_MODULE": true,
-    "WEB_SOCKET_MODULE": true,
-    "TEXT_ENCODING_MODULE": true,
-    "EVENT_SOURCE_MODULE": true,
-    "FETCH_MODULE": true,
-    "LOG_LEVEL": true
+    "es6": true
   }
 }

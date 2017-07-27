@@ -68,6 +68,7 @@ export class ChannelBuilder extends Service {
    */
   connectTo (id) {
     return new Promise((resolve, reject) => {
+      console.warn(this.wc.myId + ' connectTo channelBuilder azerty ', request)
       this.pendingRequests.set(id, {resolve, reject})
       this.wc._sendTo({ recipientId: id, content: request })
     })
@@ -101,6 +102,7 @@ export class ChannelBuilder extends Service {
         break
       }
       case 'request': {
+        console.warn(this.wc.myId + ' handle channelBuilder azerty ', request)
         const { wsUrl, isWrtcSupport } = msg.request
         // If remote peer is listening on WebSocket, connect to him
         if (wsUrl) {

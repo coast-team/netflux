@@ -85,6 +85,10 @@ export function expectBotMembers (wcId, wcs, totalNumberOfPeers) {
     })
 }
 
+export function botWaitJoin (wcId) {
+  return fetch(`${BOT_FETCH_URL}/waitJoin/${wcId}`)
+}
+
 export function sendAndExpectOnMessage (wcs, isBroadcast, withBot = false) {
   const promises = []
 
@@ -127,7 +131,7 @@ export function sendAndExpectOnMessage (wcs, isBroadcast, withBot = false) {
           flag.arraybuffer = true
           msgId = (new Uint32Array(msg.slice().buffer))[0]
         } else {
-          log.error('Unknown message type')
+          console.error('Unknown message type')
         }
         expect(msgId).toBeDefined()
         expect(msgId).toEqual(id)
@@ -270,7 +274,7 @@ export function onMessageForBot (wc, id, msg, isBroadcast) {
     const data = JSON.parse(msg)
     switch (data.code) {
       case LEAVE_CODE:
-        wc.leave()
+        wc.disconnect()
         break
     }
   } catch (err) {
@@ -284,25 +288,34 @@ function tellBotToSend (wcId) {
 }
 
 export class Scenario {
-  constructor (nbAgents, botPosition) {
-    this.nbAgents = nbAgents
-    this.botPosition = botPosition || -1
-    this.nbBots = botPosition === undefined ? 0 : 1
+  constructor (template) {
+    this.template = template
+  }
+
+  get nbClients () {
+    let count = 0
+    for (let i = 0; i < this.template.length; i++) {
+      if (this.template[i] === 'c') {
+        count++
+      }
+    }
+    return count
   }
 
   get nbPeers () {
-    return this.nbAgents + this.nbBots
+    return this.template.length
   }
 
   get smiles () {
-    let smiles = ''
-    for (let i = 0; i < this.nbPeers; i++) {
-      smiles += i === this.botPosition ? '🤖 ' : '🙂 '
-    }
-    return smiles
+    return this.template.replace(/c/g, '🙂').replace(/b/g, '🤖')
   }
 
   hasBot () {
-    return this.botPosition !== -1
+    for (let i = 0; i < this.template.length; i++) {
+      if (this.template[i] === 'b') {
+        return true
+      }
+    }
+    return false
   }
 }

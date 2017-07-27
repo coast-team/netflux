@@ -33,13 +33,13 @@ module.exports = (config) => {
 
     rollupPreprocessor: {
       plugins: [
+        require('rollup-plugin-strip')({
+          functions: [ 'console.info', 'console.log', 'console.error' ]
+        }),
         require('rollup-plugin-typescript2')(),
         require('rollup-plugin-string')({
           include: 'test/**/*.txt'
         }),
-        // require('rollup-plugin-strip')({
-        //   functions: [ 'console.info' ]
-        // }),
         require('rollup-plugin-node-resolve')(),
         require('rollup-plugin-commonjs')({
           namedExports: { 'node_modules/protobufjs/minimal.js': [ 'Reader', 'Writer', 'util', 'roots' ] }
@@ -89,14 +89,7 @@ module.exports = (config) => {
 
   if (process.env.TRAVIS || TYPE === 'travis') {
     Object.assign(config, {
-      browsers: ['Chrome_travis_ci'],
-
-      customLaunchers: {
-        Chrome_travis_ci: {
-          base: 'Chrome',
-          flags: ['--no-sandbox']
-        }
-      },
+      browsers: ['ChromeHeadless'],
 
       coverageReporter: {
         reporters: [

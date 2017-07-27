@@ -3,8 +3,9 @@ import babel from 'rollup-plugin-babel'
 import strip from 'rollup-plugin-strip'
 import commonjs from 'rollup-plugin-commonjs'
 import resolve from 'rollup-plugin-node-resolve'
-import typescript from 'rollup-plugin-typescript2'
+import replace from 'rollup-plugin-re'
 import pkg from './package.json'
+import typescript from 'rollup-plugin-typescript2';
 
 export default [
   {
@@ -17,7 +18,12 @@ export default [
     plugins: [
       typescript(),
       strip({
-        functions: [ 'console.info' ]
+        functions: [ 'console.info', 'console.log', 'console.trace', 'console.goupe' ]
+      }),
+      replace({
+        defines: {
+          NODE: true
+        }
       }),
       resolve(),
       commonjs({
@@ -39,7 +45,12 @@ export default [
     plugins: [
       typescript(),
       strip({
-        functions: [ 'console.info' ]
+        functions: [ 'console.info', 'console.log', 'console.trace', 'console.goupe' ]
+      }),
+      replace({
+        defines: {
+          NODE: false
+        }
       }),
       resolve(),
       commonjs({

@@ -21,6 +21,7 @@ export class WebRTCBuilder extends Service {
     super(ID, webRTCBuilder.Message, wc._svcMsgStream)
     this.wc = wc
     this.rtcConfiguration = { iceServers }
+    this.clients = new Map()
   }
 
   static get isSupported () {
@@ -30,7 +31,12 @@ export class WebRTCBuilder extends Service {
   channelsFromWebChannel () {
     if (WebRTCBuilder.isSupported) {
       return this._channels(
-        this.svcMsgStream.map(({ msg, senderId }) => ({ offer: msg.offer, id: senderId, candidate: msg.candidate })),
+        this.svcMsgStream
+          .filter(({ msg }) => msg.isInitiator)
+          .map(({ msg, senderId }) => {
+            msg.id = senderId
+            return msg
+          }),
         (msg, id) => this.wc._sendTo({ recipientId: id, content: super.encode(msg) })
       )
     }
@@ -49,9 +55,12 @@ export class WebRTCBuilder extends Service {
     if (WebRTCBuilder.isSupported) {
       return this._establishChannel(
         this.svcMsgStream
-          .filter(({ senderId }) => senderId === id)
-          .map(({ msg }) => ({ answer: msg.answer, candidate: msg.candidate })),
-        msg => this.wc._sendTo({ recipientId: id, content: super.encode(msg) }),
+          .filter(({ msg, senderId }) => senderId === id && !msg.isInitiator)
+          .map(({ msg }) => ({ answer: msg.answer, iceCandidate: msg.iceCandidate })),
+        msg => {
+          msg.isInitiator = true
+          this.wc._sendTo({ recipientId: id, content: super.encode(msg) })
+        },
         id
       )
     }
@@ -68,16 +77,22 @@ export class WebRTCBuilder extends Service {
   channelsFromSignaling (signaling) {
     if (WebRTCBuilder.isSupported) {
       return this._channels(
-        signaling.stream.filter(msg => msg.id !== 0)
+        signaling.stream.filter(({ id }) => id !== 0)
           .map(msg => {
-            const data = super.decode(msg.data)
-            return Object.assign(data, { id: msg.id })
+            if (msg.type === 'data') {
+              const completeData = super.decode(msg.data)
+              completeData.id = msg.id
+              return completeData
+            } else {
+              return { isError: true }
+            }
           }),
         (msg, id) => {
           const bytes = webRTCBuilder.Message
             .encode(webRTCBuilder.Message.create(msg))
             .finish()
-          signaling.send({ id, data: bytes })
+          const isEnd = msg.iceCandidate !== undefined && msg.iceCandidate.candidate !== ''
+          signaling.send({ id, isEnd, data: bytes })
         }
       )
     }
@@ -95,13 +110,16 @@ export class WebRTCBuilder extends Service {
   connectOverSignaling (signaling) {
     if (WebRTCBuilder.isSupported) {
       return this._establishChannel(
-        signaling.stream.filter(msg => msg.id === 0)
-          .map(msg => super.decode(msg.data)),
+        signaling.stream.filter(({ id }) => id === 0)
+          .map(msg => {
+            return msg.type === 'data' ? super.decode(msg.data) : { isError: true }
+          }),
         msg => {
           const bytes = webRTCBuilder.Message
             .encode(webRTCBuilder.Message.create(msg))
             .finish()
-          signaling.send({ data: bytes })
+          const isEnd = msg.iceCandidate !== undefined && msg.iceCandidate.candidate !== ''
+          signaling.send({ isEnd, data: bytes })
         }
       )
     }
@@ -119,20 +137,20 @@ export class WebRTCBuilder extends Service {
     const pc = new WebRTC.RTCPeerConnection(this.rtcConfiguration)
     const remoteCandidateStream = new ReplaySubject()
     this._localCandidates(pc).subscribe(
-      candidate => send({ candidate }),
+      iceCandidate => send({ iceCandidate }),
       err => console.warn(err),
-      () => send({ isEnd: true })
+      () => send({ iceCandidate: { candidate: '' } })
     )
 
     return new Promise((resolve, reject) => {
       const subs = stream.subscribe(
-        ({ answer, candidate }) => {
+        ({ answer, iceCandidate, isError }) => {
           if (answer) {
             pc.setRemoteDescription({ type: 'answer', sdp: answer })
               .then(() => {
                 remoteCandidateStream.subscribe(
-                  candidate => {
-                    pc.addIceCandidate(new WebRTC.RTCIceCandidate(candidate))
+                  iceCandidate => {
+                    pc.addIceCandidate(new WebRTC.RTCIceCandidate(iceCandidate))
                       .catch(reject)
                   },
                   err => console.warn(err),
@@ -140,10 +158,17 @@ export class WebRTCBuilder extends Service {
                 )
               })
               .catch(reject)
-          } else if (candidate) {
-            remoteCandidateStream.next(candidate)
+          } else if (iceCandidate) {
+            if (iceCandidate.candidate !== '') {
+              remoteCandidateStream.next(iceCandidate)
+            } else {
+              remoteCandidateStream.complete()
+            }
+          } else if (isError) {
+            reject(new Error('Remote peer no longer available via Signaling'))
           } else {
-            remoteCandidateStream.complete()
+            console.log('Unknown message from a remote peer', {answer, iceCandidate, isError})
+            reject(new Error('Unknown message from a remote peer', {answer, iceCandidate, isError}))
           }
         },
         reject,
@@ -171,10 +196,9 @@ export class WebRTCBuilder extends Service {
    */
   _channels (stream, send) {
     return Observable.create(observer => {
-      const clients = new Map()
       stream.subscribe(
-        ({ offer, candidate, id }) => {
-          let client = clients.get(id)
+        ({ offer, iceCandidate, id, isError }) => {
+          const client = this.clients.get(id)
           let pc
           let remoteCandidateStream
           if (client) {
@@ -183,39 +207,45 @@ export class WebRTCBuilder extends Service {
             pc = new WebRTC.RTCPeerConnection(this.rtcConfiguration)
             remoteCandidateStream = new ReplaySubject()
             this._localCandidates(pc).subscribe(
-              candidate => send({ candidate }, id),
+              iceCandidate => send({ iceCandidate }, id),
               err => console.warn(err),
-              () => send({ isEnd: true }, id)
+              () => send({ iceCandidate: { candidate: '' } }, id)
             )
-            clients.set(id, [pc, remoteCandidateStream])
+            this.clients.set(id, [pc, remoteCandidateStream])
           }
           if (offer) {
             this._openChannel(pc, false)
               .then(ch => observer.next(ch))
               .catch(err => {
-                clients.delete(id)
+                this.clients.delete(id)
                 console.error(`Client "${id}" failed to establish RTCDataChannel with you: ${err.message}`)
               })
             pc.setRemoteDescription({ type: 'offer', sdp: offer })
               .then(() => remoteCandidateStream.subscribe(
-                candidate => {
-                  pc.addIceCandidate(new WebRTC.RTCIceCandidate(candidate))
+                iceCandidate => {
+                  pc.addIceCandidate(new WebRTC.RTCIceCandidate(iceCandidate))
                     .catch(err => console.warn(err))
                 },
                 err => console.warn(err),
-                () => clients.delete(id)
+                () => this.clients.delete(id)
               ))
               .then(() => pc.createAnswer())
               .then(answer => pc.setLocalDescription(answer))
               .then(() => send({ answer: pc.localDescription.sdp }, id))
               .catch(err => {
-                clients.delete(id)
+                this.clients.delete(id)
                 console.error(err)
               })
-          } else if (candidate) {
-            remoteCandidateStream.next(candidate)
+          } else if (iceCandidate) {
+            if (iceCandidate.candidate !== '') {
+              remoteCandidateStream.next(iceCandidate)
+            } else {
+              remoteCandidateStream.complete()
+            }
+          } else if (isError) {
+            console.warn('Remote peer no longer available via Signaling')
           } else {
-            remoteCandidateStream.complete()
+            console.error(new Error('Unknown message from a remote peer', {offer, iceCandidate, isError}))
           }
         },
         err => observer.error(err),

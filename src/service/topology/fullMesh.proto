@@ -3,19 +3,15 @@ package fullMesh;
 
 message Message {
   oneof type {
-    // Connection service of the peer who received a message of this type should
-    // establish connection with one or several peers.
     Peers connectTo = 1;
 
     Peers connectedTo = 2;
 
-    // One of the internal message type. The message is intended for the `WebChannel`
-    // members to notify them about the joining peer
     uint32 joiningPeerId = 3;
 
-     // One of the internal message type. The message sent by the joining peer to
-     // notify all `WebChannel` members about his arrivel.
-    uint32 joinedPeerId = 4;
+    bool joinSucceed = 4;
+
+    uint32 joinFailedPeerId = 5;
   }
 }
 
