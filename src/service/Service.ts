@@ -13,12 +13,12 @@ export interface ServiceMessage {
 export abstract class Service {
 
   serviceId: number
-  Message: any
+  protoMessage: any
   svcMsgStream: Subject<ServiceMessage>
 
-  constructor (id, Message, msgStream?) {
+  constructor (id, protoMessage, msgStream?) {
     this.serviceId = id
-    this.Message = Message
+    this.protoMessage = protoMessage
     if (msgStream !== undefined) {
       this.setSvcMsgStream(msgStream)
     }
@@ -28,13 +28,13 @@ export abstract class Service {
     return service.Message.encode(
       service.Message.create({
         id: this.serviceId,
-        content: this.Message.encode(this.Message.create(msg)).finish()
+        content: this.protoMessage.encode(this.protoMessage.create(msg)).finish()
       })
     ).finish()
   }
 
   public decode (bytes: Uint8Array): any {
-    return this.Message.decode(bytes)
+    return this.protoMessage.decode(bytes)
   }
 
   private setSvcMsgStream (msgStream) {
@@ -44,7 +44,7 @@ export abstract class Service {
         channel,
         senderId,
         recipientId,
-        msg: this.Message.decode(content),
+        msg: this.protoMessage.decode(content),
         timestamp
       }))
   }
