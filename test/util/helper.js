@@ -129,7 +129,7 @@ export function sendAndExpectOnMessage (wcs, isBroadcast, withBot = false) {
           // log.debug(wc.myId + ' received Uint8Array from ' + id + ' is broadcast ' + broadcasted)
           expect(flag.arraybuffer).toBeFalsy()
           flag.arraybuffer = true
-          msgId = (new Uint32Array(msg.slice().buffer))[0]
+          msgId = (new Uint32Array(msg.slice(0, msg.length).buffer))[0]
         } else {
           console.error('Unknown message type')
         }
@@ -184,14 +184,15 @@ function sendMessages (wc, isBroadcast) {
   if (isBroadcast) {
     wc.send(msgString)
     wc.send(msgChunk)
-    wc.send(msgArrayBuffer)
+    wc.send(new Uint8Array(msgArrayBuffer.buffer))
 
   // Send the messages privately to each peer
   } else {
     wc.members.forEach(id => {
       wc.sendTo(id, msgString)
       wc.sendTo(id, msgChunk)
-      wc.sendTo(id, msgArrayBuffer)
+      console.log('Send ', msgArrayBuffer.buffer.byteLength)
+      wc.sendTo(id, new Uint8Array(msgArrayBuffer.buffer))
     })
   }
 }

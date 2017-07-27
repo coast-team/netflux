@@ -13,8 +13,8 @@ const MAX_USER_MSG_SIZE = 15000
  */
 const MAX_MSG_ID_SIZE = 65535
 
-const stringEncoder = new TextEncoder()
-const stringDecoder = new TextDecoder()
+const textEncoder = new TextEncoder()
+const textDecoder = new TextDecoder()
 
 /**
  * Message builder service is responsible to build messages to send them over the
@@ -101,7 +101,7 @@ export class UserMessage {
         case user.Message.Type.U_INT_8_ARRAY:
           return content
         case user.Message.Type.STRING:
-          return stringDecoder.decode(content)
+          return textDecoder.decode(content)
         default:
           throw new Error('Unknown message type')
       }
@@ -117,21 +117,13 @@ export class UserMessage {
    * @returns {MessageTypeEnum} User message type
    */
   userDataToType (data) {
-    let type
-    let bytes
-    if (data instanceof ArrayBuffer) {
-      type = user.Message.Type.U_INT_8_ARRAY
-      bytes = data
+    if (data instanceof Uint8Array) {
+      return { type: user.Message.Type.U_INT_8_ARRAY, bytes: data }
     } else if (typeof data === 'string' || data instanceof String) {
-      type = user.Message.Type.STRING
-      bytes = stringEncoder.encode(data)
-    } else if (ArrayBuffer.isView(data)) {
-      type = user.Message.Type.U_INT_8_ARRAY
-      bytes = data.buffer
+      return { type: user.Message.Type.STRING, bytes: textEncoder.encode(data) }
     } else {
-      throw new Error('Unknown message object')
+      throw new Error('Message neigther a string or a Uint8Array object')
     }
-    return {type, bytes: new Uint8Array(bytes)}
   }
 
   getBuffer (peerId, msgId) {
