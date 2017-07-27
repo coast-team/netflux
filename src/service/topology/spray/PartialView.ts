@@ -1,6 +1,6 @@
 export class PartialView extends Array {
-  constructor() {
-    super();
+  constructor () {
+    super()
   }
 
   /**
@@ -10,9 +10,9 @@ export class PartialView extends Array {
   */
   get oldest (): Array<number> {
     if (this.length <= 0) {
-      throw new Error("Empty partial view");
+      throw new Error('Empty partial view')
     }
-    return this[0];
+    return this[0]
   }
 
   /**
@@ -21,8 +21,8 @@ export class PartialView extends Array {
   * @param {number} peerId
   * @param {number} age
   */
-  add (peerId: number, age:number = 0): void {
-    this.push([peerId, age]);
+  add (peerId: number, age = 0): void {
+    this.push([peerId, age])
   }
 
   /**
@@ -35,12 +35,12 @@ export class PartialView extends Array {
   */
   private _indexArc (peerId: number, age: number): number {
     for (let i = 0; i < this.length; i++) {
-      let elem = this[i];
-      if (elem[0] == peerId && elem[1] == age) {
-        return i;
+      let elem = this[i]
+      if (elem[0] === peerId && elem[1] === age) {
+        return i
       }
     }
-    return -1;
+    return -1
   }
 
   /**
@@ -50,9 +50,9 @@ export class PartialView extends Array {
   * @param {number} age
   */
   remove (peerId: number, age: number): void {
-    let index = this._indexArc(peerId, age);
+    let index = this._indexArc(peerId, age)
     if (index >= 0) {
-      this.splice(index, 1);
+      this.splice(index, 1)
     }
   }
 
@@ -61,19 +61,19 @@ export class PartialView extends Array {
   */
   incrementAge (): void {
     for (let i = 0; i < this.length; i++) {
-      this[i][1]++;
+      this[i][1]++
     }
   }
 
   toString (): string {
-    let s = "[";
+    let s = '['
     this.forEach((arc) => {
-      if (s.length != 1) {
-        s.concat(', ');
+      if (s.length !== 1) {
+        s.concat(', ')
       }
-      s = s.concat(`[${arc[0]},${arc[1]}]`);
+      s = s.concat(`[${arc[0]},${arc[1]}]`)
     })
-    s = s.concat("]");
-    return s;
+    s = s.concat(']')
+    return s
   }
 }
