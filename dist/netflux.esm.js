@@ -1200,126 +1200,80 @@ var Util = (function () {
 /**
  * Wrapper class for `RTCDataChannel` and `WebSocket`.
  */
-class Channel {
-  /**
-   * Creates a channel from existing `RTCDataChannel` or `WebSocket`.
-   * @param {WebSocket|RTCDataChannel} connection Data channel or web socket
-   * @param {WebChannel} wc The `WebChannel` this channel will be part of
-   * @param {number} id Peer id
-   */
-  constructor (connection, wc, id) {
+var Channel = (function () {
     /**
-     * DataChannel or WebSocket.
-     * @private
-     * @type {external:WebSocket|external:RTCDataChannel}
+     * Creates a channel from existing `RTCDataChannel` or `WebSocket`.
      */
-    this.connection = connection;
-
-    /**
-     * The `WebChannel` which this channel belongs to.
-     * @type {WebChannel}
-     */
-    this.webChannel = wc;
-
-    /**
-     * Identifier of the peer who is at the other end of this channel
-     * @type {WebChannel}
-     */
-    this.peerId = id || -1;
-
-    /**
-     * Send message.
-     * @type {function(message: ArrayBuffer)}
-     */
-    this.send = undefined;
-
-    // Configure `send` function
-    if (Util.isBrowser()) {
-      connection.binaryType = 'arraybuffer';
-      this.send = this.sendBrowser;
-    } else if (Util.isSocket(connection)) {
-      this.send = this.sendInNodeViaWebSocket;
-    } else {
-      connection.binaryType = 'arraybuffer';
-      this.send = this.sendInNodeViaDataChannel;
+    function Channel(connection, wc, id) {
+        var _this = this;
+        this.connection = connection;
+        this.peerId = id || -1;
+        // Configure `send` function
+        if (Util.isBrowser()) {
+            connection.binaryType = 'arraybuffer';
+            this.send = this.sendInBrowser;
+        }
+        else if (Util.isSocket(connection)) {
+            this.send = this.sendInNodeViaWebSocket;
+        }
+        else {
+            connection.binaryType = 'arraybuffer';
+            this.send = this.sendInNodeViaDataChannel;
+        }
+        // Configure handlers
+        if (!Util.isBrowser() && Util.isSocket(this.connection)) {
+            this.connection.onmessage = function (_a) {
+                var data = _a.data;
+                return wc._onMessage(_this, new Uint8Array(data));
+            };
+        }
+        else {
+            this.connection.onmessage = function (_a) {
+                var data = _a.data;
+                wc._onMessage(_this, data);
+            };
+        }
+        this.connection.onclose = function (closeEvt) { return wc._topology.onChannelClose(closeEvt, _this); };
+        this.connection.onerror = function (evt) { return wc._topology.onChannelError(evt, _this); };
     }
-
-    // Configure handlers
-    if (!Util.isBrowser() && Util.isSocket(this.connection)) {
-      this.connection.onmessage = msgEvt => {
-        wc._onMessage(this, new Uint8Array(msgEvt.data));
-      };
-    } else {
-      this.connection.onmessage = msgEvt => wc._onMessage(this, msgEvt.data);
-    }
-    this.connection.onclose = closeEvt => wc._topology.onChannelClose(closeEvt, this);
-    this.connection.onerror = evt => wc._topology.onChannelError(evt, this);
-  }
-
-  /**
-   * Send message over this channel. The message should be prepared beforhand by
-   * the {@link MessageService} (see{@link MessageService#msg},
-   * {@link MessageService#handleUserMessage}).
-   *
-   * @private
-   * @param {ArrayBuffer} data Message
-   */
-  sendBrowser (data) {
-    // if (this.connection.readyState !== 'closed' && new Int8Array(data).length !== 0) {
-    if (this.isOpen()) {
-      try {
-        this.connection.send(data);
-      } catch (err) {
-        console.error(`Channel send: ${err.message}`);
-      }
-    }
-  }
-
-  /**
-   * @private
-   * @param {ArrayBuffer} data
-   */
-  sendInNodeViaWebSocket (data) {
-    if (this.isOpen()) {
-      try {
-        this.connection.send(data, {binary: true});
-      } catch (err) {
-        console.error(`Channel send: ${err.message}`);
-      }
-    }
-  }
-
-  /**
-   * @private
-   * @param {ArrayBuffer} data
-   */
-  sendInNodeViaDataChannel (data) {
-    this.sendBrowser(data.slice(0));
-  }
-
-  /**
-   */
-  clearHandlers () {
-    this.onMessage = () => {};
-    this.onClose = () => {};
-    this.onError = () => {};
-  }
-
-  /**
-   * @returns {boolean}
-   */
-  isOpen () {
-    const state = this.connection.readyState;
-    return state === 1 || state === 'open'
-  }
-
-  /**
-   * Close the channel.
-   */
-  close () {
-    this.connection.close();
-  }
-}
+    Channel.prototype.clearHandlers = function () {
+        this.connection.onmessage = function () { };
+        this.connection.onclose = function () { };
+        this.connection.onerror = function () { };
+    };
+    Channel.prototype.close = function () {
+        this.connection.close();
+    };
+    Channel.prototype.sendInBrowser = function (data) {
+        // if (this.connection.readyState !== 'closed' && new Int8Array(data).length !== 0) {
+        if (this.isOpen()) {
+            try {
+                this.connection.send(data);
+            }
+            catch (err) {
+                console.error("Channel send: " + err.message);
+            }
+        }
+    };
+    Channel.prototype.sendInNodeViaWebSocket = function (data) {
+        if (this.isOpen()) {
+            try {
+                this.connection.send(data, { binary: true });
+            }
+            catch (err) {
+                console.error("Channel send: " + err.message);
+            }
+        }
+    };
+    Channel.prototype.sendInNodeViaDataChannel = function (data) {
+        this.sendInBrowser(data.slice(0));
+    };
+    Channel.prototype.isOpen = function () {
+        var state = this.connection.readyState;
+        return state === 1 || state === 'open';
+    };
+    return Channel;
+}());
 
 /*! *****************************************************************************
 Copyright (c) Microsoft Corporation. All rights reserved.
@@ -8846,8 +8800,6 @@ class ChannelBuilder extends Service$1 {
    * @param {Object} msg
    */
   _handleInnerMessage ({ channel, senderId, recipientId, msg }) {
-    const wc = channel.webChannel;
-
     switch (msg.type) {
       case 'failed': {
         this.pendingRequests.get(senderId).reject(new Error(msg.failed));
@@ -8862,10 +8814,10 @@ class ChannelBuilder extends Service$1 {
             .catch(reason => {
               if (ME.wsUrl) {
                 // Ask him to connect to me via WebSocket
-                wc._sendTo({ recipientId: senderId, content: response });
+                this.wc._sendTo({ recipientId: senderId, content: response });
               } else {
                 // Send failed reason
-                wc._sendTo({
+                this.wc._sendTo({
                   recipientId: senderId,
                   content: super.encode({ failed: `Failed to establish a socket: ${reason}` })
                 });
@@ -8876,20 +8828,20 @@ class ChannelBuilder extends Service$1 {
         } else if (isWrtcSupport) {
           if (ME.wsUrl) {
             // Ask him to connect to me via WebSocket
-            wc._sendTo({ recipientId: senderId, content: response });
+            this.wc._sendTo({ recipientId: senderId, content: response });
           } else if (ME.isWrtcSupport) {
             this.wc.webRTCBuilder.connectOverWebChannel(senderId)
               .then(ch => this._handleChannel(ch))
               .catch(reason => {
                 // Send failed reason
-                wc._sendTo({
+                this.wc._sendTo({
                   recipientId: senderId,
                   content: super.encode({ failed: `Failed establish a data channel: ${reason}` })
                 });
               });
           } else {
             // Send failed reason
-            wc._sendTo({
+            this.wc._sendTo({
               recipientId: senderId,
               content: super.encode({ failed: 'No common connectors' })
             });
@@ -8898,10 +8850,10 @@ class ChannelBuilder extends Service$1 {
         } else if (!wsUrl && !isWrtcSupport) {
           if (ME.wsUrl) {
             // Ask him to connect to me via WebSocket
-            wc._sendTo({ recipientId: senderId, content: response });
+            this.wc._sendTo({ recipientId: senderId, content: response });
           } else {
             // Send failed reason
-            wc._sendTo({
+            this.wc._sendTo({
               recipientId: senderId,
               content: super.encode({ failed: 'No common connectors' })
             });

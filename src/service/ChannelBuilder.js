@@ -93,8 +93,6 @@ export class ChannelBuilder extends Service {
    * @param {Object} msg
    */
   _handleInnerMessage ({ channel, senderId, recipientId, msg }) {
-    const wc = channel.webChannel
-
     switch (msg.type) {
       case 'failed': {
         this.pendingRequests.get(senderId).reject(new Error(msg.failed))
@@ -109,10 +107,10 @@ export class ChannelBuilder extends Service {
             .catch(reason => {
               if (ME.wsUrl) {
                 // Ask him to connect to me via WebSocket
-                wc._sendTo({ recipientId: senderId, content: response })
+                this.wc._sendTo({ recipientId: senderId, content: response })
               } else {
                 // Send failed reason
-                wc._sendTo({
+                this.wc._sendTo({
                   recipientId: senderId,
                   content: super.encode({ failed: `Failed to establish a socket: ${reason}` })
                 })
@@ -123,20 +121,20 @@ export class ChannelBuilder extends Service {
         } else if (isWrtcSupport) {
           if (ME.wsUrl) {
             // Ask him to connect to me via WebSocket
-            wc._sendTo({ recipientId: senderId, content: response })
+            this.wc._sendTo({ recipientId: senderId, content: response })
           } else if (ME.isWrtcSupport) {
             this.wc.webRTCBuilder.connectOverWebChannel(senderId)
               .then(ch => this._handleChannel(ch))
               .catch(reason => {
                 // Send failed reason
-                wc._sendTo({
+                this.wc._sendTo({
                   recipientId: senderId,
                   content: super.encode({ failed: `Failed establish a data channel: ${reason}` })
                 })
               })
           } else {
             // Send failed reason
-            wc._sendTo({
+            this.wc._sendTo({
               recipientId: senderId,
               content: super.encode({ failed: 'No common connectors' })
             })
@@ -145,10 +143,10 @@ export class ChannelBuilder extends Service {
         } else if (!wsUrl && !isWrtcSupport) {
           if (ME.wsUrl) {
             // Ask him to connect to me via WebSocket
-            wc._sendTo({ recipientId: senderId, content: response })
+            this.wc._sendTo({ recipientId: senderId, content: response })
           } else {
             // Send failed reason
-            wc._sendTo({
+            this.wc._sendTo({
               recipientId: senderId,
               content: super.encode({ failed: 'No common connectors' })
             })
