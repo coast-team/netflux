@@ -1166,51 +1166,40 @@ var Subject_1 = {
 /**
  * Utility class contains some helper static methods.
  */
-class Util {
-  /**
-   * Check execution environment.
-   *
-   * @returns {boolean} Description
-   */
-  static isBrowser () {
-    if (typeof window === 'undefined' || (typeof process !== 'undefined' && process.title === 'node')) {
-      return false
+var Util = (function () {
+    function Util() {
     }
-    return true
-  }
-
-  /**
-   * Check whether the channel is a socket.
-   *
-   * @param {WebSocket|RTCDataChannel} channel
-   *
-   * @returns {boolean}
-   */
-  static isSocket (channel) {
-    return channel.constructor.name === 'WebSocket'
-  }
-
-  /**
-   * Check whether the string is a valid URL.
-   *
-   * @param {string} str
-   *
-   * @returns {type} Description
-   */
-  static isURL (str) {
-    const regex =
-      '^' +
-        // protocol identifier
-        '(?:wss|ws)://' +
-        // Host name/IP
-        '[^\\s]+' +
-        // port number
-        '(?::\\d{2,5})?' +
-      '$';
-
-    return (new RegExp(regex, 'i')).test(str)
-  }
-}
+    /**
+     * Check execution environment.
+     */
+    Util.isBrowser = function () {
+        if (typeof window === 'undefined' || (typeof process !== 'undefined' && process.title === 'node')) {
+            return false;
+        }
+        return true;
+    };
+    /**
+     * Check whether the channel is a socket.
+     */
+    Util.isSocket = function (channel) {
+        return channel.constructor.name === 'WebSocket';
+    };
+    /**
+     * Check whether the string is a valid URL.
+     */
+    Util.isURL = function (str) {
+        var regex = '^' +
+            // protocol identifier
+            '(?:wss|ws)://' +
+            // Host name/IP
+            '[^\\s]+' +
+            // port number
+            '(?::\\d{2,5})?' +
+            '$';
+        return (new RegExp(regex, 'i')).test(str);
+    };
+    return Util;
+}());
 
 /**
  * Wrapper class for `RTCDataChannel` and `WebSocket`.
@@ -7584,16 +7573,16 @@ module.exports = {
 
 /* tslint:disable:variable-name */
 var WebRTC;
-var WebSocket_;
-var TextEncoder_;
-var TextDecoder_;
-var CloseEvent_;
+var _WebSocket;
+var _TextEncoder;
+var _TextDecoder;
+var _CloseEvent;
 if (Util.isBrowser()) {
     WebRTC = window;
-    WebSocket_ = WebSocket;
-    TextEncoder_ = TextEncoder;
-    TextDecoder_ = TextDecoder;
-    CloseEvent_ = CloseEvent;
+    _WebSocket = WebSocket;
+    _TextEncoder = TextEncoder;
+    _TextDecoder = TextDecoder;
+    _CloseEvent = CloseEvent;
 }
 else {
     // #if NODE
@@ -7604,11 +7593,11 @@ else {
         console.warn(err.message);
         WebRTC = undefined;
     }
-    WebSocket_ = require('uws');
+    _WebSocket = require('uws');
     var textEncoding$1 = require('text-encoding');
-    TextEncoder_ = textEncoding$1.TextEncoder;
-    TextDecoder_ = textEncoding$1.TextDecoder;
-    CloseEvent_ = (function () {
+    _TextEncoder = textEncoding$1.TextEncoder;
+    _TextDecoder = textEncoding$1.TextDecoder;
+    _CloseEvent = (function () {
         function CloseEvent(name, options) {
             if (options === void 0) { options = {}; }
             this.name = name;
@@ -7651,7 +7640,7 @@ class WebSocketBuilder {
   connect (url) {
     return new Promise((resolve, reject) => {
       if (Util.isURL(url) && url.search(/^wss?/) !== -1) {
-        const ws = new WebSocket_(url);
+        const ws = new _WebSocket(url);
         ws.onopen = () => resolve(ws);
         // Timeout for node (otherwise it will loop forever if incorrect address)
         setTimeout(() => {
@@ -7669,7 +7658,7 @@ class WebSocketBuilder {
     const fullUrl = `${url}/internalChannel?wcId=${this.wc.id}&senderId=${this.wc.myId}`;
     return new Promise((resolve, reject) => {
       if (Util.isURL(url) && url.search(/^wss?/) !== -1) {
-        const ws = new WebSocket_(fullUrl);
+        const ws = new _WebSocket(fullUrl);
         const channel = new Channel(ws, this.wc, id);
         ws.onopen = () => resolve(channel);
         // Timeout for node (otherwise it will loop forever if incorrect address)
@@ -8806,7 +8795,7 @@ class WebRTCBuilder extends Service$1 {
   _configOnDisconnect (pc, dc) {
     pc.oniceconnectionstatechange = () => {
       if (pc.iceConnectionState === 'disconnected' && dc.onclose) {
-        dc.onclose(new CloseEvent_('disconnect', {
+        dc.onclose(new _CloseEvent('disconnect', {
           code: 4201,
           reason: 'disconnected'
         }));
@@ -8994,8 +8983,8 @@ const MAX_USER_MSG_SIZE = 15000;
  */
 const MAX_MSG_ID_SIZE = 65535;
 
-const textEncoder = new TextEncoder_();
-const textDecoder = new TextDecoder_();
+const textEncoder = new _TextEncoder();
+const textDecoder = new _TextDecoder();
 
 /**
  * Message builder service is responsible to build messages to send them over the

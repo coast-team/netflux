@@ -4,10 +4,8 @@
 export class Util {
   /**
    * Check execution environment.
-   *
-   * @returns {boolean} Description
    */
-  static isBrowser () {
+  static isBrowser (): boolean {
     if (typeof window === 'undefined' || (typeof process !== 'undefined' && process.title === 'node')) {
       return false
     }
@@ -16,23 +14,15 @@ export class Util {
 
   /**
    * Check whether the channel is a socket.
-   *
-   * @param {WebSocket|RTCDataChannel} channel
-   *
-   * @returns {boolean}
    */
-  static isSocket (channel) {
+  static isSocket (channel: WebSocket | RTCDataChannel): boolean {
     return channel.constructor.name === 'WebSocket'
   }
 
   /**
    * Check whether the string is a valid URL.
-   *
-   * @param {string} str
-   *
-   * @returns {type} Description
    */
-  static isURL (str) {
+  static isURL (str: string): boolean {
     const regex =
       '^' +
         // protocol identifier
