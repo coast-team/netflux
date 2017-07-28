@@ -16,7 +16,7 @@ export class Channel {
   /**
    * Creates a channel from existing `RTCDataChannel` or `WebSocket`.
    */
-  constructor (connection: WebSocket | RTCDataChannel, wc: WebChannel, id: number) {
+  constructor (connection: WebSocket | RTCDataChannel, wc: WebChannel, id?: number) {
     this.connection = connection
     this.peerId = id || -1
 

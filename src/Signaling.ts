@@ -84,7 +84,7 @@ export class Signaling {
    * Notify Signaling server that you had joined the network and ready
    * to add new peers to the network.
    */
-  private open (): void {
+  open (): void {
     if (this.state === Signaling.CONNECTED) {
       this.rxWs.send({ joined: true })
       this.state = Signaling.OPEN

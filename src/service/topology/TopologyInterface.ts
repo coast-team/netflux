@@ -1,6 +1,6 @@
 import { Service } from '../Service'
 import { Channel } from '../../Channel'
-import { Message } from '../../Util'
+import { MessageI } from '../../Util'
 
 /**
  * It is responsible to preserve Web Channel
@@ -14,7 +14,7 @@ import { Message } from '../../Util'
  *
  * @see FullMesh
  */
-export interface TopologyInterface {
+export interface TopologyInterface extends Service {
 
   /**
    * As a network member, add a new peer into the network.
@@ -34,25 +34,25 @@ export interface TopologyInterface {
   /**
    * Broadcast a message to the network.
    */
-  send (msg: Message): void
+  send (msg: MessageI): void
 
   /**
    * Forward a broadcasted message. This method should be called onces
    * the peer receives a broadcasted message.
    */
-  forward (msg: Message): void
+  forward (msg: MessageI): void
 
   /**
    * Send a message to a particular peer in the network.
    */
-  sendTo (msg: Message): void
+  sendTo (msg: MessageI): void
 
   /**
    * Forward the message to its recipient or to some peer who knowns how
    * to forward this message to its recipient. This method should be called
    * onces the peer receives a private message intended to someone else.
    */
-  forwardTo (msg: Message): void
+  forwardTo (msg: MessageI): void
 
   /**
    * Disconnect from the network
@@ -69,4 +69,9 @@ export interface TopologyInterface {
    * channel.
    */
   onChannelError (evt: Event, channel: Channel): void
+
+  /**
+   * Call this function before switching to another topology
+   */
+  clean (): void
 }

@@ -34,7 +34,7 @@ export function isURL (str: string): boolean {
   return (new RegExp(regex, 'i')).test(str)
 }
 
-export interface Message {
+export interface MessageI {
   senderId: number,
   recipientId: number,
   isService: boolean,

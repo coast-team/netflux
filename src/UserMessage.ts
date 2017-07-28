@@ -14,7 +14,7 @@ const MAX_MSG_ID_SIZE = 65535
 const textEncoder = new TextEncoder()
 const textDecoder = new TextDecoder()
 
-type UserDataType = Uint8Array | string
+export type UserDataType = Uint8Array | string
 
 /**
  * Message builder service is responsible to build messages to send them over the

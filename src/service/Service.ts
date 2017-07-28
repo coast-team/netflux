@@ -16,7 +16,7 @@ export abstract class Service {
   /*
    * Unique service identifier.
    */
-  protected serviceId: number
+  public serviceId: number
 
   /*
    * Service message observable.
