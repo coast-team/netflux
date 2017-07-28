@@ -5340,185 +5340,169 @@ var FullMesh = (function (_super) {
     return FullMesh;
 }(Service$1));
 
-const CONNECTING = 0;
-const CONNECTED = 1;
-const OPEN = 3;
-const CLOSED = 4;
-
-const PING_TIMEOUT$1 = 8000;
-
-const pongMsg = signaling.Message.encode(signaling.Message.create({ pong: true })).finish();
-
+var PING_TIMEOUT$1 = 8000;
+var pongMsg = signaling.Message.encode(signaling.Message.create({ pong: true })).finish();
 /**
  * This class represents a door of the `WebChannel` for the current peer. If the door
  * is open, then clients can join the `WebChannel` through this peer. There are as
  * many doors as peers in the `WebChannel` and each of them can be closed or opened.
  */
-class Signaling {
-  /**
-   * @param {WebChannel} wc
-   * @param {function(ch: RTCDataChannel)} onChannel
-   * @param {string} url
-   */
-  constructor (wc, onChannel, url) {
+var Signaling = (function () {
     /**
-     * @type {WebChannel}
+     * @param {WebChannel} wc
+     * @param {function(ch: RTCDataChannel)} onChannel
+     * @param {string} url
      */
-    this.wc = wc;
-
-    /**
-     * Signaling server url.
-     * @private
-     * @type {string}
-     */
-    this.url = url.endsWith('/') ? url : url + '/';
-
-    this.onStateChanged = () => {};
-
-    this._state = CLOSED;
-    /**
-     * Connection with the signaling server.
-     * @private
-     * @type {external:WebSocket|external:ws/WebSocket|external:EventSource}
-     */
-    this.rxWs = undefined;
-
-    this.onChannel = onChannel;
-
-    this.pingTimeout = undefined;
-  }
-
-  set state (state) {
-    if (this._state !== state) {
-      this._state = state;
-      this.onStateChanged(state);
-      if (this._state === OPEN) {
-        this.wc.webRTCBuilder.channelsFromSignaling({
-          stream: this.rxWs.stream.filter(msg => msg.type === 'content')
-            .map(({ content }) => content),
-          send: msg => this.rxWs.send({ content: msg })
-        })
-          .subscribe(ch => this.onChannel(ch));
-      }
+    function Signaling(wc, onChannel, url) {
+        // public
+        this.url = url.endsWith('/') ? url : url + '/';
+        this.onChannel = onChannel;
+        this.onStateChanged = function () { };
+        // private
+        this.wc = wc;
+        this._state = Signaling.CLOSED;
+        this.rxWs = undefined;
+        this.pingTimeout = undefined;
     }
-  }
-
-  get state () {
-    return this._state
-  }
-
-  /**
-   * Open the gate.
-   *
-   * @param {string} url Signaling server url
-   * @param {string} [key = this.generateKey()]
-   * @param {Object} signaling
-   */
-  open () {
-    if (this.state === CONNECTED) {
-      this.rxWs.send({ joined: true });
-      this.state = OPEN;
-    }
-  }
-
-  join (key) {
-    this.state = CONNECTING;
-    return this.wc.webSocketBuilder.connect(this.url + key)
-      .then(ws => this.createRxWs(ws))
-      .then(rxWs => {
-        this.rxWs = rxWs;
-        return new Promise((resolve, reject) => {
-          rxWs.stream.subscribe(
-            msg => {
-              switch (msg.type) {
-                case 'ping':
-                  rxWs.pong();
-                  clearTimeout(this.pingTimeout);
-                  this.startPingTimeout();
-                  break
-                case 'isFirst':
-                  if (msg.isFirst) {
-                    this.state = OPEN;
-                    resolve();
-                  } else {
-                    this.wc.webRTCBuilder.connectOverSignaling({
-                      stream: rxWs.stream.filter(msg => msg.type === 'content')
-                        .map(({ content }) => content),
-                      send: (msg) => rxWs.send({ content: msg })
+    Object.defineProperty(Signaling.prototype, "state", {
+        get: function () {
+            return this._state;
+        },
+        set: function (state) {
+            var _this = this;
+            if (this._state !== state) {
+                this._state = state;
+                this.onStateChanged(state);
+                if (this._state === Signaling.OPEN) {
+                    this.wc.webRTCBuilder.channelsFromSignaling({
+                        stream: this.rxWs.stream.filter(function (msg) { return msg.type === 'content'; })
+                            .map(function (_a) {
+                            var content = _a.content;
+                            return content;
+                        }),
+                        send: function (msg) { return _this.rxWs.send({ content: msg }); }
                     })
-                      .then(ch => {
-                        this.state = CONNECTED;
-                        resolve(ch);
-                      })
-                      .catch(err => {
-                        if (rxWs.readyState !== 2 && rxWs.readyState !== 3) {
-                          rxWs.close(1000);
-                        }
-                        reject(new Error(`Could not join over Signaling: ${err.message}`));
-                      });
-                  }
-                  break
-              }
-            },
-            err => reject(err)
-          );
+                        .subscribe(function (ch) { return _this.onChannel(ch); });
+                }
+            }
+        },
+        enumerable: true,
+        configurable: true
+    });
+    /**
+     * Notify Signaling server that you had joined the network and ready
+     * to add new peers to the network.
+     */
+    Signaling.prototype.open = function () {
+        if (this.state === Signaling.CONNECTED) {
+            this.rxWs.send({ joined: true });
+            this.state = Signaling.OPEN;
+        }
+    };
+    Signaling.prototype.join = function (key) {
+        var _this = this;
+        this.state = Signaling.CONNECTING;
+        return this.wc.webSocketBuilder.connect(this.url + key)
+            .then(function (ws) { return _this.createRxWs(ws); })
+            .then(function (rxWs) {
+            _this.rxWs = rxWs;
+            return new Promise(function (resolve, reject) {
+                rxWs.stream.subscribe(function (msg) {
+                    switch (msg.type) {
+                        case 'ping':
+                            rxWs.pong();
+                            clearTimeout(_this.pingTimeout);
+                            _this.startPingTimeout();
+                            break;
+                        case 'isFirst':
+                            if (msg.isFirst) {
+                                _this.state = Signaling.OPEN;
+                                resolve();
+                            }
+                            else {
+                                _this.wc.webRTCBuilder.connectOverSignaling({
+                                    stream: rxWs.stream.filter(function (msg) { return msg.type === 'content'; })
+                                        .map(function (_a) {
+                                        var content = _a.content;
+                                        return content;
+                                    }),
+                                    send: function (msg) { return rxWs.send({ content: msg }); }
+                                })
+                                    .then(function (ch) {
+                                    _this.state = Signaling.CONNECTED;
+                                    resolve(ch);
+                                })
+                                    .catch(function (err) {
+                                    if (rxWs.readyState !== 2 && rxWs.readyState !== 3) {
+                                        rxWs.close(1000);
+                                    }
+                                    reject(new Error("Could not join over Signaling: " + err.message));
+                                });
+                            }
+                            break;
+                    }
+                }, function (err) { return reject(err); });
+            });
         })
-      })
-      .catch(err => {
-        this.state = CLOSED;
-        throw err
-      })
-  }
-
-  /**
-   * Close the door if it is open and do nothing if it is closed already.
-   */
-  close () {
-    if (this.state !== CLOSED) {
-      this.rxWs.close(1000, 'hello');
-    }
-  }
-
-  startPingTimeout () {
-    this.pingTimeout = setTimeout(() => {
-      if (this.state !== CLOSED) {
-        this.rxWS.close(4002, 'Signaling ping timeout');
-      }
-    }, PING_TIMEOUT$1);
-  }
-
-  createRxWs (ws) {
-    const subject = new Subject_2();
-    ws.binaryType = 'arraybuffer';
-    ws.onmessage = evt => {
-      try {
-        subject.next(signaling.Message.decode(new Uint8Array(evt.data)));
-      } catch (err) {
-        console.error(`WebSocket message error from ${ws.url}`, err);
-        ws.close(4000, err.message);
-      }
+            .catch(function (err) {
+            _this.state = Signaling.CLOSED;
+            throw err;
+        });
     };
-    ws.onerror = err => subject.error(err);
-    ws.onclose = closeEvt => {
-      this.state = CLOSED;
-      if (closeEvt.code === 1000) {
-        subject.complete();
-      } else {
-        subject.error(new Error(`${closeEvt.code}: ${closeEvt.reason}`));
-      }
+    /**
+     * Close the `WebSocket` with Signaling server.
+     */
+    Signaling.prototype.close = function () {
+        if (this.state !== Signaling.CLOSED) {
+            this.rxWs.close(1000, 'hello');
+        }
     };
-    ws.onopen = () => this.startPingTimeout();
-    return {
-      stream: subject,
-      send: msg => ws.send(signaling.Message.encode(
-        signaling.Message.create(msg)
-      ).finish()),
-      pong: () => ws.send(pongMsg),
-      close: (code, reason) => ws.close(code, reason),
-      readyState: ws.readyState
-    }
-  }
-}
+    Signaling.prototype.startPingTimeout = function () {
+        var _this = this;
+        this.pingTimeout = window.setTimeout(function () {
+            if (_this.state !== Signaling.CLOSED) {
+                _this.rxWs.close(4002, 'Signaling ping timeout');
+            }
+        }, PING_TIMEOUT$1);
+    };
+    Signaling.prototype.createRxWs = function (ws) {
+        var _this = this;
+        var subject = new Subject_2();
+        ws.binaryType = 'arraybuffer';
+        ws.onmessage = function (evt) {
+            try {
+                subject.next(signaling.Message.decode(new Uint8Array(evt.data)));
+            }
+            catch (err) {
+                console.error("WebSocket message error from " + ws.url, err);
+                ws.close(4000, err.message);
+            }
+        };
+        ws.onerror = function (err) { return subject.error(err); };
+        ws.onclose = function (closeEvt) {
+            _this.state = Signaling.CLOSED;
+            if (closeEvt.code === 1000) {
+                subject.complete();
+            }
+            else {
+                subject.error(new Error(closeEvt.code + ": " + closeEvt.reason));
+            }
+        };
+        ws.onopen = function () { return _this.startPingTimeout(); };
+        return {
+            stream: subject,
+            send: function (msg) { return ws.send(signaling.Message.encode(signaling.Message.create(msg)).finish()); },
+            pong: function () { return ws.send(pongMsg); },
+            close: function (code, reason) { return ws.close(code, reason); },
+            readyState: ws.readyState
+        };
+    };
+    Signaling.CONNECTING = 0;
+    Signaling.CONNECTED = 1;
+    Signaling.OPEN = 2;
+    Signaling.CLOSED = 3;
+    return Signaling;
+}());
 
 var __extends$7 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -9101,7 +9085,7 @@ class WebChannel extends Service$1 {
 
     this._signaling = new Signaling(this, ch => this._addChannel(ch), signalingURL);
     this._signaling.onStateChanged = state => {
-      if (state === CLOSED && this.members.length === 0) {
+      if (state === Signaling.CLOSED && this.members.length === 0) {
         this._setState(DISCONNECTED);
       }
       this.onSignalingStateChanged(state);
@@ -9199,13 +9183,13 @@ class WebChannel extends Service$1 {
 
   static get DISCONNECTED () { return DISCONNECTED }
 
-  static get SIGNALING_CONNECTING () { return CONNECTING }
+  static get SIGNALING_CONNECTING () { return Signaling.CONNECTING }
 
-  static get SIGNALING_CONNECTED () { return CONNECTED }
+  static get SIGNALING_CONNECTED () { return Signaling.CONNECTED }
 
-  static get SIGNALING_OPEN () { return OPEN }
+  static get SIGNALING_OPEN () { return Signaling.OPEN }
 
-  static get SIGNALING_CLOSED () { return CLOSED }
+  static get SIGNALING_CLOSED () { return Signaling.CLOSED }
 
   get state () {
     return this._state
@@ -9396,7 +9380,7 @@ class WebChannel extends Service$1 {
   _onPeerLeave (peerId) {
     this.members.splice(this.members.indexOf(peerId), 1);
     this.onPeerLeave(peerId);
-    if (this.members.length === 0 && this._signaling.state === CLOSED) {
+    if (this.members.length === 0 && this._signaling.state === Signaling.CLOSED) {
       this._setState(DISCONNECTED);
     }
   }

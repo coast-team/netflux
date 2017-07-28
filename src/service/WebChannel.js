@@ -3,7 +3,7 @@ import { Subject } from 'rxjs/Subject'
 import { Channel } from '../Channel'
 import { FullMesh } from './topology/FullMesh'
 import { Service } from './Service'
-import { Signaling, CONNECTING, CONNECTED, OPEN, CLOSED } from '../Signaling'
+import { Signaling } from '../Signaling'
 import { ChannelBuilder } from './ChannelBuilder'
 import { WebSocketBuilder } from '../WebSocketBuilder'
 import { WebRTCBuilder } from './WebRTCBuilder'
@@ -85,7 +85,7 @@ export class WebChannel extends Service {
 
     this._signaling = new Signaling(this, ch => this._addChannel(ch), signalingURL)
     this._signaling.onStateChanged = state => {
-      if (state === CLOSED && this.members.length === 0) {
+      if (state === Signaling.CLOSED && this.members.length === 0) {
         this._setState(DISCONNECTED)
       }
       this.onSignalingStateChanged(state)
@@ -183,13 +183,13 @@ export class WebChannel extends Service {
 
   static get DISCONNECTED () { return DISCONNECTED }
 
-  static get SIGNALING_CONNECTING () { return CONNECTING }
+  static get SIGNALING_CONNECTING () { return Signaling.CONNECTING }
 
-  static get SIGNALING_CONNECTED () { return CONNECTED }
+  static get SIGNALING_CONNECTED () { return Signaling.CONNECTED }
 
-  static get SIGNALING_OPEN () { return OPEN }
+  static get SIGNALING_OPEN () { return Signaling.OPEN }
 
-  static get SIGNALING_CLOSED () { return CLOSED }
+  static get SIGNALING_CLOSED () { return Signaling.CLOSED }
 
   get state () {
     return this._state
@@ -380,7 +380,7 @@ export class WebChannel extends Service {
   _onPeerLeave (peerId) {
     this.members.splice(this.members.indexOf(peerId), 1)
     this.onPeerLeave(peerId)
-    if (this.members.length === 0 && this._signaling.state === CLOSED) {
+    if (this.members.length === 0 && this._signaling.state === Signaling.CLOSED) {
       this._setState(DISCONNECTED)
     }
   }

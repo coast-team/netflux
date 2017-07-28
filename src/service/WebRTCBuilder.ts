@@ -42,6 +42,11 @@ interface AnswerReceived {
   isError?: boolean
 }
 
+export interface SignalingConnection {
+  stream: Observable<any>,
+  send: (msg: any) => any
+}
+
 /**
  * Service class responsible to establish `RTCDataChannel` between two clients via
  * signaling server or `WebChannel`.
@@ -107,7 +112,7 @@ export class WebRTCBuilder extends Service {
    * Listen on `RTCDataChannel` from Signaling server.
    * Starts to listen on **SDP answer**.
    */
-  channelsFromSignaling (signaling): Observable<Channel> {
+  channelsFromSignaling (signaling: SignalingConnection): Observable<Channel> {
     if (WebRTCBuilder.isSupported) {
       return this.channels(
         signaling.stream.filter(({ id }) => id !== 0)
@@ -136,7 +141,7 @@ export class WebRTCBuilder extends Service {
    * Establish an `RTCDataChannel` with a peer identified by `id` trough Signaling server.
    * Starts by sending an **SDP offer**.
    */
-  connectOverSignaling (signaling): Promise<Channel> {
+  connectOverSignaling (signaling: SignalingConnection): Promise<Channel> {
     if (WebRTCBuilder.isSupported) {
       return this.establishChannel(
         signaling.stream.filter(({ id }) => id === 0)
