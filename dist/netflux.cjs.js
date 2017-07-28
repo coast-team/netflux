@@ -9574,169 +9574,167 @@ class WebChannel extends Service$1 {
   }
 }
 
-const url = require('url');
-
+var url = require('url');
 /**
  * BotServer can listen on web socket. A peer can invite bot to join his `WebChannel`.
  * He can also join one of the bot's `WebChannel`.
  */
-class BotServer {
-  /**
-   * Bot server settings are the same as for `WebChannel` (see {@link WebChannelSettings}),
-   * plus `host` and `port` parameters.
-   *
-   * @param {Object} options
-   * @param {FULL_MESH} [options.topology=FULL_MESH] Fully connected topology is the only one available for now
-   * @param {string} [options.signalingURL='wss://www.coedit.re:10443'] Signaling server url
-   * @param {RTCIceServer} [options.iceServers=[{urls:'stun3.l.google.com:19302'}]] Set of ice servers for WebRTC
-   * @param {Object} [options.bot] Options for bot server
-   * @param {string} [options.bot.url=''] Bot public URL to be shared on the p2p network
-   * @param {Object} [options.bot.server=null] A pre-created Node.js HTTP server
-   */
-  constructor (options = {}) {
-    const botDefaults = {
-      bot: {
-        url: '',
-        server: undefined,
-        perMessageDeflate: false
-      }
-    };
-
-    let wcOptions = Object.assign({}, defaults, options);
-    this.wcSettings = {
-      topology: wcOptions.topology,
-      signalingURL: wcOptions.signalingURL,
-      iceServers: wcOptions.iceServers
-    };
-    this.botSettings = Object.assign({}, botDefaults.bot, options.bot);
-    this.serverSettings = {
-      perMessageDeflate: this.botSettings.perMessageDeflate,
-      verifyClient: (info) => this.validateConnection(info),
-      server: this.botSettings.server
-    };
-
+var BotServer = (function () {
     /**
-     * @type {WebSocketServer}
+     * Bot server settings are the same as for `WebChannel` (see {@link WebChannelSettings}),
+     * plus `host` and `port` parameters.
+     *
+     * @param {Object} options
+     * @param {FULL_MESH} [options.topology=FULL_MESH] Fully connected topology is the only one available for now
+     * @param {string} [options.signalingURL='wss://www.coedit.re:10443'] Signaling server url
+     * @param {RTCIceServer} [options.iceServers=[{urls:'stun3.l.google.com:19302'}]] Set of ice servers for WebRTC
+     * @param {Object} [options.bot] Options for bot server
+     * @param {string} [options.bot.url=''] Bot public URL to be shared on the p2p network
+     * @param {Object} [options.bot.server=null] A pre-created Node.js HTTP server
      */
-    this.server = null;
-
-    /**
-     * @type {WebChannel[]}
-     */
-    this.webChannels = [];
-
-    /**
-     * @type {function(wc: WebChannel)}
-     */
-    this.onWebChannel = () => {};
-
-    this.onWebChannelReady = () => {};
-
-    this.onError = () => {};
-
-    this.init();
-  }
-
-  get url () {
-    if (this.botSettings.url !== '') {
-      return this.botSettings.url
-    } else {
-      const address = this.serverSettings.server.address();
-      return `ws://${address.address}:${address.port}`
+    function BotServer(options) {
+        if (options === void 0) { options = {}; }
+        var _this = this;
+        var botDefaults = {
+            bot: {
+                url: '',
+                server: undefined,
+                perMessageDeflate: false
+            }
+        };
+        var wcOptions = Object.assign({}, defaults, options);
+        this.wcSettings = {
+            topology: wcOptions.topology,
+            signalingURL: wcOptions.signalingURL,
+            iceServers: wcOptions.iceServers
+        };
+        this.botSettings = Object.assign({}, botDefaults.bot, options.bot);
+        this.serverSettings = {
+            perMessageDeflate: this.botSettings.perMessageDeflate,
+            verifyClient: function (info) { return _this.validateConnection(info); },
+            server: this.botSettings.server
+        };
+        /**
+         * @type {WebSocketServer}
+         */
+        this.server = null;
+        /**
+         * @type {WebChannel[]}
+         */
+        this.webChannels = [];
+        /**
+         * @type {function(wc: WebChannel)}
+         */
+        this.onWebChannel = function () { };
+        this.onWebChannelReady = function () { };
+        this.onError = function () { };
+        this.init();
     }
-  }
-
-  init () {
-    let WebSocketServer = require('uws').Server;
-    this.server = new WebSocketServer(this.serverSettings);
-    const serverListening = this.serverSettings.server || this.server;
-    serverListening.on('listening', () => WebSocketBuilder.listen().next(this.url));
-
-    this.server.on('error', err => {
-      WebSocketBuilder.listen().next('');
-      this.onError(err);
+    Object.defineProperty(BotServer.prototype, "url", {
+        get: function () {
+            if (this.botSettings.url !== '') {
+                return this.botSettings.url;
+            }
+            else {
+                var address = this.serverSettings.server.address();
+                return "ws://" + address.address + ":" + address.port;
+            }
+        },
+        enumerable: true,
+        configurable: true
     });
-
-    this.server.on('connection', ws => {
-      const {pathname, query} = url.parse(ws.upgradeReq.url, true);
-      const wcId = Number(query.wcId);
-      let wc = this.getWebChannel(wcId);
-      const senderId = Number(query.senderId);
-      switch (pathname) {
-        case '/invite': {
-          if (wc && wc.members.length === 0) {
-            this.removeWebChannel(wc);
-          }
-          wc = new WebChannel(this.wcSettings);
-          wc.id = wcId;
-          this.addWebChannel(wc);
-          this.onWebChannel(wc);
-          wc.join(new Channel(ws, wc, senderId)).then(() => {
-            this.onWebChannelReady(wc);
-          });
-          break
+    BotServer.prototype.init = function () {
+        var _this = this;
+        this.server = new (require('uws').Server)(this.serverSettings);
+        var serverListening = this.serverSettings.server || this.server;
+        serverListening.on('listening', function () { return WebSocketBuilder.listen().next(_this.url); });
+        this.server.on('error', function (err) {
+            WebSocketBuilder.listen().next('');
+            _this.onError(err);
+        });
+        this.server.on('connection', function (ws) {
+            var _a = url.parse(ws.upgradeReq.url, true), pathname = _a.pathname, query = _a.query;
+            var wcId = Number(query.wcId);
+            var wc = _this.getWebChannel(wcId);
+            var senderId = Number(query.senderId);
+            switch (pathname) {
+                case '/invite': {
+                    if (wc && wc.members.length === 0) {
+                        _this.removeWebChannel(wc);
+                    }
+                    wc = new WebChannel(_this.wcSettings);
+                    wc.id = wcId;
+                    _this.addWebChannel(wc);
+                    _this.onWebChannel(wc);
+                    wc.join(new Channel(ws, wc, senderId)).then(function () {
+                        _this.onWebChannelReady(wc);
+                    });
+                    break;
+                }
+                case '/internalChannel': {
+                    if (wc !== undefined) {
+                        WebSocketBuilder.newIncomingSocket(wc, ws, senderId);
+                    }
+                    else {
+                        console.error('Cannot find WebChannel for a new internal channel');
+                    }
+                    break;
+                }
+            }
+        });
+    };
+    /**
+     * Get `WebChannel` identified by its `id`.
+     */
+    BotServer.prototype.getWebChannel = function (id) {
+        try {
+            for (var _a = __values(this.webChannels), _b = _a.next(); !_b.done; _b = _a.next()) {
+                var wc = _b.value;
+                if (id === wc.id) {
+                    return wc;
+                }
+            }
         }
-        case '/internalChannel': {
-          if (wc !== undefined) {
-            WebSocketBuilder.newIncomingSocket(wc, ws, senderId);
-          } else {
-            console.error('Cannot find WebChannel for a new internal channel');
-          }
-          break
+        catch (e_1_1) { e_1 = { error: e_1_1 }; }
+        finally {
+            try {
+                if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+            }
+            finally { if (e_1) throw e_1.error; }
         }
-      }
-    });
-  }
-
-  /**
-   * Get `WebChannel` identified by its `id`.
-   *
-   * @param {number} id
-   *
-   * @returns {WebChannel|null}
-   */
-  getWebChannel (id) {
-    for (let wc of this.webChannels) {
-      if (id === wc.id) return wc
-    }
-    return undefined
-  }
-
-  /**
-   * Add `WebChannel`.
-   *
-   * @param {WebChannel} wc
-   */
-  addWebChannel (wc) {
-    this.webChannels[this.webChannels.length] = wc;
-  }
-
-  /**
-   * Remove `WebChannel`
-   *
-   * @param {WebChannel} wc
-   */
-  removeWebChannel (wc) {
-    this.webChannels.splice(this.webChannels.indexOf(wc), 1);
-  }
-
-  validateConnection (info) {
-    const {pathname, query} = url.parse(info.req.url, true);
-    const wcId = query.wcId ? Number(query.wcId) : undefined;
-    switch (pathname) {
-      case '/invite':
-        if (wcId) {
-          const wc = this.getWebChannel(wcId);
-          return (wc === undefined || wc.members.length === 0) && query.senderId
+        return undefined;
+        var e_1, _c;
+    };
+    /**
+     * Add `WebChannel`.
+     */
+    BotServer.prototype.addWebChannel = function (wc) {
+        this.webChannels[this.webChannels.length] = wc;
+    };
+    /**
+     * Remove `WebChannel`.
+     */
+    BotServer.prototype.removeWebChannel = function (wc) {
+        this.webChannels.splice(this.webChannels.indexOf(wc), 1);
+    };
+    BotServer.prototype.validateConnection = function (info) {
+        var _a = url.parse(info.req.url, true), pathname = _a.pathname, query = _a.query;
+        var wcId = query.wcId ? Number(query.wcId) : undefined;
+        switch (pathname) {
+            case '/invite':
+                if (wcId) {
+                    var wc = this.getWebChannel(wcId);
+                    return (wc === undefined || wc.members.length === 0) && query.senderId;
+                }
+                return false;
+            case '/internalChannel':
+                return query.senderId && wcId && this.getWebChannel(wcId) !== undefined;
+            default:
+                return false;
         }
-        return false
-      case '/internalChannel':
-        return query.senderId && wcId && this.getWebChannel(wcId)
-      default:
-        return false
-    }
-  }
-}
+    };
+    return BotServer;
+}());
 
 // #endif
 

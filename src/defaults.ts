@@ -4,10 +4,16 @@ enum Topologies {
   FULL_MESH
 }
 
-interface WebChannelOptions {
+export interface WebChannelOptions {
   topology: Topologies,
   signalingURL: string,
   iceServers: RTCIceServer[]
+}
+
+export interface BotOptions {
+  url: string,
+  server: any,
+  perMessageDeflate: boolean
 }
 
 /**
