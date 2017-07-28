@@ -7610,73 +7610,76 @@ else {
     // #endif
 }
 
-const CONNECT_TIMEOUT = 3000;
-const listenSubject = new BehaviorSubject_2('');
-
+var CONNECT_TIMEOUT = 3000;
+var listenSubject = new BehaviorSubject_2('');
 /**
  * Service class responsible to establish connections between peers via
  * `WebSocket`.
  */
-class WebSocketBuilder {
-  constructor (wc) {
-    this.wc = wc;
-    this.channelStream = new Subject_2();
-  }
-
-  static listen () {
-    return listenSubject
-  }
-
-  static newIncomingSocket (wc, ws, senderId) {
-    wc.webSocketBuilder.channelStream.next(new Channel(ws, wc, senderId));
-  }
-
-  /**
-   * Creates WebSocket with server.
-   *
-   * @param {string} url - Server url
-   * @returns {Promise<WebSocket, string>} It is resolved once the WebSocket has been created and rejected otherwise
-   */
-  connect (url) {
-    return new Promise((resolve, reject) => {
-      if (Util.isURL(url) && url.search(/^wss?/) !== -1) {
-        const ws = new _WebSocket(url);
-        ws.onopen = () => resolve(ws);
-        // Timeout for node (otherwise it will loop forever if incorrect address)
-        setTimeout(() => {
-          if (ws.readyState !== ws.OPEN) {
-            reject(new Error(`WebSocket ${CONNECT_TIMEOUT}ms connection timeout with ${url}`));
-          }
-        }, CONNECT_TIMEOUT);
-      } else {
-        throw new Error(`${url} is not a valid URL`)
-      }
-    })
-  }
-
-  connectTo (url, id) {
-    const fullUrl = `${url}/internalChannel?wcId=${this.wc.id}&senderId=${this.wc.myId}`;
-    return new Promise((resolve, reject) => {
-      if (Util.isURL(url) && url.search(/^wss?/) !== -1) {
-        const ws = new _WebSocket(fullUrl);
-        const channel = new Channel(ws, this.wc, id);
-        ws.onopen = () => resolve(channel);
-        // Timeout for node (otherwise it will loop forever if incorrect address)
-        setTimeout(() => {
-          if (ws.readyState !== ws.OPEN) {
-            reject(new Error(`WebSocket ${CONNECT_TIMEOUT}ms connection timeout with ${url}`));
-          }
-        }, CONNECT_TIMEOUT);
-      } else {
-        throw new Error(`${url} is not a valid URL`)
-      }
-    })
-  }
-
-  channels () {
-    return this.channelStream.asObservable()
-  }
-}
+var WebSocketBuilder = (function () {
+    function WebSocketBuilder(wc) {
+        this.wc = wc;
+        this.channelsSubject = new Subject_2();
+    }
+    WebSocketBuilder.listen = function () {
+        return listenSubject;
+    };
+    WebSocketBuilder.newIncomingSocket = function (wc, ws, senderId) {
+        wc.webSocketBuilder.channelsSubject.next(new Channel(ws, wc, senderId));
+    };
+    /**
+     * Establish `WebSocket` with a server.
+     *
+     * @param url Server url
+     */
+    WebSocketBuilder.prototype.connect = function (url) {
+        return new Promise(function (resolve, reject) {
+            if (Util.isURL(url) && url.search(/^wss?/) !== -1) {
+                var ws_1 = new _WebSocket(url);
+                ws_1.onopen = function () { return resolve(ws_1); };
+                // Timeout for node (otherwise it will loop forever if incorrect address)
+                setTimeout(function () {
+                    if (ws_1.readyState !== ws_1.OPEN) {
+                        reject(new Error("WebSocket " + CONNECT_TIMEOUT + "ms connection timeout with " + url));
+                    }
+                }, CONNECT_TIMEOUT);
+            }
+            else {
+                throw new Error(url + " is not a valid URL");
+            }
+        });
+    };
+    /**
+     * Establish a `Channel` with a server peer identified by `id`.
+     *
+     * @param url Server url
+     * @param id  Peer id
+     */
+    WebSocketBuilder.prototype.connectTo = function (url, id) {
+        var _this = this;
+        var fullUrl = url + "/internalChannel?wcId=" + this.wc.id + "&senderId=" + this.wc.myId;
+        return new Promise(function (resolve, reject) {
+            if (Util.isURL(url) && url.search(/^wss?/) !== -1) {
+                var ws_2 = new _WebSocket(fullUrl);
+                var channel_1 = new Channel(ws_2, _this.wc, id);
+                ws_2.onopen = function () { return resolve(channel_1); };
+                // Timeout for node (otherwise it will loop forever if incorrect address)
+                setTimeout(function () {
+                    if (ws_2.readyState !== ws_2.OPEN) {
+                        reject(new Error("WebSocket " + CONNECT_TIMEOUT + "ms connection timeout with " + url));
+                    }
+                }, CONNECT_TIMEOUT);
+            }
+            else {
+                throw new Error(url + " is not a valid URL");
+            }
+        });
+    };
+    WebSocketBuilder.prototype.channels = function () {
+        return this.channelsSubject.asObservable();
+    };
+    return WebSocketBuilder;
+}());
 
 var __extends$12 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
