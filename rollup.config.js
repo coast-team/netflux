@@ -1,5 +1,4 @@
 import filesize from 'rollup-plugin-filesize'
-import babel from 'rollup-plugin-babel'
 import strip from 'rollup-plugin-strip'
 import commonjs from 'rollup-plugin-commonjs'
 import resolve from 'rollup-plugin-node-resolve'
@@ -31,9 +30,6 @@ export default [
           'node_modules/protobufjs/minimal.js': [ 'Reader', 'Writer', 'util', 'roots' ]
         }
       }),
-      babel({
-        exclude: 'node_modules/**'
-      }),
       filesize({ format: { round: 0 } })
     ]
   },
@@ -57,9 +53,6 @@ export default [
         namedExports: {
           'node_modules/protobufjs/minimal.js': [ 'Reader', 'Writer', 'util', 'roots' ]
         }
-      }),
-      babel({
-        exclude: 'node_modules/**'
       }),
       filesize({ format: { round: 0 } })
     ]
