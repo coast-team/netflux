@@ -1,15 +1,46 @@
 import { ReplaySubject } from 'rxjs/ReplaySubject'
+import { Subject } from 'rxjs/Subject'
 import { Observable } from 'rxjs/Observable'
 import 'rxjs/add/operator/map'
 
 import { Service } from './Service'
 import { webRTCBuilder } from '../Protobuf'
 import { Channel } from '../Channel'
+import { WebChannel } from './WebChannel'
 import { WebRTC, CloseEvent } from '../polyfills'
 
 const ID = 0
 
 const CONNECTION_TIMEOUT = 10000
+
+interface IceCandidate {
+  candidate: string,
+  sdpMid?: string,
+  sdpMLineIndex?: number
+}
+
+interface OfferSent {
+  offer?: string,
+  iceCandidate?: IceCandidate
+}
+
+interface OfferReceived {
+  offer?: string,
+  iceCandidate?: IceCandidate,
+  isError?: boolean,
+  id: number
+}
+
+interface AnswerSent {
+  answer?: string,
+  iceCandidate?: IceCandidate
+}
+
+interface AnswerReceived {
+  answer?: string,
+  iceCandidate?: IceCandidate,
+  isError?: boolean
+}
 
 /**
  * Service class responsible to establish `RTCDataChannel` between two clients via
@@ -17,6 +48,10 @@ const CONNECTION_TIMEOUT = 10000
  *
  */
 export class WebRTCBuilder extends Service {
+  private wc: WebChannel
+  private rtcConfiguration: RTCConfiguration
+  private clients: Map<number, [RTCPeerConnection, ReplaySubject<IceCandidate>]>
+
   constructor (wc, iceServers) {
     super(ID, webRTCBuilder.Message, wc._svcMsgStream)
     this.wc = wc
@@ -24,16 +59,19 @@ export class WebRTCBuilder extends Service {
     this.clients = new Map()
   }
 
-  static get isSupported () {
+  /**
+   * Indicates whether WebRTC is supported by the environment.
+   */
+  static get isSupported (): boolean {
     return WebRTC !== undefined
   }
 
   channelsFromWebChannel () {
     if (WebRTCBuilder.isSupported) {
-      return this._channels(
+      return this.channels(
         this.svcMsgStream
-          .filter(({ msg }) => msg.isInitiator)
-          .map(({ msg, senderId }) => {
+          .filter(({ msg }: {msg: any}) => msg.isInitiator)
+          .map(({ msg, senderId }: { msg: any, senderId: number }) => {
             msg.id = senderId
             return msg
           }),
@@ -47,17 +85,15 @@ export class WebRTCBuilder extends Service {
    * Establish an `RTCDataChannel` with a peer identified by `id` trough `WebChannel`.
    * Starts by sending an **SDP offer**.
    *
-   * @param {number} id Peer id
-   *
-   * @returns {Promise<RTCDataChannel>} Data channel between you and `id` peer
+   * @param id  Peer id
    */
-  connectOverWebChannel (id) {
+  connectOverWebChannel (id: number): Promise<Channel> {
     if (WebRTCBuilder.isSupported) {
-      return this._establishChannel(
+      return this.establishChannel(
         this.svcMsgStream
-          .filter(({ msg, senderId }) => senderId === id && !msg.isInitiator)
-          .map(({ msg }) => ({ answer: msg.answer, iceCandidate: msg.iceCandidate })),
-        msg => {
+          .filter(({ msg, senderId }: { msg: any, senderId: number }) => senderId === id && !msg.isInitiator)
+          .map(({ msg }: { msg: any }) => ({ answer: msg.answer, iceCandidate: msg.iceCandidate })),
+        (msg: any) => {
           msg.isInitiator = true
           this.wc._sendTo({ recipientId: id, content: super.encode(msg) })
         },
@@ -68,19 +104,16 @@ export class WebRTCBuilder extends Service {
   }
 
   /**
-   * Listen on `RTCDataChannel` from Signaling server. Starts to listen on **SDP answer**.
-   *
-   * @param {Subject} signaling Specific to Netflux RxJs Subject connection with Signaling server
-   *
-   * @returns {Observable<RTCDataChannel>} Observable emitting `RTCDataChannel`. Can emit errors and completes when the stream with Signaling server has completed.
+   * Listen on `RTCDataChannel` from Signaling server.
+   * Starts to listen on **SDP answer**.
    */
-  channelsFromSignaling (signaling) {
+  channelsFromSignaling (signaling): Observable<Channel> {
     if (WebRTCBuilder.isSupported) {
-      return this._channels(
+      return this.channels(
         signaling.stream.filter(({ id }) => id !== 0)
           .map(msg => {
             if (msg.type === 'data') {
-              const completeData = super.decode(msg.data)
+              const completeData: any = super.decode(msg.data)
               completeData.id = msg.id
               return completeData
             } else {
@@ -102,14 +135,10 @@ export class WebRTCBuilder extends Service {
   /**
    * Establish an `RTCDataChannel` with a peer identified by `id` trough Signaling server.
    * Starts by sending an **SDP offer**.
-   *
-   * @param {Subject} signaling Specific to Netflux RxJs Subject connection with Signaling server
-   *
-   * @returns {Promise<RTCDataChannel>} Data channel between you and `id` peer
    */
-  connectOverSignaling (signaling) {
+  connectOverSignaling (signaling): Promise<Channel> {
     if (WebRTCBuilder.isSupported) {
-      return this._establishChannel(
+      return this.establishChannel(
         signaling.stream.filter(({ id }) => id === 0)
           .map(msg => {
             return msg.type === 'data' ? super.decode(msg.data) : { isError: true }
@@ -126,17 +155,14 @@ export class WebRTCBuilder extends Service {
     throw new Error('WebRTC is not supported')
   }
 
-  /**
-   * @private
-   * @param  {Subject} stream
-   * @param  {function(msg: Object): void} send
-   * @param  {string} [peerId]
-   * @return {Promise<RTCDataChannel>}
-   */
-  _establishChannel (stream, send, peerId = 1) {
+  private establishChannel (
+    stream: Observable<AnswerReceived>,
+    send: (msg: OfferSent) => void,
+    peerId = 1
+  ): Promise<Channel> {
     const pc = new WebRTC.RTCPeerConnection(this.rtcConfiguration)
     const remoteCandidateStream = new ReplaySubject()
-    this._localCandidates(pc).subscribe(
+    this.localCandidates(pc).subscribe(
       iceCandidate => send({ iceCandidate }),
       err => console.warn(err),
       () => send({ iceCandidate: { candidate: '' } })
@@ -167,15 +193,15 @@ export class WebRTCBuilder extends Service {
           } else if (isError) {
             reject(new Error('Remote peer no longer available via Signaling'))
           } else {
-            console.log('Unknown message from a remote peer', {answer, iceCandidate, isError})
-            reject(new Error('Unknown message from a remote peer', {answer, iceCandidate, isError}))
+            console.error('Unknown message from a remote peer', {answer, iceCandidate, isError})
+            reject(new Error('Unknown message from a remote peer'))
           }
         },
         reject,
         () => reject(new Error('Failed to establish RTCDataChannel: the connection with Signaling server was closed'))
       )
 
-      this._openChannel(pc, true, peerId)
+      this.openChannel(pc, peerId)
         .then(resolve)
         .catch(reject)
 
@@ -186,15 +212,10 @@ export class WebRTCBuilder extends Service {
     })
   }
 
-  /**
-   * @private
-   * @param  {Subject} stream
-   * @param  {function(msg: Object, id: number): void} send
-   * @param  {functioin} initFunc
-   * @param  {RTCConfiguration} rtcConfiguration
-   * @return {Observable<Channel>}
-   */
-  _channels (stream, send) {
+  private channels (
+    stream: Observable<OfferReceived>,
+    send: (msg: AnswerSent, id: number) => void
+  ): Observable<Channel> {
     return Observable.create(observer => {
       stream.subscribe(
         ({ offer, iceCandidate, id, isError }) => {
@@ -206,7 +227,7 @@ export class WebRTCBuilder extends Service {
           } else {
             pc = new WebRTC.RTCPeerConnection(this.rtcConfiguration)
             remoteCandidateStream = new ReplaySubject()
-            this._localCandidates(pc).subscribe(
+            this.localCandidates(pc).subscribe(
               iceCandidate => send({ iceCandidate }, id),
               err => console.warn(err),
               () => send({ iceCandidate: { candidate: '' } }, id)
@@ -214,7 +235,7 @@ export class WebRTCBuilder extends Service {
             this.clients.set(id, [pc, remoteCandidateStream])
           }
           if (offer) {
-            this._openChannel(pc, false)
+            this.openChannel(pc)
               .then(ch => observer.next(ch))
               .catch(err => {
                 this.clients.delete(id)
@@ -245,7 +266,7 @@ export class WebRTCBuilder extends Service {
           } else if (isError) {
             console.warn('Remote peer no longer available via Signaling')
           } else {
-            console.error(new Error('Unknown message from a remote peer', {offer, iceCandidate, isError}))
+            console.error(new Error('Unknown message from a remote peer'))
           }
         },
         err => observer.error(err),
@@ -254,12 +275,7 @@ export class WebRTCBuilder extends Service {
     })
   }
 
-  /**
-   * @private
-   * @param  {RTCPeerConnection} pc
-   * @return {Observable<{candidate: string, sdpMid: string, sdpMLineIndex: string}>}
-   */
-  _localCandidates (pc) {
+  private localCandidates (pc: RTCPeerConnection): Observable<IceCandidate> {
     return Observable.create(observer => {
       pc.onicecandidate = evt => {
         if (evt.candidate !== null) {
@@ -275,23 +291,16 @@ export class WebRTCBuilder extends Service {
     })
   }
 
-  /**
-   * @private
-   * @param  {RTCPeerConnection} pc
-   * @param  {boolean} offerCreator
-   * @param  {string} [peerId='']
-   * @return {Promise<RTCDataChannel>}
-   */
-  _openChannel (pc, offerCreator, peerId) {
-    if (offerCreator) {
+  private openChannel (pc: RTCPeerConnection, peerId?: number): Promise<Channel> {
+    if (peerId !== undefined) {
       try {
-        const dc = pc.createDataChannel(this.wc.myId)
+        const dc = pc.createDataChannel((this.wc.myId).toString())
 
         // Initialize dataChannel for WebChannel
         const channel = new Channel(dc, this.wc, peerId)
 
         // Configure disconnection
-        this._configOnDisconnect(pc, dc)
+        this.configOnDisconnect(pc, dc)
         return new Promise((resolve, reject) => {
           const timeout = setTimeout(() => {
             reject(new Error(`${CONNECTION_TIMEOUT}ms timeout`))
@@ -311,7 +320,7 @@ export class WebRTCBuilder extends Service {
         }, CONNECTION_TIMEOUT)
         pc.ondatachannel = dcEvt => {
           // Configure disconnection
-          this._configOnDisconnect(pc, dcEvt.channel)
+          this.configOnDisconnect(pc, dcEvt.channel)
           dcEvt.channel.onopen = evt => {
             clearTimeout(timeout)
 
@@ -323,12 +332,7 @@ export class WebRTCBuilder extends Service {
     }
   }
 
-  /**
-   * @private
-   * @param {RTCPeerConnection} pc
-   * @param {RTCDataChannel} dc
-   */
-  _configOnDisconnect (pc, dc) {
+  private configOnDisconnect (pc: RTCPeerConnection, dc: RTCDataChannel): void {
     pc.oniceconnectionstatechange = () => {
       if (pc.iceConnectionState === 'disconnected' && dc.onclose) {
         dc.onclose(new CloseEvent('disconnect', {

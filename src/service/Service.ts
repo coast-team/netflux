@@ -41,7 +41,7 @@ export abstract class Service {
    *
    * @param msg Service specific message object
    */
-  encode (msg: object): Uint8Array {
+  encode (msg: any): Uint8Array {
     return service.Message.encode(
       service.Message.create({
         id: this.serviceId,
@@ -55,7 +55,7 @@ export abstract class Service {
    *
    * @return  Service specific message object
    */
-  decode (bytes: Uint8Array): object {
+  decode (bytes: Uint8Array): any {
     return this.protoMessage.decode(bytes)
   }
 
