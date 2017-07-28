@@ -52,7 +52,7 @@ export class WebRTCBuilder extends Service {
   private rtcConfiguration: RTCConfiguration
   private clients: Map<number, [RTCPeerConnection, ReplaySubject<IceCandidate>]>
 
-  constructor (wc, iceServers) {
+  constructor (wc: WebChannel, iceServers: RTCIceServer[]) {
     super(ID, webRTCBuilder.Message, wc._svcMsgStream)
     this.wc = wc
     this.rtcConfiguration = { iceServers }
