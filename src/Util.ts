@@ -55,5 +55,5 @@ export interface ServiceMessageDecoded {
   senderId: number,
   recipientId: number,
   timestamp: number,
-  msg: object
+  msg: any
 }

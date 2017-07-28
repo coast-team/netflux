@@ -6,7 +6,7 @@ import { fullMesh } from '../../Protobuf'
 import { WebChannel } from '../WebChannel'
 import { Channel } from '../../Channel'
 import { Service } from '../Service'
-import { Message } from '../../Util'
+import { Message, ServiceMessageDecoded } from '../../Util'
 
 /**
  * {@link FullMesh} identifier.
@@ -38,7 +38,7 @@ export class FullMesh extends Service implements TopologyInterface {
     this.channels = new Set()
     this.jps = new Map()
     this.svcMsgStream.subscribe(
-      msg => this._handleSvcMsg(msg),
+      msg => this.handleSvcMsg(msg),
       err => console.error('FullMesh Message Stream Error', err),
       () => this.leave()
     )
@@ -71,22 +71,22 @@ export class FullMesh extends Service implements TopologyInterface {
     }
   }
 
-  initJoining (ch: Channel) {
+  initJoining (ch: Channel): void {
     console.info(this.wc.myId + ' initJoining ' + ch.peerId)
     this.jps.set(this.wc.myId, ch)
     this.peerJoined(ch)
   }
 
-  send (msg: Message) {
+  send (msg: Message): void {
     const bytes = this.wc._encode(msg)
     for (let ch of this.channels) {
       ch.send(bytes)
     }
   }
 
-  forward (msg: Message) { /* Nothing to do for this topology */ }
+  forward (msg: Message): void { /* Nothing to do for this topology */ }
 
-  sendTo (msg: Message) {
+  sendTo (msg: Message): void {
     const bytes = this.wc._encode(msg)
     for (let ch of this.channels) {
       if (ch.peerId === msg.recipientId) {
@@ -101,9 +101,9 @@ export class FullMesh extends Service implements TopologyInterface {
     return console.error(this.wc.myId + ' The recipient could not be found', msg.recipientId)
   }
 
-  forwardTo (msg: Message) { this.sendTo(msg) }
+  forwardTo (msg: Message): void { this.sendTo(msg) }
 
-  leave () {
+  leave (): void {
     for (let ch of this.channels) {
       ch.close()
     }
@@ -115,7 +115,7 @@ export class FullMesh extends Service implements TopologyInterface {
     this.channelsSubs.unsubscribe()
   }
 
-  onChannelClose (closeEvt: CloseEvent, channel: Channel) {
+  onChannelClose (closeEvt: CloseEvent, channel: Channel): void {
     if (this.wc.state === WebChannel.JOINING) {
       const firstChannel = this.channels.values().next().value
       if (firstChannel.peerId === channel.peerId) {
@@ -141,17 +141,11 @@ export class FullMesh extends Service implements TopologyInterface {
     }
   }
 
-  /**
-   * Error event handler for each `Channel` in the `WebChannel`.
-   *
-   * @param {Event} evt
-   * @param {Channel} channel
-   */
-  onChannelError (evt: Event, channel: Channel) {
+  onChannelError (evt: Event, channel: Channel): void {
     console.error(`Channel error with id: ${channel.peerId}: `, evt)
   }
 
-  _handleSvcMsg ({channel, senderId, recipientId, msg}) {
+  private handleSvcMsg ({channel, senderId, recipientId, msg}: ServiceMessageDecoded): void {
     switch (msg.type) {
     case 'connectTo': {
       const peers = msg.connectTo.peers
@@ -229,7 +223,7 @@ export class FullMesh extends Service implements TopologyInterface {
     }
   }
 
-  peerJoined (ch) {
+  private peerJoined (ch: Channel): void {
     this.channels.add(ch)
     this.jps.delete(ch.peerId)
     this.wc._onPeerJoin(ch.peerId)
