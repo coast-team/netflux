@@ -7584,20 +7584,21 @@ module.exports = {
 
 },{}]},{},[2]);
 
-let WebRTC;
-let WebSocket;
-let TextEncoder;
-let TextDecoder;
-let CloseEvent;
-
+/* tslint:disable:variable-name */
+var WebRTC;
+var WebSocket_;
+var TextEncoder_;
+var TextDecoder_;
+var CloseEvent_;
 if (Util.isBrowser()) {
-  WebRTC = window;
-  WebSocket = window.WebSocket;
-  TextEncoder = window.TextEncoder;
-  TextDecoder = window.TextDecoder;
-  CloseEvent = window.CloseEvent;
-} else {
-  
+    WebRTC = window;
+    WebSocket_ = WebSocket;
+    TextEncoder_ = TextEncoder;
+    TextDecoder_ = TextDecoder;
+    CloseEvent_ = CloseEvent;
+}
+else {
+    
 }
 
 const CONNECT_TIMEOUT = 3000;
@@ -7630,7 +7631,7 @@ class WebSocketBuilder {
   connect (url) {
     return new Promise((resolve, reject) => {
       if (Util.isURL(url) && url.search(/^wss?/) !== -1) {
-        const ws = new WebSocket(url);
+        const ws = new WebSocket_(url);
         ws.onopen = () => resolve(ws);
         // Timeout for node (otherwise it will loop forever if incorrect address)
         setTimeout(() => {
@@ -7648,7 +7649,7 @@ class WebSocketBuilder {
     const fullUrl = `${url}/internalChannel?wcId=${this.wc.id}&senderId=${this.wc.myId}`;
     return new Promise((resolve, reject) => {
       if (Util.isURL(url) && url.search(/^wss?/) !== -1) {
-        const ws = new WebSocket(fullUrl);
+        const ws = new WebSocket_(fullUrl);
         const channel = new Channel(ws, this.wc, id);
         ws.onopen = () => resolve(channel);
         // Timeout for node (otherwise it will loop forever if incorrect address)
@@ -8785,7 +8786,7 @@ class WebRTCBuilder extends Service$1 {
   _configOnDisconnect (pc, dc) {
     pc.oniceconnectionstatechange = () => {
       if (pc.iceConnectionState === 'disconnected' && dc.onclose) {
-        dc.onclose(new CloseEvent('disconnect', {
+        dc.onclose(new CloseEvent_('disconnect', {
           code: 4201,
           reason: 'disconnected'
         }));
@@ -8973,8 +8974,8 @@ const MAX_USER_MSG_SIZE = 15000;
  */
 const MAX_MSG_ID_SIZE = 65535;
 
-const textEncoder = new TextEncoder();
-const textDecoder = new TextDecoder();
+const textEncoder = new TextEncoder_();
+const textDecoder = new TextDecoder_();
 
 /**
  * Message builder service is responsible to build messages to send them over the
