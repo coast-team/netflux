@@ -1,4 +1,4 @@
-import { Util } from './Util'
+import { isBrowser, isSocket } from './Util'
 import { WebChannel } from './service/WebChannel'
 
 /**
@@ -21,10 +21,10 @@ export class Channel {
     this.peerId = id || -1
 
     // Configure `send` function
-    if (Util.isBrowser()) {
+    if (isBrowser()) {
       connection.binaryType = 'arraybuffer'
       this.send = this.sendInBrowser
-    } else if (Util.isSocket(connection)) {
+    } else if (isSocket(connection)) {
       this.send = this.sendInNodeViaWebSocket
     } else {
       connection.binaryType = 'arraybuffer'

@@ -9,7 +9,7 @@ import { WebSocketBuilder } from '../WebSocketBuilder'
 import { WebRTCBuilder } from './WebRTCBuilder'
 import { Message, webChannel, service } from '../Protobuf'
 import { UserMessage } from '../UserMessage'
-import { Util } from '../Util'
+import { isURL } from '../Util'
 import { defaults } from '../defaults'
 
 /**
@@ -245,7 +245,7 @@ export class WebChannel extends Service {
    * @returns {Promise<undefined,string>}
    */
   invite (url) {
-    if (Util.isURL(url)) {
+    if (isURL(url)) {
       return this.webSocketBuilder.connect(`${url}/invite?wcId=${this.id}&senderId=${this.myId}`)
         .then(connection => this._addChannel(new Channel(connection, this)))
     } else {

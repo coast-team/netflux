@@ -1166,42 +1166,34 @@ var Subject_1 = {
 };
 
 /**
- * Utility class contains some helper static methods.
+ * Check execution environment.
  */
-var Util = (function () {
-    function Util() {
+function isBrowser() {
+    if (typeof window === 'undefined' || (typeof process !== 'undefined' && process.title === 'node')) {
+        return false;
     }
-    /**
-     * Check execution environment.
-     */
-    Util.isBrowser = function () {
-        if (typeof window === 'undefined' || (typeof process !== 'undefined' && process.title === 'node')) {
-            return false;
-        }
-        return true;
-    };
-    /**
-     * Check whether the channel is a socket.
-     */
-    Util.isSocket = function (channel) {
-        return channel.constructor.name === 'WebSocket';
-    };
-    /**
-     * Check whether the string is a valid URL.
-     */
-    Util.isURL = function (str) {
-        var regex = '^' +
-            // protocol identifier
-            '(?:wss|ws)://' +
-            // Host name/IP
-            '[^\\s]+' +
-            // port number
-            '(?::\\d{2,5})?' +
-            '$';
-        return (new RegExp(regex, 'i')).test(str);
-    };
-    return Util;
-}());
+    return true;
+}
+/**
+ * Check whether the channel is a socket.
+ */
+function isSocket(channel) {
+    return channel.constructor.name === 'WebSocket';
+}
+/**
+ * Check whether the string is a valid URL.
+ */
+function isURL(str) {
+    var regex = '^' +
+        // protocol identifier
+        '(?:wss|ws)://' +
+        // Host name/IP
+        '[^\\s]+' +
+        // port number
+        '(?::\\d{2,5})?' +
+        '$';
+    return (new RegExp(regex, 'i')).test(str);
+}
 
 /**
  * Wrapper class for `RTCDataChannel` and `WebSocket`.
@@ -1215,11 +1207,11 @@ var Channel = (function () {
         this.connection = connection;
         this.peerId = id || -1;
         // Configure `send` function
-        if (Util.isBrowser()) {
+        if (isBrowser()) {
             connection.binaryType = 'arraybuffer';
             this.send = this.sendInBrowser;
         }
-        else if (Util.isSocket(connection)) {
+        else if (isSocket(connection)) {
             this.send = this.sendInNodeViaWebSocket;
         }
         else {
@@ -7518,7 +7510,7 @@ var _WebSocket;
 var _TextEncoder;
 var _TextDecoder;
 var _CloseEvent;
-if (Util.isBrowser()) {
+if (isBrowser()) {
     WebRTC = window;
     _WebSocket = WebSocket;
     _TextEncoder = TextEncoder;
@@ -7553,7 +7545,7 @@ var WebSocketBuilder = (function () {
      */
     WebSocketBuilder.prototype.connect = function (url) {
         return new Promise(function (resolve, reject) {
-            if (Util.isURL(url) && url.search(/^wss?/) !== -1) {
+            if (isURL(url) && url.search(/^wss?/) !== -1) {
                 var ws_1 = new _WebSocket(url);
                 ws_1.onopen = function () { return resolve(ws_1); };
                 // Timeout for node (otherwise it will loop forever if incorrect address)
@@ -7578,7 +7570,7 @@ var WebSocketBuilder = (function () {
         var _this = this;
         var fullUrl = url + "/internalChannel?wcId=" + this.wc.id + "&senderId=" + this.wc.myId;
         return new Promise(function (resolve, reject) {
-            if (Util.isURL(url) && url.search(/^wss?/) !== -1) {
+            if (isURL(url) && url.search(/^wss?/) !== -1) {
                 var ws_2 = new _WebSocket(fullUrl);
                 var channel_1 = new Channel(ws_2, _this.wc, id);
                 ws_2.onopen = function () { return resolve(channel_1); };
@@ -8998,18 +8990,22 @@ var Buffer$1 = (function () {
     return Buffer;
 }());
 
+var Topologies;
+(function (Topologies) {
+    Topologies[Topologies["FULL_MESH"] = 0] = "FULL_MESH";
+})(Topologies || (Topologies = {}));
 /**
  * @type {Object}
  * @property {FULL_MESH} defaults.topology Fully connected topology is the only one available for now
  * @property {string} defaults.signalingURL Signaling server url
  * @property {RTCIceServer} defaults.iceServers Set of ice servers for WebRTC
  */
-const defaults = {
-  topology: FULL_MESH,
-  signalingURL: 'wss://www.coedit.re:10473',
-  iceServers: [
-    {urls: 'stun:stun3.l.google.com:19302'}
-  ]
+var defaults = {
+    topology: FULL_MESH,
+    signalingURL: 'wss://www.coedit.re:10473',
+    iceServers: [
+        { urls: 'stun:stun3.l.google.com:19302' }
+    ]
 };
 
 /**
@@ -9245,7 +9241,7 @@ class WebChannel extends Service$1 {
    * @returns {Promise<undefined,string>}
    */
   invite (url) {
-    if (Util.isURL(url)) {
+    if (isURL(url)) {
       return this.webSocketBuilder.connect(`${url}/invite?wcId=${this.id}&senderId=${this.myId}`)
         .then(connection => this._addChannel(new Channel(connection, this)))
     } else {

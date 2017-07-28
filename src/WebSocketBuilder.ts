@@ -3,7 +3,7 @@ import { BehaviorSubject } from 'rxjs/BehaviorSubject'
 import { Observable } from 'rxjs/Observable'
 import 'rxjs/add/operator/filter'
 
-import { Util } from './Util'
+import { isURL } from './Util'
 import { Channel } from './Channel'
 import { WebSocket } from './polyfills'
 import { WebChannel } from './service/WebChannel'
@@ -40,7 +40,7 @@ export class WebSocketBuilder {
    */
   connect (url: string): Promise<WebSocket> {
     return new Promise((resolve, reject) => {
-      if (Util.isURL(url) && url.search(/^wss?/) !== -1) {
+      if (isURL(url) && url.search(/^wss?/) !== -1) {
         const ws = new WebSocket(url)
         ws.onopen = () => resolve(ws)
         // Timeout for node (otherwise it will loop forever if incorrect address)
@@ -64,7 +64,7 @@ export class WebSocketBuilder {
   connectTo (url: string, id: number): Promise<Channel> {
     const fullUrl = `${url}/internalChannel?wcId=${this.wc.id}&senderId=${this.wc.myId}`
     return new Promise((resolve, reject) => {
-      if (Util.isURL(url) && url.search(/^wss?/) !== -1) {
+      if (isURL(url) && url.search(/^wss?/) !== -1) {
         const ws = new WebSocket(fullUrl)
         const channel = new Channel(ws, this.wc, id)
         ws.onopen = () => resolve(channel)

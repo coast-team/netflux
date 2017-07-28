@@ -2,7 +2,7 @@ import { Subject } from 'rxjs/Subject'
 import { Observable } from 'rxjs/Observable'
 
 import { service } from '../Protobuf'
-import { ServiceMessageEncoded, ServiceMessageDecoded } from '../typedef/types'
+import { ServiceMessageEncoded, ServiceMessageDecoded } from '../Util'
 
 /**
  * Services are specific classes. Instance of such class communicates via

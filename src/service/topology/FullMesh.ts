@@ -6,7 +6,7 @@ import { fullMesh } from '../../Protobuf'
 import { WebChannel } from '../WebChannel'
 import { Channel } from '../../Channel'
 import { Service } from '../Service'
-import { Message } from '../../typedef/types'
+import { Message } from '../../Util'
 
 /**
  * {@link FullMesh} identifier.

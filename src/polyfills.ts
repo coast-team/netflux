@@ -1,5 +1,5 @@
 import '../node_modules/webrtc-adapter/out/adapter_no_edge_no_global'
-import { Util } from './Util'
+import { isBrowser } from './Util'
 
 /* tslint:disable:variable-name */
 
@@ -9,7 +9,7 @@ let _TextEncoder
 let _TextDecoder
 let _CloseEvent
 
-if (Util.isBrowser()) {
+if (isBrowser()) {
   WebRTC = window
   _WebSocket = WebSocket
   _TextEncoder = TextEncoder

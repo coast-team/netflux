@@ -1,6 +1,6 @@
 import { Service } from '../Service'
 import { Channel } from '../../Channel'
-import { Message } from '../../typedef/types'
+import { Message } from '../../Util'
 
 /**
  * It is responsible to preserve Web Channel

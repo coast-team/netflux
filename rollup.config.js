@@ -8,7 +8,7 @@ import typescript from 'rollup-plugin-typescript2'
 
 export default [
   {
-    entry: 'src/index.js',
+    entry: 'src/index.ts',
     targets: [
       { dest: pkg.main, format: 'cjs' },
       { dest: pkg.module, format: 'es' }
@@ -34,7 +34,7 @@ export default [
     ]
   },
   {
-    entry: 'src/index.js',
+    entry: 'src/index.ts',
     format: 'umd',
     moduleName: 'netflux',
     dest: pkg.browser,

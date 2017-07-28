@@ -1,4 +1,4 @@
-import { Util } from '../../src/Util'
+import { isBrowser } from '../../src/Util'
 import { WebChannel } from '../../src/service/WebChannel'
 import chunk50kb from './50kb.txt'
 
@@ -191,7 +191,6 @@ function sendMessages (wc, isBroadcast) {
     wc.members.forEach(id => {
       wc.sendTo(id, msgString)
       wc.sendTo(id, msgChunk)
-      console.log('Send ', msgArrayBuffer.buffer.byteLength)
       wc.sendTo(id, new Uint8Array(msgArrayBuffer.buffer))
     })
   }
@@ -237,29 +236,29 @@ function randStr () {
 }
 
 export function itBrowser (shouldSkip, ...args) {
-  if (Util.isBrowser()) Reflect.apply(it, undefined, args)
+  if (isBrowser()) Reflect.apply(it, undefined, args)
   else if (shouldSkip) Reflect.apply(xit, undefined, args)
 }
 
 export function xitBrowser (shouldSkip, ...args) {
-  if (Util.isBrowser()) Reflect.apply(xit, undefined, args)
+  if (isBrowser()) Reflect.apply(xit, undefined, args)
   else if (shouldSkip) Reflect.apply(xit, undefined, args)
 }
 
 export function itNode (shouldSkip, ...args) {
-  if (Util.isBrowser()) {
+  if (isBrowser()) {
     if (shouldSkip) Reflect.apply(xit, undefined, args)
   } else Reflect.apply(it, undefined, args)
 }
 
 export function xitNode (shouldSkip, ...args) {
-  if (Util.isBrowser()) {
+  if (isBrowser()) {
     if (shouldSkip) Reflect.apply(xit, undefined, args)
   } else Reflect.apply(xit, undefined, args)
 }
 
 export function env () {
-  if (Util.isBrowser()) {
+  if (isBrowser()) {
     const sUsrAg = navigator.userAgent
     if (sUsrAg.indexOf('Chrome') > -1) {
       return 'CHROME'
