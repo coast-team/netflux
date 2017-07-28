@@ -5,6 +5,7 @@ import commonjs from 'rollup-plugin-commonjs'
 import resolve from 'rollup-plugin-node-resolve'
 import replace from 'rollup-plugin-re'
 import pkg from './package.json'
+import typescript from 'rollup-plugin-typescript2'
 
 export default [
   {
@@ -15,6 +16,7 @@ export default [
     ],
     external: ['wrtc', 'uws', 'text-encoding'],
     plugins: [
+      typescript(),
       strip({
         functions: [ 'console.info', 'console.log', 'console.trace', 'console.goupe' ]
       }),
@@ -41,6 +43,7 @@ export default [
     moduleName: 'netflux',
     dest: pkg.browser,
     plugins: [
+      typescript(),
       strip({
         functions: [ 'console.info', 'console.log', 'console.trace', 'console.goupe' ]
       }),

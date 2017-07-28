@@ -33,6 +33,7 @@ module.exports = (config) => {
 
     rollupPreprocessor: {
       plugins: [
+        require('rollup-plugin-typescript2')(),
         require('rollup-plugin-string')({
           include: 'test/**/*.txt'
         }),
@@ -104,6 +105,7 @@ module.exports = (config) => {
     Object.assign(config, {
       rollupPreprocessor: {
         plugins: [
+          require('rollup-plugin-typescript2')(),
           require('rollup-plugin-string')({
             include: 'test/**/*.txt'
           }),

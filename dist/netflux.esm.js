@@ -5098,53 +5098,54 @@ var signaling = $root.signaling = function () {
 }();
 
 var Service = function () {
-  function Service(id, Message$$1) {
-    var msgStream = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : undefined;
-    classCallCheck(this, Service);
+    function Service(id, protoMessage, msgStream) {
+        classCallCheck(this, Service);
 
-    this.serviceId = id;
-    this.Message = Message$$1;
-    if (msgStream !== undefined) {
-      this.setSvcMsgStream(msgStream);
+        this.serviceId = id;
+        this.protoMessage = protoMessage;
+        if (msgStream !== undefined) {
+            this.setSvcMsgStream(msgStream);
+        }
     }
-  }
 
-  createClass(Service, [{
-    key: 'setSvcMsgStream',
-    value: function setSvcMsgStream(msgStream) {
-      var _this = this;
+    createClass(Service, [{
+        key: 'encode',
+        value: function encode(msg) {
+            return service.Message.encode(service.Message.create({
+                id: this.serviceId,
+                content: this.protoMessage.encode(this.protoMessage.create(msg)).finish()
+            })).finish();
+        }
+    }, {
+        key: 'decode',
+        value: function decode(bytes) {
+            return this.protoMessage.decode(bytes);
+        }
+    }, {
+        key: 'setSvcMsgStream',
+        value: function setSvcMsgStream(msgStream) {
+            var _this = this;
 
-      this.svcMsgStream = msgStream.filter(function (_ref) {
-        var id = _ref.id;
-        return id === _this.serviceId;
-      }).map(function (_ref2) {
-        var channel = _ref2.channel,
-            senderId = _ref2.senderId,
-            recipientId = _ref2.recipientId,
-            content = _ref2.content;
-        return {
-          channel: channel,
-          senderId: senderId,
-          recipientId: recipientId,
-          msg: _this.Message.decode(content)
-        };
-      });
-    }
-  }, {
-    key: 'encode',
-    value: function encode(msg) {
-      return service.Message.encode(service.Message.create({
-        id: this.serviceId,
-        content: this.Message.encode(this.Message.create(msg)).finish()
-      })).finish();
-    }
-  }, {
-    key: 'decode',
-    value: function decode(bytes) {
-      return this.Message.decode(bytes);
-    }
-  }]);
-  return Service;
+            this.svcMsgStream = msgStream.filter(function (_ref) {
+                var id = _ref.id;
+                return id === _this.serviceId;
+            }).map(function (_ref2) {
+                var channel = _ref2.channel,
+                    senderId = _ref2.senderId,
+                    recipientId = _ref2.recipientId,
+                    content = _ref2.content,
+                    timestamp = _ref2.timestamp;
+                return {
+                    channel: channel,
+                    senderId: senderId,
+                    recipientId: recipientId,
+                    msg: _this.protoMessage.decode(content),
+                    timestamp: timestamp
+                };
+            });
+        }
+    }]);
+    return Service;
 }();
 
 /**
@@ -5168,146 +5169,6 @@ var TopologyInterface = function (_Service) {
     return possibleConstructorReturn(this, (TopologyInterface.__proto__ || Object.getPrototypeOf(TopologyInterface)).apply(this, arguments));
   }
 
-  createClass(TopologyInterface, [{
-    key: 'addJoining',
-
-    /**
-     * Add a new peer into WebChannel.
-     *
-     * @abstract
-     * @param  {Channel} ch - Channel with the new peer
-     */
-    value: function addJoining(ch) {
-      throw new Error('Must be implemented by subclass!');
-    }
-
-    /**
-     * As a joining peer initializes the intermediary channel
-     *
-     * @abstract
-     * @param  {Channel} ch - intermediary channel with one of the network member
-     */
-
-  }, {
-    key: 'initJoining',
-    value: function initJoining(ch) {
-      throw new Error('Must be implemented by subclass!');
-    }
-
-    /**
-     * Broadcast a message to all network members.
-     *
-     * @abstract
-     * @param  {Object} msg - Message to be send
-     * @param  {number} [msg.senderId] - Id of the sender peer
-     * @param  {number} [msg.recipientId] - Id of the recipient peer
-     * @param  {boolean} [msg.isService] - True is it is an Netflux internal message and false
-     *   means that is is a user message.
-     * @param  {ArrayBuffer} [msg.content] - Message main content
-     */
-
-  }, {
-    key: 'send',
-    value: function send(msg) {
-      throw new Error('Must be implemented by subclass!');
-    }
-
-    /**
-     * Forward a broadcasted message. This method will be called onces
-     * the peer receives a broadcasted message.
-     *
-     * @abstract
-     * @param  {Object} msg
-     * @param  {number} [msg.senderId] - Id of the sender peer
-     * @param  {number} [msg.recipientId] - Id of the recipient peer
-     * @param  {boolean} [msg.isService] - True if it is Netflux internal message
-     *    and false if it is a user message.
-     * @param  {ArrayBuffer} [msg.content] - Message main content
-     */
-
-  }, {
-    key: 'forward',
-    value: function forward(msg) {
-      throw new Error('Must be implemented by subclass!');
-    }
-
-    /**
-     * Send a message to a particular peer in the network.
-     *
-     * @abstract
-     * @param  {Object} msg - Message to be send
-     * @param  {number} [msg.senderId] - Id of the sender peer
-     * @param  {number} [msg.recipientId] - Id of the recipient peer
-     * @param  {boolean} [msg.isService] - True is it is an Netflux internal message and false
-     *   means that is is a user message.
-     * @param  {ArrayBuffer} [msg.content] - Message main content
-     */
-
-  }, {
-    key: 'sendTo',
-    value: function sendTo(msg) {
-      throw new Error('Must be implemented by subclass!');
-    }
-
-    /**
-     * Forward the message to its recipient or to some peer who knowns
-     * how to forward this message to its recipient. This method
-     * will be called onces the peer receives a private message
-     * which is intended to someone else.
-     *
-     * @abstract
-     * @param  {Object} msg
-     * @param  {number} [msg.senderId] - Id of the sender peer
-     * @param  {number} [msg.recipientId] - Id of the recipient peer
-     * @param  {boolean} [msg.isService] - True if it is a Netflux internal message
-     *    and false if it is a user message.
-     * @param  {ArrayBuffer} [msg.content] - Message main content
-     */
-
-  }, {
-    key: 'forwardTo',
-    value: function forwardTo(msg) {
-      throw new Error('Must be implemented by subclass!');
-    }
-
-    /**
-     * Leave Web Channel.
-     *
-     * @abstract
-     */
-
-  }, {
-    key: 'leave',
-    value: function leave() {
-      throw new Error('Must be implemented by subclass!');
-    }
-
-    /**
-     * Close event handler for each `Channel` in the `WebChannel`.
-     *
-     * @param {CloseEvent} closeEvt
-     * @param {Channel} channel
-     */
-
-  }, {
-    key: 'onChannelClose',
-    value: function onChannelClose(closeEvt, channel) {
-      throw new Error('Must be implemented by subclass!');
-    }
-
-    /**
-     * Error event handler for each `Channel` in the `WebChannel`.
-     *
-     * @param {Event} evt
-     * @param {Channel} channel
-     */
-
-  }, {
-    key: 'onChannelError',
-    value: function onChannelError(evt, channel) {
-      throw new Error('Must be implemented by subclass!');
-    }
-  }]);
   return TopologyInterface;
 }(Service);
 

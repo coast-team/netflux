@@ -13,16 +13,14 @@ import { Service } from '../Service'
  * @see FullMesh
  * @interface
  */
-export class TopologyInterface extends Service {
+export abstract class TopologyInterface extends Service {
   /**
    * Add a new peer into WebChannel.
    *
    * @abstract
    * @param  {Channel} ch - Channel with the new peer
    */
-  addJoining (ch) {
-    throw new Error('Must be implemented by subclass!')
-  }
+  abstract addJoining (ch: any): void
 
   /**
    * As a joining peer initializes the intermediary channel
@@ -30,9 +28,7 @@ export class TopologyInterface extends Service {
    * @abstract
    * @param  {Channel} ch - intermediary channel with one of the network member
    */
-  initJoining (ch) {
-    throw new Error('Must be implemented by subclass!')
-  }
+  abstract initJoining (ch: any): void
 
   /**
    * Broadcast a message to all network members.
@@ -45,9 +41,7 @@ export class TopologyInterface extends Service {
    *   means that is is a user message.
    * @param  {ArrayBuffer} [msg.content] - Message main content
    */
-  send (msg) {
-    throw new Error('Must be implemented by subclass!')
-  }
+  abstract send (msg: any): void
 
   /**
    * Forward a broadcasted message. This method will be called onces
@@ -61,9 +55,7 @@ export class TopologyInterface extends Service {
    *    and false if it is a user message.
    * @param  {ArrayBuffer} [msg.content] - Message main content
    */
-  forward (msg) {
-    throw new Error('Must be implemented by subclass!')
-  }
+  abstract forward (msg): void
 
   /**
    * Send a message to a particular peer in the network.
@@ -76,9 +68,7 @@ export class TopologyInterface extends Service {
    *   means that is is a user message.
    * @param  {ArrayBuffer} [msg.content] - Message main content
    */
-  sendTo (msg) {
-    throw new Error('Must be implemented by subclass!')
-  }
+  abstract sendTo (msg): void
 
   /**
    * Forward the message to its recipient or to some peer who knowns
@@ -94,18 +84,14 @@ export class TopologyInterface extends Service {
    *    and false if it is a user message.
    * @param  {ArrayBuffer} [msg.content] - Message main content
    */
-  forwardTo (msg) {
-    throw new Error('Must be implemented by subclass!')
-  }
+  abstract forwardTo (msg): void
 
   /**
    * Leave Web Channel.
    *
    * @abstract
    */
-  leave () {
-    throw new Error('Must be implemented by subclass!')
-  }
+  abstract leave (): void
 
   /**
    * Close event handler for each `Channel` in the `WebChannel`.
@@ -113,9 +99,7 @@ export class TopologyInterface extends Service {
    * @param {CloseEvent} closeEvt
    * @param {Channel} channel
    */
-  onChannelClose (closeEvt, channel) {
-    throw new Error('Must be implemented by subclass!')
-  }
+  abstract onChannelClose (closeEvt, channel): void
 
   /**
    * Error event handler for each `Channel` in the `WebChannel`.
@@ -123,7 +107,5 @@ export class TopologyInterface extends Service {
    * @param {Event} evt
    * @param {Channel} channel
    */
-  onChannelError (evt, channel) {
-    throw new Error('Must be implemented by subclass!')
-  }
+  abstract onChannelError (evt, channel): void
 }

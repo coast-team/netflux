@@ -1,6 +1,7 @@
 import fs from 'fs'
 import string from 'rollup-plugin-string'
 import commonjs from 'rollup-plugin-commonjs'
+import typescript from 'rollup-plugin-typescript2'
 
 const entries = []
 function read (path) {
@@ -22,6 +23,7 @@ for (let entry of entries) {
     format: 'cjs',
     dest: entry.replace(/^test/, 'test/.rolledup'),
     plugins: [
+      typescript(),
       string({
         include: 'test/**/*.txt'
       }),
