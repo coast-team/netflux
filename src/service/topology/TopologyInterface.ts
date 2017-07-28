@@ -1,4 +1,6 @@
 import { Service } from '../Service'
+import { Channel } from '../../Channel'
+import { Message } from '../../typedef/types'
 
 /**
  * It is responsible to preserve Web Channel
@@ -11,101 +13,60 @@ import { Service } from '../Service'
  * - Send a message to a particular peer.
  *
  * @see FullMesh
- * @interface
  */
-export abstract class TopologyInterface extends Service {
-  /**
-   * Add a new peer into WebChannel.
-   *
-   * @abstract
-   * @param  {Channel} ch - Channel with the new peer
-   */
-  abstract addJoining (ch: any): void
+export interface TopologyInterface {
 
   /**
-   * As a joining peer initializes the intermediary channel
+   * As a network member, add a new peer into the network.
    *
-   * @abstract
-   * @param  {Channel} ch - intermediary channel with one of the network member
+   * @param ch  A channel between you and the joining peer
    */
-  abstract initJoining (ch: any): void
+  addJoining (ch: Channel): void
 
   /**
-   * Broadcast a message to all network members.
+   * As a joining peer initialize the channel between you and
+   * one of the network member through whom you are joining.
    *
-   * @abstract
-   * @param  {Object} msg - Message to be send
-   * @param  {number} [msg.senderId] - Id of the sender peer
-   * @param  {number} [msg.recipientId] - Id of the recipient peer
-   * @param  {boolean} [msg.isService] - True is it is an Netflux internal message and false
-   *   means that is is a user message.
-   * @param  {ArrayBuffer} [msg.content] - Message main content
+   * @param ch  A channel between you and one of the network member
    */
-  abstract send (msg: any): void
+  initJoining (ch: Channel): void
 
   /**
-   * Forward a broadcasted message. This method will be called onces
+   * Broadcast a message to the network.
+   */
+  send (msg: Message): void
+
+  /**
+   * Forward a broadcasted message. This method should be called onces
    * the peer receives a broadcasted message.
-   *
-   * @abstract
-   * @param  {Object} msg
-   * @param  {number} [msg.senderId] - Id of the sender peer
-   * @param  {number} [msg.recipientId] - Id of the recipient peer
-   * @param  {boolean} [msg.isService] - True if it is Netflux internal message
-   *    and false if it is a user message.
-   * @param  {ArrayBuffer} [msg.content] - Message main content
    */
-  abstract forward (msg): void
+  forward (msg: Message): void
 
   /**
    * Send a message to a particular peer in the network.
-   *
-   * @abstract
-   * @param  {Object} msg - Message to be send
-   * @param  {number} [msg.senderId] - Id of the sender peer
-   * @param  {number} [msg.recipientId] - Id of the recipient peer
-   * @param  {boolean} [msg.isService] - True is it is an Netflux internal message and false
-   *   means that is is a user message.
-   * @param  {ArrayBuffer} [msg.content] - Message main content
    */
-  abstract sendTo (msg): void
+  sendTo (msg: Message): void
 
   /**
-   * Forward the message to its recipient or to some peer who knowns
-   * how to forward this message to its recipient. This method
-   * will be called onces the peer receives a private message
-   * which is intended to someone else.
-   *
-   * @abstract
-   * @param  {Object} msg
-   * @param  {number} [msg.senderId] - Id of the sender peer
-   * @param  {number} [msg.recipientId] - Id of the recipient peer
-   * @param  {boolean} [msg.isService] - True if it is a Netflux internal message
-   *    and false if it is a user message.
-   * @param  {ArrayBuffer} [msg.content] - Message main content
+   * Forward the message to its recipient or to some peer who knowns how
+   * to forward this message to its recipient. This method should be called
+   * onces the peer receives a private message intended to someone else.
    */
-  abstract forwardTo (msg): void
+  forwardTo (msg: Message): void
 
   /**
-   * Leave Web Channel.
-   *
-   * @abstract
+   * Disconnect from the network
    */
-  abstract leave (): void
+  leave (): void
 
   /**
-   * Close event handler for each `Channel` in the `WebChannel`.
-   *
-   * @param {CloseEvent} closeEvt
-   * @param {Channel} channel
+   * This handler will be called when one of the network channel closed.
    */
-  abstract onChannelClose (closeEvt, channel): void
+  onChannelClose (closeEvt: CloseEvent, channel: Channel): void
 
   /**
-   * Error event handler for each `Channel` in the `WebChannel`.
-   *
-   * @param {Event} evt
-   * @param {Channel} channel
+   * This handler will be called when an error occured on one of the network
+   * channel.
    */
-  abstract onChannelError (evt, channel): void
+  onChannelError (evt: Event, channel: Channel): void
 }

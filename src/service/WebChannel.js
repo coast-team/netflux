@@ -142,7 +142,7 @@ export class WebChannel extends Service {
      * @private
      */
     this._joinSucceed = () => {}
-    this._joinFailed = () => {}
+    this._joinFailed = (error) => {}
 
     /**
      * Message builder service instance.
