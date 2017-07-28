@@ -105,11 +105,9 @@ export class FullMesh extends Service implements TopologyInterface {
 
   leave () {
     for (let ch of this.channels) {
-      ch.clearHandlers()
       ch.close()
     }
     for (let ch of this.jps.values()) {
-      ch.clearHandlers()
       ch.close()
     }
     this.channels.clear()

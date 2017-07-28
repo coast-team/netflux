@@ -1227,26 +1227,13 @@ var Channel = (function () {
             this.send = this.sendInNodeViaDataChannel;
         }
         // Configure handlers
-        if (!Util.isBrowser() && Util.isSocket(this.connection)) {
-            this.connection.onmessage = function (_a) {
-                var data = _a.data;
-                return wc._onMessage(_this, new Uint8Array(data));
-            };
-        }
-        else {
-            this.connection.onmessage = function (_a) {
-                var data = _a.data;
-                wc._onMessage(_this, data);
-            };
-        }
+        this.connection.onmessage = function (_a) {
+            var data = _a.data;
+            return wc._onMessage(_this, new Uint8Array(data));
+        };
         this.connection.onclose = function (closeEvt) { return wc._topology.onChannelClose(closeEvt, _this); };
         this.connection.onerror = function (evt) { return wc._topology.onChannelError(evt, _this); };
     }
-    Channel.prototype.clearHandlers = function () {
-        this.connection.onmessage = function () { };
-        this.connection.onclose = function () { };
-        this.connection.onerror = function () { };
-    };
     Channel.prototype.close = function () {
         this.connection.close();
     };
@@ -5164,7 +5151,6 @@ var FullMesh = (function (_super) {
         try {
             for (var _a = __values(this.channels), _b = _a.next(); !_b.done; _b = _a.next()) {
                 var ch = _b.value;
-                ch.clearHandlers();
                 ch.close();
             }
         }
@@ -5178,7 +5164,6 @@ var FullMesh = (function (_super) {
         try {
             for (var _d = __values(this.jps.values()), _e = _d.next(); !_e.done; _e = _d.next()) {
                 var ch = _e.value;
-                ch.clearHandlers();
                 ch.close();
             }
         }

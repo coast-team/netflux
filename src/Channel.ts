@@ -32,21 +32,9 @@ export class Channel {
     }
 
     // Configure handlers
-    if (!Util.isBrowser() && Util.isSocket(this.connection)) {
-      this.connection.onmessage = ({ data }) => wc._onMessage(this, new Uint8Array(data))
-    } else {
-      this.connection.onmessage = ({ data }) => {
-        wc._onMessage(this, data)
-      }
-    }
+    this.connection.onmessage = ({ data }) => wc._onMessage(this, new Uint8Array(data))
     this.connection.onclose = closeEvt => wc._topology.onChannelClose(closeEvt, this)
     this.connection.onerror = evt => wc._topology.onChannelError(evt, this)
-  }
-
-  clearHandlers (): void {
-    this.connection.onmessage = () => {}
-    this.connection.onclose = () => {}
-    this.connection.onerror = () => {}
   }
 
   close (): void {
