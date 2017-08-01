@@ -1,0 +1,11 @@
+{
+  "presets": [
+    ["env", {
+      "targets": {
+        "uglify": true
+      },
+      "modules": false,
+      "loose": true
+    }]
+  ]
+}
