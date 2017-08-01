@@ -33,9 +33,9 @@ module.exports = (config) => {
 
     rollupPreprocessor: {
       plugins: [
-        require('rollup-plugin-strip')({
-          functions: [ 'console.info', 'console.log', 'console.error' ]
-        }),
+        // require('rollup-plugin-strip')({
+        //   functions: [ 'console.info', 'console.log', 'console.error' ]
+        // }),
         require('rollup-plugin-typescript2')(),
         require('rollup-plugin-string')({
           include: 'test/**/*.txt'

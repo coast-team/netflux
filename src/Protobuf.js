@@ -715,13 +715,13 @@ export const spray = $root.spray = (() => {
         Message.prototype.exchangeResp = null;
         Message.prototype.connectTo = 0;
         Message.prototype.connectedTo = null;
-        Message.prototype.joiningPeerId = 0;
         Message.prototype.joinedPeerId = 0;
+        Message.prototype.joinedPeerIdFinished = 0;
 
         let $oneOfFields;
 
         Object.defineProperty(Message.prototype, "type", {
-            get: $util.oneOfGetter($oneOfFields = ["shouldAdd", "exchangeInit", "exchangeResp", "connectTo", "connectedTo", "joiningPeerId", "joinedPeerId"]),
+            get: $util.oneOfGetter($oneOfFields = ["shouldAdd", "exchangeInit", "exchangeResp", "connectTo", "connectedTo", "joinedPeerId", "joinedPeerIdFinished"]),
             set: $util.oneOfSetter($oneOfFields)
         });
 
@@ -742,10 +742,10 @@ export const spray = $root.spray = (() => {
                 writer.uint32(32).uint32(message.connectTo);
             if (message.connectedTo != null && message.hasOwnProperty("connectedTo"))
                 $root.spray.Peers.encode(message.connectedTo, writer.uint32(42).fork()).ldelim();
-            if (message.joiningPeerId != null && message.hasOwnProperty("joiningPeerId"))
-                writer.uint32(48).uint32(message.joiningPeerId);
             if (message.joinedPeerId != null && message.hasOwnProperty("joinedPeerId"))
-                writer.uint32(56).uint32(message.joinedPeerId);
+                writer.uint32(48).uint32(message.joinedPeerId);
+            if (message.joinedPeerIdFinished != null && message.hasOwnProperty("joinedPeerIdFinished"))
+                writer.uint32(56).uint32(message.joinedPeerIdFinished);
             return writer;
         };
 
@@ -772,10 +772,10 @@ export const spray = $root.spray = (() => {
                     message.connectedTo = $root.spray.Peers.decode(reader, reader.uint32());
                     break;
                 case 6:
-                    message.joiningPeerId = reader.uint32();
+                    message.joinedPeerId = reader.uint32();
                     break;
                 case 7:
-                    message.joinedPeerId = reader.uint32();
+                    message.joinedPeerIdFinished = reader.uint32();
                     break;
                 default:
                     reader.skipType(tag & 7);

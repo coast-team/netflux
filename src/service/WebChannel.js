@@ -442,23 +442,34 @@ export class WebChannel extends Service {
     switch (msg.recipientId) {
       // If the message is broadcasted
       case 0:
+        console.info(this.myId + ' broadcast message from ' + channel.peerId, msg)
         this._handleMyMessage(channel, msg)
         this._topology.forward(msg)
         break
 
       // If it is a private message to me
       case this.myId:
+        console.info(this.myId + ' message for me from ' + channel.peerId, msg)
         this._handleMyMessage(channel, msg)
         break
 
       // If is is a message to me from a peer who does not know yet my ID
       case 1:
+        console.info(this.myId + ' init message for me from ' + channel.peerId, msg)
         this._handleMyMessage(channel, msg)
         break
 
       // Otherwise the message should be forwarded to the intended peer
       default:
-        console.warn(this.myId + ' forwardTo wc ' + msg.senderId + ' => ' + msg.recipientId)
+        try {
+          let jpsString = ''
+          for (let [key, value] of this._topology.jps) {
+            jpsString += `${key} => ${value.peerId}\n`
+          }
+          console.warn(this.myId + ' forwardTo from ' + channel.peerId + ' : ' + msg.senderId + ' => ' + msg.recipientId, msg, '\n' + this._topology.p.toString() + '\n', jpsString)
+        } catch (e) {
+          // Do nothing
+        }
         this._topology.forwardTo(msg)
     }
   }
@@ -466,14 +477,14 @@ export class WebChannel extends Service {
   _handleMyMessage (channel, msg) {
     if (!msg.isService) {
       // User Message
-      // console.log(this.myId + ' User Message ' + JSON.stringify(msg))
+      console.info(this.myId + ' User Message from ' + channel.peerId, msg)
       const data = this._userMsg.decode(msg.content, msg.senderId)
       if (data !== undefined) {
         this.onMessage(msg.senderId, data, msg.recipientId === 0)
       }
     } else {
       // Inner Message
-      console.info(this.myId + ' Inner message : ' + JSON.stringify(msg))
+      console.info(this.myId + ' Inner message from ' + channel.peerId, msg)
       try {
         if (JSON.stringify(spray.Message.decode(service.Message.decode(msg.content).content)) !== {}) {
           console.info(this.myId + ' content1 : ' + JSON.stringify(spray.Message.decode(service.Message.decode(msg.content).content)))

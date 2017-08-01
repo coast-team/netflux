@@ -69,7 +69,7 @@ export class PartialView extends Array {
     let s = '['
     this.forEach((arc) => {
       if (s.length !== 1) {
-        s.concat(', ')
+        s = s.concat(', ')
       }
       s = s.concat(`[${arc[0]},${arc[1]}]`)
     })

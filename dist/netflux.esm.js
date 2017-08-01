@@ -1575,7 +1575,7 @@ var PartialView = function (_Array) {
 
 
     createClass(PartialView, [{
-        key: "add",
+        key: 'add',
 
         /**
         * Adds a node with the age of 0 to the partial view
@@ -1598,11 +1598,11 @@ var PartialView = function (_Array) {
         */
 
     }, {
-        key: "_indexArc",
+        key: '_indexArc',
         value: function _indexArc(peerId, age) {
             for (var i = 0; i < this.length; i++) {
                 var elem = this[i];
-                if (elem[0] == peerId && elem[1] == age) {
+                if (elem[0] === peerId && elem[1] === age) {
                     return i;
                 }
             }
@@ -1616,7 +1616,7 @@ var PartialView = function (_Array) {
         */
 
     }, {
-        key: "remove",
+        key: 'remove',
         value: function remove(peerId, age) {
             var index = this._indexArc(peerId, age);
             if (index >= 0) {
@@ -1628,30 +1628,30 @@ var PartialView = function (_Array) {
         */
 
     }, {
-        key: "incrementAge",
+        key: 'incrementAge',
         value: function incrementAge() {
             for (var i = 0; i < this.length; i++) {
                 this[i][1]++;
             }
         }
     }, {
-        key: "toString",
+        key: 'toString',
         value: function toString() {
-            var s = "[";
+            var s = '[';
             this.forEach(function (arc) {
-                if (s.length != 1) {
-                    s.concat(', ');
+                if (s.length !== 1) {
+                    s = s.concat(', ');
                 }
-                s = s.concat("[" + arc[0] + "," + arc[1] + "]");
+                s = s.concat('[' + arc[0] + ',' + arc[1] + ']');
             });
-            s = s.concat("]");
+            s = s.concat(']');
             return s;
         }
     }, {
-        key: "oldest",
+        key: 'oldest',
         get: function get$$1() {
             if (this.length <= 0) {
-                throw new Error("Empty partial view");
+                throw new Error('Empty partial view');
             }
             return this[0];
         }
@@ -4943,13 +4943,13 @@ var spray = $root.spray = function () {
         Message.prototype.exchangeResp = null;
         Message.prototype.connectTo = 0;
         Message.prototype.connectedTo = null;
-        Message.prototype.joiningPeerId = 0;
         Message.prototype.joinedPeerId = 0;
+        Message.prototype.joinedPeerIdFinished = 0;
 
         var $oneOfFields = void 0;
 
         Object.defineProperty(Message.prototype, "type", {
-            get: $util.oneOfGetter($oneOfFields = ["shouldAdd", "exchangeInit", "exchangeResp", "connectTo", "connectedTo", "joiningPeerId", "joinedPeerId"]),
+            get: $util.oneOfGetter($oneOfFields = ["shouldAdd", "exchangeInit", "exchangeResp", "connectTo", "connectedTo", "joinedPeerId", "joinedPeerIdFinished"]),
             set: $util.oneOfSetter($oneOfFields)
         });
 
@@ -4964,8 +4964,8 @@ var spray = $root.spray = function () {
             if (message.exchangeResp != null && message.hasOwnProperty("exchangeResp")) $root.spray.Sample.encode(message.exchangeResp, writer.uint32(26).fork()).ldelim();
             if (message.connectTo != null && message.hasOwnProperty("connectTo")) writer.uint32(32).uint32(message.connectTo);
             if (message.connectedTo != null && message.hasOwnProperty("connectedTo")) $root.spray.Peers.encode(message.connectedTo, writer.uint32(42).fork()).ldelim();
-            if (message.joiningPeerId != null && message.hasOwnProperty("joiningPeerId")) writer.uint32(48).uint32(message.joiningPeerId);
-            if (message.joinedPeerId != null && message.hasOwnProperty("joinedPeerId")) writer.uint32(56).uint32(message.joinedPeerId);
+            if (message.joinedPeerId != null && message.hasOwnProperty("joinedPeerId")) writer.uint32(48).uint32(message.joinedPeerId);
+            if (message.joinedPeerIdFinished != null && message.hasOwnProperty("joinedPeerIdFinished")) writer.uint32(56).uint32(message.joinedPeerIdFinished);
             return writer;
         };
 
@@ -4992,10 +4992,10 @@ var spray = $root.spray = function () {
                         message.connectedTo = $root.spray.Peers.decode(reader, reader.uint32());
                         break;
                     case 6:
-                        message.joiningPeerId = reader.uint32();
+                        message.joinedPeerId = reader.uint32();
                         break;
                     case 7:
-                        message.joinedPeerId = reader.uint32();
+                        message.joinedPeerIdFinished = reader.uint32();
                         break;
                     default:
                         reader.skipType(tag & 7);
@@ -5377,11 +5377,11 @@ var signaling = $root.signaling = function () {
 }();
 
 var Service = function () {
-    function Service(id, Message$$1, msgStream) {
+    function Service(id, protoMessage, msgStream) {
         classCallCheck(this, Service);
 
         this.serviceId = id;
-        this.Message = Message$$1;
+        this.protoMessage = protoMessage;
         if (msgStream !== undefined) {
             this.setSvcMsgStream(msgStream);
         }
@@ -5392,13 +5392,13 @@ var Service = function () {
         value: function encode(msg) {
             return service.Message.encode(service.Message.create({
                 id: this.serviceId,
-                content: this.Message.encode(this.Message.create(msg)).finish()
+                content: this.protoMessage.encode(this.protoMessage.create(msg)).finish()
             })).finish();
         }
     }, {
         key: 'decode',
         value: function decode(bytes) {
-            return this.Message.decode(bytes);
+            return this.protoMessage.decode(bytes);
         }
     }, {
         key: 'setSvcMsgStream',
@@ -5418,7 +5418,7 @@ var Service = function () {
                     channel: channel,
                     senderId: senderId,
                     recipientId: recipientId,
-                    msg: _this.Message.decode(content),
+                    msg: _this.protoMessage.decode(content),
                     timestamp: timestamp
                 };
             });
@@ -5486,6 +5486,7 @@ var SprayService = function (_TopologyInterface) {
 
             this.channels = new Set();
             this.jps = new Map();
+            this.deportedJoin = new Map();
             this.p = new PartialView();
             this.received = []; // [senderId, timestamp] couples of received messages
             this.timeoutExch = setTimeout(function () {
@@ -5501,7 +5502,7 @@ var SprayService = function (_TopologyInterface) {
                 return _this2.leave();
             });
             this.channelsSubscription = this.wc.channelBuilder.channels().subscribe(function (ch) {
-                return _this2.jps.set(ch.peerId, ch);
+                console.warn(_this2.wc.myId + (' chanBuild => jps.set(' + ch.peerId + ', ' + ch.peerId + ')'));_this2.jps.set(ch.peerId, ch);
             }, function (err) {
                 return console.error('Spray set joining peer Error', err);
             });
@@ -5528,29 +5529,57 @@ var SprayService = function (_TopologyInterface) {
             var newPeerId = channel.peerId;
             console.info(this.wc.myId + ' addJoining ' + newPeerId);
             var peers = this.wc.members.slice();
+            var jpsString = '\njps : ';
+            var _iteratorNormalCompletion = true;
+            var _didIteratorError = false;
+            var _iteratorError = undefined;
+
+            try {
+                for (var _iterator = this.jps[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                    var _step$value = slicedToArray(_step.value, 2),
+                        key = _step$value[0],
+                        value = _step$value[1];
+
+                    jpsString += key + ' => ' + value.peerId + '\n';
+                }
+            } catch (err) {
+                _didIteratorError = true;
+                _iteratorError = err;
+            } finally {
+                try {
+                    if (!_iteratorNormalCompletion && _iterator.return) {
+                        _iterator.return();
+                    }
+                } finally {
+                    if (_didIteratorError) {
+                        throw _iteratorError;
+                    }
+                }
+            }
+
+            console.warn(this.wc.myId + ' addJoining => this.jps.set(' + newPeerId + ',' + channel.peerId + ')\n', jpsString);
+            this.jps.set(+channel.peerId, channel);
             // First joining peer
-            if (this.wc.members.slice().length == 0) {
-                this.peerJoined(channel);
+            if (this.wc.members.slice().length === 0) {
                 channel.send(this.wc._encode({
                     recipientId: newPeerId,
-                    content: get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'encode', this).call(this, { joinedPeerId: newPeerId }),
+                    content: get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'encode', this).call(this, { joinedPeerIdFinished: newPeerId }),
                     meta: { timestamp: Date.now() }
                 }));
+                this.peerJoined(channel);
                 this.p.add(newPeerId);
                 // There are at least 2 members in the network
             } else {
-                // TODO : modify for spray algo
-                this.jps.set(newPeerId, channel);
-                // this.wc._send({ content: super.encode({ joiningPeerId: newPeerId }) });
-                // channel.send(this.wc._encode({
-                //     recipientId: newPeerId,
-                //     content: super.encode({ connectTo: { peers } })
-                // }))
                 this.p.forEach(function (_ref) {
                     var _ref2 = slicedToArray(_ref, 2),
                         pId = _ref2[0],
                         age = _ref2[1];
 
+                    if (_this3.deportedJoin.get(newPeerId) === undefined) {
+                        _this3.deportedJoin.set(newPeerId, 1);
+                    } else {
+                        _this3.deportedJoin.set(newPeerId, _this3.deportedJoin.get(newPeerId) + 1);
+                    }
                     _this3.wc._sendTo({
                         recipientId: pId,
                         content: get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'encode', _this3).call(_this3, { connectTo: newPeerId }),
@@ -5572,86 +5601,18 @@ var SprayService = function (_TopologyInterface) {
     }, {
         key: 'initJoining',
         value: function initJoining(ch) {
-            this.jps.set(this.wc.myId, ch);
-            this.peerJoined(ch);
-        }
-        /**
-         * Send message to all WebChannel members
-         */
-
-    }, {
-        key: 'send',
-        value: function send(msg) {
-            var _this4 = this;
-
-            if (this.wc.state == DISCONNECTED) {
-                console.error(this.wc.myId + ' send break (disconnected) ');
-                return;
-            }
-            if (msg.recipientId == this.wc.myId) {
-                console.error(this.wc.myId + ' send break (to me)');
-                return;
-            }
-            console.info(this.wc.myId + ' send ' + JSON.stringify(msg));
-            try {
-                console.info(this.wc.myId + ' content1 : ' + JSON.stringify(get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'decode', this).call(this, service.Message.decode(msg.content).content)));
-            } catch (e) {
-                try {
-                    console.info(this.wc.myId + ' content2 : ' + JSON.stringify(channelBuilder.Message.decode(msg.content)));
-                } catch (e2) {}
-            }
-            if (msg.meta == undefined || msg.meta.timestamp == undefined) {
-                if (msg.meta == undefined) {
-                    msg.meta = {};
-                }
-                msg.meta.timestamp = Date.now();
-            }
-            var bytes = this.wc._encode(msg);
-            var listChan = [];
-            console.info(this.wc.myId + ' partialView : ' + this.p.toString());
-            this.p.forEach(function (arc) {
-                var _iteratorNormalCompletion = true;
-                var _didIteratorError = false;
-                var _iteratorError = undefined;
-
-                try {
-                    for (var _iterator = _this4.channels[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-                        var ch = _step.value;
-
-                        if (ch.peerId == arc[0]) {
-                            listChan.push(ch);
-                            return;
-                        }
-                    }
-                } catch (err) {
-                    _didIteratorError = true;
-                    _iteratorError = err;
-                } finally {
-                    try {
-                        if (!_iteratorNormalCompletion && _iterator.return) {
-                            _iterator.return();
-                        }
-                    } finally {
-                        if (_didIteratorError) {
-                            throw _iteratorError;
-                        }
-                    }
-                }
-
-                console.error(_this4.wc.myId + ' channel not found ' + arc[0]);
-            });
+            var jpsString = '\njps : ';
             var _iteratorNormalCompletion2 = true;
             var _didIteratorError2 = false;
             var _iteratorError2 = undefined;
 
             try {
-                for (var _iterator2 = listChan[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-                    var ch = _step2.value;
+                for (var _iterator2 = this.jps[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+                    var _step2$value = slicedToArray(_step2.value, 2),
+                        key = _step2$value[0],
+                        value = _step2$value[1];
 
-                    if (ch.peerId == msg.senderId) {
-                        return;
-                    }
-                    ch.send(bytes);
+                    jpsString += key + ' => ' + value.peerId + '\n';
                 }
             } catch (err) {
                 _didIteratorError2 = true;
@@ -5668,53 +5629,62 @@ var SprayService = function (_TopologyInterface) {
                 }
             }
 
-            this.received.push([msg.senderId, msg.meta.timestamp]);
+            console.warn(this.wc.myId + ' initJoining => this.jps.set(' + this.wc.myId + ',' + ch.peerId + ')\n', jpsString);
+            this.jps.set(this.wc.myId, ch);
+            this.peerJoined(ch);
         }
         /**
-         * Send message to a specific peer (recipientId)
+         * Send message to all WebChannel members
          */
 
     }, {
-        key: 'sendTo',
-        value: function sendTo(msg) {
-            var _this5 = this;
+        key: 'send',
+        value: function send(msg) {
+            var _this4 = this;
 
-            if (this.wc.state == DISCONNECTED) {
-                console.error(this.wc.myId + ' sendTo break (disconnected) ');
+            if (this.wc.state === DISCONNECTED) {
+                console.error(this.wc.myId + ' send break (disconnected) ', msg);
                 return;
             }
-            if (msg.recipientId == this.wc.myId) {
-                console.error(this.wc.myId + ' sendTo break (to me)');
+            if (msg.recipientId === undefined) {
+                console.error(this.wc.myId + ' send break (no recipientId)', msg);
                 return;
             }
-            // console.info(this.wc.myId + ' sendTo ' + msg.recipientId + "\nContent length : " + Object.keys(msg.content).length);
-            console.info(this.wc.myId + ' sendTo ' + JSON.stringify(msg));
-            try {
-                console.info(this.wc.myId + ' content1 : ' + JSON.stringify(get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'decode', this).call(this, service.Message.decode(msg.content).content)));
-            } catch (e) {
-                try {
-                    console.info(this.wc.myId + ' content2 : ' + JSON.stringify(channelBuilder.Message.decode(msg.content)));
-                } catch (e2) {}
+            if (msg.recipientId === this.wc.myId) {
+                console.error(this.wc.myId + ' send break (to me)', msg);
+                return;
             }
-            if (msg.meta == undefined || msg.meta.timestamp == undefined) {
-                if (msg.meta == undefined) {
+            console.info(this.wc.myId + (' send ' + msg.senderId + ' => ' + msg.recipientId));
+            // console.info(this.wc.myId + ' send ' + JSON.stringify(msg))
+            // try {
+            //   console.info(this.wc.myId + ' content1 : ' + JSON.stringify(super.decode(service.Message.decode(msg.content).content)))
+            // } catch (e) {
+            //   try {
+            //     console.info(this.wc.myId + ' content2 : ' + JSON.stringify(channelBuilder.Message.decode(msg.content)))
+            //   } catch (e2) {
+            //   }
+            // }
+            if (msg.meta === undefined || msg.meta.timestamp === undefined) {
+                if (msg.meta === undefined) {
                     msg.meta = {};
                 }
                 msg.meta.timestamp = Date.now();
             }
             var bytes = this.wc._encode(msg);
-            console.info(this.wc.myId + ' partialView : ' + this.p);
-            if (this.p.length == 0) {
+            var listChan = [];
+            this.p.forEach(function (arc) {
                 var _iteratorNormalCompletion3 = true;
                 var _didIteratorError3 = false;
                 var _iteratorError3 = undefined;
 
                 try {
-                    for (var _iterator3 = this.channels[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+                    for (var _iterator3 = _this4.channels[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
                         var ch = _step3.value;
 
-                        if (ch.peerId === msg.recipientId) {
-                            return ch.send(bytes);
+                        if (ch !== undefined && ch.peerId === arc[0]) {
+                            console.warn(_this4.wc.myId + ' channel found ' + ch.peerId);
+                            listChan.push(ch);
+                            return;
                         }
                     }
                 } catch (err) {
@@ -5731,19 +5701,53 @@ var SprayService = function (_TopologyInterface) {
                         }
                     }
                 }
-            }
-            var listChan = [];
-            this.p.forEach(function (arc) {
+
+                console.warn(_this4.wc.myId + ' channel not found ' + arc[0]);
+            });
+            if (this.jps.has(msg.recipientId)) {
+                console.warn(this.wc.myId + ' need to send to joining peer');
                 var _iteratorNormalCompletion4 = true;
                 var _didIteratorError4 = false;
                 var _iteratorError4 = undefined;
 
                 try {
-                    for (var _iterator4 = _this5.channels[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-                        var _ch = _step4.value;
+                    for (var _iterator4 = this.jps[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+                        var _step4$value = slicedToArray(_step4.value, 2),
+                            id = _step4$value[0],
+                            ch = _step4$value[1];
 
-                        if (_ch.peerId == arc[0]) {
-                            listChan.push(_ch);
+                        if (id === msg.recipientId || id === this.wc.myId) {
+                            this.received.push([msg.senderId, msg.meta.timestamp, msg.content.length]);
+                            var jpsString = '\njps : ';
+                            var _iteratorNormalCompletion5 = true;
+                            var _didIteratorError5 = false;
+                            var _iteratorError5 = undefined;
+
+                            try {
+                                for (var _iterator5 = this.jps[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+                                    var _step5$value = slicedToArray(_step5.value, 2),
+                                        key = _step5$value[0],
+                                        value = _step5$value[1];
+
+                                    jpsString += key + ' => ' + value.peerId + '\n';
+                                }
+                            } catch (err) {
+                                _didIteratorError5 = true;
+                                _iteratorError5 = err;
+                            } finally {
+                                try {
+                                    if (!_iteratorNormalCompletion5 && _iterator5.return) {
+                                        _iterator5.return();
+                                    }
+                                } finally {
+                                    if (_didIteratorError5) {
+                                        throw _iteratorError5;
+                                    }
+                                }
+                            }
+
+                            console.warn(this.wc.myId + ' message sent to ' + msg.recipientId + ' (joining peer)', msg, jpsString);
+                            ch.send(bytes);
                             return;
                         }
                     }
@@ -5762,53 +5766,25 @@ var SprayService = function (_TopologyInterface) {
                     }
                 }
 
-                console.error(_this5.wc.myId + ' channel not found ' + arc[0]);
-            });
-            var _iteratorNormalCompletion5 = true;
-            var _didIteratorError5 = false;
-            var _iteratorError5 = undefined;
-
-            try {
-                for (var _iterator5 = listChan[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-                    var _ch2 = _step5.value;
-
-                    if (_ch2.peerId === msg.recipientId) {
-                        if (msg.recipientId == 0 && _ch2.peerId == msg.senderId) {
-                            return;
-                        }
-                        this.received.push([msg.senderId, msg.meta.timestamp]);
-                        return _ch2.send(bytes);
-                    }
-                }
-            } catch (err) {
-                _didIteratorError5 = true;
-                _iteratorError5 = err;
-            } finally {
-                try {
-                    if (!_iteratorNormalCompletion5 && _iterator5.return) {
-                        _iterator5.return();
-                    }
-                } finally {
-                    if (_didIteratorError5) {
-                        throw _iteratorError5;
-                    }
-                }
+                console.error(this.wc.myId + ' can only send to sender');
+                return; // Security
             }
-
+            var listChanString = '';
+            listChan.forEach(function (ch) {
+                listChanString += ch.peerId + '\n';
+            });
+            console.warn(this.wc.myId + ' listChan : ' + listChanString);
             var _iteratorNormalCompletion6 = true;
             var _didIteratorError6 = false;
             var _iteratorError6 = undefined;
 
             try {
-                for (var _iterator6 = this.jps[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
-                    var _step6$value = slicedToArray(_step6.value, 2),
-                        id = _step6$value[0],
-                        _ch3 = _step6$value[1];
+                for (var _iterator6 = listChan[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+                    var ch = _step6.value;
 
-                    if (id === msg.recipientId || id === this.wc.myId) {
-                        this.received.push([msg.senderId, msg.meta.timestamp]);
-                        console.warn(this.wc.myId + ' message sent to ' + msg.recipientId + ' through broadcast');
-                        return _ch3.send(bytes);
+                    if (ch !== undefined && ch.peerId !== msg.senderId) {
+                        console.warn(this.wc.myId + ' sending to ' + ch.peerId);
+                        ch.send(bytes);
                     }
                 }
             } catch (err) {
@@ -5826,57 +5802,42 @@ var SprayService = function (_TopologyInterface) {
                 }
             }
 
-            return console.error(this.wc.myId + ' The recipient could not be found ', msg.recipientId);
+            console.warn(this.wc.myId + (' end send ' + msg.senderId + ' => ' + msg.recipientId));
+            this.received.push([msg.senderId, msg.meta.timestamp, msg.content.length]);
         }
+        /**
+         * Send message to a specific peer (recipientId)
+         */
+
     }, {
-        key: 'forwardTo',
-        value: function forwardTo(msg) {
-            if (this.wc.state == DISCONNECTED) {
-                console.error(this.wc.myId + ' forwardTo break (disconnected) ');
+        key: 'sendTo',
+        value: function sendTo(msg) {
+            var _this5 = this;
+
+            if (this.wc.state === DISCONNECTED) {
+                console.error(this.wc.myId + ' sendTo break (disconnected) ', msg);
                 return;
             }
-            this.forward(msg);
-        }
-    }, {
-        key: 'forward',
-        value: function forward(msg) {
-            if (this.wc.state == DISCONNECTED) {
-                console.error(this.wc.myId + ' forward break (disconnected) ');
+            if (msg.recipientId === undefined) {
+                console.error(this.wc.myId + ' sendTo break (no recipientId)', msg);
                 return;
             }
-            var peersId = [];
-            this.p.forEach(function (arc) {
-                peersId.push(arc[0]);
-            });
-            if (peersId.includes(msg.recipientId)) {
-                var disp = void 0;
-                try {
-                    disp = get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'decode', this).call(this, service.Message.decode(msg.content).content);
-                } catch (e) {
-                    try {
-                        disp = channelBuilder.Message.decode(msg.content);
-                    } catch (e2) {}
-                }
-                this.sendTo(msg);
-            } else {
-                this.send(msg);
+            if (msg.recipientId === this.wc.myId) {
+                console.error(this.wc.myId + ' sendTo break (to me)', msg);
+                return;
             }
-        }
-    }, {
-        key: 'leave',
-        value: function leave() {
-            console.info(this.wc.myId + ' leave ');
-            // TODO ?
+            var jpsString = '\njps : ';
             var _iteratorNormalCompletion7 = true;
             var _didIteratorError7 = false;
             var _iteratorError7 = undefined;
 
             try {
-                for (var _iterator7 = this.channels[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
-                    var c = _step7.value;
+                for (var _iterator7 = this.jps[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
+                    var _step7$value = slicedToArray(_step7.value, 2),
+                        key = _step7$value[0],
+                        value = _step7$value[1];
 
-                    c.clearHandlers();
-                    c.close();
+                    jpsString += key + ' => ' + value.peerId + '\n';
                 }
             } catch (err) {
                 _didIteratorError7 = true;
@@ -5893,65 +5854,65 @@ var SprayService = function (_TopologyInterface) {
                 }
             }
 
-            this.channels.clear();
-            clearTimeout(this.timeoutExch);
-            clearTimeout(this.timeoutReceived);
-            clearInterval(this.interval);
-        }
-    }, {
-        key: 'onChannelClose',
-        value: function onChannelClose(closeEvt, channel) {
-            console.info(this.wc.myId + ' onChannelClose ');
-            // TODO : use _onPeerDown or _onArcDown
-            if (this.iJoin()) {
-                var firstChannel = this.channels.values().next().value;
-                if (firstChannel.peerId === channel.peerId) {
-                    this.wc._joinFailed();
-                    var _iteratorNormalCompletion8 = true;
-                    var _didIteratorError8 = false;
-                    var _iteratorError8 = undefined;
+            console.info(this.wc.myId + (' sendTo ' + msg.senderId + ' => ' + msg.recipientId + '\n'), jpsString);
+            // console.info(this.wc.myId + ' sendTo ' + msg.recipientId + "\nContent length : " + Object.keys(msg.content).length);
+            // console.info(this.wc.myId + ' sendTo ' + JSON.stringify(msg))
+            // try {
+            //   console.info(this.wc.myId + ' content1 : ' + JSON.stringify(super.decode(service.Message.decode(msg.content).content)))
+            // } catch (e) {
+            //   try {
+            //     console.info(this.wc.myId + ' content2 : ' + JSON.stringify(channelBuilder.Message.decode(msg.content)))
+            //   } catch (e2) {
+            //   }
+            // }
+            if (msg.meta === undefined || msg.meta.timestamp === undefined) {
+                if (msg.meta === undefined) {
+                    msg.meta = {};
+                }
+                msg.meta.timestamp = Date.now();
+            }
+            var bytes = this.wc._encode(msg);
+            if (this.p.length === 0) {
+                var _iteratorNormalCompletion8 = true;
+                var _didIteratorError8 = false;
+                var _iteratorError8 = undefined;
 
-                    try {
-                        for (var _iterator8 = this.channels[Symbol.iterator](), _step8; !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
-                            var ch = _step8.value;
+                try {
+                    for (var _iterator8 = this.channels[Symbol.iterator](), _step8; !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
+                        var ch = _step8.value;
 
-                            ch.clearHandlers();
-                            ch.close();
-                        }
-                    } catch (err) {
-                        _didIteratorError8 = true;
-                        _iteratorError8 = err;
-                    } finally {
-                        try {
-                            if (!_iteratorNormalCompletion8 && _iterator8.return) {
-                                _iterator8.return();
-                            }
-                        } finally {
-                            if (_didIteratorError8) {
-                                throw _iteratorError8;
-                            }
+                        if (ch !== undefined && ch.peerId === msg.recipientId) {
+                            return ch.send(bytes);
                         }
                     }
-
-                    this.channels.clear();
-                    this.jps.clear();
-                } else {
-                    this.channels.delete(channel);
-                    console.info(this.wc.myId + ' _onPeerLeave when iJoin ' + channel.peerId);
-                    this.wc._onPeerLeave(channel.peerId);
+                } catch (err) {
+                    _didIteratorError8 = true;
+                    _iteratorError8 = err;
+                } finally {
+                    try {
+                        if (!_iteratorNormalCompletion8 && _iterator8.return) {
+                            _iterator8.return();
+                        }
+                    } finally {
+                        if (_didIteratorError8) {
+                            throw _iteratorError8;
+                        }
+                    }
                 }
-            } else {
+            }
+            var listChan = [];
+            this.p.forEach(function (arc) {
                 var _iteratorNormalCompletion9 = true;
                 var _didIteratorError9 = false;
                 var _iteratorError9 = undefined;
 
                 try {
-                    for (var _iterator9 = this.jps[Symbol.iterator](), _step9; !(_iteratorNormalCompletion9 = (_step9 = _iterator9.next()).done); _iteratorNormalCompletion9 = true) {
-                        var _step9$value = slicedToArray(_step9.value, 1),
-                            id = _step9$value[0];
+                    for (var _iterator9 = _this5.channels[Symbol.iterator](), _step9; !(_iteratorNormalCompletion9 = (_step9 = _iterator9.next()).done); _iteratorNormalCompletion9 = true) {
+                        var _ch = _step9.value;
 
-                        if (id === channel.peerId) {
-                            this.jps.delete(id);
+                        if (_ch !== undefined && _ch.peerId === arc[0]) {
+                            console.warn(_this5.wc.myId + ' channel found ' + _ch.peerId);
+                            listChan.push(_ch);
                             return;
                         }
                     }
@@ -5966,6 +5927,346 @@ var SprayService = function (_TopologyInterface) {
                     } finally {
                         if (_didIteratorError9) {
                             throw _iteratorError9;
+                        }
+                    }
+                }
+
+                console.warn(_this5.wc.myId + ' channel not found ' + arc[0]);
+            });
+            var _iteratorNormalCompletion10 = true;
+            var _didIteratorError10 = false;
+            var _iteratorError10 = undefined;
+
+            try {
+                for (var _iterator10 = listChan[Symbol.iterator](), _step10; !(_iteratorNormalCompletion10 = (_step10 = _iterator10.next()).done); _iteratorNormalCompletion10 = true) {
+                    var _ch2 = _step10.value;
+
+                    if (_ch2 !== undefined && _ch2.peerId === msg.recipientId) {
+                        this.received.push([msg.senderId, msg.meta.timestamp, msg.content.length]);
+                        console.warn(this.wc.myId + ' message sent to ' + _ch2.peerId);
+                        return _ch2.send(bytes);
+                    }
+                }
+            } catch (err) {
+                _didIteratorError10 = true;
+                _iteratorError10 = err;
+            } finally {
+                try {
+                    if (!_iteratorNormalCompletion10 && _iterator10.return) {
+                        _iterator10.return();
+                    }
+                } finally {
+                    if (_didIteratorError10) {
+                        throw _iteratorError10;
+                    }
+                }
+            }
+
+            var _iteratorNormalCompletion11 = true;
+            var _didIteratorError11 = false;
+            var _iteratorError11 = undefined;
+
+            try {
+                for (var _iterator11 = this.jps[Symbol.iterator](), _step11; !(_iteratorNormalCompletion11 = (_step11 = _iterator11.next()).done); _iteratorNormalCompletion11 = true) {
+                    var _step11$value = slicedToArray(_step11.value, 2),
+                        id = _step11$value[0],
+                        _ch3 = _step11$value[1];
+
+                    if (id === msg.recipientId || id === this.wc.myId) {
+                        this.received.push([msg.senderId, msg.meta.timestamp, msg.content.length]);
+                        var _jpsString = '\njps : ';
+                        var _iteratorNormalCompletion12 = true;
+                        var _didIteratorError12 = false;
+                        var _iteratorError12 = undefined;
+
+                        try {
+                            for (var _iterator12 = this.jps[Symbol.iterator](), _step12; !(_iteratorNormalCompletion12 = (_step12 = _iterator12.next()).done); _iteratorNormalCompletion12 = true) {
+                                var _step12$value = slicedToArray(_step12.value, 2),
+                                    key = _step12$value[0],
+                                    value = _step12$value[1];
+
+                                _jpsString += key + ' => ' + value.peerId + '\n';
+                            }
+                        } catch (err) {
+                            _didIteratorError12 = true;
+                            _iteratorError12 = err;
+                        } finally {
+                            try {
+                                if (!_iteratorNormalCompletion12 && _iterator12.return) {
+                                    _iterator12.return();
+                                }
+                            } finally {
+                                if (_didIteratorError12) {
+                                    throw _iteratorError12;
+                                }
+                            }
+                        }
+
+                        console.warn(this.wc.myId + ' message sent to ' + msg.recipientId + ' through broadcast', msg, '\n' + this.p.toString(), _jpsString);
+                        return _ch3.send(bytes);
+                    }
+                }
+            } catch (err) {
+                _didIteratorError11 = true;
+                _iteratorError11 = err;
+            } finally {
+                try {
+                    if (!_iteratorNormalCompletion11 && _iterator11.return) {
+                        _iterator11.return();
+                    }
+                } finally {
+                    if (_didIteratorError11) {
+                        throw _iteratorError11;
+                    }
+                }
+            }
+
+            return console.error(this.wc.myId + ' The recipient could not be found ', msg.recipientId, msg);
+        }
+    }, {
+        key: 'forwardTo',
+        value: function forwardTo(msg) {
+            if (this.wc.state === DISCONNECTED) {
+                console.error(this.wc.myId + ' forwardTo break (disconnected) ', msg);
+                return;
+            }
+            if (msg.recipientId === undefined) {
+                console.error(this.wc.myId + ' forwardTo break (no recipientId)', msg);
+                return;
+            }
+            console.info(this.wc.myId + (' forwardTo ' + msg.senderId + ' => ' + msg.recipientId));
+            this.forward(msg);
+        }
+    }, {
+        key: 'forward',
+        value: function forward(msg) {
+            if (this.wc.state === DISCONNECTED) {
+                console.error(this.wc.myId + ' forward break (disconnected) ', msg);
+                return;
+            }
+            if (msg.recipientId === undefined) {
+                console.error(this.wc.myId + ' forward break (no recipientId)', msg);
+                return;
+            }
+            if (msg.meta !== undefined && msg.meta.timestamp !== undefined) {
+                var alreadyReceived = false;
+                this.received.forEach(function (message) {
+                    if (!alreadyReceived && message[0] === msg.senderId && message[1] === msg.meta.timestamp && message[2] === msg.content.length) {
+                        alreadyReceived = true;
+                    }
+                });
+                if (alreadyReceived) {
+                    console.info(this.wc.myId + ' message already received ', msg);
+                    return;
+                }
+            }
+            console.info(this.wc.myId + (' forward ' + msg.senderId + ' => ' + msg.recipientId), msg);
+            var peersId = [];
+            this.p.forEach(function (arc) {
+                peersId.push(arc[0]);
+            });
+            if (peersId.includes(msg.recipientId)) {
+                this.sendTo(msg);
+            } else {
+                this.send(msg);
+            }
+        }
+    }, {
+        key: 'leave',
+        value: function leave() {
+            console.info(this.wc.myId + ' leave ', this.wc.members);
+            // TODO ?
+            var _iteratorNormalCompletion13 = true;
+            var _didIteratorError13 = false;
+            var _iteratorError13 = undefined;
+
+            try {
+                for (var _iterator13 = this.channels[Symbol.iterator](), _step13; !(_iteratorNormalCompletion13 = (_step13 = _iterator13.next()).done); _iteratorNormalCompletion13 = true) {
+                    var c = _step13.value;
+
+                    c.clearHandlers();
+                    c.close();
+                }
+            } catch (err) {
+                _didIteratorError13 = true;
+                _iteratorError13 = err;
+            } finally {
+                try {
+                    if (!_iteratorNormalCompletion13 && _iterator13.return) {
+                        _iterator13.return();
+                    }
+                } finally {
+                    if (_didIteratorError13) {
+                        throw _iteratorError13;
+                    }
+                }
+            }
+
+            this.channels.clear();
+            clearTimeout(this.timeoutExch);
+            clearTimeout(this.timeoutReceived);
+            clearInterval(this.interval);
+            this.p = new PartialView();
+        }
+    }, {
+        key: 'onChannelClose',
+        value: function onChannelClose(closeEvt, channel) {
+            var jpsString = '\njps : ';
+            var _iteratorNormalCompletion14 = true;
+            var _didIteratorError14 = false;
+            var _iteratorError14 = undefined;
+
+            try {
+                for (var _iterator14 = this.jps[Symbol.iterator](), _step14; !(_iteratorNormalCompletion14 = (_step14 = _iterator14.next()).done); _iteratorNormalCompletion14 = true) {
+                    var _step14$value = slicedToArray(_step14.value, 2),
+                        key = _step14$value[0],
+                        value = _step14$value[1];
+
+                    try {
+                        jpsString += key + ' => ' + value.peerId + '\n';
+                    } catch (e) {
+                        console.error(this.wc.myId + (' ' + key + ' with value ' + value), e);
+                    }
+                }
+            } catch (err) {
+                _didIteratorError14 = true;
+                _iteratorError14 = err;
+            } finally {
+                try {
+                    if (!_iteratorNormalCompletion14 && _iterator14.return) {
+                        _iterator14.return();
+                    }
+                } finally {
+                    if (_didIteratorError14) {
+                        throw _iteratorError14;
+                    }
+                }
+            }
+
+            console.info(this.wc.myId + ' onChannelClose ', '\npartialView : ' + this.p.toString(), jpsString);
+            // TODO : use _onPeerDown or _onArcDown
+            if (this.iJoin()) {
+                var firstChannel = this.channels.values().next().value;
+                if (channel !== undefined && firstChannel !== undefined && firstChannel.peerId === channel.peerId) {
+                    this.wc._joinFailed();
+                    var _iteratorNormalCompletion15 = true;
+                    var _didIteratorError15 = false;
+                    var _iteratorError15 = undefined;
+
+                    try {
+                        for (var _iterator15 = this.channels[Symbol.iterator](), _step15; !(_iteratorNormalCompletion15 = (_step15 = _iterator15.next()).done); _iteratorNormalCompletion15 = true) {
+                            var ch = _step15.value;
+
+                            ch.clearHandlers();
+                            ch.close();
+                        }
+                    } catch (err) {
+                        _didIteratorError15 = true;
+                        _iteratorError15 = err;
+                    } finally {
+                        try {
+                            if (!_iteratorNormalCompletion15 && _iterator15.return) {
+                                _iterator15.return();
+                            }
+                        } finally {
+                            if (_didIteratorError15) {
+                                throw _iteratorError15;
+                            }
+                        }
+                    }
+
+                    this.channels.clear();
+                    console.warn(this.wc.myId + ' jps.clear');
+                    this.jps.clear();
+                } else {
+                    this.channels.delete(channel);
+                    console.info(this.wc.myId + ' _onPeerLeave when iJoin ' + channel.peerId);
+                    this.wc._onPeerLeave(channel.peerId);
+                }
+            } else {
+                var _iteratorNormalCompletion16 = true;
+                var _didIteratorError16 = false;
+                var _iteratorError16 = undefined;
+
+                try {
+                    for (var _iterator16 = this.jps[Symbol.iterator](), _step16; !(_iteratorNormalCompletion16 = (_step16 = _iterator16.next()).done); _iteratorNormalCompletion16 = true) {
+                        var _step16$value = slicedToArray(_step16.value, 1),
+                            id = _step16$value[0];
+
+                        if (channel !== undefined && id === channel.peerId) {
+                            var _jpsString2 = '\njps : ';
+                            var _iteratorNormalCompletion17 = true;
+                            var _didIteratorError17 = false;
+                            var _iteratorError17 = undefined;
+
+                            try {
+                                for (var _iterator17 = this.jps[Symbol.iterator](), _step17; !(_iteratorNormalCompletion17 = (_step17 = _iterator17.next()).done); _iteratorNormalCompletion17 = true) {
+                                    var _step17$value = slicedToArray(_step17.value, 2),
+                                        key = _step17$value[0],
+                                        value = _step17$value[1];
+
+                                    _jpsString2 += key + ' => ' + value.peerId + '\n';
+                                }
+                            } catch (err) {
+                                _didIteratorError17 = true;
+                                _iteratorError17 = err;
+                            } finally {
+                                try {
+                                    if (!_iteratorNormalCompletion17 && _iterator17.return) {
+                                        _iterator17.return();
+                                    }
+                                } finally {
+                                    if (_didIteratorError17) {
+                                        throw _iteratorError17;
+                                    }
+                                }
+                            }
+
+                            console.warn(this.wc.myId + ' onChanClose => this.jps.delete(' + id + ')\n', _jpsString2);
+                            this.jps.delete(id);
+                            _jpsString2 = '\njps : ';
+                            var _iteratorNormalCompletion18 = true;
+                            var _didIteratorError18 = false;
+                            var _iteratorError18 = undefined;
+
+                            try {
+                                for (var _iterator18 = this.jps[Symbol.iterator](), _step18; !(_iteratorNormalCompletion18 = (_step18 = _iterator18.next()).done); _iteratorNormalCompletion18 = true) {
+                                    var _step18$value = slicedToArray(_step18.value, 2),
+                                        key = _step18$value[0],
+                                        value = _step18$value[1];
+
+                                    _jpsString2 += key + ' => ' + value.peerId + '\n';
+                                }
+                            } catch (err) {
+                                _didIteratorError18 = true;
+                                _iteratorError18 = err;
+                            } finally {
+                                try {
+                                    if (!_iteratorNormalCompletion18 && _iterator18.return) {
+                                        _iterator18.return();
+                                    }
+                                } finally {
+                                    if (_didIteratorError18) {
+                                        throw _iteratorError18;
+                                    }
+                                }
+                            }
+
+                            console.warn(this.wc.myId + ' deleted of jps ' + id + '\n', _jpsString2);
+                            return;
+                        }
+                    }
+                } catch (err) {
+                    _didIteratorError16 = true;
+                    _iteratorError16 = err;
+                } finally {
+                    try {
+                        if (!_iteratorNormalCompletion16 && _iterator16.return) {
+                            _iterator16.return();
+                        }
+                    } finally {
+                        if (_didIteratorError16) {
+                            throw _iteratorError16;
                         }
                     }
                 }
@@ -5994,101 +6295,161 @@ var SprayService = function (_TopologyInterface) {
         value: function _handleSvcMsg(M) {
             var _this6 = this;
 
-            if (this.wc.state == DISCONNECTED) {
-                console.info(this.wc.myId + ' _handleSvcMsg break (disconnected) ');
+            if (this.wc.state === DISCONNECTED) {
+                console.info(this.wc.myId + ' _handleSvcMsg break (disconnected) ', M);
                 return;
             }
             var msg = M.msg;
-            console.info(this.wc.myId + " new message reception : " + M.senderId + ", timestamp : " + M.timestamp);
-            // console.info(this.wc.myId + " new message reception : " + JSON.stringify(msg) + ", timestamp : " + M.timestamp);
-            if (M.timestamp != undefined) {
+            if (M.timestamp !== undefined) {
+                var rcvdString = '';
+                var _iteratorNormalCompletion19 = true;
+                var _didIteratorError19 = false;
+                var _iteratorError19 = undefined;
+
+                try {
+                    for (var _iterator19 = this.received[Symbol.iterator](), _step19; !(_iteratorNormalCompletion19 = (_step19 = _iterator19.next()).done); _iteratorNormalCompletion19 = true) {
+                        var _step19$value = slicedToArray(_step19.value, 3),
+                            sId = _step19$value[0],
+                            ts = _step19$value[1],
+                            l = _step19$value[2];
+
+                        if (rcvdString.length !== 0) {
+                            rcvdString += ', ';
+                        }
+                        rcvdString += '[' + sId + ',' + ts + ',' + l + ']';
+                    }
+                } catch (err) {
+                    _didIteratorError19 = true;
+                    _iteratorError19 = err;
+                } finally {
+                    try {
+                        if (!_iteratorNormalCompletion19 && _iterator19.return) {
+                            _iterator19.return();
+                        }
+                    } finally {
+                        if (_didIteratorError19) {
+                            throw _iteratorError19;
+                        }
+                    }
+                }
+
+                console.info(this.wc.myId + ' received : ' + rcvdString);
                 var alreadyReceived = false;
                 this.received.forEach(function (message) {
-                    if (!alreadyReceived && message[0] == msg.senderId && message[1] == M.timestamp) {
+                    if (!alreadyReceived && message[0] === M.senderId && message[1] === M.timestamp && message[2] === msg.length) {
                         alreadyReceived = true;
                     }
                 });
                 if (alreadyReceived) {
-                    console.log(this.wc.myId + " message already received ");
+                    console.info(this.wc.myId + ' message already received ', msg);
                     return;
                 }
-                this.received.push([M.senderId, M.timestamp]);
-                console.info(this.wc.myId + ' received length : ' + this.received.length);
-                var rcvd = "";
+                this.received.push([M.senderId, M.timestamp, msg.length]);
+                var rcvd = '';
                 this.received.forEach(function (r) {
-                    if (rcvd.length == 0) {
-                        rcvd += "[";
+                    if (rcvd.length === 0) {
+                        rcvd += '[';
                     }
-                    if (rcvd.length != 1) {
-                        rcvd += ", ";
+                    if (rcvd.length !== 1) {
+                        rcvd += ', ';
                     }
-                    rcvd += '[' + r[0] + ',' + r[1] + ']';
+                    rcvd += '[' + r[0] + ',' + r[1] + ',' + r[2] + ']';
                 });
-                if (rcvd.length != 0) {
-                    rcvd += "]";
-                    console.info(this.wc.myId + ' received : ' + rcvd);
+                if (rcvd.length !== 0) {
+                    rcvd += ']';
                 }
             }
-            if (M.recipientId != this.wc.myId) {
-                // console.error(this.wc.myId + ' received but not for me : ' + JSON.stringify(msg));
-                this.forward(msg);
-                return;
-            }
-            console.log(this.wc.myId + ' message type : ' + msg.type);
+            // if (M.recipientId !== this.wc.myId) {
+            //   console.error(this.wc.myId + ' need to modify this line ', msg)
+            //   this.forward(msg)
+            //   return
+            // }
             switch (msg.type) {
                 case 'shouldAdd':
                     {
-                        console.log(this.wc.myId + ' shouldAdd ' + msg.shouldAdd);
+                        console.info(this.wc.myId + ' shouldAdd ' + msg.shouldAdd);
                         this.p.add(msg.shouldAdd);
-                        console.log(this.wc.myId + ' partialView increased : ' + this.p.toString());
                         break;
                     }
                 case 'exchangeInit':
                     {
-                        console.log(M.channel.peerId + ' exchanging with ' + this.wc.myId);
+                        console.error(M.channel.peerId + ' exchanging with ' + this.wc.myId);
                         this._onExchange(this.wc, M.channel.peerId, msg.exchangeInit.sample);
                         break;
                     }
                 case 'connectTo':
                     {
-                        console.warn(this.wc.myId + ' connectTo ' + msg.connectTo);
+                        console.info(this.wc.myId + ' connectTo ' + msg.connectTo);
                         var peer = msg.connectTo;
+                        var jpsString = '\njps : ';
+                        var _iteratorNormalCompletion20 = true;
+                        var _didIteratorError20 = false;
+                        var _iteratorError20 = undefined;
+
+                        try {
+                            for (var _iterator20 = this.jps[Symbol.iterator](), _step20; !(_iteratorNormalCompletion20 = (_step20 = _iterator20.next()).done); _iteratorNormalCompletion20 = true) {
+                                var _step20$value = slicedToArray(_step20.value, 2),
+                                    key = _step20$value[0],
+                                    value = _step20$value[1];
+
+                                jpsString += key + ' => ' + value.peerId + '\n';
+                            }
+                        } catch (err) {
+                            _didIteratorError20 = true;
+                            _iteratorError20 = err;
+                        } finally {
+                            try {
+                                if (!_iteratorNormalCompletion20 && _iterator20.return) {
+                                    _iterator20.return();
+                                }
+                            } finally {
+                                if (_didIteratorError20) {
+                                    throw _iteratorError20;
+                                }
+                            }
+                        }
+
+                        console.warn(this.wc.myId + (' connectTo => this.jps.set(' + peer + ', ' + M.channel.peerId + ')\n'), jpsString);
                         this.jps.set(peer, M.channel);
                         var counter = 0;
                         var connected = [];
                         var allCompleted = new Promise(function (resolve) {
-                            var _iteratorNormalCompletion10 = true;
-                            var _didIteratorError10 = false;
-                            var _iteratorError10 = undefined;
+                            var _iteratorNormalCompletion21 = true;
+                            var _didIteratorError21 = false;
+                            var _iteratorError21 = undefined;
 
                             try {
-                                for (var _iterator10 = _this6.channels[Symbol.iterator](), _step10; !(_iteratorNormalCompletion10 = (_step10 = _iterator10.next()).done); _iteratorNormalCompletion10 = true) {
-                                    var ch = _step10.value;
+                                for (var _iterator21 = _this6.channels[Symbol.iterator](), _step21; !(_iteratorNormalCompletion21 = (_step21 = _iterator21.next()).done); _iteratorNormalCompletion21 = true) {
+                                    var ch = _step21.value;
 
-                                    if (ch.peerId == peer) {
+                                    if (ch !== undefined && ch.peerId === peer) {
                                         console.error(_this6.wc.myId + ' already connected with ' + peer);
                                         resolve();
                                     }
                                 }
                             } catch (err) {
-                                _didIteratorError10 = true;
-                                _iteratorError10 = err;
+                                _didIteratorError21 = true;
+                                _iteratorError21 = err;
                             } finally {
                                 try {
-                                    if (!_iteratorNormalCompletion10 && _iterator10.return) {
-                                        _iterator10.return();
+                                    if (!_iteratorNormalCompletion21 && _iterator21.return) {
+                                        _iterator21.return();
                                     }
                                 } finally {
-                                    if (_didIteratorError10) {
-                                        throw _iteratorError10;
+                                    if (_didIteratorError21) {
+                                        throw _iteratorError21;
                                     }
                                 }
                             }
 
-                            console.warn(_this6.wc.myId + ' here ');
                             _this6.wc.channelBuilder.connectTo(peer).then(function (ch) {
                                 console.warn(_this6.wc.myId + ' passed here');
                                 _this6.peerJoined(ch);
+                                _this6.wc._sendTo({
+                                    recipientId: peer,
+                                    content: get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'encode', _this6).call(_this6, { joinedPeerIdFinished: _this6.wc.myId }),
+                                    meta: { timestamp: Date.now() }
+                                });
                                 console.warn(_this6.wc.myId + ' counter : ' + counter);
                                 if (++counter === 1) {
                                     resolve();
@@ -6101,29 +6462,149 @@ var SprayService = function (_TopologyInterface) {
                             });
                         });
                         allCompleted.then(function () {
-                            // M.channel.send(this.wc._encode({
-                            //   recipientId: M.channel.peerId,
-                            //   content: super.encode({ connectedTo: { peers: connected } })
-                            // }))
-                            console.warn(_this6.wc.myId + ' connected to ' + peer);
+                            _this6.wc._send({
+                                content: get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'encode', _this6).call(_this6, { joinedPeerId: peer }),
+                                meta: { timestamp: Date.now() }
+                            });
+                            console.warn(_this6.wc.myId + ' connected to ' + peer + '\npartialView : ' + _this6.p.toString(), _this6.wc.members);
                         });
                         break;
                     }
-                case 'joiningPeerId':
+                case 'joinedPeerIdFinished':
                     {
-                        this.jps.set(msg.joiningPeerId, M.channel);
+                        console.error(this.wc.myId + ' joinedPeerIdFinished ' + msg.joinedPeerIdFinished);
+                        if (this.iJoin() && msg.joinedPeerIdFinished === this.wc.myId) {
+                            var chanString = '\nchannels :';
+                            var _iteratorNormalCompletion22 = true;
+                            var _didIteratorError22 = false;
+                            var _iteratorError22 = undefined;
+
+                            try {
+                                for (var _iterator22 = this.channels[Symbol.iterator](), _step22; !(_iteratorNormalCompletion22 = (_step22 = _iterator22.next()).done); _iteratorNormalCompletion22 = true) {
+                                    var ch = _step22.value;
+
+                                    chanString += ch.peerId + '\n';
+                                }
+                            } catch (err) {
+                                _didIteratorError22 = true;
+                                _iteratorError22 = err;
+                            } finally {
+                                try {
+                                    if (!_iteratorNormalCompletion22 && _iterator22.return) {
+                                        _iterator22.return();
+                                    }
+                                } finally {
+                                    if (_didIteratorError22) {
+                                        throw _iteratorError22;
+                                    }
+                                }
+                            }
+
+                            console.error(this.wc.myId + ' _joinSucceed ' + M.senderId + ' ' + msg.joinedPeerIdFinished, chanString, this.wc.members);
+                            this.wc._joinSucceed();
+                        } else if (this.jps.has(msg.joinedPeerIdFinished)) {
+                            console.warn(this.wc.myId + ' blablabla ' + msg.joinedPeerIdFinished);
+                            this.peerJoined(this.jps.get(msg.joinedPeerIdFinished));
+                        }
+                        var _jpsString3 = '\njps : ';
+                        var _iteratorNormalCompletion23 = true;
+                        var _didIteratorError23 = false;
+                        var _iteratorError23 = undefined;
+
+                        try {
+                            for (var _iterator23 = this.jps[Symbol.iterator](), _step23; !(_iteratorNormalCompletion23 = (_step23 = _iterator23.next()).done); _iteratorNormalCompletion23 = true) {
+                                var _step23$value = slicedToArray(_step23.value, 2),
+                                    key = _step23$value[0],
+                                    value = _step23$value[1];
+
+                                _jpsString3 += key + ' => ' + value.peerId + '\n';
+                            }
+                        } catch (err) {
+                            _didIteratorError23 = true;
+                            _iteratorError23 = err;
+                        } finally {
+                            try {
+                                if (!_iteratorNormalCompletion23 && _iterator23.return) {
+                                    _iterator23.return();
+                                }
+                            } finally {
+                                if (_didIteratorError23) {
+                                    throw _iteratorError23;
+                                }
+                            }
+                        }
+
+                        console.warn(this.wc.myId + ' joinedPeerIdFinished => this.jps.delete(' + msg.joinedPeerIdFinished + ')\n', _jpsString3);
+                        this.jps.delete(msg.joinedPeerIdFinished);
+                        _jpsString3 = '\njps : ';
+                        var _iteratorNormalCompletion24 = true;
+                        var _didIteratorError24 = false;
+                        var _iteratorError24 = undefined;
+
+                        try {
+                            for (var _iterator24 = this.jps[Symbol.iterator](), _step24; !(_iteratorNormalCompletion24 = (_step24 = _iterator24.next()).done); _iteratorNormalCompletion24 = true) {
+                                var _step24$value = slicedToArray(_step24.value, 2),
+                                    key = _step24$value[0],
+                                    value = _step24$value[1];
+
+                                _jpsString3 += key + ' => ' + value.peerId + '\n';
+                            }
+                        } catch (err) {
+                            _didIteratorError24 = true;
+                            _iteratorError24 = err;
+                        } finally {
+                            try {
+                                if (!_iteratorNormalCompletion24 && _iterator24.return) {
+                                    _iterator24.return();
+                                }
+                            } finally {
+                                if (_didIteratorError24) {
+                                    throw _iteratorError24;
+                                }
+                            }
+                        }
+
+                        console.warn(this.wc.myId + ' deleted of jps ' + msg.joinedPeerIdFinished + '\n', _jpsString3);
                         break;
                     }
                 case 'joinedPeerId':
                     {
-                        if (this.iJoin()) {
-                            this.wc._joinSucceed();
-                            console.info(this.wc.myId + ' _joinSucceed ');
-                        } else {
-                            console.error(this.wc.myId + ' peerJoined blablabla ');
-                            this.peerJoined(this.jps.get(msg.joinedPeerId));
+                        console.info(this.wc.myId + ' joinedPeerId ' + msg.joinedPeerId);
+                        // TODO : iJoin or empty var needJoin
+                        if (this.deportedJoin.get(msg.joinedPeerId)) {
+                            this.deportedJoin.set(msg.joinedPeerId, this.deportedJoin.get(msg.joinedPeerId) - 1);
+                            console.warn(this.wc.myId + ' still ' + this.deportedJoin.get(msg.joinedPeerId) + ' peers joining ' + msg.joinedPeerId);
                         }
-                        this.jps.delete(msg.joinedPeerId);
+                        if (this.deportedJoin.get(msg.joinedPeerId) === 0) {
+                            console.error(this.wc.myId + ' no more peer joining ' + msg.joinedPeerId, this.wc.members);
+                            this.forward({
+                                senderId: this.wc.myId,
+                                recipientId: msg.joinedPeerId,
+                                isService: true,
+                                content: get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'encode', this).call(this, { joinedPeerIdFinished: msg.joinedPeerId }),
+                                meta: { timestamp: Date.now() }
+                            });
+                            this.deportedJoin.delete(msg.joinedPeerId);
+                            var _ch4 = this.jps.get(msg.joinedPeerId);
+                            if (_ch4 === undefined) {
+                                console.error(this.wc.myId + ' joinedPeerId with undefined channel', msg.joinedPeerId);
+                                return;
+                            }
+                            this.peerJoined(_ch4);
+                        }
+                        // if (msg.joinedPeerId !== this.wc.myId) {
+                        //   let jpsString = '\njps : '
+                        //   for (let [key, value] of this.jps) {
+                        //     jpsString += `${key} => ${value.peerId}\n`
+                        //   }
+                        //   console.warn(this.wc.myId + ' joinedPeerId => this.jps.delete(' + msg.joinedPeerId + ')\n', jpsString)
+                        //   this.jps.delete(msg.joinedPeerId)
+                        //   jpsString = '\njps : '
+                        //   for (let [key, value] of this.jps) {
+                        //     jpsString += `${key} => ${value.peerId}\n`
+                        //   }
+                        //   console.warn(this.wc.myId + ' deleted of jps ' + msg.joinedPeerId + '\n', jpsString, this.wc.members)
+                        // }
                         break;
                     }
             }
@@ -6152,7 +6633,7 @@ var SprayService = function (_TopologyInterface) {
                     while (1) {
                         switch (_context.prev = _context.next) {
                             case 0:
-                                console.log(this.wc.myId + ' _exchange ');
+                                console.error(this.wc.myId + ' _exchange ');
                                 this.p.incrementAge();
                                 oldestArc = this.p.oldest;
                                 cloneP = new PartialView();
@@ -6176,7 +6657,7 @@ var SprayService = function (_TopologyInterface) {
                                 _context.next = 12;
                                 return new Promise(function (resolve, reject) {
                                     wc._svcMsgStream.filter(function (msg) {
-                                        return msg.recipientId === wc.myId && msg.type == 'exchangeResp';
+                                        return msg.recipientId === wc.myId && msg.type === 'exchangeResp';
                                     }).subscribe(function (msg) {
                                         resolve(msg.respSample);
                                     }, function (err) {
@@ -6200,7 +6681,7 @@ var SprayService = function (_TopologyInterface) {
 
                             case 12:
                                 this._replace(sample, wc.myId, oldestArc[0]);
-                                // TODO disconnection
+                                // TODO disconnection (ch.close)
                                 sample.forEach(function (arc) {
                                     _this8.p.remove(arc[0], arc[1]);
                                 });
@@ -6226,7 +6707,7 @@ var SprayService = function (_TopologyInterface) {
         value: function _onExchange(wc, origineId, sample) {
             var _this9 = this;
 
-            console.log(this.wc.myId + ' _onExchange ');
+            console.info(this.wc.myId + ' _onExchange ');
             var respSample = this._getSample(this.p, Math.ceil(this.p.length / 2));
             this._replace(respSample, origineId, wc.myId);
             wc._sendTo({
@@ -6279,9 +6760,9 @@ var SprayService = function (_TopologyInterface) {
     }, {
         key: '_replace',
         value: function _replace(p, oldId, newId) {
-            console.info(this.wc.myId + ' _replace ' + oldId + " by " + newId);
+            console.info(this.wc.myId + ' _replace ');
             p.forEach(function (arc) {
-                if (arc[0] == oldId) {
+                if (arc[0] === oldId) {
                     arc[0] = newId;
                 }
             });
@@ -6298,12 +6779,12 @@ var SprayService = function (_TopologyInterface) {
         value: function _onPeerDown(peerDownId) {
             var _this10 = this;
 
-            console.info(this.wc.myId + ' _onPeerDown ' + peerDownId);
+            console.info(this.wc.myId + ' _onPeerDown ');
             // Count and delete
             var occ = 0;
             var toRemove = [];
             this.p.forEach(function (arc) {
-                if (arc[0] == peerDownId) {
+                if (arc[0] === peerDownId) {
                     toRemove.push(arc);
                     occ++;
                 }
@@ -6331,7 +6812,7 @@ var SprayService = function (_TopologyInterface) {
     }, {
         key: '_onArcDown',
         value: function _onArcDown(peerId, age) {
-            console.info(this.wc.myId + ' _onArcDown ' + peerId);
+            console.info(this.wc.myId + ' _onArcDown ');
             this.p.remove(peerId, age);
             var newArcId = this.p[Math.floor(Math.random() * this.p.length)][0];
             this.p.add(newArcId);
@@ -6359,9 +6840,79 @@ var SprayService = function (_TopologyInterface) {
     }, {
         key: 'peerJoined',
         value: function peerJoined(ch) {
-            console.info(this.wc.myId + ' peerJoined ');
+            if (ch === undefined) {
+                console.error(this.wc.myId + ' peerJoined on undefined channel');
+                return;
+            }
+            console.info(this.wc.myId + ' peerJoined ' + ch.peerId);
             this.channels.add(ch);
+            var jpsString = '\njps : ';
+            var _iteratorNormalCompletion25 = true;
+            var _didIteratorError25 = false;
+            var _iteratorError25 = undefined;
+
+            try {
+                for (var _iterator25 = this.jps[Symbol.iterator](), _step25; !(_iteratorNormalCompletion25 = (_step25 = _iterator25.next()).done); _iteratorNormalCompletion25 = true) {
+                    var _step25$value = slicedToArray(_step25.value, 2),
+                        key = _step25$value[0],
+                        value = _step25$value[1];
+
+                    try {
+                        jpsString += key + ' => ' + value.peerId + '\n';
+                    } catch (e) {
+                        console.error(this.wc.myId + (' ' + key + ' with value ' + value), e);
+                    }
+                }
+            } catch (err) {
+                _didIteratorError25 = true;
+                _iteratorError25 = err;
+            } finally {
+                try {
+                    if (!_iteratorNormalCompletion25 && _iterator25.return) {
+                        _iterator25.return();
+                    }
+                } finally {
+                    if (_didIteratorError25) {
+                        throw _iteratorError25;
+                    }
+                }
+            }
+
+            console.warn(this.wc.myId + ' peerJoined => this.jps.delete(' + ch.peerId + ')\n', jpsString);
             this.jps.delete(ch.peerId);
+            jpsString = '\njps : ';
+            var _iteratorNormalCompletion26 = true;
+            var _didIteratorError26 = false;
+            var _iteratorError26 = undefined;
+
+            try {
+                for (var _iterator26 = this.jps[Symbol.iterator](), _step26; !(_iteratorNormalCompletion26 = (_step26 = _iterator26.next()).done); _iteratorNormalCompletion26 = true) {
+                    var _step26$value = slicedToArray(_step26.value, 2),
+                        key = _step26$value[0],
+                        value = _step26$value[1];
+
+                    try {
+                        jpsString += key + ' => ' + value.peerId + '\n';
+                    } catch (e) {
+                        console.error(this.wc.myId + (' ' + key + ' with value ' + value), e);
+                    }
+                }
+            } catch (err) {
+                _didIteratorError26 = true;
+                _iteratorError26 = err;
+            } finally {
+                try {
+                    if (!_iteratorNormalCompletion26 && _iterator26.return) {
+                        _iterator26.return();
+                    }
+                } finally {
+                    if (_didIteratorError26) {
+                        throw _iteratorError26;
+                    }
+                }
+            }
+
+            console.warn(this.wc.myId + ' deleted of jps ' + ch.peerId + '\n', jpsString, this.p.toString(), this.wc.members);
             this.wc._onPeerJoin(ch.peerId);
         }
     }]);
@@ -10055,7 +10606,6 @@ var ChannelBuilder = function (_Service) {
       var _this2 = this;
 
       return new Promise(function (resolve, reject) {
-        console.warn(_this2.wc.myId + ' connectTo channelBuilder azerty ', request);
         _this2.pendingRequests.set(id, { resolve: resolve, reject: reject });
         _this2.wc._sendTo({ recipientId: id, content: request });
       });
@@ -10978,7 +11528,39 @@ var WebChannel = function (_Service) {
 
         // Otherwise the message should be forwarded to the intended peer
         default:
-          console.warn(this.myId + ' forwardTo wc ' + msg.senderId + ' => ' + msg.recipientId);
+          try {
+            var jpsString = '';
+            var _iteratorNormalCompletion3 = true;
+            var _didIteratorError3 = false;
+            var _iteratorError3 = undefined;
+
+            try {
+              for (var _iterator3 = this._topology.jps[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+                var _step3$value = slicedToArray(_step3.value, 2),
+                    key = _step3$value[0],
+                    value = _step3$value[1];
+
+                jpsString += key + ' => ' + value.peerId + '\n';
+              }
+            } catch (err) {
+              _didIteratorError3 = true;
+              _iteratorError3 = err;
+            } finally {
+              try {
+                if (!_iteratorNormalCompletion3 && _iterator3.return) {
+                  _iterator3.return();
+                }
+              } finally {
+                if (_didIteratorError3) {
+                  throw _iteratorError3;
+                }
+              }
+            }
+
+            console.warn(this.myId + ' forwardTo from ' + channel.peerId + ' : ' + msg.senderId + ' => ' + msg.recipientId, msg, '\n' + this._topology.p.toString() + '\n', jpsString);
+          } catch (e) {
+            // Do nothing
+          }
           this._topology.forwardTo(msg);
       }
     }
@@ -10987,7 +11569,6 @@ var WebChannel = function (_Service) {
     value: function _handleMyMessage(channel, msg) {
       if (!msg.isService) {
         // User Message
-        // console.log(this.myId + ' User Message ' + JSON.stringify(msg))
         var data = this._userMsg.decode(msg.content, msg.senderId);
         if (data !== undefined) {
           this.onMessage(msg.senderId, data, msg.recipientId === 0);

@@ -3,7 +3,7 @@ import bigStr from '../../util/4mb.txt'
 import { WebChannel } from '../../../src/service/WebChannel'
 
 // const USE_CASES = [2, 3, 7]
-const USE_CASES = [2]
+const USE_CASES = [3]
 const scenarios = [
   // new helper.Scenario('cc') // ,
   // new helper.Scenario('cb'),
@@ -84,7 +84,8 @@ describe('Spray connected', () => {
             done()
           })
           .catch(done.fail)
-      }, 100)
+      // }, 150)
+      }, scenario.nbAgents * 2000)
     })
   })
 

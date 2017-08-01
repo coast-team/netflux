@@ -13,9 +13,9 @@ message Message {
 
     Peers connectedTo = 5;
 
-    uint32 joiningPeerId = 6;
+    uint32 joinedPeerId = 6;
 
-    uint32 joinedPeerId = 7;
+    uint32 joinedPeerIdFinished = 7;
   }
 }
 
