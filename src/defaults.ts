@@ -16,12 +16,6 @@ export interface BotOptions {
   perMessageDeflate: boolean
 }
 
-/**
- * @type {Object}
- * @property {FULL_MESH} defaults.topology Fully connected topology is the only one available for now
- * @property {string} defaults.signalingURL Signaling server url
- * @property {RTCIceServer} defaults.iceServers Set of ice servers for WebRTC
- */
 export const defaults: WebChannelOptions = {
   topology: FULL_MESH,
   signalingURL: 'wss://www.coedit.re:10473',

@@ -71,7 +71,7 @@ export interface TopologyInterface extends Service {
   onChannelError (evt: Event, channel: Channel): void
 
   /**
-   * Call this function before switching to another topology
+   * Call this function before switching to another topology.
    */
   clean (): void
 }
