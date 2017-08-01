@@ -1,3 +1,7 @@
+/**
+ * WebRTC builder module.
+ */
+
 import { ReplaySubject } from 'rxjs/ReplaySubject'
 import { Subject } from 'rxjs/Subject'
 import { Observable } from 'rxjs/Observable'
@@ -7,8 +11,15 @@ import { Service } from './Service'
 import { webRTCBuilder } from '../Protobuf'
 import { Channel } from '../Channel'
 import { WebChannel } from './WebChannel'
-import { WebRTC, CloseEvent } from '../polyfills'
+import { RTCPeerConnection, RTCDataChannel, RTCIceCandidate, CloseEvent } from '../polyfills'
 
+/**
+ * WebRTC builder module.
+ */
+
+/**
+ * Service id.
+ */
 const ID = 0
 
 const CONNECTION_TIMEOUT = 10000
@@ -68,7 +79,7 @@ export class WebRTCBuilder extends Service {
    * Indicates whether WebRTC is supported by the environment.
    */
   static get isSupported (): boolean {
-    return WebRTC !== undefined
+    return RTCPeerConnection !== undefined
   }
 
   channelsFromWebChannel () {
@@ -165,7 +176,7 @@ export class WebRTCBuilder extends Service {
     send: (msg: OfferSent) => void,
     peerId = 1
   ): Promise<Channel> {
-    const pc = new WebRTC.RTCPeerConnection(this.rtcConfiguration)
+    const pc = new RTCPeerConnection(this.rtcConfiguration)
     const remoteCandidateStream = new ReplaySubject()
     this.localCandidates(pc).subscribe(
       iceCandidate => send({ iceCandidate }),
@@ -181,7 +192,7 @@ export class WebRTCBuilder extends Service {
               .then(() => {
                 remoteCandidateStream.subscribe(
                   iceCandidate => {
-                    pc.addIceCandidate(new WebRTC.RTCIceCandidate(iceCandidate))
+                    pc.addIceCandidate(new RTCIceCandidate(iceCandidate))
                       .catch(reject)
                   },
                   err => console.warn(err),
@@ -230,7 +241,7 @@ export class WebRTCBuilder extends Service {
           if (client) {
             [pc, remoteCandidateStream] = client
           } else {
-            pc = new WebRTC.RTCPeerConnection(this.rtcConfiguration)
+            pc = new RTCPeerConnection(this.rtcConfiguration)
             remoteCandidateStream = new ReplaySubject()
             this.localCandidates(pc).subscribe(
               iceCandidate => send({ iceCandidate }, id),
@@ -249,7 +260,7 @@ export class WebRTCBuilder extends Service {
             pc.setRemoteDescription({ type: 'offer', sdp: offer })
               .then(() => remoteCandidateStream.subscribe(
                 iceCandidate => {
-                  pc.addIceCandidate(new WebRTC.RTCIceCandidate(iceCandidate))
+                  pc.addIceCandidate(new RTCIceCandidate(iceCandidate))
                     .catch(err => console.warn(err))
                 },
                 err => console.warn(err),

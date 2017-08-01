@@ -37,6 +37,7 @@ const INNER_ID = 100
  * messages. Every peer in the `WebChannel` can invite another person to join
  * the `WebChannel` and he also possess enough information to be able to add it
  * preserving the current `WebChannel` structure (network topology).
+ * [[include:installation.md]]
  */
 export class WebChannel extends Service {
 

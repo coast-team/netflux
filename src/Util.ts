@@ -4,7 +4,7 @@ import { Channel } from './Channel'
  * Check execution environment.
  */
 export function isBrowser (): boolean {
-  if (typeof window === 'undefined' || (typeof process !== 'undefined' && process.title === 'node')) {
+  if (typeof window === 'undefined') {
     return false
   }
   return true

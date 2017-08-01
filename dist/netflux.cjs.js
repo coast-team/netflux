@@ -1237,7 +1237,7 @@ var Subject_1 = {
  * Check execution environment.
  */
 function isBrowser() {
-    if (typeof window === 'undefined' || (typeof process !== 'undefined' && process.title === 'node')) {
+    if (typeof window === 'undefined') {
         return false;
     }
     return true;
@@ -8429,13 +8429,17 @@ module.exports = {
 },{}]},{},[2]);
 
 /* tslint:disable:variable-name */
-var WebRTC;
+var _RTCPeerConnection;
+var _RTCDataChannel;
+var _RTCIceCandidate;
 var _WebSocket;
 var _TextEncoder;
 var _TextDecoder;
 var _CloseEvent;
 if (isBrowser()) {
-    WebRTC = window;
+    _RTCPeerConnection = RTCPeerConnection;
+    _RTCDataChannel = RTCDataChannel;
+    _RTCIceCandidate = RTCIceCandidate;
     _WebSocket = WebSocket;
     _TextEncoder = TextEncoder;
     _TextDecoder = TextDecoder;
@@ -8443,15 +8447,20 @@ if (isBrowser()) {
 }
 else {
     // #if NODE
+    var textEncoding$1 = require('text-encoding');
     try {
-        WebRTC = require('wrtc');
+        var wrtc = require('wrtc');
+        _RTCPeerConnection = wrtc.RTCPeerConnection;
+        _RTCDataChannel = wrtc.RTCDataChannel;
+        _RTCIceCandidate = wrtc.RTCIceCandidate;
     }
     catch (err) {
         console.warn(err.message);
-        WebRTC = undefined;
+        _RTCPeerConnection = undefined;
+        _RTCDataChannel = undefined;
+        _RTCIceCandidate = undefined;
     }
     _WebSocket = require('uws');
-    var textEncoding$1 = require('text-encoding');
     _TextEncoder = textEncoding$1.TextEncoder;
     _TextDecoder = textEncoding$1.TextDecoder;
     _CloseEvent = (function () {
@@ -9332,6 +9341,15 @@ var ReplayEvent = (function () {
     return ReplayEvent;
 }());
 
+/**
+ * WebRTC builder module.
+ */
+/**
+ * WebRTC builder module.
+ */
+/**
+ * Service id.
+ */
 var ID$1 = 0;
 var CONNECTION_TIMEOUT = 10000;
 /**
@@ -9353,7 +9371,7 @@ var WebRTCBuilder = (function (_super) {
          * Indicates whether WebRTC is supported by the environment.
          */
         get: function () {
-            return WebRTC !== undefined;
+            return _RTCPeerConnection !== undefined;
         },
         enumerable: true,
         configurable: true
@@ -9454,7 +9472,7 @@ var WebRTCBuilder = (function (_super) {
     WebRTCBuilder.prototype.establishChannel = function (stream, send, peerId) {
         var _this = this;
         if (peerId === void 0) { peerId = 1; }
-        var pc = new WebRTC.RTCPeerConnection(this.rtcConfiguration);
+        var pc = new _RTCPeerConnection(this.rtcConfiguration);
         var remoteCandidateStream = new ReplaySubject_2();
         this.localCandidates(pc).subscribe(function (iceCandidate) { return send({ iceCandidate: iceCandidate }); }, function (err) { return console.warn(err); }, function () { return send({ iceCandidate: { candidate: '' } }); });
         return new Promise(function (resolve, reject) {
@@ -9464,7 +9482,7 @@ var WebRTCBuilder = (function (_super) {
                     pc.setRemoteDescription({ type: 'answer', sdp: answer })
                         .then(function () {
                         remoteCandidateStream.subscribe(function (iceCandidate) {
-                            pc.addIceCandidate(new WebRTC.RTCIceCandidate(iceCandidate))
+                            pc.addIceCandidate(new _RTCIceCandidate(iceCandidate))
                                 .catch(reject);
                         }, function (err) { return console.warn(err); }, function () { return subs.unsubscribe(); });
                     })
@@ -9507,7 +9525,7 @@ var WebRTCBuilder = (function (_super) {
                     _b = __read(client, 2), pc = _b[0], remoteCandidateStream = _b[1];
                 }
                 else {
-                    pc = new WebRTC.RTCPeerConnection(_this.rtcConfiguration);
+                    pc = new _RTCPeerConnection(_this.rtcConfiguration);
                     remoteCandidateStream = new ReplaySubject_2();
                     _this.localCandidates(pc).subscribe(function (iceCandidate) { return send({ iceCandidate: iceCandidate }, id); }, function (err) { return console.warn(err); }, function () { return send({ iceCandidate: { candidate: '' } }, id); });
                     _this.clients.set(id, [pc, remoteCandidateStream]);
@@ -9521,7 +9539,7 @@ var WebRTCBuilder = (function (_super) {
                     });
                     pc.setRemoteDescription({ type: 'offer', sdp: offer })
                         .then(function () { return remoteCandidateStream.subscribe(function (iceCandidate) {
-                        pc.addIceCandidate(new WebRTC.RTCIceCandidate(iceCandidate))
+                        pc.addIceCandidate(new _RTCIceCandidate(iceCandidate))
                             .catch(function (err) { return console.warn(err); });
                     }, function (err) { return console.warn(err); }, function () { return _this.clients.delete(id); }); })
                         .then(function () { return pc.createAnswer(); })
@@ -9862,8 +9880,11 @@ var UserMessage = (function () {
         if (data instanceof Uint8Array) {
             return { type: user.Message.Type.U_INT_8_ARRAY, bytes: data };
         }
-        else if (typeof data === 'string' || data instanceof String) {
+        else if (typeof data === 'string') {
             return { type: user.Message.Type.STRING, bytes: textEncoder.encode(data) };
+        }
+        else if (data instanceof String) {
+            return { type: user.Message.Type.STRING, bytes: textEncoder.encode('' + data) };
         }
         else {
             throw new Error('Message neigther a string type or a Uint8Array type');
@@ -9955,6 +9976,7 @@ var INNER_ID = 100;
  * messages. Every peer in the `WebChannel` can invite another person to join
  * the `WebChannel` and he also possess enough information to be able to add it
  * preserving the current `WebChannel` structure (network topology).
+ * [[include:installation.md]]
  */
 var WebChannel = (function (_super) {
     __extends(WebChannel, _super);

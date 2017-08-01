@@ -1,17 +1,19 @@
 {
   "compilerOptions": {
-    "outDir": "./built",
+    "outDir": "build/",
     "allowJs": true,
     "target": "es5",
-    "lib": [ "es6", "dom", "es7" ],
+    "module": "es6",
+    "lib": [ "es6", "es7", "es2015", "es2016", "es2017", "dom" ],
     "moduleResolution": "node",
-    "downlevelIteration": true
+    "downlevelIteration": true,
+    "types": ["text-encoding"]
   },
   "include": [
     "./src/**/*"
   ],
   "exclude": [
     "node_modules",
-    "typings"
+    "!node_modules/@types"
   ]
 }

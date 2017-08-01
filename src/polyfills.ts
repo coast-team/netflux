@@ -3,29 +3,38 @@ import { isBrowser } from './Util'
 
 /* tslint:disable:variable-name */
 
-let WebRTC
+let _RTCPeerConnection
+let _RTCDataChannel
+let _RTCIceCandidate
 let _WebSocket
-let _TextEncoder
-let _TextDecoder
+let _TextEncoder: TextEncoder
+let _TextDecoder: TextDecoder
 let _CloseEvent
 
 if (isBrowser()) {
-  WebRTC = window
+  _RTCPeerConnection = RTCPeerConnection
+  _RTCDataChannel = RTCDataChannel
+  _RTCIceCandidate = RTCIceCandidate
   _WebSocket = WebSocket
   _TextEncoder = TextEncoder
   _TextDecoder = TextDecoder
   _CloseEvent = CloseEvent
 } else {
-  // #if NODE
 
+  // #if NODE
+  const textEncoding = require('text-encoding')
   try {
-    WebRTC = require('wrtc')
+    const wrtc = require('wrtc')
+    _RTCPeerConnection = wrtc.RTCPeerConnection
+    _RTCDataChannel = wrtc.RTCDataChannel
+    _RTCIceCandidate = wrtc.RTCIceCandidate
   } catch (err) {
     console.warn(err.message)
-    WebRTC = undefined
+    _RTCPeerConnection = undefined
+    _RTCDataChannel = undefined
+    _RTCIceCandidate = undefined
   }
   _WebSocket = require('uws')
-  const textEncoding = require('text-encoding')
   _TextEncoder = textEncoding.TextEncoder
   _TextDecoder = textEncoding.TextDecoder
   _CloseEvent = class CloseEvent {
@@ -42,4 +51,12 @@ if (isBrowser()) {
   }
   // #endif
 }
-export { WebRTC, _WebSocket as WebSocket, _TextEncoder as TextEncoder, _TextDecoder as TextDecoder, _CloseEvent as CloseEvent }
+export {
+  _RTCPeerConnection as RTCPeerConnection,
+  _RTCDataChannel as RTCDataChannel,
+  _RTCIceCandidate as RTCIceCandidate,
+  _WebSocket as WebSocket,
+  _TextEncoder as TextEncoder,
+  _TextDecoder as TextDecoder,
+  _CloseEvent as CloseEvent
+}

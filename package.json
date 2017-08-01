@@ -30,6 +30,7 @@
   ],
   "scripts": {
     "build": "rm -rf dist && rollup --config",
+    "build:doc": "rm -rf dist/es6 && tsc -p tsconfig.doc.json",
     "build:testbot": "rollup -c test/util/rollup.config.js",
     "start:testbot": "pm2 gracefulReload test/util/process.yml",
     "pretest": "npm run build && npm run build:testbot && npm run start:testbot",
@@ -43,7 +44,6 @@
     "postproto": "babel -o src/Protobuf.js src/Protobuf.es6.js; rm src/Protobuf.es6.js",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
     "lint": "tslint src/**/* -e 'src/**/*.proto' ",
-    "doc": "esdoc -c esdoc.json",
     "precommit": "npm run test:coverage",
     "commitmsg": "validate-commit-msg",
     "cz": "git-cz"
@@ -60,8 +60,6 @@
   },
   "devDependencies": {
     "@types/text-encoding": "0.0.31",
-    "@types/websocket": "0.0.34",
-    "@types/webrtc": "0.0.21",
     "babel-preset-env": "^1.6.0",
     "commitizen": "^2.4.6",
     "cz-conventional-changelog": "^2.0.0",

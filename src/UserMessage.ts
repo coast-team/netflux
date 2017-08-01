@@ -104,8 +104,10 @@ export class UserMessage {
   userDataToType (data): { type: number , bytes: Uint8Array } {
     if (data instanceof Uint8Array) {
       return { type: user.Message.Type.U_INT_8_ARRAY, bytes: data }
-    } else if (typeof data === 'string' || data instanceof String) {
+    } else if (typeof data === 'string') {
       return { type: user.Message.Type.STRING, bytes: textEncoder.encode(data) }
+    } else if (data instanceof String) {
+      return { type: user.Message.Type.STRING, bytes: textEncoder.encode('' + data) }
     } else {
       throw new Error('Message neigther a string type or a Uint8Array type')
     }

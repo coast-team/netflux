@@ -67,7 +67,7 @@ export class Channel {
   }
 
   private isOpen (): boolean {
-    const state = this.connection.readyState
+    const state: any = this.connection.readyState
     return state === 1 || state === 'open'
   }
 }
