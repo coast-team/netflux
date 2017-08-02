@@ -13,13 +13,13 @@ const delay = 1000 * 60 * 2
 /**
  * Timeout value in milliseconds for exchanges
  */
-const timeout = 1000 * 60
+const timeout = 1000 * 30
 
 /**
  * Value in milliseconds representing the maximum time expected
  * of message traveling between two peers (used by _clearReceived)
  */
-const delayPerConnection = 100 * 600
+const delayPerConnection = 100 * 300
 
 export const SPRAY = 15
 
@@ -30,7 +30,7 @@ export class SprayService extends TopologyInterface {
   channels: Set<Channel>
   jps: Map<number, Channel>
   p: PartialView
-  received: Array<Array<number>>
+  received: Array<Array<number|ArrayBuffer>>
   wc: WebChannel
   channelsSubscription: any // Type ??
   interval: NodeJS.Timer
@@ -61,7 +61,7 @@ export class SprayService extends TopologyInterface {
     )
 
     this.channelsSubscription = this.wc.channelBuilder.channels().subscribe(
-      ch => {console.warn(this.wc.myId + ` chanBuild => jps.set(${ch.peerId}, ${ch.peerId})`); (this.jps.set(ch.peerId, ch))},
+      ch => {console.info(this.wc.myId + ` chanBuild => jps.set(${ch.peerId}, ${ch.peerId})`); (this.jps.set(ch.peerId, ch))},
       err => console.error('Spray set joining peer Error', err)
     )
 
@@ -86,7 +86,7 @@ export class SprayService extends TopologyInterface {
     for (let [key, value] of this.jps) {
       jpsString += `${key} => ${value.peerId}\n`
     }
-    console.warn(this.wc.myId + ' addJoining => this.jps.set(' + newPeerId + ',' + channel.peerId + ')\n', jpsString)
+    console.info(this.wc.myId + ' addJoining => this.jps.set(' + newPeerId + ',' + channel.peerId + ')\n', jpsString)
     this.jps.set(+channel.peerId, channel)
 
     // First joining peer
@@ -134,7 +134,7 @@ export class SprayService extends TopologyInterface {
     for (let [key, value] of this.jps) {
       jpsString += `${key} => ${value.peerId}\n`
     }
-    console.warn(this.wc.myId + ' initJoining => this.jps.set(' + this.wc.myId + ',' + ch.peerId + ')\n', jpsString)
+    console.info(this.wc.myId + ' initJoining => this.jps.set(' + this.wc.myId + ',' + ch.peerId + ')\n', jpsString)
     this.jps.set(this.wc.myId, ch)
     this.peerJoined(ch)
   }
@@ -142,19 +142,19 @@ export class SprayService extends TopologyInterface {
   /**
    * Send message to all WebChannel members
    */
-  send (msg: {senderId: number, recipientId: number, isService: boolean, content: Uint8Array, meta: any}): void {
+  async send (msg: {senderId: number, recipientId: number, isService: boolean, content: Uint8Array, meta: any}): Promise<void> {
     if (this.wc.state === DISCONNECTED) {
-      console.error(this.wc.myId + ' send break (disconnected) ', msg)
+      // console.error(this.wc.myId + ' send break (disconnected) ', msg)
       return
     }
 
     if (msg.recipientId === undefined) {
-      console.error(this.wc.myId + ' send break (no recipientId)', msg)
+      // console.error(this.wc.myId + ' send break (no recipientId)', msg)
       return
     }
 
     if (msg.recipientId === this.wc.myId) {
-      console.error(this.wc.myId + ' send break (to me)', msg)
+      // console.error(this.wc.myId + ' send break (to me)', msg)
       return
     }
 
@@ -183,7 +183,7 @@ export class SprayService extends TopologyInterface {
     this.p.forEach((arc) => {
       for (let ch of this.channels) {
         if (ch !== undefined && ch.peerId === arc[0]) {
-          console.warn(this.wc.myId + ' channel found ' + ch.peerId)
+          console.info(this.wc.myId + ' channel found ' + ch.peerId)
           listChan.push(ch)
           return
         }
@@ -192,15 +192,20 @@ export class SprayService extends TopologyInterface {
     })
 
     if (this.jps.has(msg.recipientId)) {
-      console.warn(this.wc.myId + ' need to send to joining peer')
+      console.info(this.wc.myId + ' need to send to joining peer')
       for (let [id, ch] of this.jps) {
         if (id === msg.recipientId || id === this.wc.myId) {
-          this.received.push([msg.senderId, msg.meta.timestamp, msg.content.length])
+
+          let valH = undefined
+
+          await crypto.subtle.digest('SHA-256', msg.content.buffer).then((h) => {valH = h})
+
+          this.received.push([msg.senderId, msg.meta.timestamp, valH])
           let jpsString = '\njps : '
           for (let [key, value] of this.jps) {
             jpsString += `${key} => ${value.peerId}\n`
           }
-          console.warn(this.wc.myId + ' message sent to ' + msg.recipientId + ' (joining peer)', msg, jpsString)
+          // console.warn(this.wc.myId + ' message sent to ' + msg.recipientId + ' (joining peer)', msg, jpsString)
           ch.send((bytes))
           return
         }
@@ -213,36 +218,40 @@ export class SprayService extends TopologyInterface {
     listChan.forEach((ch) => {
       listChanString += ch.peerId + '\n'
     })
-    console.warn(this.wc.myId + ' listChan : ' + listChanString)
+    console.info(this.wc.myId + ' listChan : ' + listChanString)
 
     for (let ch of listChan) {
       if (ch !== undefined && ch.peerId !== msg.senderId) {
-        console.warn(this.wc.myId + ' sending to ' + ch.peerId)
+        console.info(this.wc.myId + ' sending to ' + ch.peerId)
         ch.send(bytes)
       }
     }
 
-    console.warn(this.wc.myId + ` end send ${msg.senderId} => ${msg.recipientId}`)
+    console.info(this.wc.myId + ` end send ${msg.senderId} => ${msg.recipientId}`)
 
-    this.received.push([msg.senderId, msg.meta.timestamp, msg.content.length])
+    let valH = undefined
+
+    await crypto.subtle.digest('SHA-256', msg.content.buffer).then((h) => {valH = h})
+
+    this.received.push([msg.senderId, msg.meta.timestamp, valH])
   }
 
   /**
    * Send message to a specific peer (recipientId)
    */
-  sendTo (msg: {senderId: number, recipientId: number, isService: boolean, content: Uint8Array, meta: any}): any {
+  async sendTo (msg: {senderId: number, recipientId: number, isService: boolean, content: Uint8Array, meta: any}): Promise<any> {
     if (this.wc.state === DISCONNECTED) {
-      console.error(this.wc.myId + ' sendTo break (disconnected) ', msg)
+      // console.error(this.wc.myId + ' sendTo break (disconnected) ', msg)
       return
     }
 
     if (msg.recipientId === undefined) {
-      console.error(this.wc.myId + ' sendTo break (no recipientId)', msg)
+      // console.error(this.wc.myId + ' sendTo break (no recipientId)', msg)
       return
     }
 
     if (msg.recipientId === this.wc.myId) {
-      console.error(this.wc.myId + ' sendTo break (to me)', msg)
+      // console.error(this.wc.myId + ' sendTo break (to me)', msg)
       return
     }
 
@@ -275,6 +284,7 @@ export class SprayService extends TopologyInterface {
     const bytes = this.wc._encode(msg)
 
     if (this.p.length === 0) {
+      console.info(this.wc.myId + ' empty partialView')
       for (let ch of this.channels) {
         if (ch !== undefined && ch.peerId === msg.recipientId) {
           return ch.send(bytes)
@@ -286,7 +296,7 @@ export class SprayService extends TopologyInterface {
     this.p.forEach((arc) => {
       for (let ch of this.channels) {
         if (ch !== undefined && ch.peerId === arc[0]) {
-          console.warn(this.wc.myId + ' channel found ' + ch.peerId)
+          console.info(this.wc.myId + ' channel found ' + ch.peerId)
           listChan.push(ch)
           return
         }
@@ -296,35 +306,47 @@ export class SprayService extends TopologyInterface {
 
     for (let ch of listChan) {
       if (ch !== undefined && ch.peerId === msg.recipientId) {
-        this.received.push([msg.senderId, msg.meta.timestamp, msg.content.length])
-        console.warn(this.wc.myId + ' message sent to ' + ch.peerId)
+        let valH = undefined
+
+        await crypto.subtle.digest('SHA-256', msg.content.buffer).then((h) => {valH = h})
+
+        this.received.push([msg.senderId, msg.meta.timestamp, valH])
+        console.info(this.wc.myId + ' message sent to ' + ch.peerId)
         return ch.send(bytes)
       }
     }
 
     for (let [id, ch] of this.jps) {
       if (id === msg.recipientId || id === this.wc.myId) {
-        this.received.push([msg.senderId, msg.meta.timestamp, msg.content.length])
+        let valH = undefined
+
+        await crypto.subtle.digest('SHA-256', msg.content.buffer).then((h) => {valH = h})
+
+        this.received.push([msg.senderId, msg.meta.timestamp, valH])
         let jpsString = '\njps : '
         for (let [key, value] of this.jps) {
           jpsString += `${key} => ${value.peerId}\n`
         }
-        console.warn(this.wc.myId + ' message sent to ' + msg.recipientId + ' through broadcast', msg, '\n' + this.p.toString(), jpsString)
+        // console.warn(this.wc.myId + ' message sent to ' + msg.recipientId + ' through broadcast', msg, '\n' + this.p.toString(),
+        //  jpsString)
         return ch.send((bytes))
       }
     }
 
-    return console.error(this.wc.myId + ' The recipient could not be found ', msg.recipientId, msg)
+    // console.error(this.wc.myId + ' The recipient could not be found ', msg.recipientId, msg)
+    console.error(this.wc.myId + ' The recipient could not be found ', msg.recipientId)
+    this.forward(msg)
+    return
   }
 
   forwardTo (msg: {senderId: number, recipientId: number, isService: boolean, content: Uint8Array, meta: any}): void {
     if (this.wc.state === DISCONNECTED) {
-      console.error(this.wc.myId + ' forwardTo break (disconnected) ', msg)
+      // console.error(this.wc.myId + ' forwardTo break (disconnected) ', msg)
       return
     }
 
     if (msg.recipientId === undefined) {
-      console.error(this.wc.myId + ' forwardTo break (no recipientId)', msg)
+      // console.error(this.wc.myId + ' forwardTo break (no recipientId)', msg)
       return
     }
 
@@ -332,32 +354,47 @@ export class SprayService extends TopologyInterface {
     this.forward(msg)
   }
 
-  forward (msg: {senderId: number, recipientId: number, isService: boolean, content: Uint8Array, meta: any}): void {
+  async forward (msg: {senderId: number, recipientId: number, isService: boolean, content: Uint8Array, meta: any}): Promise<void> {
     if (this.wc.state === DISCONNECTED) {
-      console.error(this.wc.myId + ' forward break (disconnected) ', msg)
+      // console.error(this.wc.myId + ' forward break (disconnected) ', msg)
       return
     }
     if (msg.recipientId === undefined) {
-      console.error(this.wc.myId + ' forward break (no recipientId)', msg)
+      // console.error(this.wc.myId + ' forward break (no recipientId)', msg)
       return
     }
 
     if (msg.meta !== undefined && msg.meta.timestamp !== undefined) {
+      let rcvdString = ''
+      for (let [sId, ts, l] of this.received) {
+        if (rcvdString.length !== 0) {
+          rcvdString += ', '
+        }
+        rcvdString += `[${sId},${ts},${l}]`
+      }
+      console.info(this.wc.myId + ' received : ' + rcvdString)
+
       let alreadyReceived = false
 
+      let valH = undefined
+
+      await crypto.subtle.digest('SHA-256', msg.content.buffer).then((h) => valH = h)
+
       this.received.forEach( (message) => {
-        if (!alreadyReceived && message[0] === msg.senderId && message[1] === msg.meta.timestamp && message[2] === msg.content.length) {
+        if (!alreadyReceived && message[0] === msg.senderId && message[1] === msg.meta.timestamp
+           && this.areHashEqual(<ArrayBuffer> message[2], valH)) {
           alreadyReceived = true
         }
       })
 
       if (alreadyReceived) {
-        console.info(this.wc.myId + ' message already received ', msg)
+        // console.info(this.wc.myId + ' message already received ', msg)
+        console.error(this.wc.myId + ` message already received ${msg.senderId} => ${msg.recipientId}, ${msg.meta.timestamp}`)
         return
       }
     }
 
-    console.info(this.wc.myId + ` forward ${msg.senderId} => ${msg.recipientId}`, msg)
+    // console.info(this.wc.myId + ` forward ${msg.senderId} => ${msg.recipientId}`, msg)
 
     let peersId = []
     this.p.forEach( (arc) => {
@@ -372,11 +409,15 @@ export class SprayService extends TopologyInterface {
   }
 
   leave (): void {
-    console.info(this.wc.myId + ' leave ', this.wc.members)
+    console.info(this.wc.myId + ' leave ')
     // TODO ?
     for (let c of this.channels) {
       c.clearHandlers()
       c.close()
+    }
+    for (let ch of this.jps.values()) {
+      ch.clearHandlers()
+      ch.close()
     }
     this.channels.clear()
     clearTimeout(this.timeoutExch)
@@ -406,7 +447,7 @@ export class SprayService extends TopologyInterface {
           ch.close()
         }
         this.channels.clear()
-        console.warn(this.wc.myId + ' jps.clear')
+        console.info(this.wc.myId + ' jps.clear')
         this.jps.clear()
       } else {
         this.channels.delete(channel)
@@ -420,13 +461,13 @@ export class SprayService extends TopologyInterface {
           for (let [key, value] of this.jps) {
             jpsString += `${key} => ${value.peerId}\n`
           }
-          console.warn(this.wc.myId + ' onChanClose => this.jps.delete(' + id + ')\n', jpsString)
+          console.info(this.wc.myId + ' onChanClose => this.jps.delete(' + id + ')\n', jpsString)
           this.jps.delete(id)
           jpsString = '\njps : '
           for (let [key, value] of this.jps) {
             jpsString += `${key} => ${value.peerId}\n`
           }
-          console.warn(this.wc.myId + ' deleted of jps ' + id + '\n', jpsString)
+          console.info(this.wc.myId + ' deleted of jps ' + id + '\n', jpsString)
           return
         }
       }
@@ -448,7 +489,7 @@ export class SprayService extends TopologyInterface {
    *
    * @param {ServiceMessage} M {channel, senderId, recipientId, msg, timestamp}
    */
-  private _handleSvcMsg (M: ServiceMessage): void {
+  private async _handleSvcMsg (M: ServiceMessage): Promise<void> {
     if (this.wc.state === DISCONNECTED) {
       console.info(this.wc.myId + ' _handleSvcMsg break (disconnected) ', M)
       return
@@ -467,18 +508,25 @@ export class SprayService extends TopologyInterface {
       console.info(this.wc.myId + ' received : ' + rcvdString)
       let alreadyReceived = false
 
+      let valH = undefined
+
+      await crypto.subtle.digest('SHA-256', super.encode(msg).buffer)
+                        .then((h) => {valH = h})
+
       this.received.forEach( (message) => {
-        if (!alreadyReceived && message[0] === M.senderId && message[1] === M.timestamp && message[2] === msg.length) {
+        if (!alreadyReceived && message[0] === M.senderId && message[1] === M.timestamp
+           && this.areHashEqual(<ArrayBuffer> message[2], valH)) {
           alreadyReceived = true
         }
       })
 
       if (alreadyReceived) {
-        console.info(this.wc.myId + ' message already received ', msg)
+        // console.info(this.wc.myId + ' message already received ', msg)
+        console.error(this.wc.myId + ` message already received ${msg.senderId} => ${msg.recipientId}, ${msg.meta.timestamp}`)
         return
       }
 
-      this.received.push([M.senderId, M.timestamp, msg.length])
+      this.received.push([M.senderId, M.timestamp, valH])
       let rcvd = ''
       this.received.forEach((r) => {
         if (rcvd.length === 0) {
@@ -526,7 +574,7 @@ export class SprayService extends TopologyInterface {
       for (let [key, value] of this.jps) {
         jpsString += `${key} => ${value.peerId}\n`
       }
-      console.warn(this.wc.myId + ` connectTo => this.jps.set(${peer}, ${M.channel.peerId})\n`, jpsString)
+      console.info(this.wc.myId + ` connectTo => this.jps.set(${peer}, ${M.channel.peerId})\n`, jpsString)
       this.jps.set(peer, M.channel)
       let counter = 0
       const connected = []
@@ -539,7 +587,7 @@ export class SprayService extends TopologyInterface {
         }
         this.wc.channelBuilder.connectTo(peer)
             .then(ch => {
-              console.warn(this.wc.myId + ' passed here')
+              console.info(this.wc.myId + ' passed here')
 
               this.peerJoined(ch)
 
@@ -549,13 +597,13 @@ export class SprayService extends TopologyInterface {
                 meta: { timestamp: Date.now() }
               })
 
-              console.warn(this.wc.myId + ' counter : ' + counter)
+              console.info(this.wc.myId + ' counter : ' + counter)
               if (++counter === 1) {
                 resolve()
               }
             })
             .catch(err => {
-              console.warn(this.wc.myId + ' failed to connect to ' + peer, err.message)
+              console.error(this.wc.myId + ' failed to connect to ' + peer, err.message)
               if (++counter === 1) {
                 resolve()
               }
@@ -568,7 +616,7 @@ export class SprayService extends TopologyInterface {
           meta: { timestamp: Date.now() }
         })
 
-        console.warn(this.wc.myId + ' connected to ' + peer + '\npartialView : ' + this.p.toString(), this.wc.members)
+        console.info(this.wc.myId + ' connected to ' + peer + '\npartialView : ' + this.p.toString(), this.wc.members)
       })
       break
 
@@ -586,7 +634,7 @@ export class SprayService extends TopologyInterface {
         this.wc._joinSucceed()
 
       } else if (this.jps.has(msg.joinedPeerIdFinished)) {
-        console.warn(this.wc.myId + ' blablabla ' + msg.joinedPeerIdFinished)
+        console.info(this.wc.myId + ' blablabla ' + msg.joinedPeerIdFinished)
         this.peerJoined(this.jps.get(msg.joinedPeerIdFinished))
 
       }
@@ -595,13 +643,13 @@ export class SprayService extends TopologyInterface {
       for (let [key, value] of this.jps) {
         jpsString += `${key} => ${value.peerId}\n`
       }
-      console.warn(this.wc.myId + ' joinedPeerIdFinished => this.jps.delete(' + msg.joinedPeerIdFinished + ')\n', jpsString)
+      console.info(this.wc.myId + ' joinedPeerIdFinished => this.jps.delete(' + msg.joinedPeerIdFinished + ')\n', jpsString)
       this.jps.delete(msg.joinedPeerIdFinished)
       jpsString = '\njps : '
       for (let [key, value] of this.jps) {
         jpsString += `${key} => ${value.peerId}\n`
       }
-      console.warn(this.wc.myId + ' deleted of jps ' + msg.joinedPeerIdFinished + '\n', jpsString)
+      console.info(this.wc.myId + ' deleted of jps ' + msg.joinedPeerIdFinished + '\n', jpsString)
       break
 
     }
@@ -611,11 +659,11 @@ export class SprayService extends TopologyInterface {
       // TODO : iJoin or empty var needJoin
       if (this.deportedJoin.get(msg.joinedPeerId)) {
         this.deportedJoin.set(msg.joinedPeerId, this.deportedJoin.get(msg.joinedPeerId) - 1)
-        console.warn(this.wc.myId + ' still ' + this.deportedJoin.get(msg.joinedPeerId) + ' peers joining ' + msg.joinedPeerId)
+        console.info(this.wc.myId + ' still ' + this.deportedJoin.get(msg.joinedPeerId) + ' peers joining ' + msg.joinedPeerId)
       }
 
       if (this.deportedJoin.get(msg.joinedPeerId) === 0) {
-        console.error(this.wc.myId + ' no more peer joining ' + msg.joinedPeerId, this.wc.members)
+        console.info(this.wc.myId + ' no more peer joining ' + msg.joinedPeerId, this.wc.members)
 
         this.forward({
           senderId: this.wc.myId,
@@ -633,20 +681,6 @@ export class SprayService extends TopologyInterface {
         }
         this.peerJoined(ch)
       }
-
-      // if (msg.joinedPeerId !== this.wc.myId) {
-      //   let jpsString = '\njps : '
-      //   for (let [key, value] of this.jps) {
-      //     jpsString += `${key} => ${value.peerId}\n`
-      //   }
-      //   console.warn(this.wc.myId + ' joinedPeerId => this.jps.delete(' + msg.joinedPeerId + ')\n', jpsString)
-      //   this.jps.delete(msg.joinedPeerId)
-      //   jpsString = '\njps : '
-      //   for (let [key, value] of this.jps) {
-      //     jpsString += `${key} => ${value.peerId}\n`
-      //   }
-      //   console.warn(this.wc.myId + ' deleted of jps ' + msg.joinedPeerId + '\n', jpsString, this.wc.members)
-      // }
       break
 
     }
@@ -830,13 +864,15 @@ export class SprayService extends TopologyInterface {
   }
 
   private _clearReceived (): void {
-    console.info(this.wc.myId + ' _clearReceived ')
+    // TODO : there are different timestamp bases
+    console.error(this.wc.myId + ' _clearReceived ')
     let clearDelay = Math.floor(Math.exp(this.p.length)) * 2 * delayPerConnection
 
     let i = 0
     while (i < this.received.length) {
-      let ts = this.received[i][1]
+      let ts = +this.received[i][1]
 
+      // Bad condition
       if (Date.now() - ts > clearDelay) {
         this.received.splice(i, 1)
       } else {
@@ -844,7 +880,7 @@ export class SprayService extends TopologyInterface {
       }
     }
 
-    setTimeout(() => this._clearReceived(), clearDelay)
+    this.timeoutReceived = setTimeout(() => this._clearReceived(), clearDelay)
   }
 
   peerJoined (ch: Channel): void {
@@ -864,7 +900,7 @@ export class SprayService extends TopologyInterface {
       }
     }
 
-    console.warn(this.wc.myId + ' peerJoined => this.jps.delete(' + ch.peerId + ')\n', jpsString)
+    console.info(this.wc.myId + ' peerJoined => this.jps.delete(' + ch.peerId + ')\n', jpsString)
     this.jps.delete(ch.peerId)
     jpsString = '\njps : '
     for (let [key, value] of this.jps) {
@@ -875,7 +911,28 @@ export class SprayService extends TopologyInterface {
       }
     }
 
-    console.warn(this.wc.myId + ' deleted of jps ' + ch.peerId + '\n', jpsString, this.p.toString(), this.wc.members)
+    console.info(this.wc.myId + ' deleted of jps ' + ch.peerId + '\n', jpsString, this.p.toString(), this.wc.members)
     this.wc._onPeerJoin(ch.peerId)
+  }
+
+  areHashEqual (h1: ArrayBuffer, h2: ArrayBuffer): Boolean {
+    console.info(this.wc.myId + ` areHashEqual (${typeof h1}, ${typeof h2})`)
+    let view1 = new DataView(h1)
+    let view2 = new DataView(h2)
+
+    if (view1.byteLength !== view2.byteLength) {
+      return false
+    }
+
+    for (let i = 0; i < view1.byteLength; i += 4) {
+      let value1 = view1.getUint32(i)
+      let value2 = view2.getUint32(i)
+
+      if (value1 !== value2) {
+        return false
+      }
+    }
+
+    return true
   }
 }

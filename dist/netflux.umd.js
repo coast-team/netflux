@@ -5464,12 +5464,12 @@ var delay = 1000 * 60 * 2;
 /**
  * Timeout value in milliseconds for exchanges
  */
-var timeout = 1000 * 60;
+var timeout = 1000 * 30;
 /**
  * Value in milliseconds representing the maximum time expected
  * of message traveling between two peers (used by _clearReceived)
  */
-var delayPerConnection = 100 * 600;
+var delayPerConnection = 100 * 300;
 var SPRAY = 15;
 var SprayService = function (_TopologyInterface) {
     inherits(SprayService, _TopologyInterface);
@@ -5508,7 +5508,7 @@ var SprayService = function (_TopologyInterface) {
                 return _this2.leave();
             });
             this.channelsSubscription = this.wc.channelBuilder.channels().subscribe(function (ch) {
-                console.warn(_this2.wc.myId + (' chanBuild => jps.set(' + ch.peerId + ', ' + ch.peerId + ')'));_this2.jps.set(ch.peerId, ch);
+                console.info(_this2.wc.myId + (' chanBuild => jps.set(' + ch.peerId + ', ' + ch.peerId + ')'));_this2.jps.set(ch.peerId, ch);
             }, function (err) {
                 return console.error('Spray set joining peer Error', err);
             });
@@ -5563,7 +5563,7 @@ var SprayService = function (_TopologyInterface) {
                 }
             }
 
-            console.warn(this.wc.myId + ' addJoining => this.jps.set(' + newPeerId + ',' + channel.peerId + ')\n', jpsString);
+            console.info(this.wc.myId + ' addJoining => this.jps.set(' + newPeerId + ',' + channel.peerId + ')\n', jpsString);
             this.jps.set(+channel.peerId, channel);
             // First joining peer
             if (this.wc.members.slice().length === 0) {
@@ -5635,7 +5635,7 @@ var SprayService = function (_TopologyInterface) {
                 }
             }
 
-            console.warn(this.wc.myId + ' initJoining => this.jps.set(' + this.wc.myId + ',' + ch.peerId + ')\n', jpsString);
+            console.info(this.wc.myId + ' initJoining => this.jps.set(' + this.wc.myId + ',' + ch.peerId + ')\n', jpsString);
             this.jps.set(this.wc.myId, ch);
             this.peerJoined(ch);
         }
@@ -5646,170 +5646,286 @@ var SprayService = function (_TopologyInterface) {
     }, {
         key: 'send',
         value: function send(msg) {
-            var _this4 = this;
+            return __awaiter(this, void 0, void 0, regeneratorRuntime.mark(function _callee() {
+                var _this4 = this;
 
-            if (this.wc.state === DISCONNECTED) {
-                console.error(this.wc.myId + ' send break (disconnected) ', msg);
-                return;
-            }
-            if (msg.recipientId === undefined) {
-                console.error(this.wc.myId + ' send break (no recipientId)', msg);
-                return;
-            }
-            if (msg.recipientId === this.wc.myId) {
-                console.error(this.wc.myId + ' send break (to me)', msg);
-                return;
-            }
-            console.info(this.wc.myId + (' send ' + msg.senderId + ' => ' + msg.recipientId));
-            // console.info(this.wc.myId + ' send ' + JSON.stringify(msg))
-            // try {
-            //   console.info(this.wc.myId + ' content1 : ' + JSON.stringify(super.decode(service.Message.decode(msg.content).content)))
-            // } catch (e) {
-            //   try {
-            //     console.info(this.wc.myId + ' content2 : ' + JSON.stringify(channelBuilder.Message.decode(msg.content)))
-            //   } catch (e2) {
-            //   }
-            // }
-            if (msg.meta === undefined || msg.meta.timestamp === undefined) {
-                if (msg.meta === undefined) {
-                    msg.meta = {};
-                }
-                msg.meta.timestamp = Date.now();
-            }
-            var bytes = this.wc._encode(msg);
-            var listChan = [];
-            this.p.forEach(function (arc) {
-                var _iteratorNormalCompletion3 = true;
-                var _didIteratorError3 = false;
-                var _iteratorError3 = undefined;
+                var bytes, listChan, _iteratorNormalCompletion4, _didIteratorError4, _iteratorError4, _iterator4, _step4, _step4$value, id, ch, _valH, jpsString, _iteratorNormalCompletion5, _didIteratorError5, _iteratorError5, _iterator5, _step5, _step5$value, key, value, listChanString, _iteratorNormalCompletion6, _didIteratorError6, _iteratorError6, _iterator6, _step6, valH;
 
-                try {
-                    for (var _iterator3 = _this4.channels[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-                        var ch = _step3.value;
+                return regeneratorRuntime.wrap(function _callee$(_context) {
+                    while (1) {
+                        switch (_context.prev = _context.next) {
+                            case 0:
+                                if (!(this.wc.state === DISCONNECTED)) {
+                                    _context.next = 2;
+                                    break;
+                                }
 
-                        if (ch !== undefined && ch.peerId === arc[0]) {
-                            console.warn(_this4.wc.myId + ' channel found ' + ch.peerId);
-                            listChan.push(ch);
-                            return;
-                        }
-                    }
-                } catch (err) {
-                    _didIteratorError3 = true;
-                    _iteratorError3 = err;
-                } finally {
-                    try {
-                        if (!_iteratorNormalCompletion3 && _iterator3.return) {
-                            _iterator3.return();
-                        }
-                    } finally {
-                        if (_didIteratorError3) {
-                            throw _iteratorError3;
-                        }
-                    }
-                }
+                                return _context.abrupt('return');
 
-                console.warn(_this4.wc.myId + ' channel not found ' + arc[0]);
-            });
-            if (this.jps.has(msg.recipientId)) {
-                console.warn(this.wc.myId + ' need to send to joining peer');
-                var _iteratorNormalCompletion4 = true;
-                var _didIteratorError4 = false;
-                var _iteratorError4 = undefined;
+                            case 2:
+                                if (!(msg.recipientId === undefined)) {
+                                    _context.next = 4;
+                                    break;
+                                }
 
-                try {
-                    for (var _iterator4 = this.jps[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-                        var _step4$value = slicedToArray(_step4.value, 2),
-                            id = _step4$value[0],
-                            ch = _step4$value[1];
+                                return _context.abrupt('return');
 
-                        if (id === msg.recipientId || id === this.wc.myId) {
-                            this.received.push([msg.senderId, msg.meta.timestamp, msg.content.length]);
-                            var jpsString = '\njps : ';
-                            var _iteratorNormalCompletion5 = true;
-                            var _didIteratorError5 = false;
-                            var _iteratorError5 = undefined;
+                            case 4:
+                                if (!(msg.recipientId === this.wc.myId)) {
+                                    _context.next = 6;
+                                    break;
+                                }
 
-                            try {
-                                for (var _iterator5 = this.jps[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-                                    var _step5$value = slicedToArray(_step5.value, 2),
-                                        key = _step5$value[0],
-                                        value = _step5$value[1];
+                                return _context.abrupt('return');
+
+                            case 6:
+                                console.info(this.wc.myId + (' send ' + msg.senderId + ' => ' + msg.recipientId));
+                                // console.info(this.wc.myId + ' send ' + JSON.stringify(msg))
+                                // try {
+                                //   console.info(this.wc.myId + ' content1 : ' + JSON.stringify(super.decode(service.Message.decode(msg.content).content)))
+                                // } catch (e) {
+                                //   try {
+                                //     console.info(this.wc.myId + ' content2 : ' + JSON.stringify(channelBuilder.Message.decode(msg.content)))
+                                //   } catch (e2) {
+                                //   }
+                                // }
+                                if (msg.meta === undefined || msg.meta.timestamp === undefined) {
+                                    if (msg.meta === undefined) {
+                                        msg.meta = {};
+                                    }
+                                    msg.meta.timestamp = Date.now();
+                                }
+                                bytes = this.wc._encode(msg);
+                                listChan = [];
+
+                                this.p.forEach(function (arc) {
+                                    var _iteratorNormalCompletion3 = true;
+                                    var _didIteratorError3 = false;
+                                    var _iteratorError3 = undefined;
+
+                                    try {
+                                        for (var _iterator3 = _this4.channels[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+                                            var ch = _step3.value;
+
+                                            if (ch !== undefined && ch.peerId === arc[0]) {
+                                                console.info(_this4.wc.myId + ' channel found ' + ch.peerId);
+                                                listChan.push(ch);
+                                                return;
+                                            }
+                                        }
+                                    } catch (err) {
+                                        _didIteratorError3 = true;
+                                        _iteratorError3 = err;
+                                    } finally {
+                                        try {
+                                            if (!_iteratorNormalCompletion3 && _iterator3.return) {
+                                                _iterator3.return();
+                                            }
+                                        } finally {
+                                            if (_didIteratorError3) {
+                                                throw _iteratorError3;
+                                            }
+                                        }
+                                    }
+
+                                    console.warn(_this4.wc.myId + ' channel not found ' + arc[0]);
+                                });
+
+                                if (!this.jps.has(msg.recipientId)) {
+                                    _context.next = 66;
+                                    break;
+                                }
+
+                                console.info(this.wc.myId + ' need to send to joining peer');
+                                _iteratorNormalCompletion4 = true;
+                                _didIteratorError4 = false;
+                                _iteratorError4 = undefined;
+                                _context.prev = 16;
+                                _iterator4 = this.jps[Symbol.iterator]();
+
+                            case 18:
+                                if (_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done) {
+                                    _context.next = 50;
+                                    break;
+                                }
+
+                                _step4$value = slicedToArray(_step4.value, 2), id = _step4$value[0], ch = _step4$value[1];
+
+                                if (!(id === msg.recipientId || id === this.wc.myId)) {
+                                    _context.next = 47;
+                                    break;
+                                }
+
+                                _valH = undefined;
+                                _context.next = 24;
+                                return crypto.subtle.digest('SHA-256', msg.content.buffer).then(function (h) {
+                                    _valH = h;
+                                });
+
+                            case 24:
+                                this.received.push([msg.senderId, msg.meta.timestamp, _valH]);
+                                jpsString = '\njps : ';
+                                _iteratorNormalCompletion5 = true;
+                                _didIteratorError5 = false;
+                                _iteratorError5 = undefined;
+                                _context.prev = 29;
+
+                                for (_iterator5 = this.jps[Symbol.iterator](); !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+                                    _step5$value = slicedToArray(_step5.value, 2), key = _step5$value[0], value = _step5$value[1];
 
                                     jpsString += key + ' => ' + value.peerId + '\n';
                                 }
-                            } catch (err) {
+                                // console.warn(this.wc.myId + ' message sent to ' + msg.recipientId + ' (joining peer)', msg, jpsString)
+                                _context.next = 37;
+                                break;
+
+                            case 33:
+                                _context.prev = 33;
+                                _context.t0 = _context['catch'](29);
                                 _didIteratorError5 = true;
-                                _iteratorError5 = err;
-                            } finally {
-                                try {
-                                    if (!_iteratorNormalCompletion5 && _iterator5.return) {
-                                        _iterator5.return();
-                                    }
-                                } finally {
-                                    if (_didIteratorError5) {
-                                        throw _iteratorError5;
+                                _iteratorError5 = _context.t0;
+
+                            case 37:
+                                _context.prev = 37;
+                                _context.prev = 38;
+
+                                if (!_iteratorNormalCompletion5 && _iterator5.return) {
+                                    _iterator5.return();
+                                }
+
+                            case 40:
+                                _context.prev = 40;
+
+                                if (!_didIteratorError5) {
+                                    _context.next = 43;
+                                    break;
+                                }
+
+                                throw _iteratorError5;
+
+                            case 43:
+                                return _context.finish(40);
+
+                            case 44:
+                                return _context.finish(37);
+
+                            case 45:
+                                ch.send(bytes);
+                                return _context.abrupt('return');
+
+                            case 47:
+                                _iteratorNormalCompletion4 = true;
+                                _context.next = 18;
+                                break;
+
+                            case 50:
+                                _context.next = 56;
+                                break;
+
+                            case 52:
+                                _context.prev = 52;
+                                _context.t1 = _context['catch'](16);
+                                _didIteratorError4 = true;
+                                _iteratorError4 = _context.t1;
+
+                            case 56:
+                                _context.prev = 56;
+                                _context.prev = 57;
+
+                                if (!_iteratorNormalCompletion4 && _iterator4.return) {
+                                    _iterator4.return();
+                                }
+
+                            case 59:
+                                _context.prev = 59;
+
+                                if (!_didIteratorError4) {
+                                    _context.next = 62;
+                                    break;
+                                }
+
+                                throw _iteratorError4;
+
+                            case 62:
+                                return _context.finish(59);
+
+                            case 63:
+                                return _context.finish(56);
+
+                            case 64:
+                                console.error(this.wc.myId + ' can only send to sender');
+                                return _context.abrupt('return');
+
+                            case 66:
+                                listChanString = '';
+
+                                listChan.forEach(function (ch) {
+                                    listChanString += ch.peerId + '\n';
+                                });
+                                console.info(this.wc.myId + ' listChan : ' + listChanString);
+                                _iteratorNormalCompletion6 = true;
+                                _didIteratorError6 = false;
+                                _iteratorError6 = undefined;
+                                _context.prev = 72;
+                                for (_iterator6 = listChan[Symbol.iterator](); !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+                                    ch = _step6.value;
+
+                                    if (ch !== undefined && ch.peerId !== msg.senderId) {
+                                        console.info(this.wc.myId + ' sending to ' + ch.peerId);
+                                        ch.send(bytes);
                                     }
                                 }
-                            }
+                                _context.next = 80;
+                                break;
 
-                            console.warn(this.wc.myId + ' message sent to ' + msg.recipientId + ' (joining peer)', msg, jpsString);
-                            ch.send(bytes);
-                            return;
+                            case 76:
+                                _context.prev = 76;
+                                _context.t2 = _context['catch'](72);
+                                _didIteratorError6 = true;
+                                _iteratorError6 = _context.t2;
+
+                            case 80:
+                                _context.prev = 80;
+                                _context.prev = 81;
+
+                                if (!_iteratorNormalCompletion6 && _iterator6.return) {
+                                    _iterator6.return();
+                                }
+
+                            case 83:
+                                _context.prev = 83;
+
+                                if (!_didIteratorError6) {
+                                    _context.next = 86;
+                                    break;
+                                }
+
+                                throw _iteratorError6;
+
+                            case 86:
+                                return _context.finish(83);
+
+                            case 87:
+                                return _context.finish(80);
+
+                            case 88:
+                                console.info(this.wc.myId + (' end send ' + msg.senderId + ' => ' + msg.recipientId));
+                                valH = undefined;
+                                _context.next = 92;
+                                return crypto.subtle.digest('SHA-256', msg.content.buffer).then(function (h) {
+                                    valH = h;
+                                });
+
+                            case 92:
+                                this.received.push([msg.senderId, msg.meta.timestamp, valH]);
+
+                            case 93:
+                            case 'end':
+                                return _context.stop();
                         }
                     }
-                } catch (err) {
-                    _didIteratorError4 = true;
-                    _iteratorError4 = err;
-                } finally {
-                    try {
-                        if (!_iteratorNormalCompletion4 && _iterator4.return) {
-                            _iterator4.return();
-                        }
-                    } finally {
-                        if (_didIteratorError4) {
-                            throw _iteratorError4;
-                        }
-                    }
-                }
-
-                console.error(this.wc.myId + ' can only send to sender');
-                return; // Security
-            }
-            var listChanString = '';
-            listChan.forEach(function (ch) {
-                listChanString += ch.peerId + '\n';
-            });
-            console.warn(this.wc.myId + ' listChan : ' + listChanString);
-            var _iteratorNormalCompletion6 = true;
-            var _didIteratorError6 = false;
-            var _iteratorError6 = undefined;
-
-            try {
-                for (var _iterator6 = listChan[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
-                    var ch = _step6.value;
-
-                    if (ch !== undefined && ch.peerId !== msg.senderId) {
-                        console.warn(this.wc.myId + ' sending to ' + ch.peerId);
-                        ch.send(bytes);
-                    }
-                }
-            } catch (err) {
-                _didIteratorError6 = true;
-                _iteratorError6 = err;
-            } finally {
-                try {
-                    if (!_iteratorNormalCompletion6 && _iterator6.return) {
-                        _iterator6.return();
-                    }
-                } finally {
-                    if (_didIteratorError6) {
-                        throw _iteratorError6;
-                    }
-                }
-            }
-
-            console.warn(this.wc.myId + (' end send ' + msg.senderId + ' => ' + msg.recipientId));
-            this.received.push([msg.senderId, msg.meta.timestamp, msg.content.length]);
+                }, _callee, this, [[16, 52, 56, 64], [29, 33, 37, 45], [38,, 40, 44], [57,, 59, 63], [72, 76, 80, 88], [81,, 83, 87]]);
+            }));
         }
         /**
          * Send message to a specific peer (recipientId)
@@ -5818,226 +5934,412 @@ var SprayService = function (_TopologyInterface) {
     }, {
         key: 'sendTo',
         value: function sendTo(msg) {
-            var _this5 = this;
+            return __awaiter(this, void 0, void 0, regeneratorRuntime.mark(function _callee2() {
+                var _this5 = this;
 
-            if (this.wc.state === DISCONNECTED) {
-                console.error(this.wc.myId + ' sendTo break (disconnected) ', msg);
-                return;
-            }
-            if (msg.recipientId === undefined) {
-                console.error(this.wc.myId + ' sendTo break (no recipientId)', msg);
-                return;
-            }
-            if (msg.recipientId === this.wc.myId) {
-                console.error(this.wc.myId + ' sendTo break (to me)', msg);
-                return;
-            }
-            var jpsString = '\njps : ';
-            var _iteratorNormalCompletion7 = true;
-            var _didIteratorError7 = false;
-            var _iteratorError7 = undefined;
+                var jpsString, _iteratorNormalCompletion7, _didIteratorError7, _iteratorError7, _iterator7, _step7, _step7$value, key, value, bytes, _iteratorNormalCompletion8, _didIteratorError8, _iteratorError8, _iterator8, _step8, ch, listChan, _iteratorNormalCompletion10, _didIteratorError10, _iteratorError10, _iterator10, _step10, _ch2, valH, _iteratorNormalCompletion11, _didIteratorError11, _iteratorError11, _iterator11, _step11, _step11$value, id, _ch3, _valH2, _jpsString, _iteratorNormalCompletion12, _didIteratorError12, _iteratorError12, _iterator12, _step12, _step12$value;
 
-            try {
-                for (var _iterator7 = this.jps[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
-                    var _step7$value = slicedToArray(_step7.value, 2),
-                        key = _step7$value[0],
-                        value = _step7$value[1];
+                return regeneratorRuntime.wrap(function _callee2$(_context2) {
+                    while (1) {
+                        switch (_context2.prev = _context2.next) {
+                            case 0:
+                                if (!(this.wc.state === DISCONNECTED)) {
+                                    _context2.next = 2;
+                                    break;
+                                }
 
-                    jpsString += key + ' => ' + value.peerId + '\n';
-                }
-            } catch (err) {
-                _didIteratorError7 = true;
-                _iteratorError7 = err;
-            } finally {
-                try {
-                    if (!_iteratorNormalCompletion7 && _iterator7.return) {
-                        _iterator7.return();
-                    }
-                } finally {
-                    if (_didIteratorError7) {
-                        throw _iteratorError7;
-                    }
-                }
-            }
+                                return _context2.abrupt('return');
 
-            console.info(this.wc.myId + (' sendTo ' + msg.senderId + ' => ' + msg.recipientId + '\n'), jpsString);
-            // console.info(this.wc.myId + ' sendTo ' + msg.recipientId + "\nContent length : " + Object.keys(msg.content).length);
-            // console.info(this.wc.myId + ' sendTo ' + JSON.stringify(msg))
-            // try {
-            //   console.info(this.wc.myId + ' content1 : ' + JSON.stringify(super.decode(service.Message.decode(msg.content).content)))
-            // } catch (e) {
-            //   try {
-            //     console.info(this.wc.myId + ' content2 : ' + JSON.stringify(channelBuilder.Message.decode(msg.content)))
-            //   } catch (e2) {
-            //   }
-            // }
-            if (msg.meta === undefined || msg.meta.timestamp === undefined) {
-                if (msg.meta === undefined) {
-                    msg.meta = {};
-                }
-                msg.meta.timestamp = Date.now();
-            }
-            var bytes = this.wc._encode(msg);
-            if (this.p.length === 0) {
-                var _iteratorNormalCompletion8 = true;
-                var _didIteratorError8 = false;
-                var _iteratorError8 = undefined;
+                            case 2:
+                                if (!(msg.recipientId === undefined)) {
+                                    _context2.next = 4;
+                                    break;
+                                }
 
-                try {
-                    for (var _iterator8 = this.channels[Symbol.iterator](), _step8; !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
-                        var ch = _step8.value;
+                                return _context2.abrupt('return');
 
-                        if (ch !== undefined && ch.peerId === msg.recipientId) {
-                            return ch.send(bytes);
-                        }
-                    }
-                } catch (err) {
-                    _didIteratorError8 = true;
-                    _iteratorError8 = err;
-                } finally {
-                    try {
-                        if (!_iteratorNormalCompletion8 && _iterator8.return) {
-                            _iterator8.return();
-                        }
-                    } finally {
-                        if (_didIteratorError8) {
-                            throw _iteratorError8;
-                        }
-                    }
-                }
-            }
-            var listChan = [];
-            this.p.forEach(function (arc) {
-                var _iteratorNormalCompletion9 = true;
-                var _didIteratorError9 = false;
-                var _iteratorError9 = undefined;
+                            case 4:
+                                if (!(msg.recipientId === this.wc.myId)) {
+                                    _context2.next = 6;
+                                    break;
+                                }
 
-                try {
-                    for (var _iterator9 = _this5.channels[Symbol.iterator](), _step9; !(_iteratorNormalCompletion9 = (_step9 = _iterator9.next()).done); _iteratorNormalCompletion9 = true) {
-                        var _ch = _step9.value;
+                                return _context2.abrupt('return');
 
-                        if (_ch !== undefined && _ch.peerId === arc[0]) {
-                            console.warn(_this5.wc.myId + ' channel found ' + _ch.peerId);
-                            listChan.push(_ch);
-                            return;
-                        }
-                    }
-                } catch (err) {
-                    _didIteratorError9 = true;
-                    _iteratorError9 = err;
-                } finally {
-                    try {
-                        if (!_iteratorNormalCompletion9 && _iterator9.return) {
-                            _iterator9.return();
-                        }
-                    } finally {
-                        if (_didIteratorError9) {
-                            throw _iteratorError9;
-                        }
-                    }
-                }
+                            case 6:
+                                jpsString = '\njps : ';
+                                _iteratorNormalCompletion7 = true;
+                                _didIteratorError7 = false;
+                                _iteratorError7 = undefined;
+                                _context2.prev = 10;
 
-                console.warn(_this5.wc.myId + ' channel not found ' + arc[0]);
-            });
-            var _iteratorNormalCompletion10 = true;
-            var _didIteratorError10 = false;
-            var _iteratorError10 = undefined;
+                                for (_iterator7 = this.jps[Symbol.iterator](); !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
+                                    _step7$value = slicedToArray(_step7.value, 2), key = _step7$value[0], value = _step7$value[1];
 
-            try {
-                for (var _iterator10 = listChan[Symbol.iterator](), _step10; !(_iteratorNormalCompletion10 = (_step10 = _iterator10.next()).done); _iteratorNormalCompletion10 = true) {
-                    var _ch2 = _step10.value;
+                                    jpsString += key + ' => ' + value.peerId + '\n';
+                                }
+                                _context2.next = 18;
+                                break;
 
-                    if (_ch2 !== undefined && _ch2.peerId === msg.recipientId) {
-                        this.received.push([msg.senderId, msg.meta.timestamp, msg.content.length]);
-                        console.warn(this.wc.myId + ' message sent to ' + _ch2.peerId);
-                        return _ch2.send(bytes);
-                    }
-                }
-            } catch (err) {
-                _didIteratorError10 = true;
-                _iteratorError10 = err;
-            } finally {
-                try {
-                    if (!_iteratorNormalCompletion10 && _iterator10.return) {
-                        _iterator10.return();
-                    }
-                } finally {
-                    if (_didIteratorError10) {
-                        throw _iteratorError10;
-                    }
-                }
-            }
+                            case 14:
+                                _context2.prev = 14;
+                                _context2.t0 = _context2['catch'](10);
+                                _didIteratorError7 = true;
+                                _iteratorError7 = _context2.t0;
 
-            var _iteratorNormalCompletion11 = true;
-            var _didIteratorError11 = false;
-            var _iteratorError11 = undefined;
+                            case 18:
+                                _context2.prev = 18;
+                                _context2.prev = 19;
 
-            try {
-                for (var _iterator11 = this.jps[Symbol.iterator](), _step11; !(_iteratorNormalCompletion11 = (_step11 = _iterator11.next()).done); _iteratorNormalCompletion11 = true) {
-                    var _step11$value = slicedToArray(_step11.value, 2),
-                        id = _step11$value[0],
-                        _ch3 = _step11$value[1];
+                                if (!_iteratorNormalCompletion7 && _iterator7.return) {
+                                    _iterator7.return();
+                                }
 
-                    if (id === msg.recipientId || id === this.wc.myId) {
-                        this.received.push([msg.senderId, msg.meta.timestamp, msg.content.length]);
-                        var _jpsString = '\njps : ';
-                        var _iteratorNormalCompletion12 = true;
-                        var _didIteratorError12 = false;
-                        var _iteratorError12 = undefined;
+                            case 21:
+                                _context2.prev = 21;
 
-                        try {
-                            for (var _iterator12 = this.jps[Symbol.iterator](), _step12; !(_iteratorNormalCompletion12 = (_step12 = _iterator12.next()).done); _iteratorNormalCompletion12 = true) {
-                                var _step12$value = slicedToArray(_step12.value, 2),
-                                    key = _step12$value[0],
-                                    value = _step12$value[1];
+                                if (!_didIteratorError7) {
+                                    _context2.next = 24;
+                                    break;
+                                }
 
-                                _jpsString += key + ' => ' + value.peerId + '\n';
-                            }
-                        } catch (err) {
-                            _didIteratorError12 = true;
-                            _iteratorError12 = err;
-                        } finally {
-                            try {
+                                throw _iteratorError7;
+
+                            case 24:
+                                return _context2.finish(21);
+
+                            case 25:
+                                return _context2.finish(18);
+
+                            case 26:
+                                console.info(this.wc.myId + (' sendTo ' + msg.senderId + ' => ' + msg.recipientId + '\n'), jpsString);
+                                // console.info(this.wc.myId + ' sendTo ' + msg.recipientId + "\nContent length : " + Object.keys(msg.content).length);
+                                // console.info(this.wc.myId + ' sendTo ' + JSON.stringify(msg))
+                                // try {
+                                //   console.info(this.wc.myId + ' content1 : ' + JSON.stringify(super.decode(service.Message.decode(msg.content).content)))
+                                // } catch (e) {
+                                //   try {
+                                //     console.info(this.wc.myId + ' content2 : ' + JSON.stringify(channelBuilder.Message.decode(msg.content)))
+                                //   } catch (e2) {
+                                //   }
+                                // }
+                                if (msg.meta === undefined || msg.meta.timestamp === undefined) {
+                                    if (msg.meta === undefined) {
+                                        msg.meta = {};
+                                    }
+                                    msg.meta.timestamp = Date.now();
+                                }
+                                bytes = this.wc._encode(msg);
+
+                                if (!(this.p.length === 0)) {
+                                    _context2.next = 57;
+                                    break;
+                                }
+
+                                console.info(this.wc.myId + ' empty partialView');
+                                _iteratorNormalCompletion8 = true;
+                                _didIteratorError8 = false;
+                                _iteratorError8 = undefined;
+                                _context2.prev = 34;
+                                _iterator8 = this.channels[Symbol.iterator]();
+
+                            case 36:
+                                if (_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done) {
+                                    _context2.next = 43;
+                                    break;
+                                }
+
+                                ch = _step8.value;
+
+                                if (!(ch !== undefined && ch.peerId === msg.recipientId)) {
+                                    _context2.next = 40;
+                                    break;
+                                }
+
+                                return _context2.abrupt('return', ch.send(bytes));
+
+                            case 40:
+                                _iteratorNormalCompletion8 = true;
+                                _context2.next = 36;
+                                break;
+
+                            case 43:
+                                _context2.next = 49;
+                                break;
+
+                            case 45:
+                                _context2.prev = 45;
+                                _context2.t1 = _context2['catch'](34);
+                                _didIteratorError8 = true;
+                                _iteratorError8 = _context2.t1;
+
+                            case 49:
+                                _context2.prev = 49;
+                                _context2.prev = 50;
+
+                                if (!_iteratorNormalCompletion8 && _iterator8.return) {
+                                    _iterator8.return();
+                                }
+
+                            case 52:
+                                _context2.prev = 52;
+
+                                if (!_didIteratorError8) {
+                                    _context2.next = 55;
+                                    break;
+                                }
+
+                                throw _iteratorError8;
+
+                            case 55:
+                                return _context2.finish(52);
+
+                            case 56:
+                                return _context2.finish(49);
+
+                            case 57:
+                                listChan = [];
+
+                                this.p.forEach(function (arc) {
+                                    var _iteratorNormalCompletion9 = true;
+                                    var _didIteratorError9 = false;
+                                    var _iteratorError9 = undefined;
+
+                                    try {
+                                        for (var _iterator9 = _this5.channels[Symbol.iterator](), _step9; !(_iteratorNormalCompletion9 = (_step9 = _iterator9.next()).done); _iteratorNormalCompletion9 = true) {
+                                            var _ch = _step9.value;
+
+                                            if (_ch !== undefined && _ch.peerId === arc[0]) {
+                                                console.info(_this5.wc.myId + ' channel found ' + _ch.peerId);
+                                                listChan.push(_ch);
+                                                return;
+                                            }
+                                        }
+                                    } catch (err) {
+                                        _didIteratorError9 = true;
+                                        _iteratorError9 = err;
+                                    } finally {
+                                        try {
+                                            if (!_iteratorNormalCompletion9 && _iterator9.return) {
+                                                _iterator9.return();
+                                            }
+                                        } finally {
+                                            if (_didIteratorError9) {
+                                                throw _iteratorError9;
+                                            }
+                                        }
+                                    }
+
+                                    console.warn(_this5.wc.myId + ' channel not found ' + arc[0]);
+                                });
+                                _iteratorNormalCompletion10 = true;
+                                _didIteratorError10 = false;
+                                _iteratorError10 = undefined;
+                                _context2.prev = 62;
+                                _iterator10 = listChan[Symbol.iterator]();
+
+                            case 64:
+                                if (_iteratorNormalCompletion10 = (_step10 = _iterator10.next()).done) {
+                                    _context2.next = 76;
+                                    break;
+                                }
+
+                                _ch2 = _step10.value;
+
+                                if (!(_ch2 !== undefined && _ch2.peerId === msg.recipientId)) {
+                                    _context2.next = 73;
+                                    break;
+                                }
+
+                                valH = undefined;
+                                _context2.next = 70;
+                                return crypto.subtle.digest('SHA-256', msg.content.buffer).then(function (h) {
+                                    valH = h;
+                                });
+
+                            case 70:
+                                this.received.push([msg.senderId, msg.meta.timestamp, valH]);
+                                console.info(this.wc.myId + ' message sent to ' + _ch2.peerId);
+                                return _context2.abrupt('return', _ch2.send(bytes));
+
+                            case 73:
+                                _iteratorNormalCompletion10 = true;
+                                _context2.next = 64;
+                                break;
+
+                            case 76:
+                                _context2.next = 82;
+                                break;
+
+                            case 78:
+                                _context2.prev = 78;
+                                _context2.t2 = _context2['catch'](62);
+                                _didIteratorError10 = true;
+                                _iteratorError10 = _context2.t2;
+
+                            case 82:
+                                _context2.prev = 82;
+                                _context2.prev = 83;
+
+                                if (!_iteratorNormalCompletion10 && _iterator10.return) {
+                                    _iterator10.return();
+                                }
+
+                            case 85:
+                                _context2.prev = 85;
+
+                                if (!_didIteratorError10) {
+                                    _context2.next = 88;
+                                    break;
+                                }
+
+                                throw _iteratorError10;
+
+                            case 88:
+                                return _context2.finish(85);
+
+                            case 89:
+                                return _context2.finish(82);
+
+                            case 90:
+                                _iteratorNormalCompletion11 = true;
+                                _didIteratorError11 = false;
+                                _iteratorError11 = undefined;
+                                _context2.prev = 93;
+                                _iterator11 = this.jps[Symbol.iterator]();
+
+                            case 95:
+                                if (_iteratorNormalCompletion11 = (_step11 = _iterator11.next()).done) {
+                                    _context2.next = 126;
+                                    break;
+                                }
+
+                                _step11$value = slicedToArray(_step11.value, 2), id = _step11$value[0], _ch3 = _step11$value[1];
+
+                                if (!(id === msg.recipientId || id === this.wc.myId)) {
+                                    _context2.next = 123;
+                                    break;
+                                }
+
+                                _valH2 = undefined;
+                                _context2.next = 101;
+                                return crypto.subtle.digest('SHA-256', msg.content.buffer).then(function (h) {
+                                    _valH2 = h;
+                                });
+
+                            case 101:
+                                this.received.push([msg.senderId, msg.meta.timestamp, _valH2]);
+                                _jpsString = '\njps : ';
+                                _iteratorNormalCompletion12 = true;
+                                _didIteratorError12 = false;
+                                _iteratorError12 = undefined;
+                                _context2.prev = 106;
+
+                                for (_iterator12 = this.jps[Symbol.iterator](); !(_iteratorNormalCompletion12 = (_step12 = _iterator12.next()).done); _iteratorNormalCompletion12 = true) {
+                                    _step12$value = slicedToArray(_step12.value, 2), key = _step12$value[0], value = _step12$value[1];
+
+                                    _jpsString += key + ' => ' + value.peerId + '\n';
+                                }
+                                // console.warn(this.wc.myId + ' message sent to ' + msg.recipientId + ' through broadcast', msg, '\n' + this.p.toString(),
+                                //  jpsString)
+                                _context2.next = 114;
+                                break;
+
+                            case 110:
+                                _context2.prev = 110;
+                                _context2.t3 = _context2['catch'](106);
+                                _didIteratorError12 = true;
+                                _iteratorError12 = _context2.t3;
+
+                            case 114:
+                                _context2.prev = 114;
+                                _context2.prev = 115;
+
                                 if (!_iteratorNormalCompletion12 && _iterator12.return) {
                                     _iterator12.return();
                                 }
-                            } finally {
-                                if (_didIteratorError12) {
-                                    throw _iteratorError12;
+
+                            case 117:
+                                _context2.prev = 117;
+
+                                if (!_didIteratorError12) {
+                                    _context2.next = 120;
+                                    break;
                                 }
-                            }
+
+                                throw _iteratorError12;
+
+                            case 120:
+                                return _context2.finish(117);
+
+                            case 121:
+                                return _context2.finish(114);
+
+                            case 122:
+                                return _context2.abrupt('return', _ch3.send(bytes));
+
+                            case 123:
+                                _iteratorNormalCompletion11 = true;
+                                _context2.next = 95;
+                                break;
+
+                            case 126:
+                                _context2.next = 132;
+                                break;
+
+                            case 128:
+                                _context2.prev = 128;
+                                _context2.t4 = _context2['catch'](93);
+                                _didIteratorError11 = true;
+                                _iteratorError11 = _context2.t4;
+
+                            case 132:
+                                _context2.prev = 132;
+                                _context2.prev = 133;
+
+                                if (!_iteratorNormalCompletion11 && _iterator11.return) {
+                                    _iterator11.return();
+                                }
+
+                            case 135:
+                                _context2.prev = 135;
+
+                                if (!_didIteratorError11) {
+                                    _context2.next = 138;
+                                    break;
+                                }
+
+                                throw _iteratorError11;
+
+                            case 138:
+                                return _context2.finish(135);
+
+                            case 139:
+                                return _context2.finish(132);
+
+                            case 140:
+                                // console.error(this.wc.myId + ' The recipient could not be found ', msg.recipientId, msg)
+                                console.error(this.wc.myId + ' The recipient could not be found ', msg.recipientId);
+                                this.forward(msg);
+                                return _context2.abrupt('return');
+
+                            case 143:
+                            case 'end':
+                                return _context2.stop();
                         }
-
-                        console.warn(this.wc.myId + ' message sent to ' + msg.recipientId + ' through broadcast', msg, '\n' + this.p.toString(), _jpsString);
-                        return _ch3.send(bytes);
                     }
-                }
-            } catch (err) {
-                _didIteratorError11 = true;
-                _iteratorError11 = err;
-            } finally {
-                try {
-                    if (!_iteratorNormalCompletion11 && _iterator11.return) {
-                        _iterator11.return();
-                    }
-                } finally {
-                    if (_didIteratorError11) {
-                        throw _iteratorError11;
-                    }
-                }
-            }
-
-            return console.error(this.wc.myId + ' The recipient could not be found ', msg.recipientId, msg);
+                }, _callee2, this, [[10, 14, 18, 26], [19,, 21, 25], [34, 45, 49, 57], [50,, 52, 56], [62, 78, 82, 90], [83,, 85, 89], [93, 128, 132, 140], [106, 110, 114, 122], [115,, 117, 121], [133,, 135, 139]]);
+            }));
         }
     }, {
         key: 'forwardTo',
         value: function forwardTo(msg) {
             if (this.wc.state === DISCONNECTED) {
-                console.error(this.wc.myId + ' forwardTo break (disconnected) ', msg);
+                // console.error(this.wc.myId + ' forwardTo break (disconnected) ', msg)
                 return;
             }
             if (msg.recipientId === undefined) {
-                console.error(this.wc.myId + ' forwardTo break (no recipientId)', msg);
+                // console.error(this.wc.myId + ' forwardTo break (no recipientId)', msg)
                 return;
             }
             console.info(this.wc.myId + (' forwardTo ' + msg.senderId + ' => ' + msg.recipientId));
@@ -6046,93 +6348,144 @@ var SprayService = function (_TopologyInterface) {
     }, {
         key: 'forward',
         value: function forward(msg) {
-            if (this.wc.state === DISCONNECTED) {
-                console.error(this.wc.myId + ' forward break (disconnected) ', msg);
-                return;
-            }
-            if (msg.recipientId === undefined) {
-                console.error(this.wc.myId + ' forward break (no recipientId)', msg);
-                return;
-            }
-            if (msg.meta !== undefined && msg.meta.timestamp !== undefined) {
-                var alreadyReceived = false;
-                this.received.forEach(function (message) {
-                    if (!alreadyReceived && message[0] === msg.senderId && message[1] === msg.meta.timestamp && message[2] === msg.content.length) {
-                        alreadyReceived = true;
+            return __awaiter(this, void 0, void 0, regeneratorRuntime.mark(function _callee3() {
+                var _this6 = this;
+
+                var rcvdString, _iteratorNormalCompletion13, _didIteratorError13, _iteratorError13, _iterator13, _step13, _step13$value, sId, ts, l, alreadyReceived, valH, peersId;
+
+                return regeneratorRuntime.wrap(function _callee3$(_context3) {
+                    while (1) {
+                        switch (_context3.prev = _context3.next) {
+                            case 0:
+                                if (!(this.wc.state === DISCONNECTED)) {
+                                    _context3.next = 2;
+                                    break;
+                                }
+
+                                return _context3.abrupt('return');
+
+                            case 2:
+                                if (!(msg.recipientId === undefined)) {
+                                    _context3.next = 4;
+                                    break;
+                                }
+
+                                return _context3.abrupt('return');
+
+                            case 4:
+                                if (!(msg.meta !== undefined && msg.meta.timestamp !== undefined)) {
+                                    _context3.next = 34;
+                                    break;
+                                }
+
+                                rcvdString = '';
+                                _iteratorNormalCompletion13 = true;
+                                _didIteratorError13 = false;
+                                _iteratorError13 = undefined;
+                                _context3.prev = 9;
+
+                                for (_iterator13 = this.received[Symbol.iterator](); !(_iteratorNormalCompletion13 = (_step13 = _iterator13.next()).done); _iteratorNormalCompletion13 = true) {
+                                    _step13$value = slicedToArray(_step13.value, 3), sId = _step13$value[0], ts = _step13$value[1], l = _step13$value[2];
+
+                                    if (rcvdString.length !== 0) {
+                                        rcvdString += ', ';
+                                    }
+                                    rcvdString += '[' + sId + ',' + ts + ',' + l + ']';
+                                }
+                                _context3.next = 17;
+                                break;
+
+                            case 13:
+                                _context3.prev = 13;
+                                _context3.t0 = _context3['catch'](9);
+                                _didIteratorError13 = true;
+                                _iteratorError13 = _context3.t0;
+
+                            case 17:
+                                _context3.prev = 17;
+                                _context3.prev = 18;
+
+                                if (!_iteratorNormalCompletion13 && _iterator13.return) {
+                                    _iterator13.return();
+                                }
+
+                            case 20:
+                                _context3.prev = 20;
+
+                                if (!_didIteratorError13) {
+                                    _context3.next = 23;
+                                    break;
+                                }
+
+                                throw _iteratorError13;
+
+                            case 23:
+                                return _context3.finish(20);
+
+                            case 24:
+                                return _context3.finish(17);
+
+                            case 25:
+                                console.info(this.wc.myId + ' received : ' + rcvdString);
+                                alreadyReceived = false;
+                                valH = undefined;
+                                _context3.next = 30;
+                                return crypto.subtle.digest('SHA-256', msg.content.buffer).then(function (h) {
+                                    return valH = h;
+                                });
+
+                            case 30:
+                                this.received.forEach(function (message) {
+                                    if (!alreadyReceived && message[0] === msg.senderId && message[1] === msg.meta.timestamp && _this6.areHashEqual(message[2], valH)) {
+                                        alreadyReceived = true;
+                                    }
+                                });
+
+                                if (!alreadyReceived) {
+                                    _context3.next = 34;
+                                    break;
+                                }
+
+                                // console.info(this.wc.myId + ' message already received ', msg)
+                                console.error(this.wc.myId + (' message already received ' + msg.senderId + ' => ' + msg.recipientId + ', ' + msg.meta.timestamp));
+                                return _context3.abrupt('return');
+
+                            case 34:
+                                // console.info(this.wc.myId + ` forward ${msg.senderId} => ${msg.recipientId}`, msg)
+                                peersId = [];
+
+                                this.p.forEach(function (arc) {
+                                    peersId.push(arc[0]);
+                                });
+                                if (peersId.includes(msg.recipientId)) {
+                                    this.sendTo(msg);
+                                } else {
+                                    this.send(msg);
+                                }
+
+                            case 37:
+                            case 'end':
+                                return _context3.stop();
+                        }
                     }
-                });
-                if (alreadyReceived) {
-                    console.info(this.wc.myId + ' message already received ', msg);
-                    return;
-                }
-            }
-            console.info(this.wc.myId + (' forward ' + msg.senderId + ' => ' + msg.recipientId), msg);
-            var peersId = [];
-            this.p.forEach(function (arc) {
-                peersId.push(arc[0]);
-            });
-            if (peersId.includes(msg.recipientId)) {
-                this.sendTo(msg);
-            } else {
-                this.send(msg);
-            }
+                }, _callee3, this, [[9, 13, 17, 25], [18,, 20, 24]]);
+            }));
         }
     }, {
         key: 'leave',
         value: function leave() {
-            console.info(this.wc.myId + ' leave ', this.wc.members);
+            console.info(this.wc.myId + ' leave ');
             // TODO ?
-            var _iteratorNormalCompletion13 = true;
-            var _didIteratorError13 = false;
-            var _iteratorError13 = undefined;
-
-            try {
-                for (var _iterator13 = this.channels[Symbol.iterator](), _step13; !(_iteratorNormalCompletion13 = (_step13 = _iterator13.next()).done); _iteratorNormalCompletion13 = true) {
-                    var c = _step13.value;
-
-                    c.clearHandlers();
-                    c.close();
-                }
-            } catch (err) {
-                _didIteratorError13 = true;
-                _iteratorError13 = err;
-            } finally {
-                try {
-                    if (!_iteratorNormalCompletion13 && _iterator13.return) {
-                        _iterator13.return();
-                    }
-                } finally {
-                    if (_didIteratorError13) {
-                        throw _iteratorError13;
-                    }
-                }
-            }
-
-            this.channels.clear();
-            clearTimeout(this.timeoutExch);
-            clearTimeout(this.timeoutReceived);
-            clearInterval(this.interval);
-            this.p = new PartialView();
-        }
-    }, {
-        key: 'onChannelClose',
-        value: function onChannelClose(closeEvt, channel) {
-            var jpsString = '\njps : ';
             var _iteratorNormalCompletion14 = true;
             var _didIteratorError14 = false;
             var _iteratorError14 = undefined;
 
             try {
-                for (var _iterator14 = this.jps[Symbol.iterator](), _step14; !(_iteratorNormalCompletion14 = (_step14 = _iterator14.next()).done); _iteratorNormalCompletion14 = true) {
-                    var _step14$value = slicedToArray(_step14.value, 2),
-                        key = _step14$value[0],
-                        value = _step14$value[1];
+                for (var _iterator14 = this.channels[Symbol.iterator](), _step14; !(_iteratorNormalCompletion14 = (_step14 = _iterator14.next()).done); _iteratorNormalCompletion14 = true) {
+                    var c = _step14.value;
 
-                    try {
-                        jpsString += key + ' => ' + value.peerId + '\n';
-                    } catch (e) {
-                        console.error(this.wc.myId + (' ' + key + ' with value ' + value), e);
-                    }
+                    c.clearHandlers();
+                    c.close();
                 }
             } catch (err) {
                 _didIteratorError14 = true;
@@ -6149,40 +6502,107 @@ var SprayService = function (_TopologyInterface) {
                 }
             }
 
+            var _iteratorNormalCompletion15 = true;
+            var _didIteratorError15 = false;
+            var _iteratorError15 = undefined;
+
+            try {
+                for (var _iterator15 = this.jps.values()[Symbol.iterator](), _step15; !(_iteratorNormalCompletion15 = (_step15 = _iterator15.next()).done); _iteratorNormalCompletion15 = true) {
+                    var ch = _step15.value;
+
+                    ch.clearHandlers();
+                    ch.close();
+                }
+            } catch (err) {
+                _didIteratorError15 = true;
+                _iteratorError15 = err;
+            } finally {
+                try {
+                    if (!_iteratorNormalCompletion15 && _iterator15.return) {
+                        _iterator15.return();
+                    }
+                } finally {
+                    if (_didIteratorError15) {
+                        throw _iteratorError15;
+                    }
+                }
+            }
+
+            this.channels.clear();
+            clearTimeout(this.timeoutExch);
+            clearTimeout(this.timeoutReceived);
+            clearInterval(this.interval);
+            this.p = new PartialView();
+        }
+    }, {
+        key: 'onChannelClose',
+        value: function onChannelClose(closeEvt, channel) {
+            var jpsString = '\njps : ';
+            var _iteratorNormalCompletion16 = true;
+            var _didIteratorError16 = false;
+            var _iteratorError16 = undefined;
+
+            try {
+                for (var _iterator16 = this.jps[Symbol.iterator](), _step16; !(_iteratorNormalCompletion16 = (_step16 = _iterator16.next()).done); _iteratorNormalCompletion16 = true) {
+                    var _step16$value = slicedToArray(_step16.value, 2),
+                        key = _step16$value[0],
+                        value = _step16$value[1];
+
+                    try {
+                        jpsString += key + ' => ' + value.peerId + '\n';
+                    } catch (e) {
+                        console.error(this.wc.myId + (' ' + key + ' with value ' + value), e);
+                    }
+                }
+            } catch (err) {
+                _didIteratorError16 = true;
+                _iteratorError16 = err;
+            } finally {
+                try {
+                    if (!_iteratorNormalCompletion16 && _iterator16.return) {
+                        _iterator16.return();
+                    }
+                } finally {
+                    if (_didIteratorError16) {
+                        throw _iteratorError16;
+                    }
+                }
+            }
+
             console.info(this.wc.myId + ' onChannelClose ', '\npartialView : ' + this.p.toString(), jpsString);
             // TODO : use _onPeerDown or _onArcDown
             if (this.iJoin()) {
                 var firstChannel = this.channels.values().next().value;
                 if (channel !== undefined && firstChannel !== undefined && firstChannel.peerId === channel.peerId) {
                     this.wc._joinFailed();
-                    var _iteratorNormalCompletion15 = true;
-                    var _didIteratorError15 = false;
-                    var _iteratorError15 = undefined;
+                    var _iteratorNormalCompletion17 = true;
+                    var _didIteratorError17 = false;
+                    var _iteratorError17 = undefined;
 
                     try {
-                        for (var _iterator15 = this.channels[Symbol.iterator](), _step15; !(_iteratorNormalCompletion15 = (_step15 = _iterator15.next()).done); _iteratorNormalCompletion15 = true) {
-                            var ch = _step15.value;
+                        for (var _iterator17 = this.channels[Symbol.iterator](), _step17; !(_iteratorNormalCompletion17 = (_step17 = _iterator17.next()).done); _iteratorNormalCompletion17 = true) {
+                            var ch = _step17.value;
 
                             ch.clearHandlers();
                             ch.close();
                         }
                     } catch (err) {
-                        _didIteratorError15 = true;
-                        _iteratorError15 = err;
+                        _didIteratorError17 = true;
+                        _iteratorError17 = err;
                     } finally {
                         try {
-                            if (!_iteratorNormalCompletion15 && _iterator15.return) {
-                                _iterator15.return();
+                            if (!_iteratorNormalCompletion17 && _iterator17.return) {
+                                _iterator17.return();
                             }
                         } finally {
-                            if (_didIteratorError15) {
-                                throw _iteratorError15;
+                            if (_didIteratorError17) {
+                                throw _iteratorError17;
                             }
                         }
                     }
 
                     this.channels.clear();
-                    console.warn(this.wc.myId + ' jps.clear');
+                    console.info(this.wc.myId + ' jps.clear');
                     this.jps.clear();
                 } else {
                     this.channels.delete(channel);
@@ -6190,89 +6610,89 @@ var SprayService = function (_TopologyInterface) {
                     this.wc._onPeerLeave(channel.peerId);
                 }
             } else {
-                var _iteratorNormalCompletion16 = true;
-                var _didIteratorError16 = false;
-                var _iteratorError16 = undefined;
+                var _iteratorNormalCompletion18 = true;
+                var _didIteratorError18 = false;
+                var _iteratorError18 = undefined;
 
                 try {
-                    for (var _iterator16 = this.jps[Symbol.iterator](), _step16; !(_iteratorNormalCompletion16 = (_step16 = _iterator16.next()).done); _iteratorNormalCompletion16 = true) {
-                        var _step16$value = slicedToArray(_step16.value, 1),
-                            id = _step16$value[0];
+                    for (var _iterator18 = this.jps[Symbol.iterator](), _step18; !(_iteratorNormalCompletion18 = (_step18 = _iterator18.next()).done); _iteratorNormalCompletion18 = true) {
+                        var _step18$value = slicedToArray(_step18.value, 1),
+                            id = _step18$value[0];
 
                         if (channel !== undefined && id === channel.peerId) {
                             var _jpsString2 = '\njps : ';
-                            var _iteratorNormalCompletion17 = true;
-                            var _didIteratorError17 = false;
-                            var _iteratorError17 = undefined;
+                            var _iteratorNormalCompletion19 = true;
+                            var _didIteratorError19 = false;
+                            var _iteratorError19 = undefined;
 
                             try {
-                                for (var _iterator17 = this.jps[Symbol.iterator](), _step17; !(_iteratorNormalCompletion17 = (_step17 = _iterator17.next()).done); _iteratorNormalCompletion17 = true) {
-                                    var _step17$value = slicedToArray(_step17.value, 2),
-                                        key = _step17$value[0],
-                                        value = _step17$value[1];
+                                for (var _iterator19 = this.jps[Symbol.iterator](), _step19; !(_iteratorNormalCompletion19 = (_step19 = _iterator19.next()).done); _iteratorNormalCompletion19 = true) {
+                                    var _step19$value = slicedToArray(_step19.value, 2),
+                                        key = _step19$value[0],
+                                        value = _step19$value[1];
 
                                     _jpsString2 += key + ' => ' + value.peerId + '\n';
                                 }
                             } catch (err) {
-                                _didIteratorError17 = true;
-                                _iteratorError17 = err;
+                                _didIteratorError19 = true;
+                                _iteratorError19 = err;
                             } finally {
                                 try {
-                                    if (!_iteratorNormalCompletion17 && _iterator17.return) {
-                                        _iterator17.return();
+                                    if (!_iteratorNormalCompletion19 && _iterator19.return) {
+                                        _iterator19.return();
                                     }
                                 } finally {
-                                    if (_didIteratorError17) {
-                                        throw _iteratorError17;
+                                    if (_didIteratorError19) {
+                                        throw _iteratorError19;
                                     }
                                 }
                             }
 
-                            console.warn(this.wc.myId + ' onChanClose => this.jps.delete(' + id + ')\n', _jpsString2);
+                            console.info(this.wc.myId + ' onChanClose => this.jps.delete(' + id + ')\n', _jpsString2);
                             this.jps.delete(id);
                             _jpsString2 = '\njps : ';
-                            var _iteratorNormalCompletion18 = true;
-                            var _didIteratorError18 = false;
-                            var _iteratorError18 = undefined;
+                            var _iteratorNormalCompletion20 = true;
+                            var _didIteratorError20 = false;
+                            var _iteratorError20 = undefined;
 
                             try {
-                                for (var _iterator18 = this.jps[Symbol.iterator](), _step18; !(_iteratorNormalCompletion18 = (_step18 = _iterator18.next()).done); _iteratorNormalCompletion18 = true) {
-                                    var _step18$value = slicedToArray(_step18.value, 2),
-                                        key = _step18$value[0],
-                                        value = _step18$value[1];
+                                for (var _iterator20 = this.jps[Symbol.iterator](), _step20; !(_iteratorNormalCompletion20 = (_step20 = _iterator20.next()).done); _iteratorNormalCompletion20 = true) {
+                                    var _step20$value = slicedToArray(_step20.value, 2),
+                                        key = _step20$value[0],
+                                        value = _step20$value[1];
 
                                     _jpsString2 += key + ' => ' + value.peerId + '\n';
                                 }
                             } catch (err) {
-                                _didIteratorError18 = true;
-                                _iteratorError18 = err;
+                                _didIteratorError20 = true;
+                                _iteratorError20 = err;
                             } finally {
                                 try {
-                                    if (!_iteratorNormalCompletion18 && _iterator18.return) {
-                                        _iterator18.return();
+                                    if (!_iteratorNormalCompletion20 && _iterator20.return) {
+                                        _iterator20.return();
                                     }
                                 } finally {
-                                    if (_didIteratorError18) {
-                                        throw _iteratorError18;
+                                    if (_didIteratorError20) {
+                                        throw _iteratorError20;
                                     }
                                 }
                             }
 
-                            console.warn(this.wc.myId + ' deleted of jps ' + id + '\n', _jpsString2);
+                            console.info(this.wc.myId + ' deleted of jps ' + id + '\n', _jpsString2);
                             return;
                         }
                     }
                 } catch (err) {
-                    _didIteratorError16 = true;
-                    _iteratorError16 = err;
+                    _didIteratorError18 = true;
+                    _iteratorError18 = err;
                 } finally {
                     try {
-                        if (!_iteratorNormalCompletion16 && _iterator16.return) {
-                            _iterator16.return();
+                        if (!_iteratorNormalCompletion18 && _iterator18.return) {
+                            _iterator18.return();
                         }
                     } finally {
-                        if (_didIteratorError16) {
-                            throw _iteratorError16;
+                        if (_didIteratorError18) {
+                            throw _iteratorError18;
                         }
                     }
                 }
@@ -6299,321 +6719,454 @@ var SprayService = function (_TopologyInterface) {
     }, {
         key: '_handleSvcMsg',
         value: function _handleSvcMsg(M) {
-            var _this6 = this;
+            var _this7 = this;
 
-            if (this.wc.state === DISCONNECTED) {
-                console.info(this.wc.myId + ' _handleSvcMsg break (disconnected) ', M);
-                return;
-            }
-            var msg = M.msg;
-            if (M.timestamp !== undefined) {
-                var rcvdString = '';
-                var _iteratorNormalCompletion19 = true;
-                var _didIteratorError19 = false;
-                var _iteratorError19 = undefined;
+            var _super = function _super(name) {
+                return get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), name, _this7);
+            };
+            return __awaiter(this, void 0, void 0, regeneratorRuntime.mark(function _callee4() {
+                var _this8 = this;
 
-                try {
-                    for (var _iterator19 = this.received[Symbol.iterator](), _step19; !(_iteratorNormalCompletion19 = (_step19 = _iterator19.next()).done); _iteratorNormalCompletion19 = true) {
-                        var _step19$value = slicedToArray(_step19.value, 3),
-                            sId = _step19$value[0],
-                            ts = _step19$value[1],
-                            l = _step19$value[2];
+                var msg, rcvdString, _iteratorNormalCompletion21, _didIteratorError21, _iteratorError21, _iterator21, _step21, _step21$value, sId, ts, l, alreadyReceived, valH, rcvd, peer, jpsString, _iteratorNormalCompletion22, _didIteratorError22, _iteratorError22, _iterator22, _step22, _step22$value, key, value, counter, connected, allCompleted, chanString, _iteratorNormalCompletion24, _didIteratorError24, _iteratorError24, _iterator24, _step24, ch, _jpsString3, _iteratorNormalCompletion25, _didIteratorError25, _iteratorError25, _iterator25, _step25, _step25$value, _iteratorNormalCompletion26, _didIteratorError26, _iteratorError26, _iterator26, _step26, _step26$value, _ch4;
 
-                        if (rcvdString.length !== 0) {
-                            rcvdString += ', ';
-                        }
-                        rcvdString += '[' + sId + ',' + ts + ',' + l + ']';
-                    }
-                } catch (err) {
-                    _didIteratorError19 = true;
-                    _iteratorError19 = err;
-                } finally {
-                    try {
-                        if (!_iteratorNormalCompletion19 && _iterator19.return) {
-                            _iterator19.return();
-                        }
-                    } finally {
-                        if (_didIteratorError19) {
-                            throw _iteratorError19;
-                        }
-                    }
-                }
-
-                console.info(this.wc.myId + ' received : ' + rcvdString);
-                var alreadyReceived = false;
-                this.received.forEach(function (message) {
-                    if (!alreadyReceived && message[0] === M.senderId && message[1] === M.timestamp && message[2] === msg.length) {
-                        alreadyReceived = true;
-                    }
-                });
-                if (alreadyReceived) {
-                    console.info(this.wc.myId + ' message already received ', msg);
-                    return;
-                }
-                this.received.push([M.senderId, M.timestamp, msg.length]);
-                var rcvd = '';
-                this.received.forEach(function (r) {
-                    if (rcvd.length === 0) {
-                        rcvd += '[';
-                    }
-                    if (rcvd.length !== 1) {
-                        rcvd += ', ';
-                    }
-                    rcvd += '[' + r[0] + ',' + r[1] + ',' + r[2] + ']';
-                });
-                if (rcvd.length !== 0) {
-                    rcvd += ']';
-                }
-            }
-            // if (M.recipientId !== this.wc.myId) {
-            //   console.error(this.wc.myId + ' need to modify this line ', msg)
-            //   this.forward(msg)
-            //   return
-            // }
-            switch (msg.type) {
-                case 'shouldAdd':
-                    {
-                        console.info(this.wc.myId + ' shouldAdd ' + msg.shouldAdd);
-                        this.p.add(msg.shouldAdd);
-                        break;
-                    }
-                case 'exchangeInit':
-                    {
-                        console.error(M.channel.peerId + ' exchanging with ' + this.wc.myId);
-                        this._onExchange(this.wc, M.channel.peerId, msg.exchangeInit.sample);
-                        break;
-                    }
-                case 'connectTo':
-                    {
-                        console.info(this.wc.myId + ' connectTo ' + msg.connectTo);
-                        var peer = msg.connectTo;
-                        var jpsString = '\njps : ';
-                        var _iteratorNormalCompletion20 = true;
-                        var _didIteratorError20 = false;
-                        var _iteratorError20 = undefined;
-
-                        try {
-                            for (var _iterator20 = this.jps[Symbol.iterator](), _step20; !(_iteratorNormalCompletion20 = (_step20 = _iterator20.next()).done); _iteratorNormalCompletion20 = true) {
-                                var _step20$value = slicedToArray(_step20.value, 2),
-                                    key = _step20$value[0],
-                                    value = _step20$value[1];
-
-                                jpsString += key + ' => ' + value.peerId + '\n';
-                            }
-                        } catch (err) {
-                            _didIteratorError20 = true;
-                            _iteratorError20 = err;
-                        } finally {
-                            try {
-                                if (!_iteratorNormalCompletion20 && _iterator20.return) {
-                                    _iterator20.return();
+                return regeneratorRuntime.wrap(function _callee4$(_context4) {
+                    while (1) {
+                        switch (_context4.prev = _context4.next) {
+                            case 0:
+                                if (!(this.wc.state === DISCONNECTED)) {
+                                    _context4.next = 3;
+                                    break;
                                 }
-                            } finally {
-                                if (_didIteratorError20) {
-                                    throw _iteratorError20;
+
+                                console.info(this.wc.myId + ' _handleSvcMsg break (disconnected) ', M);
+                                return _context4.abrupt('return');
+
+                            case 3:
+                                msg = M.msg;
+
+                                if (!(M.timestamp !== undefined)) {
+                                    _context4.next = 38;
+                                    break;
                                 }
-                            }
-                        }
 
-                        console.warn(this.wc.myId + (' connectTo => this.jps.set(' + peer + ', ' + M.channel.peerId + ')\n'), jpsString);
-                        this.jps.set(peer, M.channel);
-                        var counter = 0;
-                        var connected = [];
-                        var allCompleted = new Promise(function (resolve) {
-                            var _iteratorNormalCompletion21 = true;
-                            var _didIteratorError21 = false;
-                            var _iteratorError21 = undefined;
+                                rcvdString = '';
+                                _iteratorNormalCompletion21 = true;
+                                _didIteratorError21 = false;
+                                _iteratorError21 = undefined;
+                                _context4.prev = 9;
 
-                            try {
-                                for (var _iterator21 = _this6.channels[Symbol.iterator](), _step21; !(_iteratorNormalCompletion21 = (_step21 = _iterator21.next()).done); _iteratorNormalCompletion21 = true) {
-                                    var ch = _step21.value;
+                                for (_iterator21 = this.received[Symbol.iterator](); !(_iteratorNormalCompletion21 = (_step21 = _iterator21.next()).done); _iteratorNormalCompletion21 = true) {
+                                    _step21$value = slicedToArray(_step21.value, 3), sId = _step21$value[0], ts = _step21$value[1], l = _step21$value[2];
 
-                                    if (ch !== undefined && ch.peerId === peer) {
-                                        console.error(_this6.wc.myId + ' already connected with ' + peer);
-                                        resolve();
+                                    if (rcvdString.length !== 0) {
+                                        rcvdString += ', ';
                                     }
+                                    rcvdString += '[' + sId + ',' + ts + ',' + l + ']';
                                 }
-                            } catch (err) {
+                                _context4.next = 17;
+                                break;
+
+                            case 13:
+                                _context4.prev = 13;
+                                _context4.t0 = _context4['catch'](9);
                                 _didIteratorError21 = true;
-                                _iteratorError21 = err;
-                            } finally {
-                                try {
-                                    if (!_iteratorNormalCompletion21 && _iterator21.return) {
-                                        _iterator21.return();
-                                    }
-                                } finally {
-                                    if (_didIteratorError21) {
-                                        throw _iteratorError21;
-                                    }
-                                }
-                            }
+                                _iteratorError21 = _context4.t0;
 
-                            _this6.wc.channelBuilder.connectTo(peer).then(function (ch) {
-                                console.warn(_this6.wc.myId + ' passed here');
-                                _this6.peerJoined(ch);
-                                _this6.wc._sendTo({
-                                    recipientId: peer,
-                                    content: get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'encode', _this6).call(_this6, { joinedPeerIdFinished: _this6.wc.myId }),
-                                    meta: { timestamp: Date.now() }
+                            case 17:
+                                _context4.prev = 17;
+                                _context4.prev = 18;
+
+                                if (!_iteratorNormalCompletion21 && _iterator21.return) {
+                                    _iterator21.return();
+                                }
+
+                            case 20:
+                                _context4.prev = 20;
+
+                                if (!_didIteratorError21) {
+                                    _context4.next = 23;
+                                    break;
+                                }
+
+                                throw _iteratorError21;
+
+                            case 23:
+                                return _context4.finish(20);
+
+                            case 24:
+                                return _context4.finish(17);
+
+                            case 25:
+                                console.info(this.wc.myId + ' received : ' + rcvdString);
+                                alreadyReceived = false;
+                                valH = undefined;
+                                _context4.next = 30;
+                                return crypto.subtle.digest('SHA-256', _super("encode").call(this, msg).buffer).then(function (h) {
+                                    valH = h;
                                 });
-                                console.warn(_this6.wc.myId + ' counter : ' + counter);
-                                if (++counter === 1) {
-                                    resolve();
-                                }
-                            }).catch(function (err) {
-                                console.warn(_this6.wc.myId + ' failed to connect to ' + peer, err.message);
-                                if (++counter === 1) {
-                                    resolve();
-                                }
-                            });
-                        });
-                        allCompleted.then(function () {
-                            _this6.wc._send({
-                                content: get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'encode', _this6).call(_this6, { joinedPeerId: peer }),
-                                meta: { timestamp: Date.now() }
-                            });
-                            console.warn(_this6.wc.myId + ' connected to ' + peer + '\npartialView : ' + _this6.p.toString(), _this6.wc.members);
-                        });
-                        break;
-                    }
-                case 'joinedPeerIdFinished':
-                    {
-                        console.error(this.wc.myId + ' joinedPeerIdFinished ' + msg.joinedPeerIdFinished);
-                        if (this.iJoin() && msg.joinedPeerIdFinished === this.wc.myId) {
-                            var chanString = '\nchannels :';
-                            var _iteratorNormalCompletion22 = true;
-                            var _didIteratorError22 = false;
-                            var _iteratorError22 = undefined;
 
-                            try {
-                                for (var _iterator22 = this.channels[Symbol.iterator](), _step22; !(_iteratorNormalCompletion22 = (_step22 = _iterator22.next()).done); _iteratorNormalCompletion22 = true) {
-                                    var ch = _step22.value;
+                            case 30:
+                                this.received.forEach(function (message) {
+                                    if (!alreadyReceived && message[0] === M.senderId && message[1] === M.timestamp && _this8.areHashEqual(message[2], valH)) {
+                                        alreadyReceived = true;
+                                    }
+                                });
+
+                                if (!alreadyReceived) {
+                                    _context4.next = 34;
+                                    break;
+                                }
+
+                                // console.info(this.wc.myId + ' message already received ', msg)
+                                console.error(this.wc.myId + (' message already received ' + msg.senderId + ' => ' + msg.recipientId + ', ' + msg.meta.timestamp));
+                                return _context4.abrupt('return');
+
+                            case 34:
+                                this.received.push([M.senderId, M.timestamp, valH]);
+                                rcvd = '';
+
+                                this.received.forEach(function (r) {
+                                    if (rcvd.length === 0) {
+                                        rcvd += '[';
+                                    }
+                                    if (rcvd.length !== 1) {
+                                        rcvd += ', ';
+                                    }
+                                    rcvd += '[' + r[0] + ',' + r[1] + ',' + r[2] + ']';
+                                });
+                                if (rcvd.length !== 0) {
+                                    rcvd += ']';
+                                }
+
+                            case 38:
+                                _context4.t1 = msg.type;
+                                _context4.next = _context4.t1 === 'shouldAdd' ? 41 : _context4.t1 === 'exchangeInit' ? 44 : _context4.t1 === 'connectTo' ? 47 : _context4.t1 === 'joinedPeerIdFinished' ? 76 : _context4.t1 === 'joinedPeerId' ? 147 : 159;
+                                break;
+
+                            case 41:
+                                console.info(this.wc.myId + ' shouldAdd ' + msg.shouldAdd);
+                                this.p.add(msg.shouldAdd);
+                                return _context4.abrupt('break', 159);
+
+                            case 44:
+                                console.error(M.channel.peerId + ' exchanging with ' + this.wc.myId);
+                                this._onExchange(this.wc, M.channel.peerId, msg.exchangeInit.sample);
+                                return _context4.abrupt('break', 159);
+
+                            case 47:
+                                console.info(this.wc.myId + ' connectTo ' + msg.connectTo);
+                                peer = msg.connectTo;
+                                jpsString = '\njps : ';
+                                _iteratorNormalCompletion22 = true;
+                                _didIteratorError22 = false;
+                                _iteratorError22 = undefined;
+                                _context4.prev = 53;
+
+                                for (_iterator22 = this.jps[Symbol.iterator](); !(_iteratorNormalCompletion22 = (_step22 = _iterator22.next()).done); _iteratorNormalCompletion22 = true) {
+                                    _step22$value = slicedToArray(_step22.value, 2), key = _step22$value[0], value = _step22$value[1];
+
+                                    jpsString += key + ' => ' + value.peerId + '\n';
+                                }
+                                _context4.next = 61;
+                                break;
+
+                            case 57:
+                                _context4.prev = 57;
+                                _context4.t2 = _context4['catch'](53);
+                                _didIteratorError22 = true;
+                                _iteratorError22 = _context4.t2;
+
+                            case 61:
+                                _context4.prev = 61;
+                                _context4.prev = 62;
+
+                                if (!_iteratorNormalCompletion22 && _iterator22.return) {
+                                    _iterator22.return();
+                                }
+
+                            case 64:
+                                _context4.prev = 64;
+
+                                if (!_didIteratorError22) {
+                                    _context4.next = 67;
+                                    break;
+                                }
+
+                                throw _iteratorError22;
+
+                            case 67:
+                                return _context4.finish(64);
+
+                            case 68:
+                                return _context4.finish(61);
+
+                            case 69:
+                                console.info(this.wc.myId + (' connectTo => this.jps.set(' + peer + ', ' + M.channel.peerId + ')\n'), jpsString);
+                                this.jps.set(peer, M.channel);
+                                counter = 0;
+                                connected = [];
+                                allCompleted = new Promise(function (resolve) {
+                                    var _iteratorNormalCompletion23 = true;
+                                    var _didIteratorError23 = false;
+                                    var _iteratorError23 = undefined;
+
+                                    try {
+                                        for (var _iterator23 = _this8.channels[Symbol.iterator](), _step23; !(_iteratorNormalCompletion23 = (_step23 = _iterator23.next()).done); _iteratorNormalCompletion23 = true) {
+                                            var ch = _step23.value;
+
+                                            if (ch !== undefined && ch.peerId === peer) {
+                                                console.error(_this8.wc.myId + ' already connected with ' + peer);
+                                                resolve();
+                                            }
+                                        }
+                                    } catch (err) {
+                                        _didIteratorError23 = true;
+                                        _iteratorError23 = err;
+                                    } finally {
+                                        try {
+                                            if (!_iteratorNormalCompletion23 && _iterator23.return) {
+                                                _iterator23.return();
+                                            }
+                                        } finally {
+                                            if (_didIteratorError23) {
+                                                throw _iteratorError23;
+                                            }
+                                        }
+                                    }
+
+                                    _this8.wc.channelBuilder.connectTo(peer).then(function (ch) {
+                                        console.info(_this8.wc.myId + ' passed here');
+                                        _this8.peerJoined(ch);
+                                        _this8.wc._sendTo({
+                                            recipientId: peer,
+                                            content: _super("encode").call(_this8, { joinedPeerIdFinished: _this8.wc.myId }),
+                                            meta: { timestamp: Date.now() }
+                                        });
+                                        console.info(_this8.wc.myId + ' counter : ' + counter);
+                                        if (++counter === 1) {
+                                            resolve();
+                                        }
+                                    }).catch(function (err) {
+                                        console.error(_this8.wc.myId + ' failed to connect to ' + peer, err.message);
+                                        if (++counter === 1) {
+                                            resolve();
+                                        }
+                                    });
+                                });
+
+                                allCompleted.then(function () {
+                                    _this8.wc._send({
+                                        content: _super("encode").call(_this8, { joinedPeerId: peer }),
+                                        meta: { timestamp: Date.now() }
+                                    });
+                                    console.info(_this8.wc.myId + ' connected to ' + peer + '\npartialView : ' + _this8.p.toString(), _this8.wc.members);
+                                });
+                                return _context4.abrupt('break', 159);
+
+                            case 76:
+                                console.error(this.wc.myId + ' joinedPeerIdFinished ' + msg.joinedPeerIdFinished);
+
+                                if (!(this.iJoin() && msg.joinedPeerIdFinished === this.wc.myId)) {
+                                    _context4.next = 102;
+                                    break;
+                                }
+
+                                chanString = '\nchannels :';
+                                _iteratorNormalCompletion24 = true;
+                                _didIteratorError24 = false;
+                                _iteratorError24 = undefined;
+                                _context4.prev = 82;
+
+                                for (_iterator24 = this.channels[Symbol.iterator](); !(_iteratorNormalCompletion24 = (_step24 = _iterator24.next()).done); _iteratorNormalCompletion24 = true) {
+                                    ch = _step24.value;
 
                                     chanString += ch.peerId + '\n';
                                 }
-                            } catch (err) {
-                                _didIteratorError22 = true;
-                                _iteratorError22 = err;
-                            } finally {
-                                try {
-                                    if (!_iteratorNormalCompletion22 && _iterator22.return) {
-                                        _iterator22.return();
-                                    }
-                                } finally {
-                                    if (_didIteratorError22) {
-                                        throw _iteratorError22;
-                                    }
-                                }
-                            }
+                                _context4.next = 90;
+                                break;
 
-                            console.error(this.wc.myId + ' _joinSucceed ' + M.senderId + ' ' + msg.joinedPeerIdFinished, chanString, this.wc.members);
-                            this.wc._joinSucceed();
-                        } else if (this.jps.has(msg.joinedPeerIdFinished)) {
-                            console.warn(this.wc.myId + ' blablabla ' + msg.joinedPeerIdFinished);
-                            this.peerJoined(this.jps.get(msg.joinedPeerIdFinished));
-                        }
-                        var _jpsString3 = '\njps : ';
-                        var _iteratorNormalCompletion23 = true;
-                        var _didIteratorError23 = false;
-                        var _iteratorError23 = undefined;
+                            case 86:
+                                _context4.prev = 86;
+                                _context4.t3 = _context4['catch'](82);
+                                _didIteratorError24 = true;
+                                _iteratorError24 = _context4.t3;
 
-                        try {
-                            for (var _iterator23 = this.jps[Symbol.iterator](), _step23; !(_iteratorNormalCompletion23 = (_step23 = _iterator23.next()).done); _iteratorNormalCompletion23 = true) {
-                                var _step23$value = slicedToArray(_step23.value, 2),
-                                    key = _step23$value[0],
-                                    value = _step23$value[1];
+                            case 90:
+                                _context4.prev = 90;
+                                _context4.prev = 91;
 
-                                _jpsString3 += key + ' => ' + value.peerId + '\n';
-                            }
-                        } catch (err) {
-                            _didIteratorError23 = true;
-                            _iteratorError23 = err;
-                        } finally {
-                            try {
-                                if (!_iteratorNormalCompletion23 && _iterator23.return) {
-                                    _iterator23.return();
-                                }
-                            } finally {
-                                if (_didIteratorError23) {
-                                    throw _iteratorError23;
-                                }
-                            }
-                        }
-
-                        console.warn(this.wc.myId + ' joinedPeerIdFinished => this.jps.delete(' + msg.joinedPeerIdFinished + ')\n', _jpsString3);
-                        this.jps.delete(msg.joinedPeerIdFinished);
-                        _jpsString3 = '\njps : ';
-                        var _iteratorNormalCompletion24 = true;
-                        var _didIteratorError24 = false;
-                        var _iteratorError24 = undefined;
-
-                        try {
-                            for (var _iterator24 = this.jps[Symbol.iterator](), _step24; !(_iteratorNormalCompletion24 = (_step24 = _iterator24.next()).done); _iteratorNormalCompletion24 = true) {
-                                var _step24$value = slicedToArray(_step24.value, 2),
-                                    key = _step24$value[0],
-                                    value = _step24$value[1];
-
-                                _jpsString3 += key + ' => ' + value.peerId + '\n';
-                            }
-                        } catch (err) {
-                            _didIteratorError24 = true;
-                            _iteratorError24 = err;
-                        } finally {
-                            try {
                                 if (!_iteratorNormalCompletion24 && _iterator24.return) {
                                     _iterator24.return();
                                 }
-                            } finally {
-                                if (_didIteratorError24) {
-                                    throw _iteratorError24;
-                                }
-                            }
-                        }
 
-                        console.warn(this.wc.myId + ' deleted of jps ' + msg.joinedPeerIdFinished + '\n', _jpsString3);
-                        break;
-                    }
-                case 'joinedPeerId':
-                    {
-                        console.info(this.wc.myId + ' joinedPeerId ' + msg.joinedPeerId);
-                        // TODO : iJoin or empty var needJoin
-                        if (this.deportedJoin.get(msg.joinedPeerId)) {
-                            this.deportedJoin.set(msg.joinedPeerId, this.deportedJoin.get(msg.joinedPeerId) - 1);
-                            console.warn(this.wc.myId + ' still ' + this.deportedJoin.get(msg.joinedPeerId) + ' peers joining ' + msg.joinedPeerId);
-                        }
-                        if (this.deportedJoin.get(msg.joinedPeerId) === 0) {
-                            console.error(this.wc.myId + ' no more peer joining ' + msg.joinedPeerId, this.wc.members);
-                            this.forward({
-                                senderId: this.wc.myId,
-                                recipientId: msg.joinedPeerId,
-                                isService: true,
-                                content: get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), 'encode', this).call(this, { joinedPeerIdFinished: msg.joinedPeerId }),
-                                meta: { timestamp: Date.now() }
-                            });
-                            this.deportedJoin.delete(msg.joinedPeerId);
-                            var _ch4 = this.jps.get(msg.joinedPeerId);
-                            if (_ch4 === undefined) {
+                            case 93:
+                                _context4.prev = 93;
+
+                                if (!_didIteratorError24) {
+                                    _context4.next = 96;
+                                    break;
+                                }
+
+                                throw _iteratorError24;
+
+                            case 96:
+                                return _context4.finish(93);
+
+                            case 97:
+                                return _context4.finish(90);
+
+                            case 98:
+                                console.error(this.wc.myId + ' _joinSucceed ' + M.senderId + ' ' + msg.joinedPeerIdFinished, chanString, this.wc.members);
+                                this.wc._joinSucceed();
+                                _context4.next = 103;
+                                break;
+
+                            case 102:
+                                if (this.jps.has(msg.joinedPeerIdFinished)) {
+                                    console.info(this.wc.myId + ' blablabla ' + msg.joinedPeerIdFinished);
+                                    this.peerJoined(this.jps.get(msg.joinedPeerIdFinished));
+                                }
+
+                            case 103:
+                                _jpsString3 = '\njps : ';
+                                _iteratorNormalCompletion25 = true;
+                                _didIteratorError25 = false;
+                                _iteratorError25 = undefined;
+                                _context4.prev = 107;
+
+                                for (_iterator25 = this.jps[Symbol.iterator](); !(_iteratorNormalCompletion25 = (_step25 = _iterator25.next()).done); _iteratorNormalCompletion25 = true) {
+                                    _step25$value = slicedToArray(_step25.value, 2), key = _step25$value[0], value = _step25$value[1];
+
+                                    _jpsString3 += key + ' => ' + value.peerId + '\n';
+                                }
+                                _context4.next = 115;
+                                break;
+
+                            case 111:
+                                _context4.prev = 111;
+                                _context4.t4 = _context4['catch'](107);
+                                _didIteratorError25 = true;
+                                _iteratorError25 = _context4.t4;
+
+                            case 115:
+                                _context4.prev = 115;
+                                _context4.prev = 116;
+
+                                if (!_iteratorNormalCompletion25 && _iterator25.return) {
+                                    _iterator25.return();
+                                }
+
+                            case 118:
+                                _context4.prev = 118;
+
+                                if (!_didIteratorError25) {
+                                    _context4.next = 121;
+                                    break;
+                                }
+
+                                throw _iteratorError25;
+
+                            case 121:
+                                return _context4.finish(118);
+
+                            case 122:
+                                return _context4.finish(115);
+
+                            case 123:
+                                console.info(this.wc.myId + ' joinedPeerIdFinished => this.jps.delete(' + msg.joinedPeerIdFinished + ')\n', _jpsString3);
+                                this.jps.delete(msg.joinedPeerIdFinished);
+                                _jpsString3 = '\njps : ';
+                                _iteratorNormalCompletion26 = true;
+                                _didIteratorError26 = false;
+                                _iteratorError26 = undefined;
+                                _context4.prev = 129;
+                                for (_iterator26 = this.jps[Symbol.iterator](); !(_iteratorNormalCompletion26 = (_step26 = _iterator26.next()).done); _iteratorNormalCompletion26 = true) {
+                                    _step26$value = slicedToArray(_step26.value, 2), key = _step26$value[0], value = _step26$value[1];
+
+                                    _jpsString3 += key + ' => ' + value.peerId + '\n';
+                                }
+                                _context4.next = 137;
+                                break;
+
+                            case 133:
+                                _context4.prev = 133;
+                                _context4.t5 = _context4['catch'](129);
+                                _didIteratorError26 = true;
+                                _iteratorError26 = _context4.t5;
+
+                            case 137:
+                                _context4.prev = 137;
+                                _context4.prev = 138;
+
+                                if (!_iteratorNormalCompletion26 && _iterator26.return) {
+                                    _iterator26.return();
+                                }
+
+                            case 140:
+                                _context4.prev = 140;
+
+                                if (!_didIteratorError26) {
+                                    _context4.next = 143;
+                                    break;
+                                }
+
+                                throw _iteratorError26;
+
+                            case 143:
+                                return _context4.finish(140);
+
+                            case 144:
+                                return _context4.finish(137);
+
+                            case 145:
+                                console.info(this.wc.myId + ' deleted of jps ' + msg.joinedPeerIdFinished + '\n', _jpsString3);
+                                return _context4.abrupt('break', 159);
+
+                            case 147:
+                                console.info(this.wc.myId + ' joinedPeerId ' + msg.joinedPeerId);
+                                // TODO : iJoin or empty var needJoin
+                                if (this.deportedJoin.get(msg.joinedPeerId)) {
+                                    this.deportedJoin.set(msg.joinedPeerId, this.deportedJoin.get(msg.joinedPeerId) - 1);
+                                    console.info(this.wc.myId + ' still ' + this.deportedJoin.get(msg.joinedPeerId) + ' peers joining ' + msg.joinedPeerId);
+                                }
+
+                                if (!(this.deportedJoin.get(msg.joinedPeerId) === 0)) {
+                                    _context4.next = 158;
+                                    break;
+                                }
+
+                                console.info(this.wc.myId + ' no more peer joining ' + msg.joinedPeerId, this.wc.members);
+                                this.forward({
+                                    senderId: this.wc.myId,
+                                    recipientId: msg.joinedPeerId,
+                                    isService: true,
+                                    content: _super("encode").call(this, { joinedPeerIdFinished: msg.joinedPeerId }),
+                                    meta: { timestamp: Date.now() }
+                                });
+                                this.deportedJoin.delete(msg.joinedPeerId);
+                                _ch4 = this.jps.get(msg.joinedPeerId);
+
+                                if (!(_ch4 === undefined)) {
+                                    _context4.next = 157;
+                                    break;
+                                }
+
                                 console.error(this.wc.myId + ' joinedPeerId with undefined channel', msg.joinedPeerId);
-                                return;
-                            }
-                            this.peerJoined(_ch4);
+                                return _context4.abrupt('return');
+
+                            case 157:
+                                this.peerJoined(_ch4);
+
+                            case 158:
+                                return _context4.abrupt('break', 159);
+
+                            case 159:
+                            case 'end':
+                                return _context4.stop();
                         }
-                        // if (msg.joinedPeerId !== this.wc.myId) {
-                        //   let jpsString = '\njps : '
-                        //   for (let [key, value] of this.jps) {
-                        //     jpsString += `${key} => ${value.peerId}\n`
-                        //   }
-                        //   console.warn(this.wc.myId + ' joinedPeerId => this.jps.delete(' + msg.joinedPeerId + ')\n', jpsString)
-                        //   this.jps.delete(msg.joinedPeerId)
-                        //   jpsString = '\njps : '
-                        //   for (let [key, value] of this.jps) {
-                        //     jpsString += `${key} => ${value.peerId}\n`
-                        //   }
-                        //   console.warn(this.wc.myId + ' deleted of jps ' + msg.joinedPeerId + '\n', jpsString, this.wc.members)
-                        // }
-                        break;
                     }
-            }
+                }, _callee4, this, [[9, 13, 17, 25], [18,, 20, 24], [53, 57, 61, 69], [62,, 64, 68], [82, 86, 90, 98], [91,, 93, 97], [107, 111, 115, 123], [116,, 118, 122], [129, 133, 137, 145], [138,, 140, 144]]);
+            }));
         }
         /**
          * Periodic procedure of exchange (active thread)
@@ -6626,18 +7179,18 @@ var SprayService = function (_TopologyInterface) {
     }, {
         key: '_exchange',
         value: function _exchange(wc) {
-            var _this7 = this;
+            var _this9 = this;
 
             var _super = function _super(name) {
-                return get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), name, _this7);
+                return get(SprayService.prototype.__proto__ || Object.getPrototypeOf(SprayService.prototype), name, _this9);
             };
-            return __awaiter(this, void 0, void 0, regeneratorRuntime.mark(function _callee() {
-                var _this8 = this;
+            return __awaiter(this, void 0, void 0, regeneratorRuntime.mark(function _callee5() {
+                var _this10 = this;
 
                 var oldestArc, cloneP, sample;
-                return regeneratorRuntime.wrap(function _callee$(_context) {
+                return regeneratorRuntime.wrap(function _callee5$(_context5) {
                     while (1) {
-                        switch (_context.prev = _context.next) {
+                        switch (_context5.prev = _context5.next) {
                             case 0:
                                 console.error(this.wc.myId + ' _exchange ');
                                 this.p.incrementAge();
@@ -6660,7 +7213,7 @@ var SprayService = function (_TopologyInterface) {
                                 });
                                 // async/await response... with timeout
                                 // let respSample = await new PartialView();
-                                _context.next = 12;
+                                _context5.next = 12;
                                 return new Promise(function (resolve, reject) {
                                     wc._svcMsgStream.filter(function (msg) {
                                         return msg.recipientId === wc.myId && msg.type === 'exchangeResp';
@@ -6676,7 +7229,7 @@ var SprayService = function (_TopologyInterface) {
                                 }).then(function (respSample) {
                                     if (Array.isArray(respSample)) {
                                         respSample.forEach(function (arc) {
-                                            _this8.p.add(arc[0], arc[1]);
+                                            _this10.p.add(arc[0], arc[1]);
                                         });
                                     } else {
                                         console.error('SprayService Exchange response typeof ', typeof respSample === 'undefined' ? 'undefined' : _typeof(respSample));
@@ -6689,15 +7242,15 @@ var SprayService = function (_TopologyInterface) {
                                 this._replace(sample, wc.myId, oldestArc[0]);
                                 // TODO disconnection (ch.close)
                                 sample.forEach(function (arc) {
-                                    _this8.p.remove(arc[0], arc[1]);
+                                    _this10.p.remove(arc[0], arc[1]);
                                 });
 
                             case 14:
                             case 'end':
-                                return _context.stop();
+                                return _context5.stop();
                         }
                     }
-                }, _callee, this);
+                }, _callee5, this);
             }));
         }
         /**
@@ -6711,7 +7264,7 @@ var SprayService = function (_TopologyInterface) {
     }, {
         key: '_onExchange',
         value: function _onExchange(wc, origineId, sample) {
-            var _this9 = this;
+            var _this11 = this;
 
             console.info(this.wc.myId + ' _onExchange ');
             var respSample = this._getSample(this.p, Math.ceil(this.p.length / 2));
@@ -6724,10 +7277,10 @@ var SprayService = function (_TopologyInterface) {
             });
             this._replace(respSample, wc.myId, origineId);
             respSample.forEach(function (arc) {
-                _this9.p.remove(arc[0], arc[1]);
+                _this11.p.remove(arc[0], arc[1]);
             });
             sample.forEach(function (arc) {
-                _this9.p.add(arc[0], arc[1]);
+                _this11.p.add(arc[0], arc[1]);
             });
         }
         /**
@@ -6783,7 +7336,7 @@ var SprayService = function (_TopologyInterface) {
     }, {
         key: '_onPeerDown',
         value: function _onPeerDown(peerDownId) {
-            var _this10 = this;
+            var _this12 = this;
 
             console.info(this.wc.myId + ' _onPeerDown ');
             // Count and delete
@@ -6796,7 +7349,7 @@ var SprayService = function (_TopologyInterface) {
                 }
             });
             toRemove.forEach(function (arc) {
-                _this10.p.remove(arc[0], arc[1]);
+                _this12.p.remove(arc[0], arc[1]);
             });
             // Duplicate arcs
             for (var i = 0; i < occ; i++) {
@@ -6826,21 +7379,23 @@ var SprayService = function (_TopologyInterface) {
     }, {
         key: '_clearReceived',
         value: function _clearReceived() {
-            var _this11 = this;
+            var _this13 = this;
 
-            console.info(this.wc.myId + ' _clearReceived ');
+            // TODO : there are different timestamp bases
+            console.error(this.wc.myId + ' _clearReceived ');
             var clearDelay = Math.floor(Math.exp(this.p.length)) * 2 * delayPerConnection;
             var i = 0;
             while (i < this.received.length) {
-                var ts = this.received[i][1];
+                var ts = +this.received[i][1];
+                // Bad condition
                 if (Date.now() - ts > clearDelay) {
                     this.received.splice(i, 1);
                 } else {
                     i++;
                 }
             }
-            setTimeout(function () {
-                return _this11._clearReceived();
+            this.timeoutReceived = setTimeout(function () {
+                return _this13._clearReceived();
             }, clearDelay);
         }
     }, {
@@ -6853,15 +7408,15 @@ var SprayService = function (_TopologyInterface) {
             console.info(this.wc.myId + ' peerJoined ' + ch.peerId);
             this.channels.add(ch);
             var jpsString = '\njps : ';
-            var _iteratorNormalCompletion25 = true;
-            var _didIteratorError25 = false;
-            var _iteratorError25 = undefined;
+            var _iteratorNormalCompletion27 = true;
+            var _didIteratorError27 = false;
+            var _iteratorError27 = undefined;
 
             try {
-                for (var _iterator25 = this.jps[Symbol.iterator](), _step25; !(_iteratorNormalCompletion25 = (_step25 = _iterator25.next()).done); _iteratorNormalCompletion25 = true) {
-                    var _step25$value = slicedToArray(_step25.value, 2),
-                        key = _step25$value[0],
-                        value = _step25$value[1];
+                for (var _iterator27 = this.jps[Symbol.iterator](), _step27; !(_iteratorNormalCompletion27 = (_step27 = _iterator27.next()).done); _iteratorNormalCompletion27 = true) {
+                    var _step27$value = slicedToArray(_step27.value, 2),
+                        key = _step27$value[0],
+                        value = _step27$value[1];
 
                     try {
                         jpsString += key + ' => ' + value.peerId + '\n';
@@ -6870,32 +7425,32 @@ var SprayService = function (_TopologyInterface) {
                     }
                 }
             } catch (err) {
-                _didIteratorError25 = true;
-                _iteratorError25 = err;
+                _didIteratorError27 = true;
+                _iteratorError27 = err;
             } finally {
                 try {
-                    if (!_iteratorNormalCompletion25 && _iterator25.return) {
-                        _iterator25.return();
+                    if (!_iteratorNormalCompletion27 && _iterator27.return) {
+                        _iterator27.return();
                     }
                 } finally {
-                    if (_didIteratorError25) {
-                        throw _iteratorError25;
+                    if (_didIteratorError27) {
+                        throw _iteratorError27;
                     }
                 }
             }
 
-            console.warn(this.wc.myId + ' peerJoined => this.jps.delete(' + ch.peerId + ')\n', jpsString);
+            console.info(this.wc.myId + ' peerJoined => this.jps.delete(' + ch.peerId + ')\n', jpsString);
             this.jps.delete(ch.peerId);
             jpsString = '\njps : ';
-            var _iteratorNormalCompletion26 = true;
-            var _didIteratorError26 = false;
-            var _iteratorError26 = undefined;
+            var _iteratorNormalCompletion28 = true;
+            var _didIteratorError28 = false;
+            var _iteratorError28 = undefined;
 
             try {
-                for (var _iterator26 = this.jps[Symbol.iterator](), _step26; !(_iteratorNormalCompletion26 = (_step26 = _iterator26.next()).done); _iteratorNormalCompletion26 = true) {
-                    var _step26$value = slicedToArray(_step26.value, 2),
-                        key = _step26$value[0],
-                        value = _step26$value[1];
+                for (var _iterator28 = this.jps[Symbol.iterator](), _step28; !(_iteratorNormalCompletion28 = (_step28 = _iterator28.next()).done); _iteratorNormalCompletion28 = true) {
+                    var _step28$value = slicedToArray(_step28.value, 2),
+                        key = _step28$value[0],
+                        value = _step28$value[1];
 
                     try {
                         jpsString += key + ' => ' + value.peerId + '\n';
@@ -6904,22 +7459,40 @@ var SprayService = function (_TopologyInterface) {
                     }
                 }
             } catch (err) {
-                _didIteratorError26 = true;
-                _iteratorError26 = err;
+                _didIteratorError28 = true;
+                _iteratorError28 = err;
             } finally {
                 try {
-                    if (!_iteratorNormalCompletion26 && _iterator26.return) {
-                        _iterator26.return();
+                    if (!_iteratorNormalCompletion28 && _iterator28.return) {
+                        _iterator28.return();
                     }
                 } finally {
-                    if (_didIteratorError26) {
-                        throw _iteratorError26;
+                    if (_didIteratorError28) {
+                        throw _iteratorError28;
                     }
                 }
             }
 
-            console.warn(this.wc.myId + ' deleted of jps ' + ch.peerId + '\n', jpsString, this.p.toString(), this.wc.members);
+            console.info(this.wc.myId + ' deleted of jps ' + ch.peerId + '\n', jpsString, this.p.toString(), this.wc.members);
             this.wc._onPeerJoin(ch.peerId);
+        }
+    }, {
+        key: 'areHashEqual',
+        value: function areHashEqual(h1, h2) {
+            console.info(this.wc.myId + (' areHashEqual (' + (typeof h1 === 'undefined' ? 'undefined' : _typeof(h1)) + ', ' + (typeof h2 === 'undefined' ? 'undefined' : _typeof(h2)) + ')'));
+            var view1 = new DataView(h1);
+            var view2 = new DataView(h2);
+            if (view1.byteLength !== view2.byteLength) {
+                return false;
+            }
+            for (var i = 0; i < view1.byteLength; i += 4) {
+                var value1 = view1.getUint32(i);
+                var value2 = view2.getUint32(i);
+                if (value1 !== value2) {
+                    return false;
+                }
+            }
+            return true;
         }
     }]);
     return SprayService;
@@ -11495,17 +12068,32 @@ var WebChannel = function (_Service) {
       switch (msg.recipientId) {
         // If the message is broadcasted
         case 0:
+          // console.info(this.myId + ' broadcast message from ' + channel.peerId, msg)
+          console.warn(this.myId + ' broadcast message from ' + channel.peerId + (' ' + msg.senderId + ' => ' + msg.recipientId), msg);
+          if (msg.meta && msg.meta.timestamp !== undefined) {
+            console.warn(this.myId + ' timestamp : ' + msg.meta.timestamp);
+          }
           this._handleMyMessage(channel, msg);
           this._topology.forward(msg);
           break;
 
         // If it is a private message to me
         case this.myId:
+          // console.info(this.myId + ' message for me from ' + channel.peerId, msg)
+          console.warn(this.myId + ' message for me from ' + channel.peerId + (' ' + msg.senderId + ' => ' + msg.recipientId));
+          if (msg.meta && msg.meta.timestamp !== undefined) {
+            console.warn(this.myId + ' timestamp : ' + msg.meta.timestamp);
+          }
           this._handleMyMessage(channel, msg);
           break;
 
         // If is is a message to me from a peer who does not know yet my ID
         case 1:
+          // console.info(this.myId + ' init message for me from ' + channel.peerId, msg)
+          console.warn(this.myId + ' init message for me from ' + channel.peerId + (' ' + msg.senderId + ' => ' + msg.recipientId));
+          if (msg.meta && msg.meta.timestamp !== undefined) {
+            console.warn(this.myId + ' timestamp : ' + msg.meta.timestamp);
+          }
           this._handleMyMessage(channel, msg);
           break;
 
@@ -11525,6 +12113,7 @@ var WebChannel = function (_Service) {
 
                 jpsString += key + ' => ' + value.peerId + '\n';
               }
+              // console.warn(this.myId + ' forwardTo from ' + channel.peerId + ' : ' + msg.senderId + ' => ' + msg.recipientId, msg, '\n' + this._topology.p.toString() + '\n', jpsString)
             } catch (err) {
               _didIteratorError3 = true;
               _iteratorError3 = err;
@@ -11540,7 +12129,10 @@ var WebChannel = function (_Service) {
               }
             }
 
-            console.warn(this.myId + ' forwardTo from ' + channel.peerId + ' : ' + msg.senderId + ' => ' + msg.recipientId, msg, '\n' + this._topology.p.toString() + '\n', jpsString);
+            console.warn(this.myId + ' forwardTo from ' + channel.peerId + ' : ' + msg.senderId + ' => ' + msg.recipientId, '\n' + this._topology.p.toString() + '\n', jpsString);
+            if (msg.meta && msg.meta.timestamp !== undefined) {
+              console.warn(this.myId + ' timestamp : ' + msg.meta.timestamp);
+            }
           } catch (e) {
             // Do nothing
           }
@@ -11552,12 +12144,14 @@ var WebChannel = function (_Service) {
     value: function _handleMyMessage(channel, msg) {
       if (!msg.isService) {
         // User Message
+        // console.info(this.myId + ' User Message from ' + channel.peerId, msg)
         var data = this._userMsg.decode(msg.content, msg.senderId);
         if (data !== undefined) {
           this.onMessage(msg.senderId, data, msg.recipientId === 0);
         }
       } else {
         // Inner Message
+        // console.info(this.myId + ' Inner message from ' + channel.peerId, msg)
         try {
           if (JSON.stringify(spray.Message.decode(service.Message.decode(msg.content).content)) !== {}) {} else if (JSON.stringify(get(WebChannel.prototype.__proto__ || Object.getPrototypeOf(WebChannel.prototype), 'decode', this).call(this, service.Message.decode(msg.content).content)) !== {}) {} else if (JSON.stringify(this.decode(service.Message.decode(msg.content).content)) !== {}) {} else {}
         } catch (e) {

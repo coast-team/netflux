@@ -9,7 +9,7 @@ const scenarios = [
   // new helper.Scenario('cb'),
   new helper.Scenario('ccc') // ,
   // new helper.Scenario('ccb'),
-  // new helper.Scenario('ccccccc'),
+  // new helper.Scenario('ccccccc') // ,
   // new helper.Scenario('cccbccc')
 ]
 const PEER_FACE = '🙂 '
@@ -22,7 +22,7 @@ const faces = length => {
 }
 
 describe('Spray connected', () => {
-  fdescribe('Should establish a p2p network', () => {
+  describe('Should establish a p2p network', () => {
     let wcs
     afterEach(() => wcs.forEach(wc => wc.disconnect()))
 
@@ -108,7 +108,7 @@ describe('Spray connected', () => {
     })
   })
 
-  describe('Should send/receive', () => {
+  fdescribe('Should send/receive', () => {
     let wcs
 
     afterEach(() => wcs.forEach(wc => wc.disconnect()))

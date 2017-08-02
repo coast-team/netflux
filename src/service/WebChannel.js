@@ -437,25 +437,38 @@ export class WebChannel extends Service {
    * @param {external:ArrayBuffer} bytes - Message
    */
   _onMessage (channel, bytes) {
+    console.info(this.myId + ' new message incoming from ' + channel.peerId)
     const msg = this._decode(bytes)
 
     switch (msg.recipientId) {
       // If the message is broadcasted
       case 0:
-        console.info(this.myId + ' broadcast message from ' + channel.peerId, msg)
+        // console.info(this.myId + ' broadcast message from ' + channel.peerId, msg)
+        console.warn(this.myId + ' broadcast message from ' + channel.peerId + ` ${msg.senderId} => ${msg.recipientId}`, msg)
+        if (msg.meta && msg.meta.timestamp !== undefined) {
+          console.warn(this.myId + ' timestamp : ' + msg.meta.timestamp)
+        }
         this._handleMyMessage(channel, msg)
         this._topology.forward(msg)
         break
 
       // If it is a private message to me
       case this.myId:
-        console.info(this.myId + ' message for me from ' + channel.peerId, msg)
+        // console.info(this.myId + ' message for me from ' + channel.peerId, msg)
+        console.warn(this.myId + ' message for me from ' + channel.peerId + ` ${msg.senderId} => ${msg.recipientId}`)
+        if (msg.meta && msg.meta.timestamp !== undefined) {
+          console.warn(this.myId + ' timestamp : ' + msg.meta.timestamp)
+        }
         this._handleMyMessage(channel, msg)
         break
 
       // If is is a message to me from a peer who does not know yet my ID
       case 1:
-        console.info(this.myId + ' init message for me from ' + channel.peerId, msg)
+        // console.info(this.myId + ' init message for me from ' + channel.peerId, msg)
+        console.warn(this.myId + ' init message for me from ' + channel.peerId + ` ${msg.senderId} => ${msg.recipientId}`)
+        if (msg.meta && msg.meta.timestamp !== undefined) {
+          console.warn(this.myId + ' timestamp : ' + msg.meta.timestamp)
+        }
         this._handleMyMessage(channel, msg)
         break
 
@@ -466,7 +479,11 @@ export class WebChannel extends Service {
           for (let [key, value] of this._topology.jps) {
             jpsString += `${key} => ${value.peerId}\n`
           }
-          console.warn(this.myId + ' forwardTo from ' + channel.peerId + ' : ' + msg.senderId + ' => ' + msg.recipientId, msg, '\n' + this._topology.p.toString() + '\n', jpsString)
+          // console.warn(this.myId + ' forwardTo from ' + channel.peerId + ' : ' + msg.senderId + ' => ' + msg.recipientId, msg, '\n' + this._topology.p.toString() + '\n', jpsString)
+          console.warn(this.myId + ' forwardTo from ' + channel.peerId + ' : ' + msg.senderId + ' => ' + msg.recipientId, '\n' + this._topology.p.toString() + '\n', jpsString)
+          if (msg.meta && msg.meta.timestamp !== undefined) {
+            console.warn(this.myId + ' timestamp : ' + msg.meta.timestamp)
+          }
         } catch (e) {
           // Do nothing
         }
@@ -477,14 +494,14 @@ export class WebChannel extends Service {
   _handleMyMessage (channel, msg) {
     if (!msg.isService) {
       // User Message
-      console.info(this.myId + ' User Message from ' + channel.peerId, msg)
+      // console.info(this.myId + ' User Message from ' + channel.peerId, msg)
       const data = this._userMsg.decode(msg.content, msg.senderId)
       if (data !== undefined) {
         this.onMessage(msg.senderId, data, msg.recipientId === 0)
       }
     } else {
       // Inner Message
-      console.info(this.myId + ' Inner message from ' + channel.peerId, msg)
+      // console.info(this.myId + ' Inner message from ' + channel.peerId, msg)
       try {
         if (JSON.stringify(spray.Message.decode(service.Message.decode(msg.content).content)) !== {}) {
           console.info(this.myId + ' content1 : ' + JSON.stringify(spray.Message.decode(service.Message.decode(msg.content).content)))
