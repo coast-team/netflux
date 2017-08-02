@@ -107,13 +107,13 @@ export function sendAndExpectOnMessage (wcs, isBroadcast, withBot = false) {
       wc.onMessage = (id, msg, broadcasted) => {
         expect(broadcasted).toEqual(isBroadcast)
         let msgId
-        console.warn(wc.myId + ' helper on message', id, (msg !== undefined), broadcasted)
-        console.warn(wc.myId + ' helper flags', flags, flags.size, wc.members)
+        // console.warn(wc.myId + ' helper on message', id, (msg !== undefined), broadcasted)
+        // console.warn(wc.myId + ' helper flags', flags, flags.size, wc.members)
         const flag = flags.get(id)
-        console.warn(wc.myId + ' helper flag', flag)
+        // console.warn(wc.myId + ' helper flag', flag)
         expect(flag).toBeDefined()
         if (typeof msg === 'string' || msg instanceof String) {
-          console.warn(wc.myId + ' received string/chunk from ' + id + ' is broadcast ' + broadcasted)
+          // console.warn(wc.myId + ' received string/chunk from ' + id + ' is broadcast ' + broadcasted)
           let msgObj = JSON.parse(msg)
           msgId = msgObj.id
 
@@ -130,7 +130,7 @@ export function sendAndExpectOnMessage (wcs, isBroadcast, withBot = false) {
 
         // Receive Binary
         } else if (msg instanceof Uint8Array) {
-          console.warn(wc.myId + ' received Uint8Array from ' + id + ' is broadcast ' + broadcasted)
+          // console.warn(wc.myId + ' received Uint8Array from ' + id + ' is broadcast ' + broadcasted)
           expect(flag.arraybuffer).toBeFalsy()
           flag.arraybuffer = true
           msgId = (new Uint32Array(msg.slice().buffer))[0]
@@ -141,7 +141,7 @@ export function sendAndExpectOnMessage (wcs, isBroadcast, withBot = false) {
         expect(msgId).toEqual(id)
         expect(flags.has(msgId)).toBeTruthy()
         if (flag.string && flag.arraybuffer && flag.chunk) {
-          console.error(wc.myId + ' flags deleted id ' + id + ', broadcasted : ' + broadcasted, flags.size)
+          // console.error(wc.myId + ' flags deleted id ' + id + ', broadcasted : ' + broadcasted, flags.size)
           flags.delete(id)
         }
 

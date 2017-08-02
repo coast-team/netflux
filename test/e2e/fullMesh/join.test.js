@@ -3,12 +3,13 @@ import bigStr from '../../util/4mb.txt'
 import { WebChannel } from '../../../src/service/WebChannel'
 
 // const USE_CASES = [2, 3, 7]
-const USE_CASES = [3]
+const USE_CASES = [4]
 const scenarios = [
   // new helper.Scenario('cc') // ,
   // new helper.Scenario('cb'),
-  new helper.Scenario('ccc') // ,
+  // new helper.Scenario('ccc') // ,
   // new helper.Scenario('ccb'),
+  new helper.Scenario('cccc') // ,
   // new helper.Scenario('ccccccc') // ,
   // new helper.Scenario('cccbccc')
 ]
@@ -22,7 +23,7 @@ const faces = length => {
 }
 
 describe('Spray connected', () => {
-  describe('Should establish a p2p network', () => {
+  fdescribe('Should establish a p2p network', () => {
     let wcs
     afterEach(() => wcs.forEach(wc => wc.disconnect()))
 
@@ -108,7 +109,7 @@ describe('Spray connected', () => {
     })
   })
 
-  fdescribe('Should send/receive', () => {
+  describe('Should send/receive', () => {
     let wcs
 
     afterEach(() => wcs.forEach(wc => wc.disconnect()))

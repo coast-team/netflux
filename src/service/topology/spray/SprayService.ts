@@ -372,7 +372,7 @@ export class SprayService extends TopologyInterface {
         }
         rcvdString += `[${sId},${ts},${l}]`
       }
-      console.info(this.wc.myId + ' received : ' + rcvdString)
+      // console.info(this.wc.myId + ' received : ' + rcvdString)
 
       let alreadyReceived = false
 
@@ -410,7 +410,6 @@ export class SprayService extends TopologyInterface {
 
   leave (): void {
     console.info(this.wc.myId + ' leave ')
-    // TODO ?
     for (let c of this.channels) {
       c.clearHandlers()
       c.close()
@@ -505,7 +504,7 @@ export class SprayService extends TopologyInterface {
         }
         rcvdString += `[${sId},${ts},${l}]`
       }
-      console.info(this.wc.myId + ' received : ' + rcvdString)
+      // console.info(this.wc.myId + ' received : ' + rcvdString)
       let alreadyReceived = false
 
       let valH = undefined
@@ -656,7 +655,6 @@ export class SprayService extends TopologyInterface {
     case 'joinedPeerId': {
 
       console.info(this.wc.myId + ' joinedPeerId ' + msg.joinedPeerId)
-      // TODO : iJoin or empty var needJoin
       if (this.deportedJoin.get(msg.joinedPeerId)) {
         this.deportedJoin.set(msg.joinedPeerId, this.deportedJoin.get(msg.joinedPeerId) - 1)
         console.info(this.wc.myId + ' still ' + this.deportedJoin.get(msg.joinedPeerId) + ' peers joining ' + msg.joinedPeerId)
@@ -742,8 +740,12 @@ export class SprayService extends TopologyInterface {
         console.error('Failed waiting exchange response ', err)
       })
     this._replace(sample, wc.myId, oldestArc[0])
-    // TODO disconnection (ch.close)
     sample.forEach( (arc) => {
+      for (let ch of this.channels) {
+        if (ch.peerId === arc[0]) {
+          ch.close()
+        }
+      }
       this.p.remove(arc[0], arc[1])
     })
   }

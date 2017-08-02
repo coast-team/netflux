@@ -6372,7 +6372,7 @@ var SprayService = function (_TopologyInterface) {
 
                             case 4:
                                 if (!(msg.meta !== undefined && msg.meta.timestamp !== undefined)) {
-                                    _context3.next = 34;
+                                    _context3.next = 33;
                                     break;
                                 }
 
@@ -6390,6 +6390,7 @@ var SprayService = function (_TopologyInterface) {
                                     }
                                     rcvdString += '[' + sId + ',' + ts + ',' + l + ']';
                                 }
+                                // console.info(this.wc.myId + ' received : ' + rcvdString)
                                 _context3.next = 17;
                                 break;
 
@@ -6424,15 +6425,14 @@ var SprayService = function (_TopologyInterface) {
                                 return _context3.finish(17);
 
                             case 25:
-                                console.info(this.wc.myId + ' received : ' + rcvdString);
                                 alreadyReceived = false;
                                 valH = undefined;
-                                _context3.next = 30;
+                                _context3.next = 29;
                                 return crypto.subtle.digest('SHA-256', msg.content.buffer).then(function (h) {
                                     return valH = h;
                                 });
 
-                            case 30:
+                            case 29:
                                 this.received.forEach(function (message) {
                                     if (!alreadyReceived && message[0] === msg.senderId && message[1] === msg.meta.timestamp && _this6.areHashEqual(message[2], valH)) {
                                         alreadyReceived = true;
@@ -6440,7 +6440,7 @@ var SprayService = function (_TopologyInterface) {
                                 });
 
                                 if (!alreadyReceived) {
-                                    _context3.next = 34;
+                                    _context3.next = 33;
                                     break;
                                 }
 
@@ -6448,7 +6448,7 @@ var SprayService = function (_TopologyInterface) {
                                 console.error(this.wc.myId + (' message already received ' + msg.senderId + ' => ' + msg.recipientId + ', ' + msg.meta.timestamp));
                                 return _context3.abrupt('return');
 
-                            case 34:
+                            case 33:
                                 // console.info(this.wc.myId + ` forward ${msg.senderId} => ${msg.recipientId}`, msg)
                                 peersId = [];
 
@@ -6461,7 +6461,7 @@ var SprayService = function (_TopologyInterface) {
                                     this.send(msg);
                                 }
 
-                            case 37:
+                            case 36:
                             case 'end':
                                 return _context3.stop();
                         }
@@ -6743,7 +6743,7 @@ var SprayService = function (_TopologyInterface) {
                                 msg = M.msg;
 
                                 if (!(M.timestamp !== undefined)) {
-                                    _context4.next = 38;
+                                    _context4.next = 37;
                                     break;
                                 }
 
@@ -6761,6 +6761,7 @@ var SprayService = function (_TopologyInterface) {
                                     }
                                     rcvdString += '[' + sId + ',' + ts + ',' + l + ']';
                                 }
+                                // console.info(this.wc.myId + ' received : ' + rcvdString)
                                 _context4.next = 17;
                                 break;
 
@@ -6795,15 +6796,14 @@ var SprayService = function (_TopologyInterface) {
                                 return _context4.finish(17);
 
                             case 25:
-                                console.info(this.wc.myId + ' received : ' + rcvdString);
                                 alreadyReceived = false;
                                 valH = undefined;
-                                _context4.next = 30;
+                                _context4.next = 29;
                                 return crypto.subtle.digest('SHA-256', _super("encode").call(this, msg).buffer).then(function (h) {
                                     valH = h;
                                 });
 
-                            case 30:
+                            case 29:
                                 this.received.forEach(function (message) {
                                     if (!alreadyReceived && message[0] === M.senderId && message[1] === M.timestamp && _this8.areHashEqual(message[2], valH)) {
                                         alreadyReceived = true;
@@ -6811,7 +6811,7 @@ var SprayService = function (_TopologyInterface) {
                                 });
 
                                 if (!alreadyReceived) {
-                                    _context4.next = 34;
+                                    _context4.next = 33;
                                     break;
                                 }
 
@@ -6819,7 +6819,7 @@ var SprayService = function (_TopologyInterface) {
                                 console.error(this.wc.myId + (' message already received ' + msg.senderId + ' => ' + msg.recipientId + ', ' + msg.meta.timestamp));
                                 return _context4.abrupt('return');
 
-                            case 34:
+                            case 33:
                                 this.received.push([M.senderId, M.timestamp, valH]);
                                 rcvd = '';
 
@@ -6836,69 +6836,69 @@ var SprayService = function (_TopologyInterface) {
                                     rcvd += ']';
                                 }
 
-                            case 38:
+                            case 37:
                                 _context4.t1 = msg.type;
-                                _context4.next = _context4.t1 === 'shouldAdd' ? 41 : _context4.t1 === 'exchangeInit' ? 44 : _context4.t1 === 'connectTo' ? 47 : _context4.t1 === 'joinedPeerIdFinished' ? 76 : _context4.t1 === 'joinedPeerId' ? 147 : 159;
+                                _context4.next = _context4.t1 === 'shouldAdd' ? 40 : _context4.t1 === 'exchangeInit' ? 43 : _context4.t1 === 'connectTo' ? 46 : _context4.t1 === 'joinedPeerIdFinished' ? 75 : _context4.t1 === 'joinedPeerId' ? 146 : 158;
                                 break;
 
-                            case 41:
+                            case 40:
                                 console.info(this.wc.myId + ' shouldAdd ' + msg.shouldAdd);
                                 this.p.add(msg.shouldAdd);
-                                return _context4.abrupt('break', 159);
+                                return _context4.abrupt('break', 158);
 
-                            case 44:
+                            case 43:
                                 console.error(M.channel.peerId + ' exchanging with ' + this.wc.myId);
                                 this._onExchange(this.wc, M.channel.peerId, msg.exchangeInit.sample);
-                                return _context4.abrupt('break', 159);
+                                return _context4.abrupt('break', 158);
 
-                            case 47:
+                            case 46:
                                 console.info(this.wc.myId + ' connectTo ' + msg.connectTo);
                                 peer = msg.connectTo;
                                 jpsString = '\njps : ';
                                 _iteratorNormalCompletion22 = true;
                                 _didIteratorError22 = false;
                                 _iteratorError22 = undefined;
-                                _context4.prev = 53;
+                                _context4.prev = 52;
 
                                 for (_iterator22 = this.jps[Symbol.iterator](); !(_iteratorNormalCompletion22 = (_step22 = _iterator22.next()).done); _iteratorNormalCompletion22 = true) {
                                     _step22$value = slicedToArray(_step22.value, 2), key = _step22$value[0], value = _step22$value[1];
 
                                     jpsString += key + ' => ' + value.peerId + '\n';
                                 }
-                                _context4.next = 61;
+                                _context4.next = 60;
                                 break;
 
-                            case 57:
-                                _context4.prev = 57;
-                                _context4.t2 = _context4['catch'](53);
+                            case 56:
+                                _context4.prev = 56;
+                                _context4.t2 = _context4['catch'](52);
                                 _didIteratorError22 = true;
                                 _iteratorError22 = _context4.t2;
 
-                            case 61:
+                            case 60:
+                                _context4.prev = 60;
                                 _context4.prev = 61;
-                                _context4.prev = 62;
 
                                 if (!_iteratorNormalCompletion22 && _iterator22.return) {
                                     _iterator22.return();
                                 }
 
-                            case 64:
-                                _context4.prev = 64;
+                            case 63:
+                                _context4.prev = 63;
 
                                 if (!_didIteratorError22) {
-                                    _context4.next = 67;
+                                    _context4.next = 66;
                                     break;
                                 }
 
                                 throw _iteratorError22;
 
+                            case 66:
+                                return _context4.finish(63);
+
                             case 67:
-                                return _context4.finish(64);
+                                return _context4.finish(60);
 
                             case 68:
-                                return _context4.finish(61);
-
-                            case 69:
                                 console.info(this.wc.myId + (' connectTo => this.jps.set(' + peer + ', ' + M.channel.peerId + ')\n'), jpsString);
                                 this.jps.set(peer, M.channel);
                                 counter = 0;
@@ -6959,13 +6959,13 @@ var SprayService = function (_TopologyInterface) {
                                     });
                                     console.info(_this8.wc.myId + ' connected to ' + peer + '\npartialView : ' + _this8.p.toString(), _this8.wc.members);
                                 });
-                                return _context4.abrupt('break', 159);
+                                return _context4.abrupt('break', 158);
 
-                            case 76:
+                            case 75:
                                 console.error(this.wc.myId + ' joinedPeerIdFinished ' + msg.joinedPeerIdFinished);
 
                                 if (!(this.iJoin() && msg.joinedPeerIdFinished === this.wc.myId)) {
-                                    _context4.next = 102;
+                                    _context4.next = 101;
                                     break;
                                 }
 
@@ -6973,154 +6973,154 @@ var SprayService = function (_TopologyInterface) {
                                 _iteratorNormalCompletion24 = true;
                                 _didIteratorError24 = false;
                                 _iteratorError24 = undefined;
-                                _context4.prev = 82;
+                                _context4.prev = 81;
 
                                 for (_iterator24 = this.channels[Symbol.iterator](); !(_iteratorNormalCompletion24 = (_step24 = _iterator24.next()).done); _iteratorNormalCompletion24 = true) {
                                     ch = _step24.value;
 
                                     chanString += ch.peerId + '\n';
                                 }
-                                _context4.next = 90;
+                                _context4.next = 89;
                                 break;
 
-                            case 86:
-                                _context4.prev = 86;
-                                _context4.t3 = _context4['catch'](82);
+                            case 85:
+                                _context4.prev = 85;
+                                _context4.t3 = _context4['catch'](81);
                                 _didIteratorError24 = true;
                                 _iteratorError24 = _context4.t3;
 
-                            case 90:
+                            case 89:
+                                _context4.prev = 89;
                                 _context4.prev = 90;
-                                _context4.prev = 91;
 
                                 if (!_iteratorNormalCompletion24 && _iterator24.return) {
                                     _iterator24.return();
                                 }
 
-                            case 93:
-                                _context4.prev = 93;
+                            case 92:
+                                _context4.prev = 92;
 
                                 if (!_didIteratorError24) {
-                                    _context4.next = 96;
+                                    _context4.next = 95;
                                     break;
                                 }
 
                                 throw _iteratorError24;
 
+                            case 95:
+                                return _context4.finish(92);
+
                             case 96:
-                                return _context4.finish(93);
+                                return _context4.finish(89);
 
                             case 97:
-                                return _context4.finish(90);
-
-                            case 98:
                                 console.error(this.wc.myId + ' _joinSucceed ' + M.senderId + ' ' + msg.joinedPeerIdFinished, chanString, this.wc.members);
                                 this.wc._joinSucceed();
-                                _context4.next = 103;
+                                _context4.next = 102;
                                 break;
 
-                            case 102:
+                            case 101:
                                 if (this.jps.has(msg.joinedPeerIdFinished)) {
                                     console.info(this.wc.myId + ' blablabla ' + msg.joinedPeerIdFinished);
                                     this.peerJoined(this.jps.get(msg.joinedPeerIdFinished));
                                 }
 
-                            case 103:
+                            case 102:
                                 _jpsString3 = '\njps : ';
                                 _iteratorNormalCompletion25 = true;
                                 _didIteratorError25 = false;
                                 _iteratorError25 = undefined;
-                                _context4.prev = 107;
+                                _context4.prev = 106;
 
                                 for (_iterator25 = this.jps[Symbol.iterator](); !(_iteratorNormalCompletion25 = (_step25 = _iterator25.next()).done); _iteratorNormalCompletion25 = true) {
                                     _step25$value = slicedToArray(_step25.value, 2), key = _step25$value[0], value = _step25$value[1];
 
                                     _jpsString3 += key + ' => ' + value.peerId + '\n';
                                 }
-                                _context4.next = 115;
+                                _context4.next = 114;
                                 break;
 
-                            case 111:
-                                _context4.prev = 111;
-                                _context4.t4 = _context4['catch'](107);
+                            case 110:
+                                _context4.prev = 110;
+                                _context4.t4 = _context4['catch'](106);
                                 _didIteratorError25 = true;
                                 _iteratorError25 = _context4.t4;
 
-                            case 115:
+                            case 114:
+                                _context4.prev = 114;
                                 _context4.prev = 115;
-                                _context4.prev = 116;
 
                                 if (!_iteratorNormalCompletion25 && _iterator25.return) {
                                     _iterator25.return();
                                 }
 
-                            case 118:
-                                _context4.prev = 118;
+                            case 117:
+                                _context4.prev = 117;
 
                                 if (!_didIteratorError25) {
-                                    _context4.next = 121;
+                                    _context4.next = 120;
                                     break;
                                 }
 
                                 throw _iteratorError25;
 
+                            case 120:
+                                return _context4.finish(117);
+
                             case 121:
-                                return _context4.finish(118);
+                                return _context4.finish(114);
 
                             case 122:
-                                return _context4.finish(115);
-
-                            case 123:
                                 console.info(this.wc.myId + ' joinedPeerIdFinished => this.jps.delete(' + msg.joinedPeerIdFinished + ')\n', _jpsString3);
                                 this.jps.delete(msg.joinedPeerIdFinished);
                                 _jpsString3 = '\njps : ';
                                 _iteratorNormalCompletion26 = true;
                                 _didIteratorError26 = false;
                                 _iteratorError26 = undefined;
-                                _context4.prev = 129;
+                                _context4.prev = 128;
                                 for (_iterator26 = this.jps[Symbol.iterator](); !(_iteratorNormalCompletion26 = (_step26 = _iterator26.next()).done); _iteratorNormalCompletion26 = true) {
                                     _step26$value = slicedToArray(_step26.value, 2), key = _step26$value[0], value = _step26$value[1];
 
                                     _jpsString3 += key + ' => ' + value.peerId + '\n';
                                 }
-                                _context4.next = 137;
+                                _context4.next = 136;
                                 break;
 
-                            case 133:
-                                _context4.prev = 133;
-                                _context4.t5 = _context4['catch'](129);
+                            case 132:
+                                _context4.prev = 132;
+                                _context4.t5 = _context4['catch'](128);
                                 _didIteratorError26 = true;
                                 _iteratorError26 = _context4.t5;
 
-                            case 137:
+                            case 136:
+                                _context4.prev = 136;
                                 _context4.prev = 137;
-                                _context4.prev = 138;
 
                                 if (!_iteratorNormalCompletion26 && _iterator26.return) {
                                     _iterator26.return();
                                 }
 
-                            case 140:
-                                _context4.prev = 140;
+                            case 139:
+                                _context4.prev = 139;
 
                                 if (!_didIteratorError26) {
-                                    _context4.next = 143;
+                                    _context4.next = 142;
                                     break;
                                 }
 
                                 throw _iteratorError26;
 
+                            case 142:
+                                return _context4.finish(139);
+
                             case 143:
-                                return _context4.finish(140);
+                                return _context4.finish(136);
 
                             case 144:
-                                return _context4.finish(137);
-
-                            case 145:
                                 console.info(this.wc.myId + ' deleted of jps ' + msg.joinedPeerIdFinished + '\n', _jpsString3);
-                                return _context4.abrupt('break', 159);
+                                return _context4.abrupt('break', 158);
 
-                            case 147:
+                            case 146:
                                 console.info(this.wc.myId + ' joinedPeerId ' + msg.joinedPeerId);
                                 // TODO : iJoin or empty var needJoin
                                 if (this.deportedJoin.get(msg.joinedPeerId)) {
@@ -7129,7 +7129,7 @@ var SprayService = function (_TopologyInterface) {
                                 }
 
                                 if (!(this.deportedJoin.get(msg.joinedPeerId) === 0)) {
-                                    _context4.next = 158;
+                                    _context4.next = 157;
                                     break;
                                 }
 
@@ -7145,25 +7145,25 @@ var SprayService = function (_TopologyInterface) {
                                 _ch4 = this.jps.get(msg.joinedPeerId);
 
                                 if (!(_ch4 === undefined)) {
-                                    _context4.next = 157;
+                                    _context4.next = 156;
                                     break;
                                 }
 
                                 console.error(this.wc.myId + ' joinedPeerId with undefined channel', msg.joinedPeerId);
                                 return _context4.abrupt('return');
 
-                            case 157:
+                            case 156:
                                 this.peerJoined(_ch4);
 
-                            case 158:
-                                return _context4.abrupt('break', 159);
+                            case 157:
+                                return _context4.abrupt('break', 158);
 
-                            case 159:
+                            case 158:
                             case 'end':
                                 return _context4.stop();
                         }
                     }
-                }, _callee4, this, [[9, 13, 17, 25], [18,, 20, 24], [53, 57, 61, 69], [62,, 64, 68], [82, 86, 90, 98], [91,, 93, 97], [107, 111, 115, 123], [116,, 118, 122], [129, 133, 137, 145], [138,, 140, 144]]);
+                }, _callee4, this, [[9, 13, 17, 25], [18,, 20, 24], [52, 56, 60, 68], [61,, 63, 67], [81, 85, 89, 97], [90,, 92, 96], [106, 110, 114, 122], [115,, 117, 121], [128, 132, 136, 144], [137,, 139, 143]]);
             }));
         }
         /**
