@@ -1,9 +1,11 @@
 import { PartialView } from './PartialView'
 import { TopologyInterface } from '../TopologyInterface'
-import { ServiceMessage } from '../../Service'
-import { WebChannel, DISCONNECTED } from '../../WebChannel'
+import { Service } from '../../Service'
+import { ServiceMessageDecoded } from '../../../Util'
+import { WebChannel } from '../../WebChannel'
 import { Channel } from '../../../Channel'
 import { spray, service, channelBuilder } from '../../../Protobuf'
+import { Message } from '../../../typings/Protobuf'
 
 /**
  * Delay in milliseconds between two exchanges
@@ -25,7 +27,7 @@ export const SPRAY = 15
 
 
 
-export class SprayService extends TopologyInterface {
+export class SprayService extends Service implements TopologyInterface {
 
   channels: Set<Channel>
   jps: Map<number, Channel>
@@ -139,11 +141,15 @@ export class SprayService extends TopologyInterface {
     this.peerJoined(ch)
   }
 
+  clean (): void {
+    // Do nothing
+  }
+
   /**
    * Send message to all WebChannel members
    */
-  async send (msg: {senderId: number, recipientId: number, isService: boolean, content: Uint8Array, meta: any}): Promise<void> {
-    if (this.wc.state === DISCONNECTED) {
+  async send (msg: Message): Promise<void> {
+    if (this.wc.state === WebChannel.DISCONNECTED) {
       // console.error(this.wc.myId + ' send break (disconnected) ', msg)
       return
     }
@@ -198,7 +204,7 @@ export class SprayService extends TopologyInterface {
 
           let valH = undefined
 
-          await crypto.subtle.digest('SHA-256', msg.content.buffer).then((h) => {valH = h})
+          await crypto.subtle.digest('SHA-256', msg.content.buffer as any).then((h) => {valH = h})
 
           this.received.push([msg.senderId, msg.meta.timestamp, valH])
           let jpsString = '\njps : '
@@ -231,7 +237,7 @@ export class SprayService extends TopologyInterface {
 
     let valH = undefined
 
-    await crypto.subtle.digest('SHA-256', msg.content.buffer).then((h) => {valH = h})
+    await crypto.subtle.digest('SHA-256', msg.content.buffer as any).then((h) => {valH = h})
 
     this.received.push([msg.senderId, msg.meta.timestamp, valH])
   }
@@ -239,8 +245,8 @@ export class SprayService extends TopologyInterface {
   /**
    * Send message to a specific peer (recipientId)
    */
-  async sendTo (msg: {senderId: number, recipientId: number, isService: boolean, content: Uint8Array, meta: any}): Promise<any> {
-    if (this.wc.state === DISCONNECTED) {
+  async sendTo (msg: Message): Promise<any> {
+    if (this.wc.state === WebChannel.DISCONNECTED) {
       // console.error(this.wc.myId + ' sendTo break (disconnected) ', msg)
       return
     }
@@ -308,7 +314,7 @@ export class SprayService extends TopologyInterface {
       if (ch !== undefined && ch.peerId === msg.recipientId) {
         let valH = undefined
 
-        await crypto.subtle.digest('SHA-256', msg.content.buffer).then((h) => {valH = h})
+        await crypto.subtle.digest('SHA-256', msg.content.buffer as any).then((h) => {valH = h})
 
         this.received.push([msg.senderId, msg.meta.timestamp, valH])
         console.info(this.wc.myId + ' message sent to ' + ch.peerId)
@@ -320,7 +326,7 @@ export class SprayService extends TopologyInterface {
       if (id === msg.recipientId || id === this.wc.myId) {
         let valH = undefined
 
-        await crypto.subtle.digest('SHA-256', msg.content.buffer).then((h) => {valH = h})
+        await crypto.subtle.digest('SHA-256', msg.content.buffer as any).then((h) => {valH = h})
 
         this.received.push([msg.senderId, msg.meta.timestamp, valH])
         let jpsString = '\njps : '
@@ -339,8 +345,8 @@ export class SprayService extends TopologyInterface {
     return
   }
 
-  forwardTo (msg: {senderId: number, recipientId: number, isService: boolean, content: Uint8Array, meta: any}): void {
-    if (this.wc.state === DISCONNECTED) {
+  forwardTo (msg: Message): void {
+    if (this.wc.state === WebChannel.DISCONNECTED) {
       // console.error(this.wc.myId + ' forwardTo break (disconnected) ', msg)
       return
     }
@@ -354,8 +360,8 @@ export class SprayService extends TopologyInterface {
     this.forward(msg)
   }
 
-  async forward (msg: {senderId: number, recipientId: number, isService: boolean, content: Uint8Array, meta: any}): Promise<void> {
-    if (this.wc.state === DISCONNECTED) {
+  async forward (msg: Message): Promise<void> {
+    if (this.wc.state === WebChannel.DISCONNECTED) {
       // console.error(this.wc.myId + ' forward break (disconnected) ', msg)
       return
     }
@@ -378,7 +384,7 @@ export class SprayService extends TopologyInterface {
 
       let valH = undefined
 
-      await crypto.subtle.digest('SHA-256', msg.content.buffer).then((h) => valH = h)
+      await crypto.subtle.digest('SHA-256', msg.content.buffer as any).then((h) => valH = h)
 
       this.received.forEach( (message) => {
         if (!alreadyReceived && message[0] === msg.senderId && message[1] === msg.meta.timestamp
@@ -411,11 +417,9 @@ export class SprayService extends TopologyInterface {
   leave (): void {
     console.info(this.wc.myId + ' leave ')
     for (let c of this.channels) {
-      c.clearHandlers()
       c.close()
     }
     for (let ch of this.jps.values()) {
-      ch.clearHandlers()
       ch.close()
     }
     this.channels.clear()
@@ -442,7 +446,6 @@ export class SprayService extends TopologyInterface {
       if (channel !== undefined && firstChannel !== undefined && firstChannel.peerId === channel.peerId) {
         this.wc._joinFailed()
         for (let ch of this.channels) {
-          ch.clearHandlers()
           ch.close()
         }
         this.channels.clear()
@@ -488,8 +491,8 @@ export class SprayService extends TopologyInterface {
    *
    * @param {ServiceMessage} M {channel, senderId, recipientId, msg, timestamp}
    */
-  private async _handleSvcMsg (M: ServiceMessage): Promise<void> {
-    if (this.wc.state === DISCONNECTED) {
+  private async _handleSvcMsg (M: ServiceMessageDecoded): Promise<void> {
+    if (this.wc.state === WebChannel.DISCONNECTED) {
       console.info(this.wc.myId + ' _handleSvcMsg break (disconnected) ', M)
       return
     }
@@ -509,7 +512,7 @@ export class SprayService extends TopologyInterface {
 
       let valH = undefined
 
-      await crypto.subtle.digest('SHA-256', super.encode(msg).buffer)
+      await crypto.subtle.digest('SHA-256', super.encode(msg).buffer as any)
                         .then((h) => {valH = h})
 
       this.received.forEach( (message) => {

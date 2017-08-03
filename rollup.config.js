@@ -1,15 +1,14 @@
 import filesize from 'rollup-plugin-filesize'
-import babel from 'rollup-plugin-babel'
 import strip from 'rollup-plugin-strip'
 import commonjs from 'rollup-plugin-commonjs'
 import resolve from 'rollup-plugin-node-resolve'
 import replace from 'rollup-plugin-re'
 import pkg from './package.json'
-import typescript from 'rollup-plugin-typescript2';
+import typescript from 'rollup-plugin-typescript2'
 
 export default [
   {
-    entry: 'src/index.js',
+    entry: 'src/index.ts',
     targets: [
       { dest: pkg.main, format: 'cjs' },
       { dest: pkg.module, format: 'es' }
@@ -31,14 +30,11 @@ export default [
           'node_modules/protobufjs/minimal.js': [ 'Reader', 'Writer', 'util', 'roots' ]
         }
       }),
-      babel({
-        exclude: 'node_modules/**'
-      }),
       filesize({ format: { round: 0 } })
     ]
   },
   {
-    entry: 'src/index.js',
+    entry: 'src/index.ts',
     format: 'umd',
     moduleName: 'netflux',
     dest: pkg.browser,
@@ -57,9 +53,6 @@ export default [
         namedExports: {
           'node_modules/protobufjs/minimal.js': [ 'Reader', 'Writer', 'util', 'roots' ]
         }
-      }),
-      babel({
-        exclude: 'node_modules/**'
       }),
       filesize({ format: { round: 0 } })
     ]

@@ -1,22 +1,34 @@
 import { Subject } from 'rxjs/Subject'
+import { Observable } from 'rxjs/Observable'
 
 import { service } from '../Protobuf'
+import { ServiceMessageEncoded, ServiceMessageDecoded } from '../Util'
 
-export interface ServiceMessage {
-  channel: any,
-  senderId: number,
-  recipientId: number,
-  msg: any,
-  timestamp: number
-}
-
+/**
+ * Services are specific classes. Instance of such class communicates via
+ * network with another instance of the same class. Indeed each peer in the
+ * network instantiates its own service.
+ * Each service has `.proto` file containing the desciption of its
+ * communication protocol.
+ */
 export abstract class Service {
 
-  serviceId: number
-  protoMessage: any
-  svcMsgStream: Subject<ServiceMessage>
+  /*
+   * Unique service identifier.
+   */
+  public serviceId: number
 
-  constructor (id, protoMessage, msgStream?) {
+  /*
+   * Service message observable.
+   */
+  protected svcMsgStream: Observable<ServiceMessageDecoded>
+
+  /*
+   * Service protobujs object generated from `.proto` file.
+   */
+  private protoMessage: any
+
+  constructor (id: number, protoMessage: any, msgStream?: Subject<ServiceMessageEncoded>) {
     this.serviceId = id
     this.protoMessage = protoMessage
     if (msgStream !== undefined) {
@@ -24,7 +36,12 @@ export abstract class Service {
     }
   }
 
-  public encode (msg: any): Uint8Array {
+  /**
+   * Encode service message for sending over the network.
+   *
+   * @param msg Service specific message object
+   */
+  encode (msg: any): Uint8Array {
     return service.Message.encode(
       service.Message.create({
         id: this.serviceId,
@@ -33,11 +50,16 @@ export abstract class Service {
     ).finish()
   }
 
-  public decode (bytes: Uint8Array): any {
+  /**
+   * Decode service message received from the network.
+   *
+   * @return  Service specific message object
+   */
+  decode (bytes: Uint8Array): any {
     return this.protoMessage.decode(bytes)
   }
 
-  private setSvcMsgStream (msgStream) {
+  protected setSvcMsgStream (msgStream: Subject<ServiceMessageEncoded>): void {
     this.svcMsgStream = msgStream
       .filter(({ id }) => id === this.serviceId)
       .map(({ channel, senderId, recipientId, content, timestamp }) => ({

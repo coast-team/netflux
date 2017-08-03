@@ -1,10 +1,12 @@
 import { Subject } from 'rxjs/Subject'
 import { BehaviorSubject } from 'rxjs/BehaviorSubject'
+import { Observable } from 'rxjs/Observable'
 import 'rxjs/add/operator/filter'
 
-import { Util } from './Util'
+import { isURL } from './Util'
 import { Channel } from './Channel'
 import { WebSocket } from './polyfills'
+import { WebChannel } from './service/WebChannel'
 
 const CONNECT_TIMEOUT = 3000
 const listenSubject = new BehaviorSubject('')
@@ -14,28 +16,31 @@ const listenSubject = new BehaviorSubject('')
  * `WebSocket`.
  */
 export class WebSocketBuilder {
-  constructor (wc) {
-    this.wc = wc
-    this.channelStream = new Subject()
-  }
 
-  static listen () {
+  private wc: WebChannel
+  private channelsSubject: Subject<Channel>
+
+  static listen (): BehaviorSubject<string> {
     return listenSubject
   }
 
   static newIncomingSocket (wc, ws, senderId) {
-    wc.webSocketBuilder.channelStream.next(new Channel(ws, wc, senderId))
+    wc.webSocketBuilder.channelsSubject.next(new Channel(ws, wc, senderId))
+  }
+
+  constructor (wc: WebChannel) {
+    this.wc = wc
+    this.channelsSubject = new Subject()
   }
 
   /**
-   * Creates WebSocket with server.
+   * Establish `WebSocket` with a server.
    *
-   * @param {string} url - Server url
-   * @returns {Promise<WebSocket, string>} It is resolved once the WebSocket has been created and rejected otherwise
+   * @param url Server url
    */
-  connect (url) {
+  connect (url: string): Promise<WebSocket> {
     return new Promise((resolve, reject) => {
-      if (Util.isURL(url) && url.search(/^wss?/) !== -1) {
+      if (isURL(url) && url.search(/^wss?/) !== -1) {
         const ws = new WebSocket(url)
         ws.onopen = () => resolve(ws)
         // Timeout for node (otherwise it will loop forever if incorrect address)
@@ -50,10 +55,16 @@ export class WebSocketBuilder {
     })
   }
 
-  connectTo (url, id) {
+  /**
+   * Establish a `Channel` with a server peer identified by `id`.
+   *
+   * @param url Server url
+   * @param id  Peer id
+   */
+  connectTo (url: string, id: number): Promise<Channel> {
     const fullUrl = `${url}/internalChannel?wcId=${this.wc.id}&senderId=${this.wc.myId}`
     return new Promise((resolve, reject) => {
-      if (Util.isURL(url) && url.search(/^wss?/) !== -1) {
+      if (isURL(url) && url.search(/^wss?/) !== -1) {
         const ws = new WebSocket(fullUrl)
         const channel = new Channel(ws, this.wc, id)
         ws.onopen = () => resolve(channel)
@@ -69,7 +80,7 @@ export class WebSocketBuilder {
     })
   }
 
-  channels () {
-    return this.channelStream.asObservable()
+  channels (): Observable<Channel> {
+    return this.channelsSubject.asObservable()
   }
 }

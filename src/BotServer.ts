@@ -1,7 +1,7 @@
 import { WebSocketBuilder } from './WebSocketBuilder'
 import { WebChannel } from './service/WebChannel'
 import { Channel } from './Channel'
-import { defaults } from './defaults'
+import { defaults, WebChannelOptions, BotOptions, } from './defaults'
 
 const url = require('url')
 
@@ -10,6 +10,21 @@ const url = require('url')
  * He can also join one of the bot's `WebChannel`.
  */
 export class BotServer {
+
+  public server: any
+  public webChannels: WebChannel[]
+  public onWebChannel: (wc: WebChannel) => void
+  public onWebChannelReady: (wc: WebChannel) => void
+  public onError: (err) => void
+
+  private wcSettings: WebChannelOptions
+  private botSettings: BotOptions
+  private serverSettings: {
+    perMessageDeflate: boolean,
+    verifyClient: (info: any) => boolean,
+    server: any
+  }
+
   /**
    * Bot server settings are the same as for `WebChannel` (see {@link WebChannelSettings}),
    * plus `host` and `port` parameters.
@@ -22,7 +37,7 @@ export class BotServer {
    * @param {string} [options.bot.url=''] Bot public URL to be shared on the p2p network
    * @param {Object} [options.bot.server=null] A pre-created Node.js HTTP server
    */
-  constructor (options = {}) {
+  constructor (options: any = {}) {
     const botDefaults = {
       bot: {
         url: '',
@@ -66,7 +81,7 @@ export class BotServer {
     this.init()
   }
 
-  get url () {
+  get url (): string {
     if (this.botSettings.url !== '') {
       return this.botSettings.url
     } else {
@@ -75,9 +90,8 @@ export class BotServer {
     }
   }
 
-  init () {
-    let WebSocketServer = require('uws').Server
-    this.server = new WebSocketServer(this.serverSettings)
+  init (): void {
+    this.server = new (require('uws').Server)(this.serverSettings)
     const serverListening = this.serverSettings.server || this.server
     serverListening.on('listening', () => WebSocketBuilder.listen().next(this.url))
 
@@ -92,77 +106,71 @@ export class BotServer {
       let wc = this.getWebChannel(wcId)
       const senderId = Number(query.senderId)
       switch (pathname) {
-        case '/invite': {
-          if (wc && wc.members.length === 0) {
-            this.removeWebChannel(wc)
-          }
-          wc = new WebChannel(this.wcSettings)
-          wc.id = wcId
-          this.addWebChannel(wc)
-          this.onWebChannel(wc)
-          wc.join(new Channel(ws, wc, senderId)).then(() => {
-            this.onWebChannelReady(wc)
-          })
-          break
+      case '/invite': {
+        if (wc && wc.members.length === 0) {
+          this.removeWebChannel(wc)
         }
-        case '/internalChannel': {
-          if (wc !== undefined) {
-            WebSocketBuilder.newIncomingSocket(wc, ws, senderId)
-          } else {
-            console.error('Cannot find WebChannel for a new internal channel')
-          }
-          break
+        wc = new WebChannel(this.wcSettings)
+        wc.id = wcId
+        this.addWebChannel(wc)
+        this.onWebChannel(wc)
+        wc.join(new Channel(ws, wc, senderId) as any).then(() => {
+          this.onWebChannelReady(wc)
+        })
+        break
+      }
+      case '/internalChannel': {
+        if (wc !== undefined) {
+          WebSocketBuilder.newIncomingSocket(wc, ws, senderId)
+        } else {
+          console.error('Cannot find WebChannel for a new internal channel')
         }
+        break
+      }
       }
     })
   }
 
   /**
    * Get `WebChannel` identified by its `id`.
-   *
-   * @param {number} id
-   *
-   * @returns {WebChannel|null}
    */
-  getWebChannel (id) {
+  getWebChannel (id: number): WebChannel {
     for (let wc of this.webChannels) {
-      if (id === wc.id) return wc
+      if (id === wc.id) {
+        return wc
+      }
     }
     return undefined
   }
 
   /**
    * Add `WebChannel`.
-   *
-   * @param {WebChannel} wc
    */
-  addWebChannel (wc) {
+  addWebChannel (wc: WebChannel): void {
     this.webChannels[this.webChannels.length] = wc
   }
 
   /**
-   * Remove `WebChannel`
-   *
-   * @param {WebChannel} wc
+   * Remove `WebChannel`.
    */
-  removeWebChannel (wc) {
+  removeWebChannel (wc: WebChannel): void {
     this.webChannels.splice(this.webChannels.indexOf(wc), 1)
   }
 
-  validateConnection (info) {
+  validateConnection (info: any): boolean {
     const {pathname, query} = url.parse(info.req.url, true)
     const wcId = query.wcId ? Number(query.wcId) : undefined
     switch (pathname) {
-      case '/invite':
-        if (wcId) {
-          const wc = this.getWebChannel(wcId)
-          return (wc === undefined || wc.members.length === 0) && query.senderId
-        }
-        return false
-      case '/internalChannel':
-        return query.senderId && wcId && this.getWebChannel(wcId)
-      default:
-        return false
+    case '/invite':
+      if (wcId) {
+        const wc = this.getWebChannel(wcId)
+        return (wc === undefined || wc.members.length === 0) && query.senderId
+      }
+      return false
+    case '/internalChannel':
+      return query.senderId && wcId && this.getWebChannel(wcId) !== undefined
+    default:
+      return false
     }
   }
 }

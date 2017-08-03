@@ -81,7 +81,8 @@
     "variable-name": [
       true,
       "ban-keywords",
-      "check-format"
+      "check-format",
+      "allow-leading-underscore"
     ],
     "use-isnan": true,
     "whitespace": [
@@ -94,24 +95,6 @@
       "check-type",
       "check-typecast"
     ],
-    "directive-selector": [true, "attribute", "mute", "camelCase"],
-    "component-selector": [true, "element", "mute", "kebab-case"],
-    "use-input-property-decorator": true,
-    "use-output-property-decorator": true,
-    "use-host-property-decorator": true,
-    "no-attribute-parameter-decorator": true,
-    "no-input-rename": true,
-    "no-output-rename": true,
-    "no-forward-ref": true,
-    "use-life-cycle-interface": true,
-    "use-pipe-transform-interface": true,
-    "pipe-naming": [true, "camelCase", "mute"],
-    "component-class-suffix": true,
-    "directive-class-suffix": true,
-    "import-destructuring-spacing": true,
-    "templates-use-public": true,
-    "no-access-missing-member": true,
-    "invoke-injectable": true,
     "space-before-function-paren": true,
     "ter-indent": [true, 2]
   }

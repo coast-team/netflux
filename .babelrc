@@ -1,13 +1,11 @@
 {
   "presets": [
-    [
-      "es2015",
-      {
-        "modules": false
-      }
-    ]
-  ],
-  "plugins": [
-    "external-helpers"
+    ["env", {
+      "targets": {
+        "uglify": true
+      },
+      "modules": false,
+      "loose": true
+    }]
   ]
 }

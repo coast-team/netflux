@@ -1,4 +1,4 @@
-import { Util } from '../../src/Util'
+import { isBrowser } from '../../src/Util'
 import { WebChannel } from '../../src/service/WebChannel'
 import chunk50kb from './50kb.txt'
 
@@ -133,7 +133,7 @@ export function sendAndExpectOnMessage (wcs, isBroadcast, withBot = false) {
           // console.warn(wc.myId + ' received Uint8Array from ' + id + ' is broadcast ' + broadcasted)
           expect(flag.arraybuffer).toBeFalsy()
           flag.arraybuffer = true
-          msgId = (new Uint32Array(msg.slice().buffer))[0]
+          msgId = (new Uint32Array(msg.slice(0, msg.length).buffer))[0]
         } else {
           console.error('Unknown message type')
         }
@@ -189,14 +189,14 @@ function sendMessages (wc, isBroadcast) {
   if (isBroadcast) {
     wc.send(msgString)
     wc.send(msgChunk)
-    wc.send(msgArrayBuffer)
+    wc.send(new Uint8Array(msgArrayBuffer.buffer))
 
   // Send the messages privately to each peer
   } else {
     wc.members.forEach(id => {
       wc.sendTo(id, msgString)
       wc.sendTo(id, msgChunk)
-      wc.sendTo(id, msgArrayBuffer)
+      wc.sendTo(id, new Uint8Array(msgArrayBuffer.buffer))
     })
   }
 }
@@ -241,29 +241,29 @@ function randStr () {
 }
 
 export function itBrowser (shouldSkip, ...args) {
-  if (Util.isBrowser()) Reflect.apply(it, undefined, args)
+  if (isBrowser()) Reflect.apply(it, undefined, args)
   else if (shouldSkip) Reflect.apply(xit, undefined, args)
 }
 
 export function xitBrowser (shouldSkip, ...args) {
-  if (Util.isBrowser()) Reflect.apply(xit, undefined, args)
+  if (isBrowser()) Reflect.apply(xit, undefined, args)
   else if (shouldSkip) Reflect.apply(xit, undefined, args)
 }
 
 export function itNode (shouldSkip, ...args) {
-  if (Util.isBrowser()) {
+  if (isBrowser()) {
     if (shouldSkip) Reflect.apply(xit, undefined, args)
   } else Reflect.apply(it, undefined, args)
 }
 
 export function xitNode (shouldSkip, ...args) {
-  if (Util.isBrowser()) {
+  if (isBrowser()) {
     if (shouldSkip) Reflect.apply(xit, undefined, args)
   } else Reflect.apply(xit, undefined, args)
 }
 
 export function env () {
-  if (Util.isBrowser()) {
+  if (isBrowser()) {
     const sUsrAg = navigator.userAgent
     if (sUsrAg.indexOf('Chrome') > -1) {
       return 'CHROME'
