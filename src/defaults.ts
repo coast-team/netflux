@@ -1,7 +1,9 @@
 import { FULL_MESH } from './service/topology/FullMesh'
+import { SPRAY } from './service/topology/spray/SprayService'
 
 enum Topologies {
-  FULL_MESH
+  FULL_MESH,
+  SPRAY
 }
 
 export interface WebChannelOptions {
@@ -17,7 +19,7 @@ export interface BotOptions {
 }
 
 export const defaults: WebChannelOptions = {
-  topology: FULL_MESH,
+  topology: SPRAY,
   signalingURL: 'wss://www.coedit.re:10473',
   iceServers: [
     {urls: 'stun:stun3.l.google.com:19302'}

@@ -1357,10 +1357,106 @@ var Channel = (function () {
     return Channel;
 }());
 
+var __extends$6 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+
+/**
+ * Applies a given `project` function to each value emitted by the source
+ * Observable, and emits the resulting values as an Observable.
+ *
+ * <span class="informal">Like [Array.prototype.map()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map),
+ * it passes each source value through a transformation function to get
+ * corresponding output values.</span>
+ *
+ * <img src="./img/map.png" width="100%">
+ *
+ * Similar to the well known `Array.prototype.map` function, this operator
+ * applies a projection to each value and emits that projection in the output
+ * Observable.
+ *
+ * @example <caption>Map every click to the clientX position of that click</caption>
+ * var clicks = Rx.Observable.fromEvent(document, 'click');
+ * var positions = clicks.map(ev => ev.clientX);
+ * positions.subscribe(x => console.log(x));
+ *
+ * @see {@link mapTo}
+ * @see {@link pluck}
+ *
+ * @param {function(value: T, index: number): R} project The function to apply
+ * to each `value` emitted by the source Observable. The `index` parameter is
+ * the number `i` for the i-th emission that has happened since the
+ * subscription, starting from the number `0`.
+ * @param {any} [thisArg] An optional argument to define what `this` is in the
+ * `project` function.
+ * @return {Observable<R>} An Observable that emits the values from the source
+ * Observable transformed by the given `project` function.
+ * @method map
+ * @owner Observable
+ */
+function map$2(project, thisArg) {
+    if (typeof project !== 'function') {
+        throw new TypeError('argument is not a function. Are you looking for `mapTo()`?');
+    }
+    return this.lift(new MapOperator(project, thisArg));
+}
+var map_2 = map$2;
+var MapOperator = (function () {
+    function MapOperator(project, thisArg) {
+        this.project = project;
+        this.thisArg = thisArg;
+    }
+    MapOperator.prototype.call = function (subscriber, source) {
+        return source.subscribe(new MapSubscriber(subscriber, this.project, this.thisArg));
+    };
+    return MapOperator;
+}());
+var MapOperator_1 = MapOperator;
+/**
+ * We need this JSDoc comment for affecting ESDoc.
+ * @ignore
+ * @extends {Ignored}
+ */
+var MapSubscriber = (function (_super) {
+    __extends$6(MapSubscriber, _super);
+    function MapSubscriber(destination, project, thisArg) {
+        _super.call(this, destination);
+        this.project = project;
+        this.count = 0;
+        this.thisArg = thisArg || this;
+    }
+    // NOTE: This looks unoptimized, but it's actually purposefully NOT
+    // using try/catch optimizations.
+    MapSubscriber.prototype._next = function (value) {
+        var result;
+        try {
+            result = this.project.call(this.thisArg, value, this.count++);
+        }
+        catch (err) {
+            this.destination.error(err);
+            return;
+        }
+        this.destination.next(result);
+    };
+    return MapSubscriber;
+}(Subscriber_1.Subscriber));
+
+
+var map_1 = {
+	map: map_2,
+	MapOperator: MapOperator_1
+};
+
+Observable_1.Observable.prototype.map = map_1.map;
+
 var PartialView = (function (_super) {
     __extends(PartialView, _super);
     function PartialView() {
-        return _super.call(this) || this;
+        var _this = _super.call(this) || this;
+        Object.setPrototypeOf(_this, PartialView.prototype);
+        return _this;
     }
     Object.defineProperty(PartialView.prototype, "oldest", {
         /**
@@ -6568,6 +6664,7 @@ var SprayService = (function (_super) {
         else {
             this.p.forEach(function (_a) {
                 var _b = __read(_a, 2), pId = _b[0], age = _b[1];
+                // TODO : timeout if a peer disconnects during joining (A tells B, C to join D but B disconnects before joining)
                 if (_this.deportedJoin.get(newPeerId) === undefined) {
                     _this.deportedJoin.set(newPeerId, 1);
                 }
@@ -6622,7 +6719,7 @@ var SprayService = (function (_super) {
     SprayService.prototype.send = function (msg) {
         return __awaiter(this, void 0, void 0, function () {
             var _this = this;
-            var bytes, listChan, _loop_1, this_1, _a, _b, _c, id, ch, state_1, e_3_1, listChanString, listChan_1, listChan_1_1, ch, valH, e_3, _d, e_4, _e;
+            var bytes, listChan, _loop_1, this_1, _a, _b, _c, id, ch, state_1, e_3_1, listChanString, _loop_2, this_2, listChan_1, listChan_1_1, ch, e_4_1, valH, e_3, _d, e_4, _e;
             return __generator(this, function (_f) {
                 switch (_f.label) {
                     case 0:
@@ -6638,7 +6735,6 @@ var SprayService = (function (_super) {
                             // console.error(this.wc.myId + ' send break (to me)', msg)
                             return [2 /*return*/];
                         }
-                        console.info(this.wc.myId + (" send " + msg.senderId + " => " + msg.recipientId));
                         // console.info(this.wc.myId + ' send ' + JSON.stringify(msg))
                         // try {
                         //   console.info(this.wc.myId + ' content1 : ' + JSON.stringify(super.decode(service.Message.decode(msg.content).content)))
@@ -6654,6 +6750,7 @@ var SprayService = (function (_super) {
                             }
                             msg.meta.timestamp = Date.now();
                         }
+                        console.info(this.wc.myId + (" send " + msg.senderId + " => " + msg.recipientId + ", " + msg.meta.timestamp));
                         bytes = this.wc._encode(msg);
                         listChan = [];
                         this.p.forEach(function (arc) {
@@ -6749,26 +6846,56 @@ var SprayService = (function (_super) {
                             listChanString += ch.peerId + '\n';
                         });
                         console.info(this.wc.myId + ' listChan : ' + listChanString);
-                        try {
-                            for (listChan_1 = __values(listChan), listChan_1_1 = listChan_1.next(); !listChan_1_1.done; listChan_1_1 = listChan_1.next()) {
-                                ch = listChan_1_1.value;
-                                if (ch !== undefined && ch.peerId !== msg.senderId) {
-                                    console.info(this.wc.myId + ' sending to ' + ch.peerId);
-                                    ch.send(bytes);
+                        _loop_2 = function (ch) {
+                            var valH_2;
+                            return __generator(this, function (_a) {
+                                switch (_a.label) {
+                                    case 0:
+                                        if (!(ch !== undefined && ch.peerId !== msg.senderId)) return [3 /*break*/, 2];
+                                        valH_2 = undefined;
+                                        return [4 /*yield*/, crypto.subtle.digest('SHA-256', msg.content.buffer).then(function (h) { valH_2 = h; })];
+                                    case 1:
+                                        _a.sent();
+                                        this_2.received.push([msg.senderId, msg.meta.timestamp, valH_2]);
+                                        console.info(this_2.wc.myId + ' message sent to ' + ch.peerId);
+                                        ch.send(bytes);
+                                        _a.label = 2;
+                                    case 2: return [2 /*return*/];
                                 }
-                            }
+                            });
+                        };
+                        this_2 = this;
+                        _f.label = 10;
+                    case 10:
+                        _f.trys.push([10, 15, 16, 17]);
+                        listChan_1 = __values(listChan), listChan_1_1 = listChan_1.next();
+                        _f.label = 11;
+                    case 11:
+                        if (!!listChan_1_1.done) return [3 /*break*/, 14];
+                        ch = listChan_1_1.value;
+                        return [5 /*yield**/, _loop_2(ch)];
+                    case 12:
+                        _f.sent();
+                        _f.label = 13;
+                    case 13:
+                        listChan_1_1 = listChan_1.next();
+                        return [3 /*break*/, 11];
+                    case 14: return [3 /*break*/, 17];
+                    case 15:
+                        e_4_1 = _f.sent();
+                        e_4 = { error: e_4_1 };
+                        return [3 /*break*/, 17];
+                    case 16:
+                        try {
+                            if (listChan_1_1 && !listChan_1_1.done && (_e = listChan_1.return)) _e.call(listChan_1);
                         }
-                        catch (e_4_1) { e_4 = { error: e_4_1 }; }
-                        finally {
-                            try {
-                                if (listChan_1_1 && !listChan_1_1.done && (_e = listChan_1.return)) _e.call(listChan_1);
-                            }
-                            finally { if (e_4) throw e_4.error; }
-                        }
+                        finally { if (e_4) throw e_4.error; }
+                        return [7 /*endfinally*/];
+                    case 17:
                         console.info(this.wc.myId + (" end send " + msg.senderId + " => " + msg.recipientId));
                         valH = undefined;
                         return [4 /*yield*/, crypto.subtle.digest('SHA-256', msg.content.buffer).then(function (h) { valH = h; })];
-                    case 10:
+                    case 18:
                         _f.sent();
                         this.received.push([msg.senderId, msg.meta.timestamp, valH]);
                         return [2 /*return*/];
@@ -6782,7 +6909,7 @@ var SprayService = (function (_super) {
     SprayService.prototype.sendTo = function (msg) {
         return __awaiter(this, void 0, void 0, function () {
             var _this = this;
-            var jpsString, _a, _b, _c, key, value, bytes, _d, _e, ch, listChan, _loop_2, this_2, listChan_2, listChan_2_1, ch, state_2, e_7_1, _loop_3, this_3, _f, _g, _h, id, ch, state_3, e_8_1, e_9, _j, e_10, _k, e_7, _l, e_8, _m;
+            var jpsString, _a, _b, _c, key, value, bytes, _loop_3, this_3, _d, _e, ch, state_2, e_7_1, listChan, _loop_4, this_4, listChan_2, listChan_2_1, ch, state_3, e_8_1, _loop_5, this_5, _f, _g, _h, id, ch, state_4, e_9_1, e_10, _j, e_7, _k, e_8, _l, e_9, _m;
             return __generator(this, function (_o) {
                 switch (_o.label) {
                     case 0:
@@ -6805,14 +6932,13 @@ var SprayService = (function (_super) {
                                 jpsString += key + " => " + value.peerId + "\n";
                             }
                         }
-                        catch (e_9_1) { e_9 = { error: e_9_1 }; }
+                        catch (e_10_1) { e_10 = { error: e_10_1 }; }
                         finally {
                             try {
                                 if (_b && !_b.done && (_j = _a.return)) _j.call(_a);
                             }
-                            finally { if (e_9) throw e_9.error; }
+                            finally { if (e_10) throw e_10.error; }
                         }
-                        console.info(this.wc.myId + (" sendTo " + msg.senderId + " => " + msg.recipientId + "\n"), jpsString);
                         // console.info(this.wc.myId + ' sendTo ' + msg.recipientId + "\nContent length : " + Object.keys(msg.content).length);
                         // console.info(this.wc.myId + ' sendTo ' + JSON.stringify(msg))
                         // try {
@@ -6829,25 +6955,57 @@ var SprayService = (function (_super) {
                             }
                             msg.meta.timestamp = Date.now();
                         }
+                        console.info(this.wc.myId + (" sendTo " + msg.senderId + " => " + msg.recipientId + ", " + msg.meta.timestamp + "\n"), jpsString);
                         bytes = this.wc._encode(msg);
-                        if (this.p.length === 0) {
-                            console.info(this.wc.myId + ' empty partialView');
-                            try {
-                                for (_d = __values(this.channels), _e = _d.next(); !_e.done; _e = _d.next()) {
-                                    ch = _e.value;
-                                    if (ch !== undefined && ch.peerId === msg.recipientId) {
-                                        return [2 /*return*/, ch.send(bytes)];
-                                    }
+                        if (!(this.p.length === 0)) return [3 /*break*/, 8];
+                        console.info(this.wc.myId + ' empty partialView');
+                        _loop_3 = function (ch) {
+                            var valH_3;
+                            return __generator(this, function (_a) {
+                                switch (_a.label) {
+                                    case 0:
+                                        if (!(ch !== undefined && ch.peerId === msg.recipientId)) return [3 /*break*/, 2];
+                                        valH_3 = undefined;
+                                        return [4 /*yield*/, crypto.subtle.digest('SHA-256', msg.content.buffer).then(function (h) { valH_3 = h; })];
+                                    case 1:
+                                        _a.sent();
+                                        this_3.received.push([msg.senderId, msg.meta.timestamp, valH_3]);
+                                        console.info(this_3.wc.myId + ' message sent to ' + ch.peerId);
+                                        return [2 /*return*/, { value: ch.send(bytes) }];
+                                    case 2: return [2 /*return*/];
                                 }
-                            }
-                            catch (e_10_1) { e_10 = { error: e_10_1 }; }
-                            finally {
-                                try {
-                                    if (_e && !_e.done && (_k = _d.return)) _k.call(_d);
-                                }
-                                finally { if (e_10) throw e_10.error; }
-                            }
+                            });
+                        };
+                        this_3 = this;
+                        _o.label = 1;
+                    case 1:
+                        _o.trys.push([1, 6, 7, 8]);
+                        _d = __values(this.channels), _e = _d.next();
+                        _o.label = 2;
+                    case 2:
+                        if (!!_e.done) return [3 /*break*/, 5];
+                        ch = _e.value;
+                        return [5 /*yield**/, _loop_3(ch)];
+                    case 3:
+                        state_2 = _o.sent();
+                        if (typeof state_2 === "object")
+                            return [2 /*return*/, state_2.value];
+                        _o.label = 4;
+                    case 4:
+                        _e = _d.next();
+                        return [3 /*break*/, 2];
+                    case 5: return [3 /*break*/, 8];
+                    case 6:
+                        e_7_1 = _o.sent();
+                        e_7 = { error: e_7_1 };
+                        return [3 /*break*/, 8];
+                    case 7:
+                        try {
+                            if (_e && !_e.done && (_k = _d.return)) _k.call(_d);
                         }
+                        finally { if (e_7) throw e_7.error; }
+                        return [7 /*endfinally*/];
+                    case 8:
                         listChan = [];
                         this.p.forEach(function (arc) {
                             try {
@@ -6870,67 +7028,67 @@ var SprayService = (function (_super) {
                             console.warn(_this.wc.myId + ' channel not found ' + arc[0]);
                             var e_11, _c;
                         });
-                        _loop_2 = function (ch) {
-                            var valH_2;
+                        _loop_4 = function (ch) {
+                            var valH_4;
                             return __generator(this, function (_a) {
                                 switch (_a.label) {
                                     case 0:
                                         if (!(ch !== undefined && ch.peerId === msg.recipientId)) return [3 /*break*/, 2];
-                                        valH_2 = undefined;
-                                        return [4 /*yield*/, crypto.subtle.digest('SHA-256', msg.content.buffer).then(function (h) { valH_2 = h; })];
+                                        valH_4 = undefined;
+                                        return [4 /*yield*/, crypto.subtle.digest('SHA-256', msg.content.buffer).then(function (h) { valH_4 = h; })];
                                     case 1:
                                         _a.sent();
-                                        this_2.received.push([msg.senderId, msg.meta.timestamp, valH_2]);
-                                        console.info(this_2.wc.myId + ' message sent to ' + ch.peerId);
+                                        this_4.received.push([msg.senderId, msg.meta.timestamp, valH_4]);
+                                        console.info(this_4.wc.myId + ' message sent to ' + ch.peerId);
                                         return [2 /*return*/, { value: ch.send(bytes) }];
                                     case 2: return [2 /*return*/];
                                 }
                             });
                         };
-                        this_2 = this;
-                        _o.label = 1;
-                    case 1:
-                        _o.trys.push([1, 6, 7, 8]);
+                        this_4 = this;
+                        _o.label = 9;
+                    case 9:
+                        _o.trys.push([9, 14, 15, 16]);
                         listChan_2 = __values(listChan), listChan_2_1 = listChan_2.next();
-                        _o.label = 2;
-                    case 2:
-                        if (!!listChan_2_1.done) return [3 /*break*/, 5];
+                        _o.label = 10;
+                    case 10:
+                        if (!!listChan_2_1.done) return [3 /*break*/, 13];
                         ch = listChan_2_1.value;
-                        return [5 /*yield**/, _loop_2(ch)];
-                    case 3:
-                        state_2 = _o.sent();
-                        if (typeof state_2 === "object")
-                            return [2 /*return*/, state_2.value];
-                        _o.label = 4;
-                    case 4:
+                        return [5 /*yield**/, _loop_4(ch)];
+                    case 11:
+                        state_3 = _o.sent();
+                        if (typeof state_3 === "object")
+                            return [2 /*return*/, state_3.value];
+                        _o.label = 12;
+                    case 12:
                         listChan_2_1 = listChan_2.next();
-                        return [3 /*break*/, 2];
-                    case 5: return [3 /*break*/, 8];
-                    case 6:
-                        e_7_1 = _o.sent();
-                        e_7 = { error: e_7_1 };
-                        return [3 /*break*/, 8];
-                    case 7:
+                        return [3 /*break*/, 10];
+                    case 13: return [3 /*break*/, 16];
+                    case 14:
+                        e_8_1 = _o.sent();
+                        e_8 = { error: e_8_1 };
+                        return [3 /*break*/, 16];
+                    case 15:
                         try {
                             if (listChan_2_1 && !listChan_2_1.done && (_l = listChan_2.return)) _l.call(listChan_2);
                         }
-                        finally { if (e_7) throw e_7.error; }
+                        finally { if (e_8) throw e_8.error; }
                         return [7 /*endfinally*/];
-                    case 8:
-                        _loop_3 = function (id, ch) {
-                            var valH_3, jpsString_1, _a, _b, _c, key, value, e_12, _d;
+                    case 16:
+                        _loop_5 = function (id, ch) {
+                            var valH_5, jpsString_1, _a, _b, _c, key, value, e_12, _d;
                             return __generator(this, function (_e) {
                                 switch (_e.label) {
                                     case 0:
-                                        if (!(id === msg.recipientId || id === this_3.wc.myId)) return [3 /*break*/, 2];
-                                        valH_3 = undefined;
-                                        return [4 /*yield*/, crypto.subtle.digest('SHA-256', msg.content.buffer).then(function (h) { valH_3 = h; })];
+                                        if (!(id === msg.recipientId || id === this_5.wc.myId)) return [3 /*break*/, 2];
+                                        valH_5 = undefined;
+                                        return [4 /*yield*/, crypto.subtle.digest('SHA-256', msg.content.buffer).then(function (h) { valH_5 = h; })];
                                     case 1:
                                         _e.sent();
-                                        this_3.received.push([msg.senderId, msg.meta.timestamp, valH_3]);
+                                        this_5.received.push([msg.senderId, msg.meta.timestamp, valH_5]);
                                         jpsString_1 = '\njps : ';
                                         try {
-                                            for (_a = __values(this_3.jps), _b = _a.next(); !_b.done; _b = _a.next()) {
+                                            for (_a = __values(this_5.jps), _b = _a.next(); !_b.done; _b = _a.next()) {
                                                 _c = __read(_b.value, 2), key = _c[0], value = _c[1];
                                                 jpsString_1 += key + " => " + value.peerId + "\n";
                                             }
@@ -6947,36 +7105,36 @@ var SprayService = (function (_super) {
                                 }
                             });
                         };
-                        this_3 = this;
-                        _o.label = 9;
-                    case 9:
-                        _o.trys.push([9, 14, 15, 16]);
+                        this_5 = this;
+                        _o.label = 17;
+                    case 17:
+                        _o.trys.push([17, 22, 23, 24]);
                         _f = __values(this.jps), _g = _f.next();
-                        _o.label = 10;
-                    case 10:
-                        if (!!_g.done) return [3 /*break*/, 13];
+                        _o.label = 18;
+                    case 18:
+                        if (!!_g.done) return [3 /*break*/, 21];
                         _h = __read(_g.value, 2), id = _h[0], ch = _h[1];
-                        return [5 /*yield**/, _loop_3(id, ch)];
-                    case 11:
-                        state_3 = _o.sent();
-                        if (typeof state_3 === "object")
-                            return [2 /*return*/, state_3.value];
-                        _o.label = 12;
-                    case 12:
+                        return [5 /*yield**/, _loop_5(id, ch)];
+                    case 19:
+                        state_4 = _o.sent();
+                        if (typeof state_4 === "object")
+                            return [2 /*return*/, state_4.value];
+                        _o.label = 20;
+                    case 20:
                         _g = _f.next();
-                        return [3 /*break*/, 10];
-                    case 13: return [3 /*break*/, 16];
-                    case 14:
-                        e_8_1 = _o.sent();
-                        e_8 = { error: e_8_1 };
-                        return [3 /*break*/, 16];
-                    case 15:
+                        return [3 /*break*/, 18];
+                    case 21: return [3 /*break*/, 24];
+                    case 22:
+                        e_9_1 = _o.sent();
+                        e_9 = { error: e_9_1 };
+                        return [3 /*break*/, 24];
+                    case 23:
                         try {
                             if (_g && !_g.done && (_m = _f.return)) _m.call(_f);
                         }
-                        finally { if (e_8) throw e_8.error; }
+                        finally { if (e_9) throw e_9.error; }
                         return [7 /*endfinally*/];
-                    case 16:
+                    case 24:
                         // console.error(this.wc.myId + ' The recipient could not be found ', msg.recipientId, msg)
                         console.error(this.wc.myId + ' The recipient could not be found ', msg.recipientId);
                         this.forward(msg);
@@ -6999,67 +7157,63 @@ var SprayService = (function (_super) {
     };
     SprayService.prototype.forward = function (msg) {
         return __awaiter(this, void 0, void 0, function () {
-            var _this = this;
-            var rcvdString, _a, _b, _c, sId, ts, l, alreadyReceived_1, valH_4, peersId, e_13, _d;
+            var rcvdString, _a, _b, _c, sId, ts, l, alreadyReceived_1, peersId, e_13, _d;
             return __generator(this, function (_e) {
-                switch (_e.label) {
-                    case 0:
-                        if (this.wc.state === WebChannel.DISCONNECTED) {
-                            // console.error(this.wc.myId + ' forward break (disconnected) ', msg)
-                            return [2 /*return*/];
-                        }
-                        if (msg.recipientId === undefined) {
-                            // console.error(this.wc.myId + ' forward break (no recipientId)', msg)
-                            return [2 /*return*/];
-                        }
-                        if (!(msg.meta !== undefined && msg.meta.timestamp !== undefined)) return [3 /*break*/, 2];
-                        rcvdString = '';
-                        try {
-                            for (_a = __values(this.received), _b = _a.next(); !_b.done; _b = _a.next()) {
-                                _c = __read(_b.value, 3), sId = _c[0], ts = _c[1], l = _c[2];
-                                if (rcvdString.length !== 0) {
-                                    rcvdString += ', ';
-                                }
-                                rcvdString += "[" + sId + "," + ts + "," + l + "]";
-                            }
-                        }
-                        catch (e_13_1) { e_13 = { error: e_13_1 }; }
-                        finally {
-                            try {
-                                if (_b && !_b.done && (_d = _a.return)) _d.call(_a);
-                            }
-                            finally { if (e_13) throw e_13.error; }
-                        }
-                        alreadyReceived_1 = false;
-                        valH_4 = undefined;
-                        return [4 /*yield*/, crypto.subtle.digest('SHA-256', msg.content.buffer).then(function (h) { return valH_4 = h; })];
-                    case 1:
-                        _e.sent();
-                        this.received.forEach(function (message) {
-                            if (!alreadyReceived_1 && message[0] === msg.senderId && message[1] === msg.meta.timestamp
-                                && _this.areHashEqual(message[2], valH_4)) {
-                                alreadyReceived_1 = true;
-                            }
-                        });
-                        if (alreadyReceived_1) {
-                            // console.info(this.wc.myId + ' message already received ', msg)
-                            console.error(this.wc.myId + (" message already received " + msg.senderId + " => " + msg.recipientId + ", " + msg.meta.timestamp));
-                            return [2 /*return*/];
-                        }
-                        _e.label = 2;
-                    case 2:
-                        peersId = [];
-                        this.p.forEach(function (arc) {
-                            peersId.push(arc[0]);
-                        });
-                        if (peersId.includes(msg.recipientId)) {
-                            this.sendTo(msg);
-                        }
-                        else {
-                            this.send(msg);
-                        }
-                        return [2 /*return*/];
+                if (this.wc.state === WebChannel.DISCONNECTED) {
+                    // console.error(this.wc.myId + ' forward break (disconnected) ', msg)
+                    return [2 /*return*/];
                 }
+                if (msg.recipientId === undefined) {
+                    // console.error(this.wc.myId + ' forward break (no recipientId)', msg)
+                    return [2 /*return*/];
+                }
+                if (msg.meta !== undefined && msg.meta.timestamp !== undefined) {
+                    rcvdString = '';
+                    try {
+                        for (_a = __values(this.received), _b = _a.next(); !_b.done; _b = _a.next()) {
+                            _c = __read(_b.value, 3), sId = _c[0], ts = _c[1], l = _c[2];
+                            if (rcvdString.length !== 0) {
+                                rcvdString += ', ';
+                            }
+                            rcvdString += "[" + sId + "," + ts + "," + l + "]";
+                        }
+                    }
+                    catch (e_13_1) { e_13 = { error: e_13_1 }; }
+                    finally {
+                        try {
+                            if (_b && !_b.done && (_d = _a.return)) _d.call(_a);
+                        }
+                        finally { if (e_13) throw e_13.error; }
+                    }
+                    alreadyReceived_1 = false;
+                    this.isAlreadyReceived(msg).then(function (bool) { return alreadyReceived_1 = bool; });
+                    // let valH = undefined
+                    //
+                    // await crypto.subtle.digest('SHA-256', msg.content.buffer as any).then((h) => valH = h)
+                    //
+                    // this.received.forEach( (message) => {
+                    //   if (!alreadyReceived && message[0] === msg.senderId && message[1] === msg.meta.timestamp
+                    //      && this.areHashEqual(<ArrayBuffer> message[2], valH)) {
+                    //     alreadyReceived = true
+                    //   }
+                    // })
+                    if (alreadyReceived_1) {
+                        // console.info(this.wc.myId + ' message already received ', msg)
+                        // console.error(this.wc.myId + ` message already received ${msg.senderId} => ${msg.recipientId}, ${msg.meta.timestamp}`)
+                        return [2 /*return*/];
+                    }
+                }
+                peersId = [];
+                this.p.forEach(function (arc) {
+                    peersId.push(arc[0]);
+                });
+                if (peersId.includes(msg.recipientId)) {
+                    this.sendTo(msg);
+                }
+                else {
+                    this.send(msg);
+                }
+                return [2 /*return*/];
             });
         });
     };
@@ -7096,6 +7250,8 @@ var SprayService = (function (_super) {
         clearTimeout(this.timeoutReceived);
         clearInterval(this.interval);
         this.p = new PartialView();
+        this.jps.clear();
+        this.channelsSubscription.unsubscribe();
         var e_14, _c, e_15, _f;
     };
     SprayService.prototype.onChannelClose = function (closeEvt, channel) {
@@ -7214,7 +7370,7 @@ var SprayService = (function (_super) {
     SprayService.prototype._handleSvcMsg = function (M) {
         return __awaiter(this, void 0, void 0, function () {
             var _this = this;
-            var msg, rcvdString, _a, _b, _c, sId, ts, l, alreadyReceived_2, valH_5, rcvd_1, peer_1, jpsString, _d, _e, _f, key, value, counter_1, connected, allCompleted, chanString, _g, _h, ch, jpsString, _j, _k, _l, key, value, _m, _o, _p, key, value, ch, e_21, _q, e_22, _r, e_23, _s, e_24, _t, e_25, _u;
+            var msg, rcvdString, _a, _b, _c, sId, ts, l, alreadyReceived_2, valH_6, rcvd_1, peer_1, jpsString, _d, _e, _f, key, value, counter_1, connected, allCompleted, chanString, _g, _h, ch, jpsString, _j, _k, _l, key, value, _m, _o, _p, key, value, ch, newPeers_1, myPeers_1, missingPeers_1, e_21, _q, e_22, _r, e_23, _s, e_24, _t, e_25, _u;
             return __generator(this, function (_v) {
                 switch (_v.label) {
                     case 0:
@@ -7242,23 +7398,23 @@ var SprayService = (function (_super) {
                             finally { if (e_21) throw e_21.error; }
                         }
                         alreadyReceived_2 = false;
-                        valH_5 = undefined;
+                        this.isAlreadyReceived({
+                            senderId: M.senderId,
+                            recipientId: M.recipientId,
+                            isService: true,
+                            content: _super.prototype.encode.call(this, msg),
+                            meta: { timestamp: M.timestamp }
+                        }).then(function (bool) { return alreadyReceived_2 = bool; });
+                        valH_6 = undefined;
                         return [4 /*yield*/, crypto.subtle.digest('SHA-256', _super.prototype.encode.call(this, msg).buffer)
-                                .then(function (h) { valH_5 = h; })];
+                                .then(function (h) { valH_6 = h; })];
                     case 1:
                         _v.sent();
-                        this.received.forEach(function (message) {
-                            if (!alreadyReceived_2 && message[0] === M.senderId && message[1] === M.timestamp
-                                && _this.areHashEqual(message[2], valH_5)) {
-                                alreadyReceived_2 = true;
-                            }
-                        });
                         if (alreadyReceived_2) {
-                            // console.info(this.wc.myId + ' message already received ', msg)
-                            console.error(this.wc.myId + (" message already received " + msg.senderId + " => " + msg.recipientId + ", " + msg.meta.timestamp));
+                            console.error(this.wc.myId + (" message already received from " + M.channel.peerId + " :\n          " + M.senderId + " => " + M.recipientId + ", " + M.timestamp), M);
                             return [2 /*return*/];
                         }
-                        this.received.push([M.senderId, M.timestamp, valH_5]);
+                        this.received.push([M.senderId, M.timestamp, valH_6]);
                         rcvd_1 = '';
                         this.received.forEach(function (r) {
                             if (rcvd_1.length === 0) {
@@ -7362,6 +7518,10 @@ var SprayService = (function (_super) {
                             case 'joinedPeerIdFinished': {
                                 console.error(this.wc.myId + ' joinedPeerIdFinished ' + msg.joinedPeerIdFinished);
                                 if (this.iJoin() && msg.joinedPeerIdFinished === this.wc.myId) {
+                                    this.wc._send({
+                                        content: _super.prototype.encode.call(this, { joinedPeerId: this.wc.myId }),
+                                        meta: { timestamp: Date.now() }
+                                    });
                                     chanString = '\nchannels :';
                                     try {
                                         for (_g = __values(this.channels), _h = _g.next(); !_h.done; _h = _g.next()) {
@@ -7417,14 +7577,26 @@ var SprayService = (function (_super) {
                                 break;
                             }
                             case 'joinedPeerId': {
-                                console.info(this.wc.myId + ' joinedPeerId ' + msg.joinedPeerId);
+                                console.info(this.wc.myId + ' joinedPeerId ' + msg.joinedPeerId, '\n wc.members : ' + JSON.stringify(this.wc.members));
+                                if (!this.wc.members.includes(msg.joinedPeerId) && msg.joinedPeerId !== this.wc.myId) {
+                                    console.info(this.wc.myId + ' _onPeerJoin1 ' + msg.joinedPeerId, '\n wc.members : ' + JSON.stringify(this.wc.members));
+                                    this.wc._onPeerJoin(msg.joinedPeerId);
+                                    console.info(this.wc.myId + (" sending connectedTo peers to " + msg.joinedPeerId + " " + JSON.stringify(this.wc.members)));
+                                    this.sendTo({
+                                        senderId: this.wc.myId,
+                                        recipientId: msg.joinedPeerId,
+                                        isService: true,
+                                        content: _super.prototype.encode.call(this, { connectedTo: { peers: this.wc.members } }),
+                                        meta: { timestamp: Date.now() }
+                                    });
+                                }
                                 if (this.deportedJoin.get(msg.joinedPeerId)) {
                                     this.deportedJoin.set(msg.joinedPeerId, this.deportedJoin.get(msg.joinedPeerId) - 1);
                                     console.info(this.wc.myId + ' still ' + this.deportedJoin.get(msg.joinedPeerId) + ' peers joining ' + msg.joinedPeerId);
                                 }
                                 if (this.deportedJoin.get(msg.joinedPeerId) === 0) {
                                     console.info(this.wc.myId + ' no more peer joining ' + msg.joinedPeerId, this.wc.members);
-                                    this.forward({
+                                    this.sendTo({
                                         senderId: this.wc.myId,
                                         recipientId: msg.joinedPeerId,
                                         isService: true,
@@ -7440,6 +7612,35 @@ var SprayService = (function (_super) {
                                     this.peerJoined(ch);
                                 }
                                 break;
+                            }
+                            case 'connectedTo': {
+                                console.info(this.wc.myId + ' connectedTo ' + JSON.stringify(msg.connectedTo), JSON.stringify(this.wc.members));
+                                newPeers_1 = msg.connectedTo.peers;
+                                myPeers_1 = this.wc.members.slice();
+                                missingPeers_1 = [];
+                                myPeers_1.forEach(function (peer) {
+                                    if (!newPeers_1.includes(peer) && peer !== M.senderId) {
+                                        console.info(_this.wc.myId + ' connectedTo missing ' + peer);
+                                        missingPeers_1.push(peer);
+                                    }
+                                });
+                                newPeers_1.forEach(function (peer) {
+                                    if (!myPeers_1.includes(peer) && peer !== _this.wc.myId) {
+                                        console.info(_this.wc.myId + ' connectedTo adding ' + peer);
+                                        console.info(_this.wc.myId + ' _onPeerJoin2 ' + peer, '\n wc.members : ' + JSON.stringify(_this.wc.members));
+                                        _this.wc._onPeerJoin(peer);
+                                    }
+                                });
+                                if (missingPeers_1.length !== 0) {
+                                    console.info(this.wc.myId + (" sending connectedTo missing peers to " + M.senderId + " " + JSON.stringify(this.wc.members)));
+                                    this.sendTo({
+                                        senderId: this.wc.myId,
+                                        recipientId: M.senderId,
+                                        isService: true,
+                                        content: _super.prototype.encode.call(this, { connectedTo: { peers: this.wc.members } }),
+                                        meta: { timestamp: Date.now() }
+                                    });
+                                }
                             }
                         }
                         return [2 /*return*/];
@@ -7705,7 +7906,10 @@ var SprayService = (function (_super) {
             finally { if (e_29) throw e_29.error; }
         }
         console.info(this.wc.myId + ' deleted of jps ' + ch.peerId + '\n', jpsString, this.p.toString(), this.wc.members);
-        this.wc._onPeerJoin(ch.peerId);
+        if (!this.wc.members.includes(ch.peerId) && ch.peerId !== this.wc.myId) {
+            console.info(this.wc.myId + ' _onPeerJoin3 ' + ch.peerId, '\n wc.members : ' + JSON.stringify(this.wc.members));
+            this.wc._onPeerJoin(ch.peerId);
+        }
         var e_28, _d, e_29, _h;
     };
     SprayService.prototype.areHashEqual = function (h1, h2) {
@@ -7723,6 +7927,75 @@ var SprayService = (function (_super) {
             }
         }
         return true;
+    };
+    SprayService.prototype.isAlreadyReceived = function (msg) {
+        return __awaiter(this, void 0, void 0, function () {
+            var _this = this;
+            var alreadyReceived, valH;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        alreadyReceived = false;
+                        valH = undefined;
+                        return [4 /*yield*/, crypto.subtle.digest('SHA-256', msg.content.buffer).then(function (h) { return valH = h; })];
+                    case 1:
+                        _a.sent();
+                        this.received.forEach(function (message) {
+                            if (!alreadyReceived && message[0] === msg.senderId && message[1] === msg.meta.timestamp
+                                && _this.areHashEqual(message[2], valH)) {
+                                alreadyReceived = true;
+                            }
+                        });
+                        if (alreadyReceived) {
+                            // console.error(this.wc.myId + ` message already received ${msg.senderId} => ${msg.recipientId}, ${msg.meta.timestamp}`, msg)
+                            return [2 /*return*/, true];
+                        }
+                        return [2 /*return*/, false];
+                }
+            });
+        });
+    };
+    SprayService.prototype.onChannelMessage = function (channel, bytes) {
+        return __awaiter(this, void 0, void 0, function () {
+            var msg, alreadyReceived;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (this.wc.state === WebChannel.DISCONNECTED) {
+                            return [2 /*return*/];
+                        }
+                        msg = this.wc._decode(bytes);
+                        alreadyReceived = false;
+                        return [4 /*yield*/, this.isAlreadyReceived(msg).then(function (bool) { return alreadyReceived = bool; })];
+                    case 1:
+                        _a.sent();
+                        if (alreadyReceived) {
+                            console.error(this.wc.myId + (" message already received from " + channel.peerId + " :\n        " + msg.senderId + " => " + msg.recipientId + ", " + msg.meta.timestamp), msg);
+                            return [2 /*return*/];
+                        }
+                        console.warn(this.wc.myId + (" new message from " + channel.peerId + " : " + msg.senderId + " => " + msg.recipientId), msg);
+                        switch (msg.recipientId) {
+                            // If the message is broadcasted
+                            case 0:
+                                this.wc._treatMessage(channel, msg);
+                                this.forward(msg);
+                                break;
+                            // If it is a private message to me
+                            case this.wc.myId:
+                                this.wc._treatMessage(channel, msg);
+                                break;
+                            // If is is a message to me from a peer who does not know yet my ID
+                            case 1:
+                                this.wc._treatMessage(channel, msg);
+                                break;
+                            // Otherwise the message should be forwarded to the intended peer
+                            default:
+                                this.forwardTo(msg);
+                        }
+                        return [2 /*return*/];
+                }
+            });
+        });
     };
     return SprayService;
 }(Service));
@@ -7891,7 +8164,7 @@ var Signaling = (function () {
     return Signaling;
 }());
 
-var __extends$6 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+var __extends$7 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -7902,7 +8175,7 @@ var __extends$6 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b
  * @class BehaviorSubject<T>
  */
 var BehaviorSubject = (function (_super) {
-    __extends$6(BehaviorSubject, _super);
+    __extends$7(BehaviorSubject, _super);
     function BehaviorSubject(_value) {
         _super.call(this);
         this._value = _value;
@@ -7939,7 +8212,7 @@ var BehaviorSubject = (function (_super) {
 }(Subject_1.Subject));
 var BehaviorSubject_2 = BehaviorSubject;
 
-var __extends$7 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+var __extends$8 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -8005,7 +8278,7 @@ var FilterOperator = (function () {
  * @extends {Ignored}
  */
 var FilterSubscriber = (function (_super) {
-    __extends$7(FilterSubscriber, _super);
+    __extends$8(FilterSubscriber, _super);
     function FilterSubscriber(destination, predicate, thisArg) {
         _super.call(this, destination);
         this.predicate = predicate;
@@ -9992,7 +10265,7 @@ var WebSocketBuilder = (function () {
     return WebSocketBuilder;
 }());
 
-var __extends$11 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+var __extends$12 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -10013,7 +10286,7 @@ var __extends$11 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, 
  * @class Action<T>
  */
 var Action = (function (_super) {
-    __extends$11(Action, _super);
+    __extends$12(Action, _super);
     function Action(scheduler, work) {
         _super.call(this);
     }
@@ -10040,7 +10313,7 @@ var Action_1 = {
 	Action: Action_2
 };
 
-var __extends$10 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+var __extends$11 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -10053,7 +10326,7 @@ var __extends$10 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, 
  * @extends {Ignored}
  */
 var AsyncAction = (function (_super) {
-    __extends$10(AsyncAction, _super);
+    __extends$11(AsyncAction, _super);
     function AsyncAction(scheduler, work) {
         _super.call(this, scheduler, work);
         this.scheduler = scheduler;
@@ -10186,7 +10459,7 @@ var AsyncAction_1 = {
 	AsyncAction: AsyncAction_2
 };
 
-var __extends$9 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+var __extends$10 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -10198,7 +10471,7 @@ var __extends$9 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b
  * @extends {Ignored}
  */
 var QueueAction = (function (_super) {
-    __extends$9(QueueAction, _super);
+    __extends$10(QueueAction, _super);
     function QueueAction(scheduler, work) {
         _super.call(this, scheduler, work);
         this.scheduler = scheduler;
@@ -10292,14 +10565,14 @@ var Scheduler_1 = {
 	Scheduler: Scheduler_2
 };
 
-var __extends$13 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+var __extends$14 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 
 var AsyncScheduler = (function (_super) {
-    __extends$13(AsyncScheduler, _super);
+    __extends$14(AsyncScheduler, _super);
     function AsyncScheduler() {
         _super.apply(this, arguments);
         this.actions = [];
@@ -10347,14 +10620,14 @@ var AsyncScheduler_1 = {
 	AsyncScheduler: AsyncScheduler_2
 };
 
-var __extends$12 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+var __extends$13 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 
 var QueueScheduler = (function (_super) {
-    __extends$12(QueueScheduler, _super);
+    __extends$13(QueueScheduler, _super);
     function QueueScheduler() {
         _super.apply(this, arguments);
     }
@@ -10565,7 +10838,7 @@ var Notification_1 = {
 	Notification: Notification_2
 };
 
-var __extends$14 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+var __extends$15 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -10641,7 +10914,7 @@ var ObserveOnOperator_1 = ObserveOnOperator;
  * @extends {Ignored}
  */
 var ObserveOnSubscriber = (function (_super) {
-    __extends$14(ObserveOnSubscriber, _super);
+    __extends$15(ObserveOnSubscriber, _super);
     function ObserveOnSubscriber(destination, scheduler, delay) {
         if (delay === void 0) { delay = 0; }
         _super.call(this, destination);
@@ -10685,7 +10958,7 @@ var observeOn_1 = {
 	ObserveOnMessage: ObserveOnMessage_1
 };
 
-var __extends$8 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+var __extends$9 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -10700,7 +10973,7 @@ var __extends$8 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b
  * @class ReplaySubject<T>
  */
 var ReplaySubject = (function (_super) {
-    __extends$8(ReplaySubject, _super);
+    __extends$9(ReplaySubject, _super);
     function ReplaySubject(bufferSize, windowTime, scheduler) {
         if (bufferSize === void 0) { bufferSize = Number.POSITIVE_INFINITY; }
         if (windowTime === void 0) { windowTime = Number.POSITIVE_INFINITY; }
@@ -10785,100 +11058,6 @@ var ReplayEvent = (function () {
     }
     return ReplayEvent;
 }());
-
-var __extends$15 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
-
-/**
- * Applies a given `project` function to each value emitted by the source
- * Observable, and emits the resulting values as an Observable.
- *
- * <span class="informal">Like [Array.prototype.map()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map),
- * it passes each source value through a transformation function to get
- * corresponding output values.</span>
- *
- * <img src="./img/map.png" width="100%">
- *
- * Similar to the well known `Array.prototype.map` function, this operator
- * applies a projection to each value and emits that projection in the output
- * Observable.
- *
- * @example <caption>Map every click to the clientX position of that click</caption>
- * var clicks = Rx.Observable.fromEvent(document, 'click');
- * var positions = clicks.map(ev => ev.clientX);
- * positions.subscribe(x => console.log(x));
- *
- * @see {@link mapTo}
- * @see {@link pluck}
- *
- * @param {function(value: T, index: number): R} project The function to apply
- * to each `value` emitted by the source Observable. The `index` parameter is
- * the number `i` for the i-th emission that has happened since the
- * subscription, starting from the number `0`.
- * @param {any} [thisArg] An optional argument to define what `this` is in the
- * `project` function.
- * @return {Observable<R>} An Observable that emits the values from the source
- * Observable transformed by the given `project` function.
- * @method map
- * @owner Observable
- */
-function map$2(project, thisArg) {
-    if (typeof project !== 'function') {
-        throw new TypeError('argument is not a function. Are you looking for `mapTo()`?');
-    }
-    return this.lift(new MapOperator(project, thisArg));
-}
-var map_2 = map$2;
-var MapOperator = (function () {
-    function MapOperator(project, thisArg) {
-        this.project = project;
-        this.thisArg = thisArg;
-    }
-    MapOperator.prototype.call = function (subscriber, source) {
-        return source.subscribe(new MapSubscriber(subscriber, this.project, this.thisArg));
-    };
-    return MapOperator;
-}());
-var MapOperator_1 = MapOperator;
-/**
- * We need this JSDoc comment for affecting ESDoc.
- * @ignore
- * @extends {Ignored}
- */
-var MapSubscriber = (function (_super) {
-    __extends$15(MapSubscriber, _super);
-    function MapSubscriber(destination, project, thisArg) {
-        _super.call(this, destination);
-        this.project = project;
-        this.count = 0;
-        this.thisArg = thisArg || this;
-    }
-    // NOTE: This looks unoptimized, but it's actually purposefully NOT
-    // using try/catch optimizations.
-    MapSubscriber.prototype._next = function (value) {
-        var result;
-        try {
-            result = this.project.call(this.thisArg, value, this.count++);
-        }
-        catch (err) {
-            this.destination.error(err);
-            return;
-        }
-        this.destination.next(result);
-    };
-    return MapSubscriber;
-}(Subscriber_1.Subscriber));
-
-
-var map_1 = {
-	map: map_2,
-	MapOperator: MapOperator_1
-};
-
-Observable_1.Observable.prototype.map = map_1.map;
 
 /**
  * WebRTC builder module.
@@ -11483,6 +11662,554 @@ var Buffer$1 = (function () {
     return Buffer;
 }());
 
+var Topologies;
+(function (Topologies) {
+    Topologies[Topologies["FULL_MESH"] = 0] = "FULL_MESH";
+    Topologies[Topologies["SPRAY"] = 1] = "SPRAY";
+})(Topologies || (Topologies = {}));
+var defaults = {
+    topology: SPRAY,
+    signalingURL: 'wss://www.coedit.re:10473',
+    iceServers: [
+        { urls: 'stun:stun3.l.google.com:19302' }
+    ]
+};
+
+/**
+ * Maximum identifier number for {@link WebChannel#_generateId} function.
+ * @type {number}
+ */
+var MAX_ID = 2147483647;
+var REJOIN_MAX_ATTEMPTS = 10;
+var REJOIN_TIMEOUT = 2000;
+/**
+ * Timout for ping `WebChannel` in milliseconds.
+ * @type {number}
+ */
+var PING_TIMEOUT = 5000;
+var ID_TIMEOUT = 10000;
+var INNER_ID = 100;
+/**
+ * This class is an API starting point. It represents a group of collaborators
+ * also called peers. Each peer can send/receive broadcast as well as personal
+ * messages. Every peer in the `WebChannel` can invite another person to join
+ * the `WebChannel` and he also possess enough information to be able to add it
+ * preserving the current `WebChannel` structure (network topology).
+ * [[include:installation.md]]
+ */
+var WebChannel = (function (_super) {
+    __extends(WebChannel, _super);
+    /**
+     * @param {WebChannelSettings} settings Web channel settings
+     */
+    function WebChannel(_a) {
+        var _b = _a === void 0 ? {} : _a, _c = _b.topology, topology = _c === void 0 ? defaults.topology : _c, _d = _b.signalingURL, signalingURL = _d === void 0 ? defaults.signalingURL : _d, _e = _b.iceServers, iceServers = _e === void 0 ? defaults.iceServers : _e;
+        var _this = _super.call(this, INNER_ID, webChannel.Message) || this;
+        _this._generatedIds = new Set();
+        // public members
+        _this.members = [];
+        _this.topology = topology;
+        _this.id = _this._generateId();
+        _this.myId = _this._generateId();
+        _this.key = undefined;
+        // public event handlers
+        _this.onPeerJoin = function () { };
+        _this.onPeerLeave = function () { };
+        _this.onMessage = function () { };
+        _this.onStateChanged = function () { };
+        _this.onSignalingStateChanged = function () { };
+        // private
+        _this._state = WebChannel.DISCONNECTED;
+        _this._signaling = new Signaling(_this, function (ch) { return _this._addChannel(ch); }, signalingURL);
+        _this._signaling.onStateChanged = function (state) {
+            if (state === Signaling.CLOSED && _this.members.length === 0) {
+                _this._setState(WebChannel.DISCONNECTED);
+            }
+            _this.onSignalingStateChanged(state);
+        };
+        _this._userMsg = new UserMessage();
+        _this._svcMsgStream = new Subject_2();
+        _super.prototype.setSvcMsgStream.call(_this, _this._svcMsgStream);
+        _this.webRTCBuilder = new WebRTCBuilder(_this, iceServers);
+        _this.webSocketBuilder = new WebSocketBuilder(_this);
+        _this.channelBuilder = new ChannelBuilder(_this);
+        _this.svcMsgStream.subscribe(function (msg) { return _this._treatServiceMessage(msg); }, function (err) { return console.error('service/WebChannel inner message error', err); });
+        _this._setTopology(topology);
+        _this._joinSucceed = function () { };
+        _this._joinFailed = function () { };
+        // Related to ping-pong
+        _this._pingTime = 0;
+        _this._maxTime = 0;
+        _this._pingFinish = function () { };
+        _this._pongNb = 0;
+        return _this;
+    }
+    WebChannel.prototype._setState = function (state) {
+        if (this._state !== state) {
+            this._state = state;
+            this.onStateChanged(state);
+        }
+    };
+    Object.defineProperty(WebChannel.prototype, "state", {
+        get: function () {
+            return this._state;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(WebChannel.prototype, "signalingState", {
+        get: function () {
+            return this._signaling.state;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(WebChannel.prototype, "signalingURL", {
+        get: function () {
+            return this._signaling.url;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    /**
+     * Join the network via a key provided by one of the network member or a `Channel`.
+     */
+    WebChannel.prototype.join = function (value) {
+        var _this = this;
+        if (this._state === WebChannel.DISCONNECTED) {
+            this._setState(WebChannel.JOINING);
+            return new Promise(function (resolve, reject) {
+                if (value instanceof Channel) {
+                    _this._joinSucceed = function () {
+                        _this._setState(WebChannel.JOINED);
+                        resolve();
+                    };
+                    _this._joinFailed = function (err) {
+                        _this._setState(WebChannel.DISCONNECTED);
+                        reject(err);
+                    };
+                }
+                else {
+                    if (value === undefined) {
+                        _this.key = _this._generateKey();
+                    }
+                    else if ((typeof value === 'string' || value instanceof String) && value.length < 512) {
+                        _this.key = value;
+                    }
+                    else {
+                        throw new Error('Parameter of the join function should be either a Channel or a string');
+                    }
+                    _this._joinRecursively(function () { return resolve(); }, function (err) { return reject(err); }, 0);
+                }
+            });
+        }
+        return Promise.reject(new Error('Could not join: already joining or joined'));
+    };
+    /**
+     * Invite a server peer to join the network.
+     */
+    WebChannel.prototype.invite = function (url) {
+        var _this = this;
+        if (isURL(url)) {
+            return this.webSocketBuilder.connect(url + "/invite?wcId=" + this.id + "&senderId=" + this.myId)
+                .then(function (connection) { return _this._addChannel(new Channel(connection, _this)); });
+        }
+        else {
+            return Promise.reject(new Error(url + " is not a valid URL"));
+        }
+    };
+    /**
+     * TODO
+     */
+    WebChannel.prototype.openSignaling = function () { };
+    /**
+     * Close the connection with Signaling server.
+     */
+    WebChannel.prototype.closeSignaling = function () {
+        this._signaling.close();
+    };
+    /**
+     * Leave the network which means close channels with all peers and connection
+     * with Signaling server.
+     */
+    WebChannel.prototype.disconnect = function () {
+        this._setState(WebChannel.DISCONNECTED);
+        this._pingTime = 0;
+        this.members = [];
+        this._joinSucceed = function () { };
+        this._joinFailed = function () { };
+        this._svcMsgStream.complete();
+        this._signaling.close();
+    };
+    /**
+     * Broadcast a message to the network.
+     */
+    WebChannel.prototype.send = function (data) {
+        if (this.members.length !== 0) {
+            var msg = {
+                senderId: this.myId,
+                recipientId: 0,
+                isService: false
+            };
+            var chunkedData = this._userMsg.encode(data);
+            try {
+                for (var chunkedData_1 = __values(chunkedData), chunkedData_1_1 = chunkedData_1.next(); !chunkedData_1_1.done; chunkedData_1_1 = chunkedData_1.next()) {
+                    var chunk = chunkedData_1_1.value;
+                    msg.content = chunk;
+                    this._topology.send(msg);
+                }
+            }
+            catch (e_1_1) { e_1 = { error: e_1_1 }; }
+            finally {
+                try {
+                    if (chunkedData_1_1 && !chunkedData_1_1.done && (_a = chunkedData_1.return)) _a.call(chunkedData_1);
+                }
+                finally { if (e_1) throw e_1.error; }
+            }
+        }
+        var e_1, _a;
+    };
+    /**
+     * Send a message to a particular peer in the network.
+     */
+    WebChannel.prototype.sendTo = function (id, data) {
+        if (this.members.length !== 0) {
+            var msg = {
+                senderId: this.myId,
+                recipientId: id,
+                isService: false
+            };
+            var chunkedData = this._userMsg.encode(data);
+            try {
+                for (var chunkedData_2 = __values(chunkedData), chunkedData_2_1 = chunkedData_2.next(); !chunkedData_2_1.done; chunkedData_2_1 = chunkedData_2.next()) {
+                    var chunk = chunkedData_2_1.value;
+                    msg.content = chunk;
+                    this._topology.sendTo(msg);
+                }
+            }
+            catch (e_2_1) { e_2 = { error: e_2_1 }; }
+            finally {
+                try {
+                    if (chunkedData_2_1 && !chunkedData_2_1.done && (_a = chunkedData_2.return)) _a.call(chunkedData_2);
+                }
+                finally { if (e_2) throw e_2.error; }
+            }
+        }
+        var e_2, _a;
+    };
+    /**
+     * Get the ping of the `network. It is an amount in milliseconds which
+     * corresponds to the longest ping to each network member.
+     */
+    WebChannel.prototype.ping = function () {
+        var _this = this;
+        if (this.members.length !== 0 && this._pingTime === 0) {
+            return new Promise(function (resolve, reject) {
+                if (_this._pingTime === 0) {
+                    _this._pingTime = Date.now();
+                    _this._maxTime = 0;
+                    _this._pongNb = 0;
+                    _this._pingFinish = function (delay) { return resolve(delay); };
+                    _this._send({ content: _super.prototype.encode.call(_this, { ping: true }) });
+                    setTimeout(function () { return resolve(PING_TIMEOUT); }, PING_TIMEOUT);
+                }
+            });
+        }
+        else {
+            return Promise.reject(new Error('No peers to ping'));
+        }
+    };
+    WebChannel.prototype._onPeerJoin = function (id) {
+        this.members[this.members.length] = id;
+        this.onPeerJoin(id);
+    };
+    WebChannel.prototype._onPeerLeave = function (id) {
+        this.members.splice(this.members.indexOf(id), 1);
+        this.onPeerLeave(id);
+        if (this.members.length === 0 && this._signaling.state === Signaling.CLOSED) {
+            this._setState(WebChannel.DISCONNECTED);
+        }
+    };
+    /**
+     * Send service message to a particular peer in the network.
+     */
+    WebChannel.prototype._sendTo = function (_a) {
+        var _b = _a === void 0 ? {} : _a, _c = _b.senderId, senderId = _c === void 0 ? this.myId : _c, _d = _b.recipientId, recipientId = _d === void 0 ? this.myId : _d, _e = _b.isService, isService = _e === void 0 ? true : _e, _f = _b.content, content = _f === void 0 ? undefined : _f, _g = _b.meta, meta = _g === void 0 ? undefined : _g;
+        var msg = { senderId: senderId, recipientId: recipientId, isService: isService, content: content, meta: meta };
+        if (msg.recipientId === this.myId) {
+            this._treatMessage(undefined, msg);
+        }
+        else {
+            this._topology.sendTo(msg);
+        }
+    };
+    /**
+     * Broadcast service message to the network.
+     */
+    WebChannel.prototype._send = function (_a) {
+        var _b = _a === void 0 ? {} : _a, _c = _b.senderId, senderId = _c === void 0 ? this.myId : _c, _d = _b.recipientId, recipientId = _d === void 0 ? 0 : _d, _e = _b.isService, isService = _e === void 0 ? true : _e, _f = _b.content, content = _f === void 0 ? undefined : _f, _g = _b.meta, meta = _g === void 0 ? undefined : _g, _h = _b.isMeIncluded, isMeIncluded = _h === void 0 ? false : _h;
+        var msg = { senderId: senderId, recipientId: recipientId, isService: isService, content: content, meta: meta };
+        if (isMeIncluded) {
+            this._treatMessage(undefined, msg);
+        }
+        this._topology.send(msg);
+    };
+    WebChannel.prototype._encode = function (_a) {
+        var _b = _a === void 0 ? {} : _a, _c = _b.senderId, senderId = _c === void 0 ? this.myId : _c, _d = _b.recipientId, recipientId = _d === void 0 ? 0 : _d, _e = _b.isService, isService = _e === void 0 ? true : _e, _f = _b.content, content = _f === void 0 ? undefined : _f, _g = _b.meta, meta = _g === void 0 ? undefined : _g;
+        var msg = { senderId: senderId, recipientId: recipientId, isService: isService, content: content, meta: meta };
+        return Message.encode(Message.create(msg)).finish();
+    };
+    WebChannel.prototype._decode = function (bytes) {
+        return Message.decode(new Uint8Array(bytes));
+    };
+    /**
+     * Message handler. All messages arrive here first.
+     */
+    WebChannel.prototype._onMessage = function (channel, bytes) {
+        // const msg = this._decode(bytes)
+        // console.warn(this.myId + ` new message from ${channel.peerId} : ${msg.senderId} => ${msg.recipientId}`, msg)
+        // switch (msg.recipientId) {
+        // // If the message is broadcasted
+        // case 0:
+        //   this._treatMessage(channel, msg)
+        //   this._topology.forward(msg)
+        //   break
+        //
+        // // If it is a private message to me
+        // case this.myId:
+        //   this._treatMessage(channel, msg)
+        //   break
+        //
+        // // If is is a message to me from a peer who does not know yet my ID
+        // case 1:
+        //   this._treatMessage(channel, msg)
+        //   break
+        //
+        // // Otherwise the message should be forwarded to the intended peer
+        // default:
+        //   this._topology.forwardTo(msg)
+        // }
+        this._topology.onChannelMessage(channel, bytes);
+    };
+    WebChannel.prototype._treatMessage = function (channel, msg) {
+        // User Message
+        if (!msg.isService) {
+            var data = this._userMsg.decode(msg.content, msg.senderId);
+            if (data !== undefined) {
+                this.onMessage(msg.senderId, data, msg.recipientId === 0);
+            }
+            // Service Message
+        }
+        else {
+            try {
+                if (JSON.stringify(spray.Message.decode(service.Message.decode(msg.content).content)) !== {}) {
+                    console.info(this.myId + ' content1 : ' + JSON.stringify(spray.Message.decode(service.Message.decode(msg.content).content)));
+                }
+                else if (JSON.stringify(_super.prototype.decode.call(this, service.Message.decode(msg.content).content)) !== {}) {
+                    console.info(this.myId + ' content2 : ' + JSON.stringify(_super.prototype.decode.call(this, service.Message.decode(msg.content).content)));
+                }
+                else if (JSON.stringify(this.decode(service.Message.decode(msg.content).content)) !== {}) {
+                    console.info(this.myId + ' content3 : ' + JSON.stringify(this.decode(service.Message.decode(msg.content).content)));
+                }
+                else {
+                    console.info(this.myId + ' undecodable ');
+                }
+            }
+            catch (e) {
+                try {
+                    if (JSON.stringify(_super.prototype.decode.call(this, service.Message.decode(msg.content).content)) !== {}) {
+                        console.info(this.myId + ' content2 : ' + JSON.stringify(_super.prototype.decode.call(this, service.Message.decode(msg.content).content)));
+                    }
+                    else if (JSON.stringify(this.decode(service.Message.decode(msg.content).content)) !== {}) {
+                        console.info(this.myId + ' content3 : ' + JSON.stringify(this.decode(service.Message.decode(msg.content).content)));
+                    }
+                    else {
+                        console.info(this.myId + ' undecodable ');
+                    }
+                }
+                catch (e2) {
+                    try {
+                        if (JSON.stringify(this.decode(service.Message.decode(msg.content).content)) !== {}) {
+                            console.info(this.myId + ' content3 : ' + JSON.stringify(this.decode(service.Message.decode(msg.content).content)));
+                        }
+                        else {
+                            console.info(this.myId + ' undecodable ');
+                        }
+                    }
+                    catch (e3) {
+                        console.info(this.myId + ' undecodable ' + e);
+                    }
+                }
+            }
+            if ('meta' in msg && msg.meta !== null) {
+                this._svcMsgStream.next(Object.assign({
+                    channel: channel,
+                    senderId: msg.senderId,
+                    recipientId: msg.recipientId,
+                    timestamp: msg.meta.timestamp
+                }, service.Message.decode(msg.content)));
+            }
+            else {
+                this._svcMsgStream.next(Object.assign({
+                    channel: channel,
+                    senderId: msg.senderId,
+                    recipientId: msg.recipientId,
+                    timestamp: undefined
+                }, service.Message.decode(msg.content)));
+            }
+        }
+    };
+    WebChannel.prototype._treatServiceMessage = function (_a) {
+        var channel = _a.channel, senderId = _a.senderId, recipientId = _a.recipientId, msg = _a.msg;
+        switch (msg.type) {
+            case 'initWebChannel': {
+                var _b = msg.initWebChannel, topology = _b.topology, wcId = _b.wcId, peerId = _b.peerId;
+                this._setTopology(topology);
+                this.myId = peerId;
+                this.id = wcId;
+                channel.peerId = senderId;
+                this._topology.initJoining(channel);
+                break;
+            }
+            case 'ping': {
+                this._sendTo({
+                    recipientId: channel.peerId,
+                    content: _super.prototype.encode.call(this, { pong: true })
+                });
+                break;
+            }
+            case 'pong': {
+                var now = Date.now();
+                this._pongNb++;
+                this._maxTime = Math.max(this._maxTime, now - this._pingTime);
+                console.warn(this.myId + ' this.members.length : ' + this.members.length + ', this._pongNb : ' + this._pongNb);
+                if (this._pongNb === this.members.length) {
+                    this._pingFinish(this._maxTime);
+                    console.warn(this.myId + ' this._maxtime : ' + this._maxTime);
+                    this._pingTime = 0;
+                }
+                break;
+            }
+            default:
+                throw new Error("Unknown message type: \"" + msg.type + "\"");
+        }
+    };
+    /**
+     * Delegate adding a new peer in the network to topology.
+     */
+    WebChannel.prototype._addChannel = function (ch) {
+        ch.peerId = this._generateId();
+        var msg = this._encode({
+            recipientId: 1,
+            content: _super.prototype.encode.call(this, { initWebChannel: {
+                    topology: this._topology.serviceId,
+                    wcId: this.id,
+                    peerId: ch.peerId
+                } })
+        });
+        ch.send(msg);
+        this._topology.addJoining(ch);
+    };
+    WebChannel.prototype._joinRecursively = function (resolve, reject, attempt) {
+        var _this = this;
+        this._signaling.join(this.key)
+            .then(function (ch) {
+            if (ch) {
+                _this._joinSucceed = function () {
+                    _this._signaling.open();
+                    _this._setState(WebChannel.JOINED);
+                    resolve();
+                };
+                _this._joinFailed = function (str) {
+                    _this._setState(WebChannel.DISCONNECTED);
+                    reject(new Error(str));
+                };
+            }
+            else {
+                _this._setState(WebChannel.JOINED);
+                resolve();
+            }
+        })
+            .catch(function (err) {
+            console.warn("Failed to join via " + _this.signalingURL + " with " + _this.key + " key: " + err.message);
+            if (attempt === REJOIN_MAX_ATTEMPTS) {
+                reject(new Error("Failed to join via " + _this.signalingURL + " with "
+                    + (_this.key + " key: reached maximum rejoin attempts (" + REJOIN_MAX_ATTEMPTS + ")")));
+            }
+            else {
+                console.info("Trying to rejoin in " + REJOIN_TIMEOUT + " the " + (attempt + 1) + " time... ");
+                setTimeout(function () {
+                    _this._joinRecursively(function () { return resolve(); }, function (err) { return reject(err); }, ++attempt);
+                }, REJOIN_TIMEOUT);
+            }
+        });
+    };
+    WebChannel.prototype._setTopology = function (topology) {
+        if (this._topology !== undefined) {
+            if (this.topology !== topology) {
+                this.topology = topology;
+                this._topology.clean();
+                // this._topology = new FullMesh(this)
+                this._topology = new SprayService(this);
+            }
+        }
+        else {
+            this.topology = topology;
+            // this._topology = new FullMesh(this)
+            this._topology = new SprayService(this);
+        }
+    };
+    /**
+     * Generate random id for a `WebChannel` or a new peer.
+     */
+    WebChannel.prototype._generateId = function () {
+        var _this = this;
+        var _loop_1 = function () {
+            var id = Math.ceil(Math.random() * MAX_ID);
+            if (id === this_1.myId) {
+                return "continue";
+            }
+            if (this_1.members.includes(id)) {
+                return "continue";
+            }
+            if (this_1._generatedIds.has(id)) {
+                return "continue";
+            }
+            this_1._generatedIds.add(id);
+            setTimeout(function () { return _this._generatedIds.delete(id); }, ID_TIMEOUT);
+            return { value: id };
+        };
+        var this_1 = this;
+        do {
+            var state_1 = _loop_1();
+            if (typeof state_1 === "object")
+                return state_1.value;
+        } while (true);
+    };
+    /**
+     * Generate random key which will be used to join the network.
+     */
+    WebChannel.prototype._generateKey = function () {
+        var MIN_LENGTH = 5;
+        var DELTA_LENGTH = 0;
+        var MASK = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        var result = '';
+        var length = MIN_LENGTH + Math.round(Math.random() * DELTA_LENGTH);
+        for (var i = 0; i < length; i++) {
+            result += MASK[Math.round(Math.random() * (MASK.length - 1))];
+        }
+        return result;
+    };
+    WebChannel.JOINING = 0;
+    WebChannel.JOINED = 1;
+    WebChannel.DISCONNECTED = 2;
+    WebChannel.SIGNALING_CONNECTING = Signaling.CONNECTING;
+    WebChannel.SIGNALING_CONNECTED = Signaling.CONNECTED;
+    WebChannel.SIGNALING_OPEN = Signaling.OPEN;
+    WebChannel.SIGNALING_CLOSED = Signaling.CLOSED;
+    return WebChannel;
+}(Service));
+
 /**
  * {@link FullMesh} identifier.
  * @ignore
@@ -11785,509 +12512,32 @@ var FullMesh = (function (_super) {
         this.wc._onPeerJoin(ch.peerId);
         console.info(this.wc.myId + ' _onPeerJoin ' + ch.peerId);
     };
-    return FullMesh;
-}(Service));
-
-var Topologies;
-(function (Topologies) {
-    Topologies[Topologies["FULL_MESH"] = 0] = "FULL_MESH";
-})(Topologies || (Topologies = {}));
-var defaults = {
-    topology: FULL_MESH,
-    signalingURL: 'wss://www.coedit.re:10473',
-    iceServers: [
-        { urls: 'stun:stun3.l.google.com:19302' }
-    ]
-};
-
-/**
- * Maximum identifier number for {@link WebChannel#_generateId} function.
- * @type {number}
- */
-var MAX_ID = 2147483647;
-var REJOIN_MAX_ATTEMPTS = 10;
-var REJOIN_TIMEOUT = 2000;
-/**
- * Timout for ping `WebChannel` in milliseconds.
- * @type {number}
- */
-var PING_TIMEOUT = 5000;
-var ID_TIMEOUT = 10000;
-var INNER_ID = 100;
-/**
- * This class is an API starting point. It represents a group of collaborators
- * also called peers. Each peer can send/receive broadcast as well as personal
- * messages. Every peer in the `WebChannel` can invite another person to join
- * the `WebChannel` and he also possess enough information to be able to add it
- * preserving the current `WebChannel` structure (network topology).
- * [[include:installation.md]]
- */
-var WebChannel = (function (_super) {
-    __extends(WebChannel, _super);
-    /**
-     * @param {WebChannelSettings} settings Web channel settings
-     */
-    function WebChannel(_a) {
-        var _b = _a === void 0 ? {} : _a, _c = _b.topology, topology = _c === void 0 ? defaults.topology : _c, _d = _b.signalingURL, signalingURL = _d === void 0 ? defaults.signalingURL : _d, _e = _b.iceServers, iceServers = _e === void 0 ? defaults.iceServers : _e;
-        var _this = _super.call(this, INNER_ID, webChannel.Message) || this;
-        _this._generatedIds = new Set();
-        // public members
-        _this.members = [];
-        _this.topology = topology;
-        _this.id = _this._generateId();
-        _this.myId = _this._generateId();
-        _this.key = undefined;
-        // public event handlers
-        _this.onPeerJoin = function () { };
-        _this.onPeerLeave = function () { };
-        _this.onMessage = function () { };
-        _this.onStateChanged = function () { };
-        _this.onSignalingStateChanged = function () { };
-        // private
-        _this._state = WebChannel.DISCONNECTED;
-        _this._signaling = new Signaling(_this, function (ch) { return _this._addChannel(ch); }, signalingURL);
-        _this._signaling.onStateChanged = function (state) {
-            if (state === Signaling.CLOSED && _this.members.length === 0) {
-                _this._setState(WebChannel.DISCONNECTED);
-            }
-            _this.onSignalingStateChanged(state);
-        };
-        _this._userMsg = new UserMessage();
-        _this._svcMsgStream = new Subject_2();
-        _super.prototype.setSvcMsgStream.call(_this, _this._svcMsgStream);
-        _this.webRTCBuilder = new WebRTCBuilder(_this, iceServers);
-        _this.webSocketBuilder = new WebSocketBuilder(_this);
-        _this.channelBuilder = new ChannelBuilder(_this);
-        _this.svcMsgStream.subscribe(function (msg) { return _this._treatServiceMessage(msg); }, function (err) { return console.error('service/WebChannel inner message error', err); });
-        _this._setTopology(topology);
-        _this._joinSucceed = function () { };
-        _this._joinFailed = function () { };
-        // Related to ping-pong
-        _this._pingTime = 0;
-        _this._maxTime = 0;
-        _this._pingFinish = function () { };
-        _this._pongNb = 0;
-        return _this;
-    }
-    WebChannel.prototype._setState = function (state) {
-        if (this._state !== state) {
-            this._state = state;
-            this.onStateChanged(state);
+    FullMesh.prototype.onChannelMessage = function (channel, bytes) {
+        if (this.wc.state === WebChannel.DISCONNECTED) {
+            return;
         }
-    };
-    Object.defineProperty(WebChannel.prototype, "state", {
-        get: function () {
-            return this._state;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(WebChannel.prototype, "signalingState", {
-        get: function () {
-            return this._signaling.state;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(WebChannel.prototype, "signalingURL", {
-        get: function () {
-            return this._signaling.url;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    /**
-     * Join the network via a key provided by one of the network member or a `Channel`.
-     */
-    WebChannel.prototype.join = function (value) {
-        var _this = this;
-        if (this._state === WebChannel.DISCONNECTED) {
-            this._setState(WebChannel.JOINING);
-            return new Promise(function (resolve, reject) {
-                if (value instanceof Channel) {
-                    _this._joinSucceed = function () {
-                        _this._setState(WebChannel.JOINED);
-                        resolve();
-                    };
-                    _this._joinFailed = function (err) {
-                        _this._setState(WebChannel.DISCONNECTED);
-                        reject(err);
-                    };
-                }
-                else {
-                    if (value === undefined) {
-                        _this.key = _this._generateKey();
-                    }
-                    else if ((typeof value === 'string' || value instanceof String) && value.length < 512) {
-                        _this.key = value;
-                    }
-                    else {
-                        throw new Error('Parameter of the join function should be either a Channel or a string');
-                    }
-                    _this._joinRecursively(function () { return resolve(); }, function (err) { return reject(err); }, 0);
-                }
-            });
-        }
-        return Promise.reject(new Error('Could not join: already joining or joined'));
-    };
-    /**
-     * Invite a server peer to join the network.
-     */
-    WebChannel.prototype.invite = function (url) {
-        var _this = this;
-        if (isURL(url)) {
-            return this.webSocketBuilder.connect(url + "/invite?wcId=" + this.id + "&senderId=" + this.myId)
-                .then(function (connection) { return _this._addChannel(new Channel(connection, _this)); });
-        }
-        else {
-            return Promise.reject(new Error(url + " is not a valid URL"));
-        }
-    };
-    /**
-     * TODO
-     */
-    WebChannel.prototype.openSignaling = function () { };
-    /**
-     * Close the connection with Signaling server.
-     */
-    WebChannel.prototype.closeSignaling = function () {
-        this._signaling.close();
-    };
-    /**
-     * Leave the network which means close channels with all peers and connection
-     * with Signaling server.
-     */
-    WebChannel.prototype.disconnect = function () {
-        this._setState(WebChannel.DISCONNECTED);
-        this._pingTime = 0;
-        this.members = [];
-        this._joinSucceed = function () { };
-        this._joinFailed = function () { };
-        this._svcMsgStream.complete();
-        this._signaling.close();
-    };
-    /**
-     * Broadcast a message to the network.
-     */
-    WebChannel.prototype.send = function (data) {
-        if (this.members.length !== 0) {
-            var msg = {
-                senderId: this.myId,
-                recipientId: 0,
-                isService: false
-            };
-            var chunkedData = this._userMsg.encode(data);
-            try {
-                for (var chunkedData_1 = __values(chunkedData), chunkedData_1_1 = chunkedData_1.next(); !chunkedData_1_1.done; chunkedData_1_1 = chunkedData_1.next()) {
-                    var chunk = chunkedData_1_1.value;
-                    msg.content = chunk;
-                    this._topology.send(msg);
-                }
-            }
-            catch (e_1_1) { e_1 = { error: e_1_1 }; }
-            finally {
-                try {
-                    if (chunkedData_1_1 && !chunkedData_1_1.done && (_a = chunkedData_1.return)) _a.call(chunkedData_1);
-                }
-                finally { if (e_1) throw e_1.error; }
-            }
-        }
-        var e_1, _a;
-    };
-    /**
-     * Send a message to a particular peer in the network.
-     */
-    WebChannel.prototype.sendTo = function (id, data) {
-        if (this.members.length !== 0) {
-            var msg = {
-                senderId: this.myId,
-                recipientId: id,
-                isService: false
-            };
-            var chunkedData = this._userMsg.encode(data);
-            try {
-                for (var chunkedData_2 = __values(chunkedData), chunkedData_2_1 = chunkedData_2.next(); !chunkedData_2_1.done; chunkedData_2_1 = chunkedData_2.next()) {
-                    var chunk = chunkedData_2_1.value;
-                    msg.content = chunk;
-                    this._topology.sendTo(msg);
-                }
-            }
-            catch (e_2_1) { e_2 = { error: e_2_1 }; }
-            finally {
-                try {
-                    if (chunkedData_2_1 && !chunkedData_2_1.done && (_a = chunkedData_2.return)) _a.call(chunkedData_2);
-                }
-                finally { if (e_2) throw e_2.error; }
-            }
-        }
-        var e_2, _a;
-    };
-    /**
-     * Get the ping of the `network. It is an amount in milliseconds which
-     * corresponds to the longest ping to each network member.
-     */
-    WebChannel.prototype.ping = function () {
-        var _this = this;
-        if (this.members.length !== 0 && this._pingTime === 0) {
-            return new Promise(function (resolve, reject) {
-                if (_this._pingTime === 0) {
-                    _this._pingTime = Date.now();
-                    _this._maxTime = 0;
-                    _this._pongNb = 0;
-                    _this._pingFinish = function (delay) { return resolve(delay); };
-                    _this._send({ content: _super.prototype.encode.call(_this, { ping: true }) });
-                    setTimeout(function () { return resolve(PING_TIMEOUT); }, PING_TIMEOUT);
-                }
-            });
-        }
-        else {
-            return Promise.reject(new Error('No peers to ping'));
-        }
-    };
-    WebChannel.prototype._onPeerJoin = function (id) {
-        this.members[this.members.length] = id;
-        this.onPeerJoin(id);
-    };
-    WebChannel.prototype._onPeerLeave = function (id) {
-        this.members.splice(this.members.indexOf(id), 1);
-        this.onPeerLeave(id);
-        if (this.members.length === 0 && this._signaling.state === Signaling.CLOSED) {
-            this._setState(WebChannel.DISCONNECTED);
-        }
-    };
-    /**
-     * Send service message to a particular peer in the network.
-     */
-    WebChannel.prototype._sendTo = function (_a) {
-        var _b = _a === void 0 ? {} : _a, _c = _b.senderId, senderId = _c === void 0 ? this.myId : _c, _d = _b.recipientId, recipientId = _d === void 0 ? this.myId : _d, _e = _b.isService, isService = _e === void 0 ? true : _e, _f = _b.content, content = _f === void 0 ? undefined : _f, _g = _b.meta, meta = _g === void 0 ? undefined : _g;
-        var msg = { senderId: senderId, recipientId: recipientId, isService: isService, content: content, meta: meta };
-        if (msg.recipientId === this.myId) {
-            this._treatMessage(undefined, msg);
-        }
-        else {
-            this._topology.sendTo(msg);
-        }
-    };
-    /**
-     * Broadcast service message to the network.
-     */
-    WebChannel.prototype._send = function (_a) {
-        var _b = _a === void 0 ? {} : _a, _c = _b.senderId, senderId = _c === void 0 ? this.myId : _c, _d = _b.recipientId, recipientId = _d === void 0 ? 0 : _d, _e = _b.isService, isService = _e === void 0 ? true : _e, _f = _b.content, content = _f === void 0 ? undefined : _f, _g = _b.meta, meta = _g === void 0 ? undefined : _g, _h = _b.isMeIncluded, isMeIncluded = _h === void 0 ? false : _h;
-        var msg = { senderId: senderId, recipientId: recipientId, isService: isService, content: content, meta: meta };
-        if (isMeIncluded) {
-            this._treatMessage(undefined, msg);
-        }
-        this._topology.send(msg);
-    };
-    WebChannel.prototype._encode = function (_a) {
-        var _b = _a === void 0 ? {} : _a, _c = _b.senderId, senderId = _c === void 0 ? this.myId : _c, _d = _b.recipientId, recipientId = _d === void 0 ? 0 : _d, _e = _b.isService, isService = _e === void 0 ? true : _e, _f = _b.content, content = _f === void 0 ? undefined : _f, _g = _b.meta, meta = _g === void 0 ? undefined : _g;
-        var msg = { senderId: senderId, recipientId: recipientId, isService: isService, content: content, meta: meta };
-        return Message.encode(Message.create(msg)).finish();
-    };
-    WebChannel.prototype._decode = function (bytes) {
-        return Message.decode(new Uint8Array(bytes));
-    };
-    /**
-     * Message handler. All messages arrive here first.
-     */
-    WebChannel.prototype._onMessage = function (channel, bytes) {
-        var msg = this._decode(bytes);
+        var msg = this.wc._decode(bytes);
+        console.warn(this.wc.myId + (" new message from " + channel.peerId + " : " + msg.senderId + " => " + msg.recipientId), msg);
         switch (msg.recipientId) {
             // If the message is broadcasted
             case 0:
-                this._treatMessage(channel, msg);
-                this._topology.forward(msg);
+                this.wc._treatMessage(channel, msg);
+                this.forward(msg);
                 break;
             // If it is a private message to me
-            case this.myId:
-                this._treatMessage(channel, msg);
+            case this.wc.myId:
+                this.wc._treatMessage(channel, msg);
                 break;
             // If is is a message to me from a peer who does not know yet my ID
             case 1:
-                this._treatMessage(channel, msg);
+                this.wc._treatMessage(channel, msg);
                 break;
             // Otherwise the message should be forwarded to the intended peer
             default:
-                this._topology.forwardTo(msg);
+                this.forwardTo(msg);
         }
     };
-    WebChannel.prototype._treatMessage = function (channel, msg) {
-        // User Message
-        if (!msg.isService) {
-            var data = this._userMsg.decode(msg.content, msg.senderId);
-            if (data !== undefined) {
-                this.onMessage(msg.senderId, data, msg.recipientId === 0);
-            }
-            // Service Message
-        }
-        else {
-            if ('meta' in msg && msg.meta !== null) {
-                this._svcMsgStream.next(Object.assign({
-                    channel: channel,
-                    senderId: msg.senderId,
-                    recipientId: msg.recipientId,
-                    timestamp: msg.meta.timestamp
-                }, service.Message.decode(msg.content)));
-            }
-            else {
-                this._svcMsgStream.next(Object.assign({
-                    channel: channel,
-                    senderId: msg.senderId,
-                    recipientId: msg.recipientId,
-                    timestamp: undefined
-                }, service.Message.decode(msg.content)));
-            }
-        }
-    };
-    WebChannel.prototype._treatServiceMessage = function (_a) {
-        var channel = _a.channel, senderId = _a.senderId, recipientId = _a.recipientId, msg = _a.msg;
-        switch (msg.type) {
-            case 'initWebChannel': {
-                var _b = msg.initWebChannel, topology = _b.topology, wcId = _b.wcId, peerId = _b.peerId;
-                this._setTopology(topology);
-                this.myId = peerId;
-                this.id = wcId;
-                channel.peerId = senderId;
-                this._topology.initJoining(channel);
-                break;
-            }
-            case 'ping': {
-                this._sendTo({
-                    recipientId: channel.peerId,
-                    content: _super.prototype.encode.call(this, { pong: true })
-                });
-                break;
-            }
-            case 'pong': {
-                var now = Date.now();
-                this._pongNb++;
-                this._maxTime = Math.max(this._maxTime, now - this._pingTime);
-                console.warn(this.myId + ' this.members.length : ' + this.members.length + ', this._pongNb : ' + this._pongNb);
-                if (this._pongNb === this.members.length) {
-                    this._pingFinish(this._maxTime);
-                    console.warn(this.myId + ' this._maxtime : ' + this._maxTime);
-                    this._pingTime = 0;
-                }
-                break;
-            }
-            default:
-                throw new Error("Unknown message type: \"" + msg.type + "\"");
-        }
-    };
-    /**
-     * Delegate adding a new peer in the network to topology.
-     */
-    WebChannel.prototype._addChannel = function (ch) {
-        ch.peerId = this._generateId();
-        var msg = this._encode({
-            recipientId: 1,
-            content: _super.prototype.encode.call(this, { initWebChannel: {
-                    topology: this._topology.serviceId,
-                    wcId: this.id,
-                    peerId: ch.peerId
-                } })
-        });
-        ch.send(msg);
-        this._topology.addJoining(ch);
-    };
-    WebChannel.prototype._joinRecursively = function (resolve, reject, attempt) {
-        var _this = this;
-        this._signaling.join(this.key)
-            .then(function (ch) {
-            if (ch) {
-                _this._joinSucceed = function () {
-                    _this._signaling.open();
-                    _this._setState(WebChannel.JOINED);
-                    resolve();
-                };
-                _this._joinFailed = function (str) {
-                    _this._setState(WebChannel.DISCONNECTED);
-                    reject(new Error(str));
-                };
-            }
-            else {
-                _this._setState(WebChannel.JOINED);
-                resolve();
-            }
-        })
-            .catch(function (err) {
-            console.warn("Failed to join via " + _this.signalingURL + " with " + _this.key + " key: " + err.message);
-            if (attempt === REJOIN_MAX_ATTEMPTS) {
-                reject(new Error("Failed to join via " + _this.signalingURL + " with "
-                    + (_this.key + " key: reached maximum rejoin attempts (" + REJOIN_MAX_ATTEMPTS + ")")));
-            }
-            else {
-                console.info("Trying to rejoin in " + REJOIN_TIMEOUT + " the " + (attempt + 1) + " time... ");
-                setTimeout(function () {
-                    _this._joinRecursively(function () { return resolve(); }, function (err) { return reject(err); }, ++attempt);
-                }, REJOIN_TIMEOUT);
-            }
-        });
-    };
-    WebChannel.prototype._setTopology = function (topology) {
-        if (this._topology !== undefined) {
-            if (this.topology !== topology) {
-                this.topology = topology;
-                this._topology.clean();
-                // this._topology = new FullMesh(this)
-                this._topology = new SprayService(this);
-            }
-        }
-        else {
-            this.topology = topology;
-            // this._topology = new FullMesh(this)
-            this._topology = new SprayService(this);
-        }
-    };
-    /**
-     * Generate random id for a `WebChannel` or a new peer.
-     */
-    WebChannel.prototype._generateId = function () {
-        var _this = this;
-        var _loop_1 = function () {
-            var id = Math.ceil(Math.random() * MAX_ID);
-            if (id === this_1.myId) {
-                return "continue";
-            }
-            if (this_1.members.includes(id)) {
-                return "continue";
-            }
-            if (this_1._generatedIds.has(id)) {
-                return "continue";
-            }
-            this_1._generatedIds.add(id);
-            setTimeout(function () { return _this._generatedIds.delete(id); }, ID_TIMEOUT);
-            return { value: id };
-        };
-        var this_1 = this;
-        do {
-            var state_1 = _loop_1();
-            if (typeof state_1 === "object")
-                return state_1.value;
-        } while (true);
-    };
-    /**
-     * Generate random key which will be used to join the network.
-     */
-    WebChannel.prototype._generateKey = function () {
-        var MIN_LENGTH = 5;
-        var DELTA_LENGTH = 0;
-        var MASK = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-        var result = '';
-        var length = MIN_LENGTH + Math.round(Math.random() * DELTA_LENGTH);
-        for (var i = 0; i < length; i++) {
-            result += MASK[Math.round(Math.random() * (MASK.length - 1))];
-        }
-        return result;
-    };
-    WebChannel.JOINING = 0;
-    WebChannel.JOINED = 1;
-    WebChannel.DISCONNECTED = 2;
-    WebChannel.SIGNALING_CONNECTING = Signaling.CONNECTING;
-    WebChannel.SIGNALING_CONNECTED = Signaling.CONNECTED;
-    WebChannel.SIGNALING_OPEN = Signaling.OPEN;
-    WebChannel.SIGNALING_CLOSED = Signaling.CLOSED;
-    return WebChannel;
+    return FullMesh;
 }(Service));
 
 var url = require('url');

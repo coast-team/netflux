@@ -231,4 +231,35 @@ export class FullMesh extends Service implements TopologyInterface {
     this.wc._onPeerJoin(ch.peerId)
     console.info(this.wc.myId + ' _onPeerJoin ' + ch.peerId)
   }
+
+  onChannelMessage (channel: Channel, bytes: Uint8Array): void {
+    if (this.wc.state === WebChannel.DISCONNECTED) {
+      return
+    }
+
+    const msg = <MessageI> this.wc._decode(bytes)
+
+    console.warn(this.wc.myId + ` new message from ${channel.peerId} : ${msg.senderId} => ${msg.recipientId}`, msg)
+    switch (msg.recipientId) {
+    // If the message is broadcasted
+    case 0:
+      this.wc._treatMessage(channel, msg)
+      this.forward(msg)
+      break
+
+    // If it is a private message to me
+    case this.wc.myId:
+      this.wc._treatMessage(channel, msg)
+      break
+
+    // If is is a message to me from a peer who does not know yet my ID
+    case 1:
+      this.wc._treatMessage(channel, msg)
+      break
+
+    // Otherwise the message should be forwarded to the intended peer
+    default:
+      this.forwardTo(msg)
+    }
+  }
 }

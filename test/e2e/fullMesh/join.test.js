@@ -3,14 +3,14 @@ import bigStr from '../../util/4mb.txt'
 import { WebChannel } from '../../../src/service/WebChannel'
 
 // const USE_CASES = [2, 3, 7]
-const USE_CASES = [2]
+const USE_CASES = [7]
 const scenarios = [
-  new helper.Scenario('cc') // ,
+  // new helper.Scenario('cc') // ,
   // new helper.Scenario('cb'),
   // new helper.Scenario('ccc') // ,
   // new helper.Scenario('ccb'),
   // new helper.Scenario('cccc') // ,
-  // new helper.Scenario('ccccccc') // ,
+  new helper.Scenario('ccccccc') // ,
   // new helper.Scenario('cccbccc')
 ]
 const PEER_FACE = '🙂 '
@@ -22,8 +22,8 @@ const faces = length => {
   return faces
 }
 
-describe('Spray connected', () => {
-  describe('Should establish a p2p network', () => {
+describe('Spray', () => {
+  fdescribe('Should establish a p2p network', () => {
     let wcs
     afterEach(() => wcs.forEach(wc => wc.disconnect()))
 
@@ -109,7 +109,7 @@ describe('Spray connected', () => {
     })
   })
 
-  fdescribe('Should send/receive', () => {
+  describe('Should send/receive', () => {
     let wcs
 
     afterEach(() => wcs.forEach(wc => wc.disconnect()))

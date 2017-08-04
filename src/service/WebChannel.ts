@@ -394,31 +394,33 @@ export class WebChannel extends Service {
    * Message handler. All messages arrive here first.
    */
   _onMessage (channel: Channel, bytes: Uint8Array): void {
-    const msg = this._decode(bytes)
-    switch (msg.recipientId) {
-    // If the message is broadcasted
-    case 0:
-      this._treatMessage(channel, msg)
-      this._topology.forward(msg)
-      break
-
-    // If it is a private message to me
-    case this.myId:
-      this._treatMessage(channel, msg)
-      break
-
-    // If is is a message to me from a peer who does not know yet my ID
-    case 1:
-      this._treatMessage(channel, msg)
-      break
-
-    // Otherwise the message should be forwarded to the intended peer
-    default:
-      this._topology.forwardTo(msg)
-    }
+    // const msg = this._decode(bytes)
+    // console.warn(this.myId + ` new message from ${channel.peerId} : ${msg.senderId} => ${msg.recipientId}`, msg)
+    // switch (msg.recipientId) {
+    // // If the message is broadcasted
+    // case 0:
+    //   this._treatMessage(channel, msg)
+    //   this._topology.forward(msg)
+    //   break
+    //
+    // // If it is a private message to me
+    // case this.myId:
+    //   this._treatMessage(channel, msg)
+    //   break
+    //
+    // // If is is a message to me from a peer who does not know yet my ID
+    // case 1:
+    //   this._treatMessage(channel, msg)
+    //   break
+    //
+    // // Otherwise the message should be forwarded to the intended peer
+    // default:
+    //   this._topology.forwardTo(msg)
+    // }
+    this._topology.onChannelMessage(channel, bytes)
   }
 
-  private _treatMessage (channel: Channel, msg: IMessage): void {
+  _treatMessage (channel: Channel, msg: IMessage): void {
     // User Message
     if (!msg.isService) {
       const data = this._userMsg.decode(msg.content, msg.senderId)
@@ -428,6 +430,38 @@ export class WebChannel extends Service {
 
     // Service Message
     } else {
+      try {
+        if (JSON.stringify(spray.Message.decode(service.Message.decode(msg.content).content)) !== {}) {
+          console.info(this.myId + ' content1 : ' + JSON.stringify(spray.Message.decode(service.Message.decode(msg.content).content)))
+        } else if (JSON.stringify(super.decode(service.Message.decode(msg.content).content)) !== {}) {
+          console.info(this.myId + ' content2 : ' + JSON.stringify(super.decode(service.Message.decode(msg.content).content)))
+        } else if (JSON.stringify(this.decode(service.Message.decode(msg.content).content)) !== {}) {
+          console.info(this.myId + ' content3 : ' + JSON.stringify(this.decode(service.Message.decode(msg.content).content)))
+        } else {
+          console.info(this.myId + ' undecodable ')
+        }
+      } catch (e) {
+        try {
+          if (JSON.stringify(super.decode(service.Message.decode(msg.content).content)) !== {}) {
+            console.info(this.myId + ' content2 : ' + JSON.stringify(super.decode(service.Message.decode(msg.content).content)))
+          } else if (JSON.stringify(this.decode(service.Message.decode(msg.content).content)) !== {}) {
+            console.info(this.myId + ' content3 : ' + JSON.stringify(this.decode(service.Message.decode(msg.content).content)))
+          } else {
+            console.info(this.myId + ' undecodable ')
+          }
+        } catch (e2) {
+          try {
+            if (JSON.stringify(this.decode(service.Message.decode(msg.content).content)) !== {}) {
+              console.info(this.myId + ' content3 : ' + JSON.stringify(this.decode(service.Message.decode(msg.content).content)))
+            } else {
+              console.info(this.myId + ' undecodable ')
+            }
+          } catch (e3) {
+            console.info(this.myId + ' undecodable ' + e)
+          }
+        }
+      }
+
       if ('meta' in msg && msg.meta !== null) {
         this._svcMsgStream.next(Object.assign({
           channel,

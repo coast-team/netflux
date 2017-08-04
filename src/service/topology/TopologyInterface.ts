@@ -74,4 +74,6 @@ export interface TopologyInterface extends Service {
    * Call this function before switching to another topology.
    */
   clean (): void
+
+  onChannelMessage (channel: Channel, bytes: Uint8Array): void
 }

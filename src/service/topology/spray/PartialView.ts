@@ -1,6 +1,7 @@
 export class PartialView extends Array {
   constructor () {
     super()
+    Object.setPrototypeOf(this, PartialView.prototype)
   }
 
   /**

@@ -1,10 +1,13 @@
+import 'rxjs/add/operator/map'
+import { Subscription } from 'rxjs/Subscription'
+
 import { PartialView } from './PartialView'
 import { TopologyInterface } from '../TopologyInterface'
 import { Service } from '../../Service'
 import { ServiceMessageDecoded } from '../../../Util'
 import { WebChannel } from '../../WebChannel'
 import { Channel } from '../../../Channel'
-import { spray, service, channelBuilder } from '../../../Protobuf'
+import { spray } from '../../../Protobuf'
 import { Message } from '../../../typings/Protobuf'
 
 /**
@@ -34,7 +37,7 @@ export class SprayService extends Service implements TopologyInterface {
   p: PartialView
   received: Array<Array<number|ArrayBuffer>>
   wc: WebChannel
-  channelsSubscription: any // Type ??
+  channelsSubscription: Subscription
   interval: NodeJS.Timer
   timeoutExch: NodeJS.Timer
   timeoutReceived: NodeJS.Timer
@@ -105,6 +108,7 @@ export class SprayService extends Service implements TopologyInterface {
     // There are at least 2 members in the network
     } else {
       this.p.forEach(([pId, age]) => {
+        // TODO : timeout if a peer disconnects during joining (A tells B, C to join D but B disconnects before joining)
         if (this.deportedJoin.get(newPeerId) === undefined) {
           this.deportedJoin.set(newPeerId, 1)
         } else {
@@ -164,7 +168,6 @@ export class SprayService extends Service implements TopologyInterface {
       return
     }
 
-    console.info(this.wc.myId + ` send ${msg.senderId} => ${msg.recipientId}`)
 
     // console.info(this.wc.myId + ' send ' + JSON.stringify(msg))
     // try {
@@ -182,6 +185,7 @@ export class SprayService extends Service implements TopologyInterface {
       }
       msg.meta.timestamp = Date.now()
     }
+    console.info(this.wc.myId + ` send ${msg.senderId} => ${msg.recipientId}, ${msg.meta.timestamp}`)
 
     const bytes = this.wc._encode(msg)
 
@@ -228,7 +232,12 @@ export class SprayService extends Service implements TopologyInterface {
 
     for (let ch of listChan) {
       if (ch !== undefined && ch.peerId !== msg.senderId) {
-        console.info(this.wc.myId + ' sending to ' + ch.peerId)
+        let valH = undefined
+
+        await crypto.subtle.digest('SHA-256', msg.content.buffer as any).then((h) => {valH = h})
+
+        this.received.push([msg.senderId, msg.meta.timestamp, valH])
+        console.info(this.wc.myId + ' message sent to ' + ch.peerId)
         ch.send(bytes)
       }
     }
@@ -266,7 +275,6 @@ export class SprayService extends Service implements TopologyInterface {
       jpsString += `${key} => ${value.peerId}\n`
     }
 
-    console.info(this.wc.myId + ` sendTo ${msg.senderId} => ${msg.recipientId}\n`, jpsString)
 
     // console.info(this.wc.myId + ' sendTo ' + msg.recipientId + "\nContent length : " + Object.keys(msg.content).length);
 
@@ -286,6 +294,7 @@ export class SprayService extends Service implements TopologyInterface {
       }
       msg.meta.timestamp = Date.now()
     }
+    console.info(this.wc.myId + ` sendTo ${msg.senderId} => ${msg.recipientId}, ${msg.meta.timestamp}\n`, jpsString)
 
     const bytes = this.wc._encode(msg)
 
@@ -293,6 +302,12 @@ export class SprayService extends Service implements TopologyInterface {
       console.info(this.wc.myId + ' empty partialView')
       for (let ch of this.channels) {
         if (ch !== undefined && ch.peerId === msg.recipientId) {
+          let valH = undefined
+
+          await crypto.subtle.digest('SHA-256', msg.content.buffer as any).then((h) => {valH = h})
+
+          this.received.push([msg.senderId, msg.meta.timestamp, valH])
+          console.info(this.wc.myId + ' message sent to ' + ch.peerId)
           return ch.send(bytes)
         }
       }
@@ -382,20 +397,22 @@ export class SprayService extends Service implements TopologyInterface {
 
       let alreadyReceived = false
 
-      let valH = undefined
+      this.isAlreadyReceived(msg).then((bool) => alreadyReceived = bool)
 
-      await crypto.subtle.digest('SHA-256', msg.content.buffer as any).then((h) => valH = h)
-
-      this.received.forEach( (message) => {
-        if (!alreadyReceived && message[0] === msg.senderId && message[1] === msg.meta.timestamp
-           && this.areHashEqual(<ArrayBuffer> message[2], valH)) {
-          alreadyReceived = true
-        }
-      })
+      // let valH = undefined
+      //
+      // await crypto.subtle.digest('SHA-256', msg.content.buffer as any).then((h) => valH = h)
+      //
+      // this.received.forEach( (message) => {
+      //   if (!alreadyReceived && message[0] === msg.senderId && message[1] === msg.meta.timestamp
+      //      && this.areHashEqual(<ArrayBuffer> message[2], valH)) {
+      //     alreadyReceived = true
+      //   }
+      // })
 
       if (alreadyReceived) {
         // console.info(this.wc.myId + ' message already received ', msg)
-        console.error(this.wc.myId + ` message already received ${msg.senderId} => ${msg.recipientId}, ${msg.meta.timestamp}`)
+        // console.error(this.wc.myId + ` message already received ${msg.senderId} => ${msg.recipientId}, ${msg.meta.timestamp}`)
         return
       }
     }
@@ -427,6 +444,8 @@ export class SprayService extends Service implements TopologyInterface {
     clearTimeout(this.timeoutReceived)
     clearInterval(this.interval)
     this.p = new PartialView()
+    this.jps.clear()
+    this.channelsSubscription.unsubscribe()
   }
 
   onChannelClose (closeEvt: CloseEvent, channel: Channel): void {
@@ -510,21 +529,22 @@ export class SprayService extends Service implements TopologyInterface {
       // console.info(this.wc.myId + ' received : ' + rcvdString)
       let alreadyReceived = false
 
+      this.isAlreadyReceived({
+        senderId: M.senderId,
+        recipientId: M.recipientId,
+        isService: true,
+        content: super.encode(msg),
+        meta: { timestamp: M.timestamp }
+      }).then((bool) => alreadyReceived = bool)
+
       let valH = undefined
 
       await crypto.subtle.digest('SHA-256', super.encode(msg).buffer as any)
                         .then((h) => {valH = h})
 
-      this.received.forEach( (message) => {
-        if (!alreadyReceived && message[0] === M.senderId && message[1] === M.timestamp
-           && this.areHashEqual(<ArrayBuffer> message[2], valH)) {
-          alreadyReceived = true
-        }
-      })
-
       if (alreadyReceived) {
-        // console.info(this.wc.myId + ' message already received ', msg)
-        console.error(this.wc.myId + ` message already received ${msg.senderId} => ${msg.recipientId}, ${msg.meta.timestamp}`)
+        console.error(this.wc.myId + ` message already received from ${M.channel.peerId} :
+          ${M.senderId} => ${M.recipientId}, ${M.timestamp}`, M)
         return
       }
 
@@ -627,6 +647,11 @@ export class SprayService extends Service implements TopologyInterface {
 
       console.error(this.wc.myId + ' joinedPeerIdFinished ' + msg.joinedPeerIdFinished)
       if (this.iJoin() && msg.joinedPeerIdFinished === this.wc.myId) {
+        this.wc._send({
+          content: super.encode({ joinedPeerId: this.wc.myId }),
+          meta: { timestamp: Date.now() }
+        })
+
         let chanString = '\nchannels :'
         for (let ch of this.channels) {
           chanString += `${ch.peerId}\n`
@@ -657,7 +682,22 @@ export class SprayService extends Service implements TopologyInterface {
     }
     case 'joinedPeerId': {
 
-      console.info(this.wc.myId + ' joinedPeerId ' + msg.joinedPeerId)
+      console.info(this.wc.myId + ' joinedPeerId ' + msg.joinedPeerId, '\n wc.members : ' + JSON.stringify(this.wc.members))
+
+      if (!this.wc.members.includes(msg.joinedPeerId) && msg.joinedPeerId !== this.wc.myId) {
+        console.info(this.wc.myId + ' _onPeerJoin1 ' + msg.joinedPeerId, '\n wc.members : ' + JSON.stringify(this.wc.members))
+        this.wc._onPeerJoin(msg.joinedPeerId)
+
+        console.info(this.wc.myId + ` sending connectedTo peers to ${msg.joinedPeerId} ${JSON.stringify(this.wc.members)}`)
+        this.sendTo({
+          senderId: this.wc.myId,
+          recipientId: msg.joinedPeerId,
+          isService: true,
+          content: super.encode({ connectedTo: { peers: this.wc.members } }),
+          meta: { timestamp: Date.now() }
+        })
+      }
+
       if (this.deportedJoin.get(msg.joinedPeerId)) {
         this.deportedJoin.set(msg.joinedPeerId, this.deportedJoin.get(msg.joinedPeerId) - 1)
         console.info(this.wc.myId + ' still ' + this.deportedJoin.get(msg.joinedPeerId) + ' peers joining ' + msg.joinedPeerId)
@@ -666,7 +706,7 @@ export class SprayService extends Service implements TopologyInterface {
       if (this.deportedJoin.get(msg.joinedPeerId) === 0) {
         console.info(this.wc.myId + ' no more peer joining ' + msg.joinedPeerId, this.wc.members)
 
-        this.forward({
+        this.sendTo({
           senderId: this.wc.myId,
           recipientId: msg.joinedPeerId,
           isService: true,
@@ -684,6 +724,40 @@ export class SprayService extends Service implements TopologyInterface {
       }
       break
 
+    }
+    case 'connectedTo': {
+
+      console.info(this.wc.myId + ' connectedTo ' + JSON.stringify(msg.connectedTo), JSON.stringify(this.wc.members))
+
+      const newPeers = <Array<number>> msg.connectedTo.peers
+      const myPeers = <Array<number>> this.wc.members.slice()
+      let missingPeers = []
+
+      myPeers.forEach((peer) => {
+        if (!newPeers.includes(peer) && peer !== M.senderId) {
+          console.info(this.wc.myId + ' connectedTo missing ' + peer)
+          missingPeers.push(peer)
+        }
+      })
+
+      newPeers.forEach((peer) => {
+        if (!myPeers.includes(peer) && peer !== this.wc.myId) {
+          console.info(this.wc.myId + ' connectedTo adding ' + peer)
+          console.info(this.wc.myId + ' _onPeerJoin2 ' + peer, '\n wc.members : ' + JSON.stringify(this.wc.members))
+          this.wc._onPeerJoin(peer)
+        }
+      })
+
+      if (missingPeers.length !== 0) {
+        console.info(this.wc.myId + ` sending connectedTo missing peers to ${M.senderId} ${JSON.stringify(this.wc.members)}`)
+        this.sendTo({
+          senderId: this.wc.myId,
+          recipientId: M.senderId,
+          isService: true,
+          content: super.encode({ connectedTo: { peers: this.wc.members } }),
+          meta: { timestamp: Date.now() }
+        })
+      }
     }
     }
   }
@@ -917,7 +991,10 @@ export class SprayService extends Service implements TopologyInterface {
     }
 
     console.info(this.wc.myId + ' deleted of jps ' + ch.peerId + '\n', jpsString, this.p.toString(), this.wc.members)
-    this.wc._onPeerJoin(ch.peerId)
+    if (!this.wc.members.includes(ch.peerId) && ch.peerId !== this.wc.myId) {
+      console.info(this.wc.myId + ' _onPeerJoin3 ' + ch.peerId, '\n wc.members : ' + JSON.stringify(this.wc.members))
+      this.wc._onPeerJoin(ch.peerId)
+    }
   }
 
   areHashEqual (h1: ArrayBuffer, h2: ArrayBuffer): Boolean {
@@ -939,5 +1016,68 @@ export class SprayService extends Service implements TopologyInterface {
     }
 
     return true
+  }
+
+  async isAlreadyReceived (msg: Message): Promise<boolean> {
+    let alreadyReceived = false
+
+    let valH = undefined
+
+    await crypto.subtle.digest('SHA-256', msg.content.buffer as any).then((h) => valH = h)
+
+    this.received.forEach( (message) => {
+      if (!alreadyReceived && message[0] === msg.senderId && message[1] === msg.meta.timestamp
+         && this.areHashEqual(<ArrayBuffer> message[2], valH)) {
+        alreadyReceived = true
+      }
+    })
+
+    if (alreadyReceived) {
+      // console.error(this.wc.myId + ` message already received ${msg.senderId} => ${msg.recipientId}, ${msg.meta.timestamp}`, msg)
+      return true
+    }
+
+    return false
+  }
+
+  async onChannelMessage (channel: Channel, bytes: Uint8Array): Promise<void> {
+    if (this.wc.state === WebChannel.DISCONNECTED) {
+      return
+    }
+
+    const msg = <Message> this.wc._decode(bytes)
+
+    let alreadyReceived = false
+
+    await this.isAlreadyReceived(msg).then((bool) => alreadyReceived = bool)
+
+    if (alreadyReceived) {
+      console.error(this.wc.myId + ` message already received from ${channel.peerId} :
+        ${msg.senderId} => ${msg.recipientId}, ${msg.meta.timestamp}`, msg)
+      return
+    }
+
+    console.warn(this.wc.myId + ` new message from ${channel.peerId} : ${msg.senderId} => ${msg.recipientId}`, msg)
+    switch (msg.recipientId) {
+    // If the message is broadcasted
+    case 0:
+      this.wc._treatMessage(channel, msg)
+      this.forward(msg)
+      break
+
+    // If it is a private message to me
+    case this.wc.myId:
+      this.wc._treatMessage(channel, msg)
+      break
+
+    // If is is a message to me from a peer who does not know yet my ID
+    case 1:
+      this.wc._treatMessage(channel, msg)
+      break
+
+    // Otherwise the message should be forwarded to the intended peer
+    default:
+      this.forwardTo(msg)
+    }
   }
 }
