@@ -89,7 +89,7 @@
     "pm2": "^2.0.12",
     "protobufjs": "^6.8.0",
     "rollup": "^0.45.2",
-    "rollup-plugin-babel": "^2.6.1",
+    "rollup-plugin-babel": "^3.0.0",
     "rollup-plugin-commonjs": "^8.0.2",
     "rollup-plugin-filesize": "^1.0.0",
     "rollup-plugin-istanbul": "^1.0.0",
