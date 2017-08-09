@@ -91,7 +91,7 @@ export class WebRTCBuilder extends Service {
           const bytes = webRTCBuilder.Message
             .encode(webRTCBuilder.Message.create(msg))
             .finish()
-          const isEnd = msg.iceCandidate !== undefined && msg.iceCandidate.candidate !== ''
+          const isEnd = msg.iceCandidate !== undefined && msg.iceCandidate.candidate === ''
           signaling.send({ id, isEnd, data: bytes })
         }
       )
@@ -118,7 +118,7 @@ export class WebRTCBuilder extends Service {
           const bytes = webRTCBuilder.Message
             .encode(webRTCBuilder.Message.create(msg))
             .finish()
-          const isEnd = msg.iceCandidate !== undefined && msg.iceCandidate.candidate !== ''
+          const isEnd = msg.iceCandidate !== undefined && msg.iceCandidate.candidate === ''
           signaling.send({ isEnd, data: bytes })
         }
       )
@@ -167,7 +167,6 @@ export class WebRTCBuilder extends Service {
           } else if (isError) {
             reject(new Error('Remote peer no longer available via Signaling'))
           } else {
-            console.log('Unknown message from a remote peer', {answer, iceCandidate, isError})
             reject(new Error('Unknown message from a remote peer', {answer, iceCandidate, isError}))
           }
         },
@@ -335,6 +334,8 @@ export class WebRTCBuilder extends Service {
           code: 4201,
           reason: 'disconnected'
         }))
+      } else if (pc.iceCandidateState === 'failed') {
+        console.error('Ice connection state changed to: failed')
       }
     }
   }

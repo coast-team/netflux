@@ -6351,7 +6351,7 @@ var chromeShim = {
               var receiver;
               if (window.RTCPeerConnection.prototype.getReceivers) {
                 receiver = pc.getReceivers().find(function(r) {
-                  return r.track.id === te.track.id;
+                  return r.track && r.track.id === te.track.id;
                 });
               } else {
                 receiver = {track: te.track};
@@ -6367,7 +6367,7 @@ var chromeShim = {
               var receiver;
               if (window.RTCPeerConnection.prototype.getReceivers) {
                 receiver = pc.getReceivers().find(function(r) {
-                  return r.track.id === track.id;
+                  return r.track && r.track.id === track.id;
                 });
               } else {
                 receiver = {track: track};
@@ -8989,7 +8989,7 @@ var WebRTCBuilder = function (_Service) {
           }
         }), function (msg, id) {
           var bytes = webRTCBuilder.Message.encode(webRTCBuilder.Message.create(msg)).finish();
-          var isEnd = msg.iceCandidate !== undefined && msg.iceCandidate.candidate !== '';
+          var isEnd = msg.iceCandidate !== undefined && msg.iceCandidate.candidate === '';
           signaling$$1.send({ id: id, isEnd: isEnd, data: bytes });
         });
       }
@@ -9018,7 +9018,7 @@ var WebRTCBuilder = function (_Service) {
           return msg.type === 'data' ? get(WebRTCBuilder.prototype.__proto__ || Object.getPrototypeOf(WebRTCBuilder.prototype), 'decode', _this5).call(_this5, msg.data) : { isError: true };
         }), function (msg) {
           var bytes = webRTCBuilder.Message.encode(webRTCBuilder.Message.create(msg)).finish();
-          var isEnd = msg.iceCandidate !== undefined && msg.iceCandidate.candidate !== '';
+          var isEnd = msg.iceCandidate !== undefined && msg.iceCandidate.candidate === '';
           signaling$$1.send({ isEnd: isEnd, data: bytes });
         });
       }
@@ -9270,6 +9270,8 @@ var WebRTCBuilder = function (_Service) {
             code: 4201,
             reason: 'disconnected'
           }));
+        } else if (pc.iceCandidateState === 'failed') {
+          console.error('Ice connection state changed to: failed');
         }
       };
     }
