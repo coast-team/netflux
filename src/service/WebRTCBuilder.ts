@@ -209,7 +209,6 @@ export class WebRTCBuilder extends Service {
           } else if (isError) {
             reject(new Error('Remote peer no longer available via Signaling'))
           } else {
-            console.error('Unknown message from a remote peer', {answer, iceCandidate, isError})
             reject(new Error('Unknown message from a remote peer'))
           }
         },
@@ -355,6 +354,8 @@ export class WebRTCBuilder extends Service {
           code: 4201,
           reason: 'disconnected'
         }))
+      } else if (pc.iceCandidateState === 'failed') {
+        console.error('Ice connection state changed to: failed')
       }
     }
   }

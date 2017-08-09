@@ -31,6 +31,7 @@ declare var RTCDataChannel: {
 }
 
 interface RTCPeerConnection {
+  iceCandidateState: RTCIceConnectionState
   ondatachannel: (event: RTCDataChannelEvent) => void
   createDataChannel (label: string): RTCDataChannel
 }
