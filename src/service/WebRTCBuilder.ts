@@ -140,7 +140,7 @@ export class WebRTCBuilder extends Service {
           const bytes = webRTCBuilder.Message
             .encode(webRTCBuilder.Message.create(msg))
             .finish()
-          const isEnd = msg.iceCandidate !== undefined && msg.iceCandidate.candidate !== ''
+          const isEnd = msg.iceCandidate !== undefined && msg.iceCandidate.candidate === ''
           signaling.send({ id, isEnd, data: bytes })
         }
       )
@@ -163,7 +163,7 @@ export class WebRTCBuilder extends Service {
           const bytes = webRTCBuilder.Message
             .encode(webRTCBuilder.Message.create(msg))
             .finish()
-          const isEnd = msg.iceCandidate !== undefined && msg.iceCandidate.candidate !== ''
+          const isEnd = msg.iceCandidate !== undefined && msg.iceCandidate.candidate === ''
           signaling.send({ isEnd, data: bytes })
         }
       )

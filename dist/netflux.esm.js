@@ -9436,7 +9436,7 @@ var WebRTCBuilder = (function (_super) {
                 var bytes = webRTCBuilder.Message
                     .encode(webRTCBuilder.Message.create(msg))
                     .finish();
-                var isEnd = msg.iceCandidate !== undefined && msg.iceCandidate.candidate !== '';
+                var isEnd = msg.iceCandidate !== undefined && msg.iceCandidate.candidate === '';
                 signaling$$1.send({ id: id, isEnd: isEnd, data: bytes });
             });
         }
@@ -9459,7 +9459,7 @@ var WebRTCBuilder = (function (_super) {
                 var bytes = webRTCBuilder.Message
                     .encode(webRTCBuilder.Message.create(msg))
                     .finish();
-                var isEnd = msg.iceCandidate !== undefined && msg.iceCandidate.candidate !== '';
+                var isEnd = msg.iceCandidate !== undefined && msg.iceCandidate.candidate === '';
                 signaling$$1.send({ isEnd: isEnd, data: bytes });
             });
         }
