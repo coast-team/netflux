@@ -21,6 +21,7 @@ export default [
       }),
       replace({
         defines: {
+          BROWSER: false,
           NODE: true
         }
       }),
@@ -45,6 +46,7 @@ export default [
       }),
       replace({
         defines: {
+          BROWSER: true,
           NODE: false
         }
       }),

@@ -50,7 +50,7 @@
   },
   "dependencies": {
     "protobufjs": "^6.8.0",
-    "rxjs": "^5.2.0",
+    "rxjs": "^5.4.3",
     "text-encoding": "^0.6.4",
     "uws": "^8.14.0",
     "webrtc-adapter": "^4.0.1"
@@ -75,7 +75,7 @@
     "karma-coverage-es6": "^0.2.7",
     "karma-firefox-launcher": "^1.0.0",
     "karma-jasmine": "^1.0.2",
-    "karma-rollup-preprocessor": "^4.0.0",
+    "karma-rollup-preprocessor": "^4.0.3",
     "karma-spec-reporter": "0.0.31",
     "kcors": "^2.2.1",
     "koa": "^2.2.0",

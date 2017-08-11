@@ -1,5 +1,4 @@
-import { WebChannel } from '../../src/service/WebChannel'
-import { BotServer } from '../../src/BotServer'
+import { WebChannel, BotServer } from '../../src/index'
 import { onMessageForBot, SIGNALING_URL, BOT_HOST, BOT_PORT } from './helper'
 
 // Require dependencies

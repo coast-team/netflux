@@ -4,10 +4,12 @@
     "allowJs": true,
     "target": "es5",
     "module": "es6",
-    "lib": [ "es6", "es7", "es2015", "es2016", "es2017", "dom" ],
+    "lib": [ "es2016", "dom" ],
     "moduleResolution": "node",
     "downlevelIteration": true,
-    "types": ["text-encoding"]
+    "typeRoots": [
+      "node_modules/@types"
+    ]
   },
   "include": [
     "./src/**/*"

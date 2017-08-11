@@ -11,7 +11,6 @@ import { Service } from './Service'
 import { webRTCBuilder } from '../Protobuf'
 import { Channel } from '../Channel'
 import { WebChannel } from './WebChannel'
-import { RTCPeerConnection, RTCDataChannel, RTCIceCandidate, CloseEvent } from '../polyfills'
 
 /**
  * WebRTC builder module.
@@ -188,7 +187,7 @@ export class WebRTCBuilder extends Service {
       const subs = stream.subscribe(
         ({ answer, iceCandidate, isError }) => {
           if (answer) {
-            pc.setRemoteDescription({ type: 'answer', sdp: answer })
+            pc.setRemoteDescription({ type: 'answer', sdp: answer } as any)
               .then(() => {
                 remoteCandidateStream.subscribe(
                   iceCandidate => {

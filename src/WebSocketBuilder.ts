@@ -5,7 +5,6 @@ import 'rxjs/add/operator/filter'
 
 import { isURL } from './Util'
 import { Channel } from './Channel'
-import { WebSocket } from './polyfills'
 import { WebChannel } from './service/WebChannel'
 
 const CONNECT_TIMEOUT = 3000

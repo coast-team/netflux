@@ -1,5 +1,4 @@
 import { user } from './Protobuf'
-import { TextEncoder, TextDecoder } from './polyfills'
 
 /**
  * Maximum size of the user message sent over `Channel`. Is meant without metadata.

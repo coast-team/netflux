@@ -1,5 +1,5 @@
 import { isBrowser } from '../../src/Util'
-import { WebChannel } from '../../src/service/WebChannel'
+import { WebChannel } from '../../src/index'
 import chunk50kb from './50kb.txt'
 
 // Main signaling server for all tests

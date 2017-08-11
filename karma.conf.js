@@ -37,6 +37,12 @@ module.exports = (config) => {
         require('rollup-plugin-string')({
           include: 'test/**/*.txt'
         }),
+        require('rollup-plugin-re')({
+          defines: {
+            BROWSER: true,
+            NODE: false
+          }
+        }),
         // require('rollup-plugin-strip')({
         //   functions: [ 'console.info' ]
         // }),
@@ -108,6 +114,12 @@ module.exports = (config) => {
           require('rollup-plugin-typescript2')(),
           require('rollup-plugin-string')({
             include: 'test/**/*.txt'
+          }),
+          require('rollup-plugin-re')({
+            defines: {
+              BROWSER: true,
+              NODE: false
+            }
           }),
           require('rollup-plugin-node-resolve')({}),
           require('rollup-plugin-commonjs')({
