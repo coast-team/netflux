@@ -90,7 +90,7 @@
     "rollup-plugin-string": "^2.0.2",
     "rollup-plugin-strip": "^1.1.1",
     "rollup-plugin-typescript2": "^0.4.6",
-    "semantic-release": "^6.3.2",
+    "semantic-release": "^7.0.1",
     "sigver": "^15.0.1",
     "tslib": "^1.7.1",
     "tslint": "^5.5.0",
