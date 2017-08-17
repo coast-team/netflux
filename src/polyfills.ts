@@ -1,5 +1,5 @@
 // #if BROWSER
-import '../node_modules/webrtc-adapter/out/adapter_no_edge_no_global'
+import 'webrtc-adapter/out/adapter_no_edge_no_global'
 // #endif
 
 // #if NODE

@@ -15,7 +15,6 @@ export default [
     ],
     external: ['wrtc', 'uws', 'text-encoding'],
     plugins: [
-      typescript(),
       strip({
         functions: [ 'console.info', 'console.log', 'console.trace', 'console.goupe' ]
       }),
@@ -25,6 +24,7 @@ export default [
           NODE: true
         }
       }),
+      typescript(),
       resolve(),
       commonjs({
         namedExports: {
@@ -40,7 +40,6 @@ export default [
     moduleName: 'netflux',
     dest: pkg.browser,
     plugins: [
-      typescript(),
       strip({
         functions: [ 'console.info', 'console.log', 'console.trace', 'console.goupe' ]
       }),
@@ -50,6 +49,7 @@ export default [
           NODE: false
         }
       }),
+      typescript(),
       resolve(),
       commonjs({
         namedExports: {

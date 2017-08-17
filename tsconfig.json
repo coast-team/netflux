@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "outDir": "build/",
     "allowJs": true,
     "target": "es5",
     "module": "es6",
@@ -12,7 +11,7 @@
     ]
   },
   "include": [
-    "./src/**/*"
+    "./src/**/*.ts"
   ],
   "exclude": [
     "node_modules",
