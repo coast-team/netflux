@@ -18,16 +18,13 @@ import { TopologyInterface } from './topology/TopologyInterface'
  * @type {number}
  */
 const MAX_ID = 2147483647
-const REJOIN_MAX_ATTEMPTS = 10
-const REJOIN_TIMEOUT = 2000
+const REJOIN_TIMEOUT = 3000
 
 /**
  * Timout for ping `WebChannel` in milliseconds.
  * @type {number}
  */
 const PING_TIMEOUT = 5000
-
-const ID_TIMEOUT = 10000
 
 const INNER_ID = 100
 
@@ -45,7 +42,7 @@ export class WebChannel extends Service {
 
   static JOINED = 1
 
-  static DISCONNECTED = 2
+  static LEFT = 2
 
   static SIGNALING_CONNECTING = Signaling.CONNECTING
 
@@ -76,9 +73,15 @@ export class WebChannel extends Service {
   public myId: number
 
   /**
-   * Unique string mandatory to join a network
+   * Unique string mandatory to join a network.
    */
   public key: string
+
+  /**
+   * If true, when the connection with Signaling is closed, will continuously
+   * trying to reconnect to Signaling until succeed in order to join the network.
+   */
+  public autoRejoin: boolean
 
   /**
    * Thi handler is called each time the state of Signaling server changes.
@@ -106,8 +109,7 @@ export class WebChannel extends Service {
   public onMessage: (id: number, msg: UserDataType, isBroadcast: boolean) => void
 
   // Private-public
-  public _joinSucceed: () => void
-  public _joinFailed: (err?: string) => void
+  public _joinResult: Subject<Error|void>
   public webRTCBuilder: WebRTCBuilder
   public webSocketBuilder: WebSocketBuilder
   public channelBuilder: ChannelBuilder
@@ -122,43 +124,54 @@ export class WebChannel extends Service {
   private _maxTime: number
   private _pingFinish: (maxTime: number) => void
   private _pongNb: number
+  private _rejoinTimer: any
+  private _disableAutoRejoin: boolean
 
   /**
-   * @param {WebChannelSettings} settings Web channel settings
+   * @param options Web channel settings
    */
   constructor ({
     topology = defaults.topology,
     signalingURL = defaults.signalingURL,
-    iceServers = defaults.iceServers
+    iceServers = defaults.iceServers,
+    autoRejoin = defaults.autoRejoin
   } = {}) {
     super(INNER_ID, webChannel.Message)
     this._generatedIds = new Set()
 
-    // public members
+    // PUBLIC MEMBERS
     this.members = []
     this.topology = topology
     this.id = this._generateId()
     this.myId = this._generateId()
     this.key = undefined
+    this.autoRejoin = autoRejoin
 
-    // public event handlers
+    // PUBLIC EVENT HANDLERS
     this.onPeerJoin = () => {}
     this.onPeerLeave = () => {}
     this.onMessage = () => {}
     this.onStateChanged = () => {}
     this.onSignalingStateChanged = () => {}
 
-    // private
-    this._state = WebChannel.DISCONNECTED
+    // PRIVATE
+    this._state = WebChannel.LEFT
+    this._userMsg = new UserMessage()
+
+    // Signaling init
     this._signaling = new Signaling(this, ch => this._addChannel(ch), signalingURL)
     this._signaling.onStateChanged = state => {
-      if (state === Signaling.CLOSED && this.members.length === 0) {
-        this._setState(WebChannel.DISCONNECTED)
+      if (state === Signaling.CLOSED) {
+        if (this.autoRejoin && !this._disableAutoRejoin) {
+          this._rejoin()
+        } else if (this.members.length === 0) {
+          this._setState(WebChannel.LEFT)
+        }
       }
       this.onSignalingStateChanged(state)
     }
-    this._userMsg = new UserMessage()
 
+    // Services init
     this._svcMsgStream = new Subject()
     super.setSvcMsgStream(this._svcMsgStream)
     this.webRTCBuilder = new WebRTCBuilder(this, iceServers)
@@ -168,12 +181,25 @@ export class WebChannel extends Service {
       msg => this._treatServiceMessage(msg),
       err => console.error('service/WebChannel inner message error', err)
     )
+
+    // Topology init
     this._setTopology(topology)
+    this._joinResult = new Subject()
+    this._joinResult.subscribe((err) => {
+      if (err !== undefined) {
+        this._signaling.close()
+        if (this.autoRejoin && !this._disableAutoRejoin) {
+          this._rejoin()
+        } else {
+          this._setState(WebChannel.LEFT)
+        }
+      } else {
+        this._signaling.open()
+        this._setState(WebChannel.JOINED)
+      }
+    })
 
-    this._joinSucceed = () => {}
-    this._joinFailed = () => {}
-
-    // Related to ping-pong
+    // Ping-pong init
     this._pingTime = 0
     this._maxTime = 0
     this._pingFinish = () => {}
@@ -202,55 +228,48 @@ export class WebChannel extends Service {
   /**
    * Join the network via a key provided by one of the network member or a `Channel`.
    */
-  join (value: string | Channel): Promise<void> {
-    if (this._state === WebChannel.DISCONNECTED) {
+  join (value: string | Channel): void {
+    if (this._state === WebChannel.LEFT) {
+      this._disableAutoRejoin = false
       this._setState(WebChannel.JOINING)
-      return new Promise((resolve, reject) => {
-        if (value instanceof Channel) {
-          this._joinSucceed = () => {
-            this._setState(WebChannel.JOINED)
-            resolve()
-          }
-          this._joinFailed = err => {
-            this._setState(WebChannel.DISCONNECTED)
-            reject(err)
-          }
+      if (!(value instanceof Channel)) {
+        if (value === undefined) {
+          this.key = this._generateKey()
+        } else if ((typeof value === 'string' || value instanceof String) && value.length < 512) {
+          this.key = value
         } else {
-          if (value === undefined) {
-            this.key = this._generateKey()
-          } else if ((typeof value === 'string' || value instanceof String) && value.length < 512) {
-            this.key = value
-          } else {
-            throw new Error('Parameter of the join function should be either a Channel or a string')
-          }
-          this._joinRecursively(() => resolve(), err => reject(err), 0)
+          throw new Error('Parameter of the join function should be either a Channel or a string')
         }
-      })
+        this._signaling.join(this.key)
+          .then((isFirst) => {
+            if (isFirst) {
+              this._setState(WebChannel.JOINED)
+            }
+          })
+      }
+    } else {
+      throw new Error('Failed to join: already joining or joined')
     }
-    return Promise.reject(new Error('Could not join: already joining or joined'))
   }
 
   /**
    * Invite a server peer to join the network.
    */
-  invite (url: string): Promise<void> {
+  invite (url: string): void {
     if (isURL(url)) {
-      return this.webSocketBuilder.connect(`${url}/invite?wcId=${this.id}&senderId=${this.myId}`)
+      this.webSocketBuilder.connect(`${url}/invite?wcId=${this.id}&senderId=${this.myId}`)
         .then(connection => this._addChannel(new Channel(connection, this)))
+        .catch((err) => console.error(`Failed to invite the bot ${url}: ${err.message}`))
     } else {
-      return Promise.reject(new Error(`${url} is not a valid URL`))
+      throw new Error(`Failed to invite a bot: ${url} is not a valid URL`)
     }
   }
-
-  /**
-   * TODO
-   */
-  openSignaling () { }
 
   /**
    * Close the connection with Signaling server.
    */
   closeSignaling (): void {
+    this._disableAutoRejoin = true
     this._signaling.close()
   }
 
@@ -258,12 +277,11 @@ export class WebChannel extends Service {
    * Leave the network which means close channels with all peers and connection
    * with Signaling server.
    */
-  disconnect () {
-    this._setState(WebChannel.DISCONNECTED)
+  leave () {
+    this._disableAutoRejoin = true
+    this._setState(WebChannel.LEFT)
     this._pingTime = 0
     this.members = []
-    this._joinSucceed = () => {}
-    this._joinFailed = () => {}
     this._svcMsgStream.complete()
     this._signaling.close()
   }
@@ -333,8 +351,10 @@ export class WebChannel extends Service {
   _onPeerLeave (id: number): void {
     this.members.splice(this.members.indexOf(id), 1)
     this.onPeerLeave(id)
-    if (this.members.length === 0 && this._signaling.state === Signaling.CLOSED) {
-      this._setState(WebChannel.DISCONNECTED)
+    if (this.members.length === 0
+      && this._signaling.state === Signaling.CLOSED
+      && !this.autoRejoin && this._disableAutoRejoin) {
+      this.leave()
     }
   }
 
@@ -482,38 +502,6 @@ export class WebChannel extends Service {
     this._topology.addJoining(ch)
   }
 
-  private _joinRecursively (resolve: () => void, reject: (err?: Error) => void, attempt: number): void {
-    this._signaling.join(this.key)
-      .then(ch => {
-        if (ch) {
-          this._joinSucceed = () => {
-            this._signaling.open()
-            this._setState(WebChannel.JOINED)
-            resolve()
-          }
-          this._joinFailed = str => {
-            this._setState(WebChannel.DISCONNECTED)
-            reject(new Error(str))
-          }
-        } else {
-          this._setState(WebChannel.JOINED)
-          resolve()
-        }
-      })
-      .catch(err => {
-        console.warn(`Failed to join via ${this.signalingURL} with ${this.key} key: ${err.message}`)
-        if (attempt === REJOIN_MAX_ATTEMPTS) {
-          reject(new Error(`Failed to join via ${this.signalingURL} with `
-            + `${this.key} key: reached maximum rejoin attempts (${REJOIN_MAX_ATTEMPTS})`))
-        } else {
-          console.info(`Trying to rejoin in ${REJOIN_TIMEOUT} the ${attempt + 1} time... `)
-          setTimeout(() => {
-            this._joinRecursively(() => resolve(), err => reject(err), ++attempt)
-          }, REJOIN_TIMEOUT)
-        }
-      })
-  }
-
   private _setTopology (topology: number): void {
     if (this._topology !== undefined) {
       if (this.topology !== topology) {
@@ -525,6 +513,19 @@ export class WebChannel extends Service {
       this.topology = topology
       this._topology = new FullMesh(this)
     }
+  }
+
+  private _rejoin () {
+    this._rejoinTimer = setTimeout(() => {
+      this._signaling.join(this.key)
+        .then((isFirst) => {
+          if (isFirst) {
+            this._setState(WebChannel.JOINED)
+          } else {
+            this._setState(WebChannel.JOINING)
+          }
+        })
+    }, REJOIN_TIMEOUT)
   }
 
   /**
@@ -543,7 +544,6 @@ export class WebChannel extends Service {
         continue
       }
       this._generatedIds.add(id)
-      setTimeout(() => this._generatedIds.delete(id), ID_TIMEOUT)
       return id
     } while (true)
   }

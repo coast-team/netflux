@@ -1,3 +1,5 @@
+import { Subject } from 'rxjs/Subject'
+
 import { isBrowser } from '../../src/Util'
 import { WebChannel } from '../../src/index'
 import chunk50kb from './50kb.txt'
@@ -31,29 +33,32 @@ export function createWebChannels (numberOfPeers) {
 
 export function createAndConnectWebChannels (numberOfPeers) {
   const wcs = []
-  const resPromises = []
+  const network = new Subject()
+  const key = randKey()
+  let nextJoiningIndex = 0
 
   // Create web channels
   for (let i = 0; i < numberOfPeers; i++) {
     wcs[i] = new WebChannel({signalingURL: SIGNALING_URL})
-    resPromises[i] = new Promise((resolve, reject) => {
       wcs[i].onStateChanged = state => {
         if (state === WebChannel.JOINED) {
-          resolve(wcs[i])
+          network.next(++i)
         }
       }
-    })
   }
 
-  // Connect peers successively
-  const key = randKey()
-  let tmp = Promise.resolve()
-  for (let wc of wcs) {
-    tmp = tmp.then(() => wc.join(key))
-  }
-
-  // Resolve when all peers are connected
-  return Promise.all(resPromises)
+  return new Promise ((resolve, reject) => {
+    network.subscribe(
+      (index) => {
+        if (index === numberOfPeers) {
+          resolve(wcs)
+        } else {
+          wcs[index].join(key)
+        }
+      }
+    )
+    wcs[0].join(key)
+  })
 }
 
 export function expectMembers (wcs, totalNumberOfPeers) {
@@ -274,7 +279,7 @@ export function onMessageForBot (wc, id, msg, isBroadcast) {
     const data = JSON.parse(msg)
     switch (data.code) {
       case LEAVE_CODE:
-        wc.disconnect()
+        wc.leave()
         break
     }
   } catch (err) {
@@ -308,6 +313,15 @@ export class Scenario {
 
   get smiles () {
     return this.template.replace(/c/g, '🙂').replace(/b/g, '🤖')
+  }
+
+  get botIndex () {
+    for (let i = 0; i < this.template.length; i++) {
+      if (this.template[i] === 'b') {
+        return i
+      }
+    }
+    return -1
   }
 
   hasBot () {

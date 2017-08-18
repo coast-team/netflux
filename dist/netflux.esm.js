@@ -62,9 +62,42 @@ function __extends(d, b) {
 
 
 
+function __awaiter(thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator.throw(value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+}
 
-
-
+function __generator(thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (_) try {
+            if (f = 1, y && (t = y[op[0] & 2 ? "return" : op[0] ? "throw" : "next"]) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [0, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+}
 
 
 
@@ -6143,7 +6176,7 @@ var FullMesh = (function (_super) {
         if (this.wc.state === WebChannel.JOINING) {
             var firstChannel = this.channels.values().next().value;
             if (firstChannel.peerId === channel.peerId) {
-                this.wc._joinFailed(this.wc.myId + ' intermediary peer has gone: ' + closeEvt.reason);
+                this.wc._joinResult.next(new Error(this.wc.myId + ' intermediary peer has gone: ' + closeEvt.reason));
                 this.leave();
             }
             else {
@@ -6283,7 +6316,7 @@ var FullMesh = (function (_super) {
             }
             case 'joinSucceed': {
                 this.jps.delete(this.wc.myId);
-                this.wc._joinSucceed();
+                this.wc._joinResult.next();
                 console.info(this.wc.myId + ' _joinSucceed ');
                 break;
             }
@@ -6364,53 +6397,70 @@ var Signaling = (function () {
         }
     };
     Signaling.prototype.join = function (key) {
-        var _this = this;
-        this.state = Signaling.CONNECTING;
-        return this.wc.webSocketBuilder.connect(this.url + key)
-            .then(function (ws) { return _this.createRxWs(ws); })
-            .then(function (rxWs) {
-            _this.rxWs = rxWs;
-            return new Promise(function (resolve, reject) {
-                rxWs.stream.subscribe(function (msg) {
-                    switch (msg.type) {
-                        case 'ping':
-                            rxWs.pong();
-                            clearTimeout(_this.pingTimeout);
-                            _this.startPingTimeout();
-                            break;
-                        case 'isFirst':
-                            if (msg.isFirst) {
-                                _this.state = Signaling.OPEN;
-                                resolve();
-                            }
-                            else {
-                                _this.wc.webRTCBuilder.connectOverSignaling({
-                                    stream: rxWs.stream.filter(function (msg) { return msg.type === 'content'; })
-                                        .map(function (_a) {
-                                        var content = _a.content;
-                                        return content;
-                                    }),
-                                    send: function (msg) { return rxWs.send({ content: msg }); }
-                                })
-                                    .then(function (ch) {
-                                    _this.state = Signaling.CONNECTED;
-                                    resolve(ch);
-                                })
-                                    .catch(function (err) {
-                                    if (rxWs.readyState !== 2 && rxWs.readyState !== 3) {
-                                        rxWs.close(1000);
+        return __awaiter(this, void 0, void 0, function () {
+            var _this = this;
+            var ws, isFirst, err_1;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (this.state !== Signaling.CLOSED) {
+                            throw new Error('Failed to join via signaling: connection with signaling is already opened');
+                        }
+                        this.state = Signaling.CONNECTING;
+                        _a.label = 1;
+                    case 1:
+                        _a.trys.push([1, 4, , 5]);
+                        return [4 /*yield*/, this.wc.webSocketBuilder.connect(this.url + key)];
+                    case 2:
+                        ws = _a.sent();
+                        this.rxWs = this.createRxWs(ws);
+                        return [4 /*yield*/, new Promise(function (resolve, reject) {
+                                _this.rxWs.stream.subscribe(function (msg) {
+                                    switch (msg.type) {
+                                        case 'ping':
+                                            _this.rxWs.pong();
+                                            clearTimeout(_this.pingTimeout);
+                                            _this.startPingTimeout();
+                                            break;
+                                        case 'isFirst':
+                                            if (msg.isFirst) {
+                                                _this.state = Signaling.OPEN;
+                                                resolve(true);
+                                            }
+                                            else {
+                                                _this.wc.webRTCBuilder.connectOverSignaling({
+                                                    stream: _this.rxWs.stream.filter(function (msg) { return msg.type === 'content'; })
+                                                        .map(function (_a) {
+                                                        var content = _a.content;
+                                                        return content;
+                                                    }),
+                                                    send: function (msg) { return _this.rxWs.send({ content: msg }); }
+                                                })
+                                                    .then(function (ch) {
+                                                    _this.state = Signaling.CONNECTED;
+                                                    resolve(false);
+                                                })
+                                                    .catch(function (err) {
+                                                    if (_this.rxWs.readyState !== 2 && _this.rxWs.readyState !== 3) {
+                                                        _this.rxWs.close(1000);
+                                                    }
+                                                    reject(new Error("Failed to join over Signaling: " + err.message));
+                                                });
+                                            }
+                                            break;
                                     }
-                                    reject(new Error("Could not join over Signaling: " + err.message));
-                                });
-                            }
-                            break;
-                    }
-                }, function (err) { return reject(err); });
+                                }, function (err) { return reject(err); });
+                            })];
+                    case 3:
+                        isFirst = _a.sent();
+                        return [2 /*return*/, isFirst];
+                    case 4:
+                        err_1 = _a.sent();
+                        this.state = Signaling.CLOSED;
+                        throw err_1;
+                    case 5: return [2 /*return*/];
+                }
             });
-        })
-            .catch(function (err) {
-            _this.state = Signaling.CLOSED;
-            throw err;
         });
     };
     /**
@@ -6418,7 +6468,7 @@ var Signaling = (function () {
      */
     Signaling.prototype.close = function () {
         if (this.state !== Signaling.CLOSED) {
-            this.rxWs.close(1000, 'hello');
+            this.rxWs.close(1000);
         }
     };
     Signaling.prototype.startPingTimeout = function () {
@@ -8093,7 +8143,8 @@ var defaults = {
     signalingURL: 'wss://www.coedit.re:10473',
     iceServers: [
         { urls: 'stun:stun3.l.google.com:19302' }
-    ]
+    ],
+    autoRejoin: true
 };
 
 /**
@@ -8101,14 +8152,12 @@ var defaults = {
  * @type {number}
  */
 var MAX_ID = 2147483647;
-var REJOIN_MAX_ATTEMPTS = 10;
-var REJOIN_TIMEOUT = 2000;
+var REJOIN_TIMEOUT = 3000;
 /**
  * Timout for ping `WebChannel` in milliseconds.
  * @type {number}
  */
 var PING_TIMEOUT = 5000;
-var ID_TIMEOUT = 10000;
 var INNER_ID = 100;
 /**
  * This class is an API starting point. It represents a group of collaborators
@@ -8121,44 +8170,67 @@ var INNER_ID = 100;
 var WebChannel = (function (_super) {
     __extends(WebChannel, _super);
     /**
-     * @param {WebChannelSettings} settings Web channel settings
+     * @param options Web channel settings
      */
     function WebChannel(_a) {
-        var _b = _a === void 0 ? {} : _a, _c = _b.topology, topology = _c === void 0 ? defaults.topology : _c, _d = _b.signalingURL, signalingURL = _d === void 0 ? defaults.signalingURL : _d, _e = _b.iceServers, iceServers = _e === void 0 ? defaults.iceServers : _e;
+        var _b = _a === void 0 ? {} : _a, _c = _b.topology, topology = _c === void 0 ? defaults.topology : _c, _d = _b.signalingURL, signalingURL = _d === void 0 ? defaults.signalingURL : _d, _e = _b.iceServers, iceServers = _e === void 0 ? defaults.iceServers : _e, _f = _b.autoRejoin, autoRejoin = _f === void 0 ? defaults.autoRejoin : _f;
         var _this = _super.call(this, INNER_ID, webChannel.Message) || this;
         _this._generatedIds = new Set();
-        // public members
+        // PUBLIC MEMBERS
         _this.members = [];
         _this.topology = topology;
         _this.id = _this._generateId();
         _this.myId = _this._generateId();
         _this.key = undefined;
-        // public event handlers
+        _this.autoRejoin = autoRejoin;
+        // PUBLIC EVENT HANDLERS
         _this.onPeerJoin = function () { };
         _this.onPeerLeave = function () { };
         _this.onMessage = function () { };
         _this.onStateChanged = function () { };
         _this.onSignalingStateChanged = function () { };
-        // private
-        _this._state = WebChannel.DISCONNECTED;
+        // PRIVATE
+        _this._state = WebChannel.LEFT;
+        _this._userMsg = new UserMessage();
+        // Signaling init
         _this._signaling = new Signaling(_this, function (ch) { return _this._addChannel(ch); }, signalingURL);
         _this._signaling.onStateChanged = function (state) {
-            if (state === Signaling.CLOSED && _this.members.length === 0) {
-                _this._setState(WebChannel.DISCONNECTED);
+            if (state === Signaling.CLOSED) {
+                if (_this.autoRejoin && !_this._disableAutoRejoin) {
+                    _this._rejoin();
+                }
+                else if (_this.members.length === 0) {
+                    _this._setState(WebChannel.LEFT);
+                }
             }
             _this.onSignalingStateChanged(state);
         };
-        _this._userMsg = new UserMessage();
+        // Services init
         _this._svcMsgStream = new Subject_2();
         _super.prototype.setSvcMsgStream.call(_this, _this._svcMsgStream);
         _this.webRTCBuilder = new WebRTCBuilder(_this, iceServers);
         _this.webSocketBuilder = new WebSocketBuilder(_this);
         _this.channelBuilder = new ChannelBuilder(_this);
         _this.svcMsgStream.subscribe(function (msg) { return _this._treatServiceMessage(msg); }, function (err) { return console.error('service/WebChannel inner message error', err); });
+        // Topology init
         _this._setTopology(topology);
-        _this._joinSucceed = function () { };
-        _this._joinFailed = function () { };
-        // Related to ping-pong
+        _this._joinResult = new Subject_2();
+        _this._joinResult.subscribe(function (err) {
+            if (err !== undefined) {
+                _this._signaling.close();
+                if (_this.autoRejoin && !_this._disableAutoRejoin) {
+                    _this._rejoin();
+                }
+                else {
+                    _this._setState(WebChannel.LEFT);
+                }
+            }
+            else {
+                _this._signaling.open();
+                _this._setState(WebChannel.JOINED);
+            }
+        });
+        // Ping-pong init
         _this._pingTime = 0;
         _this._maxTime = 0;
         _this._pingFinish = function () { };
@@ -8197,34 +8269,30 @@ var WebChannel = (function (_super) {
      */
     WebChannel.prototype.join = function (value) {
         var _this = this;
-        if (this._state === WebChannel.DISCONNECTED) {
+        if (this._state === WebChannel.LEFT) {
+            this._disableAutoRejoin = false;
             this._setState(WebChannel.JOINING);
-            return new Promise(function (resolve, reject) {
-                if (value instanceof Channel) {
-                    _this._joinSucceed = function () {
-                        _this._setState(WebChannel.JOINED);
-                        resolve();
-                    };
-                    _this._joinFailed = function (err) {
-                        _this._setState(WebChannel.DISCONNECTED);
-                        reject(err);
-                    };
+            if (!(value instanceof Channel)) {
+                if (value === undefined) {
+                    this.key = this._generateKey();
+                }
+                else if ((typeof value === 'string' || value instanceof String) && value.length < 512) {
+                    this.key = value;
                 }
                 else {
-                    if (value === undefined) {
-                        _this.key = _this._generateKey();
-                    }
-                    else if ((typeof value === 'string' || value instanceof String) && value.length < 512) {
-                        _this.key = value;
-                    }
-                    else {
-                        throw new Error('Parameter of the join function should be either a Channel or a string');
-                    }
-                    _this._joinRecursively(function () { return resolve(); }, function (err) { return reject(err); }, 0);
+                    throw new Error('Parameter of the join function should be either a Channel or a string');
                 }
-            });
+                this._signaling.join(this.key)
+                    .then(function (isFirst) {
+                    if (isFirst) {
+                        _this._setState(WebChannel.JOINED);
+                    }
+                });
+            }
         }
-        return Promise.reject(new Error('Could not join: already joining or joined'));
+        else {
+            throw new Error('Failed to join: already joining or joined');
+        }
     };
     /**
      * Invite a server peer to join the network.
@@ -8232,33 +8300,30 @@ var WebChannel = (function (_super) {
     WebChannel.prototype.invite = function (url) {
         var _this = this;
         if (isURL(url)) {
-            return this.webSocketBuilder.connect(url + "/invite?wcId=" + this.id + "&senderId=" + this.myId)
-                .then(function (connection) { return _this._addChannel(new Channel(connection, _this)); });
+            this.webSocketBuilder.connect(url + "/invite?wcId=" + this.id + "&senderId=" + this.myId)
+                .then(function (connection) { return _this._addChannel(new Channel(connection, _this)); })
+                .catch(function (err) { return console.error("Failed to invite the bot " + url + ": " + err.message); });
         }
         else {
-            return Promise.reject(new Error(url + " is not a valid URL"));
+            throw new Error("Failed to invite a bot: " + url + " is not a valid URL");
         }
     };
-    /**
-     * TODO
-     */
-    WebChannel.prototype.openSignaling = function () { };
     /**
      * Close the connection with Signaling server.
      */
     WebChannel.prototype.closeSignaling = function () {
+        this._disableAutoRejoin = true;
         this._signaling.close();
     };
     /**
      * Leave the network which means close channels with all peers and connection
      * with Signaling server.
      */
-    WebChannel.prototype.disconnect = function () {
-        this._setState(WebChannel.DISCONNECTED);
+    WebChannel.prototype.leave = function () {
+        this._disableAutoRejoin = true;
+        this._setState(WebChannel.LEFT);
         this._pingTime = 0;
         this.members = [];
-        this._joinSucceed = function () { };
-        this._joinFailed = function () { };
         this._svcMsgStream.complete();
         this._signaling.close();
     };
@@ -8347,8 +8412,10 @@ var WebChannel = (function (_super) {
     WebChannel.prototype._onPeerLeave = function (id) {
         this.members.splice(this.members.indexOf(id), 1);
         this.onPeerLeave(id);
-        if (this.members.length === 0 && this._signaling.state === Signaling.CLOSED) {
-            this._setState(WebChannel.DISCONNECTED);
+        if (this.members.length === 0
+            && this._signaling.state === Signaling.CLOSED
+            && !this.autoRejoin && this._disableAutoRejoin) {
+            this.leave();
         }
     };
     /**
@@ -8473,40 +8540,6 @@ var WebChannel = (function (_super) {
         ch.send(msg);
         this._topology.addJoining(ch);
     };
-    WebChannel.prototype._joinRecursively = function (resolve, reject, attempt) {
-        var _this = this;
-        this._signaling.join(this.key)
-            .then(function (ch) {
-            if (ch) {
-                _this._joinSucceed = function () {
-                    _this._signaling.open();
-                    _this._setState(WebChannel.JOINED);
-                    resolve();
-                };
-                _this._joinFailed = function (str) {
-                    _this._setState(WebChannel.DISCONNECTED);
-                    reject(new Error(str));
-                };
-            }
-            else {
-                _this._setState(WebChannel.JOINED);
-                resolve();
-            }
-        })
-            .catch(function (err) {
-            console.warn("Failed to join via " + _this.signalingURL + " with " + _this.key + " key: " + err.message);
-            if (attempt === REJOIN_MAX_ATTEMPTS) {
-                reject(new Error("Failed to join via " + _this.signalingURL + " with "
-                    + (_this.key + " key: reached maximum rejoin attempts (" + REJOIN_MAX_ATTEMPTS + ")")));
-            }
-            else {
-                console.info("Trying to rejoin in " + REJOIN_TIMEOUT + " the " + (attempt + 1) + " time... ");
-                setTimeout(function () {
-                    _this._joinRecursively(function () { return resolve(); }, function (err) { return reject(err); }, ++attempt);
-                }, REJOIN_TIMEOUT);
-            }
-        });
-    };
     WebChannel.prototype._setTopology = function (topology) {
         if (this._topology !== undefined) {
             if (this.topology !== topology) {
@@ -8520,31 +8553,37 @@ var WebChannel = (function (_super) {
             this._topology = new FullMesh(this);
         }
     };
+    WebChannel.prototype._rejoin = function () {
+        var _this = this;
+        this._rejoinTimer = setTimeout(function () {
+            _this._signaling.join(_this.key)
+                .then(function (isFirst) {
+                if (isFirst) {
+                    _this._setState(WebChannel.JOINED);
+                }
+                else {
+                    _this._setState(WebChannel.JOINING);
+                }
+            });
+        }, REJOIN_TIMEOUT);
+    };
     /**
      * Generate random id for a `WebChannel` or a new peer.
      */
     WebChannel.prototype._generateId = function () {
-        var _this = this;
-        var _loop_1 = function () {
-            var id = Math.ceil(Math.random() * MAX_ID);
-            if (id === this_1.myId) {
-                return "continue";
-            }
-            if (this_1.members.includes(id)) {
-                return "continue";
-            }
-            if (this_1._generatedIds.has(id)) {
-                return "continue";
-            }
-            this_1._generatedIds.add(id);
-            setTimeout(function () { return _this._generatedIds.delete(id); }, ID_TIMEOUT);
-            return { value: id };
-        };
-        var this_1 = this;
         do {
-            var state_1 = _loop_1();
-            if (typeof state_1 === "object")
-                return state_1.value;
+            var id = Math.ceil(Math.random() * MAX_ID);
+            if (id === this.myId) {
+                continue;
+            }
+            if (this.members.includes(id)) {
+                continue;
+            }
+            if (this._generatedIds.has(id)) {
+                continue;
+            }
+            this._generatedIds.add(id);
+            return id;
         } while (true);
     };
     /**
@@ -8563,7 +8602,7 @@ var WebChannel = (function (_super) {
     };
     WebChannel.JOINING = 0;
     WebChannel.JOINED = 1;
-    WebChannel.DISCONNECTED = 2;
+    WebChannel.LEFT = 2;
     WebChannel.SIGNALING_CONNECTING = Signaling.CONNECTING;
     WebChannel.SIGNALING_CONNECTED = Signaling.CONNECTED;
     WebChannel.SIGNALING_OPEN = Signaling.OPEN;
@@ -8603,7 +8642,8 @@ var BotServer = (function () {
         this.wcSettings = {
             topology: wcOptions.topology,
             signalingURL: wcOptions.signalingURL,
-            iceServers: wcOptions.iceServers
+            iceServers: wcOptions.iceServers,
+            autoRejoin: false
         };
         this.botSettings = Object.assign({}, botDefaults.bot, options.bot);
         this.serverSettings = {
@@ -8623,7 +8663,6 @@ var BotServer = (function () {
          * @type {function(wc: WebChannel)}
          */
         this.onWebChannel = function () { };
-        this.onWebChannelReady = function () { };
         this.onError = function () { };
         this.init();
     }
@@ -8659,13 +8698,12 @@ var BotServer = (function () {
                     if (wc && wc.members.length === 0) {
                         _this.removeWebChannel(wc);
                     }
+                    // FIXME: it is possible to create multiple WebChannels with the same ID
                     wc = new WebChannel(_this.wcSettings);
                     wc.id = wcId;
                     _this.addWebChannel(wc);
                     _this.onWebChannel(wc);
-                    wc.join(new Channel(ws, wc, senderId)).then(function () {
-                        _this.onWebChannelReady(wc);
-                    });
+                    wc.join(new Channel(ws, wc, senderId));
                     break;
                 }
                 case '/internalChannel': {

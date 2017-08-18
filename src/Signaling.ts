@@ -35,7 +35,7 @@ export class Signaling {
   static CLOSED = 3
 
   public url: string
-  public onChannel: (channel: Channel) => void
+  public onChannel: (ch: Channel) => void
   public onStateChanged: (state: number) => void
 
   private wc: WebChannel
@@ -48,7 +48,7 @@ export class Signaling {
    * @param {function(ch: RTCDataChannel)} onChannel
    * @param {string} url
    */
-  constructor (wc: WebChannel, onChannel: (channel: Channel) => void, url: string) {
+  constructor (wc: WebChannel, onChannel: (ch: Channel) => void, url: string) {
     // public
     this.url = url.endsWith('/') ? url : url + '/'
     this.onChannel = onChannel
@@ -91,53 +91,55 @@ export class Signaling {
     }
   }
 
-  join (key): Promise<object> {
+  async join (key): Promise<boolean> {
+    if (this.state !== Signaling.CLOSED) {
+      throw new Error('Failed to join via signaling: connection with signaling is already opened')
+    }
     this.state = Signaling.CONNECTING
-    return this.wc.webSocketBuilder.connect(this.url + key)
-      .then(ws => this.createRxWs(ws))
-      .then(rxWs => {
-        this.rxWs = rxWs
-        return new Promise((resolve, reject) => {
-          rxWs.stream.subscribe(
-            msg => {
-              switch (msg.type) {
-              case 'ping':
-                rxWs.pong()
-                clearTimeout(this.pingTimeout)
-                this.startPingTimeout()
-                break
-              case 'isFirst':
-                if (msg.isFirst) {
-                  this.state = Signaling.OPEN
-                  resolve()
-                } else {
-                  this.wc.webRTCBuilder.connectOverSignaling({
-                    stream: rxWs.stream.filter(msg => msg.type === 'content')
-                      .map(({ content }) => content),
-                    send: (msg) => rxWs.send({ content: msg })
+    try {
+      const ws = await this.wc.webSocketBuilder.connect(this.url + key)
+      this.rxWs = this.createRxWs(ws)
+      const isFirst = await new Promise ((resolve, reject) => {
+        this.rxWs.stream.subscribe(
+          msg => {
+            switch (msg.type) {
+            case 'ping':
+              this.rxWs.pong()
+              clearTimeout(this.pingTimeout)
+              this.startPingTimeout()
+              break
+            case 'isFirst':
+              if (msg.isFirst) {
+                this.state = Signaling.OPEN
+                resolve(true)
+              } else {
+                this.wc.webRTCBuilder.connectOverSignaling({
+                  stream: this.rxWs.stream.filter(msg => msg.type === 'content')
+                    .map(({ content }) => content),
+                  send: (msg) => this.rxWs.send({ content: msg })
+                })
+                  .then((ch) => {
+                    this.state = Signaling.CONNECTED
+                    resolve(false)
                   })
-                    .then(ch => {
-                      this.state = Signaling.CONNECTED
-                      resolve(ch)
-                    })
-                    .catch(err => {
-                      if (rxWs.readyState !== 2 && rxWs.readyState !== 3) {
-                        rxWs.close(1000)
-                      }
-                      reject(new Error(`Could not join over Signaling: ${err.message}`))
-                    })
-                }
-                break
+                  .catch(err => {
+                    if (this.rxWs.readyState !== 2 && this.rxWs.readyState !== 3) {
+                      this.rxWs.close(1000)
+                    }
+                    reject(new Error(`Failed to join over Signaling: ${err.message}`))
+                  })
               }
-            },
-            err => reject(err)
-          )
-        })
+              break
+            }
+          },
+          err => reject(err)
+        )
       })
-      .catch(err => {
-        this.state = Signaling.CLOSED
-        throw err
-      })
+      return isFirst as boolean
+    } catch (err) {
+      this.state = Signaling.CLOSED
+      throw err
+    }
   }
 
   /**
@@ -145,7 +147,7 @@ export class Signaling {
    */
   close (): void {
     if (this.state !== Signaling.CLOSED) {
-      this.rxWs.close(1000, 'hello')
+      this.rxWs.close(1000)
     }
   }
 

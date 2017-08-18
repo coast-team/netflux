@@ -1,3 +1,5 @@
+import { ReplaySubject } from 'rxjs/ReplaySubject'
+
 import { WebChannel, BotServer } from '../../src/index'
 import { onMessageForBot, SIGNALING_URL, BOT_HOST, BOT_PORT } from './helper'
 
@@ -13,10 +15,12 @@ try {
   const router = new Router()
   const server = http.createServer(app.callback())
   const bot = new BotServer({ bot: { server } })
+  const webChannels = new ReplaySubject()
 
   // Configure router
   router
     .get('/members/:wcId', (ctx, next) => {
+      console.log('check members')
       const wcId = Number(ctx.params.wcId)
       let members = []
       let id
@@ -31,24 +35,24 @@ try {
     })
     .get('/waitJoin/:wcId', async (ctx, next) => {
       const wcId = Number(ctx.params.wcId)
-      let id
-      for (let wc of bot.webChannels) {
-        if (wc.id === wcId) {
-          if (wc.state === WebChannel.JOINED) {
-            break
-          } else {
-            await new Promise(resolve => {
-              wc.onStateChanged = state => {
-                if (state === WebChannel.JOINED) {
-                  resolve()
+      let id = -1
+      await new Promise ((resolve, reject) => {
+        webChannels.filter(wc => wc.id === wcId)
+          .subscribe(
+            wc => {
+              if (wc.state === WebChannel.JOINED) {
+                resolve()
+              } else {
+                wc.onStateChanged = state => {
+                  if (state === WebChannel.JOINED) {
+                    resolve()
+                  }
                 }
               }
-            })
-          }
-          id = wc.myId
-          break
-        }
-      }
+              id = wc.myId
+            }
+          )
+      })
       ctx.body = {id}
     })
     .get('/send/:wcId', (ctx, next) => {
@@ -80,6 +84,7 @@ try {
     wc.onMessage = (id, msg, isBroadcast) => {
       onMessageForBot(wc, id, msg, isBroadcast)
     }
+    webChannels.next(wc)
   }
   bot.onError = err => console.error('Bot ERROR: ', err)
 
@@ -100,7 +105,7 @@ try {
   })
 
   // Leave all web channels before process death
-  process.on('SIGINT', () => bot.webChannels.forEach(wc => wc.disconnect()))
+  process.on('SIGINT', () => bot.webChannels.forEach(wc => wc.leave()))
 } catch (err) {
   console.error('BotServer script error: ', err)
 }

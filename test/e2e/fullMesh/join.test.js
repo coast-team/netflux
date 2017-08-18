@@ -1,3 +1,5 @@
+import { Subject } from 'rxjs/Subject'
+
 import * as helper from '../../util/helper'
 import bigStr from '../../util/4mb.txt'
 import { WebChannel } from '../../../src/service/WebChannel'
@@ -23,15 +25,17 @@ const faces = length => {
 describe('Fully connected', () => {
   describe('Should establish a p2p network', () => {
     let wcs
-    afterEach(() => wcs.forEach(wc => wc.disconnect()))
+    afterEach(() => wcs.forEach(wc => wc.leave()))
 
     scenarios.forEach(scenario => {
       it(`${scenario.smiles}`, done => {
+        const network = new Subject()
+        let nextJoiningIndex = 0
+        let botJoined = false
         const key = helper.randKey()
-        let promises = []
         wcs = helper.createWebChannels(scenario.nbClients)
-        wcs.forEach(wc => {
-          expect(wc.state).toBe(WebChannel.DISCONNECTED)
+        wcs.forEach((wc, index) => {
+          expect(wc.state).toBe(WebChannel.LEFT)
           wc.onPeerJoinCalledTimes = 0
           wc.onPeerJoin = id => {
             wc.onPeerJoinCalledTimes++
@@ -41,48 +45,50 @@ describe('Fully connected', () => {
             // Its id should be included only ONCE
             expect(wc.members.indexOf(id)).toEqual(wc.members.lastIndexOf(id))
           }
-          promises.push(new Promise(resolve => {
-            wc.onStateChangedCalledTimes = 0
-            wc.onStateChanged = state => {
-              wc.onStateChangedCalledTimes++
-              if (state === WebChannel.JOINED) {
-                resolve()
-              }
+          wc.onStateChangedCalledTimes = 0
+          wc.onStateChanged = state => {
+            wc.onStateChangedCalledTimes++
+            if (state === WebChannel.JOINED) {
+              network.next({wc, isBot: false})
             }
-          }))
+          }
         })
 
-        let joinQueue = Promise.resolve()
-        let clientCount = 0
-        for (let i = 0; i < scenario.template.length; i++) {
-          if (scenario.template[i] === 'c') {
-            joinQueue = joinQueue.then(() => wcs[clientCount++].join(key))
-          } else {
-            joinQueue = joinQueue.then(() => wcs[i - 1].invite(helper.BOT_URL))
-          }
-        }
-
-        promises.push(joinQueue)
-
-        // After all peers have been joined, do check
-        Promise.all(promises)
-          .then(() => helper.botWaitJoin(wcs[0].id))
-          .then(() => {
-            if (scenario.hasBot()) {
-              return helper.expectBotMembers(wcs[0].id, wcs, scenario.nbPeers)
+        network.subscribe(
+          ({wc, isBot}) => {
+            nextJoiningIndex = isBot ? nextJoiningIndex : nextJoiningIndex + 1
+            if ((nextJoiningIndex === scenario.nbClients && !scenario.hasBot()) || (nextJoiningIndex === scenario.nbClients && scenario.hasBot() && botJoined)) {
+              network.complete()
+            } else if (nextJoiningIndex === scenario.botIndex && !isBot) {
+              wc.invite(helper.BOT_URL)
+              helper.botWaitJoin(wcs[0].id)
+                .then(() => {
+                  botJoined = true
+                  network.next({isBot: true})
+                })
+            } else {
+              wcs[nextJoiningIndex].join(key)
             }
-            return true
-          })
-          .then(() => {
-            helper.expectMembers(wcs, scenario.nbPeers)
-            wcs.forEach(wc => {
-              expect(wc.state).toBe(WebChannel.JOINED)
-              expect(wc.onPeerJoinCalledTimes).toBe(scenario.nbPeers - 1)
-              expect(wc.onStateChangedCalledTimes).toBe(2)
+          },
+          err => {},
+          () => {
+            let botCheck = Promise.resolve()
+            if (scenario.hasBot()) {
+              botCheck = helper.expectBotMembers(wcs[0].id, wcs, scenario.nbPeers)
+            }
+            botCheck.then(() => {
+              helper.expectMembers(wcs, scenario.nbPeers)
+              wcs.forEach(wc => {
+                expect(wc.state).toBe(WebChannel.JOINED)
+                expect(wc.onPeerJoinCalledTimes).toBe(scenario.nbPeers - 1)
+                expect(wc.onStateChangedCalledTimes).toBe(2)
+              })
+              done()
             })
-            done()
-          })
-          .catch(done.fail)
+            .catch(done.fail)
+          }
+        )
+        wcs[0].join(key)
       }, scenario.nbAgents * 2000)
     })
   })
@@ -90,7 +96,7 @@ describe('Fully connected', () => {
   xdescribe('Should ping', () => {
     let wcs
 
-    afterEach(() => wcs.forEach(wc => wc.disconnect()))
+    afterEach(() => wcs.forEach(wc => wc.leave()))
 
     USE_CASES.forEach(numberOfPeers => {
       it(`${numberOfPeers}`, done => {
@@ -109,7 +115,7 @@ describe('Fully connected', () => {
   describe('Should send/receive', () => {
     let wcs
 
-    afterEach(() => wcs.forEach(wc => wc.disconnect()))
+    afterEach(() => wcs.forEach(wc => wc.leave()))
 
     USE_CASES.forEach(numberOfPeers => {
       describe(`${faces(numberOfPeers)}`, () => {
@@ -135,7 +141,7 @@ describe('Fully connected', () => {
   describe(`${PEER_FACE}${PEER_FACE}`, () => {
     let wcs
 
-    afterEach(() => wcs.forEach(wc => wc.disconnect()))
+    afterEach(() => wcs.forEach(wc => wc.leave()))
 
     helper.itBrowser(true, 'should send/receive ~4 MB string', done => {
       helper.createAndConnectWebChannels(2)
@@ -154,7 +160,7 @@ describe('Fully connected', () => {
   describe('Should disconnect', () => {
     let wcs
 
-    afterEach(() => wcs.forEach(wc => wc.disconnect()))
+    afterEach(() => wcs.forEach(wc => wc.leave()))
     USE_CASES.forEach(numberOfPeers => {
       it(`${faces(numberOfPeers)}`, done => {
         helper.createAndConnectWebChannels(numberOfPeers)
@@ -173,7 +179,7 @@ describe('Fully connected', () => {
             let res = Promise.resolve()
             for (let wc of wcs) {
               res = res.then(() => {
-                wc.disconnect()
+                wc.leave()
                 return new Promise(resolve => setTimeout(resolve, 10))
               })
             }
@@ -181,7 +187,7 @@ describe('Fully connected', () => {
           })
           .then(() => {
             wcs.forEach((wc, index) => {
-              expect(wc.state).toBe(WebChannel.DISCONNECTED)
+              expect(wc.state).toBe(WebChannel.LEFT)
               expect(wc.members.length).toBe(0)
               expect(wc.onPeerLeaveCalledTimes).toBe(index)
               expect(wc.onStateChangedCalledTimes).toBe(1)

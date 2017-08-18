@@ -14,7 +14,6 @@ export class BotServer {
   public server: any
   public webChannels: WebChannel[]
   public onWebChannel: (wc: WebChannel) => void
-  public onWebChannelReady: (wc: WebChannel) => void
   public onError: (err) => void
 
   private wcSettings: WebChannelOptions
@@ -50,7 +49,8 @@ export class BotServer {
     this.wcSettings = {
       topology: wcOptions.topology,
       signalingURL: wcOptions.signalingURL,
-      iceServers: wcOptions.iceServers
+      iceServers: wcOptions.iceServers,
+      autoRejoin: false
     }
     this.botSettings = Object.assign({}, botDefaults.bot, options.bot)
     this.serverSettings = {
@@ -73,8 +73,6 @@ export class BotServer {
      * @type {function(wc: WebChannel)}
      */
     this.onWebChannel = () => {}
-
-    this.onWebChannelReady = () => {}
 
     this.onError = () => {}
 
@@ -110,13 +108,12 @@ export class BotServer {
         if (wc && wc.members.length === 0) {
           this.removeWebChannel(wc)
         }
+        // FIXME: it is possible to create multiple WebChannels with the same ID
         wc = new WebChannel(this.wcSettings)
         wc.id = wcId
         this.addWebChannel(wc)
         this.onWebChannel(wc)
-        wc.join(new Channel(ws, wc, senderId) as any).then(() => {
-          this.onWebChannelReady(wc)
-        })
+        wc.join(new Channel(ws, wc, senderId))
         break
       }
       case '/internalChannel': {

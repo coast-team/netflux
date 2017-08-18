@@ -54,7 +54,6 @@ export class FullMesh extends Service implements TopologyInterface {
     console.info(this.wc.myId + ' addJoining ' + ch.peerId)
     const peers = this.wc.members.slice()
     this.peerJoined(ch)
-
     // First joining peer
     if (peers.length === 0) {
       ch.send(this.wc._encode({
@@ -121,7 +120,7 @@ export class FullMesh extends Service implements TopologyInterface {
     if (this.wc.state === WebChannel.JOINING) {
       const firstChannel = this.channels.values().next().value
       if (firstChannel.peerId === channel.peerId) {
-        this.wc._joinFailed(this.wc.myId + ' intermediary peer has gone: ' + closeEvt.reason)
+        this.wc._joinResult.next(new Error(this.wc.myId + ' intermediary peer has gone: ' + closeEvt.reason))
         this.leave()
       } else {
         this.channels.delete(channel)
@@ -213,7 +212,7 @@ export class FullMesh extends Service implements TopologyInterface {
     }
     case 'joinSucceed': {
       this.jps.delete(this.wc.myId)
-      this.wc._joinSucceed()
+      this.wc._joinResult.next()
       console.info(this.wc.myId + ' _joinSucceed ')
       break
     }

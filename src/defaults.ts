@@ -7,7 +7,8 @@ enum Topologies {
 export interface WebChannelOptions {
   topology: Topologies,
   signalingURL: string,
-  iceServers: RTCIceServer[]
+  iceServers: RTCIceServer[],
+  autoRejoin: boolean
 }
 
 export interface BotOptions {
@@ -21,5 +22,6 @@ export const defaults: WebChannelOptions = {
   signalingURL: 'wss://www.coedit.re:10473',
   iceServers: [
     {urls: 'stun:stun3.l.google.com:19302'}
-  ]
+  ],
+  autoRejoin: true
 }
