@@ -1320,6 +1320,20 @@ function isURL(str) {
         '$';
     return (new RegExp(regex, 'i')).test(str);
 }
+/**
+ * Generate random key which will be used to join the network.
+ */
+function generateKey() {
+    var mask = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    var length = 20; // Should be less then MAX_KEY_LENGTH value
+    var values = new Uint32Array(length);
+    var result = '';
+    for (var i = 0; i < length; i++) {
+        result += mask[values[i] % mask.length];
+    }
+    return result;
+}
+var MAX_KEY_LENGTH = 512;
 
 /**
  * Wrapper class for `RTCDataChannel` and `WebSocket`.
@@ -8266,14 +8280,12 @@ var WebChannel = (function (_super) {
      */
     WebChannel.prototype.join = function (value) {
         var _this = this;
+        if (value === void 0) { value = generateKey(); }
         if (this._state === WebChannel.LEFT) {
             this._disableAutoRejoin = false;
             this._setState(WebChannel.JOINING);
             if (!(value instanceof Channel)) {
-                if (value === undefined) {
-                    this.key = this._generateKey();
-                }
-                else if ((typeof value === 'string' || value instanceof String) && value.length < 512) {
+                if ((typeof value === 'string' || value instanceof String) && value.length < MAX_KEY_LENGTH) {
                     this.key = value;
                 }
                 else {
@@ -8573,20 +8585,6 @@ var WebChannel = (function (_super) {
             return this._generateId();
         }
         return id;
-    };
-    /**
-     * Generate random key which will be used to join the network.
-     */
-    WebChannel.prototype._generateKey = function () {
-        var MIN_LENGTH = 5;
-        var DELTA_LENGTH = 0;
-        var MASK = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-        var result = '';
-        var length = MIN_LENGTH + Math.round(Math.random() * DELTA_LENGTH);
-        for (var i = 0; i < length; i++) {
-            result += MASK[Math.round(Math.random() * (MASK.length - 1))];
-        }
-        return result;
     };
     WebChannel.JOINING = 0;
     WebChannel.JOINED = 1;

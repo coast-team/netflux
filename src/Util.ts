@@ -34,6 +34,22 @@ export function isURL (str: string): boolean {
   return (new RegExp(regex, 'i')).test(str)
 }
 
+/**
+ * Generate random key which will be used to join the network.
+ */
+export function generateKey (): string {
+  const mask = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  const length = 20 // Should be less then MAX_KEY_LENGTH value
+  const values = new Uint32Array(length)
+  let result = ''
+  for (let i = 0; i < length; i++) {
+    result += mask[values[i] % mask.length]
+  }
+  return result
+}
+
+export const MAX_KEY_LENGTH = 512
+
 export interface MessageI {
   senderId: number,
   recipientId: number,

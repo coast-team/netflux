@@ -9,7 +9,7 @@ import { WebSocketBuilder } from '../WebSocketBuilder'
 import { WebRTCBuilder } from './WebRTCBuilder'
 import { Message, webChannel, service } from '../Protobuf'
 import { UserMessage, UserDataType } from '../UserMessage'
-import { isURL, MessageI, ServiceMessageDecoded } from '../Util'
+import { isURL, MessageI, ServiceMessageDecoded, generateKey, MAX_KEY_LENGTH } from '../Util'
 import { defaults, WebChannelOptions } from '../defaults'
 import { TopologyInterface } from './topology/TopologyInterface'
 
@@ -221,14 +221,12 @@ export class WebChannel extends Service {
   /**
    * Join the network via a key provided by one of the network member or a `Channel`.
    */
-  join (value: string | Channel): void {
+  join (value: string | Channel = generateKey()): void {
     if (this._state === WebChannel.LEFT) {
       this._disableAutoRejoin = false
       this._setState(WebChannel.JOINING)
       if (!(value instanceof Channel)) {
-        if (value === undefined) {
-          this.key = this._generateKey()
-        } else if ((typeof value === 'string' || value instanceof String) && value.length < 512) {
+        if ((typeof value === 'string' || value instanceof String) && value.length < MAX_KEY_LENGTH) {
           this.key = value
         } else {
           throw new Error('Parameter of the join function should be either a Channel or a string')
@@ -530,21 +528,5 @@ export class WebChannel extends Service {
       return this._generateId()
     }
     return id
-  }
-
-  /**
-   * Generate random key which will be used to join the network.
-   */
-  private _generateKey (): string {
-    const MIN_LENGTH = 5
-    const DELTA_LENGTH = 0
-    const MASK = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-    let result = ''
-    const length = MIN_LENGTH + Math.round(Math.random() * DELTA_LENGTH)
-
-    for (let i = 0; i < length; i++) {
-      result += MASK[Math.round(Math.random() * (MASK.length - 1))]
-    }
-    return result
   }
 }
