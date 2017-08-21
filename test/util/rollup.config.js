@@ -5,9 +5,11 @@ import replace from 'rollup-plugin-re'
 import typescript from 'rollup-plugin-typescript2'
 
 export default {
-  entry: 'test/util/botServer.js',
-  format: 'cjs',
-  dest: 'test/util/.botServer.js',
+  input: 'test/util/botServer.js',
+  output: {
+    file: 'test/util/.botServer.js',
+    format: 'cjs'
+  },
   plugins: [
     typescript(),
     string({

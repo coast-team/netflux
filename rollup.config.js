@@ -8,10 +8,10 @@ import typescript from 'rollup-plugin-typescript2'
 
 export default [
   {
-    entry: 'src/index.ts',
-    targets: [
-      { dest: pkg.main, format: 'cjs' },
-      { dest: pkg.module, format: 'es' }
+    input: 'src/index.ts',
+    output: [
+      { file: pkg.main, format: 'cjs' },
+      { file: pkg.module, format: 'es' }
     ],
     external: ['wrtc', 'uws', 'text-encoding'],
     plugins: [
@@ -35,10 +35,12 @@ export default [
     ]
   },
   {
-    entry: 'src/index.ts',
-    format: 'umd',
-    moduleName: 'netflux',
-    dest: pkg.browser,
+    input: 'src/index.ts',
+    output: {
+      file: pkg.browser,
+      format: 'umd',
+      name: 'netflux'
+    },
     plugins: [
       strip({
         functions: [ 'console.info', 'console.log', 'console.trace', 'console.goupe' ]

@@ -83,7 +83,7 @@
     "koa": "^2.2.0",
     "koa-router": "^7.1.1",
     "pm2": "^2.0.12",
-    "rollup": "^0.47.6",
+    "rollup": "^0.48.2",
     "rollup-plugin-commonjs": "^8.0.2",
     "rollup-plugin-filesize": "^1.0.0",
     "rollup-plugin-istanbul": "^1.0.0",
@@ -97,7 +97,7 @@
     "tslib": "^1.7.1",
     "tslint": "^5.5.0",
     "tslint-eslint-rules": "^4.1.1",
-    "typescript": "^2.4.2",
+    "typescript": "~2.4.2",
     "validate-commit-msg": "^2.13.1"
   },
   "config": {

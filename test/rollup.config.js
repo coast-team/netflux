@@ -3,10 +3,10 @@ import string from 'rollup-plugin-string'
 import commonjs from 'rollup-plugin-commonjs'
 import typescript from 'rollup-plugin-typescript2'
 
-const entries = []
+const inputs = []
 function read (path) {
   if (path.endsWith('test.js')) {
-    entries.push(path)
+    inputs.push(path)
   } else if (fs.statSync(path).isDirectory()) {
     const items = fs.readdirSync(path)
     for (let i of items) {
@@ -17,11 +17,13 @@ function read (path) {
 read('test')
 
 const configs = []
-for (let entry of entries) {
+for (let input of inputs) {
   configs.push({
-    entry,
-    format: 'cjs',
-    dest: entry.replace(/^test/, 'test/.rolledup'),
+    input,
+    output: {
+      file: entry.replace(/^test/, 'test/.rolledup'),
+      format: 'cjs'
+    },
     plugins: [
       typescript(),
       string({
