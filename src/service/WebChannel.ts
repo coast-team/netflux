@@ -13,11 +13,6 @@ import { isURL, MessageI, ServiceMessageDecoded } from '../Util'
 import { defaults, WebChannelOptions } from '../defaults'
 import { TopologyInterface } from './topology/TopologyInterface'
 
-/**
- * Maximum identifier number for {@link WebChannel#_generateId} function.
- * @type {number}
- */
-const MAX_ID = 2147483647
 const REJOIN_TIMEOUT = 3000
 
 /**
@@ -116,7 +111,6 @@ export class WebChannel extends Service {
   public _topology: TopologyInterface
   public _svcMsgStream: Subject<any>
 
-  private _generatedIds: Set<number>
   private _state: number
   private _signaling: Signaling
   private _userMsg: UserMessage
@@ -137,7 +131,6 @@ export class WebChannel extends Service {
     autoRejoin = defaults.autoRejoin
   } = {}) {
     super(INNER_ID, webChannel.Message)
-    this._generatedIds = new Set()
 
     // PUBLIC MEMBERS
     this.members = []
@@ -532,20 +525,11 @@ export class WebChannel extends Service {
    * Generate random id for a `WebChannel` or a new peer.
    */
   private _generateId (): number {
-    do {
-      const id = Math.ceil(Math.random() * MAX_ID)
-      if (id === this.myId) {
-        continue
-      }
-      if (this.members.includes(id)) {
-        continue
-      }
-      if (this._generatedIds.has(id)) {
-        continue
-      }
-      this._generatedIds.add(id)
-      return id
-    } while (true)
+    const id = crypto.getRandomValues(new Uint32Array(1))[0]
+    if (id === this.myId || this.members.includes(id)) {
+      return this._generateId()
+    }
+    return id
   }
 
   /**

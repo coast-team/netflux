@@ -1,3 +1,4 @@
+/* tslint:disable:variable-name */
 // #if BROWSER
 import 'webrtc-adapter/out/adapter_no_edge_no_global'
 // #endif
@@ -18,7 +19,8 @@ const textEncoding = require('text-encoding')
 global.TextEncoder = textEncoding.TextEncoder
 global.TextDecoder = textEncoding.TextDecoder
 global.WebSocket = require('uws')
-
+const WebCrypto = require('node-webcrypto-ossl')
+global.crypto = new WebCrypto()
 global.CloseEvent = class CloseEvent {
   name: string
   wasClean: boolean

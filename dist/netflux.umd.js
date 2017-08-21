@@ -1851,6 +1851,7 @@ module.exports = {
 
 },{}]},{},[2]);
 
+/* tslint:disable:variable-name */
 // #if BROWSER
 
 // #endif
@@ -9966,11 +9967,6 @@ var defaults = {
     autoRejoin: true
 };
 
-/**
- * Maximum identifier number for {@link WebChannel#_generateId} function.
- * @type {number}
- */
-var MAX_ID = 2147483647;
 var REJOIN_TIMEOUT = 3000;
 /**
  * Timout for ping `WebChannel` in milliseconds.
@@ -9994,7 +9990,6 @@ var WebChannel = (function (_super) {
     function WebChannel(_a) {
         var _b = _a === void 0 ? {} : _a, _c = _b.topology, topology = _c === void 0 ? defaults.topology : _c, _d = _b.signalingURL, signalingURL = _d === void 0 ? defaults.signalingURL : _d, _e = _b.iceServers, iceServers = _e === void 0 ? defaults.iceServers : _e, _f = _b.autoRejoin, autoRejoin = _f === void 0 ? defaults.autoRejoin : _f;
         var _this = _super.call(this, INNER_ID, webChannel.Message) || this;
-        _this._generatedIds = new Set();
         // PUBLIC MEMBERS
         _this.members = [];
         _this.topology = topology;
@@ -10390,20 +10385,11 @@ var WebChannel = (function (_super) {
      * Generate random id for a `WebChannel` or a new peer.
      */
     WebChannel.prototype._generateId = function () {
-        do {
-            var id = Math.ceil(Math.random() * MAX_ID);
-            if (id === this.myId) {
-                continue;
-            }
-            if (this.members.includes(id)) {
-                continue;
-            }
-            if (this._generatedIds.has(id)) {
-                continue;
-            }
-            this._generatedIds.add(id);
-            return id;
-        } while (true);
+        var id = crypto.getRandomValues(new Uint32Array(1))[0];
+        if (id === this.myId || this.members.includes(id)) {
+            return this._generateId();
+        }
+        return id;
     };
     /**
      * Generate random key which will be used to join the network.
