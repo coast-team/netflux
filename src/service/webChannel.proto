@@ -3,14 +3,15 @@ package webChannel;
 
 message Message {
   oneof type {
-    InitWebChannel initWebChannel = 1;
-    bool ping = 2;
-    bool pong = 3;
+    InitData initialize = 1;
+    bool initializeOk = 2;
+    bool ping = 3;
+    bool pong = 4;
   }
 }
 
-message InitWebChannel {
+message InitData {
   uint32 topology = 1;
   uint32 wcId = 2;
-  uint32 peerId = 3;
+  repeated uint32 generatedIds = 3;
 }

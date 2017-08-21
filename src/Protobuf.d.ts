@@ -260,8 +260,11 @@ export namespace webChannel {
     /** Properties of a Message. */
     interface IMessage {
 
-        /** Message initWebChannel */
-        initWebChannel?: webChannel.IInitWebChannel;
+        /** Message initialize */
+        initialize?: webChannel.IInitData;
+
+        /** Message initializeOk */
+        initializeOk?: boolean;
 
         /** Message ping */
         ping?: boolean;
@@ -279,8 +282,11 @@ export namespace webChannel {
          */
         constructor(properties?: webChannel.IMessage);
 
-        /** Message initWebChannel. */
-        public initWebChannel?: (webChannel.IInitWebChannel|null);
+        /** Message initialize. */
+        public initialize?: (webChannel.IInitData|null);
+
+        /** Message initializeOk. */
+        public initializeOk: boolean;
 
         /** Message ping. */
         public ping: boolean;
@@ -317,61 +323,61 @@ export namespace webChannel {
         public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): webChannel.Message;
     }
 
-    /** Properties of an InitWebChannel. */
-    interface IInitWebChannel {
+    /** Properties of an InitData. */
+    interface IInitData {
 
-        /** InitWebChannel topology */
+        /** InitData topology */
         topology?: number;
 
-        /** InitWebChannel wcId */
+        /** InitData wcId */
         wcId?: number;
 
-        /** InitWebChannel peerId */
-        peerId?: number;
+        /** InitData generatedIds */
+        generatedIds?: number[];
     }
 
-    /** Represents an InitWebChannel. */
-    class InitWebChannel {
+    /** Represents an InitData. */
+    class InitData {
 
         /**
-         * Constructs a new InitWebChannel.
+         * Constructs a new InitData.
          * @param [properties] Properties to set
          */
-        constructor(properties?: webChannel.IInitWebChannel);
+        constructor(properties?: webChannel.IInitData);
 
-        /** InitWebChannel topology. */
+        /** InitData topology. */
         public topology: number;
 
-        /** InitWebChannel wcId. */
+        /** InitData wcId. */
         public wcId: number;
 
-        /** InitWebChannel peerId. */
-        public peerId: number;
+        /** InitData generatedIds. */
+        public generatedIds: number[];
 
         /**
-         * Creates a new InitWebChannel instance using the specified properties.
+         * Creates a new InitData instance using the specified properties.
          * @param [properties] Properties to set
-         * @returns InitWebChannel instance
+         * @returns InitData instance
          */
-        public static create(properties?: webChannel.IInitWebChannel): webChannel.InitWebChannel;
+        public static create(properties?: webChannel.IInitData): webChannel.InitData;
 
         /**
-         * Encodes the specified InitWebChannel message. Does not implicitly {@link webChannel.InitWebChannel.verify|verify} messages.
-         * @param message InitWebChannel message or plain object to encode
+         * Encodes the specified InitData message. Does not implicitly {@link webChannel.InitData.verify|verify} messages.
+         * @param message InitData message or plain object to encode
          * @param [writer] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: webChannel.IInitWebChannel, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(message: webChannel.IInitData, writer?: $protobuf.Writer): $protobuf.Writer;
 
         /**
-         * Decodes an InitWebChannel message from the specified reader or buffer.
+         * Decodes an InitData message from the specified reader or buffer.
          * @param reader Reader or buffer to decode from
          * @param [length] Message length if known beforehand
-         * @returns InitWebChannel
+         * @returns InitData
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): webChannel.InitWebChannel;
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): webChannel.InitData;
     }
 }
 

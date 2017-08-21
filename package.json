@@ -61,6 +61,7 @@
   },
   "devDependencies": {
     "@types/text-encoding": "0.0.31",
+    "babel-cli": "^6.26.0",
     "babel-preset-env": "^1.6.0",
     "commitizen": "^2.4.6",
     "cz-conventional-changelog": "^2.0.0",

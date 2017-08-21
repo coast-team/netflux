@@ -6481,7 +6481,8 @@ var webChannel = $root.webChannel = function () {
          * Properties of a Message.
          * @memberof webChannel
          * @interface IMessage
-         * @property {webChannel.IInitWebChannel} [initWebChannel] Message initWebChannel
+         * @property {webChannel.IInitData} [initialize] Message initialize
+         * @property {boolean} [initializeOk] Message initializeOk
          * @property {boolean} [ping] Message ping
          * @property {boolean} [pong] Message pong
          */
@@ -6500,12 +6501,20 @@ var webChannel = $root.webChannel = function () {
         }
 
         /**
-         * Message initWebChannel.
-         * @member {(webChannel.IInitWebChannel|null|undefined)}initWebChannel
+         * Message initialize.
+         * @member {(webChannel.IInitData|null|undefined)}initialize
          * @memberof webChannel.Message
          * @instance
          */
-        Message.prototype.initWebChannel = null;
+        Message.prototype.initialize = null;
+
+        /**
+         * Message initializeOk.
+         * @member {boolean}initializeOk
+         * @memberof webChannel.Message
+         * @instance
+         */
+        Message.prototype.initializeOk = false;
 
         /**
          * Message ping.
@@ -6533,7 +6542,7 @@ var webChannel = $root.webChannel = function () {
          * @instance
          */
         Object.defineProperty(Message.prototype, "type", {
-            get: $util.oneOfGetter($oneOfFields = ["initWebChannel", "ping", "pong"]),
+            get: $util.oneOfGetter($oneOfFields = ["initialize", "initializeOk", "ping", "pong"]),
             set: $util.oneOfSetter($oneOfFields)
         });
 
@@ -6560,9 +6569,10 @@ var webChannel = $root.webChannel = function () {
          */
         Message.encode = function encode(message, writer) {
             if (!writer) writer = $Writer.create();
-            if (message.initWebChannel != null && message.hasOwnProperty("initWebChannel")) $root.webChannel.InitWebChannel.encode(message.initWebChannel, writer.uint32( /* id 1, wireType 2 =*/10).fork()).ldelim();
-            if (message.ping != null && message.hasOwnProperty("ping")) writer.uint32( /* id 2, wireType 0 =*/16).bool(message.ping);
-            if (message.pong != null && message.hasOwnProperty("pong")) writer.uint32( /* id 3, wireType 0 =*/24).bool(message.pong);
+            if (message.initialize != null && message.hasOwnProperty("initialize")) $root.webChannel.InitData.encode(message.initialize, writer.uint32( /* id 1, wireType 2 =*/10).fork()).ldelim();
+            if (message.initializeOk != null && message.hasOwnProperty("initializeOk")) writer.uint32( /* id 2, wireType 0 =*/16).bool(message.initializeOk);
+            if (message.ping != null && message.hasOwnProperty("ping")) writer.uint32( /* id 3, wireType 0 =*/24).bool(message.ping);
+            if (message.pong != null && message.hasOwnProperty("pong")) writer.uint32( /* id 4, wireType 0 =*/32).bool(message.pong);
             return writer;
         };
 
@@ -6585,12 +6595,15 @@ var webChannel = $root.webChannel = function () {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
                     case 1:
-                        message.initWebChannel = $root.webChannel.InitWebChannel.decode(reader, reader.uint32());
+                        message.initialize = $root.webChannel.InitData.decode(reader, reader.uint32());
                         break;
                     case 2:
-                        message.ping = reader.bool();
+                        message.initializeOk = reader.bool();
                         break;
                     case 3:
+                        message.ping = reader.bool();
+                        break;
+                    case 4:
                         message.pong = reader.bool();
                         break;
                     default:
@@ -6604,98 +6617,104 @@ var webChannel = $root.webChannel = function () {
         return Message;
     }();
 
-    webChannel.InitWebChannel = function () {
+    webChannel.InitData = function () {
 
         /**
-         * Properties of an InitWebChannel.
+         * Properties of an InitData.
          * @memberof webChannel
-         * @interface IInitWebChannel
-         * @property {number} [topology] InitWebChannel topology
-         * @property {number} [wcId] InitWebChannel wcId
-         * @property {number} [peerId] InitWebChannel peerId
+         * @interface IInitData
+         * @property {number} [topology] InitData topology
+         * @property {number} [wcId] InitData wcId
+         * @property {Array.<number>} [generatedIds] InitData generatedIds
          */
 
         /**
-         * Constructs a new InitWebChannel.
+         * Constructs a new InitData.
          * @memberof webChannel
-         * @classdesc Represents an InitWebChannel.
+         * @classdesc Represents an InitData.
          * @constructor
-         * @param {webChannel.IInitWebChannel=} [properties] Properties to set
+         * @param {webChannel.IInitData=} [properties] Properties to set
          */
-        function InitWebChannel(properties) {
+        function InitData(properties) {
+            this.generatedIds = [];
             if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
                 if (properties[keys[i]] != null) this[keys[i]] = properties[keys[i]];
             }
         }
 
         /**
-         * InitWebChannel topology.
+         * InitData topology.
          * @member {number}topology
-         * @memberof webChannel.InitWebChannel
+         * @memberof webChannel.InitData
          * @instance
          */
-        InitWebChannel.prototype.topology = 0;
+        InitData.prototype.topology = 0;
 
         /**
-         * InitWebChannel wcId.
+         * InitData wcId.
          * @member {number}wcId
-         * @memberof webChannel.InitWebChannel
+         * @memberof webChannel.InitData
          * @instance
          */
-        InitWebChannel.prototype.wcId = 0;
+        InitData.prototype.wcId = 0;
 
         /**
-         * InitWebChannel peerId.
-         * @member {number}peerId
-         * @memberof webChannel.InitWebChannel
+         * InitData generatedIds.
+         * @member {Array.<number>}generatedIds
+         * @memberof webChannel.InitData
          * @instance
          */
-        InitWebChannel.prototype.peerId = 0;
+        InitData.prototype.generatedIds = $util.emptyArray;
 
         /**
-         * Creates a new InitWebChannel instance using the specified properties.
+         * Creates a new InitData instance using the specified properties.
          * @function create
-         * @memberof webChannel.InitWebChannel
+         * @memberof webChannel.InitData
          * @static
-         * @param {webChannel.IInitWebChannel=} [properties] Properties to set
-         * @returns {webChannel.InitWebChannel} InitWebChannel instance
+         * @param {webChannel.IInitData=} [properties] Properties to set
+         * @returns {webChannel.InitData} InitData instance
          */
-        InitWebChannel.create = function create(properties) {
-            return new InitWebChannel(properties);
+        InitData.create = function create(properties) {
+            return new InitData(properties);
         };
 
         /**
-         * Encodes the specified InitWebChannel message. Does not implicitly {@link webChannel.InitWebChannel.verify|verify} messages.
+         * Encodes the specified InitData message. Does not implicitly {@link webChannel.InitData.verify|verify} messages.
          * @function encode
-         * @memberof webChannel.InitWebChannel
+         * @memberof webChannel.InitData
          * @static
-         * @param {webChannel.IInitWebChannel} message InitWebChannel message or plain object to encode
+         * @param {webChannel.IInitData} message InitData message or plain object to encode
          * @param {$protobuf.Writer} [writer] Writer to encode to
          * @returns {$protobuf.Writer} Writer
          */
-        InitWebChannel.encode = function encode(message, writer) {
+        InitData.encode = function encode(message, writer) {
             if (!writer) writer = $Writer.create();
             if (message.topology != null && message.hasOwnProperty("topology")) writer.uint32( /* id 1, wireType 0 =*/8).uint32(message.topology);
             if (message.wcId != null && message.hasOwnProperty("wcId")) writer.uint32( /* id 2, wireType 0 =*/16).uint32(message.wcId);
-            if (message.peerId != null && message.hasOwnProperty("peerId")) writer.uint32( /* id 3, wireType 0 =*/24).uint32(message.peerId);
+            if (message.generatedIds != null && message.generatedIds.length) {
+                writer.uint32( /* id 3, wireType 2 =*/26).fork();
+                for (var i = 0; i < message.generatedIds.length; ++i) {
+                    writer.uint32(message.generatedIds[i]);
+                }writer.ldelim();
+            }
             return writer;
         };
 
         /**
-         * Decodes an InitWebChannel message from the specified reader or buffer.
+         * Decodes an InitData message from the specified reader or buffer.
          * @function decode
-         * @memberof webChannel.InitWebChannel
+         * @memberof webChannel.InitData
          * @static
          * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
          * @param {number} [length] Message length if known beforehand
-         * @returns {webChannel.InitWebChannel} InitWebChannel
+         * @returns {webChannel.InitData} InitData
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        InitWebChannel.decode = function decode(reader, length) {
+        InitData.decode = function decode(reader, length) {
             if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
             var end = length === undefined ? reader.len : reader.pos + length,
-                message = new $root.webChannel.InitWebChannel();
+                message = new $root.webChannel.InitData();
             while (reader.pos < end) {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
@@ -6706,7 +6725,13 @@ var webChannel = $root.webChannel = function () {
                         message.wcId = reader.uint32();
                         break;
                     case 3:
-                        message.peerId = reader.uint32();
+                        if (!(message.generatedIds && message.generatedIds.length)) message.generatedIds = [];
+                        if ((tag & 7) === 2) {
+                            var end2 = reader.uint32() + reader.pos;
+                            while (reader.pos < end2) {
+                                message.generatedIds.push(reader.uint32());
+                            }
+                        } else message.generatedIds.push(reader.uint32());
                         break;
                     default:
                         reader.skipType(tag & 7);
@@ -6716,7 +6741,7 @@ var webChannel = $root.webChannel = function () {
             return message;
         };
 
-        return InitWebChannel;
+        return InitData;
     }();
 
     return webChannel;
@@ -10320,13 +10345,31 @@ var WebChannel = (function (_super) {
     WebChannel.prototype._treatServiceMessage = function (_a) {
         var channel = _a.channel, senderId = _a.senderId, recipientId = _a.recipientId, msg = _a.msg;
         switch (msg.type) {
-            case 'initWebChannel': {
-                var _b = msg.initWebChannel, topology = _b.topology, wcId = _b.wcId, peerId = _b.peerId;
+            case 'initialize': {
+                var _b = msg.initialize, topology = _b.topology, wcId = _b.wcId, generatedIds = _b.generatedIds;
+                if (this.members.length !== 0) {
+                    if (generatedIds.includes(this.myId) || this.topology !== topology) {
+                        this._joinResult.next(new Error('Failed merge with another network'));
+                        channel.close();
+                        return;
+                    }
+                }
                 this._setTopology(topology);
-                this.myId = peerId;
+                if (generatedIds.includes(this.myId)) {
+                    this.myId = this._generateId(generatedIds);
+                }
                 this.id = wcId;
                 channel.peerId = senderId;
                 this._topology.initJoining(channel);
+                channel.send(this._encode({
+                    recipientId: channel.peerId,
+                    content: _super.prototype.encode.call(this, { initializeOk: true })
+                }));
+                break;
+            }
+            case 'initializeOk': {
+                channel.peerId = senderId;
+                this._topology.addJoining(channel);
                 break;
             }
             case 'ping': {
@@ -10354,17 +10397,14 @@ var WebChannel = (function (_super) {
      * Delegate adding a new peer in the network to topology.
      */
     WebChannel.prototype._addChannel = function (ch) {
-        ch.peerId = this._generateId();
         var msg = this._encode({
             recipientId: 1,
-            content: _super.prototype.encode.call(this, { initWebChannel: {
+            content: _super.prototype.encode.call(this, { initialize: {
                     topology: this._topology.serviceId,
-                    wcId: this.id,
-                    peerId: ch.peerId
+                    wcId: this.id
                 } })
         });
         ch.send(msg);
-        this._topology.addJoining(ch);
     };
     WebChannel.prototype._setTopology = function (topology) {
         if (this._topology !== undefined) {
@@ -10396,9 +10436,11 @@ var WebChannel = (function (_super) {
     /**
      * Generate random id for a `WebChannel` or a new peer.
      */
-    WebChannel.prototype._generateId = function () {
+    WebChannel.prototype._generateId = function (excludeIds) {
+        if (excludeIds === void 0) { excludeIds = []; }
         var id = crypto.getRandomValues(new Uint32Array(1))[0];
-        if (id === this.myId || this.members.includes(id)) {
+        if (id === this.myId || this.members.includes(id)
+            || (excludeIds.length !== 0 && excludeIds.includes(id))) {
             return this._generateId();
         }
         return id;

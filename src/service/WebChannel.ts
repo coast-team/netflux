@@ -443,15 +443,33 @@ export class WebChannel extends Service {
     }
   }
 
-  private _treatServiceMessage ({channel, senderId, recipientId, msg}: ServiceMessageDecoded) {
+  private _treatServiceMessage ({channel, senderId, recipientId, msg}: ServiceMessageDecoded): void {
     switch (msg.type) {
-    case 'initWebChannel': {
-      const { topology, wcId, peerId } = msg.initWebChannel
+    case 'initialize': {
+      const { topology, wcId, generatedIds } = msg.initialize
+      if (this.members.length !== 0) {
+        if (generatedIds.includes(this.myId) || this.topology !== topology) {
+          this._joinResult.next(new Error('Failed merge with another network'))
+          channel.close()
+          return
+        }
+      }
       this._setTopology(topology)
-      this.myId = peerId
+      if (generatedIds.includes(this.myId)) {
+        this.myId = this._generateId(generatedIds)
+      }
       this.id = wcId
       channel.peerId = senderId
       this._topology.initJoining(channel)
+      channel.send(this._encode({
+        recipientId: channel.peerId,
+        content: super.encode({ initializeOk: true })
+      }))
+      break
+    }
+    case 'initializeOk': {
+      channel.peerId = senderId
+      this._topology.addJoining(channel)
       break
     }
     case 'ping': {
@@ -480,17 +498,14 @@ export class WebChannel extends Service {
    * Delegate adding a new peer in the network to topology.
    */
   private _addChannel (ch: Channel): void {
-    ch.peerId = this._generateId()
     const msg = this._encode({
       recipientId: 1,
-      content: super.encode({initWebChannel: {
+      content: super.encode({ initialize: {
         topology: this._topology.serviceId,
-        wcId: this.id,
-        peerId: ch.peerId
+        wcId: this.id
       }})
     })
     ch.send(msg)
-    this._topology.addJoining(ch)
   }
 
   private _setTopology (topology: number): void {
@@ -522,9 +537,10 @@ export class WebChannel extends Service {
   /**
    * Generate random id for a `WebChannel` or a new peer.
    */
-  private _generateId (): number {
+  private _generateId (excludeIds = []): number {
     const id = crypto.getRandomValues(new Uint32Array(1))[0]
-    if (id === this.myId || this.members.includes(id)) {
+    if (id === this.myId || this.members.includes(id)
+      || (excludeIds.length !== 0 && excludeIds.includes(id))) {
       return this._generateId()
     }
     return id
