@@ -18,7 +18,7 @@ interface SignalingConnection {
 type State = 0 | 1 | 2 | 3
 
 
-const PING_TIMEOUT = 8000
+const PING_TIMEOUT = 5000
 
 const pongMsg = signaling.Message.encode(signaling.Message.create({ pong: true })).finish()
 
@@ -41,7 +41,7 @@ export class Signaling {
   private wc: WebChannel
   private _state: number
   private rxWs: SignalingConnection
-  private pingTimeout: number
+  private pingTimeout: any
 
   /**
    * @param {WebChannel} wc
@@ -71,7 +71,10 @@ export class Signaling {
             .map(({ content }) => content),
           send: msg => this.rxWs.send({ content: msg })
         })
-          .subscribe(ch => this.onChannel(ch))
+          .subscribe(
+            ch => this.onChannel(ch),
+            err => console.error(err.message)
+          )
       }
     }
   }
@@ -138,7 +141,6 @@ export class Signaling {
       return isFirst as boolean
     } catch (err) {
       this.state = Signaling.CLOSED
-      throw err
     }
   }
 
@@ -152,33 +154,35 @@ export class Signaling {
   }
 
   startPingTimeout () {
-    this.pingTimeout = window.setTimeout(() => {
-      if (this.state !== Signaling.CLOSED) {
-        this.rxWs.close(4002, 'Signaling ping timeout')
+    this.pingTimeout = setTimeout(() => {
+      if (this.rxWs.readyState !== WebSocket.CLOSING && this.rxWs.readyState !== WebSocket.CLOSED) {
+        this.rxWs.close(4002, 'Signaling is no longer available')
       }
     }, PING_TIMEOUT)
   }
 
   createRxWs (ws: WebSocket): SignalingConnection {
     const subject = new Subject()
+    const setClosedState = (code, reason) => {
+      this.state = Signaling.CLOSED
+      if (code === 1000) {
+        subject.complete()
+      } else {
+        subject.error(new Error(`${code}: ${reason}`))
+      }
+    }
     ws.binaryType = 'arraybuffer'
     ws.onmessage = evt => {
       try {
         subject.next(signaling.Message.decode(new Uint8Array(evt.data)))
       } catch (err) {
-        console.error(`WebSocket message error from ${ws.url}`, err)
+        console.error('Signaling message error', err)
         ws.close(4000, err.message)
+        setClosedState(4000, err.message)
       }
     }
     ws.onerror = err => subject.error(err)
-    ws.onclose = closeEvt => {
-      this.state = Signaling.CLOSED
-      if (closeEvt.code === 1000) {
-        subject.complete()
-      } else {
-        subject.error(new Error(`${closeEvt.code}: ${closeEvt.reason}`))
-      }
-    }
+    ws.onclose = closeEvt => setClosedState(closeEvt.code, closeEvt.reason)
     ws.onopen = () => this.startPingTimeout()
     return {
       stream: subject,
@@ -186,7 +190,10 @@ export class Signaling {
         signaling.Message.create(msg)
       ).finish()),
       pong: () => ws.send(pongMsg),
-      close: (code, reason) => ws.close(code, reason),
+      close: (code, reason) => {
+        ws.close(code, reason)
+        setClosedState(code, reason)
+      },
       readyState: ws.readyState
     }
   }
