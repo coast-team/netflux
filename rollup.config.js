@@ -1,5 +1,4 @@
 import filesize from 'rollup-plugin-filesize'
-import strip from 'rollup-plugin-strip'
 import commonjs from 'rollup-plugin-commonjs'
 import resolve from 'rollup-plugin-node-resolve'
 import replace from 'rollup-plugin-re'
@@ -15,9 +14,6 @@ export default [
     ],
     external: ['wrtc', 'uws', 'text-encoding'],
     plugins: [
-      strip({
-        functions: [ 'console.info', 'console.log', 'console.trace', 'console.goupe' ]
-      }),
       replace({
         defines: {
           BROWSER: false,
@@ -42,9 +38,6 @@ export default [
       name: 'netflux'
     },
     plugins: [
-      strip({
-        functions: [ 'console.info', 'console.log', 'console.trace', 'console.goupe' ]
-      }),
       replace({
         defines: {
           BROWSER: true,

@@ -9,13 +9,6 @@ interface RTCPeerConnection {
   createDataChannel (label: string): RTCDataChannel
 }
 
-declare enum RTCDataChannelState {
-  connecting,
-  open,
-  closing,
-  closed
-}
-
 interface RTCDataChannelEvent {
   readonly channel: RTCDataChannel
 }
@@ -23,7 +16,7 @@ interface RTCDataChannelEvent {
 interface RTCDataChannel extends EventTarget {
   label: string
   reliable: boolean
-  readyState: RTCDataChannelState
+  readyState: string
   bufferedAmount: number
   binaryType: string
   onopen: (event: Event) => void

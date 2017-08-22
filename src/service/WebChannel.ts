@@ -237,6 +237,7 @@ export class WebChannel extends Service {
               this._setState(WebChannel.JOINED)
             }
           })
+          .catch((err) => console.error(err.message))
       }
     } else {
       throw new Error('Failed to join: already joining or joined')
@@ -446,25 +447,34 @@ export class WebChannel extends Service {
   private _treatServiceMessage ({channel, senderId, recipientId, msg}: ServiceMessageDecoded): void {
     switch (msg.type) {
     case 'initialize': {
-      const { topology, wcId, generatedIds } = msg.initialize
-      if (this.members.length !== 0) {
-        if (generatedIds.includes(this.myId) || this.topology !== topology) {
-          this._joinResult.next(new Error('Failed merge with another network'))
-          channel.close()
-          return
+      // Check whether the intermidiary peer is already a member of your
+      // network (possible when merging two networks (works with FullMesh)).
+      // If it is a case then you are already a member of the network.
+      if (this.members.includes(senderId)) {
+        this._setState(WebChannel.JOINED)
+        this._signaling.open()
+        channel.close()
+      } else {
+        const { topology, wcId, generatedIds } = msg.initialize
+        if (this.members.length !== 0) {
+          if (generatedIds.includes(this.myId) || this.topology !== topology) {
+            this._joinResult.next(new Error('Failed merge with another network'))
+            channel.close()
+            return
+          }
         }
+        this._setTopology(topology)
+        if (generatedIds.includes(this.myId)) {
+          this.myId = this._generateId(generatedIds)
+        }
+        this.id = wcId
+        channel.peerId = senderId
+        this._topology.initJoining(channel)
+        channel.send(this._encode({
+          recipientId: channel.peerId,
+          content: super.encode({ initializeOk: true })
+        }))
       }
-      this._setTopology(topology)
-      if (generatedIds.includes(this.myId)) {
-        this.myId = this._generateId(generatedIds)
-      }
-      this.id = wcId
-      channel.peerId = senderId
-      this._topology.initJoining(channel)
-      channel.send(this._encode({
-        recipientId: channel.peerId,
-        content: super.encode({ initializeOk: true })
-      }))
       break
     }
     case 'initializeOk': {
@@ -531,6 +541,7 @@ export class WebChannel extends Service {
             this._setState(WebChannel.JOINING)
           }
         })
+        .catch((err) => console.error(err.message))
     }, REJOIN_TIMEOUT)
   }
 

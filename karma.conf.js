@@ -43,9 +43,6 @@ module.exports = (config) => {
           }
         }),
         require('rollup-plugin-typescript2')(),
-        // require('rollup-plugin-strip')({
-        //   functions: [ 'console.info' ]
-        // }),
         require('rollup-plugin-node-resolve')(),
         require('rollup-plugin-commonjs')({
           namedExports: { 'node_modules/protobufjs/minimal.js': [ 'Reader', 'Writer', 'util', 'roots' ] }
