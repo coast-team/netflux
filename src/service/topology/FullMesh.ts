@@ -52,7 +52,7 @@ export class FullMesh extends Service implements TopologyInterface {
 
   addJoining (ch: Channel): void {
     console.info(this.wc.myId + ' addJoining ' + ch.peerId)
-    const peers = this.wc.members.slice()
+    const peers = this.wc.members.slice() // FIXME: without slice, tests fail.
     this.peerJoined(ch)
     // First joining peer
     if (peers.length === 0) {
@@ -63,7 +63,6 @@ export class FullMesh extends Service implements TopologyInterface {
 
     // There are at least 2 members in the network
     } else {
-      this.jps.set(ch.peerId, ch)
       this.wc._send({ content: super.encode({ joiningPeerId: ch.peerId }) })
       ch.send(this.wc._encode({
         recipientId: ch.peerId,
@@ -117,21 +116,30 @@ export class FullMesh extends Service implements TopologyInterface {
   }
 
   onChannelClose (closeEvt: CloseEvent, channel: Channel): void {
-    if (this.wc.state === WebChannel.JOINING) {
-      const firstChannel = this.channels.values().next().value
-      if (firstChannel.peerId === channel.peerId) {
+    const me = this.jps.get(this.wc.myId)
+
+    if (me !== undefined) {
+      // I am joining a network
+
+      if (me.peerId === channel.peerId) {
+        // Channel with intermediary peer has closed
         this.wc._joinResult.next(new Error(this.wc.myId + ' intermediary peer has gone: ' + closeEvt.reason))
         this.leave()
       } else {
+        // Another channel has closed
         this.channels.delete(channel)
+        this.jps.delete(channel.peerId)
         console.info(this.wc.myId + ' _onPeerLeave while I am joining ' + channel.peerId)
         this.wc._onPeerLeave(channel.peerId)
       }
     } else {
-      for (let [id] of this.jps) {
+      for (let [id, ch] of this.jps) {
         if (id === channel.peerId) {
           this.jps.delete(id)
-          return
+          if (ch.peerId === this.wc.myId) {
+            this.wc._send({ content: super.encode({ joinFailedPeerId: id }) })
+          }
+          break
         }
       }
       if (this.channels.has(channel)) {
@@ -150,60 +158,75 @@ export class FullMesh extends Service implements TopologyInterface {
     switch (msg.type) {
     case 'connectTo': {
       const peers = msg.connectTo.peers
-      let counter = 0
-      const connected = []
-      const allCompleted = new Promise(resolve => {
-        for (let ch of this.channels) {
-          const index = peers.indexOf(ch.peerId)
-          if (index !== -1) {
-            peers.splice(index, 1)
-          }
-          connected[connected.length] = ch.peerId
+      const connectedToIds = []
+      const connectingFinish = []
+
+      // Filter those peers to whom you are already connected
+      for (let ch of this.channels) {
+        const index = peers.indexOf(ch.peerId)
+        if (index !== -1) {
+          peers.splice(index, 1)
         }
-        for (let id of peers) {
+        if (ch.peerId !== senderId) {
+          connectedToIds[connectedToIds.length] = ch.peerId
+        }
+      }
+
+      // Establish connection to the missing peers
+      for (let id of peers) {
+        connectingFinish[connectingFinish.length] = new Promise(resolve => {
           this.wc.channelBuilder.connectTo(id)
             .then(ch => {
               this.peerJoined(ch)
-              connected[connected.length] = id
-              if (++counter === peers.length) {
-                resolve()
-              }
+              connectedToIds[connectedToIds.length] = id
+              resolve()
             })
             .catch(err => {
               console.warn(this.wc.myId + ' failed to connect to ' + id, err.message)
-              if (++counter === peers.length) {
-                resolve()
-              }
+              resolve()
             })
-        }
-      })
-      allCompleted.then(() => {
+        })
+      }
+
+      // Notify the network member after all necessary connection are established.
+      Promise.all(connectingFinish).then(() => {
         channel.send(this.wc._encode({
           recipientId: channel.peerId,
-          content: super.encode({ connectedTo: { peers: connected } })
+          content: super.encode({ connectedTo: { peers: connectedToIds } })
         }))
       })
       break
     }
     case 'connectedTo': {
-      const peers = msg.connectedTo.peers
-      const missingPeers = []
-      for (let id of this.wc.members) {
-        if (!peers.includes(id) && id !== channel.peerId) {
-          missingPeers[missingPeers.length] = id
+      let peers = msg.connectedTo.peers
+      if (this.wc.members.length === peers.length + 1) {
+        let succeed = true
+        for (let id of peers) {
+          if (!this.wc.members.includes(id) ) {
+            succeed = false
+            break
+          }
+        }
+        if (succeed) {
+          channel.send(this.wc._encode({
+            recipientId: channel.peerId,
+            content: super.encode({ joinSucceed: true })
+          }))
+          return
         }
       }
-      if (missingPeers.length === 0) {
-        channel.send(this.wc._encode({
-          recipientId: channel.peerId,
-          content: super.encode({ joinSucceed: true })
-        }))
-      } else {
-        channel.send(this.wc._encode({
-          recipientId: channel.peerId,
-          content: super.encode({ connectTo: { peers: missingPeers } })
-        }))
+
+      // Joining did not finished, resend my neighbor peers
+      peers = []
+      for (let id of this.wc.members) {
+        if (id !== senderId) {
+          peers[peers.length] = id
+        }
       }
+      channel.send(this.wc._encode({
+        recipientId: channel.peerId,
+        content: super.encode({ connectTo: { peers } })
+      }))
       break
     }
     case 'joiningPeerId': {
