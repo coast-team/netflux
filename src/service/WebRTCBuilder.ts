@@ -211,7 +211,7 @@ export class WebRTCBuilder extends Service {
             reject(new Error('Unknown message from a remote peer'))
           }
         },
-        reject,
+        err => reject(err),
         () => reject(new Error('Failed to establish RTCDataChannel: the connection with Signaling server was closed'))
       )
 
@@ -348,7 +348,11 @@ export class WebRTCBuilder extends Service {
 
   private configOnDisconnect (pc: RTCPeerConnection, dc: RTCDataChannel): void {
     pc.oniceconnectionstatechange = () => {
-      if (pc.iceConnectionState === 'disconnected' && dc.onclose) {
+      if (pc.iceConnectionState === 'disconnected'
+        && dc.readyState !== 'closing'
+        && dc.readyState !== 'closed'
+        && dc.onclose
+      ) {
         dc.onclose(new CloseEvent('disconnect', {
           code: 4201,
           reason: 'disconnected'
