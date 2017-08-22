@@ -73,7 +73,15 @@ export class ChannelBuilder extends Service {
    */
   connectTo (id: number): Promise<Channel> {
     return new Promise((resolve, reject) => {
-      this.pendingRequests.set(id, { resolve, reject })
+      this.pendingRequests.set(id, {
+        resolve: (ch: Channel) => {
+          this.pendingRequests.delete(id)
+          resolve(ch)
+        }, reject: (err: Error) => {
+          this.pendingRequests.delete(id)
+          reject(err)
+        }
+      })
       this.wc._sendTo({ recipientId: id, content: request })
     })
   }
