@@ -23,7 +23,7 @@ export default [
         patterns: [
           {
             test: /eval.*\(moduleName\);/g,
-            replace: 'undefined;',
+            replace: 'undefined;'
           }
         ]
       }),
@@ -53,7 +53,7 @@ export default [
         patterns: [
           {
             test: /eval.*\(moduleName\);/g,
-            replace: 'undefined;',
+            replace: 'undefined;'
           }
         ]
       }),
