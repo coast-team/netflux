@@ -40,7 +40,13 @@ module.exports = (config) => {
           defines: {
             BROWSER: true,
             NODE: false
-          }
+          },
+          patterns: [
+            {
+              test: /eval.*\(moduleName\);/g,
+              replace: 'undefined;',
+            }
+          ]
         }),
         require('rollup-plugin-typescript2')(),
         require('rollup-plugin-node-resolve')(),

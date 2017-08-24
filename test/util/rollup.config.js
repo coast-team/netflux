@@ -19,7 +19,13 @@ export default {
       defines: {
         BROWSER: false,
         NODE: true
-      }
+      },
+      patterns: [
+        {
+          test: /eval.*\(moduleName\);/g,
+          replace: 'undefined;',
+        }
+      ]
     }),
     resolve(),
     commonjs({

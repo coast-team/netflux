@@ -14,13 +14,19 @@ export default [
     ],
     external: ['wrtc', 'uws', 'text-encoding'],
     plugins: [
+      typescript(),
       replace({
         defines: {
-          BROWSER: false,
+          WEBRTC_ADAPTER: false,
           NODE: true
-        }
+        },
+        patterns: [
+          {
+            test: /eval.*\(moduleName\);/g,
+            replace: 'undefined;',
+          }
+        ]
       }),
-      typescript(),
       resolve(),
       commonjs({
         namedExports: {
@@ -38,13 +44,19 @@ export default [
       name: 'netflux'
     },
     plugins: [
+      typescript(),
       replace({
         defines: {
-          BROWSER: true,
+          WEBRTC_ADAPTER: true,
           NODE: false
-        }
+        },
+        patterns: [
+          {
+            test: /eval.*\(moduleName\);/g,
+            replace: 'undefined;',
+          }
+        ]
       }),
-      typescript(),
       resolve(),
       commonjs({
         namedExports: {
