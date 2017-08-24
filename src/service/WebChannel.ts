@@ -152,7 +152,7 @@ export class WebChannel extends Service {
     this._userMsg = new UserMessage()
 
     // Signaling init
-    this._signaling = new Signaling(this, ch => this._addChannel(ch), signalingURL)
+    this._signaling = new Signaling(this, ch => this._initChannel(ch), signalingURL)
     this._signaling.onStateChanged = state => {
       if (state === Signaling.CLOSED) {
         if (this.autoRejoin && !this._disableAutoRejoin) {
@@ -250,7 +250,7 @@ export class WebChannel extends Service {
   invite (url: string): void {
     if (isURL(url)) {
       this.webSocketBuilder.connect(`${url}/invite?wcId=${this.id}&senderId=${this.myId}`)
-        .then(connection => this._addChannel(new Channel(connection, this)))
+        .then(connection => this._initChannel(new Channel(connection, this)))
         .catch((err) => console.error(`Failed to invite the bot ${url}: ${err.message}`))
     } else {
       throw new Error(`Failed to invite a bot: ${url} is not a valid URL`)
@@ -446,7 +446,7 @@ export class WebChannel extends Service {
 
   private _treatServiceMessage ({channel, senderId, recipientId, msg}: ServiceMessageDecoded): void {
     switch (msg.type) {
-    case 'initialize': {
+    case 'init': {
       // Check whether the intermidiary peer is already a member of your
       // network (possible when merging two networks (works with FullMesh)).
       // If it is a case then you are already a member of the network.
@@ -455,7 +455,7 @@ export class WebChannel extends Service {
         this._signaling.open()
         channel.close()
       } else {
-        const { topology, wcId, generatedIds } = msg.initialize
+        const { topology, wcId, generatedIds } = msg.init
         if (this.members.length !== 0) {
           if (generatedIds.includes(this.myId) || this.topology !== topology) {
             this._joinResult.next(new Error('Failed merge with another network'))
@@ -472,14 +472,14 @@ export class WebChannel extends Service {
         this._topology.initJoining(channel)
         channel.send(this._encode({
           recipientId: channel.peerId,
-          content: super.encode({ initializeOk: true })
+          content: super.encode({ initOk: { members: this.members} })
         }))
       }
       break
     }
-    case 'initializeOk': {
+    case 'initOk': {
       channel.peerId = senderId
-      this._topology.addJoining(channel)
+      this._topology.addJoining(channel, msg.initOk.members)
       break
     }
     case 'ping': {
@@ -507,10 +507,10 @@ export class WebChannel extends Service {
   /**
    * Delegate adding a new peer in the network to topology.
    */
-  private _addChannel (ch: Channel): void {
+  private _initChannel (ch: Channel): void {
     const msg = this._encode({
       recipientId: 1,
-      content: super.encode({ initialize: {
+      content: super.encode({ init: {
         topology: this._topology.serviceId,
         wcId: this.id
       }})

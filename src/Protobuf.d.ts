@@ -260,11 +260,11 @@ export namespace webChannel {
     /** Properties of a Message. */
     interface IMessage {
 
-        /** Message initialize */
-        initialize?: webChannel.IInitData;
+        /** Message init */
+        init?: webChannel.IInitData;
 
-        /** Message initializeOk */
-        initializeOk?: boolean;
+        /** Message initOk */
+        initOk?: webChannel.IPeers;
 
         /** Message ping */
         ping?: boolean;
@@ -282,11 +282,11 @@ export namespace webChannel {
          */
         constructor(properties?: webChannel.IMessage);
 
-        /** Message initialize. */
-        public initialize?: (webChannel.IInitData|null);
+        /** Message init. */
+        public init?: (webChannel.IInitData|null);
 
-        /** Message initializeOk. */
-        public initializeOk: boolean;
+        /** Message initOk. */
+        public initOk?: (webChannel.IPeers|null);
 
         /** Message ping. */
         public ping: boolean;
@@ -378,6 +378,51 @@ export namespace webChannel {
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
         public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): webChannel.InitData;
+    }
+
+    /** Properties of a Peers. */
+    interface IPeers {
+
+        /** Peers members */
+        members?: number[];
+    }
+
+    /** Represents a Peers. */
+    class Peers {
+
+        /**
+         * Constructs a new Peers.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: webChannel.IPeers);
+
+        /** Peers members. */
+        public members: number[];
+
+        /**
+         * Creates a new Peers instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns Peers instance
+         */
+        public static create(properties?: webChannel.IPeers): webChannel.Peers;
+
+        /**
+         * Encodes the specified Peers message. Does not implicitly {@link webChannel.Peers.verify|verify} messages.
+         * @param message Peers message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: webChannel.IPeers, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a Peers message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns Peers
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): webChannel.Peers;
     }
 }
 
@@ -513,9 +558,6 @@ export namespace fullMesh {
 
         /** Message joinSucceed */
         joinSucceed?: boolean;
-
-        /** Message joinFailedPeerId */
-        joinFailedPeerId?: number;
     }
 
     /** Represents a Message. */
@@ -538,9 +580,6 @@ export namespace fullMesh {
 
         /** Message joinSucceed. */
         public joinSucceed: boolean;
-
-        /** Message joinFailedPeerId. */
-        public joinFailedPeerId: number;
 
         /** Message type. */
         public type?: string;
@@ -574,8 +613,8 @@ export namespace fullMesh {
     /** Properties of a Peers. */
     interface IPeers {
 
-        /** Peers peers */
-        peers?: number[];
+        /** Peers members */
+        members?: number[];
     }
 
     /** Represents a Peers. */
@@ -587,8 +626,8 @@ export namespace fullMesh {
          */
         constructor(properties?: fullMesh.IPeers);
 
-        /** Peers peers. */
-        public peers: number[];
+        /** Peers members. */
+        public members: number[];
 
         /**
          * Creates a new Peers instance using the specified properties.

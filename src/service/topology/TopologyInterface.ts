@@ -21,7 +21,7 @@ export interface TopologyInterface extends Service {
    *
    * @param ch  A channel between you and the joining peer
    */
-  addJoining (ch: Channel): void
+  addJoining (ch: Channel, members: [number]): void
 
   /**
    * As a joining peer initialize the channel between you and

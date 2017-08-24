@@ -549,8 +549,8 @@ export var webChannel = $root.webChannel = function () {
          * Properties of a Message.
          * @memberof webChannel
          * @interface IMessage
-         * @property {webChannel.IInitData} [initialize] Message initialize
-         * @property {boolean} [initializeOk] Message initializeOk
+         * @property {webChannel.IInitData} [init] Message init
+         * @property {webChannel.IPeers} [initOk] Message initOk
          * @property {boolean} [ping] Message ping
          * @property {boolean} [pong] Message pong
          */
@@ -569,20 +569,20 @@ export var webChannel = $root.webChannel = function () {
         }
 
         /**
-         * Message initialize.
-         * @member {(webChannel.IInitData|null|undefined)}initialize
+         * Message init.
+         * @member {(webChannel.IInitData|null|undefined)}init
          * @memberof webChannel.Message
          * @instance
          */
-        Message.prototype.initialize = null;
+        Message.prototype.init = null;
 
         /**
-         * Message initializeOk.
-         * @member {boolean}initializeOk
+         * Message initOk.
+         * @member {(webChannel.IPeers|null|undefined)}initOk
          * @memberof webChannel.Message
          * @instance
          */
-        Message.prototype.initializeOk = false;
+        Message.prototype.initOk = null;
 
         /**
          * Message ping.
@@ -610,7 +610,7 @@ export var webChannel = $root.webChannel = function () {
          * @instance
          */
         Object.defineProperty(Message.prototype, "type", {
-            get: $util.oneOfGetter($oneOfFields = ["initialize", "initializeOk", "ping", "pong"]),
+            get: $util.oneOfGetter($oneOfFields = ["init", "initOk", "ping", "pong"]),
             set: $util.oneOfSetter($oneOfFields)
         });
 
@@ -637,8 +637,8 @@ export var webChannel = $root.webChannel = function () {
          */
         Message.encode = function encode(message, writer) {
             if (!writer) writer = $Writer.create();
-            if (message.initialize != null && message.hasOwnProperty("initialize")) $root.webChannel.InitData.encode(message.initialize, writer.uint32( /* id 1, wireType 2 =*/10).fork()).ldelim();
-            if (message.initializeOk != null && message.hasOwnProperty("initializeOk")) writer.uint32( /* id 2, wireType 0 =*/16).bool(message.initializeOk);
+            if (message.init != null && message.hasOwnProperty("init")) $root.webChannel.InitData.encode(message.init, writer.uint32( /* id 1, wireType 2 =*/10).fork()).ldelim();
+            if (message.initOk != null && message.hasOwnProperty("initOk")) $root.webChannel.Peers.encode(message.initOk, writer.uint32( /* id 2, wireType 2 =*/18).fork()).ldelim();
             if (message.ping != null && message.hasOwnProperty("ping")) writer.uint32( /* id 3, wireType 0 =*/24).bool(message.ping);
             if (message.pong != null && message.hasOwnProperty("pong")) writer.uint32( /* id 4, wireType 0 =*/32).bool(message.pong);
             return writer;
@@ -663,10 +663,10 @@ export var webChannel = $root.webChannel = function () {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
                     case 1:
-                        message.initialize = $root.webChannel.InitData.decode(reader, reader.uint32());
+                        message.init = $root.webChannel.InitData.decode(reader, reader.uint32());
                         break;
                     case 2:
-                        message.initializeOk = reader.bool();
+                        message.initOk = $root.webChannel.Peers.decode(reader, reader.uint32());
                         break;
                     case 3:
                         message.ping = reader.bool();
@@ -810,6 +810,107 @@ export var webChannel = $root.webChannel = function () {
         };
 
         return InitData;
+    }();
+
+    webChannel.Peers = function () {
+
+        /**
+         * Properties of a Peers.
+         * @memberof webChannel
+         * @interface IPeers
+         * @property {Array.<number>} [members] Peers members
+         */
+
+        /**
+         * Constructs a new Peers.
+         * @memberof webChannel
+         * @classdesc Represents a Peers.
+         * @constructor
+         * @param {webChannel.IPeers=} [properties] Properties to set
+         */
+        function Peers(properties) {
+            this.members = [];
+            if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
+                if (properties[keys[i]] != null) this[keys[i]] = properties[keys[i]];
+            }
+        }
+
+        /**
+         * Peers members.
+         * @member {Array.<number>}members
+         * @memberof webChannel.Peers
+         * @instance
+         */
+        Peers.prototype.members = $util.emptyArray;
+
+        /**
+         * Creates a new Peers instance using the specified properties.
+         * @function create
+         * @memberof webChannel.Peers
+         * @static
+         * @param {webChannel.IPeers=} [properties] Properties to set
+         * @returns {webChannel.Peers} Peers instance
+         */
+        Peers.create = function create(properties) {
+            return new Peers(properties);
+        };
+
+        /**
+         * Encodes the specified Peers message. Does not implicitly {@link webChannel.Peers.verify|verify} messages.
+         * @function encode
+         * @memberof webChannel.Peers
+         * @static
+         * @param {webChannel.IPeers} message Peers message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        Peers.encode = function encode(message, writer) {
+            if (!writer) writer = $Writer.create();
+            if (message.members != null && message.members.length) {
+                writer.uint32( /* id 1, wireType 2 =*/10).fork();
+                for (var i = 0; i < message.members.length; ++i) {
+                    writer.uint32(message.members[i]);
+                }writer.ldelim();
+            }
+            return writer;
+        };
+
+        /**
+         * Decodes a Peers message from the specified reader or buffer.
+         * @function decode
+         * @memberof webChannel.Peers
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {webChannel.Peers} Peers
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        Peers.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length,
+                message = new $root.webChannel.Peers();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                    case 1:
+                        if (!(message.members && message.members.length)) message.members = [];
+                        if ((tag & 7) === 2) {
+                            var end2 = reader.uint32() + reader.pos;
+                            while (reader.pos < end2) {
+                                message.members.push(reader.uint32());
+                            }
+                        } else message.members.push(reader.uint32());
+                        break;
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                }
+            }
+            return message;
+        };
+
+        return Peers;
     }();
 
     return webChannel;
@@ -1077,7 +1178,6 @@ export var fullMesh = $root.fullMesh = function () {
          * @property {fullMesh.IPeers} [connectedTo] Message connectedTo
          * @property {number} [joiningPeerId] Message joiningPeerId
          * @property {boolean} [joinSucceed] Message joinSucceed
-         * @property {number} [joinFailedPeerId] Message joinFailedPeerId
          */
 
         /**
@@ -1125,14 +1225,6 @@ export var fullMesh = $root.fullMesh = function () {
          */
         Message.prototype.joinSucceed = false;
 
-        /**
-         * Message joinFailedPeerId.
-         * @member {number}joinFailedPeerId
-         * @memberof fullMesh.Message
-         * @instance
-         */
-        Message.prototype.joinFailedPeerId = 0;
-
         // OneOf field names bound to virtual getters and setters
         var $oneOfFields = void 0;
 
@@ -1143,7 +1235,7 @@ export var fullMesh = $root.fullMesh = function () {
          * @instance
          */
         Object.defineProperty(Message.prototype, "type", {
-            get: $util.oneOfGetter($oneOfFields = ["connectTo", "connectedTo", "joiningPeerId", "joinSucceed", "joinFailedPeerId"]),
+            get: $util.oneOfGetter($oneOfFields = ["connectTo", "connectedTo", "joiningPeerId", "joinSucceed"]),
             set: $util.oneOfSetter($oneOfFields)
         });
 
@@ -1174,7 +1266,6 @@ export var fullMesh = $root.fullMesh = function () {
             if (message.connectedTo != null && message.hasOwnProperty("connectedTo")) $root.fullMesh.Peers.encode(message.connectedTo, writer.uint32( /* id 2, wireType 2 =*/18).fork()).ldelim();
             if (message.joiningPeerId != null && message.hasOwnProperty("joiningPeerId")) writer.uint32( /* id 3, wireType 0 =*/24).uint32(message.joiningPeerId);
             if (message.joinSucceed != null && message.hasOwnProperty("joinSucceed")) writer.uint32( /* id 4, wireType 0 =*/32).bool(message.joinSucceed);
-            if (message.joinFailedPeerId != null && message.hasOwnProperty("joinFailedPeerId")) writer.uint32( /* id 5, wireType 0 =*/40).uint32(message.joinFailedPeerId);
             return writer;
         };
 
@@ -1208,9 +1299,6 @@ export var fullMesh = $root.fullMesh = function () {
                     case 4:
                         message.joinSucceed = reader.bool();
                         break;
-                    case 5:
-                        message.joinFailedPeerId = reader.uint32();
-                        break;
                     default:
                         reader.skipType(tag & 7);
                         break;
@@ -1228,7 +1316,7 @@ export var fullMesh = $root.fullMesh = function () {
          * Properties of a Peers.
          * @memberof fullMesh
          * @interface IPeers
-         * @property {Array.<number>} [peers] Peers peers
+         * @property {Array.<number>} [members] Peers members
          */
 
         /**
@@ -1239,19 +1327,19 @@ export var fullMesh = $root.fullMesh = function () {
          * @param {fullMesh.IPeers=} [properties] Properties to set
          */
         function Peers(properties) {
-            this.peers = [];
+            this.members = [];
             if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
                 if (properties[keys[i]] != null) this[keys[i]] = properties[keys[i]];
             }
         }
 
         /**
-         * Peers peers.
-         * @member {Array.<number>}peers
+         * Peers members.
+         * @member {Array.<number>}members
          * @memberof fullMesh.Peers
          * @instance
          */
-        Peers.prototype.peers = $util.emptyArray;
+        Peers.prototype.members = $util.emptyArray;
 
         /**
          * Creates a new Peers instance using the specified properties.
@@ -1276,10 +1364,10 @@ export var fullMesh = $root.fullMesh = function () {
          */
         Peers.encode = function encode(message, writer) {
             if (!writer) writer = $Writer.create();
-            if (message.peers != null && message.peers.length) {
+            if (message.members != null && message.members.length) {
                 writer.uint32( /* id 1, wireType 2 =*/10).fork();
-                for (var i = 0; i < message.peers.length; ++i) {
-                    writer.uint32(message.peers[i]);
+                for (var i = 0; i < message.members.length; ++i) {
+                    writer.uint32(message.members[i]);
                 }writer.ldelim();
             }
             return writer;
@@ -1304,13 +1392,13 @@ export var fullMesh = $root.fullMesh = function () {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
                     case 1:
-                        if (!(message.peers && message.peers.length)) message.peers = [];
+                        if (!(message.members && message.members.length)) message.members = [];
                         if ((tag & 7) === 2) {
                             var end2 = reader.uint32() + reader.pos;
                             while (reader.pos < end2) {
-                                message.peers.push(reader.uint32());
+                                message.members.push(reader.uint32());
                             }
-                        } else message.peers.push(reader.uint32());
+                        } else message.members.push(reader.uint32());
                         break;
                     default:
                         reader.skipType(tag & 7);

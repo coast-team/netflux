@@ -314,7 +314,7 @@ export class WebRTCBuilder extends Service {
         const channel = new Channel(dc, this.wc, peerId)
 
         // Configure disconnection
-        this.configOnDisconnect(pc, dc)
+        this.configOnDisconnect(pc, dc, peerId)
         return new Promise((resolve, reject) => {
           const timeout = setTimeout(() => {
             reject(new Error(`${CONNECTION_TIMEOUT}ms timeout`))
@@ -334,8 +334,8 @@ export class WebRTCBuilder extends Service {
         }, CONNECTION_TIMEOUT)
         pc.ondatachannel = dcEvt => {
           // Configure disconnection
-          this.configOnDisconnect(pc, dcEvt.channel)
           dcEvt.channel.onopen = evt => {
+            this.configOnDisconnect(pc, dcEvt.channel, Number(dcEvt.channel.label))
             clearTimeout(timeout)
 
             // Initialize dataChannel for WebChannel
@@ -346,7 +346,7 @@ export class WebRTCBuilder extends Service {
     }
   }
 
-  private configOnDisconnect (pc: RTCPeerConnection, dc: RTCDataChannel): void {
+  private configOnDisconnect (pc: RTCPeerConnection, dc: RTCDataChannel, id: number): void {
     pc.oniceconnectionstatechange = () => {
       if (pc.iceConnectionState === 'disconnected'
         && dc.readyState !== 'closing'

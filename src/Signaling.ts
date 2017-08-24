@@ -11,6 +11,7 @@ interface SignalingConnection {
   stream: Subject<any>,
   send: (msg: any) => any,
   pong: () => void,
+  ping: () => void,
   close: (code: number, reason?: string) => void,
   readyState: number
 }
@@ -18,8 +19,9 @@ interface SignalingConnection {
 type State = 0 | 1 | 2 | 3
 
 
-const PING_TIMEOUT = 5000
+const PING_INTERVAL = 2500
 
+const pingMsg = signaling.Message.encode(signaling.Message.create({ ping: true })).finish()
 const pongMsg = signaling.Message.encode(signaling.Message.create({ pong: true })).finish()
 
 /**
@@ -41,7 +43,8 @@ export class Signaling {
   private wc: WebChannel
   private _state: number
   private rxWs: SignalingConnection
-  private pingTimeout: any
+  private pingInterval: any
+  private pongReceived: boolean
 
   /**
    * @param {WebChannel} wc
@@ -58,7 +61,8 @@ export class Signaling {
     this.wc = wc
     this._state = Signaling.CLOSED
     this.rxWs = undefined
-    this.pingTimeout = undefined
+    this.pingInterval = undefined
+    this.pongReceived = false
   }
 
   set state (state: number) {
@@ -106,11 +110,14 @@ export class Signaling {
         this.rxWs.stream.subscribe(
           msg => {
             switch (msg.type) {
-            case 'ping':
+            case 'ping': {
               this.rxWs.pong()
-              clearTimeout(this.pingTimeout)
-              this.startPingTimeout()
               break
+            }
+            case 'pong': {
+              this.pongReceived = true
+              break
+            }
             case 'isFirst':
               if (msg.isFirst) {
                 this.state = Signaling.OPEN
@@ -153,15 +160,20 @@ export class Signaling {
     }
   }
 
-  startPingTimeout () {
-    this.pingTimeout = setTimeout(() => {
-      if (this.rxWs.readyState !== WebSocket.CLOSING && this.rxWs.readyState !== WebSocket.CLOSED) {
+  private startPingInterval () {
+    this.rxWs.ping()
+    this.pingInterval = setInterval(() => {
+      if (!this.pongReceived && this.rxWs.readyState !== WebSocket.CLOSING && this.rxWs.readyState !== WebSocket.CLOSED) {
         this.rxWs.close(4002, 'Signaling is no longer available')
+        clearInterval(this.pingInterval)
+      } else {
+        this.pongReceived = false
+        this.rxWs.ping()
       }
-    }, PING_TIMEOUT)
+    }, PING_INTERVAL)
   }
 
-  createRxWs (ws: WebSocket): SignalingConnection {
+  private createRxWs (ws: WebSocket): SignalingConnection {
     const subject = new Subject()
     const setClosedState = (code, reason) => {
       this.state = Signaling.CLOSED
@@ -183,13 +195,14 @@ export class Signaling {
     }
     ws.onerror = err => subject.error(err)
     ws.onclose = closeEvt => setClosedState(closeEvt.code, closeEvt.reason)
-    ws.onopen = () => this.startPingTimeout()
+    ws.onopen = () => this.startPingInterval()
     return {
       stream: subject,
       send: msg => ws.send(signaling.Message.encode(
         signaling.Message.create(msg)
       ).finish()),
       pong: () => ws.send(pongMsg),
+      ping: () => ws.send(pingMsg),
       close: (code, reason) => {
         ws.close(code, reason)
         setClosedState(code, reason)

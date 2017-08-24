@@ -102,7 +102,11 @@ export class ChannelBuilder extends Service {
   private handleInnerMessage ({ channel, senderId, recipientId, msg }: ServiceMessageDecoded): void {
     switch (msg.type) {
     case 'failed': {
-      this.pendingRequests.get(senderId).reject(new Error(msg.failed))
+      console.error('handleInnerMessage ERROR: ', msg.failed)
+      const pr = this.pendingRequests.get(senderId)
+      if (pr !== undefined) {
+        pr.reject(new Error(msg.failed))
+      }
       break
     }
     case 'request': {

@@ -4,17 +4,12 @@ package fullMesh;
 message Message {
   oneof type {
     Peers connectTo = 1;
-
     Peers connectedTo = 2;
-
     uint32 joiningPeerId = 3;
-
     bool joinSucceed = 4;
-
-    uint32 joinFailedPeerId = 5;
   }
 }
 
 message Peers {
-  repeated uint32 peers = 1;
+  repeated uint32 members = 1;
 }
