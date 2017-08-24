@@ -75,7 +75,7 @@
     "karma-coverage-es6": "^0.2.7",
     "karma-firefox-launcher": "^1.0.0",
     "karma-jasmine": "^1.0.2",
-    "karma-rollup-preprocessor": "^4.0.0",
+    "karma-rollup-preprocessor": "^5.0.0",
     "karma-spec-reporter": "0.0.31",
     "kcors": "^2.2.1",
     "koa": "^2.2.0",
