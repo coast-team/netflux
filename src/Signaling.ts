@@ -19,7 +19,10 @@ interface SignalingConnection {
 type State = 0 | 1 | 2 | 3
 
 
-const PING_INTERVAL = 2500
+const PING_INTERVAL = 3000
+const MESSAGE_ERROR_CODE = 4000
+const PING_ERROR_CODE = 4001
+const FIRST_CONNECTION_ERROR_CODE = 4002
 
 const pingMsg = signaling.Message.encode(signaling.Message.create({ ping: true })).finish()
 const pongMsg = signaling.Message.encode(signaling.Message.create({ pong: true })).finish()
@@ -32,16 +35,17 @@ const pongMsg = signaling.Message.encode(signaling.Message.create({ pong: true }
 export class Signaling {
 
   static CONNECTING = 0
-  static CONNECTED = 1
-  static OPEN = 2
+  static OPEN = 1
+  static FIRST_CONNECTED = 4
+  static READY_TO_JOIN_OTHERS = 5
   static CLOSED = 3
 
   public url: string
-  public onChannel: (ch: Channel) => void
-  public onStateChanged: (state: number) => void
+  public state: number
 
   private wc: WebChannel
-  private _state: number
+  private onChannel: (ch: Channel) => void
+  private stateSubject: Subject<number>
   private rxWs: SignalingConnection
   private pingInterval: any
   private pongReceived: boolean
@@ -55,36 +59,20 @@ export class Signaling {
     // public
     this.url = url.endsWith('/') ? url : url + '/'
     this.onChannel = onChannel
-    this.onStateChanged = () => {}
 
     // private
     this.wc = wc
-    this._state = Signaling.CLOSED
+    this.stateSubject = new Subject<number>()
     this.rxWs = undefined
     this.pingInterval = undefined
     this.pongReceived = false
+
+    // Init state
+    this.setState(Signaling.CLOSED)
   }
 
-  set state (state: number) {
-    if (this._state !== state) {
-      this._state = state
-      this.onStateChanged(state)
-      if (this._state === Signaling.OPEN) {
-        this.wc.webRTCBuilder.channelsFromSignaling({
-          stream: this.rxWs.stream.filter(msg => msg.type === 'content')
-            .map(({ content }) => content),
-          send: msg => this.rxWs.send({ content: msg })
-        })
-          .subscribe(
-            ch => this.onChannel(ch),
-            err => console.error(err.message)
-          )
-      }
-    }
-  }
-
-  get state (): number {
-    return this._state
+  get onState (): Observable<number> {
+    return this.stateSubject.asObservable()
   }
 
   /**
@@ -92,21 +80,22 @@ export class Signaling {
    * to add new peers to the network.
    */
   open (): void {
-    if (this.state === Signaling.CONNECTED) {
+    if (this.state === Signaling.FIRST_CONNECTED) {
       this.rxWs.send({ joined: true })
-      this.state = Signaling.OPEN
+      this.setState(Signaling.READY_TO_JOIN_OTHERS)
     }
   }
 
-  async join (key): Promise<boolean> {
+  join (key): void {
     if (this.state !== Signaling.CLOSED) {
       throw new Error('Failed to join via signaling: connection with signaling is already opened')
     }
-    this.state = Signaling.CONNECTING
-    try {
-      const ws = await this.wc.webSocketBuilder.connect(this.url + key)
-      this.rxWs = this.createRxWs(ws)
-      const isFirst = await new Promise ((resolve, reject) => {
+    this.setState(Signaling.CONNECTING)
+    this.wc.webSocketBuilder.connect(this.url + key)
+      .then(ws => {
+        this.setState(Signaling.OPEN)
+        this.rxWs = this.createRxWs(ws)
+        this.startPingInterval()
         this.rxWs.stream.subscribe(
           msg => {
             switch (msg.type) {
@@ -120,35 +109,28 @@ export class Signaling {
             }
             case 'isFirst':
               if (msg.isFirst) {
-                this.state = Signaling.OPEN
-                resolve(true)
+                this.setState(Signaling.READY_TO_JOIN_OTHERS)
               } else {
                 this.wc.webRTCBuilder.connectOverSignaling({
                   stream: this.rxWs.stream.filter(msg => msg.type === 'content')
                     .map(({ content }) => content),
                   send: (msg) => this.rxWs.send({ content: msg })
                 })
-                  .then((ch) => {
-                    this.state = Signaling.CONNECTED
-                    resolve(false)
-                  })
+                  .then(() => this.setState(Signaling.FIRST_CONNECTED))
                   .catch(err => {
-                    if (this.rxWs.readyState !== 2 && this.rxWs.readyState !== 3) {
-                      this.rxWs.close(1000)
-                    }
-                    reject(new Error(`Failed to join over Signaling: ${err.message}`))
+                    this.rxWs.close(FIRST_CONNECTION_ERROR_CODE, `Failed to join over Signaling: ${err.message}`)
                   })
               }
               break
             }
           },
-          err => reject(err)
+          err => console.error(err)
         )
       })
-      return isFirst as boolean
-    } catch (err) {
-      this.state = Signaling.CLOSED
-    }
+      .catch(err => {
+        this.setState(Signaling.CLOSED)
+        console.error(`Failed to connect to Signaling: ${err.message}`)
+      })
   }
 
   /**
@@ -160,12 +142,29 @@ export class Signaling {
     }
   }
 
+  private setState (state: number) {
+    if (this.state !== state) {
+      this.state = state
+      this.stateSubject.next(state)
+      if (state === Signaling.READY_TO_JOIN_OTHERS) {
+        this.wc.webRTCBuilder.channelsFromSignaling({
+          stream: this.rxWs.stream.filter(msg => msg.type === 'content')
+            .map(({ content }) => content),
+          send: msg => this.rxWs.send({ content: msg })
+        })
+          .subscribe(
+            ch => this.onChannel(ch),
+            err => console.error(err.message)
+          )
+      }
+    }
+  }
+
   private startPingInterval () {
     this.rxWs.ping()
     this.pingInterval = setInterval(() => {
-      if (!this.pongReceived && this.rxWs.readyState !== WebSocket.CLOSING && this.rxWs.readyState !== WebSocket.CLOSED) {
-        this.rxWs.close(4002, 'Signaling is no longer available')
-        clearInterval(this.pingInterval)
+      if (!this.pongReceived) {
+        this.rxWs.close(PING_ERROR_CODE, 'Signaling is no longer available')
       } else {
         this.pongReceived = false
         this.rxWs.ping()
@@ -175,27 +174,24 @@ export class Signaling {
 
   private createRxWs (ws: WebSocket): SignalingConnection {
     const subject = new Subject()
-    const setClosedState = (code, reason) => {
-      this.state = Signaling.CLOSED
-      if (code === 1000) {
-        subject.complete()
-      } else {
-        subject.error(new Error(`${code}: ${reason}`))
-      }
-    }
     ws.binaryType = 'arraybuffer'
     ws.onmessage = evt => {
       try {
         subject.next(signaling.Message.decode(new Uint8Array(evt.data)))
       } catch (err) {
-        console.error('Signaling message error', err)
-        ws.close(4000, err.message)
-        setClosedState(4000, err.message)
+        ws.close(MESSAGE_ERROR_CODE, err.message)
       }
     }
     ws.onerror = err => subject.error(err)
-    ws.onclose = closeEvt => setClosedState(closeEvt.code, closeEvt.reason)
-    ws.onopen = () => this.startPingInterval()
+    ws.onclose = closeEvt => {
+      clearInterval(this.pingInterval)
+      this.setState(Signaling.CLOSED)
+      if (closeEvt.code === 1000) {
+        subject.complete()
+      } else {
+        console.error(`WebSocket connection to Signaling '${this.url}' failed with code ${closeEvt.code}: ${closeEvt.reason}`)
+      }
+    }
     return {
       stream: subject,
       send: msg => ws.send(signaling.Message.encode(
@@ -203,10 +199,7 @@ export class Signaling {
       ).finish()),
       pong: () => ws.send(pongMsg),
       ping: () => ws.send(pingMsg),
-      close: (code, reason) => {
-        ws.close(code, reason)
-        setClosedState(code, reason)
-      },
+      close: (code, reason) => ws.close(code, reason),
       readyState: ws.readyState
     }
   }

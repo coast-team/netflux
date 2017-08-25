@@ -1892,42 +1892,9 @@ function __extends(d, b) {
 
 
 
-function __awaiter(thisArg, _arguments, P, generator) {
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator.throw(value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-}
 
-function __generator(thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-    function verb(n) { return function (v) { return step([n, v]); }; }
-    function step(op) {
-        if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
-            if (f = 1, y && (t = y[op[0] & 2 ? "return" : op[0] ? "throw" : "next"]) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [0, t.value];
-            switch (op[0]) {
-                case 0: case 1: t = op; break;
-                case 4: _.label++; return { value: op[1], done: false };
-                case 5: _.label++; y = op[1]; op = [0]; continue;
-                case 7: op = _.ops.pop(); _.trys.pop(); continue;
-                default:
-                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop();
-                    _.trys.pop(); continue;
-            }
-            op = body.call(thisArg, _);
-        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
-    }
-}
+
+
 
 
 
@@ -8223,7 +8190,10 @@ var FullMesh = (function (_super) {
     return FullMesh;
 }(Service$1));
 
-var PING_INTERVAL = 2500;
+var PING_INTERVAL = 3000;
+var MESSAGE_ERROR_CODE = 4000;
+var PING_ERROR_CODE = 4001;
+var FIRST_CONNECTION_ERROR_CODE = 4002;
 var pingMsg = signaling.Message.encode(signaling.Message.create({ ping: true })).finish();
 var pongMsg = signaling.Message.encode(signaling.Message.create({ pong: true })).finish();
 /**
@@ -8241,35 +8211,18 @@ var Signaling = (function () {
         // public
         this.url = url.endsWith('/') ? url : url + '/';
         this.onChannel = onChannel;
-        this.onStateChanged = function () { };
         // private
         this.wc = wc;
-        this._state = Signaling.CLOSED;
+        this.stateSubject = new Subject_2();
         this.rxWs = undefined;
         this.pingInterval = undefined;
         this.pongReceived = false;
+        // Init state
+        this.setState(Signaling.CLOSED);
     }
-    Object.defineProperty(Signaling.prototype, "state", {
+    Object.defineProperty(Signaling.prototype, "onState", {
         get: function () {
-            return this._state;
-        },
-        set: function (state) {
-            var _this = this;
-            if (this._state !== state) {
-                this._state = state;
-                this.onStateChanged(state);
-                if (this._state === Signaling.OPEN) {
-                    this.wc.webRTCBuilder.channelsFromSignaling({
-                        stream: this.rxWs.stream.filter(function (msg) { return msg.type === 'content'; })
-                            .map(function (_a) {
-                            var content = _a.content;
-                            return content;
-                        }),
-                        send: function (msg) { return _this.rxWs.send({ content: msg }); }
-                    })
-                        .subscribe(function (ch) { return _this.onChannel(ch); }, function (err) { return console.error(err.message); });
-                }
-            }
+            return this.stateSubject.asObservable();
         },
         enumerable: true,
         configurable: true
@@ -8279,79 +8232,57 @@ var Signaling = (function () {
      * to add new peers to the network.
      */
     Signaling.prototype.open = function () {
-        if (this.state === Signaling.CONNECTED) {
+        if (this.state === Signaling.FIRST_CONNECTED) {
             this.rxWs.send({ joined: true });
-            this.state = Signaling.OPEN;
+            this.setState(Signaling.READY_TO_JOIN_OTHERS);
         }
     };
     Signaling.prototype.join = function (key) {
-        return __awaiter(this, void 0, void 0, function () {
-            var _this = this;
-            var ws, isFirst, err_1;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        if (this.state !== Signaling.CLOSED) {
-                            throw new Error('Failed to join via signaling: connection with signaling is already opened');
+        var _this = this;
+        if (this.state !== Signaling.CLOSED) {
+            throw new Error('Failed to join via signaling: connection with signaling is already opened');
+        }
+        this.setState(Signaling.CONNECTING);
+        this.wc.webSocketBuilder.connect(this.url + key)
+            .then(function (ws) {
+            _this.setState(Signaling.OPEN);
+            _this.rxWs = _this.createRxWs(ws);
+            _this.startPingInterval();
+            _this.rxWs.stream.subscribe(function (msg) {
+                switch (msg.type) {
+                    case 'ping': {
+                        _this.rxWs.pong();
+                        break;
+                    }
+                    case 'pong': {
+                        _this.pongReceived = true;
+                        break;
+                    }
+                    case 'isFirst':
+                        if (msg.isFirst) {
+                            _this.setState(Signaling.READY_TO_JOIN_OTHERS);
                         }
-                        this.state = Signaling.CONNECTING;
-                        _a.label = 1;
-                    case 1:
-                        _a.trys.push([1, 4, , 5]);
-                        return [4 /*yield*/, this.wc.webSocketBuilder.connect(this.url + key)];
-                    case 2:
-                        ws = _a.sent();
-                        this.rxWs = this.createRxWs(ws);
-                        return [4 /*yield*/, new Promise(function (resolve, reject) {
-                                _this.rxWs.stream.subscribe(function (msg) {
-                                    switch (msg.type) {
-                                        case 'ping': {
-                                            _this.rxWs.pong();
-                                            break;
-                                        }
-                                        case 'pong': {
-                                            _this.pongReceived = true;
-                                            break;
-                                        }
-                                        case 'isFirst':
-                                            if (msg.isFirst) {
-                                                _this.state = Signaling.OPEN;
-                                                resolve(true);
-                                            }
-                                            else {
-                                                _this.wc.webRTCBuilder.connectOverSignaling({
-                                                    stream: _this.rxWs.stream.filter(function (msg) { return msg.type === 'content'; })
-                                                        .map(function (_a) {
-                                                        var content = _a.content;
-                                                        return content;
-                                                    }),
-                                                    send: function (msg) { return _this.rxWs.send({ content: msg }); }
-                                                })
-                                                    .then(function (ch) {
-                                                    _this.state = Signaling.CONNECTED;
-                                                    resolve(false);
-                                                })
-                                                    .catch(function (err) {
-                                                    if (_this.rxWs.readyState !== 2 && _this.rxWs.readyState !== 3) {
-                                                        _this.rxWs.close(1000);
-                                                    }
-                                                    reject(new Error("Failed to join over Signaling: " + err.message));
-                                                });
-                                            }
-                                            break;
-                                    }
-                                }, function (err) { return reject(err); });
-                            })];
-                    case 3:
-                        isFirst = _a.sent();
-                        return [2 /*return*/, isFirst];
-                    case 4:
-                        err_1 = _a.sent();
-                        this.state = Signaling.CLOSED;
-                        return [3 /*break*/, 5];
-                    case 5: return [2 /*return*/];
+                        else {
+                            _this.wc.webRTCBuilder.connectOverSignaling({
+                                stream: _this.rxWs.stream.filter(function (msg) { return msg.type === 'content'; })
+                                    .map(function (_a) {
+                                    var content = _a.content;
+                                    return content;
+                                }),
+                                send: function (msg) { return _this.rxWs.send({ content: msg }); }
+                            })
+                                .then(function () { return _this.setState(Signaling.FIRST_CONNECTED); })
+                                .catch(function (err) {
+                                _this.rxWs.close(FIRST_CONNECTION_ERROR_CODE, "Failed to join over Signaling: " + err.message);
+                            });
+                        }
+                        break;
                 }
-            });
+            }, function (err) { return console.error(err); });
+        })
+            .catch(function (err) {
+            _this.setState(Signaling.CLOSED);
+            console.error("Failed to connect to Signaling: " + err.message);
         });
     };
     /**
@@ -8362,13 +8293,30 @@ var Signaling = (function () {
             this.rxWs.close(1000);
         }
     };
+    Signaling.prototype.setState = function (state) {
+        var _this = this;
+        if (this.state !== state) {
+            this.state = state;
+            this.stateSubject.next(state);
+            if (state === Signaling.READY_TO_JOIN_OTHERS) {
+                this.wc.webRTCBuilder.channelsFromSignaling({
+                    stream: this.rxWs.stream.filter(function (msg) { return msg.type === 'content'; })
+                        .map(function (_a) {
+                        var content = _a.content;
+                        return content;
+                    }),
+                    send: function (msg) { return _this.rxWs.send({ content: msg }); }
+                })
+                    .subscribe(function (ch) { return _this.onChannel(ch); }, function (err) { return console.error(err.message); });
+            }
+        }
+    };
     Signaling.prototype.startPingInterval = function () {
         var _this = this;
         this.rxWs.ping();
         this.pingInterval = setInterval(function () {
-            if (!_this.pongReceived && _this.rxWs.readyState !== WebSocket.CLOSING && _this.rxWs.readyState !== WebSocket.CLOSED) {
-                _this.rxWs.close(4002, 'Signaling is no longer available');
-                clearInterval(_this.pingInterval);
+            if (!_this.pongReceived) {
+                _this.rxWs.close(PING_ERROR_CODE, 'Signaling is no longer available');
             }
             else {
                 _this.pongReceived = false;
@@ -8379,44 +8327,39 @@ var Signaling = (function () {
     Signaling.prototype.createRxWs = function (ws) {
         var _this = this;
         var subject = new Subject_2();
-        var setClosedState = function (code, reason) {
-            _this.state = Signaling.CLOSED;
-            if (code === 1000) {
-                subject.complete();
-            }
-            else {
-                subject.error(new Error(code + ": " + reason));
-            }
-        };
         ws.binaryType = 'arraybuffer';
         ws.onmessage = function (evt) {
             try {
                 subject.next(signaling.Message.decode(new Uint8Array(evt.data)));
             }
             catch (err) {
-                console.error('Signaling message error', err);
-                ws.close(4000, err.message);
-                setClosedState(4000, err.message);
+                ws.close(MESSAGE_ERROR_CODE, err.message);
             }
         };
         ws.onerror = function (err) { return subject.error(err); };
-        ws.onclose = function (closeEvt) { return setClosedState(closeEvt.code, closeEvt.reason); };
-        ws.onopen = function () { return _this.startPingInterval(); };
+        ws.onclose = function (closeEvt) {
+            clearInterval(_this.pingInterval);
+            _this.setState(Signaling.CLOSED);
+            if (closeEvt.code === 1000) {
+                subject.complete();
+            }
+            else {
+                console.error("WebSocket connection to Signaling '" + _this.url + "' failed with code " + closeEvt.code + ": " + closeEvt.reason);
+            }
+        };
         return {
             stream: subject,
             send: function (msg) { return ws.send(signaling.Message.encode(signaling.Message.create(msg)).finish()); },
             pong: function () { return ws.send(pongMsg); },
             ping: function () { return ws.send(pingMsg); },
-            close: function (code, reason) {
-                ws.close(code, reason);
-                setClosedState(code, reason);
-            },
+            close: function (code, reason) { return ws.close(code, reason); },
             readyState: ws.readyState
         };
     };
     Signaling.CONNECTING = 0;
-    Signaling.CONNECTED = 1;
-    Signaling.OPEN = 2;
+    Signaling.OPEN = 1;
+    Signaling.FIRST_CONNECTED = 4;
+    Signaling.READY_TO_JOIN_OTHERS = 5;
     Signaling.CLOSED = 3;
     return Signaling;
 }());
@@ -8567,7 +8510,6 @@ var filter_1 = {
 
 Observable_1.Observable.prototype.filter = filter_1.filter;
 
-var CONNECT_TIMEOUT = 3000;
 var listenSubject = new BehaviorSubject_2('');
 /**
  * Service class responsible to establish connections between peers via
@@ -8591,18 +8533,20 @@ var WebSocketBuilder = (function () {
      */
     WebSocketBuilder.prototype.connect = function (url) {
         return new Promise(function (resolve, reject) {
-            if (isURL(url) && url.search(/^wss?/) !== -1) {
-                var ws_1 = new WebSocket(url);
-                ws_1.onopen = function () { return resolve(ws_1); };
-                // Timeout for node (otherwise it will loop forever if incorrect address)
-                setTimeout(function () {
-                    if (ws_1.readyState !== ws_1.OPEN) {
-                        reject(new Error("WebSocket " + CONNECT_TIMEOUT + "ms connection timeout with " + url));
-                    }
-                }, CONNECT_TIMEOUT);
+            try {
+                if (isURL(url) && url.search(/^wss?/) !== -1) {
+                    var ws_1 = new WebSocket(url);
+                    ws_1.onopen = function () { return resolve(ws_1); };
+                    ws_1.onclose = function (closeEvt) { return reject(new Error("WebSocket connection to '" + url + "' failed with code " + closeEvt.code + ": " + closeEvt.reason)); };
+                    
+                }
+                else {
+                    throw new Error(url + " is not a valid URL");
+                }
             }
-            else {
-                throw new Error(url + " is not a valid URL");
+            catch (err) {
+                console.error('WebSocketBuilder ERROR');
+                reject(err);
             }
         });
     };
@@ -8620,12 +8564,8 @@ var WebSocketBuilder = (function () {
                 var ws_2 = new WebSocket(fullUrl);
                 var channel_1 = new Channel(ws_2, _this.wc, id);
                 ws_2.onopen = function () { return resolve(channel_1); };
-                // Timeout for node (otherwise it will loop forever if incorrect address)
-                setTimeout(function () {
-                    if (ws_2.readyState !== ws_2.OPEN) {
-                        reject(new Error("WebSocket " + CONNECT_TIMEOUT + "ms connection timeout with " + url));
-                    }
-                }, CONNECT_TIMEOUT);
+                ws_2.onclose = function (closeEvt) { return reject(new Error("WebSocket connection to '" + url + "' failed with code " + closeEvt.code + ": " + closeEvt.reason)); };
+                
             }
             else {
                 throw new Error(url + " is not a valid URL");
@@ -10106,17 +10046,25 @@ var WebChannel = (function (_super) {
         _this._userMsg = new UserMessage();
         // Signaling init
         _this._signaling = new Signaling(_this, function (ch) { return _this._initChannel(ch); }, signalingURL);
-        _this._signaling.onStateChanged = function (state) {
-            if (state === Signaling.CLOSED) {
-                if (_this.autoRejoin && !_this._disableAutoRejoin) {
-                    _this._rejoin();
-                }
-                else if (_this.members.length === 0) {
-                    _this._setState(WebChannel.LEFT);
-                }
-            }
+        _this._signaling.onState.subscribe(function (state) {
             _this.onSignalingStateChanged(state);
-        };
+            switch (state) {
+                case Signaling.OPEN:
+                    _this._setState(WebChannel.JOINING);
+                    break;
+                case Signaling.READY_TO_JOIN_OTHERS:
+                    _this._setState(WebChannel.JOINED);
+                    break;
+                case Signaling.CLOSED:
+                    if (_this.members.length === 0) {
+                        _this._setState(WebChannel.LEFT);
+                    }
+                    if (_this.autoRejoin && !_this._disableAutoRejoin) {
+                        _this._rejoin();
+                    }
+                    break;
+            }
+        });
         // Services init
         _this._svcMsgStream = new Subject_2();
         _super.prototype.setSvcMsgStream.call(_this, _this._svcMsgStream);
@@ -10129,17 +10077,12 @@ var WebChannel = (function (_super) {
         _this._joinResult = new Subject_2();
         _this._joinResult.subscribe(function (err) {
             if (err !== undefined) {
+                console.error('Failed to join: ' + err.message, err);
                 _this._signaling.close();
-                if (_this.autoRejoin && !_this._disableAutoRejoin) {
-                    _this._rejoin();
-                }
-                else {
-                    _this._setState(WebChannel.LEFT);
-                }
             }
             else {
-                _this._signaling.open();
                 _this._setState(WebChannel.JOINED);
+                _this._signaling.open();
             }
         });
         // Ping-pong init
@@ -10180,7 +10123,6 @@ var WebChannel = (function (_super) {
      * Join the network via a key provided by one of the network member or a `Channel`.
      */
     WebChannel.prototype.join = function (value) {
-        var _this = this;
         if (value === void 0) { value = generateKey(); }
         if (this._state === WebChannel.LEFT) {
             this._disableAutoRejoin = false;
@@ -10192,13 +10134,7 @@ var WebChannel = (function (_super) {
                 else {
                     throw new Error('Parameter of the join function should be either a Channel or a string');
                 }
-                this._signaling.join(this.key)
-                    .then(function (isFirst) {
-                    if (isFirst) {
-                        _this._setState(WebChannel.JOINED);
-                    }
-                })
-                    .catch(function (err) { return console.error(err.message); });
+                this._signaling.join(this.key);
             }
         }
         else {
@@ -10324,9 +10260,9 @@ var WebChannel = (function (_super) {
         this.members.splice(this.members.indexOf(id), 1);
         this.onPeerLeave(id);
         if (this.members.length === 0
-            && this._signaling.state === Signaling.CLOSED
-            && !this.autoRejoin && this._disableAutoRejoin) {
-            this.leave();
+            && (this._signaling.state === Signaling.CONNECTING
+                && this._signaling.state === Signaling.CLOSED)) {
+            this._setState(WebChannel.LEFT);
         }
     };
     /**
@@ -10491,18 +10427,7 @@ var WebChannel = (function (_super) {
     };
     WebChannel.prototype._rejoin = function () {
         var _this = this;
-        this._rejoinTimer = setTimeout(function () {
-            _this._signaling.join(_this.key)
-                .then(function (isFirst) {
-                if (isFirst) {
-                    _this._setState(WebChannel.JOINED);
-                }
-                else {
-                    _this._setState(WebChannel.JOINING);
-                }
-            })
-                .catch(function (err) { return console.error(err.message); });
-        }, REJOIN_TIMEOUT);
+        this._rejoinTimer = setTimeout(function () { return _this._signaling.join(_this.key); }, REJOIN_TIMEOUT);
     };
     /**
      * Generate random id for a `WebChannel` or a new peer.
@@ -10520,8 +10445,9 @@ var WebChannel = (function (_super) {
     WebChannel.JOINED = 1;
     WebChannel.LEFT = 2;
     WebChannel.SIGNALING_CONNECTING = Signaling.CONNECTING;
-    WebChannel.SIGNALING_CONNECTED = Signaling.CONNECTED;
     WebChannel.SIGNALING_OPEN = Signaling.OPEN;
+    WebChannel.SIGNALING_FIRST_CONNECTED = Signaling.FIRST_CONNECTED;
+    WebChannel.SIGNALING_READY_TO_JOIN_OTHERS = Signaling.READY_TO_JOIN_OTHERS;
     WebChannel.SIGNALING_CLOSED = Signaling.CLOSED;
     return WebChannel;
 }(Service$1));

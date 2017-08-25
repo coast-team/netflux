@@ -41,9 +41,11 @@ export class WebChannel extends Service {
 
   static SIGNALING_CONNECTING = Signaling.CONNECTING
 
-  static SIGNALING_CONNECTED = Signaling.CONNECTED
-
   static SIGNALING_OPEN = Signaling.OPEN
+
+  static SIGNALING_FIRST_CONNECTED = Signaling.FIRST_CONNECTED
+
+  static SIGNALING_READY_TO_JOIN_OTHERS = Signaling.READY_TO_JOIN_OTHERS
 
   static SIGNALING_CLOSED = Signaling.CLOSED
 
@@ -153,16 +155,27 @@ export class WebChannel extends Service {
 
     // Signaling init
     this._signaling = new Signaling(this, ch => this._initChannel(ch), signalingURL)
-    this._signaling.onStateChanged = state => {
-      if (state === Signaling.CLOSED) {
-        if (this.autoRejoin && !this._disableAutoRejoin) {
-          this._rejoin()
-        } else if (this.members.length === 0) {
-          this._setState(WebChannel.LEFT)
+    this._signaling.onState.subscribe(
+      state => {
+        this.onSignalingStateChanged(state)
+        switch (state) {
+        case Signaling.OPEN:
+          this._setState(WebChannel.JOINING)
+          break
+        case Signaling.READY_TO_JOIN_OTHERS:
+          this._setState(WebChannel.JOINED)
+          break
+        case Signaling.CLOSED:
+          if (this.members.length === 0) {
+            this._setState(WebChannel.LEFT)
+          }
+          if (this.autoRejoin && !this._disableAutoRejoin) {
+            this._rejoin()
+          }
+          break
         }
       }
-      this.onSignalingStateChanged(state)
-    }
+    )
 
     // Services init
     this._svcMsgStream = new Subject()
@@ -178,17 +191,13 @@ export class WebChannel extends Service {
     // Topology init
     this._setTopology(topology)
     this._joinResult = new Subject()
-    this._joinResult.subscribe((err) => {
+    this._joinResult.subscribe((err?: Error) => {
       if (err !== undefined) {
+        console.error('Failed to join: ' + err.message, err)
         this._signaling.close()
-        if (this.autoRejoin && !this._disableAutoRejoin) {
-          this._rejoin()
-        } else {
-          this._setState(WebChannel.LEFT)
-        }
       } else {
-        this._signaling.open()
         this._setState(WebChannel.JOINED)
+        this._signaling.open()
       }
     })
 
@@ -232,12 +241,6 @@ export class WebChannel extends Service {
           throw new Error('Parameter of the join function should be either a Channel or a string')
         }
         this._signaling.join(this.key)
-          .then((isFirst) => {
-            if (isFirst) {
-              this._setState(WebChannel.JOINED)
-            }
-          })
-          .catch((err) => console.error(err.message))
       }
     } else {
       throw new Error('Failed to join: already joining or joined')
@@ -344,9 +347,9 @@ export class WebChannel extends Service {
     this.members.splice(this.members.indexOf(id), 1)
     this.onPeerLeave(id)
     if (this.members.length === 0
-      && this._signaling.state === Signaling.CLOSED
-      && !this.autoRejoin && this._disableAutoRejoin) {
-      this.leave()
+      && (this._signaling.state === Signaling.CONNECTING
+      && this._signaling.state === Signaling.CLOSED)) {
+      this._setState(WebChannel.LEFT)
     }
   }
 
@@ -532,17 +535,10 @@ export class WebChannel extends Service {
   }
 
   private _rejoin () {
-    this._rejoinTimer = setTimeout(() => {
-      this._signaling.join(this.key)
-        .then((isFirst) => {
-          if (isFirst) {
-            this._setState(WebChannel.JOINED)
-          } else {
-            this._setState(WebChannel.JOINING)
-          }
-        })
-        .catch((err) => console.error(err.message))
-    }, REJOIN_TIMEOUT)
+    this._rejoinTimer = setTimeout(
+      () => this._signaling.join(this.key),
+      REJOIN_TIMEOUT
+    )
   }
 
   /**
