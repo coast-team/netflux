@@ -6157,19 +6157,19 @@ var FullMesh = (function (_super) {
     FullMesh.prototype.init = function () {
         this.channels = new Set();
         this.jps = new Map();
-        this.joinAttempts = new Map();
+        this.joinAttempts = 0;
         this.intermediaryChannel = undefined;
     };
     FullMesh.prototype.clean = function () { };
     FullMesh.prototype.addJoining = function (ch, members) {
         console.info(this.wc.myId + ' addJoining ' + ch.peerId);
         this.peerJoined(ch);
-        this.joinAttempts.set(ch.peerId, 1);
         this.checkMembers(ch, members);
     };
     FullMesh.prototype.initJoining = function (ch) {
         console.info(this.wc.myId + ' initJoining ' + ch.peerId);
         this.peerJoined(ch);
+        this.joinAttempts = 0;
         this.intermediaryChannel = ch;
     };
     FullMesh.prototype.send = function (msg) {
@@ -6254,13 +6254,14 @@ var FullMesh = (function (_super) {
         var e_4, _c;
     };
     FullMesh.prototype.onChannelClose = function (closeEvt, channel) {
-        if (this.intermediaryChannel !== undefined
-            && this.intermediaryChannel.peerId === channel.peerId) {
-            this.wc._joinResult.next(new Error("Failed to join: intermediary peer has gone: " + closeEvt.reason));
+        console.log(this.wc.myId + ' onChannelClose ' + channel.peerId);
+        if (this.intermediaryChannel && this.intermediaryChannel === channel) {
             this.leave();
+            console.error('Intermediary CLOSED: ', closeEvt);
+            this.wc._joinResult.next(new Error("Intermediary channel closed: " + closeEvt.reason));
         }
-        if (this.channels.has(channel)) {
-            this.channels.delete(channel);
+        this.channels.delete(channel);
+        if (this.wc.members.includes(channel.peerId)) {
             this.wc._onPeerLeave(channel.peerId);
             console.info(this.wc.myId + ' _onPeerLeave ' + channel.peerId);
         }
@@ -6305,22 +6306,27 @@ var FullMesh = (function (_super) {
                 }
                 // Notify the intermediary peer about your members
                 Promise.all(misssingConnections).then(function () {
-                    channel.send(_this.wc._encode({
+                    var send = function () { return channel.send(_this.wc._encode({
                         recipientId: channel.peerId,
                         content: _super.prototype.encode.call(_this, { connectedTo: { members: _this.wc.members } })
-                    }));
+                    })); };
+                    console.log(_this.wc.myId + ' joining attempt number ' + _this.joinAttempts);
+                    if (_this.joinAttempts === MAX_JOIN_ATTEMPTS) {
+                        _this.leave();
+                        _this.wc._joinResult.next(new Error('Failed to join: maximum join attempts has reached'));
+                    }
+                    else if (_this.joinAttempts === 1) {
+                        setTimeout(function () { return send(); }, 200 + 100 * Math.random());
+                    }
+                    else {
+                        send();
+                    }
+                    _this.joinAttempts++;
                 });
                 break;
             }
             case 'connectedTo': {
-                var attempts = this.joinAttempts.get(senderId);
-                this.joinAttempts.set(senderId, ++attempts);
-                if (attempts === MAX_JOIN_ATTEMPTS) {
-                    channel.close();
-                }
-                else {
-                    this.checkMembers(channel, msg.connectedTo.members);
-                }
+                this.checkMembers(channel, msg.connectedTo.members);
                 break;
             }
             case 'joiningPeerId': {
@@ -6338,9 +6344,8 @@ var FullMesh = (function (_super) {
         }
         var e_5, _b;
     };
-    FullMesh.prototype.checkMembers = function (ch, members, shouldSetTimeout) {
+    FullMesh.prototype.checkMembers = function (ch, members) {
         var _this = this;
-        if (shouldSetTimeout === void 0) { shouldSetTimeout = false; }
         // Joining succeed if the joining peer and his intermediary peer
         // have same members (excludings themselves)
         if (this.wc.members.length === members.length && members.every(function (id) { return id === _this.wc.myId || _this.wc.members.includes(id); })) {
@@ -6351,32 +6356,23 @@ var FullMesh = (function (_super) {
             return;
         }
         // Joining did not finish, resend my members to the joining peer
-        var sendMembers = function () {
-            _this.wc._send({ content: _super.prototype.encode.call(_this, { joiningPeerId: ch.peerId }) });
-            ch.send(_this.wc._encode({
-                recipientId: ch.peerId,
-                content: _super.prototype.encode.call(_this, { connectTo: { members: _this.wc.members } })
-            }));
-        };
-        if (shouldSetTimeout) {
-            setTimeout(function () { return sendMembers(); }, 200 + 100 * Math.random());
-        }
-        else {
-            sendMembers();
-        }
+        this.wc._send({ content: _super.prototype.encode.call(this, { joiningPeerId: ch.peerId }) });
+        ch.send(this.wc._encode({
+            recipientId: ch.peerId,
+            content: _super.prototype.encode.call(this, { connectTo: { members: this.wc.members } })
+        }));
     };
     FullMesh.prototype.peerJoined = function (ch) {
         this.channels.add(ch);
         this.wc._onPeerJoin(ch.peerId);
         this.jps.delete(ch.peerId);
-        console.info(this.wc.myId + ' _onPeerJoin ' + ch.peerId + ' new members are: ' + this.wc.members.join());
+        console.info(this.wc.myId + ' _onPeerJoin ' + ch.peerId);
     };
     return FullMesh;
 }(Service$1));
 
 var PING_INTERVAL = 3000;
 var MESSAGE_ERROR_CODE = 4000;
-var PING_ERROR_CODE = 4001;
 var FIRST_CONNECTION_ERROR_CODE = 4002;
 var pingMsg = signaling.Message.encode(signaling.Message.create({ ping: true })).finish();
 var pongMsg = signaling.Message.encode(signaling.Message.create({ pong: true })).finish();
@@ -6462,7 +6458,10 @@ var Signaling = (function () {
                         }
                         break;
                 }
-            }, function (err) { return console.error(err); });
+            }, function (err) {
+                _this.setState(Signaling.CLOSED);
+                console.error(err);
+            });
         })
             .catch(function (err) {
             _this.setState(Signaling.CLOSED);
@@ -6500,7 +6499,9 @@ var Signaling = (function () {
         this.rxWs.ping();
         this.pingInterval = setInterval(function () {
             if (!_this.pongReceived) {
-                _this.rxWs.close(PING_ERROR_CODE, 'Signaling is no longer available');
+                clearInterval(_this.pingInterval);
+                _this.rxWs.stream.error(new Error('Signaling is no longer available'));
+                _this.rxWs.clean();
             }
             else {
                 _this.pongReceived = false;
@@ -6536,8 +6537,16 @@ var Signaling = (function () {
             send: function (msg) { return ws.send(signaling.Message.encode(signaling.Message.create(msg)).finish()); },
             pong: function () { return ws.send(pongMsg); },
             ping: function () { return ws.send(pingMsg); },
-            close: function (code, reason) { return ws.close(code, reason); },
-            readyState: ws.readyState
+            close: function (code, reason) {
+                if (reason === void 0) { reason = ''; }
+                return ws.close(code, reason);
+            },
+            clean: function () {
+                ws.onmessage = function () { };
+                ws.onerror = function () { };
+                ws.onclose = function () { };
+                ws.close(1000);
+            }
         };
     };
     Signaling.CONNECTING = 0;
@@ -7855,17 +7864,11 @@ var WebRTCBuilder = (function (_super) {
     };
     WebRTCBuilder.prototype.configOnDisconnect = function (pc, dc, id) {
         pc.oniceconnectionstatechange = function () {
-            if (pc.iceConnectionState === 'disconnected'
-                && dc.readyState !== 'closing'
-                && dc.readyState !== 'closed'
-                && dc.onclose) {
+            if (pc.iceConnectionState === 'failed' && dc.onclose) {
                 dc.onclose(new CloseEvent('disconnect', {
                     code: 4201,
                     reason: 'disconnected'
                 }));
-            }
-            else if (pc.iceCandidateState === 'failed') {
-                console.error('Ice connection state changed to: failed');
             }
         };
     };
@@ -8323,7 +8326,7 @@ var WebChannel = (function (_super) {
      */
     WebChannel.prototype.join = function (value) {
         if (value === void 0) { value = generateKey(); }
-        if (this._state === WebChannel.LEFT) {
+        if (this._state === WebChannel.LEFT && this._signaling.state === WebChannel.SIGNALING_CLOSED) {
             this._disableAutoRejoin = false;
             this._setState(WebChannel.JOINING);
             if (!(value instanceof Channel)) {
@@ -8337,7 +8340,7 @@ var WebChannel = (function (_super) {
             }
         }
         else {
-            throw new Error('Failed to join: already joining or joined');
+            console.warn('Failed to join: already joining or joined');
         }
     };
     /**
@@ -8460,7 +8463,7 @@ var WebChannel = (function (_super) {
         this.onPeerLeave(id);
         if (this.members.length === 0
             && (this._signaling.state === Signaling.CONNECTING
-                && this._signaling.state === Signaling.CLOSED)) {
+                || this._signaling.state === Signaling.CLOSED)) {
             this._setState(WebChannel.LEFT);
         }
     };

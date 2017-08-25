@@ -231,7 +231,7 @@ export class WebChannel extends Service {
    * Join the network via a key provided by one of the network member or a `Channel`.
    */
   join (value: string | Channel = generateKey()): void {
-    if (this._state === WebChannel.LEFT) {
+    if (this._state === WebChannel.LEFT && this._signaling.state === WebChannel.SIGNALING_CLOSED) {
       this._disableAutoRejoin = false
       this._setState(WebChannel.JOINING)
       if (!(value instanceof Channel)) {
@@ -243,7 +243,7 @@ export class WebChannel extends Service {
         this._signaling.join(this.key)
       }
     } else {
-      throw new Error('Failed to join: already joining or joined')
+      console.warn('Failed to join: already joining or joined')
     }
   }
 
@@ -348,7 +348,8 @@ export class WebChannel extends Service {
     this.onPeerLeave(id)
     if (this.members.length === 0
       && (this._signaling.state === Signaling.CONNECTING
-      && this._signaling.state === Signaling.CLOSED)) {
+      || this._signaling.state === Signaling.CLOSED)
+    ) {
       this._setState(WebChannel.LEFT)
     }
   }

@@ -13,7 +13,7 @@ interface SignalingConnection {
   pong: () => void,
   ping: () => void,
   close: (code: number, reason?: string) => void,
-  readyState: number
+  clean: () => void
 }
 
 type State = 0 | 1 | 2 | 3
@@ -124,7 +124,10 @@ export class Signaling {
               break
             }
           },
-          err => console.error(err)
+          err => {
+            this.setState(Signaling.CLOSED)
+            console.error(err)
+          }
         )
       })
       .catch(err => {
@@ -164,7 +167,9 @@ export class Signaling {
     this.rxWs.ping()
     this.pingInterval = setInterval(() => {
       if (!this.pongReceived) {
-        this.rxWs.close(PING_ERROR_CODE, 'Signaling is no longer available')
+        clearInterval(this.pingInterval)
+        this.rxWs.stream.error(new Error('Signaling is no longer available'))
+        this.rxWs.clean()
       } else {
         this.pongReceived = false
         this.rxWs.ping()
@@ -199,8 +204,13 @@ export class Signaling {
       ).finish()),
       pong: () => ws.send(pongMsg),
       ping: () => ws.send(pingMsg),
-      close: (code, reason) => ws.close(code, reason),
-      readyState: ws.readyState
+      close: (code, reason = '') => ws.close(code, reason),
+      clean: () => {
+        ws.onmessage = () => {}
+        ws.onerror = () => {}
+        ws.onclose = () => {}
+        ws.close(1000)
+      }
     }
   }
 }

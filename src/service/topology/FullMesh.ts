@@ -45,7 +45,7 @@ export class FullMesh extends Service implements TopologyInterface {
    * Prebuild message for better performance.
    */
   private joinSucceedContent: Uint8Array
-  private joinAttempts: Map<number, number>
+  private joinAttempts: number
 
   constructor (wc) {
     super(FULL_MESH, fullMesh.Message, wc._svcMsgStream)
@@ -66,7 +66,7 @@ export class FullMesh extends Service implements TopologyInterface {
   private init (): void {
     this.channels = new Set()
     this.jps = new Map()
-    this.joinAttempts = new Map()
+    this.joinAttempts = 0
     this.intermediaryChannel = undefined
   }
 
@@ -75,13 +75,13 @@ export class FullMesh extends Service implements TopologyInterface {
   addJoining (ch: Channel, members: [number]): void {
     console.info(this.wc.myId + ' addJoining ' + ch.peerId)
     this.peerJoined(ch)
-    this.joinAttempts.set(ch.peerId, 1)
     this.checkMembers(ch, members)
   }
 
   initJoining (ch: Channel): void {
     console.info(this.wc.myId + ' initJoining ' + ch.peerId)
     this.peerJoined(ch)
+    this.joinAttempts = 0
     this.intermediaryChannel = ch
   }
 
@@ -128,16 +128,16 @@ export class FullMesh extends Service implements TopologyInterface {
   }
 
   onChannelClose (closeEvt: CloseEvent, channel: Channel): void {
-    if (this.intermediaryChannel !== undefined
-      && this.intermediaryChannel.peerId === channel.peerId
-    ) {
-      this.wc._joinResult.next(
-        new Error(`Failed to join: intermediary peer has gone: ${closeEvt.reason}`)
-      )
+    console.log(this.wc.myId + ' onChannelClose ' + channel.peerId)
+    if (this.intermediaryChannel && this.intermediaryChannel === channel) {
       this.leave()
+      console.error('Intermediary CLOSED: ', closeEvt)
+      this.wc._joinResult.next(
+        new Error(`Intermediary channel closed: ${closeEvt.reason}`)
+      )
     }
-    if (this.channels.has(channel)) {
-      this.channels.delete(channel)
+    this.channels.delete(channel)
+    if (this.wc.members.includes(channel.peerId)) {
       this.wc._onPeerLeave(channel.peerId)
       console.info(this.wc.myId + ' _onPeerLeave ' + channel.peerId)
     }
@@ -173,21 +173,25 @@ export class FullMesh extends Service implements TopologyInterface {
 
       // Notify the intermediary peer about your members
       Promise.all(misssingConnections).then(() => {
-        channel.send(this.wc._encode({
+        const send = () => channel.send(this.wc._encode({
           recipientId: channel.peerId,
           content: super.encode({ connectedTo: { members: this.wc.members } })
         }))
+        console.log(this.wc.myId + ' joining attempt number ' + this.joinAttempts)
+        if (this.joinAttempts === MAX_JOIN_ATTEMPTS) {
+          this.leave()
+          this.wc._joinResult.next(new Error('Failed to join: maximum join attempts has reached'))
+        } else if (this.joinAttempts === 1) {
+          setTimeout(() => send(), 200 + 100 * Math.random())
+        } else {
+          send()
+        }
+        this.joinAttempts++
       })
       break
     }
     case 'connectedTo': {
-      let attempts = this.joinAttempts.get(senderId)
-      this.joinAttempts.set(senderId, ++attempts)
-      if (attempts === MAX_JOIN_ATTEMPTS) {
-        channel.close()
-      } else {
-        this.checkMembers(channel, msg.connectedTo.members)
-      }
+      this.checkMembers(channel, msg.connectedTo.members)
       break
     }
     case 'joiningPeerId': {
@@ -205,7 +209,7 @@ export class FullMesh extends Service implements TopologyInterface {
     }
   }
 
-  private checkMembers (ch, members: [number], shouldSetTimeout = false): void {
+  private checkMembers (ch, members: [number]): void {
     // Joining succeed if the joining peer and his intermediary peer
     // have same members (excludings themselves)
     if (this.wc.members.length === members.length && members.every(
@@ -219,24 +223,17 @@ export class FullMesh extends Service implements TopologyInterface {
     }
 
     // Joining did not finish, resend my members to the joining peer
-    const sendMembers = () => {
-      this.wc._send({ content: super.encode({ joiningPeerId: ch.peerId }) })
-      ch.send(this.wc._encode({
-        recipientId: ch.peerId,
-        content: super.encode({ connectTo: { members: this.wc.members } })
-      }))
-    }
-    if (shouldSetTimeout) {
-      setTimeout(() => sendMembers(), 200 + 100 * Math.random())
-    } else {
-      sendMembers()
-    }
+    this.wc._send({ content: super.encode({ joiningPeerId: ch.peerId }) })
+    ch.send(this.wc._encode({
+      recipientId: ch.peerId,
+      content: super.encode({ connectTo: { members: this.wc.members } })
+    }))
   }
 
   private peerJoined (ch: Channel): void {
     this.channels.add(ch)
     this.wc._onPeerJoin(ch.peerId)
     this.jps.delete(ch.peerId)
-    console.info(this.wc.myId + ' _onPeerJoin ' + ch.peerId + ' new members are: ' + this.wc.members.join())
+    console.info(this.wc.myId + ' _onPeerJoin ' + ch.peerId)
   }
 }
