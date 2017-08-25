@@ -348,17 +348,11 @@ export class WebRTCBuilder extends Service {
 
   private configOnDisconnect (pc: RTCPeerConnection, dc: RTCDataChannel, id: number): void {
     pc.oniceconnectionstatechange = () => {
-      if (pc.iceConnectionState === 'disconnected'
-        && dc.readyState !== 'closing'
-        && dc.readyState !== 'closed'
-        && dc.onclose
-      ) {
+      if (pc.iceConnectionState === 'failed' && dc.onclose) {
         dc.onclose(new CloseEvent('disconnect', {
           code: 4201,
           reason: 'disconnected'
         }))
-      } else if (pc.iceCandidateState === 'failed') {
-        console.error('Ice connection state changed to: failed')
       }
     }
   }
