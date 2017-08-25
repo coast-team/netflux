@@ -6315,7 +6315,7 @@ var FullMesh = (function (_super) {
                         _this.leave();
                         _this.wc._joinResult.next(new Error('Failed to join: maximum join attempts has reached'));
                     }
-                    else if (_this.joinAttempts === 1) {
+                    else if (_this.joinAttempts > 0) {
                         setTimeout(function () { return send(); }, 200 + 100 * Math.random());
                     }
                     else {
@@ -7865,10 +7865,14 @@ var WebRTCBuilder = (function (_super) {
     WebRTCBuilder.prototype.configOnDisconnect = function (pc, dc, id) {
         pc.oniceconnectionstatechange = function () {
             if (pc.iceConnectionState === 'failed' && dc.onclose) {
+                console.log('iceConnectionState FAILED for ' + id);
                 dc.onclose(new CloseEvent('disconnect', {
                     code: 4201,
                     reason: 'disconnected'
                 }));
+            }
+            else {
+                console.log('iceConnectionState changed to ' + pc.iceConnectionState + ' for ' + id);
             }
         };
     };

@@ -177,11 +177,10 @@ export class FullMesh extends Service implements TopologyInterface {
           recipientId: channel.peerId,
           content: super.encode({ connectedTo: { members: this.wc.members } })
         }))
-        console.log(this.wc.myId + ' joining attempt number ' + this.joinAttempts)
         if (this.joinAttempts === MAX_JOIN_ATTEMPTS) {
           this.leave()
           this.wc._joinResult.next(new Error('Failed to join: maximum join attempts has reached'))
-        } else if (this.joinAttempts === 1) {
+        } else if (this.joinAttempts > 0) {
           setTimeout(() => send(), 200 + 100 * Math.random())
         } else {
           send()
