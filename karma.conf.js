@@ -54,7 +54,9 @@ module.exports = (config) => {
           namedExports: { 'node_modules/protobufjs/minimal.js': [ 'Reader', 'Writer', 'util', 'roots' ] }
         })
       ],
-      format: 'iife'
+      format: 'iife',
+      name: 'netflux',
+      sourcemap: 'inline'
     },
 
     // test results reporter to use
@@ -138,7 +140,8 @@ module.exports = (config) => {
             ]
           })
         ],
-        format: 'iife'
+        format: 'iife',
+        name: 'netflux'
       },
 
       reporters: ['spec', 'coverage'],
