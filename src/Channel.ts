@@ -1,4 +1,4 @@
-import { isBrowser, isSocket } from './Util'
+import { isBrowser } from './Util'
 import { WebChannel } from './service/WebChannel'
 
 /**
@@ -7,6 +7,7 @@ import { WebChannel } from './service/WebChannel'
 export class Channel {
 
   private connection: WebSocket | RTCDataChannel
+  private rtcPeerConnection: RTCPeerConnection
   /**
    * Id of the peer who is at the other end of this channel.
    */
@@ -16,15 +17,20 @@ export class Channel {
   /**
    * Creates a channel from existing `RTCDataChannel` or `WebSocket`.
    */
-  constructor (connection: WebSocket | RTCDataChannel, wc: WebChannel, id?: number) {
+  constructor (
+    wc: WebChannel,
+    connection: WebSocket | RTCDataChannel,
+    options: {rtcPeerConnection?: RTCPeerConnection, id: number} = {id: -1}
+  ) {
     this.connection = connection
-    this.peerId = id || -1
+    this.peerId = options.id
+    this.rtcPeerConnection = options.rtcPeerConnection
 
     // Configure `send` function
     if (isBrowser()) {
       connection.binaryType = 'arraybuffer'
       this.send = this.sendInBrowser
-    } else if (isSocket(connection)) {
+    } else if (!this.rtcPeerConnection) {
       this.send = this.sendInNodeViaWebSocket
     } else {
       connection.binaryType = 'arraybuffer'
@@ -38,7 +44,19 @@ export class Channel {
   }
 
   close (): void {
-    this.connection.close()
+    if (this.rtcPeerConnection) {
+      /*
+      We call close function on RTCPeerConnection rather then on RTCDataChannel
+      in order to have the same behavior on Chrome and Firefox. Indeed in
+      Firefox (Nigthly v 57) RTCDataChannel.close call does not fire Close Event
+      on data channel, while in Chrome it does. However RTCPeerConnection.close
+      fires Close Event in both browsers. As in Netflux we assume to have one
+      RTCDataChannel per RTCPeerConnection, we can call it here.
+      */
+      this.rtcPeerConnection.close()
+    } else {
+      this.connection.close()
+    }
   }
 
   private sendInBrowser (data: Uint8Array): void {

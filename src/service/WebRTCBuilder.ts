@@ -21,8 +21,6 @@ import { WebChannel } from './WebChannel'
  */
 const ID = 0
 
-const CONNECTION_TIMEOUT = 10000
-
 interface IceCandidate {
   candidate: string,
   sdpMid?: string,
@@ -309,51 +307,35 @@ export class WebRTCBuilder extends Service {
     if (peerId !== undefined) {
       try {
         const dc = pc.createDataChannel((this.wc.myId).toString())
-
-        // Initialize dataChannel for WebChannel
-        const channel = new Channel(dc, this.wc, peerId)
-
-        // Configure disconnection
-        this.configOnDisconnect(pc, dc, peerId)
+        const channel = new Channel(this.wc, dc, {rtcPeerConnection: pc, id: peerId})
         return new Promise((resolve, reject) => {
-          const timeout = setTimeout(() => {
-            reject(new Error(`${CONNECTION_TIMEOUT}ms timeout`))
-          }, CONNECTION_TIMEOUT)
-          dc.onopen = () => {
-            clearTimeout(timeout)
-            resolve(channel)
+          pc.oniceconnectionstatechange = () => {
+            if (pc.iceConnectionState === 'failed') {
+              pc.close()
+              reject('Failed to establish PeerConnection: ' +
+              'The ICE candidate did not find compatible matches for all components of the connection')
+            }
           }
+          dc.onopen = () => resolve(channel)
         })
       } catch (err) {
         return Promise.reject(err)
       }
     } else {
       return new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          reject(new Error(`${CONNECTION_TIMEOUT}ms timeout`))
-        }, CONNECTION_TIMEOUT)
         pc.ondatachannel = dcEvt => {
-          // Configure disconnection
-          dcEvt.channel.onopen = evt => {
-            this.configOnDisconnect(pc, dcEvt.channel, Number(dcEvt.channel.label))
-            clearTimeout(timeout)
-
-            // Initialize dataChannel for WebChannel
-            resolve(new Channel(dcEvt.channel, this.wc, Number(dcEvt.channel.label)))
+          const dc = dcEvt.channel
+          pc.oniceconnectionstatechange = () => {
+            if (pc.iceConnectionState === 'failed') {
+              pc.close()
+              reject('Failed to establish an RTCPeerConnection: ' +
+              'The ICE candidate did not find compatible matches for all components of the connection')
+            }
           }
+          const peerId = Number.parseInt(dc.label, 10)
+          dc.onopen = evt => resolve(new Channel(this.wc, dc, {rtcPeerConnection: pc, id: peerId}))
         }
       })
-    }
-  }
-
-  private configOnDisconnect (pc: RTCPeerConnection, dc: RTCDataChannel, id: number): void {
-    pc.oniceconnectionstatechange = () => {
-      if (pc.iceConnectionState === 'failed' && dc.onclose) {
-        dc.onclose(new CloseEvent('disconnect', {
-          code: 4201,
-          reason: 'disconnected'
-        }))
-      }
     }
   }
 }

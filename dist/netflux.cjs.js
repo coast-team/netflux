@@ -1273,12 +1273,6 @@ function isBrowser() {
     return true;
 }
 /**
- * Check whether the channel is a socket.
- */
-function isSocket(channel) {
-    return channel.constructor.name === 'WebSocket';
-}
-/**
  * Check whether the string is a valid URL.
  */
 function isURL(str) {
@@ -1314,16 +1308,18 @@ var Channel = (function () {
     /**
      * Creates a channel from existing `RTCDataChannel` or `WebSocket`.
      */
-    function Channel(connection, wc, id) {
+    function Channel(wc, connection, options) {
+        if (options === void 0) { options = { id: -1 }; }
         var _this = this;
         this.connection = connection;
-        this.peerId = id || -1;
+        this.peerId = options.id;
+        this.rtcPeerConnection = options.rtcPeerConnection;
         // Configure `send` function
         if (isBrowser()) {
             connection.binaryType = 'arraybuffer';
             this.send = this.sendInBrowser;
         }
-        else if (isSocket(connection)) {
+        else if (!this.rtcPeerConnection) {
             this.send = this.sendInNodeViaWebSocket;
         }
         else {
@@ -1339,7 +1335,20 @@ var Channel = (function () {
         this.connection.onerror = function (evt) { return wc._topology.onChannelError(evt, _this); };
     }
     Channel.prototype.close = function () {
-        this.connection.close();
+        if (this.rtcPeerConnection) {
+            /*
+            We call close function on RTCPeerConnection rather then on RTCDataChannel
+            in order to have the same behavior on Chrome and Firefox. Indeed in
+            Firefox (Nigthly v 57) RTCDataChannel.close call does not fire Close Event
+            on data channel, while in Chrome it does. However RTCPeerConnection.close
+            fires Close Event in both browsers. As in Netflux we assume to have one
+            RTCDataChannel per RTCPeerConnection, we can call it here.
+            */
+            this.rtcPeerConnection.close();
+        }
+        else {
+            this.connection.close();
+        }
     };
     Channel.prototype.sendInBrowser = function (data) {
         // if (this.connection.readyState !== 'closed' && new Int8Array(data).length !== 0) {
@@ -6314,7 +6323,6 @@ var FullMesh = (function (_super) {
                         recipientId: channel.peerId,
                         content: _super.prototype.encode.call(_this, { connectedTo: { members: _this.wc.members } })
                     })); };
-                    console.log(_this.wc.myId + ' joining attempt number ' + _this.joinAttempts);
                     if (_this.joinAttempts === MAX_JOIN_ATTEMPTS) {
                         _this.leave();
                         _this.wc._joinResult.next(new Error('Failed to join: maximum join attempts has reached'));
@@ -6722,7 +6730,7 @@ var WebSocketBuilder = (function () {
         return listenSubject;
     };
     WebSocketBuilder.newIncomingSocket = function (wc, ws, senderId) {
-        wc.webSocketBuilder.channelsSubject.next(new Channel(ws, wc, senderId));
+        wc.webSocketBuilder.channelsSubject.next(new Channel(wc, ws, { id: senderId }));
     };
     /**
      * Establish `WebSocket` with a server.
@@ -6767,7 +6775,7 @@ var WebSocketBuilder = (function () {
         return new Promise(function (resolve, reject) {
             if (isURL(url) && url.search(/^wss?/) !== -1) {
                 var ws_2 = new WebSocket(fullUrl);
-                var channel_1 = new Channel(ws_2, _this.wc, id);
+                var channel_1 = new Channel(_this.wc, ws_2, { id: id });
                 ws_2.onopen = function () { return resolve(channel_1); };
                 ws_2.onclose = function (closeEvt) { return reject(new Error("WebSocket connection to '" + url + "' failed with code " + closeEvt.code + ": " + closeEvt.reason)); };
                 // #if NODE
@@ -7594,7 +7602,6 @@ var ReplayEvent = (function () {
  * Service id.
  */
 var ID$1 = 0;
-var CONNECTION_TIMEOUT = 10000;
 /**
  * Service class responsible to establish `RTCDataChannel` between two clients via
  * signaling server or `WebChannel`.
@@ -7831,18 +7838,16 @@ var WebRTCBuilder = (function (_super) {
         if (peerId !== undefined) {
             try {
                 var dc_1 = pc.createDataChannel((this.wc.myId).toString());
-                // Initialize dataChannel for WebChannel
-                var channel_1 = new Channel(dc_1, this.wc, peerId);
-                // Configure disconnection
-                this.configOnDisconnect(pc, dc_1, peerId);
+                var channel_1 = new Channel(this.wc, dc_1, { rtcPeerConnection: pc, id: peerId });
                 return new Promise(function (resolve, reject) {
-                    var timeout = setTimeout(function () {
-                        reject(new Error(CONNECTION_TIMEOUT + "ms timeout"));
-                    }, CONNECTION_TIMEOUT);
-                    dc_1.onopen = function () {
-                        clearTimeout(timeout);
-                        resolve(channel_1);
+                    pc.oniceconnectionstatechange = function () {
+                        if (pc.iceConnectionState === 'failed') {
+                            pc.close();
+                            reject('Failed to establish PeerConnection: ' +
+                                'The ICE candidate did not find compatible matches for all components of the connection');
+                        }
                     };
+                    dc_1.onopen = function () { return resolve(channel_1); };
                 });
             }
             catch (err) {
@@ -7851,34 +7856,20 @@ var WebRTCBuilder = (function (_super) {
         }
         else {
             return new Promise(function (resolve, reject) {
-                var timeout = setTimeout(function () {
-                    reject(new Error(CONNECTION_TIMEOUT + "ms timeout"));
-                }, CONNECTION_TIMEOUT);
                 pc.ondatachannel = function (dcEvt) {
-                    // Configure disconnection
-                    dcEvt.channel.onopen = function (evt) {
-                        _this.configOnDisconnect(pc, dcEvt.channel, Number(dcEvt.channel.label));
-                        clearTimeout(timeout);
-                        // Initialize dataChannel for WebChannel
-                        resolve(new Channel(dcEvt.channel, _this.wc, Number(dcEvt.channel.label)));
+                    var dc = dcEvt.channel;
+                    pc.oniceconnectionstatechange = function () {
+                        if (pc.iceConnectionState === 'failed') {
+                            pc.close();
+                            reject('Failed to establish an RTCPeerConnection: ' +
+                                'The ICE candidate did not find compatible matches for all components of the connection');
+                        }
                     };
+                    var peerId = Number.parseInt(dc.label, 10);
+                    dc.onopen = function (evt) { return resolve(new Channel(_this.wc, dc, { rtcPeerConnection: pc, id: peerId })); };
                 };
             });
         }
-    };
-    WebRTCBuilder.prototype.configOnDisconnect = function (pc, dc, id) {
-        pc.oniceconnectionstatechange = function () {
-            if (pc.iceConnectionState === 'failed' && dc.onclose) {
-                console.log('iceConnectionState FAILED for ' + id);
-                dc.onclose(new CloseEvent('disconnect', {
-                    code: 4201,
-                    reason: 'disconnected'
-                }));
-            }
-            else {
-                console.log('iceConnectionState changed to ' + pc.iceConnectionState + ' for ' + id);
-            }
-        };
     };
     return WebRTCBuilder;
 }(Service$1));
@@ -8358,7 +8349,7 @@ var WebChannel = (function (_super) {
         var _this = this;
         if (isURL(url)) {
             this.webSocketBuilder.connect(url + "/invite?wcId=" + this.id + "&senderId=" + this.myId)
-                .then(function (connection) { return _this._initChannel(new Channel(connection, _this)); })
+                .then(function (connection) { return _this._initChannel(new Channel(_this, connection)); })
                 .catch(function (err) { return console.error("Failed to invite the bot " + url + ": " + err.message); });
         }
         else {
@@ -8755,7 +8746,7 @@ var BotServer = (function () {
                     wc.id = wcId;
                     _this.addWebChannel(wc);
                     _this.onWebChannel(wc);
-                    wc.join(new Channel(ws, wc, senderId));
+                    wc.join(new Channel(wc, ws, { id: senderId }));
                     break;
                 }
                 case '/internalChannel': {

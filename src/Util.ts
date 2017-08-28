@@ -11,13 +11,6 @@ export function isBrowser (): boolean {
 }
 
 /**
- * Check whether the channel is a socket.
- */
-export function isSocket (channel: WebSocket | RTCDataChannel): boolean {
-  return channel.constructor.name === 'WebSocket'
-}
-
-/**
  * Check whether the string is a valid URL.
  */
 export function isURL (str: string): boolean {

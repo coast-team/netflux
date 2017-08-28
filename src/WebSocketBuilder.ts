@@ -24,7 +24,7 @@ export class WebSocketBuilder {
   }
 
   static newIncomingSocket (wc, ws, senderId) {
-    wc.webSocketBuilder.channelsSubject.next(new Channel(ws, wc, senderId))
+    wc.webSocketBuilder.channelsSubject.next(new Channel(wc, ws, {id: senderId}))
   }
 
   constructor (wc: WebChannel) {
@@ -75,7 +75,7 @@ export class WebSocketBuilder {
     return new Promise((resolve, reject) => {
       if (isURL(url) && url.search(/^wss?/) !== -1) {
         const ws = new WebSocket(fullUrl)
-        const channel = new Channel(ws, this.wc, id)
+        const channel = new Channel(this.wc, ws, {id})
         ws.onopen = () => resolve(channel)
         ws.onclose = closeEvt => reject(new Error(
           `WebSocket connection to '${url}' failed with code ${closeEvt.code}: ${closeEvt.reason}`

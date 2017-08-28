@@ -253,7 +253,7 @@ export class WebChannel extends Service {
   invite (url: string): void {
     if (isURL(url)) {
       this.webSocketBuilder.connect(`${url}/invite?wcId=${this.id}&senderId=${this.myId}`)
-        .then(connection => this._initChannel(new Channel(connection, this)))
+        .then(connection => this._initChannel(new Channel(this, connection)))
         .catch((err) => console.error(`Failed to invite the bot ${url}: ${err.message}`))
     } else {
       throw new Error(`Failed to invite a bot: ${url} is not a valid URL`)
