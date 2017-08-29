@@ -1331,7 +1331,15 @@ var Channel = (function () {
             var data = _a.data;
             return wc._onMessage(_this, new Uint8Array(data));
         };
-        this.connection.onclose = function (evt) { return wc._topology.onChannelClose(evt, _this); };
+        this.connection.onclose = function (evt) {
+            wc._topology.onChannelClose(evt, _this);
+            if (_this.rtcPeerConnection && _this.rtcPeerConnection.signalingState !== 'closed') {
+                _this.rtcPeerConnection.close();
+            }
+            _this.connection.onmessage = function () { };
+            _this.connection.onclose = function () { };
+            _this.connection.onerror = function () { };
+        };
         this.connection.onerror = function (evt) { return wc._topology.onChannelError(evt, _this); };
     }
     Channel.prototype.close = function () {
