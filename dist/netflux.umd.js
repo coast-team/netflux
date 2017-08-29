@@ -3076,14 +3076,9 @@ var Subject_1 = {
 };
 
 /**
- * Check execution environment.
+ * Equals to true in any browser.
  */
-function isBrowser() {
-    if (typeof window === 'undefined') {
-        return false;
-    }
-    return true;
-}
+var isBrowser = (typeof window === 'undefined') ? false : true;
 /**
  * Check whether the string is a valid URL.
  */
@@ -3098,6 +3093,14 @@ function isURL(str) {
         '$';
     return (new RegExp(regex, 'i')).test(str);
 }
+/**
+ * Equals to true in Firefox and false elsewhere.
+ * Thanks to https://github.com/lancedikson/bowser
+ */
+var isFirefox = (isBrowser &&
+    navigator !== undefined &&
+    navigator.userAgent !== undefined &&
+    /firefox|iceweasel|fxios/i.test(navigator.userAgent)) ? true : false;
 /**
  * Generate random key which will be used to join the network.
  */
@@ -3127,7 +3130,7 @@ var Channel = (function () {
         this.peerId = options.id;
         this.rtcPeerConnection = options.rtcPeerConnection;
         // Configure `send` function
-        if (isBrowser()) {
+        if (isBrowser) {
             connection.binaryType = 'arraybuffer';
             this.send = this.sendInBrowser;
         }
@@ -3143,23 +3146,20 @@ var Channel = (function () {
             var data = _a.data;
             return wc._onMessage(_this, new Uint8Array(data));
         };
-        this.connection.onclose = function (closeEvt) { return wc._topology.onChannelClose(closeEvt, _this); };
+        this.connection.onclose = function (evt) { return wc._topology.onChannelClose(evt, _this); };
         this.connection.onerror = function (evt) { return wc._topology.onChannelError(evt, _this); };
     }
     Channel.prototype.close = function () {
-        if (this.rtcPeerConnection) {
-            /*
-            We call close function on RTCPeerConnection rather then on RTCDataChannel
-            in order to have the same behavior on Chrome and Firefox. Indeed in
-            Firefox (Nigthly v 57) RTCDataChannel.close call does not fire Close Event
-            on data channel, while in Chrome it does. However RTCPeerConnection.close
-            fires Close Event in both browsers. As in Netflux we assume to have one
-            RTCDataChannel per RTCPeerConnection, we can call it here.
-            */
-            this.rtcPeerConnection.close();
-        }
-        else {
-            this.connection.close();
+        if (this.connection.readyState !== 'closed' &&
+            this.connection.readyState !== 'closing' &&
+            this.connection.readyState !== WebSocket.CLOSED &&
+            this.connection.readyState !== WebSocket.CLOSING) {
+            if (isFirefox && this.rtcPeerConnection) {
+                this.rtcPeerConnection.close();
+            }
+            else {
+                this.connection.close();
+            }
         }
     };
     Channel.prototype.sendInBrowser = function (data) {
@@ -8078,12 +8078,10 @@ var FullMesh = (function (_super) {
         this.init();
         var e_4, _c;
     };
-    FullMesh.prototype.onChannelClose = function (closeEvt, channel) {
-        console.log(this.wc.myId + ' onChannelClose ' + channel.peerId);
+    FullMesh.prototype.onChannelClose = function (event, channel) {
         if (this.intermediaryChannel && this.intermediaryChannel === channel) {
             this.leave();
-            console.error('Intermediary CLOSED: ', closeEvt);
-            this.wc._joinResult.next(new Error("Intermediary channel closed: " + closeEvt.reason));
+            this.wc._joinResult.next(new Error("Intermediary channel closed: " + event.type));
         }
         this.channels.delete(channel);
         if (this.wc.members.includes(channel.peerId)) {
@@ -8358,9 +8356,21 @@ var Signaling = (function () {
         };
         return {
             stream: subject,
-            send: function (msg) { return ws.send(signaling.Message.encode(signaling.Message.create(msg)).finish()); },
-            pong: function () { return ws.send(pongMsg); },
-            ping: function () { return ws.send(pingMsg); },
+            send: function (msg) {
+                if (ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CLOSED) {
+                    ws.send(signaling.Message.encode(signaling.Message.create(msg)).finish());
+                }
+            },
+            pong: function () {
+                if (ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CLOSED) {
+                    ws.send(pongMsg);
+                }
+            },
+            ping: function () {
+                if (ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CLOSED) {
+                    ws.send(pingMsg);
+                }
+            },
             close: function (code, reason) {
                 if (reason === void 0) { reason = ''; }
                 return ws.close(code, reason);
@@ -9639,12 +9649,18 @@ var WebRTCBuilder = (function (_super) {
                 return new Promise(function (resolve, reject) {
                     pc.oniceconnectionstatechange = function () {
                         if (pc.iceConnectionState === 'failed') {
-                            pc.close();
                             reject('Failed to establish PeerConnection: ' +
                                 'The ICE candidate did not find compatible matches for all components of the connection');
                         }
                     };
-                    dc_1.onopen = function () { return resolve(channel_1); };
+                    dc_1.onopen = function () {
+                        pc.oniceconnectionstatechange = function () {
+                            if (pc.iceConnectionState === 'failed') {
+                                channel_1.close();
+                            }
+                        };
+                        resolve(channel_1);
+                    };
                 });
             }
             catch (err) {
@@ -9653,17 +9669,23 @@ var WebRTCBuilder = (function (_super) {
         }
         else {
             return new Promise(function (resolve, reject) {
+                pc.oniceconnectionstatechange = function () {
+                    if (pc.iceConnectionState === 'failed') {
+                        reject('The ICE candidate did not find compatible matches for all components of the connection');
+                    }
+                };
                 pc.ondatachannel = function (dcEvt) {
                     var dc = dcEvt.channel;
-                    pc.oniceconnectionstatechange = function () {
-                        if (pc.iceConnectionState === 'failed') {
-                            pc.close();
-                            reject('Failed to establish an RTCPeerConnection: ' +
-                                'The ICE candidate did not find compatible matches for all components of the connection');
-                        }
-                    };
                     var peerId = Number.parseInt(dc.label, 10);
-                    dc.onopen = function (evt) { return resolve(new Channel(_this.wc, dc, { rtcPeerConnection: pc, id: peerId })); };
+                    var channel = new Channel(_this.wc, dc, { rtcPeerConnection: pc, id: peerId });
+                    dc.onopen = function (evt) {
+                        pc.oniceconnectionstatechange = function () {
+                            if (pc.iceConnectionState === 'failed') {
+                                channel.close();
+                            }
+                        };
+                        resolve(channel);
+                    };
                 };
             });
         }
@@ -10057,7 +10079,7 @@ var WebChannel = (function (_super) {
                     if (_this.members.length === 0) {
                         _this._setState(WebChannel.LEFT);
                     }
-                    if (_this.autoRejoin && !_this._disableAutoRejoin) {
+                    if (!_this.isRejoinDisabled) {
                         _this._rejoin();
                     }
                     break;
@@ -10123,7 +10145,7 @@ var WebChannel = (function (_super) {
     WebChannel.prototype.join = function (value) {
         if (value === void 0) { value = generateKey(); }
         if (this._state === WebChannel.LEFT && this._signaling.state === WebChannel.SIGNALING_CLOSED) {
-            this._disableAutoRejoin = false;
+            this.isRejoinDisabled = !this.autoRejoin;
             this._setState(WebChannel.JOINING);
             if (!(value instanceof Channel)) {
                 if ((typeof value === 'string' || value instanceof String) && value.length < MAX_KEY_LENGTH) {
@@ -10157,7 +10179,7 @@ var WebChannel = (function (_super) {
      * Close the connection with Signaling server.
      */
     WebChannel.prototype.closeSignaling = function () {
-        this._disableAutoRejoin = true;
+        this.isRejoinDisabled = true;
         this._signaling.close();
     };
     /**
@@ -10165,11 +10187,12 @@ var WebChannel = (function (_super) {
      * with Signaling server.
      */
     WebChannel.prototype.leave = function () {
-        this._disableAutoRejoin = true;
-        this._setState(WebChannel.LEFT);
+        this.isRejoinDisabled = true;
         this._pingTime = 0;
-        this.members = [];
-        this._svcMsgStream.complete();
+        this._maxTime = 0;
+        this._pingFinish = function () { };
+        this._pongNb = 0;
+        this._topology.leave();
         this._signaling.close();
     };
     /**

@@ -199,11 +199,21 @@ export class Signaling {
     }
     return {
       stream: subject,
-      send: msg => ws.send(signaling.Message.encode(
-        signaling.Message.create(msg)
-      ).finish()),
-      pong: () => ws.send(pongMsg),
-      ping: () => ws.send(pingMsg),
+      send: msg => {
+        if (ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CLOSED) {
+          ws.send(signaling.Message.encode(signaling.Message.create(msg)).finish())
+        }
+      },
+      pong: () => {
+        if (ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CLOSED) {
+          ws.send(pongMsg)
+        }
+      },
+      ping: () => {
+        if (ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CLOSED) {
+          ws.send(pingMsg)
+        }
+      },
       close: (code, reason = '') => ws.close(code, reason),
       clean: () => {
         ws.onmessage = () => {}

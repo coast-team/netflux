@@ -21,16 +21,7 @@ global.TextDecoder = textEncoding.TextDecoder
 global.WebSocket = require('uws')
 const WebCrypto = require('node-webcrypto-ossl')
 global.crypto = new WebCrypto()
-global.CloseEvent = class CloseEvent {
-  name: string
-  wasClean: boolean
-  code: number
-  reason: string
-  constructor (name: string, options?: CloseEventInit) {
-    this.name = name
-    this.wasClean = false
-    this.code = options.code || 0
-    this.reason = options.reason || ''
-  }
+global.Event = class Event {
+  constructor (public name: string) {}
 }
 // #endif

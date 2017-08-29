@@ -127,13 +127,11 @@ export class FullMesh extends Service implements TopologyInterface {
     this.init()
   }
 
-  onChannelClose (closeEvt: CloseEvent, channel: Channel): void {
-    console.log(this.wc.myId + ' onChannelClose ' + channel.peerId)
+  onChannelClose (event: Event, channel: Channel): void {
     if (this.intermediaryChannel && this.intermediaryChannel === channel) {
       this.leave()
-      console.error('Intermediary CLOSED: ', closeEvt)
       this.wc._joinResult.next(
-        new Error(`Intermediary channel closed: ${closeEvt.reason}`)
+        new Error(`Intermediary channel closed: ${event.type}`)
       )
     }
     this.channels.delete(channel)

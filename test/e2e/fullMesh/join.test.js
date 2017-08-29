@@ -165,6 +165,7 @@ describe('Fully connected', () => {
       it(`${faces(numberOfPeers)}`, done => {
         helper.createAndConnectWebChannels(numberOfPeers)
           .then(webChannels => {
+            let res = []
             wcs = webChannels
             wcs.forEach(wc => {
               expect(wc.state).toBe(WebChannel.JOINED)
@@ -174,22 +175,25 @@ describe('Fully connected', () => {
                 expect(wc.members.includes(id)).toBeFalsy()
               }
               wc.onStateChangedCalledTimes = 0
-              wc.onStateChanged = () => wc.onStateChangedCalledTimes++
+              res.push(new Promise(resolve => {
+                wc.onStateChanged = state => {
+                  wc.onStateChangedCalledTimes++
+                  if (state === WebChannel.LEFT) {
+                    resolve()
+                  }
+                }
+              }))
             })
-            let res = Promise.resolve()
             for (let wc of wcs) {
-              res = res.then(() => {
-                wc.leave()
-                return new Promise(resolve => setTimeout(resolve, 10))
-              })
+              wc.leave()
             }
-            return res
+            return Promise.all(res)
           })
           .then(() => {
             wcs.forEach((wc, index) => {
               expect(wc.state).toBe(WebChannel.LEFT)
               expect(wc.members.length).toBe(0)
-              expect(wc.onPeerLeaveCalledTimes).toBe(index)
+              expect(wc.onPeerLeaveCalledTimes).toBe(numberOfPeers - 1)
               expect(wc.onStateChangedCalledTimes).toBe(1)
             })
           })

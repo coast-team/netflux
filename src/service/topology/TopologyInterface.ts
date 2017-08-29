@@ -62,13 +62,13 @@ export interface TopologyInterface extends Service {
   /**
    * This handler will be called when one of the network channel closed.
    */
-  onChannelClose (closeEvt: CloseEvent, channel: Channel): void
+  onChannelClose (event: Event, channel: Channel): void
 
   /**
    * This handler will be called when an error occured on one of the network
    * channel.
    */
-  onChannelError (evt: Event, channel: Channel): void
+  onChannelError (event: Event, channel: Channel): void
 
   /**
    * Call this function before switching to another topology.

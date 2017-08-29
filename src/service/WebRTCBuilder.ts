@@ -311,29 +311,41 @@ export class WebRTCBuilder extends Service {
         return new Promise((resolve, reject) => {
           pc.oniceconnectionstatechange = () => {
             if (pc.iceConnectionState === 'failed') {
-              pc.close()
               reject('Failed to establish PeerConnection: ' +
               'The ICE candidate did not find compatible matches for all components of the connection')
             }
           }
-          dc.onopen = () => resolve(channel)
+          dc.onopen = () => {
+            pc.oniceconnectionstatechange = () => {
+              if (pc.iceConnectionState === 'failed') {
+                channel.close()
+              }
+            }
+            resolve(channel)
+          }
         })
       } catch (err) {
         return Promise.reject(err)
       }
     } else {
       return new Promise((resolve, reject) => {
+        pc.oniceconnectionstatechange = () => {
+          if (pc.iceConnectionState === 'failed') {
+            reject('The ICE candidate did not find compatible matches for all components of the connection')
+          }
+        }
         pc.ondatachannel = dcEvt => {
           const dc = dcEvt.channel
-          pc.oniceconnectionstatechange = () => {
-            if (pc.iceConnectionState === 'failed') {
-              pc.close()
-              reject('Failed to establish an RTCPeerConnection: ' +
-              'The ICE candidate did not find compatible matches for all components of the connection')
-            }
-          }
           const peerId = Number.parseInt(dc.label, 10)
-          dc.onopen = evt => resolve(new Channel(this.wc, dc, {rtcPeerConnection: pc, id: peerId}))
+          const channel = new Channel(this.wc, dc, {rtcPeerConnection: pc, id: peerId})
+          dc.onopen = evt => {
+            pc.oniceconnectionstatechange = () => {
+              if (pc.iceConnectionState === 'failed') {
+                channel.close()
+              }
+            }
+            resolve(channel)
+          }
         }
       })
     }

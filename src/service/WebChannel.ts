@@ -121,7 +121,7 @@ export class WebChannel extends Service {
   private _pingFinish: (maxTime: number) => void
   private _pongNb: number
   private _rejoinTimer: any
-  private _disableAutoRejoin: boolean
+  private isRejoinDisabled: boolean
 
   /**
    * @param options Web channel settings
@@ -169,7 +169,7 @@ export class WebChannel extends Service {
           if (this.members.length === 0) {
             this._setState(WebChannel.LEFT)
           }
-          if (this.autoRejoin && !this._disableAutoRejoin) {
+          if (!this.isRejoinDisabled) {
             this._rejoin()
           }
           break
@@ -232,7 +232,7 @@ export class WebChannel extends Service {
    */
   join (value: string | Channel = generateKey()): void {
     if (this._state === WebChannel.LEFT && this._signaling.state === WebChannel.SIGNALING_CLOSED) {
-      this._disableAutoRejoin = false
+      this.isRejoinDisabled = !this.autoRejoin
       this._setState(WebChannel.JOINING)
       if (!(value instanceof Channel)) {
         if ((typeof value === 'string' || value instanceof String) && value.length < MAX_KEY_LENGTH) {
@@ -264,7 +264,7 @@ export class WebChannel extends Service {
    * Close the connection with Signaling server.
    */
   closeSignaling (): void {
-    this._disableAutoRejoin = true
+    this.isRejoinDisabled = true
     this._signaling.close()
   }
 
@@ -273,11 +273,12 @@ export class WebChannel extends Service {
    * with Signaling server.
    */
   leave () {
-    this._disableAutoRejoin = true
-    this._setState(WebChannel.LEFT)
+    this.isRejoinDisabled = true
     this._pingTime = 0
-    this.members = []
-    this._svcMsgStream.complete()
+    this._maxTime = 0
+    this._pingFinish = () => {}
+    this._pongNb = 0
+    this._topology.leave()
     this._signaling.close()
   }
 

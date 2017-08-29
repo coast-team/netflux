@@ -241,29 +241,29 @@ function randStr () {
 }
 
 export function itBrowser (shouldSkip, ...args) {
-  if (isBrowser()) Reflect.apply(it, undefined, args)
+  if (isBrowser) Reflect.apply(it, undefined, args)
   else if (shouldSkip) Reflect.apply(xit, undefined, args)
 }
 
 export function xitBrowser (shouldSkip, ...args) {
-  if (isBrowser()) Reflect.apply(xit, undefined, args)
+  if (isBrowser) Reflect.apply(xit, undefined, args)
   else if (shouldSkip) Reflect.apply(xit, undefined, args)
 }
 
 export function itNode (shouldSkip, ...args) {
-  if (isBrowser()) {
+  if (isBrowser) {
     if (shouldSkip) Reflect.apply(xit, undefined, args)
   } else Reflect.apply(it, undefined, args)
 }
 
 export function xitNode (shouldSkip, ...args) {
-  if (isBrowser()) {
+  if (isBrowser) {
     if (shouldSkip) Reflect.apply(xit, undefined, args)
   } else Reflect.apply(xit, undefined, args)
 }
 
 export function env () {
-  if (isBrowser()) {
+  if (isBrowser) {
     const sUsrAg = navigator.userAgent
     if (sUsrAg.indexOf('Chrome') > -1) {
       return 'CHROME'

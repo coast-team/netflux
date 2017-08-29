@@ -1,14 +1,9 @@
 import { Channel } from './Channel'
 
 /**
- * Check execution environment.
+ * Equals to true in any browser.
  */
-export function isBrowser (): boolean {
-  if (typeof window === 'undefined') {
-    return false
-  }
-  return true
-}
+export const isBrowser = (typeof window === 'undefined') ? false : true
 
 /**
  * Check whether the string is a valid URL.
@@ -26,6 +21,17 @@ export function isURL (str: string): boolean {
 
   return (new RegExp(regex, 'i')).test(str)
 }
+
+/**
+ * Equals to true in Firefox and false elsewhere.
+ * Thanks to https://github.com/lancedikson/bowser
+ */
+export const isFirefox = (
+    isBrowser &&
+    navigator !== undefined &&
+    navigator.userAgent !== undefined &&
+    /firefox|iceweasel|fxios/i.test(navigator.userAgent)
+  ) ? true : false
 
 /**
  * Generate random key which will be used to join the network.

@@ -1,4 +1,4 @@
-import { isBrowser } from './Util'
+import { isBrowser, isFirefox } from './Util'
 import { WebChannel } from './service/WebChannel'
 
 /**
@@ -27,7 +27,7 @@ export class Channel {
     this.rtcPeerConnection = options.rtcPeerConnection
 
     // Configure `send` function
-    if (isBrowser()) {
+    if (isBrowser) {
       connection.binaryType = 'arraybuffer'
       this.send = this.sendInBrowser
     } else if (!this.rtcPeerConnection) {
@@ -39,23 +39,22 @@ export class Channel {
 
     // Configure handlers
     this.connection.onmessage = ({ data }) => wc._onMessage(this, new Uint8Array(data))
-    this.connection.onclose = closeEvt => wc._topology.onChannelClose(closeEvt, this)
+    this.connection.onclose = evt => wc._topology.onChannelClose(evt, this)
     this.connection.onerror = evt => wc._topology.onChannelError(evt, this)
   }
 
   close (): void {
-    if (this.rtcPeerConnection) {
-      /*
-      We call close function on RTCPeerConnection rather then on RTCDataChannel
-      in order to have the same behavior on Chrome and Firefox. Indeed in
-      Firefox (Nigthly v 57) RTCDataChannel.close call does not fire Close Event
-      on data channel, while in Chrome it does. However RTCPeerConnection.close
-      fires Close Event in both browsers. As in Netflux we assume to have one
-      RTCDataChannel per RTCPeerConnection, we can call it here.
-      */
-      this.rtcPeerConnection.close()
-    } else {
-      this.connection.close()
+    if (
+      this.connection.readyState !== 'closed' &&
+      this.connection.readyState !== 'closing' &&
+      this.connection.readyState !== WebSocket.CLOSED &&
+      this.connection.readyState !== WebSocket.CLOSING
+    ) {
+      if (isFirefox && this.rtcPeerConnection) {
+        this.rtcPeerConnection.close()
+      } else {
+        this.connection.close()
+      }
     }
   }
 
