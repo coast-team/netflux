@@ -54,7 +54,7 @@
     "rxjs": "^5.4.3",
     "text-encoding": "^0.6.4",
     "uws": "^8.14.0",
-    "webrtc-adapter": "^4.0.1"
+    "webrtc-adapter": "^5.0.0"
   },
   "peerDependencies": {
     "wrtc": "0.0.x"
