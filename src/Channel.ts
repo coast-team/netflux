@@ -8,6 +8,7 @@ export class Channel {
 
   private connection: WebSocket | RTCDataChannel
   private rtcPeerConnection: RTCPeerConnection
+  private onClose: (evt: Event) => void
   /**
    * Id of the peer who is at the other end of this channel.
    */
@@ -37,17 +38,19 @@ export class Channel {
       this.send = this.sendInNodeViaDataChannel
     }
 
-    // Configure handlers
-    this.connection.onmessage = ({ data }) => wc._onMessage(this, new Uint8Array(data))
-    this.connection.onclose = evt => {
+    this.onClose = (evt: Event) => {
+      this.connection.onclose = () => {}
+      this.connection.onmessage = () => {}
+      this.connection.onerror = () => {}
       wc._topology.onChannelClose(evt, this)
       if (this.rtcPeerConnection && this.rtcPeerConnection.signalingState !== 'closed') {
         this.rtcPeerConnection.close()
       }
-      this.connection.onmessage = () => {}
-      this.connection.onclose = () => {}
-      this.connection.onerror = () => {}
     }
+
+    // Configure handlers
+    this.connection.onmessage = ({ data }) => wc._onMessage(this, new Uint8Array(data))
+    this.connection.onclose = evt => this.onClose(evt)
     this.connection.onerror = evt => wc._topology.onChannelError(evt, this)
   }
 
@@ -58,10 +61,9 @@ export class Channel {
       this.connection.readyState !== WebSocket.CLOSED &&
       this.connection.readyState !== WebSocket.CLOSING
     ) {
-      if (isFirefox && this.rtcPeerConnection) {
-        this.rtcPeerConnection.close()
-      } else {
-        this.connection.close()
+      this.connection.close()
+      if (isFirefox && this.rtcPeerConnection && this.rtcPeerConnection.signalingState !== 'closed') {
+        this.onClose(new Event('close'))
       }
     }
   }
@@ -92,7 +94,6 @@ export class Channel {
   }
 
   private isOpen (): boolean {
-    const state: any = this.connection.readyState
-    return state === 1 || state === 'open'
+    return this.connection.readyState === WebSocket.OPEN || this.connection.readyState === 'open'
   }
 }

@@ -1322,20 +1322,21 @@ var Channel = (function () {
             connection.binaryType = 'arraybuffer';
             this.send = this.sendInNodeViaDataChannel;
         }
+        this.onClose = function (evt) {
+            _this.connection.onclose = function () { };
+            _this.connection.onmessage = function () { };
+            _this.connection.onerror = function () { };
+            wc._topology.onChannelClose(evt, _this);
+            if (_this.rtcPeerConnection && _this.rtcPeerConnection.signalingState !== 'closed') {
+                _this.rtcPeerConnection.close();
+            }
+        };
         // Configure handlers
         this.connection.onmessage = function (_a) {
             var data = _a.data;
             return wc._onMessage(_this, new Uint8Array(data));
         };
-        this.connection.onclose = function (evt) {
-            wc._topology.onChannelClose(evt, _this);
-            if (_this.rtcPeerConnection && _this.rtcPeerConnection.signalingState !== 'closed') {
-                _this.rtcPeerConnection.close();
-            }
-            _this.connection.onmessage = function () { };
-            _this.connection.onclose = function () { };
-            _this.connection.onerror = function () { };
-        };
+        this.connection.onclose = function (evt) { return _this.onClose(evt); };
         this.connection.onerror = function (evt) { return wc._topology.onChannelError(evt, _this); };
     }
     Channel.prototype.close = function () {
@@ -1343,11 +1344,9 @@ var Channel = (function () {
             this.connection.readyState !== 'closing' &&
             this.connection.readyState !== WebSocket.CLOSED &&
             this.connection.readyState !== WebSocket.CLOSING) {
-            if (isFirefox && this.rtcPeerConnection) {
-                this.rtcPeerConnection.close();
-            }
-            else {
-                this.connection.close();
+            this.connection.close();
+            if (isFirefox && this.rtcPeerConnection && this.rtcPeerConnection.signalingState !== 'closed') {
+                this.onClose(new Event('close'));
             }
         }
     };
@@ -1376,8 +1375,7 @@ var Channel = (function () {
         this.sendInBrowser(data.slice(0));
     };
     Channel.prototype.isOpen = function () {
-        var state = this.connection.readyState;
-        return state === 1 || state === 'open';
+        return this.connection.readyState === WebSocket.OPEN || this.connection.readyState === 'open';
     };
     return Channel;
 }());
