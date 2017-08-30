@@ -107,6 +107,7 @@ function createCommonjsModule(fn, module) {
 	return module = { exports: {} }, fn(module, module.exports), module.exports;
 }
 
+"use strict";
 // CommonJS / Node have global context exposed as "global" variable.
 // We don't want to include the whole node.d.ts this this compilation unit so we'll just fake
 // the global "global" var for now.
@@ -130,6 +131,7 @@ var root = {
 	root: root_1
 };
 
+"use strict";
 function isFunction(x) {
     return typeof x === 'function';
 }
@@ -140,6 +142,7 @@ var isFunction_1 = {
 	isFunction: isFunction_2
 };
 
+"use strict";
 var isArray_1 = Array.isArray || (function (x) { return x && typeof x.length === 'number'; });
 
 
@@ -147,6 +150,7 @@ var isArray = {
 	isArray: isArray_1
 };
 
+"use strict";
 function isObject(x) {
     return x != null && typeof x === 'object';
 }
@@ -157,6 +161,7 @@ var isObject_1 = {
 	isObject: isObject_2
 };
 
+"use strict";
 // typeof any so that it we don't have to cast when comparing a result to the error object
 var errorObject_1 = { e: {} };
 
@@ -164,6 +169,8 @@ var errorObject_1 = { e: {} };
 var errorObject = {
 	errorObject: errorObject_1
 };
+
+"use strict";
 
 var tryCatchTarget;
 function tryCatcher() {
@@ -187,6 +194,7 @@ var tryCatch_1 = {
 	tryCatch: tryCatch_2
 };
 
+"use strict";
 var __extends$3 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -215,6 +223,13 @@ var UnsubscriptionError_2 = UnsubscriptionError;
 var UnsubscriptionError_1 = {
 	UnsubscriptionError: UnsubscriptionError_2
 };
+
+"use strict";
+
+
+
+
+
 
 /**
  * Represents a disposable resource, such as the execution of an Observable. A
@@ -407,6 +422,7 @@ var Subscription_1 = {
 	Subscription: Subscription_2
 };
 
+"use strict";
 var empty = {
     closed: true,
     next: function (value) { },
@@ -432,6 +448,7 @@ exports.$$rxSubscriber = exports.rxSubscriber;
 
 });
 
+"use strict";
 var __extends$2 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -700,6 +717,10 @@ var Subscriber_1 = {
 	Subscriber: Subscriber_2
 };
 
+"use strict";
+
+
+
 function toSubscriber(nextOrObserver, error, complete) {
     if (nextOrObserver) {
         if (nextOrObserver instanceof Subscriber_1.Subscriber) {
@@ -749,6 +770,10 @@ exports.observable = getSymbolObservable(root.root);
 exports.$$observable = exports.observable;
 
 });
+
+"use strict";
+
+
 
 /**
  * A representation of any set of values over any amount of time. This is the most basic building block
@@ -1007,6 +1032,7 @@ var Observable_1 = {
 	Observable: Observable_2
 };
 
+"use strict";
 var __extends$4 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -1038,6 +1064,7 @@ var ObjectUnsubscribedError_1 = {
 	ObjectUnsubscribedError: ObjectUnsubscribedError_2
 };
 
+"use strict";
 var __extends$5 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -1082,6 +1109,7 @@ var SubjectSubscription_1 = {
 	SubjectSubscription: SubjectSubscription_2
 };
 
+"use strict";
 var __extends$1 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -1307,6 +1335,7 @@ var Channel = (function () {
     function Channel(wc, connection, options) {
         if (options === void 0) { options = { id: -1 }; }
         var _this = this;
+        this.wc = wc;
         this.connection = connection;
         this.peerId = options.id;
         this.rtcPeerConnection = options.rtcPeerConnection;
@@ -1323,6 +1352,11 @@ var Channel = (function () {
             this.send = this.sendInNodeViaDataChannel;
         }
         this.onClose = function (evt) {
+            console.info("NETFLUX: " + wc.myId + " ONCLOSE CALLBACK " + _this.peerId, {
+                readyState: _this.connection.readyState,
+                iceConnectionState: _this.rtcPeerConnection.iceConnectionState,
+                signalingState: _this.rtcPeerConnection.signalingState
+            });
             _this.connection.onclose = function () { };
             _this.connection.onmessage = function () { };
             _this.connection.onerror = function () { };
@@ -1344,6 +1378,11 @@ var Channel = (function () {
             this.connection.readyState !== 'closing' &&
             this.connection.readyState !== WebSocket.CLOSED &&
             this.connection.readyState !== WebSocket.CLOSING) {
+            console.info("NETFLUX: " + this.wc.myId + " CLOSE " + this.peerId, {
+                readyState: this.connection.readyState,
+                iceConnectionState: this.rtcPeerConnection.iceConnectionState,
+                signalingState: this.rtcPeerConnection.signalingState
+            });
             this.connection.close();
             if (isFirefox && this.rtcPeerConnection && this.rtcPeerConnection.signalingState !== 'closed') {
                 this.onClose(new Event('close'));
@@ -1380,6 +1419,7 @@ var Channel = (function () {
     return Channel;
 }());
 
+"use strict";
 var __extends$6 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -1472,8 +1512,12 @@ var map_1 = {
 	MapOperator: MapOperator_1
 };
 
+"use strict";
+
+
 Observable_1.Observable.prototype.map = map_1.map;
 
+"use strict";
 var aspromise = asPromise;
 
 /**
@@ -1668,6 +1712,7 @@ base64.test = function test(string) {
 };
 });
 
+"use strict";
 var eventemitter = EventEmitter;
 
 /**
@@ -1743,6 +1788,8 @@ EventEmitter.prototype.emit = function emit(evt) {
     }
     return this;
 };
+
+"use strict";
 
 var float_1 = factory(factory);
 
@@ -2078,6 +2125,7 @@ function readUintBE(buf, pos) {
           | buf[pos + 3]) >>> 0;
 }
 
+"use strict";
 var inquire_1 = inquire;
 
 /**
@@ -2203,6 +2251,7 @@ utf8.write = function utf8_write(string, buffer, offset) {
 };
 });
 
+"use strict";
 var pool_1 = pool;
 
 /**
@@ -2251,6 +2300,7 @@ function pool(alloc, slice, size) {
     };
 }
 
+"use strict";
 var longbits = LongBits$1;
 
 
@@ -2859,6 +2909,7 @@ util._configure = function() {
 };
 });
 
+"use strict";
 var writer = Writer;
 
 
@@ -3318,6 +3369,7 @@ Writer._configure = function(BufferWriter_) {
     BufferWriter = BufferWriter_;
 };
 
+"use strict";
 var writer_buffer = BufferWriter$1;
 
 // extends Writer
@@ -3399,6 +3451,7 @@ BufferWriter$1.prototype.string = function write_string_buffer(value) {
  * @returns {Buffer} Finished buffer
  */
 
+"use strict";
 var reader = Reader;
 
 
@@ -3806,6 +3859,7 @@ Reader._configure = function(BufferReader_) {
     });
 };
 
+"use strict";
 var reader_buffer = BufferReader$1;
 
 // extends Reader
@@ -3850,6 +3904,7 @@ BufferReader$1.prototype.string = function read_string_buffer() {
  * @returns {Buffer} Value read
  */
 
+"use strict";
 var service$1 = Service;
 
 
@@ -4031,6 +4086,7 @@ var rpc = exports;
 rpc.Service = service$1;
 });
 
+"use strict";
 var roots = {};
 
 /**
@@ -4088,6 +4144,9 @@ protobuf.Writer._configure(protobuf.BufferWriter);
 configure();
 });
 
+// minimal library entry point.
+
+"use strict";
 var minimal = indexMinimal;
 
 var minimal_1 = minimal.Reader;
@@ -6578,6 +6637,7 @@ var Signaling = (function () {
     return Signaling;
 }());
 
+"use strict";
 var __extends$7 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -6626,6 +6686,7 @@ var BehaviorSubject = (function (_super) {
 }(Subject_1.Subject));
 var BehaviorSubject_2 = BehaviorSubject;
 
+"use strict";
 var __extends$8 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -6722,6 +6783,9 @@ var filter_1 = {
 	filter: filter_2
 };
 
+"use strict";
+
+
 Observable_1.Observable.prototype.filter = filter_1.filter;
 
 var CONNECT_TIMEOUT_FOR_NODE = 3000;
@@ -6807,6 +6871,7 @@ var WebSocketBuilder = (function () {
     return WebSocketBuilder;
 }());
 
+"use strict";
 var __extends$12 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -6855,6 +6920,7 @@ var Action_1 = {
 	Action: Action_2
 };
 
+"use strict";
 var __extends$11 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -7001,6 +7067,7 @@ var AsyncAction_1 = {
 	AsyncAction: AsyncAction_2
 };
 
+"use strict";
 var __extends$10 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -7054,6 +7121,7 @@ var QueueAction_1 = {
 	QueueAction: QueueAction_2
 };
 
+"use strict";
 /**
  * An execution context and a data structure to order tasks and schedule their
  * execution. Provides a notion of (potentially virtual) time, through the
@@ -7107,6 +7175,7 @@ var Scheduler_1 = {
 	Scheduler: Scheduler_2
 };
 
+"use strict";
 var __extends$14 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -7162,6 +7231,7 @@ var AsyncScheduler_1 = {
 	AsyncScheduler: AsyncScheduler_2
 };
 
+"use strict";
 var __extends$13 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -7181,6 +7251,9 @@ var QueueScheduler_2 = QueueScheduler;
 var QueueScheduler_1 = {
 	QueueScheduler: QueueScheduler_2
 };
+
+"use strict";
+
 
 /**
  *
@@ -7249,6 +7322,8 @@ var queue_1 = new QueueScheduler_1.QueueScheduler(QueueAction_1.QueueAction);
 var queue = {
 	queue: queue_1
 };
+
+"use strict";
 
 /**
  * Represents a push-based event or value that an {@link Observable} can emit.
@@ -7380,6 +7455,7 @@ var Notification_1 = {
 	Notification: Notification_2
 };
 
+"use strict";
 var __extends$15 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -7500,6 +7576,7 @@ var observeOn_1 = {
 	ObserveOnMessage: ObserveOnMessage_1
 };
 
+"use strict";
 var __extends$9 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -7857,6 +7934,11 @@ var WebRTCBuilder = (function (_super) {
                     };
                     dc_1.onopen = function () {
                         pc.oniceconnectionstatechange = function () {
+                            console.info("'NETFLUX: " + _this.wc.myId + " iceConnectionState=" + pc.iceConnectionState.toUpperCase() + " " + channel_1.peerId, {
+                                readyState: dc_1.readyState,
+                                iceConnectionState: pc.iceConnectionState,
+                                signalingState: pc.signalingState
+                            });
                             if (pc.iceConnectionState === 'failed') {
                                 channel_1.close();
                             }
@@ -7882,6 +7964,11 @@ var WebRTCBuilder = (function (_super) {
                     var channel = new Channel(_this.wc, dc, { rtcPeerConnection: pc, id: peerId });
                     dc.onopen = function (evt) {
                         pc.oniceconnectionstatechange = function () {
+                            console.info("'NETFLUX: " + _this.wc.myId + " iceConnectionState=" + pc.iceConnectionState.toUpperCase() + " " + channel.peerId, {
+                                readyState: dc.readyState,
+                                iceConnectionState: pc.iceConnectionState,
+                                signalingState: pc.signalingState
+                            });
                             if (pc.iceConnectionState === 'failed') {
                                 channel.close();
                             }

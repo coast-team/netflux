@@ -9,6 +9,7 @@ export class Channel {
   private connection: WebSocket | RTCDataChannel
   private rtcPeerConnection: RTCPeerConnection
   private onClose: (evt: Event) => void
+  private wc: WebChannel
   /**
    * Id of the peer who is at the other end of this channel.
    */
@@ -23,6 +24,7 @@ export class Channel {
     connection: WebSocket | RTCDataChannel,
     options: {rtcPeerConnection?: RTCPeerConnection, id: number} = {id: -1}
   ) {
+    this.wc = wc
     this.connection = connection
     this.peerId = options.id
     this.rtcPeerConnection = options.rtcPeerConnection
@@ -39,6 +41,11 @@ export class Channel {
     }
 
     this.onClose = (evt: Event) => {
+      console.info(`NETFLUX: ${wc.myId} ONCLOSE CALLBACK ${this.peerId}`, {
+        readyState: this.connection.readyState,
+        iceConnectionState: this.rtcPeerConnection.iceConnectionState,
+        signalingState: this.rtcPeerConnection.signalingState
+      })
       this.connection.onclose = () => {}
       this.connection.onmessage = () => {}
       this.connection.onerror = () => {}
@@ -61,6 +68,11 @@ export class Channel {
       this.connection.readyState !== WebSocket.CLOSED &&
       this.connection.readyState !== WebSocket.CLOSING
     ) {
+      console.info(`NETFLUX: ${this.wc.myId} CLOSE ${this.peerId}`, {
+        readyState: this.connection.readyState,
+        iceConnectionState: this.rtcPeerConnection.iceConnectionState,
+        signalingState: this.rtcPeerConnection.signalingState
+      })
       this.connection.close()
       if (isFirefox && this.rtcPeerConnection && this.rtcPeerConnection.signalingState !== 'closed') {
         this.onClose(new Event('close'))

@@ -317,6 +317,11 @@ export class WebRTCBuilder extends Service {
           }
           dc.onopen = () => {
             pc.oniceconnectionstatechange = () => {
+              console.info(`'NETFLUX: ${this.wc.myId} iceConnectionState=${pc.iceConnectionState.toUpperCase()} ${channel.peerId}`, {
+                readyState: dc.readyState,
+                iceConnectionState: pc.iceConnectionState,
+                signalingState: pc.signalingState
+              })
               if (pc.iceConnectionState === 'failed') {
                 channel.close()
               }
@@ -340,6 +345,11 @@ export class WebRTCBuilder extends Service {
           const channel = new Channel(this.wc, dc, {rtcPeerConnection: pc, id: peerId})
           dc.onopen = evt => {
             pc.oniceconnectionstatechange = () => {
+              console.info(`'NETFLUX: ${this.wc.myId} iceConnectionState=${pc.iceConnectionState.toUpperCase()} ${channel.peerId}`, {
+                readyState: dc.readyState,
+                iceConnectionState: pc.iceConnectionState,
+                signalingState: pc.signalingState
+              })
               if (pc.iceConnectionState === 'failed') {
                 channel.close()
               }
