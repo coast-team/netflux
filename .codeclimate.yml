@@ -1,8 +1,12 @@
 engines:
-  eslint:
+  tslint:
     enabled: true
+    channel: beta
+    config: tslint.json
   fixme:
     enabled: true
 ratings:
   paths:
-    "src/**/*.js"
+    "src/**/*.ts"
+exclude_paths:
+- src/Protobuf*

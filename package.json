@@ -43,7 +43,7 @@
     "proto": "pbjs -t static-module -w es6 --no-verify --no-delimited --no-convert src/index.proto -o src/Protobuf.es6.js && pbts src/Protobuf.es6.js -o src/Protobuf.d.ts",
     "postproto": "babel -o src/Protobuf.js src/Protobuf.es6.js; rm src/Protobuf.es6.js",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
-    "lint": "tslint src/**/* -e 'src/**/*.proto' ",
+    "lint": "tslint src/* -e 'src/**/*.proto' -e 'src/Protobuf.d.ts' ",
     "precommit": "npm run test:coverage",
     "commitmsg": "validate-commit-msg",
     "cz": "git-cz"
