@@ -1,7 +1,11 @@
 {
   "ignore": [
-    "./*.js",
-    "dist/*",
-    "src/Protobuf.js"
-  ]
+    "./**/*.js",
+    "dist/**/*"
+  ],
+  "dependencies": {
+    "unused-ignores": [
+      "karma-coverage-es6"
+    ]
+  }
 }
