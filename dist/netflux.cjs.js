@@ -8366,7 +8366,7 @@ var WebChannel = (function (_super) {
                     if (_this.members.length === 0) {
                         _this._setState(WebChannel.LEFT);
                     }
-                    if (!_this.isRejoinDisabled) {
+                    if (!_this._isRejoinDisabled) {
                         _this._rejoin();
                     }
                     break;
@@ -8432,7 +8432,7 @@ var WebChannel = (function (_super) {
     WebChannel.prototype.join = function (value) {
         if (value === void 0) { value = generateKey(); }
         if (this._state === WebChannel.LEFT && this._signaling.state === WebChannel.SIGNALING_CLOSED) {
-            this.isRejoinDisabled = !this.autoRejoin;
+            this._isRejoinDisabled = !this.autoRejoin;
             this._setState(WebChannel.JOINING);
             if (!(value instanceof Channel)) {
                 if ((typeof value === 'string' || value instanceof String) && value.length < MAX_KEY_LENGTH) {
@@ -8466,7 +8466,7 @@ var WebChannel = (function (_super) {
      * Close the connection with Signaling server.
      */
     WebChannel.prototype.closeSignaling = function () {
-        this.isRejoinDisabled = true;
+        this._isRejoinDisabled = true;
         this._signaling.close();
     };
     /**
@@ -8474,7 +8474,7 @@ var WebChannel = (function (_super) {
      * with Signaling server.
      */
     WebChannel.prototype.leave = function () {
-        this.isRejoinDisabled = true;
+        this._isRejoinDisabled = true;
         this._pingTime = 0;
         this._maxTime = 0;
         this._pingFinish = function () { };
@@ -8926,3 +8926,4 @@ var BotServer = (function () {
 
 exports.WebChannel = WebChannel;
 exports.BotServer = BotServer;
+//# sourceMappingURL=netflux.cjs.js.map

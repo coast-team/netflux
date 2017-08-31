@@ -4,8 +4,9 @@
   "version": "1.2.0-beta.2",
   "license": "AGPL-3.0",
   "main": "dist/netflux.cjs.js",
-  "module": "dist/netflux.esm.js",
-  "browser": "dist/netflux.umd.js",
+  "module": "dist/netflux.node.esm.js",
+  "browser": "dist/netflux.browser.esm.js",
+  "types": "dist/ts/index.d.ts",
   "homepage": "https://doc.esdoc.org/github.com/coast-team/netflux",
   "repository": {
     "type": "git",
@@ -29,8 +30,7 @@
     "dist/"
   ],
   "scripts": {
-    "build": "rm -rf dist && rollup --config",
-    "build:doc": "rm -rf dist/es6 && tsc -p tsconfig.doc.json",
+    "build": "rm -rf dist && rollup --config && cp -r src/Protobuf.d.ts dist/ts/Protobuf.d.ts",
     "build:testbot": "rollup -c test/util/rollup.config.js",
     "start:testbot": "pm2 gracefulReload test/util/process.yml",
     "pretest": "npm run build && npm run build:testbot && npm run start:testbot",
@@ -92,12 +92,14 @@
     "rollup-plugin-string": "^2.0.2",
     "rollup-plugin-strip": "^1.1.1",
     "rollup-plugin-typescript2": "^0.5.2",
+    "rollup-plugin-uglify": "^2.0.1",
     "semantic-release": "^7.0.2",
     "sigver": "^15.0.1",
     "tslib": "^1.7.1",
     "tslint": "^5.7.0",
     "tslint-eslint-rules": "^4.1.1",
     "typescript": "~2.4.2",
+    "uglify-js": "^3.0.28",
     "validate-commit-msg": "^2.13.1"
   },
   "config": {

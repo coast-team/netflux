@@ -1,4 +1,18 @@
-declare var global: any
+/**
+ * Polyfills globals for NodeJS
+ */
+declare module NodeJS  {
+    interface Global {
+      RTCPeerConnection: RTCPeerConnection,
+      RTCDataChannel: RTCDataChannel,
+      RTCIceCandidate: RTCIceCandidate,
+      TextEncoder: TextEncoding.TextEncoder
+      TextDecoder: TextEncoding.TextDecoder,
+      WebSocket: WebSocket,
+      crypto: Crypto,
+      Event: { name: string }
+    }
+}
 
 /**
  * WebRTC missing declarations

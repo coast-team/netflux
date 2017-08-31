@@ -1,17 +1,13 @@
 {
   "compilerOptions": {
-    "allowJs": true,
     "target": "es5",
     "module": "es6",
     "lib": [ "es2016", "dom" ],
     "moduleResolution": "node",
-    "downlevelIteration": true,
-    "typeRoots": [
-      "node_modules/@types"
-    ]
+    "downlevelIteration": true
   },
   "include": [
-    "./src/**/*.ts"
+    "src/**/*.ts"
   ],
   "exclude": [
     "node_modules",
