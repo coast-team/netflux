@@ -1432,7 +1432,7 @@ export var webRTCBuilder = $root.webRTCBuilder = function () {
          * @property {boolean} [isInitiator] Message isInitiator
          * @property {string} [offer] Message offer
          * @property {string} [answer] Message answer
-         * @property {webRTCBuilder.Message.IIceCandidate} [iceCandidate] Message iceCandidate
+         * @property {webRTCBuilder.IIceCandidate} [iceCandidate] Message iceCandidate
          */
 
         /**
@@ -1474,7 +1474,7 @@ export var webRTCBuilder = $root.webRTCBuilder = function () {
 
         /**
          * Message iceCandidate.
-         * @member {(webRTCBuilder.Message.IIceCandidate|null|undefined)}iceCandidate
+         * @member {(webRTCBuilder.IIceCandidate|null|undefined)}iceCandidate
          * @memberof webRTCBuilder.Message
          * @instance
          */
@@ -1520,7 +1520,7 @@ export var webRTCBuilder = $root.webRTCBuilder = function () {
             if (message.isInitiator != null && message.hasOwnProperty("isInitiator")) writer.uint32( /* id 1, wireType 0 =*/8).bool(message.isInitiator);
             if (message.offer != null && message.hasOwnProperty("offer")) writer.uint32( /* id 2, wireType 2 =*/18).string(message.offer);
             if (message.answer != null && message.hasOwnProperty("answer")) writer.uint32( /* id 3, wireType 2 =*/26).string(message.answer);
-            if (message.iceCandidate != null && message.hasOwnProperty("iceCandidate")) $root.webRTCBuilder.Message.IceCandidate.encode(message.iceCandidate, writer.uint32( /* id 4, wireType 2 =*/34).fork()).ldelim();
+            if (message.iceCandidate != null && message.hasOwnProperty("iceCandidate")) $root.webRTCBuilder.IceCandidate.encode(message.iceCandidate, writer.uint32( /* id 4, wireType 2 =*/34).fork()).ldelim();
             return writer;
         };
 
@@ -1552,7 +1552,7 @@ export var webRTCBuilder = $root.webRTCBuilder = function () {
                         message.answer = reader.string();
                         break;
                     case 4:
-                        message.iceCandidate = $root.webRTCBuilder.Message.IceCandidate.decode(reader, reader.uint32());
+                        message.iceCandidate = $root.webRTCBuilder.IceCandidate.decode(reader, reader.uint32());
                         break;
                     default:
                         reader.skipType(tag & 7);
@@ -1562,122 +1562,122 @@ export var webRTCBuilder = $root.webRTCBuilder = function () {
             return message;
         };
 
-        Message.IceCandidate = function () {
+        return Message;
+    }();
 
-            /**
-             * Properties of an IceCandidate.
-             * @memberof webRTCBuilder.Message
-             * @interface IIceCandidate
-             * @property {string} [candidate] IceCandidate candidate
-             * @property {string} [sdpMid] IceCandidate sdpMid
-             * @property {number} [sdpMLineIndex] IceCandidate sdpMLineIndex
-             */
+    webRTCBuilder.IceCandidate = function () {
 
-            /**
-             * Constructs a new IceCandidate.
-             * @memberof webRTCBuilder.Message
-             * @classdesc Represents an IceCandidate.
-             * @constructor
-             * @param {webRTCBuilder.Message.IIceCandidate=} [properties] Properties to set
-             */
-            function IceCandidate(properties) {
-                if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
-                    if (properties[keys[i]] != null) this[keys[i]] = properties[keys[i]];
+        /**
+         * Properties of an IceCandidate.
+         * @memberof webRTCBuilder
+         * @interface IIceCandidate
+         * @property {string} [candidate] IceCandidate candidate
+         * @property {string} [sdpMid] IceCandidate sdpMid
+         * @property {number} [sdpMLineIndex] IceCandidate sdpMLineIndex
+         */
+
+        /**
+         * Constructs a new IceCandidate.
+         * @memberof webRTCBuilder
+         * @classdesc Represents an IceCandidate.
+         * @constructor
+         * @param {webRTCBuilder.IIceCandidate=} [properties] Properties to set
+         */
+        function IceCandidate(properties) {
+            if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
+                if (properties[keys[i]] != null) this[keys[i]] = properties[keys[i]];
+            }
+        }
+
+        /**
+         * IceCandidate candidate.
+         * @member {string}candidate
+         * @memberof webRTCBuilder.IceCandidate
+         * @instance
+         */
+        IceCandidate.prototype.candidate = "";
+
+        /**
+         * IceCandidate sdpMid.
+         * @member {string}sdpMid
+         * @memberof webRTCBuilder.IceCandidate
+         * @instance
+         */
+        IceCandidate.prototype.sdpMid = "";
+
+        /**
+         * IceCandidate sdpMLineIndex.
+         * @member {number}sdpMLineIndex
+         * @memberof webRTCBuilder.IceCandidate
+         * @instance
+         */
+        IceCandidate.prototype.sdpMLineIndex = 0;
+
+        /**
+         * Creates a new IceCandidate instance using the specified properties.
+         * @function create
+         * @memberof webRTCBuilder.IceCandidate
+         * @static
+         * @param {webRTCBuilder.IIceCandidate=} [properties] Properties to set
+         * @returns {webRTCBuilder.IceCandidate} IceCandidate instance
+         */
+        IceCandidate.create = function create(properties) {
+            return new IceCandidate(properties);
+        };
+
+        /**
+         * Encodes the specified IceCandidate message. Does not implicitly {@link webRTCBuilder.IceCandidate.verify|verify} messages.
+         * @function encode
+         * @memberof webRTCBuilder.IceCandidate
+         * @static
+         * @param {webRTCBuilder.IIceCandidate} message IceCandidate message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        IceCandidate.encode = function encode(message, writer) {
+            if (!writer) writer = $Writer.create();
+            if (message.candidate != null && message.hasOwnProperty("candidate")) writer.uint32( /* id 1, wireType 2 =*/10).string(message.candidate);
+            if (message.sdpMid != null && message.hasOwnProperty("sdpMid")) writer.uint32( /* id 2, wireType 2 =*/18).string(message.sdpMid);
+            if (message.sdpMLineIndex != null && message.hasOwnProperty("sdpMLineIndex")) writer.uint32( /* id 3, wireType 0 =*/24).uint32(message.sdpMLineIndex);
+            return writer;
+        };
+
+        /**
+         * Decodes an IceCandidate message from the specified reader or buffer.
+         * @function decode
+         * @memberof webRTCBuilder.IceCandidate
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {webRTCBuilder.IceCandidate} IceCandidate
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        IceCandidate.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length,
+                message = new $root.webRTCBuilder.IceCandidate();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                    case 1:
+                        message.candidate = reader.string();
+                        break;
+                    case 2:
+                        message.sdpMid = reader.string();
+                        break;
+                    case 3:
+                        message.sdpMLineIndex = reader.uint32();
+                        break;
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
                 }
             }
+            return message;
+        };
 
-            /**
-             * IceCandidate candidate.
-             * @member {string}candidate
-             * @memberof webRTCBuilder.Message.IceCandidate
-             * @instance
-             */
-            IceCandidate.prototype.candidate = "";
-
-            /**
-             * IceCandidate sdpMid.
-             * @member {string}sdpMid
-             * @memberof webRTCBuilder.Message.IceCandidate
-             * @instance
-             */
-            IceCandidate.prototype.sdpMid = "";
-
-            /**
-             * IceCandidate sdpMLineIndex.
-             * @member {number}sdpMLineIndex
-             * @memberof webRTCBuilder.Message.IceCandidate
-             * @instance
-             */
-            IceCandidate.prototype.sdpMLineIndex = 0;
-
-            /**
-             * Creates a new IceCandidate instance using the specified properties.
-             * @function create
-             * @memberof webRTCBuilder.Message.IceCandidate
-             * @static
-             * @param {webRTCBuilder.Message.IIceCandidate=} [properties] Properties to set
-             * @returns {webRTCBuilder.Message.IceCandidate} IceCandidate instance
-             */
-            IceCandidate.create = function create(properties) {
-                return new IceCandidate(properties);
-            };
-
-            /**
-             * Encodes the specified IceCandidate message. Does not implicitly {@link webRTCBuilder.Message.IceCandidate.verify|verify} messages.
-             * @function encode
-             * @memberof webRTCBuilder.Message.IceCandidate
-             * @static
-             * @param {webRTCBuilder.Message.IIceCandidate} message IceCandidate message or plain object to encode
-             * @param {$protobuf.Writer} [writer] Writer to encode to
-             * @returns {$protobuf.Writer} Writer
-             */
-            IceCandidate.encode = function encode(message, writer) {
-                if (!writer) writer = $Writer.create();
-                if (message.candidate != null && message.hasOwnProperty("candidate")) writer.uint32( /* id 1, wireType 2 =*/10).string(message.candidate);
-                if (message.sdpMid != null && message.hasOwnProperty("sdpMid")) writer.uint32( /* id 2, wireType 2 =*/18).string(message.sdpMid);
-                if (message.sdpMLineIndex != null && message.hasOwnProperty("sdpMLineIndex")) writer.uint32( /* id 3, wireType 0 =*/24).uint32(message.sdpMLineIndex);
-                return writer;
-            };
-
-            /**
-             * Decodes an IceCandidate message from the specified reader or buffer.
-             * @function decode
-             * @memberof webRTCBuilder.Message.IceCandidate
-             * @static
-             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-             * @param {number} [length] Message length if known beforehand
-             * @returns {webRTCBuilder.Message.IceCandidate} IceCandidate
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            IceCandidate.decode = function decode(reader, length) {
-                if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
-                var end = length === undefined ? reader.len : reader.pos + length,
-                    message = new $root.webRTCBuilder.Message.IceCandidate();
-                while (reader.pos < end) {
-                    var tag = reader.uint32();
-                    switch (tag >>> 3) {
-                        case 1:
-                            message.candidate = reader.string();
-                            break;
-                        case 2:
-                            message.sdpMid = reader.string();
-                            break;
-                        case 3:
-                            message.sdpMLineIndex = reader.uint32();
-                            break;
-                        default:
-                            reader.skipType(tag & 7);
-                            break;
-                    }
-                }
-                return message;
-            };
-
-            return IceCandidate;
-        }();
-
-        return Message;
+        return IceCandidate;
     }();
 
     return webRTCBuilder;

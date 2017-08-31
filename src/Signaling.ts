@@ -8,22 +8,21 @@ import { Channel } from './Channel'
 /* tslint:disable:variable-name */
 
 interface SignalingConnection {
-  stream: Subject<any>,
-  send: (msg: any) => any,
-  pong: () => void,
+  onMessage: Observable<signaling.Message>,
+  send: (msg: signaling.IMessage) => void,
   ping: () => void,
-  close: (code: number, reason?: string) => void,
-  clean: () => void
+  pong: () => void,
+  close: (code?: number, reason?: string) => void
 }
 
-type State = 0 | 1 | 2 | 3
-
-
 const PING_INTERVAL = 3000
+
+/* WebSocket error codes */
 const MESSAGE_ERROR_CODE = 4000
 const PING_ERROR_CODE = 4001
 const FIRST_CONNECTION_ERROR_CODE = 4002
 
+/* Preconstructed messages */
 const pingMsg = signaling.Message.encode(signaling.Message.create({ ping: true })).finish()
 const pongMsg = signaling.Message.encode(signaling.Message.create({ pong: true })).finish()
 
@@ -44,40 +43,37 @@ export class Signaling {
   public state: number
 
   private wc: WebChannel
-  private onChannel: (ch: Channel) => void
   private stateSubject: Subject<number>
+  private channelSubject: Subject<Channel>
   private rxWs: SignalingConnection
   private pingInterval: any
   private pongReceived: boolean
 
-  /**
-   * @param {WebChannel} wc
-   * @param {function(ch: RTCDataChannel)} onChannel
-   * @param {string} url
-   */
-  constructor (wc: WebChannel, onChannel: (ch: Channel) => void, url: string) {
+  constructor (wc: WebChannel, url: string) {
     // public
     this.url = url.endsWith('/') ? url : url + '/'
-    this.onChannel = onChannel
+    this.state = Signaling.CLOSED
 
     // private
     this.wc = wc
     this.stateSubject = new Subject<number>()
+    this.channelSubject = new Subject<Channel>()
     this.rxWs = undefined
     this.pingInterval = undefined
     this.pongReceived = false
-
-    // Init state
-    this.setState(Signaling.CLOSED)
   }
 
   get onState (): Observable<number> {
     return this.stateSubject.asObservable()
   }
 
+  get onChannel (): Observable<Channel> {
+    return this.channelSubject.asObservable()
+  }
+
   /**
    * Notify Signaling server that you had joined the network and ready
-   * to add new peers to the network.
+   * to join new peers to the network.
    */
   open (): void {
     if (this.state === Signaling.FIRST_CONNECTED) {
@@ -86,9 +82,12 @@ export class Signaling {
     }
   }
 
-  join (key): void {
-    if (this.state !== Signaling.CLOSED) {
+  join (key: string): void {
+    if (this.state === Signaling.READY_TO_JOIN_OTHERS) {
       throw new Error('Failed to join via signaling: connection with signaling is already opened')
+    }
+    if (this.state !== Signaling.CLOSED) {
+      this.close()
     }
     this.setState(Signaling.CONNECTING)
     this.wc.webSocketBuilder.connect(this.url + key)
@@ -96,23 +95,21 @@ export class Signaling {
         this.setState(Signaling.OPEN)
         this.rxWs = this.createRxWs(ws)
         this.startPingInterval()
-        this.rxWs.stream.subscribe(
+        this.rxWs.onMessage.subscribe(
           msg => {
             switch (msg.type) {
-            case 'ping': {
+            case 'ping':
               this.rxWs.pong()
               break
-            }
-            case 'pong': {
+            case 'pong':
               this.pongReceived = true
               break
-            }
             case 'isFirst':
               if (msg.isFirst) {
                 this.setState(Signaling.READY_TO_JOIN_OTHERS)
               } else {
                 this.wc.webRTCBuilder.connectOverSignaling({
-                  stream: this.rxWs.stream.filter(msg => msg.type === 'content')
+                  onMessage: this.rxWs.onMessage.filter(msg => msg.type === 'content')
                     .map(({ content }) => content),
                   send: (msg) => this.rxWs.send({ content: msg })
                 })
@@ -123,24 +120,17 @@ export class Signaling {
               }
               break
             }
-          },
-          err => {
-            this.setState(Signaling.CLOSED)
-            console.error(err)
           }
         )
       })
-      .catch(err => {
-        this.setState(Signaling.CLOSED)
-        console.error(`Failed to connect to Signaling: ${err.message}`)
-      })
+      .catch(err => this.setState(Signaling.CLOSED))
   }
 
   /**
    * Close the `WebSocket` with Signaling server.
    */
   close (): void {
-    if (this.state !== Signaling.CLOSED) {
+    if (this.rxWs) {
       this.rxWs.close(1000)
     }
   }
@@ -151,14 +141,10 @@ export class Signaling {
       this.stateSubject.next(state)
       if (state === Signaling.READY_TO_JOIN_OTHERS) {
         this.wc.webRTCBuilder.channelsFromSignaling({
-          stream: this.rxWs.stream.filter(msg => msg.type === 'content')
+          onMessage: this.rxWs.onMessage.filter(msg => msg.type === 'content')
             .map(({ content }) => content),
           send: msg => this.rxWs.send({ content: msg })
-        })
-          .subscribe(
-            ch => this.onChannel(ch),
-            err => console.error(err.message)
-          )
+        }).subscribe(ch => this.channelSubject.next(ch))
       }
     }
   }
@@ -166,13 +152,14 @@ export class Signaling {
   private startPingInterval () {
     this.rxWs.ping()
     this.pingInterval = setInterval(() => {
-      if (!this.pongReceived) {
-        clearInterval(this.pingInterval)
-        this.rxWs.stream.error(new Error('Signaling is no longer available'))
-        this.rxWs.clean()
-      } else {
-        this.pongReceived = false
-        this.rxWs.ping()
+      if (this.state !== Signaling.CLOSED) {
+        if (!this.pongReceived) {
+          clearInterval(this.pingInterval)
+          this.rxWs.close(PING_ERROR_CODE, 'Signaling is not responding')
+        } else {
+          this.pongReceived = false
+          this.rxWs.ping()
+        }
       }
     }, PING_INTERVAL)
   }
@@ -194,19 +181,14 @@ export class Signaling {
       if (closeEvt.code === 1000) {
         subject.complete()
       } else {
-        console.error(`WebSocket connection to Signaling '${this.url}' failed with code ${closeEvt.code}: ${closeEvt.reason}`)
+        subject.error(new Error(`Connection with Signaling '${this.url}' closed: ${closeEvt.code}: ${closeEvt.reason}`))
       }
     }
     return {
-      stream: subject,
+      onMessage: subject.asObservable() as Observable<signaling.Message>,
       send: msg => {
         if (ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CLOSED) {
           ws.send(signaling.Message.encode(signaling.Message.create(msg)).finish())
-        }
-      },
-      pong: () => {
-        if (ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CLOSED) {
-          ws.send(pongMsg)
         }
       },
       ping: () => {
@@ -214,13 +196,12 @@ export class Signaling {
           ws.send(pingMsg)
         }
       },
-      close: (code, reason = '') => ws.close(code, reason),
-      clean: () => {
-        ws.onmessage = () => {}
-        ws.onerror = () => {}
-        ws.onclose = () => {}
-        ws.close(1000)
-      }
+      pong: () => {
+        if (ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CLOSED) {
+          ws.send(pongMsg)
+        }
+      },
+      close: (code = 1000, reason = '') => ws.close(code, reason)
     }
   }
 }

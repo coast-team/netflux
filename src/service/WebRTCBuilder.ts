@@ -8,7 +8,7 @@ import { Observable } from 'rxjs/Observable'
 import 'rxjs/add/operator/map'
 
 import { Service } from './Service'
-import { webRTCBuilder } from '../Protobuf'
+import { webRTCBuilder, signaling } from '../Protobuf'
 import { Channel } from '../Channel'
 import { WebChannel } from './WebChannel'
 
@@ -21,38 +21,9 @@ import { WebChannel } from './WebChannel'
  */
 const ID = 0
 
-interface IceCandidate {
-  candidate: string,
-  sdpMid?: string,
-  sdpMLineIndex?: number
-}
-
-interface OfferSent {
-  offer?: string,
-  iceCandidate?: IceCandidate
-}
-
-interface OfferReceived {
-  offer?: string,
-  iceCandidate?: IceCandidate,
-  isError?: boolean,
-  id: number
-}
-
-interface AnswerSent {
-  answer?: string,
-  iceCandidate?: IceCandidate
-}
-
-interface AnswerReceived {
-  answer?: string,
-  iceCandidate?: IceCandidate,
-  isError?: boolean
-}
-
 export interface SignalingConnection {
-  stream: Observable<any>,
-  send: (msg: any) => any
+  onMessage: Observable<any>,
+  send: (msg: signaling.IContent) => void
 }
 
 /**
@@ -63,7 +34,7 @@ export interface SignalingConnection {
 export class WebRTCBuilder extends Service {
   private wc: WebChannel
   private rtcConfiguration: RTCConfiguration
-  private clients: Map<number, [RTCPeerConnection, ReplaySubject<IceCandidate>]>
+  private clients: Map<number, [RTCPeerConnection, ReplaySubject<webRTCBuilder.IIceCandidate>]>
 
   constructor (wc: WebChannel, iceServers: RTCIceServer[]) {
     super(ID, webRTCBuilder.Message, wc._svcMsgStream)
@@ -123,7 +94,7 @@ export class WebRTCBuilder extends Service {
   channelsFromSignaling (signaling: SignalingConnection): Observable<Channel> {
     if (WebRTCBuilder.isSupported) {
       return this.channels(
-        signaling.stream.filter(({ id }) => id !== 0)
+        signaling.onMessage.filter(({ id }) => id !== 0)
           .map(msg => {
             if (msg.type === 'data') {
               const completeData: any = super.decode(msg.data)
@@ -152,7 +123,7 @@ export class WebRTCBuilder extends Service {
   connectOverSignaling (signaling: SignalingConnection): Promise<Channel> {
     if (WebRTCBuilder.isSupported) {
       return this.establishChannel(
-        signaling.stream.filter(({ id }) => id === 0)
+        signaling.onMessage.filter(({ id }) => id === 0)
           .map(msg => {
             return msg.type === 'data' ? super.decode(msg.data) : { isError: true }
           }),
@@ -169,8 +140,15 @@ export class WebRTCBuilder extends Service {
   }
 
   private establishChannel (
-    stream: Observable<AnswerReceived>,
-    send: (msg: OfferSent) => void,
+    onMessage: Observable<{
+      answer?: string,
+      iceCandidate?: webRTCBuilder.IIceCandidate,
+      isError?: boolean
+    }>,
+    send: (msg: {
+      offer?: string,
+      iceCandidate?: webRTCBuilder.IIceCandidate
+    }) => void,
     peerId = 1
   ): Promise<Channel> {
     const pc = new RTCPeerConnection(this.rtcConfiguration)
@@ -182,7 +160,7 @@ export class WebRTCBuilder extends Service {
     )
 
     return new Promise((resolve, reject) => {
-      const subs = stream.subscribe(
+      const subs = onMessage.subscribe(
         ({ answer, iceCandidate, isError }) => {
           if (answer) {
             pc.setRemoteDescription({ type: 'answer', sdp: answer } as any)
@@ -225,11 +203,19 @@ export class WebRTCBuilder extends Service {
   }
 
   private channels (
-    stream: Observable<OfferReceived>,
-    send: (msg: AnswerSent, id: number) => void
+    onMessage: Observable<{
+      offer?: string,
+      iceCandidate?: webRTCBuilder.IIceCandidate,
+      isError?: boolean,
+      id: number
+    }>,
+    send: (msg: {
+      answer?: string,
+      iceCandidate?: webRTCBuilder.IIceCandidate
+    }, id: number) => void
   ): Observable<Channel> {
     return Observable.create(observer => {
-      stream.subscribe(
+      onMessage.subscribe(
         ({ offer, iceCandidate, id, isError }) => {
           const client = this.clients.get(id)
           let pc
@@ -287,7 +273,7 @@ export class WebRTCBuilder extends Service {
     })
   }
 
-  private localCandidates (pc: RTCPeerConnection): Observable<IceCandidate> {
+  private localCandidates (pc: RTCPeerConnection): Observable<webRTCBuilder.IIceCandidate> {
     return Observable.create(observer => {
       pc.onicecandidate = evt => {
         if (evt.candidate !== null) {

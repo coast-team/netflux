@@ -8,10 +8,10 @@ message Message {
     string answer = 3;
     IceCandidate iceCandidate = 4;
   }
+}
 
-  message IceCandidate {
-    string candidate = 1;
-    string sdpMid = 2;
-    uint32 sdpMLineIndex = 3;
-  }
+message IceCandidate {
+  string candidate = 1;
+  string sdpMid = 2;
+  uint32 sdpMLineIndex = 3;
 }

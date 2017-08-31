@@ -672,7 +672,7 @@ export namespace webRTCBuilder {
         answer?: string;
 
         /** Message iceCandidate */
-        iceCandidate?: webRTCBuilder.Message.IIceCandidate;
+        iceCandidate?: webRTCBuilder.IIceCandidate;
     }
 
     /** Represents a Message. */
@@ -694,7 +694,7 @@ export namespace webRTCBuilder {
         public answer: string;
 
         /** Message iceCandidate. */
-        public iceCandidate?: (webRTCBuilder.Message.IIceCandidate|null);
+        public iceCandidate?: (webRTCBuilder.IIceCandidate|null);
 
         /** Message type. */
         public type?: string;
@@ -725,64 +725,61 @@ export namespace webRTCBuilder {
         public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): webRTCBuilder.Message;
     }
 
-    namespace Message {
+    /** Properties of an IceCandidate. */
+    interface IIceCandidate {
 
-        /** Properties of an IceCandidate. */
-        interface IIceCandidate {
+        /** IceCandidate candidate */
+        candidate?: string;
 
-            /** IceCandidate candidate */
-            candidate?: string;
+        /** IceCandidate sdpMid */
+        sdpMid?: string;
 
-            /** IceCandidate sdpMid */
-            sdpMid?: string;
+        /** IceCandidate sdpMLineIndex */
+        sdpMLineIndex?: number;
+    }
 
-            /** IceCandidate sdpMLineIndex */
-            sdpMLineIndex?: number;
-        }
+    /** Represents an IceCandidate. */
+    class IceCandidate {
 
-        /** Represents an IceCandidate. */
-        class IceCandidate {
+        /**
+         * Constructs a new IceCandidate.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: webRTCBuilder.IIceCandidate);
 
-            /**
-             * Constructs a new IceCandidate.
-             * @param [properties] Properties to set
-             */
-            constructor(properties?: webRTCBuilder.Message.IIceCandidate);
+        /** IceCandidate candidate. */
+        public candidate: string;
 
-            /** IceCandidate candidate. */
-            public candidate: string;
+        /** IceCandidate sdpMid. */
+        public sdpMid: string;
 
-            /** IceCandidate sdpMid. */
-            public sdpMid: string;
+        /** IceCandidate sdpMLineIndex. */
+        public sdpMLineIndex: number;
 
-            /** IceCandidate sdpMLineIndex. */
-            public sdpMLineIndex: number;
+        /**
+         * Creates a new IceCandidate instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns IceCandidate instance
+         */
+        public static create(properties?: webRTCBuilder.IIceCandidate): webRTCBuilder.IceCandidate;
 
-            /**
-             * Creates a new IceCandidate instance using the specified properties.
-             * @param [properties] Properties to set
-             * @returns IceCandidate instance
-             */
-            public static create(properties?: webRTCBuilder.Message.IIceCandidate): webRTCBuilder.Message.IceCandidate;
+        /**
+         * Encodes the specified IceCandidate message. Does not implicitly {@link webRTCBuilder.IceCandidate.verify|verify} messages.
+         * @param message IceCandidate message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: webRTCBuilder.IIceCandidate, writer?: $protobuf.Writer): $protobuf.Writer;
 
-            /**
-             * Encodes the specified IceCandidate message. Does not implicitly {@link webRTCBuilder.Message.IceCandidate.verify|verify} messages.
-             * @param message IceCandidate message or plain object to encode
-             * @param [writer] Writer to encode to
-             * @returns Writer
-             */
-            public static encode(message: webRTCBuilder.Message.IIceCandidate, writer?: $protobuf.Writer): $protobuf.Writer;
-
-            /**
-             * Decodes an IceCandidate message from the specified reader or buffer.
-             * @param reader Reader or buffer to decode from
-             * @param [length] Message length if known beforehand
-             * @returns IceCandidate
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): webRTCBuilder.Message.IceCandidate;
-        }
+        /**
+         * Decodes an IceCandidate message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns IceCandidate
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): webRTCBuilder.IceCandidate;
     }
 }
 
