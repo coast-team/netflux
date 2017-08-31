@@ -1,6 +1,7 @@
 {
   "ignore": [
-    "./**/*.js",
+    "*.js",
+    "src/Protobuf*",
     "dist/**/*"
   ],
   "dependencies": {
