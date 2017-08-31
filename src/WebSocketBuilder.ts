@@ -24,12 +24,16 @@ export class WebSocketBuilder {
   }
 
   static newIncomingSocket (wc, ws, senderId) {
-    wc.webSocketBuilder.channelsSubject.next(new Channel(wc, ws, {id: senderId}))
+    wc._webSocketBuilder.channelsSubject.next(new Channel(wc, ws, {id: senderId}))
   }
 
   constructor (wc: WebChannel) {
     this.wc = wc
     this.channelsSubject = new Subject()
+  }
+
+  get onChannel (): Observable<Channel> {
+    return this.channelsSubject.asObservable()
   }
 
   /**
@@ -93,9 +97,5 @@ export class WebSocketBuilder {
         throw new Error(`${url} is not a valid URL`)
       }
     })
-  }
-
-  channels (): Observable<Channel> {
-    return this.channelsSubject.asObservable()
   }
 }

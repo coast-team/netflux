@@ -1,15 +1,13 @@
 import { Subject } from 'rxjs/Subject'
 import { Observable } from 'rxjs/Observable'
 
-import { Service } from './Service'
+import { Service, ServiceMessageDecoded } from './Service'
 import { channelBuilder } from '../Protobuf'
 import { WebSocketBuilder } from '../WebSocketBuilder'
 import { Channel } from '../Channel'
 import { WebRTCBuilder } from './WebRTCBuilder'
 import { WebChannel } from './WebChannel'
-import { ServiceMessageDecoded } from '../Util'
 
-const ID = 2
 const ME = {
   wsUrl: '',
   isWrtcSupport: false
@@ -30,14 +28,15 @@ export class ChannelBuilder extends Service {
   private channelsSubject: Subject<Channel>
 
   constructor (wc: WebChannel) {
-    super(ID, channelBuilder.Message, wc._svcMsgStream)
+    super(20, channelBuilder.Message, wc._serviceMessageSubject)
     this.wc = wc
-    this.init()
+    this.pendingRequests = new Map()
+    this.channelsSubject = new Subject()
 
     // Listen on Channels as RTCDataChannels if WebRTC is supported
     ME.isWrtcSupport = WebRTCBuilder.isSupported
     if (ME.isWrtcSupport) {
-      wc.webRTCBuilder.channelsFromWebChannel()
+      wc._webRTCBuilder.channelsFromWebChannel()
         .subscribe(ch => this.handleChannel(ch))
     }
 
@@ -45,8 +44,7 @@ export class ChannelBuilder extends Service {
     WebSocketBuilder.listen().subscribe(url => {
       ME.wsUrl = url
       if (url) {
-        wc.webSocketBuilder.channels()
-          .subscribe(ch => this.handleChannel(ch))
+        wc._webSocketBuilder.onChannel.subscribe(ch => this.handleChannel(ch))
       }
 
       // Update preconstructed messages (for performance only)
@@ -56,16 +54,11 @@ export class ChannelBuilder extends Service {
     })
 
     // Subscribe to WebChannel internal messages
-    this.svcMsgStream.subscribe(
-      msg => this.handleInnerMessage(msg),
-      err => console.error('ChannelBuilder Message Stream Error', err, wc),
-      () => this.init()
-    )
+    this.onServiceMessage.subscribe(msg => this.treatServiceMessage(msg))
   }
 
-  private init () {
-    this.pendingRequests = new Map()
-    this.channelsSubject = new Subject()
+  get onChannel (): Observable<Channel> {
+    return this.channelsSubject.asObservable()
   }
 
   /**
@@ -86,10 +79,6 @@ export class ChannelBuilder extends Service {
     })
   }
 
-  channels (): Observable<Channel> {
-    return this.channelsSubject.asObservable()
-  }
-
   private handleChannel (ch: Channel): void {
     const pendReq = this.pendingRequests.get(ch.peerId)
     if (pendReq) {
@@ -99,10 +88,10 @@ export class ChannelBuilder extends Service {
     }
   }
 
-  private handleInnerMessage ({ channel, senderId, recipientId, msg }: ServiceMessageDecoded): void {
+  private treatServiceMessage ({ channel, senderId, recipientId, msg }: ServiceMessageDecoded): void {
     switch (msg.type) {
     case 'failed': {
-      console.error('handleInnerMessage ERROR: ', msg.failed)
+      console.error('treatServiceMessage ERROR: ', msg.failed)
       const pr = this.pendingRequests.get(senderId)
       if (pr !== undefined) {
         pr.reject(new Error(msg.failed))
@@ -113,7 +102,7 @@ export class ChannelBuilder extends Service {
       const { wsUrl, isWrtcSupport } = msg.request
       // If remote peer is listening on WebSocket, connect to him
       if (wsUrl) {
-        this.wc.webSocketBuilder.connectTo(wsUrl, senderId)
+        this.wc._webSocketBuilder.connectTo(wsUrl, senderId)
           .then(ch => this.handleChannel(ch))
           .catch(reason => {
             if (ME.wsUrl) {
@@ -134,7 +123,7 @@ export class ChannelBuilder extends Service {
           // Ask him to connect to me via WebSocket
           this.wc._sendTo({ recipientId: senderId, content: response })
         } else if (ME.isWrtcSupport) {
-          this.wc.webRTCBuilder.connectOverWebChannel(senderId)
+          this.wc._webRTCBuilder.connectOverWebChannel(senderId)
             .then(ch => this.handleChannel(ch))
             .catch(reason => {
               // Send failed reason
@@ -168,7 +157,7 @@ export class ChannelBuilder extends Service {
     case 'response': {
       const { wsUrl } = msg.response
       if (wsUrl) {
-        this.wc.webSocketBuilder.connectTo(wsUrl, senderId)
+        this.wc._webSocketBuilder.connectTo(wsUrl, senderId)
           .then(ch => this.handleChannel(ch))
           .catch(reason => {
             this.pendingRequests.get(senderId)

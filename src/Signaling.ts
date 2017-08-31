@@ -90,7 +90,7 @@ export class Signaling {
       this.close()
     }
     this.setState(Signaling.CONNECTING)
-    this.wc.webSocketBuilder.connect(this.url + key)
+    this.wc._webSocketBuilder.connect(this.url + key)
       .then(ws => {
         this.setState(Signaling.OPEN)
         this.rxWs = this.createRxWs(ws)
@@ -108,7 +108,7 @@ export class Signaling {
               if (msg.isFirst) {
                 this.setState(Signaling.READY_TO_JOIN_OTHERS)
               } else {
-                this.wc.webRTCBuilder.connectOverSignaling({
+                this.wc._webRTCBuilder.connectOverSignaling({
                   onMessage: this.rxWs.onMessage.filter(msg => msg.type === 'content')
                     .map(({ content }) => content),
                   send: (msg) => this.rxWs.send({ content: msg })
@@ -140,7 +140,7 @@ export class Signaling {
       this.state = state
       this.stateSubject.next(state)
       if (state === Signaling.READY_TO_JOIN_OTHERS) {
-        this.wc.webRTCBuilder.channelsFromSignaling({
+        this.wc._webRTCBuilder.channelsFromSignaling({
           onMessage: this.rxWs.onMessage.filter(msg => msg.type === 'content')
             .map(({ content }) => content),
           send: msg => this.rxWs.send({ content: msg })

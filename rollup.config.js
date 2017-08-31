@@ -38,11 +38,7 @@ export default [
   },
   {
     input: 'src/index.ts',
-    output: {
-      file: pkg.browser,
-      format: 'umd',
-      name: 'netflux'
-    },
+    output: { file: pkg.browser, format: 'umd', name: 'netflux' },
     plugins: [
       typescript(),
       replace({

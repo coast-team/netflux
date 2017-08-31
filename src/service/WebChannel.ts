@@ -1,17 +1,36 @@
 import { Subject } from 'rxjs/Subject'
 
 import { Channel } from '../Channel'
-import { FullMesh } from './topology/FullMesh'
-import { Service } from './Service'
+import { FullMesh, FULL_MESH } from './topology/FullMesh'
+import { Service, ServiceMessageDecoded } from './Service'
 import { Signaling } from '../Signaling'
 import { ChannelBuilder } from './ChannelBuilder'
 import { WebSocketBuilder } from '../WebSocketBuilder'
 import { WebRTCBuilder } from './WebRTCBuilder'
-import { Message, webChannel, service } from '../Protobuf'
+import { IMessage, Message, webChannel, service } from '../Protobuf'
 import { UserMessage, UserDataType } from '../UserMessage'
-import { isURL, MessageI, ServiceMessageDecoded, generateKey, MAX_KEY_LENGTH } from '../Util'
-import { defaults, WebChannelOptions } from '../defaults'
+import { isURL, generateKey, MAX_KEY_LENGTH } from '../Util'
 import { TopologyInterface } from './topology/TopologyInterface'
+
+export enum Topologies {
+  FULL_MESH
+}
+
+export interface WebChannelOptions {
+  topology: Topologies,
+  signalingURL: string,
+  iceServers: RTCIceServer[],
+  autoRejoin: boolean
+}
+
+export const wcDefaults: WebChannelOptions = {
+  topology: FULL_MESH,
+  signalingURL: 'wss://www.coedit.re:10473',
+  iceServers: [
+    {urls: 'stun:stun3.l.google.com:19302'}
+  ],
+  autoRejoin: true
+}
 
 const REJOIN_TIMEOUT = 3000
 
@@ -20,8 +39,6 @@ const REJOIN_TIMEOUT = 3000
  * @type {number}
  */
 const PING_TIMEOUT = 5000
-
-const INNER_ID = 100
 
 /**
  * This class is an API starting point. It represents a group of collaborators
@@ -107,11 +124,11 @@ export class WebChannel extends Service {
 
   // Private-public
   public _joinResult: Subject<Error|void>
-  public webRTCBuilder: WebRTCBuilder
-  public webSocketBuilder: WebSocketBuilder
-  public channelBuilder: ChannelBuilder
+  public _webRTCBuilder: WebRTCBuilder
+  public _webSocketBuilder: WebSocketBuilder
+  public _channelBuilder: ChannelBuilder
   public _topology: TopologyInterface
-  public _svcMsgStream: Subject<any>
+  public _serviceMessageSubject: Subject<any>
 
   private _state: number
   private _signaling: Signaling
@@ -127,12 +144,12 @@ export class WebChannel extends Service {
    * @param options Web channel settings
    */
   constructor ({
-    topology = defaults.topology,
-    signalingURL = defaults.signalingURL,
-    iceServers = defaults.iceServers,
-    autoRejoin = defaults.autoRejoin
+    topology = wcDefaults.topology,
+    signalingURL = wcDefaults.signalingURL,
+    iceServers = wcDefaults.iceServers,
+    autoRejoin = wcDefaults.autoRejoin
   } = {}) {
-    super(INNER_ID, webChannel.Message)
+    super(10, webChannel.Message)
 
     // PUBLIC MEMBERS
     this.members = []
@@ -179,12 +196,12 @@ export class WebChannel extends Service {
     )
 
     // Services init
-    this._svcMsgStream = new Subject()
-    super.setSvcMsgStream(this._svcMsgStream)
-    this.webRTCBuilder = new WebRTCBuilder(this, iceServers)
-    this.webSocketBuilder = new WebSocketBuilder(this)
-    this.channelBuilder = new ChannelBuilder(this)
-    this.svcMsgStream.subscribe(
+    this._serviceMessageSubject = new Subject()
+    super.setupServiceMessage(this._serviceMessageSubject)
+    this._webRTCBuilder = new WebRTCBuilder(this, iceServers)
+    this._webSocketBuilder = new WebSocketBuilder(this)
+    this._channelBuilder = new ChannelBuilder(this)
+    this.onServiceMessage.subscribe(
       msg => this._treatServiceMessage(msg),
       err => console.error('service/WebChannel inner message error', err)
     )
@@ -253,7 +270,7 @@ export class WebChannel extends Service {
    */
   invite (url: string): void {
     if (isURL(url)) {
-      this.webSocketBuilder.connect(`${url}/invite?wcId=${this.id}&senderId=${this.myId}`)
+      this._webSocketBuilder.connect(`${url}/invite?wcId=${this.id}&senderId=${this.myId}`)
         .then(connection => this._initChannel(new Channel(this, connection)))
         .catch((err) => console.error(`Failed to invite the bot ${url}: ${err.message}`))
     } else {
@@ -400,7 +417,7 @@ export class WebChannel extends Service {
     return Message.encode(Message.create(msg)).finish()
   }
 
-  _decode (bytes: Uint8Array): MessageI {
+  _decode (bytes: Uint8Array): IMessage {
     return Message.decode(new Uint8Array(bytes))
   }
 
@@ -432,7 +449,7 @@ export class WebChannel extends Service {
     }
   }
 
-  private _treatMessage (channel: Channel, msg: MessageI): void {
+  private _treatMessage (channel: Channel, msg: IMessage): void {
     // User Message
     if (!msg.isService) {
       const data = this._userMsg.decode(msg.content, msg.senderId)
@@ -442,7 +459,7 @@ export class WebChannel extends Service {
 
     // Service Message
     } else {
-      this._svcMsgStream.next(Object.assign({
+      this._serviceMessageSubject.next(Object.assign({
         channel,
         senderId: msg.senderId,
         recipientId: msg.recipientId

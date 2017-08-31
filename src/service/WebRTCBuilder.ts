@@ -37,7 +37,7 @@ export class WebRTCBuilder extends Service {
   private clients: Map<number, [RTCPeerConnection, ReplaySubject<webRTCBuilder.IIceCandidate>]>
 
   constructor (wc: WebChannel, iceServers: RTCIceServer[]) {
-    super(ID, webRTCBuilder.Message, wc._svcMsgStream)
+    super(ID, webRTCBuilder.Message, wc._serviceMessageSubject)
     this.wc = wc
     this.rtcConfiguration = { iceServers }
     this.clients = new Map()
@@ -52,8 +52,8 @@ export class WebRTCBuilder extends Service {
 
   channelsFromWebChannel () {
     if (WebRTCBuilder.isSupported) {
-      return this.channels(
-        this.svcMsgStream
+      return this.onChannel(
+        this.onServiceMessage
           .filter(({ msg }: {msg: any}) => msg.isInitiator)
           .map(({ msg, senderId }: { msg: any, senderId: number }) => {
             msg.id = senderId
@@ -74,7 +74,7 @@ export class WebRTCBuilder extends Service {
   connectOverWebChannel (id: number): Promise<Channel> {
     if (WebRTCBuilder.isSupported) {
       return this.establishChannel(
-        this.svcMsgStream
+        this.onServiceMessage
           .filter(({ msg, senderId }: { msg: any, senderId: number }) => senderId === id && !msg.isInitiator)
           .map(({ msg }: { msg: any }) => ({ answer: msg.answer, iceCandidate: msg.iceCandidate })),
         (msg: any) => {
@@ -93,7 +93,7 @@ export class WebRTCBuilder extends Service {
    */
   channelsFromSignaling (signaling: SignalingConnection): Observable<Channel> {
     if (WebRTCBuilder.isSupported) {
-      return this.channels(
+      return this.onChannel(
         signaling.onMessage.filter(({ id }) => id !== 0)
           .map(msg => {
             if (msg.type === 'data') {
@@ -202,7 +202,7 @@ export class WebRTCBuilder extends Service {
     })
   }
 
-  private channels (
+  private onChannel (
     onMessage: Observable<{
       offer?: string,
       iceCandidate?: webRTCBuilder.IIceCandidate,

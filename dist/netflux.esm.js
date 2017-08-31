@@ -1289,6 +1289,14 @@ var Subject_1 = {
  */
 var isBrowser = (typeof window === 'undefined') ? false : true;
 /**
+ * Equals to true in Firefox and false elsewhere.
+ * Thanks to https://github.com/lancedikson/bowser
+ */
+var isFirefox = (isBrowser &&
+    navigator !== undefined &&
+    navigator.userAgent !== undefined &&
+    /firefox|iceweasel|fxios/i.test(navigator.userAgent)) ? true : false;
+/**
  * Check whether the string is a valid URL.
  */
 function isURL(str) {
@@ -1302,14 +1310,6 @@ function isURL(str) {
         '$';
     return (new RegExp(regex, 'i')).test(str);
 }
-/**
- * Equals to true in Firefox and false elsewhere.
- * Thanks to https://github.com/lancedikson/bowser
- */
-var isFirefox = (isBrowser &&
-    navigator !== undefined &&
-    navigator.userAgent !== undefined &&
-    /firefox|iceweasel|fxios/i.test(navigator.userAgent)) ? true : false;
 /**
  * Generate random key which will be used to join the network.
  */
@@ -6154,11 +6154,11 @@ var signaling = $root.signaling = function () {
  * communication protocol.
  */
 var Service$1 = (function () {
-    function Service(id, protoMessage, msgStream) {
+    function Service(id, protoMessage, serviceMessageSubject) {
         this.serviceId = id;
         this.protoMessage = protoMessage;
-        if (msgStream !== undefined) {
-            this.setSvcMsgStream(msgStream);
+        if (serviceMessageSubject !== undefined) {
+            this.setupServiceMessage(serviceMessageSubject);
         }
     }
     /**
@@ -6180,9 +6180,9 @@ var Service$1 = (function () {
     Service.prototype.decode = function (bytes) {
         return this.protoMessage.decode(bytes);
     };
-    Service.prototype.setSvcMsgStream = function (msgStream) {
+    Service.prototype.setupServiceMessage = function (serviceMessageSubject) {
         var _this = this;
-        this.svcMsgStream = msgStream
+        this.onServiceMessage = serviceMessageSubject
             .filter(function (_a) {
             var id = _a.id;
             return id === _this.serviceId;
@@ -6217,15 +6217,15 @@ var MAX_JOIN_ATTEMPTS = 100;
 var FullMesh = (function (_super) {
     __extends(FullMesh, _super);
     function FullMesh(wc) {
-        var _this = _super.call(this, FULL_MESH, fullMesh.Message, wc._svcMsgStream) || this;
+        var _this = _super.call(this, FULL_MESH, fullMesh.Message, wc._serviceMessageSubject) || this;
         _this.wc = wc;
         _this.channels = new Set();
         _this.jps = new Map();
         _this.joinAttempts = 0;
         _this.intermediaryChannel = undefined;
         _this.joinSucceedContent = _super.prototype.encode.call(_this, { joinSucceed: true });
-        _this.svcMsgStream.subscribe(function (msg) { return _this.handleSvcMsg(msg); }, function (err) { return console.error('FullMesh Message Stream Error', err); }, function () { return _this.leave(); });
-        _this.wc.channelBuilder.channels().subscribe(function (ch) { return _this.peerJoined(ch); }, function (err) { return console.error('FullMesh set joining peer Error', err); });
+        _this.onServiceMessage.subscribe(function (msg) { return _this.handleSvcMsg(msg); });
+        _this.wc._channelBuilder.onChannel.subscribe(function (ch) { return _this.peerJoined(ch); });
         return _this;
     }
     FullMesh.prototype.clean = function () { };
@@ -6347,7 +6347,7 @@ var FullMesh = (function (_super) {
                 var misssingConnections = [];
                 var _loop_1 = function (id) {
                     misssingConnections[misssingConnections.length] = new Promise(function (resolve) {
-                        _this.wc.channelBuilder.connectTo(id)
+                        _this.wc._channelBuilder.connectTo(id)
                             .then(function (ch) {
                             _this.peerJoined(ch);
                             resolve();
@@ -6496,7 +6496,7 @@ var Signaling = (function () {
             this.close();
         }
         this.setState(Signaling.CONNECTING);
-        this.wc.webSocketBuilder.connect(this.url + key)
+        this.wc._webSocketBuilder.connect(this.url + key)
             .then(function (ws) {
             _this.setState(Signaling.OPEN);
             _this.rxWs = _this.createRxWs(ws);
@@ -6514,7 +6514,7 @@ var Signaling = (function () {
                             _this.setState(Signaling.READY_TO_JOIN_OTHERS);
                         }
                         else {
-                            _this.wc.webRTCBuilder.connectOverSignaling({
+                            _this.wc._webRTCBuilder.connectOverSignaling({
                                 onMessage: _this.rxWs.onMessage.filter(function (msg) { return msg.type === 'content'; })
                                     .map(function (_a) {
                                     var content = _a.content;
@@ -6547,7 +6547,7 @@ var Signaling = (function () {
             this.state = state;
             this.stateSubject.next(state);
             if (state === Signaling.READY_TO_JOIN_OTHERS) {
-                this.wc.webRTCBuilder.channelsFromSignaling({
+                this.wc._webRTCBuilder.channelsFromSignaling({
                     onMessage: this.rxWs.onMessage.filter(function (msg) { return msg.type === 'content'; })
                         .map(function (_a) {
                         var content = _a.content;
@@ -6795,8 +6795,15 @@ var WebSocketBuilder = (function () {
         return listenSubject;
     };
     WebSocketBuilder.newIncomingSocket = function (wc, ws, senderId) {
-        wc.webSocketBuilder.channelsSubject.next(new Channel(wc, ws, { id: senderId }));
+        wc._webSocketBuilder.channelsSubject.next(new Channel(wc, ws, { id: senderId }));
     };
+    Object.defineProperty(WebSocketBuilder.prototype, "onChannel", {
+        get: function () {
+            return this.channelsSubject.asObservable();
+        },
+        enumerable: true,
+        configurable: true
+    });
     /**
      * Establish `WebSocket` with a server.
      *
@@ -6856,9 +6863,6 @@ var WebSocketBuilder = (function () {
                 throw new Error(url + " is not a valid URL");
             }
         });
-    };
-    WebSocketBuilder.prototype.channels = function () {
-        return this.channelsSubject.asObservable();
     };
     return WebSocketBuilder;
 }());
@@ -7679,7 +7683,7 @@ var ReplayEvent = (function () {
 /**
  * Service id.
  */
-var ID$1 = 0;
+var ID = 0;
 /**
  * Service class responsible to establish `RTCDataChannel` between two clients via
  * signaling server or `WebChannel`.
@@ -7688,7 +7692,7 @@ var ID$1 = 0;
 var WebRTCBuilder = (function (_super) {
     __extends(WebRTCBuilder, _super);
     function WebRTCBuilder(wc, iceServers) {
-        var _this = _super.call(this, ID$1, webRTCBuilder.Message, wc._svcMsgStream) || this;
+        var _this = _super.call(this, ID, webRTCBuilder.Message, wc._serviceMessageSubject) || this;
         _this.wc = wc;
         _this.rtcConfiguration = { iceServers: iceServers };
         _this.clients = new Map();
@@ -7707,7 +7711,7 @@ var WebRTCBuilder = (function (_super) {
     WebRTCBuilder.prototype.channelsFromWebChannel = function () {
         var _this = this;
         if (WebRTCBuilder.isSupported) {
-            return this.channels(this.svcMsgStream
+            return this.onChannel(this.onServiceMessage
                 .filter(function (_a) {
                 var msg = _a.msg;
                 return msg.isInitiator;
@@ -7729,7 +7733,7 @@ var WebRTCBuilder = (function (_super) {
     WebRTCBuilder.prototype.connectOverWebChannel = function (id) {
         var _this = this;
         if (WebRTCBuilder.isSupported) {
-            return this.establishChannel(this.svcMsgStream
+            return this.establishChannel(this.onServiceMessage
                 .filter(function (_a) {
                 var msg = _a.msg, senderId = _a.senderId;
                 return senderId === id && !msg.isInitiator;
@@ -7751,7 +7755,7 @@ var WebRTCBuilder = (function (_super) {
     WebRTCBuilder.prototype.channelsFromSignaling = function (signaling$$1) {
         var _this = this;
         if (WebRTCBuilder.isSupported) {
-            return this.channels(signaling$$1.onMessage.filter(function (_a) {
+            return this.onChannel(signaling$$1.onMessage.filter(function (_a) {
                 var id = _a.id;
                 return id !== 0;
             })
@@ -7840,7 +7844,7 @@ var WebRTCBuilder = (function (_super) {
                 .catch(reject);
         });
     };
-    WebRTCBuilder.prototype.channels = function (onMessage, send) {
+    WebRTCBuilder.prototype.onChannel = function (onMessage, send) {
         var _this = this;
         return Observable_2.create(function (observer) {
             onMessage.subscribe(function (_a) {
@@ -7974,7 +7978,6 @@ var WebRTCBuilder = (function (_super) {
     return WebRTCBuilder;
 }(Service$1));
 
-var ID = 2;
 var ME = {
     wsUrl: '',
     isWrtcSupport: false
@@ -7989,21 +7992,21 @@ var response;
 var ChannelBuilder = (function (_super) {
     __extends(ChannelBuilder, _super);
     function ChannelBuilder(wc) {
-        var _this = _super.call(this, ID, channelBuilder.Message, wc._svcMsgStream) || this;
+        var _this = _super.call(this, 20, channelBuilder.Message, wc._serviceMessageSubject) || this;
         _this.wc = wc;
-        _this.init();
+        _this.pendingRequests = new Map();
+        _this.channelsSubject = new Subject_2();
         // Listen on Channels as RTCDataChannels if WebRTC is supported
         ME.isWrtcSupport = WebRTCBuilder.isSupported;
         if (ME.isWrtcSupport) {
-            wc.webRTCBuilder.channelsFromWebChannel()
+            wc._webRTCBuilder.channelsFromWebChannel()
                 .subscribe(function (ch) { return _this.handleChannel(ch); });
         }
         // Listen on Channels as WebSockets if the peer is listening on WebSockets
         WebSocketBuilder.listen().subscribe(function (url) {
             ME.wsUrl = url;
             if (url) {
-                wc.webSocketBuilder.channels()
-                    .subscribe(function (ch) { return _this.handleChannel(ch); });
+                wc._webSocketBuilder.onChannel.subscribe(function (ch) { return _this.handleChannel(ch); });
             }
             // Update preconstructed messages (for performance only)
             var content = { wsUrl: url, isWrtcSupport: ME.isWrtcSupport };
@@ -8011,13 +8014,16 @@ var ChannelBuilder = (function (_super) {
             response = _super.prototype.encode.call(_this, { response: content });
         });
         // Subscribe to WebChannel internal messages
-        _this.svcMsgStream.subscribe(function (msg) { return _this.handleInnerMessage(msg); }, function (err) { return console.error('ChannelBuilder Message Stream Error', err, wc); }, function () { return _this.init(); });
+        _this.onServiceMessage.subscribe(function (msg) { return _this.treatServiceMessage(msg); });
         return _this;
     }
-    ChannelBuilder.prototype.init = function () {
-        this.pendingRequests = new Map();
-        this.channelsSubject = new Subject_2();
-    };
+    Object.defineProperty(ChannelBuilder.prototype, "onChannel", {
+        get: function () {
+            return this.channelsSubject.asObservable();
+        },
+        enumerable: true,
+        configurable: true
+    });
     /**
      * Establish a `Channel` with the peer identified by `id`.
      */
@@ -8036,9 +8042,6 @@ var ChannelBuilder = (function (_super) {
             _this.wc._sendTo({ recipientId: id, content: request });
         });
     };
-    ChannelBuilder.prototype.channels = function () {
-        return this.channelsSubject.asObservable();
-    };
     ChannelBuilder.prototype.handleChannel = function (ch) {
         var pendReq = this.pendingRequests.get(ch.peerId);
         if (pendReq) {
@@ -8048,12 +8051,12 @@ var ChannelBuilder = (function (_super) {
             this.channelsSubject.next(ch);
         }
     };
-    ChannelBuilder.prototype.handleInnerMessage = function (_a) {
+    ChannelBuilder.prototype.treatServiceMessage = function (_a) {
         var _this = this;
         var channel = _a.channel, senderId = _a.senderId, recipientId = _a.recipientId, msg = _a.msg;
         switch (msg.type) {
             case 'failed': {
-                console.error('handleInnerMessage ERROR: ', msg.failed);
+                console.error('treatServiceMessage ERROR: ', msg.failed);
                 var pr = this.pendingRequests.get(senderId);
                 if (pr !== undefined) {
                     pr.reject(new Error(msg.failed));
@@ -8064,7 +8067,7 @@ var ChannelBuilder = (function (_super) {
                 var _b = msg.request, wsUrl = _b.wsUrl, isWrtcSupport = _b.isWrtcSupport;
                 // If remote peer is listening on WebSocket, connect to him
                 if (wsUrl) {
-                    this.wc.webSocketBuilder.connectTo(wsUrl, senderId)
+                    this.wc._webSocketBuilder.connectTo(wsUrl, senderId)
                         .then(function (ch) { return _this.handleChannel(ch); })
                         .catch(function (reason) {
                         if (ME.wsUrl) {
@@ -8087,7 +8090,7 @@ var ChannelBuilder = (function (_super) {
                         this.wc._sendTo({ recipientId: senderId, content: response });
                     }
                     else if (ME.isWrtcSupport) {
-                        this.wc.webRTCBuilder.connectOverWebChannel(senderId)
+                        this.wc._webRTCBuilder.connectOverWebChannel(senderId)
                             .then(function (ch) { return _this.handleChannel(ch); })
                             .catch(function (reason) {
                             // Send failed reason
@@ -8124,7 +8127,7 @@ var ChannelBuilder = (function (_super) {
             case 'response': {
                 var wsUrl = msg.response.wsUrl;
                 if (wsUrl) {
-                    this.wc.webSocketBuilder.connectTo(wsUrl, senderId)
+                    this.wc._webSocketBuilder.connectTo(wsUrl, senderId)
                         .then(function (ch) { return _this.handleChannel(ch); })
                         .catch(function (reason) {
                         _this.pendingRequests.get(senderId)
@@ -8139,7 +8142,7 @@ var ChannelBuilder = (function (_super) {
 }(Service$1));
 
 /**
- * Maximum size of the user message sent over `Channel`. Is meant without metadata.
+ * Maximum size of the user message sent over `Channel` (without metadata).
  */
 var MAX_USER_MSG_SIZE = 15000;
 /**
@@ -8259,8 +8262,8 @@ var UserMessage = (function () {
 /**
  * Buffer class used when the user message exceeds the message size limit which
  * may be sent over a `Channel`. Each buffer is identified by `WebChannel` id,
- * peer id (who sends the big message) and message id (in case if the peer sends
- * more then 1 big message at a time).
+ * peer id of the sender and message id (in case if the peer sent more then
+ * 1 big message at a time).
  */
 var Buffer$1 = (function () {
     function Buffer(totalLength, data, chunkNb) {
@@ -8297,7 +8300,7 @@ var Topologies;
 (function (Topologies) {
     Topologies[Topologies["FULL_MESH"] = 0] = "FULL_MESH";
 })(Topologies || (Topologies = {}));
-var defaults = {
+var wcDefaults = {
     topology: FULL_MESH,
     signalingURL: 'wss://www.coedit.re:10473',
     iceServers: [
@@ -8305,14 +8308,12 @@ var defaults = {
     ],
     autoRejoin: true
 };
-
 var REJOIN_TIMEOUT = 3000;
 /**
  * Timout for ping `WebChannel` in milliseconds.
  * @type {number}
  */
 var PING_TIMEOUT = 5000;
-var INNER_ID = 100;
 /**
  * This class is an API starting point. It represents a group of collaborators
  * also called peers. Each peer can send/receive broadcast as well as personal
@@ -8327,8 +8328,8 @@ var WebChannel = (function (_super) {
      * @param options Web channel settings
      */
     function WebChannel(_a) {
-        var _b = _a === void 0 ? {} : _a, _c = _b.topology, topology = _c === void 0 ? defaults.topology : _c, _d = _b.signalingURL, signalingURL = _d === void 0 ? defaults.signalingURL : _d, _e = _b.iceServers, iceServers = _e === void 0 ? defaults.iceServers : _e, _f = _b.autoRejoin, autoRejoin = _f === void 0 ? defaults.autoRejoin : _f;
-        var _this = _super.call(this, INNER_ID, webChannel.Message) || this;
+        var _b = _a === void 0 ? {} : _a, _c = _b.topology, topology = _c === void 0 ? wcDefaults.topology : _c, _d = _b.signalingURL, signalingURL = _d === void 0 ? wcDefaults.signalingURL : _d, _e = _b.iceServers, iceServers = _e === void 0 ? wcDefaults.iceServers : _e, _f = _b.autoRejoin, autoRejoin = _f === void 0 ? wcDefaults.autoRejoin : _f;
+        var _this = _super.call(this, 10, webChannel.Message) || this;
         // PUBLIC MEMBERS
         _this.members = [];
         _this.topology = topology;
@@ -8368,12 +8369,12 @@ var WebChannel = (function (_super) {
             }
         });
         // Services init
-        _this._svcMsgStream = new Subject_2();
-        _super.prototype.setSvcMsgStream.call(_this, _this._svcMsgStream);
-        _this.webRTCBuilder = new WebRTCBuilder(_this, iceServers);
-        _this.webSocketBuilder = new WebSocketBuilder(_this);
-        _this.channelBuilder = new ChannelBuilder(_this);
-        _this.svcMsgStream.subscribe(function (msg) { return _this._treatServiceMessage(msg); }, function (err) { return console.error('service/WebChannel inner message error', err); });
+        _this._serviceMessageSubject = new Subject_2();
+        _super.prototype.setupServiceMessage.call(_this, _this._serviceMessageSubject);
+        _this._webRTCBuilder = new WebRTCBuilder(_this, iceServers);
+        _this._webSocketBuilder = new WebSocketBuilder(_this);
+        _this._channelBuilder = new ChannelBuilder(_this);
+        _this.onServiceMessage.subscribe(function (msg) { return _this._treatServiceMessage(msg); }, function (err) { return console.error('service/WebChannel inner message error', err); });
         // Topology init
         _this._setTopology(topology);
         _this._joinResult = new Subject_2();
@@ -8449,7 +8450,7 @@ var WebChannel = (function (_super) {
     WebChannel.prototype.invite = function (url) {
         var _this = this;
         if (isURL(url)) {
-            this.webSocketBuilder.connect(url + "/invite?wcId=" + this.id + "&senderId=" + this.myId)
+            this._webSocketBuilder.connect(url + "/invite?wcId=" + this.id + "&senderId=" + this.myId)
                 .then(function (connection) { return _this._initChannel(new Channel(_this, connection)); })
                 .catch(function (err) { return console.error("Failed to invite the bot " + url + ": " + err.message); });
         }
@@ -8634,7 +8635,7 @@ var WebChannel = (function (_super) {
             // Service Message
         }
         else {
-            this._svcMsgStream.next(Object.assign({
+            this._serviceMessageSubject.next(Object.assign({
                 channel: channel,
                 senderId: msg.senderId,
                 recipientId: msg.recipientId
@@ -8784,7 +8785,7 @@ var BotServer = (function () {
                 perMessageDeflate: false
             }
         };
-        var wcOptions = Object.assign({}, defaults, options);
+        var wcOptions = Object.assign({}, wcDefaults, options);
         this.wcSettings = {
             topology: wcOptions.topology,
             signalingURL: wcOptions.signalingURL,
@@ -8825,6 +8826,40 @@ var BotServer = (function () {
         enumerable: true,
         configurable: true
     });
+    /**
+     * Get `WebChannel` identified by its `id`.
+     */
+    BotServer.prototype.getWebChannel = function (id) {
+        try {
+            for (var _a = __values(this.webChannels), _b = _a.next(); !_b.done; _b = _a.next()) {
+                var wc = _b.value;
+                if (id === wc.id) {
+                    return wc;
+                }
+            }
+        }
+        catch (e_1_1) { e_1 = { error: e_1_1 }; }
+        finally {
+            try {
+                if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+            }
+            finally { if (e_1) throw e_1.error; }
+        }
+        return undefined;
+        var e_1, _c;
+    };
+    /**
+     * Add `WebChannel`.
+     */
+    BotServer.prototype.addWebChannel = function (wc) {
+        this.webChannels[this.webChannels.length] = wc;
+    };
+    /**
+     * Remove `WebChannel`.
+     */
+    BotServer.prototype.removeWebChannel = function (wc) {
+        this.webChannels.splice(this.webChannels.indexOf(wc), 1);
+    };
     BotServer.prototype.init = function () {
         var _this = this;
         this.server = new (require('uws').Server)(this.serverSettings);
@@ -8864,40 +8899,6 @@ var BotServer = (function () {
             }
         });
     };
-    /**
-     * Get `WebChannel` identified by its `id`.
-     */
-    BotServer.prototype.getWebChannel = function (id) {
-        try {
-            for (var _a = __values(this.webChannels), _b = _a.next(); !_b.done; _b = _a.next()) {
-                var wc = _b.value;
-                if (id === wc.id) {
-                    return wc;
-                }
-            }
-        }
-        catch (e_1_1) { e_1 = { error: e_1_1 }; }
-        finally {
-            try {
-                if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
-            }
-            finally { if (e_1) throw e_1.error; }
-        }
-        return undefined;
-        var e_1, _c;
-    };
-    /**
-     * Add `WebChannel`.
-     */
-    BotServer.prototype.addWebChannel = function (wc) {
-        this.webChannels[this.webChannels.length] = wc;
-    };
-    /**
-     * Remove `WebChannel`.
-     */
-    BotServer.prototype.removeWebChannel = function (wc) {
-        this.webChannels.splice(this.webChannels.indexOf(wc), 1);
-    };
     BotServer.prototype.validateConnection = function (info) {
         var _a = url.parse(info.req.url, true), pathname = _a.pathname, query = _a.query;
         var wcId = query.wcId ? Number(query.wcId) : undefined;
@@ -8919,4 +8920,4 @@ var BotServer = (function () {
 
 // #endif
 
-export { WebChannel, FULL_MESH, BotServer };
+export { WebChannel, BotServer };

@@ -190,7 +190,6 @@ export namespace user {
              */
             public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): user.Message.Chunk;
         }
-
         /** Type enum. */
         enum Type {
             STRING = 0,

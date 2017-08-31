@@ -6,6 +6,17 @@ import { Channel } from './Channel'
 export const isBrowser = (typeof window === 'undefined') ? false : true
 
 /**
+ * Equals to true in Firefox and false elsewhere.
+ * Thanks to https://github.com/lancedikson/bowser
+ */
+export const isFirefox = (
+    isBrowser &&
+    navigator !== undefined &&
+    navigator.userAgent !== undefined &&
+    /firefox|iceweasel|fxios/i.test(navigator.userAgent)
+  ) ? true : false
+
+/**
  * Check whether the string is a valid URL.
  */
 export function isURL (str: string): boolean {
@@ -23,17 +34,6 @@ export function isURL (str: string): boolean {
 }
 
 /**
- * Equals to true in Firefox and false elsewhere.
- * Thanks to https://github.com/lancedikson/bowser
- */
-export const isFirefox = (
-    isBrowser &&
-    navigator !== undefined &&
-    navigator.userAgent !== undefined &&
-    /firefox|iceweasel|fxios/i.test(navigator.userAgent)
-  ) ? true : false
-
-/**
  * Generate random key which will be used to join the network.
  */
 export function generateKey (): string {
@@ -48,27 +48,3 @@ export function generateKey (): string {
 }
 
 export const MAX_KEY_LENGTH = 512
-
-export interface MessageI {
-  senderId: number,
-  recipientId: number,
-  isService: boolean,
-  content: Uint8Array
-}
-
-export interface ServiceMessageEncoded {
-  channel: Channel,
-  senderId: number,
-  recipientId: number,
-  id: number,
-  timestamp: number,
-  content: Uint8Array
-}
-
-export interface ServiceMessageDecoded {
-  channel: Channel,
-  senderId: number,
-  recipientId: number,
-  timestamp: number,
-  msg: any
-}

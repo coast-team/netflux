@@ -1,6 +1,6 @@
 import { Service } from '../Service'
 import { Channel } from '../../Channel'
-import { MessageI } from '../../Util'
+import { IMessage } from '../../Protobuf'
 
 /**
  * It is responsible to preserve Web Channel
@@ -34,25 +34,25 @@ export interface TopologyInterface extends Service {
   /**
    * Broadcast a message to the network.
    */
-  send (msg: MessageI): void
+  send (msg: IMessage): void
 
   /**
    * Forward a broadcasted message. This method should be called onces
    * the peer receives a broadcasted message.
    */
-  forward (msg: MessageI): void
+  forward (msg: IMessage): void
 
   /**
    * Send a message to a particular peer in the network.
    */
-  sendTo (msg: MessageI): void
+  sendTo (msg: IMessage): void
 
   /**
    * Forward the message to its recipient or to some peer who knowns how
    * to forward this message to its recipient. This method should be called
    * onces the peer receives a private message intended to someone else.
    */
-  forwardTo (msg: MessageI): void
+  forwardTo (msg: IMessage): void
 
   /**
    * Disconnect from the network

@@ -1,7 +1,20 @@
 import { WebSocketBuilder } from './WebSocketBuilder'
-import { WebChannel } from './service/WebChannel'
+import { WebChannel, WebChannelOptions, wcDefaults } from './service/WebChannel'
 import { Channel } from './Channel'
-import { defaults, WebChannelOptions, BotOptions, } from './defaults'
+
+export interface BotServerOptions {
+  url: string,
+  server: any,
+  perMessageDeflate: boolean
+}
+
+export const bsDefaults = {
+  bot: {
+    url: '',
+    server: undefined,
+    perMessageDeflate: false
+  }
+}
 
 const url = require('url')
 
@@ -17,7 +30,7 @@ export class BotServer {
   public onError: (err) => void
 
   private wcSettings: WebChannelOptions
-  private botSettings: BotOptions
+  private botSettings: BotServerOptions
   private serverSettings: {
     perMessageDeflate: boolean,
     verifyClient: (info: any) => boolean,
@@ -45,7 +58,7 @@ export class BotServer {
       }
     }
 
-    let wcOptions = Object.assign({}, defaults, options)
+    let wcOptions = Object.assign({}, wcDefaults, options)
     this.wcSettings = {
       topology: wcOptions.topology,
       signalingURL: wcOptions.signalingURL,
@@ -88,7 +101,33 @@ export class BotServer {
     }
   }
 
-  init (): void {
+  /**
+   * Get `WebChannel` identified by its `id`.
+   */
+  getWebChannel (id: number): WebChannel {
+    for (let wc of this.webChannels) {
+      if (id === wc.id) {
+        return wc
+      }
+    }
+    return undefined
+  }
+
+  /**
+   * Add `WebChannel`.
+   */
+  addWebChannel (wc: WebChannel): void {
+    this.webChannels[this.webChannels.length] = wc
+  }
+
+  /**
+   * Remove `WebChannel`.
+   */
+  removeWebChannel (wc: WebChannel): void {
+    this.webChannels.splice(this.webChannels.indexOf(wc), 1)
+  }
+
+  private init (): void {
     this.server = new (require('uws').Server)(this.serverSettings)
     const serverListening = this.serverSettings.server || this.server
     serverListening.on('listening', () => WebSocketBuilder.listen().next(this.url))
@@ -128,33 +167,7 @@ export class BotServer {
     })
   }
 
-  /**
-   * Get `WebChannel` identified by its `id`.
-   */
-  getWebChannel (id: number): WebChannel {
-    for (let wc of this.webChannels) {
-      if (id === wc.id) {
-        return wc
-      }
-    }
-    return undefined
-  }
-
-  /**
-   * Add `WebChannel`.
-   */
-  addWebChannel (wc: WebChannel): void {
-    this.webChannels[this.webChannels.length] = wc
-  }
-
-  /**
-   * Remove `WebChannel`.
-   */
-  removeWebChannel (wc: WebChannel): void {
-    this.webChannels.splice(this.webChannels.indexOf(wc), 1)
-  }
-
-  validateConnection (info: any): boolean {
+  private validateConnection (info: any): boolean {
     const {pathname, query} = url.parse(info.req.url, true)
     const wcId = query.wcId ? Number(query.wcId) : undefined
     switch (pathname) {

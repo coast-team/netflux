@@ -2,7 +2,24 @@ import { Subject } from 'rxjs/Subject'
 import { Observable } from 'rxjs/Observable'
 
 import { service } from '../Protobuf'
-import { ServiceMessageEncoded, ServiceMessageDecoded } from '../Util'
+import { Channel } from '../Channel'
+
+export interface ServiceMessageEncoded {
+  channel: Channel,
+  senderId: number,
+  recipientId: number,
+  id: number,
+  timestamp: number,
+  content: Uint8Array
+}
+
+export interface ServiceMessageDecoded {
+  channel: Channel,
+  senderId: number,
+  recipientId: number,
+  timestamp: number,
+  msg: any
+}
 
 /**
  * Services are specific classes. Instance of such class communicates via
@@ -21,18 +38,18 @@ export abstract class Service {
   /*
    * Service message observable.
    */
-  protected svcMsgStream: Observable<ServiceMessageDecoded>
+  protected onServiceMessage: Observable<ServiceMessageDecoded>
 
   /*
    * Service protobujs object generated from `.proto` file.
    */
   private protoMessage: any
 
-  constructor (id: number, protoMessage: any, msgStream?: Subject<ServiceMessageEncoded>) {
+  constructor (id: number, protoMessage: any, serviceMessageSubject?: Subject<ServiceMessageEncoded>) {
     this.serviceId = id
     this.protoMessage = protoMessage
-    if (msgStream !== undefined) {
-      this.setSvcMsgStream(msgStream)
+    if (serviceMessageSubject !== undefined) {
+      this.setupServiceMessage(serviceMessageSubject)
     }
   }
 
@@ -59,8 +76,8 @@ export abstract class Service {
     return this.protoMessage.decode(bytes)
   }
 
-  protected setSvcMsgStream (msgStream: Subject<ServiceMessageEncoded>): void {
-    this.svcMsgStream = msgStream
+  protected setupServiceMessage (serviceMessageSubject: Subject<ServiceMessageEncoded>): void {
+    this.onServiceMessage = serviceMessageSubject
       .filter(({ id }) => id === this.serviceId)
       .map(({ channel, senderId, recipientId, content, timestamp }) => ({
         channel,

@@ -1,7 +1,7 @@
 import { user } from './Protobuf'
 
 /**
- * Maximum size of the user message sent over `Channel`. Is meant without metadata.
+ * Maximum size of the user message sent over `Channel` (without metadata).
  */
 const MAX_USER_MSG_SIZE = 15000
 
@@ -28,7 +28,6 @@ export class UserMessage {
   constructor () {
     this.buffers = new Map()
   }
-
 
   /**
    * Encode user message for sending over the network.
@@ -100,7 +99,7 @@ export class UserMessage {
   /**
    * Identify the user data type.
    */
-  userDataToType (data): { type: number , bytes: Uint8Array } {
+  private userDataToType (data): { type: number , bytes: Uint8Array } {
     if (data instanceof Uint8Array) {
       return { type: user.Message.Type.U_INT_8_ARRAY, bytes: data }
     } else if (typeof data === 'string') {
@@ -112,7 +111,7 @@ export class UserMessage {
     }
   }
 
-  getBuffer (peerId: number, msgId: number): Buffer {
+  private getBuffer (peerId: number, msgId: number): Buffer {
     const buffers = this.buffers.get(peerId)
     if (buffers !== undefined) {
       return buffers.get(msgId)
@@ -120,7 +119,7 @@ export class UserMessage {
     return undefined
   }
 
-  setBuffer (peerId: number, msgId: number, buffer: Buffer): void {
+  private setBuffer (peerId: number, msgId: number, buffer: Buffer): void {
     let buffers = this.buffers.get(peerId)
     if (buffers === undefined) {
       buffers = new Map()
@@ -133,8 +132,8 @@ export class UserMessage {
 /**
  * Buffer class used when the user message exceeds the message size limit which
  * may be sent over a `Channel`. Each buffer is identified by `WebChannel` id,
- * peer id (who sends the big message) and message id (in case if the peer sends
- * more then 1 big message at a time).
+ * peer id of the sender and message id (in case if the peer sent more then
+ * 1 big message at a time).
  */
 class Buffer {
 

@@ -2,11 +2,10 @@ import 'rxjs/add/operator/map'
 import { Subscription } from 'rxjs/Subscription'
 
 import { TopologyInterface } from './TopologyInterface'
-import { fullMesh } from '../../Protobuf'
+import { fullMesh, IMessage } from '../../Protobuf'
 import { WebChannel } from '../WebChannel'
 import { Channel } from '../../Channel'
-import { Service } from '../Service'
-import { MessageI, ServiceMessageDecoded } from '../../Util'
+import { Service, ServiceMessageDecoded } from '../Service'
 
 /**
  * {@link FullMesh} identifier.
@@ -48,22 +47,15 @@ export class FullMesh extends Service implements TopologyInterface {
   private joinAttempts: number
 
   constructor (wc) {
-    super(FULL_MESH, fullMesh.Message, wc._svcMsgStream)
+    super(FULL_MESH, fullMesh.Message, wc._serviceMessageSubject)
     this.wc = wc
     this.channels = new Set()
     this.jps = new Map()
     this.joinAttempts = 0
     this.intermediaryChannel = undefined
     this.joinSucceedContent = super.encode({ joinSucceed: true })
-    this.svcMsgStream.subscribe(
-      msg => this.handleSvcMsg(msg),
-      err => console.error('FullMesh Message Stream Error', err),
-      () => this.leave()
-    )
-    this.wc.channelBuilder.channels().subscribe(
-      ch => this.peerJoined(ch),
-      err => console.error('FullMesh set joining peer Error', err)
-    )
+    this.onServiceMessage.subscribe(msg => this.handleSvcMsg(msg))
+    this.wc._channelBuilder.onChannel.subscribe(ch => this.peerJoined(ch))
   }
 
   clean () {}
@@ -81,16 +73,16 @@ export class FullMesh extends Service implements TopologyInterface {
     this.intermediaryChannel = ch
   }
 
-  send (msg: MessageI): void {
+  send (msg: IMessage): void {
     const bytes = this.wc._encode(msg)
     for (let ch of this.channels) {
       ch.send(bytes)
     }
   }
 
-  forward (msg: MessageI): void { /* Nothing to do for this topology */ }
+  forward (msg: IMessage): void { /* Nothing to do for this topology */ }
 
-  sendTo (msg: MessageI): void {
+  sendTo (msg: IMessage): void {
     const bytes = this.wc._encode(msg)
     for (let ch of this.channels) {
       if (ch.peerId === msg.recipientId) {
@@ -112,7 +104,7 @@ export class FullMesh extends Service implements TopologyInterface {
     console.error(this.wc.myId + ' The recipient could not be found', msg.recipientId)
   }
 
-  forwardTo (msg: MessageI): void {
+  forwardTo (msg: IMessage): void {
     this.sendTo(msg)
   }
 
@@ -152,7 +144,7 @@ export class FullMesh extends Service implements TopologyInterface {
       const misssingConnections = []
       for (let id of missingPeers) {
         misssingConnections[misssingConnections.length] = new Promise(resolve => {
-          this.wc.channelBuilder.connectTo(id)
+          this.wc._channelBuilder.connectTo(id)
             .then(ch => {
               this.peerJoined(ch)
               resolve()
