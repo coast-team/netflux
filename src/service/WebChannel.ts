@@ -69,7 +69,7 @@ export class WebChannel extends Service {
   /**
    * An array of all peer ids except yours.
    */
-  public members: number[]
+  public readonly members: number[]
 
   /**
    * Topology id.
@@ -138,7 +138,7 @@ export class WebChannel extends Service {
   private _pingFinish: (maxTime: number) => void
   private _pongNb: number
   private _rejoinTimer: any
-  private isRejoinDisabled: boolean
+  private _isRejoinDisabled: boolean
 
   /**
    * @param options Web channel settings
@@ -187,7 +187,7 @@ export class WebChannel extends Service {
           if (this.members.length === 0) {
             this._setState(WebChannel.LEFT)
           }
-          if (!this.isRejoinDisabled) {
+          if (!this._isRejoinDisabled) {
             this._rejoin()
           }
           break
@@ -250,7 +250,7 @@ export class WebChannel extends Service {
    */
   join (value: string | Channel = generateKey()): void {
     if (this._state === WebChannel.LEFT && this._signaling.state === WebChannel.SIGNALING_CLOSED) {
-      this.isRejoinDisabled = !this.autoRejoin
+      this._isRejoinDisabled = !this.autoRejoin
       this._setState(WebChannel.JOINING)
       if (!(value instanceof Channel)) {
         if ((typeof value === 'string' || value instanceof String) && value.length < MAX_KEY_LENGTH) {
@@ -282,7 +282,7 @@ export class WebChannel extends Service {
    * Close the connection with Signaling server.
    */
   closeSignaling (): void {
-    this.isRejoinDisabled = true
+    this._isRejoinDisabled = true
     this._signaling.close()
   }
 
@@ -291,7 +291,7 @@ export class WebChannel extends Service {
    * with Signaling server.
    */
   leave () {
-    this.isRejoinDisabled = true
+    this._isRejoinDisabled = true
     this._pingTime = 0
     this._maxTime = 0
     this._pingFinish = () => {}
