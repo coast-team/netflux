@@ -50,7 +50,10 @@ export class FullMesh extends Service implements TopologyInterface {
   constructor (wc) {
     super(FULL_MESH, fullMesh.Message, wc._svcMsgStream)
     this.wc = wc
-    this.init()
+    this.channels = new Set()
+    this.jps = new Map()
+    this.joinAttempts = 0
+    this.intermediaryChannel = undefined
     this.joinSucceedContent = super.encode({ joinSucceed: true })
     this.svcMsgStream.subscribe(
       msg => this.handleSvcMsg(msg),
@@ -61,13 +64,6 @@ export class FullMesh extends Service implements TopologyInterface {
       ch => this.peerJoined(ch),
       err => console.error('FullMesh set joining peer Error', err)
     )
-  }
-
-  private init (): void {
-    this.channels = new Set()
-    this.jps = new Map()
-    this.joinAttempts = 0
-    this.intermediaryChannel = undefined
   }
 
   clean () {}
@@ -124,18 +120,17 @@ export class FullMesh extends Service implements TopologyInterface {
     for (let ch of this.channels) {
       ch.close()
     }
-    this.init()
+    this.jps = new Map()
+    this.joinAttempts = 0
+    this.intermediaryChannel = undefined
   }
 
   onChannelClose (event: Event, channel: Channel): void {
     if (this.intermediaryChannel && this.intermediaryChannel === channel) {
       this.leave()
-      this.wc._joinResult.next(
-        new Error(`Intermediary channel closed: ${event.type}`)
-      )
+      this.wc._joinResult.next(new Error(`Intermediary channel closed: ${event.type}`))
     }
-    this.channels.delete(channel)
-    if (this.wc.members.includes(channel.peerId)) {
+    if (this.channels.delete(channel)) {
       this.wc._onPeerLeave(channel.peerId)
       console.info(this.wc.myId + ' _onPeerLeave ' + channel.peerId)
     }

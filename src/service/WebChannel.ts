@@ -154,7 +154,8 @@ export class WebChannel extends Service {
     this._userMsg = new UserMessage()
 
     // Signaling init
-    this._signaling = new Signaling(this, ch => this._initChannel(ch), signalingURL)
+    this._signaling = new Signaling(this, signalingURL)
+    this._signaling.onChannel.subscribe(ch => this._initChannel(ch))
     this._signaling.onState.subscribe(
       state => {
         this.onSignalingStateChanged(state)
@@ -517,7 +518,8 @@ export class WebChannel extends Service {
       recipientId: 1,
       content: super.encode({ init: {
         topology: this._topology.serviceId,
-        wcId: this.id
+        wcId: this.id,
+        generatedIds: this.members
       }})
     })
     ch.send(msg)

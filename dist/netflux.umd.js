@@ -4046,8 +4046,8 @@ var Channel = (function () {
         this.onClose = function (evt) {
             console.info("NETFLUX: " + wc.myId + " ONCLOSE CALLBACK " + _this.peerId, {
                 readyState: _this.connection.readyState,
-                iceConnectionState: _this.rtcPeerConnection.iceConnectionState,
-                signalingState: _this.rtcPeerConnection.signalingState
+                iceConnectionState: _this.rtcPeerConnection ? _this.rtcPeerConnection.iceConnectionState : '',
+                signalingState: _this.rtcPeerConnection ? _this.rtcPeerConnection.signalingState : ''
             });
             _this.connection.onclose = function () { };
             _this.connection.onmessage = function () { };
@@ -4072,8 +4072,8 @@ var Channel = (function () {
             this.connection.readyState !== WebSocket.CLOSING) {
             console.info("NETFLUX: " + this.wc.myId + " CLOSE " + this.peerId, {
                 readyState: this.connection.readyState,
-                iceConnectionState: this.rtcPeerConnection.iceConnectionState,
-                signalingState: this.rtcPeerConnection.signalingState
+                iceConnectionState: this.rtcPeerConnection ? this.rtcPeerConnection.iceConnectionState : '',
+                signalingState: this.rtcPeerConnection ? this.rtcPeerConnection.signalingState : ''
             });
             this.connection.close();
             if (isFirefox && this.rtcPeerConnection && this.rtcPeerConnection.signalingState !== 'closed') {
@@ -8278,7 +8278,7 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
          * @property {boolean} [isInitiator] Message isInitiator
          * @property {string} [offer] Message offer
          * @property {string} [answer] Message answer
-         * @property {webRTCBuilder.Message.IIceCandidate} [iceCandidate] Message iceCandidate
+         * @property {webRTCBuilder.IIceCandidate} [iceCandidate] Message iceCandidate
          */
 
         /**
@@ -8320,7 +8320,7 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
 
         /**
          * Message iceCandidate.
-         * @member {(webRTCBuilder.Message.IIceCandidate|null|undefined)}iceCandidate
+         * @member {(webRTCBuilder.IIceCandidate|null|undefined)}iceCandidate
          * @memberof webRTCBuilder.Message
          * @instance
          */
@@ -8366,7 +8366,7 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
             if (message.isInitiator != null && message.hasOwnProperty("isInitiator")) writer.uint32( /* id 1, wireType 0 =*/8).bool(message.isInitiator);
             if (message.offer != null && message.hasOwnProperty("offer")) writer.uint32( /* id 2, wireType 2 =*/18).string(message.offer);
             if (message.answer != null && message.hasOwnProperty("answer")) writer.uint32( /* id 3, wireType 2 =*/26).string(message.answer);
-            if (message.iceCandidate != null && message.hasOwnProperty("iceCandidate")) $root.webRTCBuilder.Message.IceCandidate.encode(message.iceCandidate, writer.uint32( /* id 4, wireType 2 =*/34).fork()).ldelim();
+            if (message.iceCandidate != null && message.hasOwnProperty("iceCandidate")) $root.webRTCBuilder.IceCandidate.encode(message.iceCandidate, writer.uint32( /* id 4, wireType 2 =*/34).fork()).ldelim();
             return writer;
         };
 
@@ -8398,7 +8398,7 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
                         message.answer = reader.string();
                         break;
                     case 4:
-                        message.iceCandidate = $root.webRTCBuilder.Message.IceCandidate.decode(reader, reader.uint32());
+                        message.iceCandidate = $root.webRTCBuilder.IceCandidate.decode(reader, reader.uint32());
                         break;
                     default:
                         reader.skipType(tag & 7);
@@ -8408,122 +8408,122 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
             return message;
         };
 
-        Message.IceCandidate = function () {
+        return Message;
+    }();
 
-            /**
-             * Properties of an IceCandidate.
-             * @memberof webRTCBuilder.Message
-             * @interface IIceCandidate
-             * @property {string} [candidate] IceCandidate candidate
-             * @property {string} [sdpMid] IceCandidate sdpMid
-             * @property {number} [sdpMLineIndex] IceCandidate sdpMLineIndex
-             */
+    webRTCBuilder.IceCandidate = function () {
 
-            /**
-             * Constructs a new IceCandidate.
-             * @memberof webRTCBuilder.Message
-             * @classdesc Represents an IceCandidate.
-             * @constructor
-             * @param {webRTCBuilder.Message.IIceCandidate=} [properties] Properties to set
-             */
-            function IceCandidate(properties) {
-                if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
-                    if (properties[keys[i]] != null) this[keys[i]] = properties[keys[i]];
+        /**
+         * Properties of an IceCandidate.
+         * @memberof webRTCBuilder
+         * @interface IIceCandidate
+         * @property {string} [candidate] IceCandidate candidate
+         * @property {string} [sdpMid] IceCandidate sdpMid
+         * @property {number} [sdpMLineIndex] IceCandidate sdpMLineIndex
+         */
+
+        /**
+         * Constructs a new IceCandidate.
+         * @memberof webRTCBuilder
+         * @classdesc Represents an IceCandidate.
+         * @constructor
+         * @param {webRTCBuilder.IIceCandidate=} [properties] Properties to set
+         */
+        function IceCandidate(properties) {
+            if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
+                if (properties[keys[i]] != null) this[keys[i]] = properties[keys[i]];
+            }
+        }
+
+        /**
+         * IceCandidate candidate.
+         * @member {string}candidate
+         * @memberof webRTCBuilder.IceCandidate
+         * @instance
+         */
+        IceCandidate.prototype.candidate = "";
+
+        /**
+         * IceCandidate sdpMid.
+         * @member {string}sdpMid
+         * @memberof webRTCBuilder.IceCandidate
+         * @instance
+         */
+        IceCandidate.prototype.sdpMid = "";
+
+        /**
+         * IceCandidate sdpMLineIndex.
+         * @member {number}sdpMLineIndex
+         * @memberof webRTCBuilder.IceCandidate
+         * @instance
+         */
+        IceCandidate.prototype.sdpMLineIndex = 0;
+
+        /**
+         * Creates a new IceCandidate instance using the specified properties.
+         * @function create
+         * @memberof webRTCBuilder.IceCandidate
+         * @static
+         * @param {webRTCBuilder.IIceCandidate=} [properties] Properties to set
+         * @returns {webRTCBuilder.IceCandidate} IceCandidate instance
+         */
+        IceCandidate.create = function create(properties) {
+            return new IceCandidate(properties);
+        };
+
+        /**
+         * Encodes the specified IceCandidate message. Does not implicitly {@link webRTCBuilder.IceCandidate.verify|verify} messages.
+         * @function encode
+         * @memberof webRTCBuilder.IceCandidate
+         * @static
+         * @param {webRTCBuilder.IIceCandidate} message IceCandidate message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        IceCandidate.encode = function encode(message, writer) {
+            if (!writer) writer = $Writer.create();
+            if (message.candidate != null && message.hasOwnProperty("candidate")) writer.uint32( /* id 1, wireType 2 =*/10).string(message.candidate);
+            if (message.sdpMid != null && message.hasOwnProperty("sdpMid")) writer.uint32( /* id 2, wireType 2 =*/18).string(message.sdpMid);
+            if (message.sdpMLineIndex != null && message.hasOwnProperty("sdpMLineIndex")) writer.uint32( /* id 3, wireType 0 =*/24).uint32(message.sdpMLineIndex);
+            return writer;
+        };
+
+        /**
+         * Decodes an IceCandidate message from the specified reader or buffer.
+         * @function decode
+         * @memberof webRTCBuilder.IceCandidate
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {webRTCBuilder.IceCandidate} IceCandidate
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        IceCandidate.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length,
+                message = new $root.webRTCBuilder.IceCandidate();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                    case 1:
+                        message.candidate = reader.string();
+                        break;
+                    case 2:
+                        message.sdpMid = reader.string();
+                        break;
+                    case 3:
+                        message.sdpMLineIndex = reader.uint32();
+                        break;
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
                 }
             }
+            return message;
+        };
 
-            /**
-             * IceCandidate candidate.
-             * @member {string}candidate
-             * @memberof webRTCBuilder.Message.IceCandidate
-             * @instance
-             */
-            IceCandidate.prototype.candidate = "";
-
-            /**
-             * IceCandidate sdpMid.
-             * @member {string}sdpMid
-             * @memberof webRTCBuilder.Message.IceCandidate
-             * @instance
-             */
-            IceCandidate.prototype.sdpMid = "";
-
-            /**
-             * IceCandidate sdpMLineIndex.
-             * @member {number}sdpMLineIndex
-             * @memberof webRTCBuilder.Message.IceCandidate
-             * @instance
-             */
-            IceCandidate.prototype.sdpMLineIndex = 0;
-
-            /**
-             * Creates a new IceCandidate instance using the specified properties.
-             * @function create
-             * @memberof webRTCBuilder.Message.IceCandidate
-             * @static
-             * @param {webRTCBuilder.Message.IIceCandidate=} [properties] Properties to set
-             * @returns {webRTCBuilder.Message.IceCandidate} IceCandidate instance
-             */
-            IceCandidate.create = function create(properties) {
-                return new IceCandidate(properties);
-            };
-
-            /**
-             * Encodes the specified IceCandidate message. Does not implicitly {@link webRTCBuilder.Message.IceCandidate.verify|verify} messages.
-             * @function encode
-             * @memberof webRTCBuilder.Message.IceCandidate
-             * @static
-             * @param {webRTCBuilder.Message.IIceCandidate} message IceCandidate message or plain object to encode
-             * @param {$protobuf.Writer} [writer] Writer to encode to
-             * @returns {$protobuf.Writer} Writer
-             */
-            IceCandidate.encode = function encode(message, writer) {
-                if (!writer) writer = $Writer.create();
-                if (message.candidate != null && message.hasOwnProperty("candidate")) writer.uint32( /* id 1, wireType 2 =*/10).string(message.candidate);
-                if (message.sdpMid != null && message.hasOwnProperty("sdpMid")) writer.uint32( /* id 2, wireType 2 =*/18).string(message.sdpMid);
-                if (message.sdpMLineIndex != null && message.hasOwnProperty("sdpMLineIndex")) writer.uint32( /* id 3, wireType 0 =*/24).uint32(message.sdpMLineIndex);
-                return writer;
-            };
-
-            /**
-             * Decodes an IceCandidate message from the specified reader or buffer.
-             * @function decode
-             * @memberof webRTCBuilder.Message.IceCandidate
-             * @static
-             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-             * @param {number} [length] Message length if known beforehand
-             * @returns {webRTCBuilder.Message.IceCandidate} IceCandidate
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            IceCandidate.decode = function decode(reader, length) {
-                if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
-                var end = length === undefined ? reader.len : reader.pos + length,
-                    message = new $root.webRTCBuilder.Message.IceCandidate();
-                while (reader.pos < end) {
-                    var tag = reader.uint32();
-                    switch (tag >>> 3) {
-                        case 1:
-                            message.candidate = reader.string();
-                            break;
-                        case 2:
-                            message.sdpMid = reader.string();
-                            break;
-                        case 3:
-                            message.sdpMLineIndex = reader.uint32();
-                            break;
-                        default:
-                            reader.skipType(tag & 7);
-                            break;
-                    }
-                }
-                return message;
-            };
-
-            return IceCandidate;
-        }();
-
-        return Message;
+        return IceCandidate;
     }();
 
     return webRTCBuilder;
@@ -8911,18 +8911,15 @@ var FullMesh = (function (_super) {
     function FullMesh(wc) {
         var _this = _super.call(this, FULL_MESH, fullMesh.Message, wc._svcMsgStream) || this;
         _this.wc = wc;
-        _this.init();
+        _this.channels = new Set();
+        _this.jps = new Map();
+        _this.joinAttempts = 0;
+        _this.intermediaryChannel = undefined;
         _this.joinSucceedContent = _super.prototype.encode.call(_this, { joinSucceed: true });
         _this.svcMsgStream.subscribe(function (msg) { return _this.handleSvcMsg(msg); }, function (err) { return console.error('FullMesh Message Stream Error', err); }, function () { return _this.leave(); });
         _this.wc.channelBuilder.channels().subscribe(function (ch) { return _this.peerJoined(ch); }, function (err) { return console.error('FullMesh set joining peer Error', err); });
         return _this;
     }
-    FullMesh.prototype.init = function () {
-        this.channels = new Set();
-        this.jps = new Map();
-        this.joinAttempts = 0;
-        this.intermediaryChannel = undefined;
-    };
     FullMesh.prototype.clean = function () { };
     FullMesh.prototype.addJoining = function (ch, members) {
         console.info(this.wc.myId + ' addJoining ' + ch.peerId);
@@ -9013,7 +9010,9 @@ var FullMesh = (function (_super) {
             }
             finally { if (e_4) throw e_4.error; }
         }
-        this.init();
+        this.jps = new Map();
+        this.joinAttempts = 0;
+        this.intermediaryChannel = undefined;
         var e_4, _c;
     };
     FullMesh.prototype.onChannelClose = function (event, channel) {
@@ -9021,8 +9020,7 @@ var FullMesh = (function (_super) {
             this.leave();
             this.wc._joinResult.next(new Error("Intermediary channel closed: " + event.type));
         }
-        this.channels.delete(channel);
-        if (this.wc.members.includes(channel.peerId)) {
+        if (this.channels.delete(channel)) {
             this.wc._onPeerLeave(channel.peerId);
             console.info(this.wc.myId + ' _onPeerLeave ' + channel.peerId);
         }
@@ -9132,8 +9130,11 @@ var FullMesh = (function (_super) {
 }(Service$1));
 
 var PING_INTERVAL = 3000;
+/* WebSocket error codes */
 var MESSAGE_ERROR_CODE = 4000;
+var PING_ERROR_CODE = 4001;
 var FIRST_CONNECTION_ERROR_CODE = 4002;
+/* Preconstructed messages */
 var pingMsg = signaling.Message.encode(signaling.Message.create({ ping: true })).finish();
 var pongMsg = signaling.Message.encode(signaling.Message.create({ pong: true })).finish();
 /**
@@ -9142,23 +9143,17 @@ var pongMsg = signaling.Message.encode(signaling.Message.create({ pong: true }))
  * many doors as peers in the `WebChannel` and each of them can be closed or opened.
  */
 var Signaling = (function () {
-    /**
-     * @param {WebChannel} wc
-     * @param {function(ch: RTCDataChannel)} onChannel
-     * @param {string} url
-     */
-    function Signaling(wc, onChannel, url) {
+    function Signaling(wc, url) {
         // public
         this.url = url.endsWith('/') ? url : url + '/';
-        this.onChannel = onChannel;
+        this.state = Signaling.CLOSED;
         // private
         this.wc = wc;
         this.stateSubject = new Subject_2();
+        this.channelSubject = new Subject_2();
         this.rxWs = undefined;
         this.pingInterval = undefined;
         this.pongReceived = false;
-        // Init state
-        this.setState(Signaling.CLOSED);
     }
     Object.defineProperty(Signaling.prototype, "onState", {
         get: function () {
@@ -9167,9 +9162,16 @@ var Signaling = (function () {
         enumerable: true,
         configurable: true
     });
+    Object.defineProperty(Signaling.prototype, "onChannel", {
+        get: function () {
+            return this.channelSubject.asObservable();
+        },
+        enumerable: true,
+        configurable: true
+    });
     /**
      * Notify Signaling server that you had joined the network and ready
-     * to add new peers to the network.
+     * to join new peers to the network.
      */
     Signaling.prototype.open = function () {
         if (this.state === Signaling.FIRST_CONNECTED) {
@@ -9179,8 +9181,11 @@ var Signaling = (function () {
     };
     Signaling.prototype.join = function (key) {
         var _this = this;
-        if (this.state !== Signaling.CLOSED) {
+        if (this.state === Signaling.READY_TO_JOIN_OTHERS) {
             throw new Error('Failed to join via signaling: connection with signaling is already opened');
+        }
+        if (this.state !== Signaling.CLOSED) {
+            this.close();
         }
         this.setState(Signaling.CONNECTING);
         this.wc.webSocketBuilder.connect(this.url + key)
@@ -9188,23 +9193,21 @@ var Signaling = (function () {
             _this.setState(Signaling.OPEN);
             _this.rxWs = _this.createRxWs(ws);
             _this.startPingInterval();
-            _this.rxWs.stream.subscribe(function (msg) {
+            _this.rxWs.onMessage.subscribe(function (msg) {
                 switch (msg.type) {
-                    case 'ping': {
+                    case 'ping':
                         _this.rxWs.pong();
                         break;
-                    }
-                    case 'pong': {
+                    case 'pong':
                         _this.pongReceived = true;
                         break;
-                    }
                     case 'isFirst':
                         if (msg.isFirst) {
                             _this.setState(Signaling.READY_TO_JOIN_OTHERS);
                         }
                         else {
                             _this.wc.webRTCBuilder.connectOverSignaling({
-                                stream: _this.rxWs.stream.filter(function (msg) { return msg.type === 'content'; })
+                                onMessage: _this.rxWs.onMessage.filter(function (msg) { return msg.type === 'content'; })
                                     .map(function (_a) {
                                     var content = _a.content;
                                     return content;
@@ -9218,21 +9221,15 @@ var Signaling = (function () {
                         }
                         break;
                 }
-            }, function (err) {
-                _this.setState(Signaling.CLOSED);
-                console.error(err);
             });
         })
-            .catch(function (err) {
-            _this.setState(Signaling.CLOSED);
-            console.error("Failed to connect to Signaling: " + err.message);
-        });
+            .catch(function (err) { return _this.setState(Signaling.CLOSED); });
     };
     /**
      * Close the `WebSocket` with Signaling server.
      */
     Signaling.prototype.close = function () {
-        if (this.state !== Signaling.CLOSED) {
+        if (this.rxWs) {
             this.rxWs.close(1000);
         }
     };
@@ -9243,14 +9240,13 @@ var Signaling = (function () {
             this.stateSubject.next(state);
             if (state === Signaling.READY_TO_JOIN_OTHERS) {
                 this.wc.webRTCBuilder.channelsFromSignaling({
-                    stream: this.rxWs.stream.filter(function (msg) { return msg.type === 'content'; })
+                    onMessage: this.rxWs.onMessage.filter(function (msg) { return msg.type === 'content'; })
                         .map(function (_a) {
                         var content = _a.content;
                         return content;
                     }),
                     send: function (msg) { return _this.rxWs.send({ content: msg }); }
-                })
-                    .subscribe(function (ch) { return _this.onChannel(ch); }, function (err) { return console.error(err.message); });
+                }).subscribe(function (ch) { return _this.channelSubject.next(ch); });
             }
         }
     };
@@ -9258,14 +9254,15 @@ var Signaling = (function () {
         var _this = this;
         this.rxWs.ping();
         this.pingInterval = setInterval(function () {
-            if (!_this.pongReceived) {
-                clearInterval(_this.pingInterval);
-                _this.rxWs.stream.error(new Error('Signaling is no longer available'));
-                _this.rxWs.clean();
-            }
-            else {
-                _this.pongReceived = false;
-                _this.rxWs.ping();
+            if (_this.state !== Signaling.CLOSED) {
+                if (!_this.pongReceived) {
+                    clearInterval(_this.pingInterval);
+                    _this.rxWs.close(PING_ERROR_CODE, 'Signaling is not responding');
+                }
+                else {
+                    _this.pongReceived = false;
+                    _this.rxWs.ping();
+                }
             }
         }, PING_INTERVAL);
     };
@@ -9289,19 +9286,14 @@ var Signaling = (function () {
                 subject.complete();
             }
             else {
-                console.error("WebSocket connection to Signaling '" + _this.url + "' failed with code " + closeEvt.code + ": " + closeEvt.reason);
+                subject.error(new Error("Connection with Signaling '" + _this.url + "' closed: " + closeEvt.code + ": " + closeEvt.reason));
             }
         };
         return {
-            stream: subject,
+            onMessage: subject.asObservable(),
             send: function (msg) {
                 if (ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CLOSED) {
                     ws.send(signaling.Message.encode(signaling.Message.create(msg)).finish());
-                }
-            },
-            pong: function () {
-                if (ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CLOSED) {
-                    ws.send(pongMsg);
                 }
             },
             ping: function () {
@@ -9309,15 +9301,15 @@ var Signaling = (function () {
                     ws.send(pingMsg);
                 }
             },
+            pong: function () {
+                if (ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CLOSED) {
+                    ws.send(pongMsg);
+                }
+            },
             close: function (code, reason) {
+                if (code === void 0) { code = 1000; }
                 if (reason === void 0) { reason = ''; }
                 return ws.close(code, reason);
-            },
-            clean: function () {
-                ws.onmessage = function () { };
-                ws.onerror = function () { };
-                ws.onclose = function () { };
-                ws.close(1000);
             }
         };
     };
@@ -10436,7 +10428,7 @@ var WebRTCBuilder = (function (_super) {
     WebRTCBuilder.prototype.channelsFromSignaling = function (signaling$$1) {
         var _this = this;
         if (WebRTCBuilder.isSupported) {
-            return this.channels(signaling$$1.stream.filter(function (_a) {
+            return this.channels(signaling$$1.onMessage.filter(function (_a) {
                 var id = _a.id;
                 return id !== 0;
             })
@@ -10466,7 +10458,7 @@ var WebRTCBuilder = (function (_super) {
     WebRTCBuilder.prototype.connectOverSignaling = function (signaling$$1) {
         var _this = this;
         if (WebRTCBuilder.isSupported) {
-            return this.establishChannel(signaling$$1.stream.filter(function (_a) {
+            return this.establishChannel(signaling$$1.onMessage.filter(function (_a) {
                 var id = _a.id;
                 return id === 0;
             })
@@ -10482,14 +10474,14 @@ var WebRTCBuilder = (function (_super) {
         }
         throw new Error('WebRTC is not supported');
     };
-    WebRTCBuilder.prototype.establishChannel = function (stream, send, peerId) {
+    WebRTCBuilder.prototype.establishChannel = function (onMessage, send, peerId) {
         var _this = this;
         if (peerId === void 0) { peerId = 1; }
         var pc = new RTCPeerConnection(this.rtcConfiguration);
         var remoteCandidateStream = new ReplaySubject_2();
         this.localCandidates(pc).subscribe(function (iceCandidate) { return send({ iceCandidate: iceCandidate }); }, function (err) { return console.warn(err); }, function () { return send({ iceCandidate: { candidate: '' } }); });
         return new Promise(function (resolve, reject) {
-            var subs = stream.subscribe(function (_a) {
+            var subs = onMessage.subscribe(function (_a) {
                 var answer = _a.answer, iceCandidate = _a.iceCandidate, isError = _a.isError;
                 if (answer) {
                     pc.setRemoteDescription({ type: 'answer', sdp: answer })
@@ -10525,10 +10517,10 @@ var WebRTCBuilder = (function (_super) {
                 .catch(reject);
         });
     };
-    WebRTCBuilder.prototype.channels = function (stream, send) {
+    WebRTCBuilder.prototype.channels = function (onMessage, send) {
         var _this = this;
         return Observable_2.create(function (observer) {
-            stream.subscribe(function (_a) {
+            onMessage.subscribe(function (_a) {
                 var offer = _a.offer, iceCandidate = _a.iceCandidate, id = _a.id, isError = _a.isError;
                 var client = _this.clients.get(id);
                 var pc;
@@ -11031,7 +11023,8 @@ var WebChannel = (function (_super) {
         _this._state = WebChannel.LEFT;
         _this._userMsg = new UserMessage();
         // Signaling init
-        _this._signaling = new Signaling(_this, function (ch) { return _this._initChannel(ch); }, signalingURL);
+        _this._signaling = new Signaling(_this, signalingURL);
+        _this._signaling.onChannel.subscribe(function (ch) { return _this._initChannel(ch); });
         _this._signaling.onState.subscribe(function (state) {
             _this.onSignalingStateChanged(state);
             switch (state) {
@@ -11394,7 +11387,8 @@ var WebChannel = (function (_super) {
             recipientId: 1,
             content: _super.prototype.encode.call(this, { init: {
                     topology: this._topology.serviceId,
-                    wcId: this.id
+                    wcId: this.id,
+                    generatedIds: this.members
                 } })
         });
         ch.send(msg);
