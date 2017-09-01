@@ -37,7 +37,7 @@ export class WebRTCBuilder extends Service {
   private clients: Map<number, [RTCPeerConnection, ReplaySubject<webRTCBuilder.IIceCandidate>]>
 
   constructor (wc: WebChannel, iceServers: RTCIceServer[]) {
-    super(ID, webRTCBuilder.Message, wc._serviceMessageSubject)
+    super(ID, webRTCBuilder.Message, wc.serviceMessageSubject)
     this.wc = wc
     this.rtcConfiguration = { iceServers }
     this.clients = new Map()
@@ -50,7 +50,7 @@ export class WebRTCBuilder extends Service {
     return RTCPeerConnection !== undefined
   }
 
-  channelsFromWebChannel () {
+  onChannelFromWebChannel () {
     if (WebRTCBuilder.isSupported) {
       return this.onChannel(
         this.onServiceMessage
@@ -59,7 +59,7 @@ export class WebRTCBuilder extends Service {
             msg.id = senderId
             return msg
           }),
-        (msg, id) => this.wc._sendTo({ recipientId: id, content: super.encode(msg) })
+        (msg, id) => this.wc.sendToProxy({ recipientId: id, content: super.encode(msg) })
       )
     }
     throw new Error('WebRTC is not supported')
@@ -79,7 +79,7 @@ export class WebRTCBuilder extends Service {
           .map(({ msg }: { msg: any }) => ({ answer: msg.answer, iceCandidate: msg.iceCandidate })),
         (msg: any) => {
           msg.isInitiator = true
-          this.wc._sendTo({ recipientId: id, content: super.encode(msg) })
+          this.wc.sendToProxy({ recipientId: id, content: super.encode(msg) })
         },
         id
       )
@@ -91,7 +91,7 @@ export class WebRTCBuilder extends Service {
    * Listen on `RTCDataChannel` from Signaling server.
    * Starts to listen on **SDP answer**.
    */
-  channelsFromSignaling (signaling: SignalingConnection): Observable<Channel> {
+  onChannelFromSignaling (signaling: SignalingConnection): Observable<Channel> {
     if (WebRTCBuilder.isSupported) {
       return this.onChannel(
         signaling.onMessage.filter(({ id }) => id !== 0)

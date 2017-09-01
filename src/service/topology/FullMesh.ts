@@ -1,7 +1,7 @@
 import 'rxjs/add/operator/map'
 import { Subscription } from 'rxjs/Subscription'
 
-import { TopologyInterface } from './TopologyInterface'
+import { TopologyInterface } from './Topology'
 import { fullMesh, IMessage } from '../../Protobuf'
 import { WebChannel } from '../WebChannel'
 import { Channel } from '../../Channel'
@@ -47,7 +47,7 @@ export class FullMesh extends Service implements TopologyInterface {
   private joinAttempts: number
 
   constructor (wc) {
-    super(FULL_MESH, fullMesh.Message, wc._serviceMessageSubject)
+    super(FULL_MESH, fullMesh.Message, wc.serviceMessageSubject)
     this.wc = wc
     this.channels = new Set()
     this.jps = new Map()
@@ -55,7 +55,7 @@ export class FullMesh extends Service implements TopologyInterface {
     this.intermediaryChannel = undefined
     this.joinSucceedContent = super.encode({ joinSucceed: true })
     this.onServiceMessage.subscribe(msg => this.handleSvcMsg(msg))
-    this.wc._channelBuilder.onChannel.subscribe(ch => this.peerJoined(ch))
+    this.wc.channelBuilder.onChannel.subscribe(ch => this.peerJoined(ch))
   }
 
   clean () {}
@@ -74,7 +74,7 @@ export class FullMesh extends Service implements TopologyInterface {
   }
 
   send (msg: IMessage): void {
-    const bytes = this.wc._encode(msg)
+    const bytes = this.wc.encode(msg)
     for (let ch of this.channels) {
       ch.send(bytes)
     }
@@ -83,7 +83,7 @@ export class FullMesh extends Service implements TopologyInterface {
   forward (msg: IMessage): void { /* Nothing to do for this topology */ }
 
   sendTo (msg: IMessage): void {
-    const bytes = this.wc._encode(msg)
+    const bytes = this.wc.encode(msg)
     for (let ch of this.channels) {
       if (ch.peerId === msg.recipientId) {
         ch.send(bytes)
@@ -120,11 +120,11 @@ export class FullMesh extends Service implements TopologyInterface {
   onChannelClose (event: Event, channel: Channel): void {
     if (this.intermediaryChannel && this.intermediaryChannel === channel) {
       this.leave()
-      this.wc._joinResult.next(new Error(`Intermediary channel closed: ${event.type}`))
+      this.wc.joinSubject.next(new Error(`Intermediary channel closed: ${event.type}`))
     }
     if (this.channels.delete(channel)) {
-      this.wc._onPeerLeave(channel.peerId)
-      console.info(this.wc.myId + ' _onPeerLeave ' + channel.peerId)
+      this.wc.onPeerLeaveProxy(channel.peerId)
+      console.info(this.wc.myId + ' onPeerLeaveProxy ' + channel.peerId)
     }
   }
 
@@ -144,7 +144,7 @@ export class FullMesh extends Service implements TopologyInterface {
       const misssingConnections = []
       for (let id of missingPeers) {
         misssingConnections[misssingConnections.length] = new Promise(resolve => {
-          this.wc._channelBuilder.connectTo(id)
+          this.wc.channelBuilder.connectTo(id)
             .then(ch => {
               this.peerJoined(ch)
               resolve()
@@ -158,13 +158,13 @@ export class FullMesh extends Service implements TopologyInterface {
 
       // Notify the intermediary peer about your members
       Promise.all(misssingConnections).then(() => {
-        const send = () => channel.send(this.wc._encode({
+        const send = () => channel.send(this.wc.encode({
           recipientId: channel.peerId,
           content: super.encode({ connectedTo: { members: this.wc.members } })
         }))
         if (this.joinAttempts === MAX_JOIN_ATTEMPTS) {
           this.leave()
-          this.wc._joinResult.next(new Error('Failed to join: maximum join attempts has reached'))
+          this.wc.joinSubject.next(new Error('Failed to join: maximum join attempts has reached'))
         } else if (this.joinAttempts > 0) {
           setTimeout(() => send(), 200 + 100 * Math.random())
         } else {
@@ -186,7 +186,7 @@ export class FullMesh extends Service implements TopologyInterface {
     }
     case 'joinSucceed': {
       this.intermediaryChannel = undefined
-      this.wc._joinResult.next()
+      this.wc.joinSubject.next()
       console.info(this.wc.myId + ' _joinSucceed ')
       break
     }
@@ -199,7 +199,8 @@ export class FullMesh extends Service implements TopologyInterface {
     if (this.wc.members.length === members.length && members.every(
         id => id === this.wc.myId || this.wc.members.includes(id))
       ) {
-      ch.send(this.wc._encode({
+      console.log(this.wc.myId + ' checkMembers JOIN SUCCEED')
+      ch.send(this.wc.encode({
         recipientId: ch.peerId,
         content: this.joinSucceedContent
       }))
@@ -207,8 +208,8 @@ export class FullMesh extends Service implements TopologyInterface {
     }
 
     // Joining did not finish, resend my members to the joining peer
-    this.wc._send({ content: super.encode({ joiningPeerId: ch.peerId }) })
-    ch.send(this.wc._encode({
+    this.wc.sendProxy({ content: super.encode({ joiningPeerId: ch.peerId }) })
+    ch.send(this.wc.encode({
       recipientId: ch.peerId,
       content: super.encode({ connectTo: { members: this.wc.members } })
     }))
@@ -216,8 +217,8 @@ export class FullMesh extends Service implements TopologyInterface {
 
   private peerJoined (ch: Channel): void {
     this.channels.add(ch)
-    this.wc._onPeerJoin(ch.peerId)
+    this.wc.onPeerJoinProxy(ch.peerId)
     this.jps.delete(ch.peerId)
-    console.info(this.wc.myId + ' _onPeerJoin ' + ch.peerId)
+    console.info(this.wc.myId + ' peerJoined ' + ch.peerId)
   }
 }

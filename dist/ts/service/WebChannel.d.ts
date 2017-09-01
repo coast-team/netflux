@@ -1,22 +1,24 @@
 import { Subject } from 'rxjs/Subject';
 import { Channel } from '../Channel';
-import { Service } from './Service';
+import { Service, ServiceMessageEncoded } from './Service';
+import { Signaling, SignalingState } from '../Signaling';
 import { ChannelBuilder } from './ChannelBuilder';
 import { WebSocketBuilder } from '../WebSocketBuilder';
 import { WebRTCBuilder } from './WebRTCBuilder';
-import { IMessage } from '../Protobuf';
 import { UserDataType } from '../UserMessage';
-import { TopologyInterface } from './topology/TopologyInterface';
-export declare enum Topologies {
-    FULL_MESH = 0,
-}
+import { TopologyInterface, Topology } from './topology/Topology';
 export interface WebChannelOptions {
-    topology: Topologies;
+    topology: Topology;
     signalingURL: string;
     iceServers: RTCIceServer[];
     autoRejoin: boolean;
 }
 export declare const wcDefaults: WebChannelOptions;
+export declare enum WebChannelState {
+    JOINING = 0,
+    JOINED = 1,
+    LEFT = 2,
+}
 /**
  * This class is an API starting point. It represents a group of collaborators
  * also called peers. Each peer can send/receive broadcast as well as personal
@@ -26,14 +28,6 @@ export declare const wcDefaults: WebChannelOptions;
  * [[include:installation.md]]
  */
 export declare class WebChannel extends Service {
-    static JOINING: number;
-    static JOINED: number;
-    static LEFT: number;
-    static SIGNALING_CONNECTING: number;
-    static SIGNALING_OPEN: number;
-    static SIGNALING_FIRST_CONNECTED: number;
-    static SIGNALING_READY_TO_JOIN_OTHERS: number;
-    static SIGNALING_CLOSED: number;
     /**
      * An array of all peer ids except yours.
      */
@@ -41,7 +35,7 @@ export declare class WebChannel extends Service {
     /**
      * Topology id.
      */
-    topology: number;
+    topology: Topology;
     /**
      * WebChannel id.
      */
@@ -62,11 +56,11 @@ export declare class WebChannel extends Service {
     /**
      * Thi handler is called each time the state of Signaling server changes.
      */
-    onSignalingStateChanged: (state: number) => void;
+    onSignalingStateChanged: (state: SignalingState) => void;
     /**
      * Thi handler is called each time the state of the network changes.
      */
-    onStateChanged: (state: number) => void;
+    onStateChanged: (state: WebChannelState) => void;
     /**
      * This handler is called when a new peer has joined the network.
      */
@@ -79,38 +73,34 @@ export declare class WebChannel extends Service {
      *  This handler is called when a message has been received from the network.
      */
     onMessage: (id: number, msg: UserDataType, isBroadcast: boolean) => void;
-    _joinResult: Subject<Error | void>;
-    _webRTCBuilder: WebRTCBuilder;
-    _webSocketBuilder: WebSocketBuilder;
-    _channelBuilder: ChannelBuilder;
-    _topology: TopologyInterface;
-    _serviceMessageSubject: Subject<any>;
-    private _state;
-    private _signaling;
-    private _userMsg;
-    private _pingTime;
-    private _maxTime;
-    private _pingFinish;
-    private _pongNb;
-    private _rejoinTimer;
-    private _isRejoinDisabled;
+    joinSubject: Subject<Error | void>;
+    serviceMessageSubject: Subject<ServiceMessageEncoded>;
+    webRTCBuilder: WebRTCBuilder;
+    webSocketBuilder: WebSocketBuilder;
+    channelBuilder: ChannelBuilder;
+    topologyService: TopologyInterface;
+    state: WebChannelState;
+    signaling: Signaling;
+    private userMsg;
+    private pingTime;
+    private maxTime;
+    private pingFinish;
+    private pongNb;
+    private rejoinTimer;
+    private isRejoinDisabled;
     /**
      * @param options Web channel settings
      */
     constructor({topology, signalingURL, iceServers, autoRejoin}?: {
-        topology?: Topologies;
+        topology?: Topology;
         signalingURL?: string;
         iceServers?: RTCIceServer[];
         autoRejoin?: boolean;
     });
-    _setState(state: number): void;
-    readonly state: number;
-    readonly signalingState: number;
-    readonly signalingURL: string;
     /**
      * Join the network via a key provided by one of the network member or a `Channel`.
      */
-    join(value?: string | Channel): void;
+    join(key?: string): void;
     /**
      * Invite a server peer to join the network.
      */
@@ -137,12 +127,12 @@ export declare class WebChannel extends Service {
      * corresponds to the longest ping to each network member.
      */
     ping(): Promise<number>;
-    _onPeerJoin(id: number): void;
-    _onPeerLeave(id: number): void;
+    onPeerJoinProxy(id: number): void;
+    onPeerLeaveProxy(id: number): void;
     /**
      * Send service message to a particular peer in the network.
      */
-    _sendTo({senderId, recipientId, isService, content}?: {
+    sendToProxy({senderId, recipientId, isService, content}?: {
         senderId?: number;
         recipientId?: number;
         isService?: boolean;
@@ -151,34 +141,34 @@ export declare class WebChannel extends Service {
     /**
      * Broadcast service message to the network.
      */
-    _send({senderId, recipientId, isService, content, isMeIncluded}?: {
+    sendProxy({senderId, recipientId, isService, content, isMeIncluded}?: {
         senderId?: number;
         recipientId?: number;
         isService?: boolean;
         content?: any;
         isMeIncluded?: boolean;
     }): void;
-    _encode({senderId, recipientId, isService, content}?: {
+    encode({senderId, recipientId, isService, content}?: {
         senderId?: number;
         recipientId?: number;
         isService?: boolean;
         content?: any;
     }): Uint8Array;
-    _decode(bytes: Uint8Array): IMessage;
     /**
      * Message handler. All messages arrive here first.
      */
-    _onMessage(channel: Channel, bytes: Uint8Array): void;
-    private _treatMessage(channel, msg);
-    private _treatServiceMessage({channel, senderId, recipientId, msg});
+    onMessageProxy(channel: Channel, bytes: Uint8Array): void;
+    private treatMessage(channel, msg);
+    private treatServiceMessage({channel, senderId, recipientId, msg});
+    private setState(state);
     /**
      * Delegate adding a new peer in the network to topology.
      */
-    private _initChannel(ch);
-    private _setTopology(topology);
-    private _rejoin();
+    private initChannel(ch);
+    private setTopology(topology);
+    private rejoin();
     /**
      * Generate random id for a `WebChannel` or a new peer.
      */
-    private _generateId(excludeIds?);
+    private generateId(excludeIds?);
 }

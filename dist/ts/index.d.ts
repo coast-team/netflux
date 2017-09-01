@@ -1,3 +1,6 @@
 import './polyfills';
-export { WebChannel } from './service/WebChannel';
-export { BotServer } from './BotServer';
+export { WebGroup } from './WebChannelFacade';
+export { WebChannelOptions as WebGroupOptions, WebChannelState as WebGroupState } from './service/WebChannel';
+export { Topology } from './service/topology/Topology';
+export { SignalingState } from './Signaling';
+export { BotServer, BotServerOptions } from './BotServer';

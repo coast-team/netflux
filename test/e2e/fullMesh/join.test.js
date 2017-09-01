@@ -2,7 +2,7 @@ import { Subject } from 'rxjs/Subject'
 
 import * as helper from '../../util/helper'
 import bigStr from '../../util/4mb.txt'
-import { WebChannel } from '../../../src/service/WebChannel'
+import { WebGroup, WebGroupState } from '../../../src/index'
 
 const USE_CASES = [2, 3, 7]
 const scenarios = [
@@ -24,8 +24,8 @@ const faces = length => {
 
 describe('Fully connected', () => {
   describe('Should establish a p2p network', () => {
-    let wcs
-    afterEach(() => wcs.forEach(wc => wc.leave()))
+    let wgs
+    afterEach(() => wgs.forEach(wg => wg.leave()))
 
     scenarios.forEach(scenario => {
       it(`${scenario.smiles}`, done => {
@@ -33,77 +33,78 @@ describe('Fully connected', () => {
         let nextJoiningIndex = 0
         let botJoined = false
         const key = helper.randKey()
-        wcs = helper.createWebChannels(scenario.nbClients)
-        wcs.forEach((wc, index) => {
-          expect(wc.state).toBe(WebChannel.LEFT)
-          wc.onPeerJoinCalledTimes = 0
-          wc.onPeerJoin = id => {
-            wc.onPeerJoinCalledTimes++
-            // Joined peer's id should be among WebChannel members ids
-            expect(wc.members.includes(id)).toBeTruthy()
+        wgs = helper.createWebGroups(scenario.nbClients)
+        wgs.forEach((wg, index) => {
+          console.log('WebGroup: ', wg)
+          expect(wg.state).toBe(WebGroupState.LEFT)
+          wg.onPeerJoinCalledTimes = 0
+          wg.onPeerJoin = id => {
+            wg.onPeerJoinCalledTimes++
+            // Joined peer's id should be among WebGroup members ids
+            expect(wg.members.includes(id)).toBeTruthy()
 
             // Its id should be included only ONCE
-            expect(wc.members.indexOf(id)).toEqual(wc.members.lastIndexOf(id))
+            expect(wg.members.indexOf(id)).toEqual(wg.members.lastIndexOf(id))
           }
-          wc.onStateChangedCalledTimes = 0
-          wc.onStateChanged = state => {
-            wc.onStateChangedCalledTimes++
-            if (state === WebChannel.JOINED) {
-              network.next({wc, isBot: false})
+          wg.onStateChangedCalledTimes = 0
+          wg.onStateChanged = state => {
+            wg.onStateChangedCalledTimes++
+            if (state === WebGroupState.JOINED) {
+              network.next({wg, isBot: false})
             }
           }
         })
 
         network.subscribe(
-          ({wc, isBot}) => {
+          ({wg, isBot}) => {
             nextJoiningIndex = isBot ? nextJoiningIndex : nextJoiningIndex + 1
             if ((nextJoiningIndex === scenario.nbClients && !scenario.hasBot()) || (nextJoiningIndex === scenario.nbClients && scenario.hasBot() && botJoined)) {
               network.complete()
             } else if (nextJoiningIndex === scenario.botIndex && !isBot) {
-              wc.invite(helper.BOT_URL)
-              helper.botWaitJoin(wcs[0].id)
+              wg.invite(helper.BOT_URL)
+              helper.botWaitJoin(wgs[0].id)
                 .then(() => {
                   botJoined = true
                   network.next({isBot: true})
                 })
             } else {
-              wcs[nextJoiningIndex].join(key)
+              wgs[nextJoiningIndex].join(key)
             }
           },
           err => {},
           () => {
             let botCheck = Promise.resolve()
             if (scenario.hasBot()) {
-              botCheck = helper.expectBotMembers(wcs[0].id, wcs, scenario.nbPeers)
+              botCheck = helper.expectBotMembers(wgs[0].id, wgs, scenario.nbPeers)
             }
             botCheck.then(() => {
-              helper.expectMembers(wcs, scenario.nbPeers)
-              wcs.forEach(wc => {
-                expect(wc.state).toBe(WebChannel.JOINED)
-                expect(wc.onPeerJoinCalledTimes).toBe(scenario.nbPeers - 1)
-                expect(wc.onStateChangedCalledTimes).toBe(2)
+              helper.expectMembers(wgs, scenario.nbPeers)
+              wgs.forEach(wg => {
+                expect(wg.state).toBe(WebGroupState.JOINED)
+                expect(wg.onPeerJoinCalledTimes).toBe(scenario.nbPeers - 1)
+                expect(wg.onStateChangedCalledTimes).toBe(2)
               })
               done()
             })
             .catch(done.fail)
           }
         )
-        wcs[0].join(key)
+        wgs[0].join(key)
       }, scenario.nbAgents * 2000)
     })
   })
 
   xdescribe('Should ping', () => {
-    let wcs
+    let wgs
 
-    afterEach(() => wcs.forEach(wc => wc.leave()))
+    afterEach(() => wgs.forEach(wg => wg.leave()))
 
     USE_CASES.forEach(numberOfPeers => {
       it(`${numberOfPeers}`, done => {
-        helper.createAndConnectWebChannels(numberOfPeers)
-          .then(webChannels => (wcs = webChannels))
-          .then(() => wcs.map(
-            wc => wc.ping().then(p => expect(Number.isInteger(p)).toBeTruthy())
+        helper.createAndConnectWebGroups(numberOfPeers)
+          .then(webChannels => (wgs = webChannels))
+          .then(() => wgs.map(
+            wg => wg.ping().then(p => expect(Number.isInteger(p)).toBeTruthy())
           ))
           .then(proms => Promise.all(proms))
           .then(done)
@@ -113,24 +114,24 @@ describe('Fully connected', () => {
   })
 
   describe('Should send/receive', () => {
-    let wcs
+    let wgs
 
-    afterEach(() => wcs.forEach(wc => wc.leave()))
+    afterEach(() => wgs.forEach(wg => wg.leave()))
 
     USE_CASES.forEach(numberOfPeers => {
       describe(`${faces(numberOfPeers)}`, () => {
         it(`private: ArrayBuffer, String & 50Kb chunk`, done => {
-          helper.createAndConnectWebChannels(numberOfPeers)
-            .then(webChannels => (wcs = webChannels))
-            .then(() => helper.sendAndExpectOnMessage(wcs, false))
+          helper.createAndConnectWebGroups(numberOfPeers)
+            .then(webChannels => (wgs = webChannels))
+            .then(() => helper.sendAndExpectOnMessage(wgs, false))
             .then(done)
             .catch(done.fail)
         })
 
         it(`broadcast: ArrayBuffer, String & 50Kb chunk`, done => {
-          helper.createAndConnectWebChannels(numberOfPeers)
-            .then(webChannels => (wcs = webChannels))
-            .then(() => helper.sendAndExpectOnMessage(wcs, true))
+          helper.createAndConnectWebGroups(numberOfPeers)
+            .then(webChannels => (wgs = webChannels))
+            .then(() => helper.sendAndExpectOnMessage(wgs, true))
             .then(done)
             .catch(done.fail)
         })
@@ -139,62 +140,62 @@ describe('Fully connected', () => {
   })
 
   describe(`${PEER_FACE}${PEER_FACE}`, () => {
-    let wcs
+    let wgs
 
-    afterEach(() => wcs.forEach(wc => wc.leave()))
+    afterEach(() => wgs.forEach(wg => wg.leave()))
 
     helper.itBrowser(true, 'should send/receive ~4 MB string', done => {
-      helper.createAndConnectWebChannels(2)
-        .then(webChannels => (wcs = webChannels))
+      helper.createAndConnectWebGroups(2)
+        .then(webChannels => (wgs = webChannels))
         .then(() => {
-          wcs[0].onMessage = (id, msg) => {
-            expect(id).toEqual(wcs[1].myId)
+          wgs[0].onMessage = (id, msg) => {
+            expect(id).toEqual(wgs[1].myId)
             expect(msg === bigStr).toBeTruthy()
             done()
           }
-          wcs[1].sendTo(wcs[0].myId, bigStr)
+          wgs[1].sendTo(wgs[0].myId, bigStr)
         })
     }, 10000)
   })
 
   describe('Should disconnect', () => {
-    let wcs
+    let wgs
 
-    afterEach(() => wcs.forEach(wc => wc.leave()))
+    afterEach(() => wgs.forEach(wg => wg.leave()))
     USE_CASES.forEach(numberOfPeers => {
       it(`${faces(numberOfPeers)}`, done => {
-        helper.createAndConnectWebChannels(numberOfPeers)
+        helper.createAndConnectWebGroups(numberOfPeers)
           .then(webChannels => {
             let res = []
-            wcs = webChannels
-            wcs.forEach(wc => {
-              expect(wc.state).toBe(WebChannel.JOINED)
-              wc.onPeerLeaveCalledTimes = 0
-              wc.onPeerLeave = id => {
-                wc.onPeerLeaveCalledTimes++
-                expect(wc.members.includes(id)).toBeFalsy()
+            wgs = webChannels
+            wgs.forEach(wg => {
+              expect(wg.state).toBe(WebGroupState.JOINED)
+              wg.onPeerLeaveCalledTimes = 0
+              wg.onPeerLeave = id => {
+                wg.onPeerLeaveCalledTimes++
+                expect(wg.members.includes(id)).toBeFalsy()
               }
-              wc.onStateChangedCalledTimes = 0
+              wg.onStateChangedCalledTimes = 0
               res.push(new Promise(resolve => {
-                wc.onStateChanged = state => {
-                  wc.onStateChangedCalledTimes++
-                  if (state === WebChannel.LEFT) {
+                wg.onStateChanged = state => {
+                  wg.onStateChangedCalledTimes++
+                  if (state === WebGroupState.LEFT) {
                     resolve()
                   }
                 }
               }))
             })
-            for (let wc of wcs) {
-              wc.leave()
+            for (let wg of wgs) {
+              wg.leave()
             }
             return Promise.all(res)
           })
           .then(() => {
-            wcs.forEach((wc, index) => {
-              expect(wc.state).toBe(WebChannel.LEFT)
-              expect(wc.members.length).toBe(0)
-              expect(wc.onPeerLeaveCalledTimes).toBe(numberOfPeers - 1)
-              expect(wc.onStateChangedCalledTimes).toBe(1)
+            wgs.forEach((wg, index) => {
+              expect(wg.state).toBe(WebGroupState.LEFT)
+              expect(wg.members.length).toBe(0)
+              expect(wg.onPeerLeaveCalledTimes).toBe(numberOfPeers - 1)
+              expect(wg.onStateChangedCalledTimes).toBe(1)
             })
           })
           .then(done)

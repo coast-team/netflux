@@ -1,6 +1,9 @@
 import { Service } from '../Service';
 import { Channel } from '../../Channel';
 import { IMessage } from '../../Protobuf';
+export declare enum Topology {
+    FULL_MESH = 0,
+}
 /**
  * It is responsible to preserve Web Channel
  * structure intact (i.e. all peers have the same vision of the Web Channel).

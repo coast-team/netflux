@@ -9,7 +9,6 @@ export interface ServiceMessageEncoded {
   senderId: number,
   recipientId: number,
   id: number,
-  timestamp: number,
   content: Uint8Array
 }
 
@@ -17,7 +16,6 @@ export interface ServiceMessageDecoded {
   channel: Channel,
   senderId: number,
   recipientId: number,
-  timestamp: number,
   msg: any
 }
 
@@ -79,12 +77,11 @@ export abstract class Service {
   protected setupServiceMessage (serviceMessageSubject: Subject<ServiceMessageEncoded>): void {
     this.onServiceMessage = serviceMessageSubject
       .filter(({ id }) => id === this.serviceId)
-      .map(({ channel, senderId, recipientId, content, timestamp }) => ({
+      .map(({ channel, senderId, recipientId, content }) => ({
         channel,
         senderId,
         recipientId,
-        msg: this.protoMessage.decode(content),
-        timestamp
+        msg: this.protoMessage.decode(content)
       }))
   }
 }

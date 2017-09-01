@@ -24,7 +24,7 @@ export class WebSocketBuilder {
   }
 
   static newIncomingSocket (wc, ws, senderId) {
-    wc._webSocketBuilder.channelsSubject.next(new Channel(wc, ws, {id: senderId}))
+    wc.webSocketBuilder.channelsSubject.next(new Channel(wc, ws, {id: senderId}))
   }
 
   constructor (wc: WebChannel) {

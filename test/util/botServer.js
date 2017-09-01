@@ -1,6 +1,6 @@
 import { ReplaySubject } from 'rxjs/ReplaySubject'
 
-import { WebChannel, BotServer } from '../../src/index'
+import { WebGroup, WebGroupState, BotServer } from '../../src/index'
 import { onMessageForBot, SIGNALING_URL, BOT_HOST, BOT_PORT } from './helper'
 
 // Require dependencies
@@ -40,11 +40,11 @@ try {
         webChannels.filter(wc => wc.id === wcId)
           .subscribe(
             wc => {
-              if (wc.state === WebChannel.JOINED) {
+              if (wc.state === WebGroupState.JOINED) {
                 resolve()
               } else {
                 wc.onStateChanged = state => {
-                  if (state === WebChannel.JOINED) {
+                  if (state === WebGroupState.JOINED) {
                     resolve()
                   }
                 }
@@ -112,12 +112,12 @@ try {
 
 function createWebChannel (env) {
   // Add specific web channel to the bot for tests in Firefox
-  const wc = new WebChannel({signalingURL: SIGNALING_URL})
+  const wc = new WebGroup({signalingURL: SIGNALING_URL})
   wc.onMessage = (id, msg, isBroadcast) => {
     onMessageForBot(wc, id, msg, isBroadcast)
   }
   wc.join('FIREFOX')
     .then(() => console.info(`${env} bot is ready`))
-    .catch(reason => console.error(`${env} bot WebChannel open error: ${reason}`))
+    .catch(reason => console.error(`${env} bot WebGroup open error: ${reason}`))
   return wc
 }

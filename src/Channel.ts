@@ -49,16 +49,16 @@ export class Channel {
       this.connection.onclose = () => {}
       this.connection.onmessage = () => {}
       this.connection.onerror = () => {}
-      wc._topology.onChannelClose(evt, this)
+      wc.topologyService.onChannelClose(evt, this)
       if (this.rtcPeerConnection && this.rtcPeerConnection.signalingState !== 'closed') {
         this.rtcPeerConnection.close()
       }
     }
 
     // Configure handlers
-    this.connection.onmessage = ({ data }) => wc._onMessage(this, new Uint8Array(data))
+    this.connection.onmessage = ({ data }) => wc.onMessageProxy(this, new Uint8Array(data))
     this.connection.onclose = evt => this.onClose(evt)
-    this.connection.onerror = evt => wc._topology.onChannelError(evt, this)
+    this.connection.onerror = evt => wc.topologyService.onChannelError(evt, this)
   }
 
   close (): void {

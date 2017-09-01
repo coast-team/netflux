@@ -6,14 +6,12 @@ export interface ServiceMessageEncoded {
     senderId: number;
     recipientId: number;
     id: number;
-    timestamp: number;
     content: Uint8Array;
 }
 export interface ServiceMessageDecoded {
     channel: Channel;
     senderId: number;
     recipientId: number;
-    timestamp: number;
     msg: any;
 }
 /**

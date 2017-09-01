@@ -152,7 +152,7 @@ export class BotServer {
         wc.id = wcId
         this.addWebChannel(wc)
         this.onWebChannel(wc)
-        wc.join(new Channel(wc, ws, {id: senderId}))
+        const ch = new Channel(wc, ws, {id: senderId})
         break
       }
       case '/internalChannel': {

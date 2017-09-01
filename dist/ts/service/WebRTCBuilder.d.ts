@@ -22,7 +22,7 @@ export declare class WebRTCBuilder extends Service {
      * Indicates whether WebRTC is supported by the environment.
      */
     static readonly isSupported: boolean;
-    channelsFromWebChannel(): Observable<Channel>;
+    onChannelFromWebChannel(): Observable<Channel>;
     /**
      * Establish an `RTCDataChannel` with a peer identified by `id` trough `WebChannel`.
      * Starts by sending an **SDP offer**.
@@ -34,7 +34,7 @@ export declare class WebRTCBuilder extends Service {
      * Listen on `RTCDataChannel` from Signaling server.
      * Starts to listen on **SDP answer**.
      */
-    channelsFromSignaling(signaling: SignalingConnection): Observable<Channel>;
+    onChannelFromSignaling(signaling: SignalingConnection): Observable<Channel>;
     /**
      * Establish an `RTCDataChannel` with a peer identified by `id` trough Signaling server.
      * Starts by sending an **SDP offer**.

@@ -1,7 +1,7 @@
 import { Subject } from 'rxjs/Subject'
 
 import { isBrowser } from '../../src/Util'
-import { WebChannel } from '../../src/index'
+import { WebGroup, WebGroupState } from '../../src/index'
 import chunk50kb from './50kb.txt'
 
 // Main signaling server for all tests
@@ -23,93 +23,93 @@ export const INSTANCES = [
   Uint8Array
 ]
 
-export function createWebChannels (numberOfPeers) {
-  const wcs = []
+export function createWebGroups (numberOfPeers) {
+  const wgs = []
   for (let i = 0; i < numberOfPeers; i++) {
-    wcs[i] = new WebChannel({signalingURL: SIGNALING_URL})
+    wgs[i] = new WebGroup({signalingURL: SIGNALING_URL})
   }
-  return wcs
+  return wgs
 }
 
-export function createAndConnectWebChannels (numberOfPeers) {
-  const wcs = []
+export function createAndConnectWebGroups (numberOfPeers) {
+  const wgs = []
   const network = new Subject()
   const key = randKey()
   let nextJoiningIndex = 0
 
   // Create web channels
   for (let i = 0; i < numberOfPeers; i++) {
-    wcs[i] = new WebChannel({signalingURL: SIGNALING_URL})
-      wcs[i].onStateChanged = state => {
-        if (state === WebChannel.JOINED) {
-          network.next(++i)
-        }
+    wgs[i] = new WebGroup({signalingURL: SIGNALING_URL})
+    wgs[i].onStateChanged = state => {
+      if (state === WebGroupState.JOINED) {
+        network.next(++i)
       }
+    }
   }
 
   return new Promise ((resolve, reject) => {
     network.subscribe(
       (index) => {
         if (index === numberOfPeers) {
-          resolve(wcs)
+          resolve(wgs)
         } else {
-          wcs[index].join(key)
+          wgs[index].join(key)
         }
       }
     )
-    wcs[0].join(key)
+    wgs[0].join(key)
   })
 }
 
-export function expectMembers (wcs, totalNumberOfPeers) {
-  for (let i = 0; i < wcs.length; i++) {
-    expect(wcs[i].members.length).toEqual(totalNumberOfPeers - 1)
-    for (let j = i + 1; j < wcs.length; j++) {
+export function expectMembers (wgs, totalNumberOfPeers) {
+  for (let i = 0; i < wgs.length; i++) {
+    expect(wgs[i].members.length).toEqual(totalNumberOfPeers - 1)
+    for (let j = i + 1; j < wgs.length; j++) {
       // Each peer should detect each other and only ONCE
-      let firstIndex = wcs[j].members.indexOf(wcs[i].myId)
-      let lastIndex = wcs[j].members.lastIndexOf(wcs[i].myId)
+      let firstIndex = wgs[j].members.indexOf(wgs[i].myId)
+      let lastIndex = wgs[j].members.lastIndexOf(wgs[i].myId)
       expect(firstIndex).not.toEqual(-1)
       expect(firstIndex).toEqual(lastIndex)
-      firstIndex = wcs[i].members.indexOf(wcs[j].myId)
-      lastIndex = wcs[i].members.lastIndexOf(wcs[j].myId)
+      firstIndex = wgs[i].members.indexOf(wgs[j].myId)
+      lastIndex = wgs[i].members.lastIndexOf(wgs[j].myId)
       expect(firstIndex).not.toEqual(-1)
       expect(firstIndex).toEqual(lastIndex)
     }
   }
 }
 
-export function expectBotMembers (wcId, wcs, totalNumberOfPeers) {
-  return fetch(`${BOT_FETCH_URL}/members/${wcId}`)
+export function expectBotMembers (wgId, wgs, totalNumberOfPeers) {
+  return fetch(`${BOT_FETCH_URL}/members/${wgId}`)
     .then(res => res.json())
     .then(({ id, members }) => {
       expect(members.length).toEqual(totalNumberOfPeers - 1)
-      wcs.forEach(wc => {
-        expect(wc.members.includes(id)).toBeTruthy()
-        expect(members.includes(wc.myId)).toBeTruthy()
+      wgs.forEach(wg => {
+        expect(wg.members.includes(id)).toBeTruthy()
+        expect(members.includes(wg.myId)).toBeTruthy()
       })
     })
 }
 
-export function botWaitJoin (wcId) {
-  return fetch(`${BOT_FETCH_URL}/waitJoin/${wcId}`)
+export function botWaitJoin (wgId) {
+  return fetch(`${BOT_FETCH_URL}/waitJoin/${wgId}`)
 }
 
-export function sendAndExpectOnMessage (wcs, isBroadcast, withBot = false) {
+export function sendAndExpectOnMessage (wgs, isBroadcast, withBot = false) {
   const promises = []
 
   promises.push(new Promise((resolve, reject) => {
     // Run through each agent
-    wcs.forEach(wc => {
+    wgs.forEach(wg => {
       // Prepare message flags for check
       const flags = new Map()
-      wc.members.forEach(id => flags.set(id, {
+      wg.members.forEach(id => flags.set(id, {
         string: false,
         arraybuffer: false,
         chunk: false
       }))
 
       // Handle message event
-      wc.onMessage = (id, msg, broadcasted) => {
+      wg.onMessage = (id, msg, broadcasted) => {
         expect(broadcasted).toEqual(isBroadcast)
         let msgId
         const flag = flags.get(id)
@@ -131,7 +131,7 @@ export function sendAndExpectOnMessage (wcs, isBroadcast, withBot = false) {
 
         // Receive Binary
         } else if (msg instanceof Uint8Array) {
-          // log.debug(wc.myId + ' received Uint8Array from ' + id + ' is broadcast ' + broadcasted)
+          // log.debug(wg.myId + ' received Uint8Array from ' + id + ' is broadcast ' + broadcasted)
           expect(flag.arraybuffer).toBeFalsy()
           flag.arraybuffer = true
           msgId = (new Uint32Array(msg.slice(0, msg.length).buffer))[0]
@@ -152,14 +152,14 @@ export function sendAndExpectOnMessage (wcs, isBroadcast, withBot = false) {
       }
 
       // Send messages
-      sendMessages(wc, isBroadcast)
+      sendMessages(wg, isBroadcast)
     })
   }))
 
   if (withBot) {
     promises.push(new Promise((resolve, reject) => {
       // Tell bot to send messages
-      tellBotToSend(wcs[0].id)
+      tellBotToSend(wgs[0].id)
         .then(res => {
           if (!res.ok) {
             reject(res.statusText)
@@ -172,31 +172,31 @@ export function sendAndExpectOnMessage (wcs, isBroadcast, withBot = false) {
   return Promise.all(promises)
 }
 
-function sendMessages (wc, isBroadcast) {
+function sendMessages (wg, isBroadcast) {
   // Create messages
 
   // String
-  const msgString = JSON.stringify({ id: wc.myId })
+  const msgString = JSON.stringify({ id: wg.myId })
 
   // String chunk of 50Kb
-  const msgChunk = JSON.stringify({ id: wc.myId, data: chunk50kb })
+  const msgChunk = JSON.stringify({ id: wg.myId, data: chunk50kb })
 
   // ArrayBuffer
   const msgArrayBuffer = new Uint32Array(1)
-  msgArrayBuffer[0] = wc.myId
+  msgArrayBuffer[0] = wg.myId
 
   // Broadcast the messages
   if (isBroadcast) {
-    wc.send(msgString)
-    wc.send(msgChunk)
-    wc.send(new Uint8Array(msgArrayBuffer.buffer))
+    wg.send(msgString)
+    wg.send(msgChunk)
+    wg.send(new Uint8Array(msgArrayBuffer.buffer))
 
   // Send the messages privately to each peer
   } else {
-    wc.members.forEach(id => {
-      wc.sendTo(id, msgString)
-      wc.sendTo(id, msgChunk)
-      wc.sendTo(id, new Uint8Array(msgArrayBuffer.buffer))
+    wg.members.forEach(id => {
+      wg.sendTo(id, msgString)
+      wg.sendTo(id, msgChunk)
+      wg.sendTo(id, new Uint8Array(msgArrayBuffer.buffer))
     })
   }
 }
@@ -274,22 +274,22 @@ export function env () {
   return 'NODE'
 }
 
-export function onMessageForBot (wc, id, msg, isBroadcast) {
+export function onMessageForBot (wg, id, msg, isBroadcast) {
   try {
     const data = JSON.parse(msg)
     switch (data.code) {
       case LEAVE_CODE:
-        wc.leave()
+        wg.leave()
         break
     }
   } catch (err) {
-    if (isBroadcast) wc.send(msg)
-    else wc.sendTo(id, msg)
+    if (isBroadcast) wg.send(msg)
+    else wg.sendTo(id, msg)
   }
 }
 
-function tellBotToSend (wcId) {
-  return fetch(`${BOT_FETCH_URL}/send/${wcId}`)
+function tellBotToSend (wgId) {
+  return fetch(`${BOT_FETCH_URL}/send/${wgId}`)
 }
 
 export class Scenario {

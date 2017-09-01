@@ -28,7 +28,7 @@ export class ChannelBuilder extends Service {
   private channelsSubject: Subject<Channel>
 
   constructor (wc: WebChannel) {
-    super(20, channelBuilder.Message, wc._serviceMessageSubject)
+    super(20, channelBuilder.Message, wc.serviceMessageSubject)
     this.wc = wc
     this.pendingRequests = new Map()
     this.channelsSubject = new Subject()
@@ -36,7 +36,7 @@ export class ChannelBuilder extends Service {
     // Listen on Channels as RTCDataChannels if WebRTC is supported
     ME.isWrtcSupport = WebRTCBuilder.isSupported
     if (ME.isWrtcSupport) {
-      wc._webRTCBuilder.channelsFromWebChannel()
+      wc.webRTCBuilder.onChannelFromWebChannel()
         .subscribe(ch => this.handleChannel(ch))
     }
 
@@ -44,7 +44,7 @@ export class ChannelBuilder extends Service {
     WebSocketBuilder.listen().subscribe(url => {
       ME.wsUrl = url
       if (url) {
-        wc._webSocketBuilder.onChannel.subscribe(ch => this.handleChannel(ch))
+        wc.webSocketBuilder.onChannel.subscribe(ch => this.handleChannel(ch))
       }
 
       // Update preconstructed messages (for performance only)
@@ -75,7 +75,7 @@ export class ChannelBuilder extends Service {
           reject(err)
         }
       })
-      this.wc._sendTo({ recipientId: id, content: request })
+      this.wc.sendToProxy({ recipientId: id, content: request })
     })
   }
 
@@ -102,15 +102,15 @@ export class ChannelBuilder extends Service {
       const { wsUrl, isWrtcSupport } = msg.request
       // If remote peer is listening on WebSocket, connect to him
       if (wsUrl) {
-        this.wc._webSocketBuilder.connectTo(wsUrl, senderId)
+        this.wc.webSocketBuilder.connectTo(wsUrl, senderId)
           .then(ch => this.handleChannel(ch))
           .catch(reason => {
             if (ME.wsUrl) {
               // Ask him to connect to me via WebSocket
-              this.wc._sendTo({ recipientId: senderId, content: response })
+              this.wc.sendToProxy({ recipientId: senderId, content: response })
             } else {
               // Send failed reason
-              this.wc._sendTo({
+              this.wc.sendToProxy({
                 recipientId: senderId,
                 content: super.encode({ failed: `Failed to establish a socket: ${reason}` })
               })
@@ -121,20 +121,21 @@ export class ChannelBuilder extends Service {
       } else if (isWrtcSupport) {
         if (ME.wsUrl) {
           // Ask him to connect to me via WebSocket
-          this.wc._sendTo({ recipientId: senderId, content: response })
+          this.wc.sendToProxy({ recipientId: senderId, content: response })
         } else if (ME.isWrtcSupport) {
-          this.wc._webRTCBuilder.connectOverWebChannel(senderId)
+          console.log(this.wc.myId + ' calling connectOverWebChannel with ', senderId)
+          this.wc.webRTCBuilder.connectOverWebChannel(senderId)
             .then(ch => this.handleChannel(ch))
             .catch(reason => {
               // Send failed reason
-              this.wc._sendTo({
+              this.wc.sendToProxy({
                 recipientId: senderId,
                 content: super.encode({ failed: `Failed establish a data channel: ${reason}` })
               })
             })
         } else {
           // Send failed reason
-          this.wc._sendTo({
+          this.wc.sendToProxy({
             recipientId: senderId,
             content: super.encode({ failed: 'No common connectors' })
           })
@@ -143,10 +144,10 @@ export class ChannelBuilder extends Service {
       } else if (!wsUrl && !isWrtcSupport) {
         if (ME.wsUrl) {
           // Ask him to connect to me via WebSocket
-          this.wc._sendTo({ recipientId: senderId, content: response })
+          this.wc.sendToProxy({ recipientId: senderId, content: response })
         } else {
           // Send failed reason
-          this.wc._sendTo({
+          this.wc.sendToProxy({
             recipientId: senderId,
             content: super.encode({ failed: 'No common connectors' })
           })
@@ -157,7 +158,7 @@ export class ChannelBuilder extends Service {
     case 'response': {
       const { wsUrl } = msg.response
       if (wsUrl) {
-        this.wc._webSocketBuilder.connectTo(wsUrl, senderId)
+        this.wc.webSocketBuilder.connectTo(wsUrl, senderId)
           .then(ch => this.handleChannel(ch))
           .catch(reason => {
             this.pendingRequests.get(senderId)
