@@ -8734,83 +8734,84 @@ var WebChannel = (function (_super) {
     return WebChannel;
 }(Service$1));
 
+var wcs = new WeakMap();
 var WebGroup = (function () {
     function WebGroup(options) {
-        this.wc = new WebChannel(options);
+        wcs.set(this, new WebChannel(options));
     }
     Object.defineProperty(WebGroup.prototype, "id", {
-        get: function () { return this.wc.id; },
+        get: function () { return wcs.get(this).id; },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(WebGroup.prototype, "myId", {
-        get: function () { return this.wc.myId; },
+        get: function () { return wcs.get(this).myId; },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(WebGroup.prototype, "members", {
-        get: function () { return this.wc.members; },
+        get: function () { return wcs.get(this).members; },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(WebGroup.prototype, "topology", {
-        get: function () { return this.wc.topology; },
+        get: function () { return wcs.get(this).topology; },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(WebGroup.prototype, "state", {
-        get: function () { return this.wc.state; },
+        get: function () { return wcs.get(this).state; },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(WebGroup.prototype, "signalingState", {
-        get: function () { return this.wc.signaling.state; },
+        get: function () { return wcs.get(this).signaling.state; },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(WebGroup.prototype, "signalingURL", {
-        get: function () { return this.wc.signaling.url; },
+        get: function () { return wcs.get(this).signaling.url; },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(WebGroup.prototype, "autoRejoin", {
-        get: function () { return this.wc.autoRejoin; },
-        set: function (value) { this.wc.autoRejoin = value; },
+        get: function () { return wcs.get(this).autoRejoin; },
+        set: function (value) { wcs.get(this).autoRejoin = value; },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(WebGroup.prototype, "onMessage", {
-        set: function (handler) { this.wc.onMessage = handler; },
+        set: function (handler) { wcs.get(this).onMessage = handler; },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(WebGroup.prototype, "onPeerJoin", {
-        set: function (handler) { this.wc.onPeerJoin = handler; },
+        set: function (handler) { wcs.get(this).onPeerJoin = handler; },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(WebGroup.prototype, "onPeerLeave", {
-        set: function (handler) { this.wc.onPeerLeave = handler; },
+        set: function (handler) { wcs.get(this).onPeerLeave = handler; },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(WebGroup.prototype, "onStateChanged", {
-        set: function (handler) { this.wc.onStateChanged = handler; },
+        set: function (handler) { wcs.get(this).onStateChanged = handler; },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(WebGroup.prototype, "onSignalingStateChanged", {
-        set: function (handler) { this.wc.onSignalingStateChanged = handler; },
+        set: function (handler) { wcs.get(this).onSignalingStateChanged = handler; },
         enumerable: true,
         configurable: true
     });
-    WebGroup.prototype.join = function (key) { return this.wc.join(key); };
-    WebGroup.prototype.invite = function (url) { return this.wc.invite(url); };
-    WebGroup.prototype.closeSignaling = function () { return this.wc.closeSignaling(); };
-    WebGroup.prototype.leave = function () { return this.wc.leave(); };
-    WebGroup.prototype.send = function (data) { return this.wc.send(data); };
-    WebGroup.prototype.sendTo = function (id, data) { return this.wc.sendTo(id, data); };
-    WebGroup.prototype.ping = function () { return this.wc.ping(); };
+    WebGroup.prototype.join = function (key) { return wcs.get(this).join(key); };
+    WebGroup.prototype.invite = function (url) { return wcs.get(this).invite(url); };
+    WebGroup.prototype.closeSignaling = function () { return wcs.get(this).closeSignaling(); };
+    WebGroup.prototype.leave = function () { return wcs.get(this).leave(); };
+    WebGroup.prototype.send = function (data) { return wcs.get(this).send(data); };
+    WebGroup.prototype.sendTo = function (id, data) { return wcs.get(this).sendTo(id, data); };
+    WebGroup.prototype.ping = function () { return wcs.get(this).ping(); };
     return WebGroup;
 }());
 

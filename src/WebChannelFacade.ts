@@ -2,42 +2,42 @@ import { WebChannel, WebChannelOptions, WebChannelState } from './service/WebCha
 import { Topology } from './service/topology/Topology'
 import { SignalingState } from './Signaling'
 
+const wcs = new WeakMap()
+
 export class WebGroup {
 
-  private wc: WebChannel
-
   constructor (options: WebChannelOptions) {
-    this.wc = new WebChannel(options)
+    wcs.set(this, new WebChannel(options))
   }
 
-  get id (): number { return this.wc.id }
-  get myId (): number { return this.wc.myId }
-  get members (): number[] { return this.wc.members }
-  get topology (): Topology { return this.wc.topology }
-  get state (): WebChannelState { return this.wc.state }
-  get signalingState (): SignalingState { return this.wc.signaling.state }
-  get signalingURL (): string { return this.wc.signaling.url }
+  get id (): number { return wcs.get(this).id }
+  get myId (): number { return wcs.get(this).myId }
+  get members (): number[] { return wcs.get(this).members }
+  get topology (): Topology { return wcs.get(this).topology }
+  get state (): WebChannelState { return wcs.get(this).state }
+  get signalingState (): SignalingState { return wcs.get(this).signaling.state }
+  get signalingURL (): string { return wcs.get(this).signaling.url }
 
-  get autoRejoin (): boolean { return this.wc.autoRejoin }
-  set autoRejoin (value: boolean) { this.wc.autoRejoin = value }
+  get autoRejoin (): boolean { return wcs.get(this).autoRejoin }
+  set autoRejoin (value: boolean) { wcs.get(this).autoRejoin = value }
 
-  set onMessage (handler: (id: number, msg: string | Uint8Array, isBroadcast: boolean) => void) { this.wc.onMessage = handler }
-  set onPeerJoin (handler: (id: number) => void) { this.wc.onPeerJoin = handler }
-  set onPeerLeave (handler: (id: number) => void) { this.wc.onPeerLeave = handler }
-  set onStateChanged (handler: (state: WebChannelState) => void) { this.wc.onStateChanged = handler }
-  set onSignalingStateChanged (handler: (state: SignalingState) => void) { this.wc.onSignalingStateChanged = handler }
+  set onMessage (handler: (id: number, msg: string | Uint8Array, isBroadcast: boolean) => void) { wcs.get(this).onMessage = handler }
+  set onPeerJoin (handler: (id: number) => void) { wcs.get(this).onPeerJoin = handler }
+  set onPeerLeave (handler: (id: number) => void) { wcs.get(this).onPeerLeave = handler }
+  set onStateChanged (handler: (state: WebChannelState) => void) { wcs.get(this).onStateChanged = handler }
+  set onSignalingStateChanged (handler: (state: SignalingState) => void) { wcs.get(this).onSignalingStateChanged = handler }
 
-  join (key: string): void { return this.wc.join(key) }
+  join (key: string): void { return wcs.get(this).join(key) }
 
-  invite (url: string): void { return this.wc.invite(url) }
+  invite (url: string): void { return wcs.get(this).invite(url) }
 
-  closeSignaling (): void { return this.wc.closeSignaling() }
+  closeSignaling (): void { return wcs.get(this).closeSignaling() }
 
-  leave () { return this.wc.leave() }
+  leave () { return wcs.get(this).leave() }
 
-  send (data: string | Uint8Array): void { return this.wc.send(data) }
+  send (data: string | Uint8Array): void { return wcs.get(this).send(data) }
 
-  sendTo (id: number, data: string | Uint8Array): void { return this.wc.sendTo(id, data) }
+  sendTo (id: number, data: string | Uint8Array): void { return wcs.get(this).sendTo(id, data) }
 
-  ping (): Promise<number> { return this.wc.ping() }
+  ping (): Promise<number> { return wcs.get(this).ping() }
 }
