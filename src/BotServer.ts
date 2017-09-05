@@ -1,5 +1,6 @@
 import { WebSocketBuilder } from './WebSocketBuilder'
 import { WebChannel, WebChannelOptions, wcDefaults } from './service/WebChannel'
+import { WebGroup, wcs } from './WebChannelFacade'
 import { Channel } from './Channel'
 
 export interface BotServerOptions {
@@ -25,8 +26,8 @@ const url = require('url')
 export class BotServer {
 
   public server: any
-  public webChannels: WebChannel[]
-  public onWebChannel: (wc: WebChannel) => void
+  public webGroups: Set<WebGroup>
+  public onWebGroup: (wg: WebGroup) => void
   public onError: (err) => void
 
   private wcSettings: WebChannelOptions
@@ -80,12 +81,12 @@ export class BotServer {
     /**
      * @type {WebChannel[]}
      */
-    this.webChannels = []
+    this.webGroups = new Set()
 
     /**
      * @type {function(wc: WebChannel)}
      */
-    this.onWebChannel = () => {}
+    this.onWebGroup = () => {}
 
     this.onError = () => {}
 
@@ -104,27 +105,13 @@ export class BotServer {
   /**
    * Get `WebChannel` identified by its `id`.
    */
-  getWebChannel (id: number): WebChannel {
-    for (let wc of this.webChannels) {
-      if (id === wc.id) {
-        return wc
+  private getWebGroup (id: number): WebGroup {
+    for (let wg of this.webGroups) {
+      if (id === wg.id) {
+        return wg
       }
     }
     return undefined
-  }
-
-  /**
-   * Add `WebChannel`.
-   */
-  addWebChannel (wc: WebChannel): void {
-    this.webChannels[this.webChannels.length] = wc
-  }
-
-  /**
-   * Remove `WebChannel`.
-   */
-  removeWebChannel (wc: WebChannel): void {
-    this.webChannels.splice(this.webChannels.indexOf(wc), 1)
   }
 
   private init (): void {
@@ -140,24 +127,25 @@ export class BotServer {
     this.server.on('connection', ws => {
       const {pathname, query} = url.parse(ws.upgradeReq.url, true)
       const wcId = Number(query.wcId)
-      let wc = this.getWebChannel(wcId)
+      let wg = this.getWebGroup(wcId)
       const senderId = Number(query.senderId)
       switch (pathname) {
       case '/invite': {
-        if (wc && wc.members.length === 0) {
-          this.removeWebChannel(wc)
+        if (wg && wg.members.length === 0) {
+          this.webGroups.delete(wg)
         }
         // FIXME: it is possible to create multiple WebChannels with the same ID
-        wc = new WebChannel(this.wcSettings)
+        wg = new WebGroup(this.wcSettings)
+        const wc = wcs.get(wg)
         wc.id = wcId
-        this.addWebChannel(wc)
-        this.onWebChannel(wc)
+        this.webGroups.add(wg)
+        this.onWebGroup(wg)
         const ch = new Channel(wc, ws, {id: senderId})
         break
       }
       case '/internalChannel': {
-        if (wc !== undefined) {
-          WebSocketBuilder.newIncomingSocket(wc, ws, senderId)
+        if (wg !== undefined) {
+          WebSocketBuilder.newIncomingSocket(wcs.get(wg), ws, senderId)
         } else {
           console.error('Cannot find WebChannel for a new internal channel')
         }
@@ -173,12 +161,12 @@ export class BotServer {
     switch (pathname) {
     case '/invite':
       if (wcId) {
-        const wc = this.getWebChannel(wcId)
-        return (wc === undefined || wc.members.length === 0) && query.senderId
+        const wg = this.getWebGroup(wcId)
+        return (wg === undefined || wg.members.length === 0) && query.senderId
       }
       return false
     case '/internalChannel':
-      return query.senderId && wcId && this.getWebChannel(wcId) !== undefined
+      return query.senderId && wcId && this.getWebGroup(wcId) !== undefined
     default:
       return false
     }

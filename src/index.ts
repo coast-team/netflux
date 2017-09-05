@@ -5,5 +5,6 @@ export { Topology } from './service/topology/Topology'
 export { SignalingState } from './Signaling'
 
 // #if NODE
-export { BotServer, BotServerOptions } from './BotServer'
+export { WebGroupBotServer } from './BotServerFacade'
+export { BotServerOptions as GroupBotServerOptions } from './BotServer'
 // #endif

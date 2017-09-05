@@ -8866,11 +8866,11 @@ var BotServer = (function () {
         /**
          * @type {WebChannel[]}
          */
-        this.webChannels = [];
+        this.webGroups = new Set();
         /**
          * @type {function(wc: WebChannel)}
          */
-        this.onWebChannel = function () { };
+        this.onWebGroup = function () { };
         this.onError = function () { };
         this.init();
     }
@@ -8890,12 +8890,12 @@ var BotServer = (function () {
     /**
      * Get `WebChannel` identified by its `id`.
      */
-    BotServer.prototype.getWebChannel = function (id) {
+    BotServer.prototype.getWebGroup = function (id) {
         try {
-            for (var _a = __values(this.webChannels), _b = _a.next(); !_b.done; _b = _a.next()) {
-                var wc = _b.value;
-                if (id === wc.id) {
-                    return wc;
+            for (var _a = __values(this.webGroups), _b = _a.next(); !_b.done; _b = _a.next()) {
+                var wg = _b.value;
+                if (id === wg.id) {
+                    return wg;
                 }
             }
         }
@@ -8909,18 +8909,6 @@ var BotServer = (function () {
         return undefined;
         var e_1, _c;
     };
-    /**
-     * Add `WebChannel`.
-     */
-    BotServer.prototype.addWebChannel = function (wc) {
-        this.webChannels[this.webChannels.length] = wc;
-    };
-    /**
-     * Remove `WebChannel`.
-     */
-    BotServer.prototype.removeWebChannel = function (wc) {
-        this.webChannels.splice(this.webChannels.indexOf(wc), 1);
-    };
     BotServer.prototype.init = function () {
         var _this = this;
         this.server = new (require('uws').Server)(this.serverSettings);
@@ -8933,24 +8921,25 @@ var BotServer = (function () {
         this.server.on('connection', function (ws) {
             var _a = url.parse(ws.upgradeReq.url, true), pathname = _a.pathname, query = _a.query;
             var wcId = Number(query.wcId);
-            var wc = _this.getWebChannel(wcId);
+            var wg = _this.getWebGroup(wcId);
             var senderId = Number(query.senderId);
             switch (pathname) {
                 case '/invite': {
-                    if (wc && wc.members.length === 0) {
-                        _this.removeWebChannel(wc);
+                    if (wg && wg.members.length === 0) {
+                        _this.webGroups.delete(wg);
                     }
                     // FIXME: it is possible to create multiple WebChannels with the same ID
-                    wc = new WebChannel(_this.wcSettings);
+                    wg = new WebGroup(_this.wcSettings);
+                    var wc = wcs.get(wg);
                     wc.id = wcId;
-                    _this.addWebChannel(wc);
-                    _this.onWebChannel(wc);
+                    _this.webGroups.add(wg);
+                    _this.onWebGroup(wg);
                     var ch = new Channel(wc, ws, { id: senderId });
                     break;
                 }
                 case '/internalChannel': {
-                    if (wc !== undefined) {
-                        WebSocketBuilder.newIncomingSocket(wc, ws, senderId);
+                    if (wg !== undefined) {
+                        WebSocketBuilder.newIncomingSocket(wcs.get(wg), ws, senderId);
                     }
                     else {
                         console.error('Cannot find WebChannel for a new internal channel');
@@ -8966,12 +8955,12 @@ var BotServer = (function () {
         switch (pathname) {
             case '/invite':
                 if (wcId) {
-                    var wc = this.getWebChannel(wcId);
-                    return (wc === undefined || wc.members.length === 0) && query.senderId;
+                    var wg = this.getWebGroup(wcId);
+                    return (wg === undefined || wg.members.length === 0) && query.senderId;
                 }
                 return false;
             case '/internalChannel':
-                return query.senderId && wcId && this.getWebChannel(wcId) !== undefined;
+                return query.senderId && wcId && this.getWebGroup(wcId) !== undefined;
             default:
                 return false;
         }
@@ -8979,8 +8968,45 @@ var BotServer = (function () {
     return BotServer;
 }());
 
+var botServer;
+/**
+ * BotServer can listen on web socket. A peer can invite bot to join his `WebChannel`.
+ * He can also join one of the bot's `WebChannel`.
+ */
+var WebGroupBotServer = (function () {
+    /**
+     * Bot server settings are the same as for `WebChannel` (see {@link WebChannelSettings}),
+     * plus `host` and `port` parameters.
+     */
+    function WebGroupBotServer(options) {
+        if (options === void 0) { options = {}; }
+        botServer = new BotServer(options);
+    }
+    Object.defineProperty(WebGroupBotServer.prototype, "server", {
+        get: function () { return botServer.server; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(WebGroupBotServer.prototype, "webGroups", {
+        get: function () { return botServer.webGroups; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(WebGroupBotServer.prototype, "url", {
+        get: function () { return botServer.url; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(WebGroupBotServer.prototype, "onWebGroup", {
+        set: function (handler) { botServer.onWebGroup = handler; },
+        enumerable: true,
+        configurable: true
+    });
+    return WebGroupBotServer;
+}());
+
 // #endif
 
 exports.WebGroup = WebGroup;
-exports.BotServer = BotServer;
+exports.WebGroupBotServer = WebGroupBotServer;
 //# sourceMappingURL=netflux.cjs.js.map

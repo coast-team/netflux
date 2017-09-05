@@ -1,6 +1,7 @@
-import { WebChannelOptions, WebChannelState } from './service/WebChannel';
+import { WebChannel, WebChannelOptions, WebChannelState } from './service/WebChannel';
 import { Topology } from './service/topology/Topology';
 import { SignalingState } from './Signaling';
+export declare const wcs: WeakMap<WebGroup, WebChannel>;
 export declare class WebGroup {
     constructor(options: WebChannelOptions);
     readonly id: number;
@@ -19,7 +20,7 @@ export declare class WebGroup {
     join(key: string): void;
     invite(url: string): void;
     closeSignaling(): void;
-    leave(): any;
+    leave(): void;
     send(data: string | Uint8Array): void;
     sendTo(id: number, data: string | Uint8Array): void;
     ping(): Promise<number>;

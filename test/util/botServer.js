@@ -1,6 +1,6 @@
 import { ReplaySubject } from 'rxjs/ReplaySubject'
 
-import { WebGroup, WebGroupState, BotServer } from '../../src/index'
+import { WebGroup, WebGroupState, WebGroupBotServer } from '../../src/index'
 import { onMessageForBot, SIGNALING_URL, BOT_HOST, BOT_PORT } from './helper'
 
 // Require dependencies
@@ -14,7 +14,7 @@ try {
   const app = new Koa()
   const router = new Router()
   const server = http.createServer(app.callback())
-  const bot = new BotServer({ bot: { server } })
+  const bot = new WebGroupBotServer({ bot: { server } })
   const webChannels = new ReplaySubject()
 
   // Configure router
@@ -24,7 +24,7 @@ try {
       const wcId = Number(ctx.params.wcId)
       let members = []
       let id
-      for (let wc of bot.webChannels) {
+      for (let wc of bot.webGroups) {
         if (wc.id === wcId) {
           members = wc.members
           id = wc.myId
@@ -57,7 +57,7 @@ try {
     })
     .get('/send/:wcId', (ctx, next) => {
       const wcId = Number(ctx.params.wcId)
-      for (let wc of bot.webChannels) {
+      for (let wc of bot.webGroups) {
         if (wc.id === wcId) {
           // Create a message
           const msg = JSON.stringify({ id: wc.myId })
@@ -80,7 +80,7 @@ try {
     .use(router.allowedMethods())
 
   // Configure bot
-  bot.onWebChannel = wc => {
+  bot.onWebGroup = wc => {
     wc.onMessage = (id, msg, isBroadcast) => {
       onMessageForBot(wc, id, msg, isBroadcast)
     }
@@ -105,9 +105,9 @@ try {
   })
 
   // Leave all web channels before process death
-  process.on('SIGINT', () => bot.webChannels.forEach(wc => wc.leave()))
+  process.on('SIGINT', () => bot.webGroups.forEach(wg => wg.leave()))
 } catch (err) {
-  console.error('BotServer script error: ', err)
+  console.error('WebGroupBotServer script error: ', err)
 }
 
 function createWebChannel (env) {

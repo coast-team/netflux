@@ -2,7 +2,7 @@ import { WebChannel, WebChannelOptions, WebChannelState } from './service/WebCha
 import { Topology } from './service/topology/Topology'
 import { SignalingState } from './Signaling'
 
-const wcs = new WeakMap()
+export const wcs: WeakMap<WebGroup, WebChannel> = new WeakMap()
 
 export class WebGroup {
 

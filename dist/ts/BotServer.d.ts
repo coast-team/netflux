@@ -1,4 +1,4 @@
-import { WebChannel } from './service/WebChannel';
+import { WebGroup } from './WebChannelFacade';
 export interface BotServerOptions {
     url: string;
     server: any;
@@ -17,8 +17,8 @@ export declare const bsDefaults: {
  */
 export declare class BotServer {
     server: any;
-    webChannels: WebChannel[];
-    onWebChannel: (wc: WebChannel) => void;
+    webGroups: Set<WebGroup>;
+    onWebGroup: (wg: WebGroup) => void;
     onError: (err) => void;
     private wcSettings;
     private botSettings;
@@ -40,15 +40,7 @@ export declare class BotServer {
     /**
      * Get `WebChannel` identified by its `id`.
      */
-    getWebChannel(id: number): WebChannel;
-    /**
-     * Add `WebChannel`.
-     */
-    addWebChannel(wc: WebChannel): void;
-    /**
-     * Remove `WebChannel`.
-     */
-    removeWebChannel(wc: WebChannel): void;
+    private getWebGroup(id);
     private init();
     private validateConnection(info);
 }
