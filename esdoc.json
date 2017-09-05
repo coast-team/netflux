@@ -1,12 +1,34 @@
 {
-  "source": "src",
-  "destination": "./esdoc",
-  "title": "Netflux",
-  "manual": {
-    "asset": "manual/asset",
-    "usage": ["manual/usage.md"],
-    "installation": ["manual/installation.md"],
-    "configuration": ["manual/configuration.md"],
-    "example": ["manual/examples/3peers.md"]
-  }
+  "source": "./src",
+  "destination": "./docs",
+  "includes": [".*Facade.*\\.ts"],
+  "excludes": [".*\\.(js|proto|d\\.ts)$", "BotServer\\.ts$", "Proto.*\\.ts$", "service.*\\.ts$", "Channel\\.ts$", "Signaling.*\\.ts$", "UserMessage.*\\.ts$", "WebSocketBuilder.*\\.ts$", "Util.*\\.ts$", "index.*\\.ts$", "polyfills.*\\.ts$", "Util.*\\.ts$"],
+  "plugins": [
+    {"name": "esdoc-typescript-plugin", "option": {"enable": true}},
+    {
+      "name": "esdoc-standard-plugin",
+      "option": {
+        "accessor": {"access": ["public", "protected", "private"], "autoPrivate": false},
+        "undocumentIdentifier": {"enable": false},
+        "unexportedIdentifier": {"enable": false},
+        "typeInference": {"enable": true},
+        "brand": {
+          "title": "Netflux",
+          "description": "Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done.",
+          "repository": "https://github.com/coast-team/netflux"
+        },
+        "manual": {
+          "index": "./README.md",
+          "globalIndex": true,
+          "asset": "./manual/asset",
+          "files": [
+            "./manual/overview.md",
+            "./manual/configuration.md",
+            "./manual/installation.md",
+            "./manual/examples/3peers.md"
+          ]
+        }
+      }
+    }
+  ]
 }

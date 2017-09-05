@@ -8,7 +8,7 @@ import { Observable } from 'rxjs/Observable'
 import 'rxjs/add/operator/map'
 
 import { Service } from './Service'
-import { webRTCBuilder, signaling } from '../Protobuf'
+import { webRTCBuilder, signaling } from '../proto'
 import { Channel } from '../Channel'
 import { WebChannel } from './WebChannel'
 

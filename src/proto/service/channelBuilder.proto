@@ -1,0 +1,15 @@
+syntax = "proto3";
+package channelBuilder;
+
+message Message {
+  oneof type {
+    Connection request = 1;
+    Connection response = 2;
+    string failed = 3;
+  }
+}
+
+message Connection {
+  string wsUrl = 1;
+  bool isWrtcSupport = 2;
+}

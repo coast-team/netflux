@@ -1,0 +1,1050 @@
+[
+  {
+    "__docId__": 0,
+    "kind": "file",
+    "name": "src/BotServerFacade.ts",
+    "content": "import { WebSocketBuilder } from './WebSocketBuilder'\nimport { WebGroup } from './WebChannelFacade'\nimport { BotServer, BotServerOptions } from './BotServer'\n\nlet botServer: BotServer\n\n/**\n * BotServer can listen on web socket. A peer can invite bot to join his `WebChannel`.\n * He can also join one of the bot's `WebChannel`.\n */\nexport class WebGroupBotServer {\n\n  /**\n   * Bot server settings are the same as for `WebChannel` (see {@link WebChannelSettings}),\n   * plus `host` and `port` parameters.\n   */\n  constructor (options: BotServerOptions) {\n    botServer = new BotServer(options)\n  }\n\n  get server (): any { return botServer.server }\n  get webGroups (): Set<WebGroup> { return botServer.webGroups }\n  get url (): string { return botServer.url }\n\n  set onWebGroup (handler: (wg: WebGroup) => void) { botServer.onWebGroup = handler }\n\n}\n",
+    "static": true,
+    "longname": "/home/philippe/workspace/netflux/src/BotServerFacade.ts",
+    "access": "public",
+    "description": null,
+    "lineNumber": 1
+  },
+  {
+    "__docId__": 1,
+    "kind": "class",
+    "name": "WebGroupBotServer",
+    "memberof": "src/BotServerFacade.ts",
+    "static": true,
+    "longname": "src/BotServerFacade.ts~WebGroupBotServer",
+    "access": "public",
+    "export": true,
+    "importPath": "netflux/src/BotServerFacade.ts",
+    "importStyle": "{WebGroupBotServer}",
+    "description": "BotServer can listen on web socket. A peer can invite bot to join his `WebChannel`.\nHe can also join one of the bot's `WebChannel`.",
+    "lineNumber": 11,
+    "interface": false
+  },
+  {
+    "__docId__": 2,
+    "kind": "constructor",
+    "name": "constructor",
+    "memberof": "src/BotServerFacade.ts~WebGroupBotServer",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/BotServerFacade.ts~WebGroupBotServer#constructor",
+    "access": "public",
+    "description": "Bot server settings are the same as for `WebChannel` (see {@link WebChannelSettings}),\nplus `host` and `port` parameters.",
+    "lineNumber": 15
+  },
+  {
+    "__docId__": 3,
+    "kind": "get",
+    "name": "server",
+    "memberof": "src/BotServerFacade.ts~WebGroupBotServer",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/BotServerFacade.ts~WebGroupBotServer#server",
+    "access": "public",
+    "description": "",
+    "lineNumber": 21,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 4,
+    "kind": "get",
+    "name": "webGroups",
+    "memberof": "src/BotServerFacade.ts~WebGroupBotServer",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/BotServerFacade.ts~WebGroupBotServer#webGroups",
+    "access": "public",
+    "description": "",
+    "lineNumber": 22,
+    "type": {
+      "nullable": null,
+      "types": [
+        "Set"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 5,
+    "kind": "get",
+    "name": "url",
+    "memberof": "src/BotServerFacade.ts~WebGroupBotServer",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/BotServerFacade.ts~WebGroupBotServer#url",
+    "access": "public",
+    "description": "",
+    "lineNumber": 23,
+    "type": {
+      "nullable": null,
+      "types": [
+        "string"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 6,
+    "kind": "set",
+    "name": "onWebGroup",
+    "memberof": "src/BotServerFacade.ts~WebGroupBotServer",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/BotServerFacade.ts~WebGroupBotServer#onWebGroup",
+    "access": "public",
+    "description": "",
+    "lineNumber": 25
+  },
+  {
+    "__docId__": 7,
+    "kind": "file",
+    "name": "src/WebChannelFacade.ts",
+    "content": "import { WebChannel, WebChannelOptions as WebGroupOptions, WebChannelState } from './service/WebChannel'\nimport { Topology } from './service/topology/Topology'\nimport { SignalingState } from './Signaling'\n\nexport const wcs: WeakMap<WebGroup, WebChannel> = new WeakMap()\n\n/**\n * BotServer can listen on web socket. A peer can invite bot to join his `WebChannel`.\n * He can also join one of the bot's `WebChannel`.\n */\nexport class WebGroup {\n\n  /**\n   * Create instance of WebGroup.\n   * @param {WebGroupOptions} options [description]\n   */\n  constructor (options: WebGroupOptions) {\n    wcs.set(this, new WebChannel(options))\n  }\n\n  /**\n   * WebGroup id. The same value for all members.\n   */\n  get id (): number { return wcs.get(this).id }\n\n  /**\n   * Your unique member id.\n   */\n  get myId (): number { return wcs.get(this).myId }\n\n  /**\n   * An array of member ids.\n   */\n  get members (): number[] { return wcs.get(this).members }\n\n  /**\n   * Topology id.\n   */\n  get topology (): Topology { return wcs.get(this).topology }\n  get state (): WebChannelState { return wcs.get(this).state }\n  get signalingState (): SignalingState { return wcs.get(this).signaling.state }\n  get signalingURL (): string { return wcs.get(this).signaling.url }\n\n  get autoRejoin (): boolean { return wcs.get(this).autoRejoin }\n  set autoRejoin (value: boolean) { wcs.get(this).autoRejoin = value }\n\n  set onMessage (handler: (id: number, msg: string | Uint8Array, isBroadcast: boolean) => void) { wcs.get(this).onMessage = handler }\n  set onPeerJoin (handler: (id: number) => void) { wcs.get(this).onPeerJoin = handler }\n  set onPeerLeave (handler: (id: number) => void) { wcs.get(this).onPeerLeave = handler }\n  set onStateChanged (handler: (state: WebChannelState) => void) { wcs.get(this).onStateChanged = handler }\n  set onSignalingStateChanged (handler: (state: SignalingState) => void) { wcs.get(this).onSignalingStateChanged = handler }\n\n  join (key: string): void { return wcs.get(this).join(key) }\n\n  invite (url: string): void { return wcs.get(this).invite(url) }\n\n  closeSignaling (): void { return wcs.get(this).closeSignaling() }\n\n  leave () { return wcs.get(this).leave() }\n\n  send (data: string | Uint8Array): void { return wcs.get(this).send(data) }\n\n  sendTo (id: number, data: string | Uint8Array): void { return wcs.get(this).sendTo(id, data) }\n\n  ping (): Promise<number> { return wcs.get(this).ping() }\n}\n",
+    "static": true,
+    "longname": "/home/philippe/workspace/netflux/src/WebChannelFacade.ts",
+    "access": "public",
+    "description": null,
+    "lineNumber": 1
+  },
+  {
+    "__docId__": 8,
+    "kind": "variable",
+    "name": "wcs",
+    "memberof": "src/WebChannelFacade.ts",
+    "static": true,
+    "longname": "src/WebChannelFacade.ts~wcs",
+    "access": "public",
+    "export": true,
+    "importPath": "netflux/src/WebChannelFacade.ts",
+    "importStyle": "{wcs}",
+    "description": null,
+    "lineNumber": 2,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    },
+    "ignore": true
+  },
+  {
+    "__docId__": 9,
+    "kind": "class",
+    "name": "WebGroup",
+    "memberof": "src/WebChannelFacade.ts",
+    "static": true,
+    "longname": "src/WebChannelFacade.ts~WebGroup",
+    "access": "public",
+    "export": true,
+    "importPath": "netflux/src/WebChannelFacade.ts",
+    "importStyle": "{WebGroup}",
+    "description": "BotServer can listen on web socket. A peer can invite bot to join his `WebChannel`.\nHe can also join one of the bot's `WebChannel`.",
+    "lineNumber": 11,
+    "interface": false
+  },
+  {
+    "__docId__": 10,
+    "kind": "constructor",
+    "name": "constructor",
+    "memberof": "src/WebChannelFacade.ts~WebGroup",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/WebChannelFacade.ts~WebGroup#constructor",
+    "access": "public",
+    "description": "Create instance of WebGroup.",
+    "lineNumber": 15,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "WebGroupOptions"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "options",
+        "description": "[description]"
+      }
+    ]
+  },
+  {
+    "__docId__": 11,
+    "kind": "get",
+    "name": "id",
+    "memberof": "src/WebChannelFacade.ts~WebGroup",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/WebChannelFacade.ts~WebGroup#id",
+    "access": "public",
+    "description": "WebGroup id. The same value for all members.",
+    "lineNumber": 24,
+    "type": {
+      "nullable": null,
+      "types": [
+        "number"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 12,
+    "kind": "get",
+    "name": "myId",
+    "memberof": "src/WebChannelFacade.ts~WebGroup",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/WebChannelFacade.ts~WebGroup#myId",
+    "access": "public",
+    "description": "Your unique member id.",
+    "lineNumber": 29,
+    "type": {
+      "nullable": null,
+      "types": [
+        "number"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 13,
+    "kind": "get",
+    "name": "members",
+    "memberof": "src/WebChannelFacade.ts~WebGroup",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/WebChannelFacade.ts~WebGroup#members",
+    "access": "public",
+    "description": "An array of member ids.",
+    "lineNumber": 34,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 14,
+    "kind": "get",
+    "name": "topology",
+    "memberof": "src/WebChannelFacade.ts~WebGroup",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/WebChannelFacade.ts~WebGroup#topology",
+    "access": "public",
+    "description": "Topology id.",
+    "lineNumber": 39,
+    "type": {
+      "nullable": null,
+      "types": [
+        "Topology"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 15,
+    "kind": "get",
+    "name": "state",
+    "memberof": "src/WebChannelFacade.ts~WebGroup",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/WebChannelFacade.ts~WebGroup#state",
+    "access": "public",
+    "description": "",
+    "lineNumber": 40,
+    "type": {
+      "nullable": null,
+      "types": [
+        "WebChannelState"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 16,
+    "kind": "get",
+    "name": "signalingState",
+    "memberof": "src/WebChannelFacade.ts~WebGroup",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/WebChannelFacade.ts~WebGroup#signalingState",
+    "access": "public",
+    "description": "",
+    "lineNumber": 41,
+    "type": {
+      "nullable": null,
+      "types": [
+        "SignalingState"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 17,
+    "kind": "get",
+    "name": "signalingURL",
+    "memberof": "src/WebChannelFacade.ts~WebGroup",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/WebChannelFacade.ts~WebGroup#signalingURL",
+    "access": "public",
+    "description": "",
+    "lineNumber": 42,
+    "type": {
+      "nullable": null,
+      "types": [
+        "string"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 18,
+    "kind": "get",
+    "name": "autoRejoin",
+    "memberof": "src/WebChannelFacade.ts~WebGroup",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/WebChannelFacade.ts~WebGroup#autoRejoin",
+    "access": "public",
+    "description": "",
+    "lineNumber": 44,
+    "type": {
+      "nullable": null,
+      "types": [
+        "boolean"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 19,
+    "kind": "set",
+    "name": "autoRejoin",
+    "memberof": "src/WebChannelFacade.ts~WebGroup",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/WebChannelFacade.ts~WebGroup#autoRejoin",
+    "access": "public",
+    "description": "",
+    "lineNumber": 45,
+    "type": {
+      "nullable": null,
+      "types": [
+        "boolean"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 20,
+    "kind": "set",
+    "name": "onMessage",
+    "memberof": "src/WebChannelFacade.ts~WebGroup",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/WebChannelFacade.ts~WebGroup#onMessage",
+    "access": "public",
+    "description": "",
+    "lineNumber": 47
+  },
+  {
+    "__docId__": 21,
+    "kind": "set",
+    "name": "onPeerJoin",
+    "memberof": "src/WebChannelFacade.ts~WebGroup",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/WebChannelFacade.ts~WebGroup#onPeerJoin",
+    "access": "public",
+    "description": "",
+    "lineNumber": 48
+  },
+  {
+    "__docId__": 22,
+    "kind": "set",
+    "name": "onPeerLeave",
+    "memberof": "src/WebChannelFacade.ts~WebGroup",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/WebChannelFacade.ts~WebGroup#onPeerLeave",
+    "access": "public",
+    "description": "",
+    "lineNumber": 49
+  },
+  {
+    "__docId__": 23,
+    "kind": "set",
+    "name": "onStateChanged",
+    "memberof": "src/WebChannelFacade.ts~WebGroup",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/WebChannelFacade.ts~WebGroup#onStateChanged",
+    "access": "public",
+    "description": "",
+    "lineNumber": 50
+  },
+  {
+    "__docId__": 24,
+    "kind": "set",
+    "name": "onSignalingStateChanged",
+    "memberof": "src/WebChannelFacade.ts~WebGroup",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/WebChannelFacade.ts~WebGroup#onSignalingStateChanged",
+    "access": "public",
+    "description": "",
+    "lineNumber": 51
+  },
+  {
+    "__docId__": 25,
+    "kind": "method",
+    "name": "join",
+    "memberof": "src/WebChannelFacade.ts~WebGroup",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/WebChannelFacade.ts~WebGroup#join",
+    "access": "public",
+    "description": "",
+    "lineNumber": 53,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "string"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "key",
+        "description": ""
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 26,
+    "kind": "method",
+    "name": "invite",
+    "memberof": "src/WebChannelFacade.ts~WebGroup",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/WebChannelFacade.ts~WebGroup#invite",
+    "access": "public",
+    "description": "",
+    "lineNumber": 55,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "string"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "url",
+        "description": ""
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 27,
+    "kind": "method",
+    "name": "closeSignaling",
+    "memberof": "src/WebChannelFacade.ts~WebGroup",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/WebChannelFacade.ts~WebGroup#closeSignaling",
+    "access": "public",
+    "description": "",
+    "lineNumber": 57,
+    "params": [],
+    "return": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 28,
+    "kind": "method",
+    "name": "leave",
+    "memberof": "src/WebChannelFacade.ts~WebGroup",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/WebChannelFacade.ts~WebGroup#leave",
+    "access": "public",
+    "description": "",
+    "lineNumber": 59,
+    "params": [],
+    "return": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 29,
+    "kind": "method",
+    "name": "send",
+    "memberof": "src/WebChannelFacade.ts~WebGroup",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/WebChannelFacade.ts~WebGroup#send",
+    "access": "public",
+    "description": "",
+    "lineNumber": 61,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "undefined"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "data",
+        "description": ""
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 30,
+    "kind": "method",
+    "name": "sendTo",
+    "memberof": "src/WebChannelFacade.ts~WebGroup",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/WebChannelFacade.ts~WebGroup#sendTo",
+    "access": "public",
+    "description": "",
+    "lineNumber": 63,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "number"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "id",
+        "description": ""
+      },
+      {
+        "nullable": null,
+        "types": [
+          "undefined"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "data",
+        "description": ""
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 31,
+    "kind": "method",
+    "name": "ping",
+    "memberof": "src/WebChannelFacade.ts~WebGroup",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/WebChannelFacade.ts~WebGroup#ping",
+    "access": "public",
+    "description": "",
+    "lineNumber": 65,
+    "return": {
+      "nullable": null,
+      "types": [
+        "Promise"
+      ],
+      "spread": false,
+      "description": ""
+    },
+    "params": []
+  },
+  {
+    "__docId__": 32,
+    "kind": "file",
+    "name": "src/types/esdoc.helper.ts",
+    "content": "\n/**\n * @typedef {Object} Topology\n * @property {number} [FULL_MESH=0] Full mesh topology.\n */\n\n /**\n  * The state fo the signaling server for WebRTC.\n  * @typedef {Object} SignalingState\n  * @property {number} [CONNECTING=0] The connection is not yet open.\n  * @property {number} [OPEN=1] The connection is open and ready to communicate.\n  * @property {number} [FIRST_CONNECTED=2] `RTCDataChannel` has been established\n  * with one of the web group member. From now the signaling is no longer needed,\n  * because the next of the joining process will pass through this member.\n  * @property {number} [READY_TO_JOIN_OTHERS=3] You are successfully joined a\n  * web group and ready to join others.\n  * @property {number} [CLOSED=4] The connection is closed.\n  */\n\n /**\n  * The state of the web group.\n  * @typedef {Object} WebGroupState\n  * @property {number} [JOINING=0] You are joining the web group.\n  * @property {number} [JOINED=1] You have successfully joined the web group\n  * and ready to broadcast messages via `send` method.\n  * @property {number} [LEFT=2] You have left the web group. If the connection\n  * to the web group has lost and `autoRejoin=true`, then the state would be `LEFT`,\n  * (usually during a relatively short period) before the rejoining process start.\n  */\n\n /**\n  * @external {RTCIceServer} https://developer.mozilla.org/en/docs/Web/API/RTCIceServer\n  */\n\n /**\n  * @typedef {Object} WebGroupOptions\n  * @property {Topology} [topology=Topology.FULL_MESH] Topology identifier\n  * (Full mesh is the only one supported by Netflux for now).\n  * @property {string} [signalingURL=\"wss://www.coedit.re:20473\"] Signaling URL for WebRTC.\n  * @property {RTCIceServer[]} [iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]\n  * Array of Ice servers for WebRTC.\n  * @property {boolean} [autoRejoin=true] Whether to automatically rejoin\n  * the web group on disconnect or not. Its value may be modified after\n  * `WebGroup` instantiation at any time.\n  */\n\n  /**\n   * @typedef {Object} WebGroupBotServerOptions\n   * @property {Topology} [topology=WebGroupOptions.topology] Topology identifier\n   * (Full mesh is the only one supported by Netflux for now).\n   * @property {string} [signalingURL=WebGroupOptions.signalingURL] Signaling URL for WebRTC.\n   * @property {RTCIceServer[]} [iceServers=WebGroupOptions.iceServers]\n   * Array of Ice servers for WebRTC.\n   * @property {boolean} [autoRejoin=WebGroupOptions.autoRejoin] Whether to automatically rejoin\n   * the web group on disconnect or not. Its value may be modified after\n   * `WebGroup` instantiation at any time.\n   * @property {Object} [bot] Server related options of the bot.\n   * @property {string} [bot.url=''] Bot server URL open to outside.\n   * @property {Object} [bot.server=undefined] [µWebSockets](https://github.com/uNetworking/uWebSockets) `Server` object.\n   * @property {boolean} [bot.perMessageDeflate=false] Enable/disable permessage-deflate.\n   */\n",
+    "static": true,
+    "longname": "/home/philippe/workspace/netflux/src/types/esdoc.helper.ts",
+    "access": "public",
+    "description": null,
+    "lineNumber": 1
+  },
+  {
+    "__docId__": 33,
+    "kind": "typedef",
+    "name": "Topology",
+    "memberof": "src/types/esdoc.helper.ts",
+    "static": true,
+    "longname": "src/types/esdoc.helper.ts~Topology",
+    "access": "public",
+    "description": "",
+    "properties": [
+      {
+        "nullable": null,
+        "types": [
+          "number"
+        ],
+        "spread": false,
+        "optional": true,
+        "defaultValue": "0",
+        "defaultRaw": 0,
+        "name": "FULL_MESH",
+        "description": "Full mesh topology."
+      }
+    ],
+    "type": {
+      "types": [
+        "Object"
+      ],
+      "optional": false,
+      "name": "Topology"
+    }
+  },
+  {
+    "__docId__": 34,
+    "kind": "typedef",
+    "name": "SignalingState",
+    "memberof": "src/types/esdoc.helper.ts",
+    "static": true,
+    "longname": "src/types/esdoc.helper.ts~SignalingState",
+    "access": "public",
+    "description": "The state fo the signaling server for WebRTC.",
+    "properties": [
+      {
+        "nullable": null,
+        "types": [
+          "number"
+        ],
+        "spread": false,
+        "optional": true,
+        "defaultValue": "0",
+        "defaultRaw": 0,
+        "name": "CONNECTING",
+        "description": "The connection is not yet open."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "number"
+        ],
+        "spread": false,
+        "optional": true,
+        "defaultValue": "1",
+        "defaultRaw": 1,
+        "name": "OPEN",
+        "description": "The connection is open and ready to communicate."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "number"
+        ],
+        "spread": false,
+        "optional": true,
+        "defaultValue": "2",
+        "defaultRaw": 2,
+        "name": "FIRST_CONNECTED",
+        "description": "`RTCDataChannel` has been established\nwith one of the web group member. From now the signaling is no longer needed,\nbecause the next of the joining process will pass through this member."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "number"
+        ],
+        "spread": false,
+        "optional": true,
+        "defaultValue": "3",
+        "defaultRaw": 3,
+        "name": "READY_TO_JOIN_OTHERS",
+        "description": "You are successfully joined a\nweb group and ready to join others."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "number"
+        ],
+        "spread": false,
+        "optional": true,
+        "defaultValue": "4",
+        "defaultRaw": 4,
+        "name": "CLOSED",
+        "description": "The connection is closed."
+      }
+    ],
+    "type": {
+      "types": [
+        "Object"
+      ],
+      "optional": false,
+      "name": "SignalingState"
+    }
+  },
+  {
+    "__docId__": 35,
+    "kind": "typedef",
+    "name": "WebGroupState",
+    "memberof": "src/types/esdoc.helper.ts",
+    "static": true,
+    "longname": "src/types/esdoc.helper.ts~WebGroupState",
+    "access": "public",
+    "description": "The state of the web group.",
+    "properties": [
+      {
+        "nullable": null,
+        "types": [
+          "number"
+        ],
+        "spread": false,
+        "optional": true,
+        "defaultValue": "0",
+        "defaultRaw": 0,
+        "name": "JOINING",
+        "description": "You are joining the web group."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "number"
+        ],
+        "spread": false,
+        "optional": true,
+        "defaultValue": "1",
+        "defaultRaw": 1,
+        "name": "JOINED",
+        "description": "You have successfully joined the web group\nand ready to broadcast messages via `send` method."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "number"
+        ],
+        "spread": false,
+        "optional": true,
+        "defaultValue": "2",
+        "defaultRaw": 2,
+        "name": "LEFT",
+        "description": "You have left the web group. If the connection\nto the web group has lost and `autoRejoin=true`, then the state would be `LEFT`,\n(usually during a relatively short period) before the rejoining process start."
+      }
+    ],
+    "type": {
+      "types": [
+        "Object"
+      ],
+      "optional": false,
+      "name": "WebGroupState"
+    }
+  },
+  {
+    "__docId__": 36,
+    "kind": "external",
+    "name": "RTCIceServer",
+    "externalLink": "https://developer.mozilla.org/en/docs/Web/API/RTCIceServer",
+    "memberof": "src/types/esdoc.helper.ts",
+    "static": true,
+    "longname": "src/types/esdoc.helper.ts~RTCIceServer",
+    "access": "public",
+    "description": ""
+  },
+  {
+    "__docId__": 37,
+    "kind": "typedef",
+    "name": "WebGroupOptions",
+    "memberof": "src/types/esdoc.helper.ts",
+    "static": true,
+    "longname": "src/types/esdoc.helper.ts~WebGroupOptions",
+    "access": "public",
+    "description": "",
+    "properties": [
+      {
+        "nullable": null,
+        "types": [
+          "Topology"
+        ],
+        "spread": false,
+        "optional": true,
+        "defaultValue": "Topology.FULL_MESH",
+        "defaultRaw": "Topology.FULL_MESH",
+        "name": "topology",
+        "description": "Topology identifier\n(Full mesh is the only one supported by Netflux for now)."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "string"
+        ],
+        "spread": false,
+        "optional": true,
+        "defaultValue": "\"wss://www.coedit.re:20473\"",
+        "defaultRaw": "wss://www.coedit.re:20473",
+        "name": "signalingURL",
+        "description": "Signaling URL for WebRTC."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "RTCIceServer[]"
+        ],
+        "spread": false,
+        "optional": true,
+        "defaultValue": "[{urls: 'stun:stun3.l.google.com:19302'}]",
+        "defaultRaw": "[{urls: 'stun:stun3.l.google.com:19302'}]",
+        "name": "iceServers",
+        "description": "Array of Ice servers for WebRTC."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "boolean"
+        ],
+        "spread": false,
+        "optional": true,
+        "defaultValue": "true",
+        "defaultRaw": true,
+        "name": "autoRejoin",
+        "description": "Whether to automatically rejoin\nthe web group on disconnect or not. Its value may be modified after\n`WebGroup` instantiation at any time."
+      }
+    ],
+    "type": {
+      "types": [
+        "Object"
+      ],
+      "optional": false,
+      "name": "WebGroupOptions"
+    }
+  },
+  {
+    "__docId__": 38,
+    "kind": "typedef",
+    "name": "WebGroupBotServerOptions",
+    "memberof": "src/types/esdoc.helper.ts",
+    "static": true,
+    "longname": "src/types/esdoc.helper.ts~WebGroupBotServerOptions",
+    "access": "public",
+    "description": "",
+    "properties": [
+      {
+        "nullable": null,
+        "types": [
+          "Topology"
+        ],
+        "spread": false,
+        "optional": true,
+        "defaultValue": "WebGroupOptions.topology",
+        "defaultRaw": "WebGroupOptions.topology",
+        "name": "topology",
+        "description": "Topology identifier\n(Full mesh is the only one supported by Netflux for now)."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "string"
+        ],
+        "spread": false,
+        "optional": true,
+        "defaultValue": "WebGroupOptions.signalingURL",
+        "defaultRaw": "WebGroupOptions.signalingURL",
+        "name": "signalingURL",
+        "description": "Signaling URL for WebRTC."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "RTCIceServer[]"
+        ],
+        "spread": false,
+        "optional": true,
+        "defaultValue": "WebGroupOptions.iceServers",
+        "defaultRaw": "WebGroupOptions.iceServers",
+        "name": "iceServers",
+        "description": "Array of Ice servers for WebRTC."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "boolean"
+        ],
+        "spread": false,
+        "optional": true,
+        "defaultValue": "WebGroupOptions.autoRejoin",
+        "defaultRaw": "WebGroupOptions.autoRejoin",
+        "name": "autoRejoin",
+        "description": "Whether to automatically rejoin\nthe web group on disconnect or not. Its value may be modified after\n`WebGroup` instantiation at any time."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "Object"
+        ],
+        "spread": false,
+        "optional": true,
+        "name": "bot",
+        "description": "Server related options of the bot."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "string"
+        ],
+        "spread": false,
+        "optional": true,
+        "defaultValue": "''",
+        "defaultRaw": "''",
+        "name": "bot.url",
+        "description": "Bot server URL open to outside."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "Object"
+        ],
+        "spread": false,
+        "optional": true,
+        "defaultValue": "undefined",
+        "defaultRaw": "undefined",
+        "name": "bot.server",
+        "description": "[µWebSockets](https://github.com/uNetworking/uWebSockets) `Server` object."
+      },
+      {
+        "nullable": null,
+        "types": [
+          "boolean"
+        ],
+        "spread": false,
+        "optional": true,
+        "defaultValue": "false",
+        "defaultRaw": false,
+        "name": "bot.perMessageDeflate",
+        "description": "Enable/disable permessage-deflate."
+      }
+    ],
+    "type": {
+      "types": [
+        "Object"
+      ],
+      "optional": false,
+      "name": "WebGroupBotServerOptions"
+    }
+  },
+  {
+    "kind": "index",
+    "content": "# <p align=\"center\">Netflux</p>\n\n<p align=\"center\">\n  Universal Javascript <strong style=\"font-weight: bold\">peer to peer</strong> transport API for client and server.<br />\n  Permits to create a fully connected peer to peer network based on <strong style=\"font-weight: bold\">WebRTC</strong> and <strong style=\"font-weight: bold\">WebSocket</strong>.<br />\n  Allows to send/receive <strong style=\"font-weight: bold\">String</strong>, <strong style=\"font-weight: bold\">ArrayBuffer</strong>, <strong style=\"font-weight: bold\">TypedArray</strong> data types over the network.\n</p>\n\n<p align=\"center\">\n  <a href=\"https://www.npmjs.com/package/netflux\">\n    <img src=\"https://img.shields.io/npm/v/netflux.svg?style=flat-square\" />\n  </a>&nbsp;\n  <a href=\"https://travis-ci.org/coast-team/netflux\">\n    <img src=\"https://travis-ci.org/coast-team/netflux.svg?branch=master\" />\n  </a>&nbsp;\n  <a href=\"https://github.com/semantic-release/semantic-release\">\n    <img src=\"https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg?style=flat-square\" />\n  </a>&nbsp;\n  <a href=\"https://gitter.im/coast-team/netflux?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge\">\n    <img src=\"https://img.shields.io/badge/GITTER-join%20chat-green.svg?style=flat-square\" />\n  </a>\n\n  <br />\n\n  <a href=\"http://commitizen.github.io/cz-cli\">\n    <img src=\"https://img.shields.io/badge/commitizen-friendly-brightgreen.svg?style=flat-square\" />\n  </a>&nbsp;\n  <a href=\"https://www.bithound.io/github/coast-team/netflux\">\n    <img src=\"https://www.bithound.io/github/coast-team/netflux/badges/score.svg\" />\n  </a>&nbsp;\n  <a href=\"https://codeclimate.com/github/coast-team/netflux\">\n    <img src=\"https://codeclimate.com/github/coast-team/netflux/badges/gpa.svg\" />\n  </a>&nbsp;\n  <a href=\"https://codeclimate.com/github/coast-team/netflux/coverage\">\n    <img src=\"https://codeclimate.com/github/coast-team/netflux/badges/coverage.svg\" />\n  </a>&nbsp;\n  <a href=\"https://doc.esdoc.org/github.com/coast-team/netflux\">\n    <img src=\"https://doc.esdoc.org/github.com/coast-team/netflux/badge.svg\" />\n  </a>\n</p>\n\n<p align=\"center\">\n  <img src=\"manual/asset/example_support.png\" />\n</p>\n\n## Features\n- Universal API (works in browser and server)\n- Creates peer to peer full mesh network\n- Allows to send/receive [String][String], [ArrayBuffer][ArrayBuffer], [TypedArray][TypedArray] data types.\n- Allows mixed connections between peers ([WebSocket][WebSocket] or [RTCDataChannel][RTCDataChannel])\n- Automatically chooses between [WebSocket][WebSocket] & [RTCDataChannel][RTCDataChannel]\n- No server is mandatory, except signaling server ([Sigver][Sigver])\n- Signaling and ICE server URLs are parameterized (see [doc page][Netflux:Configuration]), which allows to have the whole control over the peer to peer network\n- Built with DEFAULT Signaling and STUN servers for easy quick start ([doc page][Netflux:Configuration])\n- Each peer acts as a Signaling server to establish connection between two other peers (Signaling server is still mandatory for the first connection in the network, but this feature helps to reduce the Signaling server load)\n- Provides 3 builds:\n - `dist/netflux.es5.module.browser.js` ES5 code, ES6 module for browser (exports `create` function and does not contain any NodeJS related code)\n - `dist/netflux.es5.module.node.js` ES5 code, ECMAScript 6 module for NodeJS (exports `create` function, plus `BotServer` class)\n - `dist/netflux.es5.umd.js` ES5 code, UMD module format for both browser and NodeJS\n- `package.json` has `module` and `browser` attributes which understood be **Webpack**, **Browserify** or other module bundlers for easy consumption.\n\n## Table of contents\n - [Installation](https://doc.esdoc.org/github.com/coast-team/netflux/manual/installation.html)\n - [Usage](https://doc.esdoc.org/github.com/coast-team/netflux/manual/usage.html)\n - [Configuration](https://doc.esdoc.org/github.com/coast-team/netflux/manual/configuration.html)\n - [Example](https://doc.esdoc.org/github.com/coast-team/netflux/manual/example.html)\n\nFull documentation: https://doc.esdoc.org/github.com/coast-team/netflux\n\n## API\n`create` function is the start point, unless you are developing a peer bot, then consider using `BotServer` (see below). `create` functions return an object of type `WebChannel` which represents the peer to peer network.\n\n - [**create**(settings): WebChannel](https://doc.esdoc.org/github.com/coast-team/netflux/function/index.html#static-function-create)\n\n Members:\n  - [**id**: number](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-member-id)\n  - [**members**: number[]](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-member-members)\n  - [**myId**: number**](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-member-myId)\n  - [**onMessage**: function (peerId: number, msg: UserMessage, isBroadcast: boolean)**](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-member-onMessage)\n  - [**onPeerJoin**: function (peerId: number)](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-member-onPeerJoin)\n  - [**onPeerLeave**: function (peerId: number)**](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-member-onPeerLeave)\n  - [**onClose**: function (closeEvt: CloseEvent)**](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-member-onClose)\n\n  Methods:\n\n  ```\n  Open method allows other peers to join your network.\n  ```\n\n  - [**open**([options: OpenData]): Promise<OpenData, string>](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-method-open)\n  - [**getOpenData**(): OpenData | null](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-method-getOpenData)\n  - [**isOpen**(): boolean](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-method-isOpen)\n  - [**close**()](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-method-close)\n\n  ```\n  After someone has opened his network and has provided the key to you, you can join his network.\n  ```\n  - [**join**(keyOrSocket: string | WebSocket[, url: string]): Promise<undefined, string>](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-method-join)\n  - [**leave**()](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-method-leave)\n\n  ```\n  Any member can invite a peer bot (server) to join this network.\n  ```\n  - [**invite**(urlOrSocket: string | WebSocket): Promise<undefined, string>](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-method-invite)\n\n  ```\n  Any member is allowed to send a message.\n  ```\n  - [**send**(message: UserMessage)](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-method-send)\n  - [**sendTo**(peerId: number, message: UserMessage)](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-method-sendTo)\n\n  ```\n  Or ping.\n  ```\n  - [**ping**(): Promise<number, string>](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-method-ping)\n - [**WEB_RTC**](https://doc.esdoc.org/github.com/coast-team/netflux/variable/index.html#static-variable-WEB_RTC) constant\n - [**WEB_SOCKET**](https://doc.esdoc.org/github.com/coast-team/netflux/variable/index.html#static-variable-WEB_SOCKET) constant\n - [**BotServer**(settings)](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/BotServer.js~BotServer.html)\n\n   Members:\n\n   - [**onWebChannel**: function (wc: WebChannel)](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/BotServer.js~BotServer.html#instance-member-onWebChannel)\n   - [**webChannels**: WebChannel[]](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/BotServer.js~BotServer.html#instance-member-webChannels)\n\n   Methods:\n   - [**start**(): Promise<undefined, string](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/BotServer.js~BotServer.html#instance-method-start)\n   - [**stop**()](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/BotServer.js~BotServer.html#instance-method-stop)\n   - [**addWebChannel**(wc: WebChannel)](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/BotServer.js~BotServer.html#instance-method-addWebChannel)\n   - [**removeWebChannel**(wc: WebChannel)](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/BotServer.js~BotServer.html#instance-method-removeWebChannel)\n   - [**getWebChannel**(id: number): WebChannel | null](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/BotServer.js~BotServer.html#instance-method-getWebChannel)\n\n\n[WebSocket]: https://developer.mozilla.org/en/docs/Web/API/WebSocket\n[RTCDataChannel]: https://developer.mozilla.org/en/docs/Web/API/RTCDataChannel\n[String]: https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/String\n[ArrayBuffer]: https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer\n[TypedArray]: https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/TypedArray\n[Sigver]: https://github.com/coast-team/sigver\n[Netflux:Configuration]: https://doc.esdoc.org/github.com/coast-team/netflux/manual/configuration/configuration.html\n\n[commitizen]: https://img.shields.io/badge/commitizen-friendly-brightgreen.svg?style=flat-square\n[commitizen-url]: http://commitizen.github.io/cz-cli\n\n[bithound]: https://www.bithound.io/github/coast-team/netflux/badges/score.svg\n[bithound-url]: https://www.bithound.io/github/coast-team/netflux\n\n[codeclimate]: https://codeclimate.com/github/coast-team/netflux/badges/gpa.svg\n[codeclimate-url]: https://codeclimate.com/github/coast-team/netflux\n\n[coverage]: https://codeclimate.com/github/coast-team/netflux/badges/coverage.svg\n[coverage-url]: https://codeclimate.com/github/coast-team/netflux/coverage\n\n[doc]: https://doc.esdoc.org/github.com/coast-team/netflux/badge.svg\n[doc-url]: https://doc.esdoc.org/github.com/coast-team/netflux\n",
+    "longname": "/home/philippe/workspace/netflux/README.md",
+    "name": "./README.md",
+    "static": true,
+    "access": "public"
+  },
+  {
+    "kind": "manualIndex",
+    "globalIndex": true,
+    "content": "# <p align=\"center\">Netflux</p>\n\n<p align=\"center\">\n  Universal Javascript <strong style=\"font-weight: bold\">peer to peer</strong> transport API for client and server.<br />\n  Permits to create a fully connected peer to peer network based on <strong style=\"font-weight: bold\">WebRTC</strong> and <strong style=\"font-weight: bold\">WebSocket</strong>.<br />\n  Allows to send/receive <strong style=\"font-weight: bold\">String</strong>, <strong style=\"font-weight: bold\">ArrayBuffer</strong>, <strong style=\"font-weight: bold\">TypedArray</strong> data types over the network.\n</p>\n\n<p align=\"center\">\n  <a href=\"https://www.npmjs.com/package/netflux\">\n    <img src=\"https://img.shields.io/npm/v/netflux.svg?style=flat-square\" />\n  </a>&nbsp;\n  <a href=\"https://travis-ci.org/coast-team/netflux\">\n    <img src=\"https://travis-ci.org/coast-team/netflux.svg?branch=master\" />\n  </a>&nbsp;\n  <a href=\"https://github.com/semantic-release/semantic-release\">\n    <img src=\"https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg?style=flat-square\" />\n  </a>&nbsp;\n  <a href=\"https://gitter.im/coast-team/netflux?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge\">\n    <img src=\"https://img.shields.io/badge/GITTER-join%20chat-green.svg?style=flat-square\" />\n  </a>\n\n  <br />\n\n  <a href=\"http://commitizen.github.io/cz-cli\">\n    <img src=\"https://img.shields.io/badge/commitizen-friendly-brightgreen.svg?style=flat-square\" />\n  </a>&nbsp;\n  <a href=\"https://www.bithound.io/github/coast-team/netflux\">\n    <img src=\"https://www.bithound.io/github/coast-team/netflux/badges/score.svg\" />\n  </a>&nbsp;\n  <a href=\"https://codeclimate.com/github/coast-team/netflux\">\n    <img src=\"https://codeclimate.com/github/coast-team/netflux/badges/gpa.svg\" />\n  </a>&nbsp;\n  <a href=\"https://codeclimate.com/github/coast-team/netflux/coverage\">\n    <img src=\"https://codeclimate.com/github/coast-team/netflux/badges/coverage.svg\" />\n  </a>&nbsp;\n  <a href=\"https://doc.esdoc.org/github.com/coast-team/netflux\">\n    <img src=\"https://doc.esdoc.org/github.com/coast-team/netflux/badge.svg\" />\n  </a>\n</p>\n\n<p align=\"center\">\n  <img src=\"manual/asset/example_support.png\" />\n</p>\n\n## Features\n- Universal API (works in browser and server)\n- Creates peer to peer full mesh network\n- Allows to send/receive [String][String], [ArrayBuffer][ArrayBuffer], [TypedArray][TypedArray] data types.\n- Allows mixed connections between peers ([WebSocket][WebSocket] or [RTCDataChannel][RTCDataChannel])\n- Automatically chooses between [WebSocket][WebSocket] & [RTCDataChannel][RTCDataChannel]\n- No server is mandatory, except signaling server ([Sigver][Sigver])\n- Signaling and ICE server URLs are parameterized (see [doc page][Netflux:Configuration]), which allows to have the whole control over the peer to peer network\n- Built with DEFAULT Signaling and STUN servers for easy quick start ([doc page][Netflux:Configuration])\n- Each peer acts as a Signaling server to establish connection between two other peers (Signaling server is still mandatory for the first connection in the network, but this feature helps to reduce the Signaling server load)\n- Provides 3 builds:\n - `dist/netflux.es5.module.browser.js` ES5 code, ES6 module for browser (exports `create` function and does not contain any NodeJS related code)\n - `dist/netflux.es5.module.node.js` ES5 code, ECMAScript 6 module for NodeJS (exports `create` function, plus `BotServer` class)\n - `dist/netflux.es5.umd.js` ES5 code, UMD module format for both browser and NodeJS\n- `package.json` has `module` and `browser` attributes which understood be **Webpack**, **Browserify** or other module bundlers for easy consumption.\n\n## Table of contents\n - [Installation](https://doc.esdoc.org/github.com/coast-team/netflux/manual/installation.html)\n - [Usage](https://doc.esdoc.org/github.com/coast-team/netflux/manual/usage.html)\n - [Configuration](https://doc.esdoc.org/github.com/coast-team/netflux/manual/configuration.html)\n - [Example](https://doc.esdoc.org/github.com/coast-team/netflux/manual/example.html)\n\nFull documentation: https://doc.esdoc.org/github.com/coast-team/netflux\n\n## API\n`create` function is the start point, unless you are developing a peer bot, then consider using `BotServer` (see below). `create` functions return an object of type `WebChannel` which represents the peer to peer network.\n\n - [**create**(settings): WebChannel](https://doc.esdoc.org/github.com/coast-team/netflux/function/index.html#static-function-create)\n\n Members:\n  - [**id**: number](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-member-id)\n  - [**members**: number[]](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-member-members)\n  - [**myId**: number**](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-member-myId)\n  - [**onMessage**: function (peerId: number, msg: UserMessage, isBroadcast: boolean)**](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-member-onMessage)\n  - [**onPeerJoin**: function (peerId: number)](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-member-onPeerJoin)\n  - [**onPeerLeave**: function (peerId: number)**](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-member-onPeerLeave)\n  - [**onClose**: function (closeEvt: CloseEvent)**](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-member-onClose)\n\n  Methods:\n\n  ```\n  Open method allows other peers to join your network.\n  ```\n\n  - [**open**([options: OpenData]): Promise<OpenData, string>](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-method-open)\n  - [**getOpenData**(): OpenData | null](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-method-getOpenData)\n  - [**isOpen**(): boolean](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-method-isOpen)\n  - [**close**()](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-method-close)\n\n  ```\n  After someone has opened his network and has provided the key to you, you can join his network.\n  ```\n  - [**join**(keyOrSocket: string | WebSocket[, url: string]): Promise<undefined, string>](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-method-join)\n  - [**leave**()](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-method-leave)\n\n  ```\n  Any member can invite a peer bot (server) to join this network.\n  ```\n  - [**invite**(urlOrSocket: string | WebSocket): Promise<undefined, string>](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-method-invite)\n\n  ```\n  Any member is allowed to send a message.\n  ```\n  - [**send**(message: UserMessage)](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-method-send)\n  - [**sendTo**(peerId: number, message: UserMessage)](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-method-sendTo)\n\n  ```\n  Or ping.\n  ```\n  - [**ping**(): Promise<number, string>](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-method-ping)\n - [**WEB_RTC**](https://doc.esdoc.org/github.com/coast-team/netflux/variable/index.html#static-variable-WEB_RTC) constant\n - [**WEB_SOCKET**](https://doc.esdoc.org/github.com/coast-team/netflux/variable/index.html#static-variable-WEB_SOCKET) constant\n - [**BotServer**(settings)](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/BotServer.js~BotServer.html)\n\n   Members:\n\n   - [**onWebChannel**: function (wc: WebChannel)](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/BotServer.js~BotServer.html#instance-member-onWebChannel)\n   - [**webChannels**: WebChannel[]](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/BotServer.js~BotServer.html#instance-member-webChannels)\n\n   Methods:\n   - [**start**(): Promise<undefined, string](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/BotServer.js~BotServer.html#instance-method-start)\n   - [**stop**()](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/BotServer.js~BotServer.html#instance-method-stop)\n   - [**addWebChannel**(wc: WebChannel)](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/BotServer.js~BotServer.html#instance-method-addWebChannel)\n   - [**removeWebChannel**(wc: WebChannel)](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/BotServer.js~BotServer.html#instance-method-removeWebChannel)\n   - [**getWebChannel**(id: number): WebChannel | null](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/BotServer.js~BotServer.html#instance-method-getWebChannel)\n\n\n[WebSocket]: https://developer.mozilla.org/en/docs/Web/API/WebSocket\n[RTCDataChannel]: https://developer.mozilla.org/en/docs/Web/API/RTCDataChannel\n[String]: https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/String\n[ArrayBuffer]: https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer\n[TypedArray]: https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/TypedArray\n[Sigver]: https://github.com/coast-team/sigver\n[Netflux:Configuration]: https://doc.esdoc.org/github.com/coast-team/netflux/manual/configuration/configuration.html\n\n[commitizen]: https://img.shields.io/badge/commitizen-friendly-brightgreen.svg?style=flat-square\n[commitizen-url]: http://commitizen.github.io/cz-cli\n\n[bithound]: https://www.bithound.io/github/coast-team/netflux/badges/score.svg\n[bithound-url]: https://www.bithound.io/github/coast-team/netflux\n\n[codeclimate]: https://codeclimate.com/github/coast-team/netflux/badges/gpa.svg\n[codeclimate-url]: https://codeclimate.com/github/coast-team/netflux\n\n[coverage]: https://codeclimate.com/github/coast-team/netflux/badges/coverage.svg\n[coverage-url]: https://codeclimate.com/github/coast-team/netflux/coverage\n\n[doc]: https://doc.esdoc.org/github.com/coast-team/netflux/badge.svg\n[doc-url]: https://doc.esdoc.org/github.com/coast-team/netflux\n",
+    "longname": "/home/philippe/workspace/netflux/README.md",
+    "name": "./README.md",
+    "static": true,
+    "access": "public"
+  },
+  {
+    "kind": "manualAsset",
+    "longname": "/home/philippe/workspace/netflux/manual/asset",
+    "name": "./manual/asset",
+    "static": true,
+    "access": "public"
+  },
+  {
+    "kind": "manual",
+    "longname": "/home/philippe/workspace/netflux/manual/overview.md",
+    "name": "./manual/overview.md",
+    "content": "# Overview\nNetflux can create a peer to peer network with the following connection types:\n - `RTCDataChannel` (WebRTC)\n - `WebSocket`\n\n`RTCDataChannel` connection could be established between:\n - Browser & Browser\n - Browser & Server (If server supports)\n - Server & Server (If both servers support)\n\nOn the other hand, a `socket` could be created only between:\n - Browser & Server\n - Server & Server\n",
+    "static": true,
+    "access": "public"
+  },
+  {
+    "kind": "manual",
+    "longname": "/home/philippe/workspace/netflux/manual/configuration.md",
+    "name": "./manual/configuration.md",
+    "content": "# Configuration\nYou can rewrite each of the following settings.\n\nWhen using [`netflux.create(settings)`](https://doc.esdoc.org/github.com/coast-team/netflux/function/index.html#static-function-create) function, the default `settings` are:\n\n```javascript\n{\n  connector: WEB_RTC,\n  topology: FULLY_CONNECTED,\n  signalingURL: 'wss://sigver-coastteam.rhcloud.com:8443'\n  iceServers: [\n    {urls:'stun:turn01.uswest.xirsys.com'}\n  ]\n}\n```\n\nFor [`new BotServer(settings)`](https://doc.esdoc.org/github.com/coast-team/netflux/class/src/BotServer.js~BotServer.html#instance-constructor-constructor) the default `settings` are:\n\n```javascript\n{\n  connector: WEB_SOCKET,\n  topology: FULLY_CONNECTED,\n  signalingURL: 'wss://sigver-coastteam.rhcloud.com:8443'\n  iceServers: [\n    {urls:'stun:turn01.uswest.xirsys.com'}\n  ],\n  host: 'localhost',\n  port: 9000\n}\n```\n\nDocumentation for the settings may be found [here](https://doc.esdoc.org/github.com/coast-team/netflux/typedef/index.html#static-typedef-WebChannelSettings).\n",
+    "static": true,
+    "access": "public"
+  },
+  {
+    "kind": "manual",
+    "longname": "/home/philippe/workspace/netflux/manual/installation.md",
+    "name": "./manual/installation.md",
+    "content": "# Installation\n## NPM\n```shell\nnpm install -S netflux\n```\nNetflux has an optional peer dependency: `wrtc`. This package provides WebRTC API in NodeJS. It is optional because Netflux can use `WebSocket` instead. For some use cases maybe you still want to connect your server to the peer to peer network via `RTCDataChannel`, then you have to successfully install this dependency.\n\nIf you have problems with `wrtc` installation then:\n- For Ubuntu 16.04 execute: `sudo apt-get install libncurses5-dev libssl-dev libnss3-dev libexpat1-dev`\n- For another system, consult `wrtc` home page: https://github.com/js-platform/node-webrtc\n\n\n## What you need\nFor fully functional peer to peer network, Netflux needs:\n - Signaling server (default: `wss://sigver-coastteam.rhcloud.com:8443`)\n - STUN server (default: `stun:turn01.uswest.xirsys.com`)\n - TURN server (no default)\n\nNetflux comes with Signaling and STUN servers by default for easier quickstart. You may specify each of those servers ([how to do it](configuration.html)).\n\n\n### Signaling server\nWe developed a signaling server called [Sigver](https://github.com/coast-team/sigver). It is the only signaling server (signaling mechanism) which is supported by Netflux for now. It is available online:\n\n```\nws://sigver-coastteam.rhcloud.com:8000\n```\nor\n```\nwss://sigver-coastteam.rhcloud.com:8443\n```\n\n**Remark**: Due to the rhcloud application hosting specification, following a period of inactivity, the server will be available after a while. Try again a few seconds later.\n\nWe recommend to deploy your own instance of Sigver for production.\n\n### STUN/TURN servers\nSTUN and TURN servers are used by WebRTC.\n\nA few free STUN servers are available online, provided by Xirsys or Google for example. Unfortunately free TURN server is no longer available on the Internet. Thus there is no one by default in Netflux. Some companies like [Xirsys](http://xirsys.com) may help.\n",
+    "static": true,
+    "access": "public"
+  },
+  {
+    "kind": "manual",
+    "longname": "/home/philippe/workspace/netflux/manual/examples/3peers.md",
+    "name": "./manual/examples/3peers.md",
+    "content": "# Examples\nEach of the clients in the following examples included `dist/netflux.es5.umd.min.js` script in his browser. Thus Netflux is available under global `netflux` variable.\n\n## 3 browsers/clients\nPeers **A**, **B** and **C** will constitute a peer to peer network. We suppose that all of them using the default Signaling server provided by Netflux.\n\n**A** creates the network:\n\n```javascript\n// Creates network with default settings\nlet network = netflux.create();\n\n// When a message  has arrived from the network\nnetwork.onMessage = (peerId, msg, isBroadcast) => {\n  // do something...\n};\n\n// When a new peer has joined the network\nnetwork.onPeerJoin = (peerId) => {\n  // do something...\n};\n\n// When one of the network members has left\nnetwork.onPeerLeave = (peerId) => {\n  // do something...\n};\n\n// Allows other peers to join this network\nnetwork.open()\n  .then(({key}) => {\n    // Other peers can now join this network\n  })\n```\n\n**A** gives **B** the `key`. **B** joins the network:\n```javascript\n// Creates network with default settings\nlet network = netflux.create();\n\nnetwork.onMessage = (peerId, msg, isBroadcast) => { /* do something... */};\n\nnetwork.onPeerJoin = (peerId) => { /* do something... */};\n\nnetwork.onPeerLeave = (peerId) => { /* do something... */};\n\n// Joins the network with the key provided by A\nnetwork.join(key)\n  .then(() => {\n    /*\n      B has joined successfully.\n      From now onPeerJoin handler will be called in A's browser and\n      onPeerJoin handler will be called in B's browser too\n      (because of A who is already the network member).\n    */\n  })\n```\n\n**A** or **B** gives **C** the `key`. **C** joins the network, then he sends one message to all member and one private message to **B**:\n```javascript\n// Creates network with default settings\nlet network = netflux.create();\n\nnetwork.onMessage = (peerId, msg, isBroadcast) => { /* do something... */};\n\nnetwork.onPeerJoin = (peerId) => { /* do something... */};\n\nnetwork.onPeerLeave = (peerId) => { /* do something... */};\n\n// Joins the network with the key provided by A\nnetwork.join(key)\n  .then(() => {\n    /*\n      C has joined successfully.\n      From now onPeerJoin handler will be called in A's browser once, in B's\n      browser once and in C's browser twice (because of A and B).\n    */\n\n    // C sends a message to all network members\n    network.send('Hello everyone! It is C.')\n\n    // C sends a private message to B\n    network.sendTo(idOfB, 'Pss, B, you know, A cannot hear us!')\n  })\n```\n",
+    "static": true,
+    "access": "public"
+  }
+]

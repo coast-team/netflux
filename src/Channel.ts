@@ -1,4 +1,4 @@
-import { isBrowser, isFirefox } from './Util'
+import { isBrowser, isFirefox } from './misc/Util'
 import { WebChannel } from './service/WebChannel'
 
 /**

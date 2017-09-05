@@ -1,6 +1,6 @@
 import { Subject } from 'rxjs/Subject'
 
-import { isBrowser } from '../../src/Util'
+import { isBrowser } from '../../src/misc/Util'
 import { WebGroup, WebGroupState } from '../../src/index'
 import chunk50kb from './50kb.txt'
 

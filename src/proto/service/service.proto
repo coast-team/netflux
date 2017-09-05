@@ -1,0 +1,12 @@
+syntax = "proto3";
+package service;
+
+import "webChannel.proto";
+import "channelBuilder.proto";
+import "topology/fullMesh.proto";
+import "webRTCBuilder.proto";
+
+message Message {
+  uint32 id = 1;
+  bytes content = 2;
+}

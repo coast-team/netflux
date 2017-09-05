@@ -1,0 +1,21 @@
+syntax = "proto3";
+package webChannel;
+
+message Message {
+  oneof type {
+    InitData init = 1;
+    Peers initOk = 2;
+    bool ping = 3;
+    bool pong = 4;
+  }
+}
+
+message InitData {
+  uint32 topology = 1;
+  uint32 wcId = 2;
+  repeated uint32 generatedIds = 3;
+}
+
+message Peers {
+  repeated uint32 members = 1;
+}

@@ -1,6 +1,6 @@
 import 'rxjs/add/operator/map';
 import { TopologyInterface } from './Topology';
-import { IMessage } from '../../Protobuf';
+import { IMessage } from '../../proto';
 import { Channel } from '../../Channel';
 import { Service } from '../Service';
 /**

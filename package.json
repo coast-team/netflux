@@ -30,7 +30,7 @@
     "dist/"
   ],
   "scripts": {
-    "build": "rm -rf dist && rollup --config && cp -r src/Protobuf.d.ts dist/ts/Protobuf.d.ts",
+    "build": "rm -rf dist && rollup --config && mkdir -p 'dist/ts/proto' && cp -r src/proto/index.d.ts dist/ts/proto/index.d.ts",
     "build:testbot": "rollup -c test/util/rollup.config.js",
     "start:testbot": "pm2 gracefulReload test/util/process.yml",
     "pretest": "npm run build && npm run build:testbot && npm run start:testbot",
@@ -40,10 +40,11 @@
     "test:coverage": "rm -rf coverage && npm run test -- -- coverage",
     "test:travis": "npm run test -- -- travis",
     "test:node": "npm run pretest && node jasmine.conf.js",
-    "proto": "pbjs -t static-module -w es6 --no-verify --no-delimited --no-convert src/index.proto -o src/Protobuf.es6.js && pbts src/Protobuf.es6.js -o src/Protobuf.d.ts",
-    "postproto": "babel -o src/Protobuf.js src/Protobuf.es6.js; rm src/Protobuf.es6.js",
+    "proto": "pbjs -t static-module -w es6 --no-verify --no-delimited --no-convert src/proto/index.proto -o src/proto/index.es6.js && pbts src/proto/index.es6.js -o src/proto/index.d.ts",
+    "postproto": "babel -o src/proto/index.js src/proto/index.es6.js; rm src/proto/index.es6.js",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
-    "lint": "tslint src/* -e 'src/**/*.proto' -e 'src/Protobuf.d.ts' ",
+    "doc": "esdoc -c esdoc.json",
+    "lint": "tslint src/* -e 'src/**/*.proto' -e 'src/index.d.ts' ",
     "precommit": "npm run test:coverage",
     "commitmsg": "validate-commit-msg",
     "cz": "git-cz"
@@ -65,6 +66,9 @@
     "babel-preset-env": "^1.6.0",
     "commitizen": "^2.4.6",
     "cz-conventional-changelog": "^2.0.0",
+    "esdoc": "^1.0.2",
+    "esdoc-standard-plugin": "^1.0.0",
+    "esdoc-typescript-plugin": "^1.0.0",
     "husky": "^0.14.3",
     "istanbul": "^0.4.3",
     "jasmine": "^2.8.0",

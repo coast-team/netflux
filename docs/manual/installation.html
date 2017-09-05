@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl" href="../">
+  <title data-ice="title">Manual | Netflux</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  <script src="script/manual.js"></script>
+<meta name="description" content="Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done."><meta property="twitter:card" content="summary"><meta property="twitter:title" content="Netflux"><meta property="twitter:description" content="Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done."></head>
+<body class="layout-container manual-root" data-ice="rootContainer">
+
+<header>
+  <a href="./">Home</a>
+  
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+<a style="position:relative; top:3px;" href="https://github.com/coast-team/netflux"><img width="20px" src="./image/github.png"></a></header>
+
+<nav class="navigation" data-ice="nav"><div class="manual-toc-root">
+  
+<div data-ice="manual">
+    <ul class="manual-toc">
+      
+    <li data-ice="manualNav" class="indent-h1" data-link="manual/overview.html"><a href="manual/overview.html" data-ice="link">Overview</a></li>
+</ul>
+  </div>
+<div data-ice="manual">
+    <ul class="manual-toc">
+      
+    <li data-ice="manualNav" class="indent-h1" data-link="manual/configuration.html"><a href="manual/configuration.html" data-ice="link">Configuration</a></li>
+</ul>
+  </div>
+<div data-ice="manual">
+    <ul class="manual-toc">
+      
+    <li data-ice="manualNav" class="indent-h1" data-link="manual/installation.html"><a href="manual/installation.html" data-ice="link">Installation</a></li>
+<li data-ice="manualNav" class="indent-h2" data-link="manual/installation.html"><a href="manual/installation.html#npm" data-ice="link">NPM</a></li>
+<li data-ice="manualNav" class="indent-h2" data-link="manual/installation.html"><a href="manual/installation.html#what-you-need" data-ice="link">What you need</a></li>
+<li data-ice="manualNav" class="indent-h3" data-link="manual/installation.html"><a href="manual/installation.html#signaling-server" data-ice="link">Signaling server</a></li>
+<li data-ice="manualNav" class="indent-h3" data-link="manual/installation.html"><a href="manual/installation.html#stun-turn-servers" data-ice="link">STUN/TURN servers</a></li>
+</ul>
+  </div>
+<div data-ice="manual">
+    <ul class="manual-toc">
+      
+    <li data-ice="manualNav" class="indent-h1" data-link="manual/3peers.html"><a href="manual/3peers.html" data-ice="link">Examples</a></li>
+<li data-ice="manualNav" class="indent-h2" data-link="manual/3peers.html"><a href="manual/3peers.html#3-browsers-clients" data-ice="link">3 browsers/clients</a></li>
+</ul>
+  </div>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><div class="github-markdown" data-ice="content"><h1 id="installation">Installation</h1><h2 id="npm">NPM</h2><pre><code class="lang-shell"><code class="source-code prettyprint">npm install -S netflux</code>
+</code></pre>
+<p>Netflux has an optional peer dependency: <code>wrtc</code>. This package provides WebRTC API in NodeJS. It is optional because Netflux can use <code>WebSocket</code> instead. For some use cases maybe you still want to connect your server to the peer to peer network via <code>RTCDataChannel</code>, then you have to successfully install this dependency.</p>
+<p>If you have problems with <code>wrtc</code> installation then:</p>
+<ul>
+<li>For Ubuntu 16.04 execute: <code>sudo apt-get install libncurses5-dev libssl-dev libnss3-dev libexpat1-dev</code></li>
+<li>For another system, consult <code>wrtc</code> home page: <a href="https://github.com/js-platform/node-webrtc">https://github.com/js-platform/node-webrtc</a></li>
+</ul>
+<h2 id="what-you-need">What you need</h2><p>For fully functional peer to peer network, Netflux needs:</p>
+<ul>
+<li>Signaling server (default: <code>wss://sigver-coastteam.rhcloud.com:8443</code>)</li>
+<li>STUN server (default: <code>stun:turn01.uswest.xirsys.com</code>)</li>
+<li>TURN server (no default)</li>
+</ul>
+<p>Netflux comes with Signaling and STUN servers by default for easier quickstart. You may specify each of those servers (<a href="./manual/configuration.html">how to do it</a>).</p>
+<h3 id="signaling-server">Signaling server</h3><p>We developed a signaling server called <a href="https://github.com/coast-team/sigver">Sigver</a>. It is the only signaling server (signaling mechanism) which is supported by Netflux for now. It is available online:</p>
+<pre><code><code class="source-code prettyprint">ws://sigver-coastteam.rhcloud.com:8000</code>
+</code></pre><p>or</p>
+<pre><code><code class="source-code prettyprint">wss://sigver-coastteam.rhcloud.com:8443</code>
+</code></pre><p><strong>Remark</strong>: Due to the rhcloud application hosting specification, following a period of inactivity, the server will be available after a while. Try again a few seconds later.</p>
+<p>We recommend to deploy your own instance of Sigver for production.</p>
+<h3 id="stun-turn-servers">STUN/TURN servers</h3><p>STUN and TURN servers are used by WebRTC.</p>
+<p>A few free STUN servers are available online, provided by Xirsys or Google for example. Unfortunately free TURN server is no longer available on the Internet. Thus there is no one by default in Netflux. Some companies like <a href="http://xirsys.com">Xirsys</a> may help.</p>
+</div>
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(1.0.2)</span><img src="./image/esdoc-logo-mini-black.png"></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>

@@ -1,18 +1,41 @@
-import { WebChannel, WebChannelOptions, WebChannelState } from './service/WebChannel'
+import { WebChannel, WebChannelOptions as WebGroupOptions, WebChannelState } from './service/WebChannel'
 import { Topology } from './service/topology/Topology'
 import { SignalingState } from './Signaling'
 
 export const wcs: WeakMap<WebGroup, WebChannel> = new WeakMap()
 
+/**
+ * BotServer can listen on web socket. A peer can invite bot to join his `WebChannel`.
+ * He can also join one of the bot's `WebChannel`.
+ */
 export class WebGroup {
 
-  constructor (options: WebChannelOptions) {
+  /**
+   * Create instance of WebGroup.
+   * @param {WebGroupOptions} options [description]
+   */
+  constructor (options: WebGroupOptions) {
     wcs.set(this, new WebChannel(options))
   }
 
+  /**
+   * WebGroup id. The same value for all members.
+   */
   get id (): number { return wcs.get(this).id }
+
+  /**
+   * Your unique member id.
+   */
   get myId (): number { return wcs.get(this).myId }
+
+  /**
+   * An array of member ids.
+   */
   get members (): number[] { return wcs.get(this).members }
+
+  /**
+   * Topology id.
+   */
   get topology (): Topology { return wcs.get(this).topology }
   get state (): WebChannelState { return wcs.get(this).state }
   get signalingState (): SignalingState { return wcs.get(this).signaling.state }

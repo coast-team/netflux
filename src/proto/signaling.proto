@@ -1,0 +1,21 @@
+syntax = "proto3";
+package signaling;
+
+message Message {
+  oneof type {
+    Content content = 1;
+    bool isFirst = 2; // Only incoming
+    bool joined = 3; // Only outcoming
+    bool ping = 4;
+    bool pong = 5;
+  }
+}
+
+message Content {
+  uint32 id = 1;
+  bool isEnd = 2; // Only outcoming
+  oneof type {
+    bytes data = 3;
+    bool isError = 4; // Only incoming
+  }
+}

@@ -7,9 +7,9 @@ import { Signaling, SignalingState } from '../Signaling'
 import { ChannelBuilder } from './ChannelBuilder'
 import { WebSocketBuilder } from '../WebSocketBuilder'
 import { WebRTCBuilder } from './WebRTCBuilder'
-import { IMessage, Message, webChannel, service } from '../Protobuf'
+import { IMessage, Message, webChannel, service } from '../proto'
 import { UserMessage, UserDataType } from '../UserMessage'
-import { isURL, generateKey, MAX_KEY_LENGTH } from '../Util'
+import { isURL, generateKey, MAX_KEY_LENGTH } from '../misc/Util'
 import { TopologyInterface, Topology } from './topology/Topology'
 
 export interface WebChannelOptions {

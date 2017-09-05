@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl" href="../">
+  <title data-ice="title">Manual | Netflux</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  <script src="script/manual.js"></script>
+<meta name="description" content="Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done."><meta property="twitter:card" content="summary"><meta property="twitter:title" content="Netflux"><meta property="twitter:description" content="Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done."></head>
+<body class="layout-container manual-root manual-index" data-ice="rootContainer">
+
+<header>
+  <a href="./">Home</a>
+  
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+<a style="position:relative; top:3px;" href="https://github.com/coast-team/netflux"><img width="20px" src="./image/github.png"></a></header>
+
+<nav class="navigation" data-ice="nav"><div class="manual-toc-root">
+  
+<div data-ice="manual">
+    <ul class="manual-toc">
+      
+    <li data-ice="manualNav" class="indent-h1" data-link="manual/overview.html"><a href="manual/overview.html" data-ice="link">Overview</a></li>
+</ul>
+  </div>
+<div data-ice="manual">
+    <ul class="manual-toc">
+      
+    <li data-ice="manualNav" class="indent-h1" data-link="manual/configuration.html"><a href="manual/configuration.html" data-ice="link">Configuration</a></li>
+</ul>
+  </div>
+<div data-ice="manual">
+    <ul class="manual-toc">
+      
+    <li data-ice="manualNav" class="indent-h1" data-link="manual/installation.html"><a href="manual/installation.html" data-ice="link">Installation</a></li>
+<li data-ice="manualNav" class="indent-h2" data-link="manual/installation.html"><a href="manual/installation.html#npm" data-ice="link">NPM</a></li>
+<li data-ice="manualNav" class="indent-h2" data-link="manual/installation.html"><a href="manual/installation.html#what-you-need" data-ice="link">What you need</a></li>
+<li data-ice="manualNav" class="indent-h3" data-link="manual/installation.html"><a href="manual/installation.html#signaling-server" data-ice="link">Signaling server</a></li>
+<li data-ice="manualNav" class="indent-h3" data-link="manual/installation.html"><a href="manual/installation.html#stun-turn-servers" data-ice="link">STUN/TURN servers</a></li>
+</ul>
+  </div>
+<div data-ice="manual">
+    <ul class="manual-toc">
+      
+    <li data-ice="manualNav" class="indent-h1" data-link="manual/3peers.html"><a href="manual/3peers.html" data-ice="link">Examples</a></li>
+<li data-ice="manualNav" class="indent-h2" data-link="manual/3peers.html"><a href="manual/3peers.html#3-browsers-clients" data-ice="link">3 browsers/clients</a></li>
+</ul>
+  </div>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><div class="github-markdown">
+  <div class="manual-user-index" data-ice="manualUserIndex"><h1 id="-p--netflux--p-"><p>Netflux</p></h1><p></p><p>
+  Universal Javascript &lt;strong style=&quot;font-weight: bold&quot;&gt;peer to peer&lt;/strong&gt; transport API for client and server.<br>
+  Permits to create a fully connected peer to peer network based on &lt;strong style=&quot;font-weight: bold&quot;&gt;WebRTC&lt;/strong&gt; and &lt;strong style=&quot;font-weight: bold&quot;&gt;WebSocket&lt;/strong&gt;.<br>
+  Allows to send/receive &lt;strong style=&quot;font-weight: bold&quot;&gt;String&lt;/strong&gt;, &lt;strong style=&quot;font-weight: bold&quot;&gt;ArrayBuffer&lt;/strong&gt;, &lt;strong style=&quot;font-weight: bold&quot;&gt;TypedArray&lt;/strong&gt; data types over the network.
+</p>
+
+<p></p>
+<p></p><p>
+  <a href="https://www.npmjs.com/package/netflux">
+    <img src="https://img.shields.io/npm/v/netflux.svg?style=flat-square">
+  </a>&#xA0;
+  <a href="https://travis-ci.org/coast-team/netflux">
+    <img src="https://travis-ci.org/coast-team/netflux.svg?branch=master">
+  </a>&#xA0;
+  <a href="https://github.com/semantic-release/semantic-release">
+    <img src="https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg?style=flat-square">
+  </a>&#xA0;
+  <a href="https://gitter.im/coast-team/netflux?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge&amp;utm_content=badge">
+    <img src="https://img.shields.io/badge/GITTER-join%20chat-green.svg?style=flat-square">
+  </a>
+
+  <br>
+
+  <a href="http://commitizen.github.io/cz-cli">
+    <img src="https://img.shields.io/badge/commitizen-friendly-brightgreen.svg?style=flat-square">
+  </a>&#xA0;
+  <a href="https://www.bithound.io/github/coast-team/netflux">
+    <img src="https://www.bithound.io/github/coast-team/netflux/badges/score.svg">
+  </a>&#xA0;
+  <a href="https://codeclimate.com/github/coast-team/netflux">
+    <img src="https://codeclimate.com/github/coast-team/netflux/badges/gpa.svg">
+  </a>&#xA0;
+  <a href="https://codeclimate.com/github/coast-team/netflux/coverage">
+    <img src="https://codeclimate.com/github/coast-team/netflux/badges/coverage.svg">
+  </a>&#xA0;
+  <a href="https://doc.esdoc.org/github.com/coast-team/netflux">
+    <img src="https://doc.esdoc.org/github.com/coast-team/netflux/badge.svg">
+  </a>
+</p>
+
+<p></p>
+<p></p><p>
+  <img src="manual/asset/example_support.png">
+</p>
+
+<p></p>
+<h2 id="features">Features</h2><ul>
+<li>Universal API (works in browser and server)</li>
+<li>Creates peer to peer full mesh network</li>
+<li>Allows to send/receive <a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/String">String</a>, <a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer">ArrayBuffer</a>, <a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/TypedArray">TypedArray</a> data types.</li>
+<li>Allows mixed connections between peers (<a href="https://developer.mozilla.org/en/docs/Web/API/WebSocket">WebSocket</a> or <a href="https://developer.mozilla.org/en/docs/Web/API/RTCDataChannel">RTCDataChannel</a>)</li>
+<li>Automatically chooses between <a href="https://developer.mozilla.org/en/docs/Web/API/WebSocket">WebSocket</a> &amp; <a href="https://developer.mozilla.org/en/docs/Web/API/RTCDataChannel">RTCDataChannel</a></li>
+<li>No server is mandatory, except signaling server (<a href="https://github.com/coast-team/sigver">Sigver</a>)</li>
+<li>Signaling and ICE server URLs are parameterized (see <a href="https://doc.esdoc.org/github.com/coast-team/netflux/manual/configuration/configuration.html">doc page</a>), which allows to have the whole control over the peer to peer network</li>
+<li>Built with DEFAULT Signaling and STUN servers for easy quick start (<a href="https://doc.esdoc.org/github.com/coast-team/netflux/manual/configuration/configuration.html">doc page</a>)</li>
+<li>Each peer acts as a Signaling server to establish connection between two other peers (Signaling server is still mandatory for the first connection in the network, but this feature helps to reduce the Signaling server load)</li>
+<li>Provides 3 builds:<ul>
+<li><code>dist/netflux.es5.module.browser.js</code> ES5 code, ES6 module for browser (exports <code>create</code> function and does not contain any NodeJS related code)</li>
+<li><code>dist/netflux.es5.module.node.js</code> ES5 code, ECMAScript 6 module for NodeJS (exports <code>create</code> function, plus <code>BotServer</code> class)</li>
+<li><code>dist/netflux.es5.umd.js</code> ES5 code, UMD module format for both browser and NodeJS</li>
+</ul>
+</li>
+<li><code>package.json</code> has <code>module</code> and <code>browser</code> attributes which understood be <strong>Webpack</strong>, <strong>Browserify</strong> or other module bundlers for easy consumption.</li>
+</ul>
+<h2 id="table-of-contents">Table of contents</h2><ul>
+<li><a href="https://doc.esdoc.org/github.com/coast-team/netflux/manual/installation.html">Installation</a></li>
+<li><a href="https://doc.esdoc.org/github.com/coast-team/netflux/manual/usage.html">Usage</a></li>
+<li><a href="https://doc.esdoc.org/github.com/coast-team/netflux/manual/configuration.html">Configuration</a></li>
+<li><a href="https://doc.esdoc.org/github.com/coast-team/netflux/manual/example.html">Example</a></li>
+</ul>
+<p>Full documentation: <a href="https://doc.esdoc.org/github.com/coast-team/netflux">https://doc.esdoc.org/github.com/coast-team/netflux</a></p>
+<h2 id="api">API</h2><p><code>create</code> function is the start point, unless you are developing a peer bot, then consider using <code>BotServer</code> (see below). <code>create</code> functions return an object of type <code>WebChannel</code> which represents the peer to peer network.</p>
+<ul>
+<li><p><a href="https://doc.esdoc.org/github.com/coast-team/netflux/function/index.html#static-function-create"><strong>create</strong>(settings): WebChannel</a></p>
+<p>Members:</p>
+<ul>
+<li><a href="https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-member-id"><strong>id</strong>: number</a></li>
+<li><a href="https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-member-members"><strong>members</strong>: number[]</a></li>
+<li><a href="https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-member-myId"><strong>myId</strong>: number**</a></li>
+<li><a href="https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-member-onMessage"><strong>onMessage</strong>: function (peerId: number, msg: UserMessage, isBroadcast: boolean)**</a></li>
+<li><a href="https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-member-onPeerJoin"><strong>onPeerJoin</strong>: function (peerId: number)</a></li>
+<li><a href="https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-member-onPeerLeave"><strong>onPeerLeave</strong>: function (peerId: number)**</a></li>
+<li><a href="https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-member-onClose"><strong>onClose</strong>: function (closeEvt: CloseEvent)**</a></li>
+</ul>
+<p>Methods:</p>
+<pre><code><code class="source-code prettyprint">Open method allows other peers to join your network.</code>
+</code></pre><ul>
+<li><a href="https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-method-open"><strong>open</strong>([options: OpenData]): Promise&lt;OpenData, string&gt;</a></li>
+<li><a href="https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-method-getOpenData"><strong>getOpenData</strong>(): OpenData | null</a></li>
+<li><a href="https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-method-isOpen"><strong>isOpen</strong>(): boolean</a></li>
+<li><a href="https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-method-close"><strong>close</strong>()</a></li>
+</ul>
+<pre><code><code class="source-code prettyprint">After someone has opened his network and has provided the key to you, you can join his network.</code>
+</code></pre><ul>
+<li><a href="https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-method-join"><strong>join</strong>(keyOrSocket: string | WebSocket[, url: string]): Promise&lt;undefined, string&gt;</a></li>
+<li><a href="https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-method-leave"><strong>leave</strong>()</a></li>
+</ul>
+<pre><code><code class="source-code prettyprint">Any member can invite a peer bot (server) to join this network.</code>
+</code></pre><ul>
+<li><a href="https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-method-invite"><strong>invite</strong>(urlOrSocket: string | WebSocket): Promise&lt;undefined, string&gt;</a></li>
+</ul>
+<pre><code><code class="source-code prettyprint">Any member is allowed to send a message.</code>
+</code></pre><ul>
+<li><a href="https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-method-send"><strong>send</strong>(message: UserMessage)</a></li>
+<li><a href="https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-method-sendTo"><strong>sendTo</strong>(peerId: number, message: UserMessage)</a></li>
+</ul>
+<pre><code><code class="source-code prettyprint">Or ping.</code>
+</code></pre><ul>
+<li><a href="https://doc.esdoc.org/github.com/coast-team/netflux/class/src/WebChannel.js~WebChannel.html#instance-method-ping"><strong>ping</strong>(): Promise&lt;number, string&gt;</a></li>
+</ul>
+</li>
+<li><a href="https://doc.esdoc.org/github.com/coast-team/netflux/variable/index.html#static-variable-WEB_RTC"><strong>WEB_RTC</strong></a> constant</li>
+<li><a href="https://doc.esdoc.org/github.com/coast-team/netflux/variable/index.html#static-variable-WEB_SOCKET"><strong>WEB_SOCKET</strong></a> constant</li>
+<li><p><a href="https://doc.esdoc.org/github.com/coast-team/netflux/class/src/BotServer.js~BotServer.html"><strong>BotServer</strong>(settings)</a></p>
+<p>Members:</p>
+<ul>
+<li><a href="https://doc.esdoc.org/github.com/coast-team/netflux/class/src/BotServer.js~BotServer.html#instance-member-onWebChannel"><strong>onWebChannel</strong>: function (wc: WebChannel)</a></li>
+<li><a href="https://doc.esdoc.org/github.com/coast-team/netflux/class/src/BotServer.js~BotServer.html#instance-member-webChannels"><strong>webChannels</strong>: WebChannel[]</a></li>
+</ul>
+<p>Methods:</p>
+<ul>
+<li><a href="https://doc.esdoc.org/github.com/coast-team/netflux/class/src/BotServer.js~BotServer.html#instance-method-start"><strong>start</strong>(): Promise&lt;undefined, string</a></li>
+<li><a href="https://doc.esdoc.org/github.com/coast-team/netflux/class/src/BotServer.js~BotServer.html#instance-method-stop"><strong>stop</strong>()</a></li>
+<li><a href="https://doc.esdoc.org/github.com/coast-team/netflux/class/src/BotServer.js~BotServer.html#instance-method-addWebChannel"><strong>addWebChannel</strong>(wc: WebChannel)</a></li>
+<li><a href="https://doc.esdoc.org/github.com/coast-team/netflux/class/src/BotServer.js~BotServer.html#instance-method-removeWebChannel"><strong>removeWebChannel</strong>(wc: WebChannel)</a></li>
+<li><a href="https://doc.esdoc.org/github.com/coast-team/netflux/class/src/BotServer.js~BotServer.html#instance-method-getWebChannel"><strong>getWebChannel</strong>(id: number): WebChannel | null</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+  
+
+  <div class="manual-cards">
+    
+  <div class="manual-card-wrap" data-ice="cards">
+      <div class="manual-card">
+        <div data-ice="card"><h1>Overview</h1><p>Netflux can create a peer to peer network with the following connection types:</p><ul>
+<li><code>RTCDataChannel</code> (WebRTC)</li>
+<li><code>WebSocket</code></li>
+</ul><p><code>RTCDataChannel</code> connection could be established between:</p><ul>
+<li>Browser &amp; Browser</li>
+<li>Browser &amp; Server (If server supports)</li>
+<li>Server &amp; Server (If both servers support)</li>
+</ul><p>On the other hand, a <code>socket</code> could be created only between:</p><ul>
+<li>Browser &amp; Server</li>
+<li>Server &amp; Server</li>
+</ul></div>
+        <a data-ice="link" href="manual/overview.html"></a>
+      </div>
+    </div>
+<div class="manual-card-wrap" data-ice="cards">
+      <div class="manual-card">
+        <div data-ice="card"><h1>Configuration</h1><p>You can rewrite each of the following settings.</p><p>When using <a href="https://doc.esdoc.org/github.com/coast-team/netflux/function/index.html#static-function-create"><code>netflux.create(settings)</code></a> function, the default <code>settings</code> are:</p><pre><code class="lang-javascript"><code class="source-code prettyprint">{
+  connector: WEB_RTC,
+  topology: FULLY_CONNECTED,
+  signalingURL: &apos;wss://sigver-coastteam.rhcloud.com:8443&apos;
+  iceServers: [
+    {urls:&apos;stun:turn01.uswest.xirsys.com&apos;}
+  ]
+}</code>
+</code></pre><p>For <a href="https://doc.esdoc.org/github.com/coast-team/netflux/class/src/BotServer.js~BotServer.html#instance-constructor-constructor"><code>new BotServer(settings)</code></a> the default <code>settings</code> are:</p><pre><code class="lang-javascript"><code class="source-code prettyprint">{
+  connector: WEB_SOCKET,
+  topology: FULLY_CONNECTED,
+  signalingURL: &apos;wss://sigver-coastteam.rhcloud.com:8443&apos;
+  iceServers: [
+    {urls:&apos;stun:turn01.uswest.xirsys.com&apos;}
+  ],
+  host: &apos;localhost&apos;,
+  port: 9000
+}</code>
+</code></pre><p>Documentation for the settings may be found <a href="https://doc.esdoc.org/github.com/coast-team/netflux/typedef/index.html#static-typedef-WebChannelSettings">here</a>.</p></div>
+        <a data-ice="link" href="manual/configuration.html"></a>
+      </div>
+    </div>
+<div class="manual-card-wrap" data-ice="cards">
+      <div class="manual-card">
+        <div data-ice="card"><h1>Installation</h1><h2>NPM</h2><pre><code class="lang-shell"><code class="source-code prettyprint">npm install -S netflux</code>
+</code></pre><p>Netflux has an optional peer dependency: <code>wrtc</code>. This package provides WebRTC API in NodeJS. It is optional because Netflux can use <code>WebSocket</code> instead. For some use cases maybe you still want to connect your server to the peer to peer network via <code>RTCDataChannel</code>, then you have to successfully install this dependency.</p><p>If you have problems with <code>wrtc</code> installation then:</p><ul>
+<li>For Ubuntu 16.04 execute: <code>sudo apt-get install libncurses5-dev libssl-dev libnss3-dev libexpat1-dev</code></li>
+<li>For another system, consult <code>wrtc</code> home page: <a href="https://github.com/js-platform/node-webrtc">https://github.com/js-platform/node-webrtc</a></li>
+</ul><h2>What you need</h2><p>For fully functional peer to peer network, Netflux needs:</p><ul>
+<li>Signaling server (default: <code>wss://sigver-coastteam.rhcloud.com:8443</code>)</li>
+<li>STUN server (default: <code>stun:turn01.uswest.xirsys.com</code>)</li>
+<li>TURN server (no default)</li>
+</ul><p>Netflux comes with Signaling and STUN servers by default for easier quickstart. You may specify each of those servers (<a href="./manual/configuration.html">how to do it</a>).</p><h3>Signaling server</h3><p>We developed a signaling server called <a href="https://github.com/coast-team/sigver">Sigver</a>. It is the only signaling server (signaling mechanism) which is supported by Netflux for now. It is available online:</p><pre><code><code class="source-code prettyprint">ws://sigver-coastteam.rhcloud.com:8000</code>
+</code></pre><p>or</p><pre><code><code class="source-code prettyprint">wss://sigver-coastteam.rhcloud.com:8443</code>
+</code></pre><p><strong>Remark</strong>: Due to the rhcloud application hosting specification, following a period of inactivity, the server will be available after a while. Try again a few seconds later.</p><p>We recommend to deploy your own instance of Sigver for production.</p><h3>STUN/TURN servers</h3><p>STUN and TURN servers are used by WebRTC.</p><p>A few free STUN servers are available online, provided by Xirsys or Google for example. Unfortunately free TURN server is no longer available on the Internet. Thus there is no one by default in Netflux. Some companies like <a href="http://xirsys.com">Xirsys</a> may help.</p></div>
+        <a data-ice="link" href="manual/installation.html"></a>
+      </div>
+    </div>
+<div class="manual-card-wrap" data-ice="cards">
+      <div class="manual-card">
+        <div data-ice="card"><h1>Examples</h1><p>Each of the clients in the following examples included <code>dist/netflux.es5.umd.min.js</code> script in his browser. Thus Netflux is available under global <code>netflux</code> variable.</p><h2>3 browsers/clients</h2><p>Peers <strong>A</strong>, <strong>B</strong> and <strong>C</strong> will constitute a peer to peer network. We suppose that all of them using the default Signaling server provided by Netflux.</p><p><strong>A</strong> creates the network:</p><pre><code class="lang-javascript"><code class="source-code prettyprint">// Creates network with default settings
+let network = netflux.create();
+
+// When a message  has arrived from the network
+network.onMessage = (peerId, msg, isBroadcast) =&gt; {
+  // do something...
+};
+
+// When a new peer has joined the network
+network.onPeerJoin = (peerId) =&gt; {
+  // do something...
+};
+
+// When one of the network members has left
+network.onPeerLeave = (peerId) =&gt; {
+  // do something...
+};
+
+// Allows other peers to join this network
+network.open()
+  .then(({key}) =&gt; {
+    // Other peers can now join this network
+  })</code>
+</code></pre><p><strong>A</strong> gives <strong>B</strong> the <code>key</code>. <strong>B</strong> joins the network:</p><pre><code class="lang-javascript"><code class="source-code prettyprint">// Creates network with default settings
+let network = netflux.create();
+
+network.onMessage = (peerId, msg, isBroadcast) =&gt; { /* do something... */};
+
+network.onPeerJoin = (peerId) =&gt; { /* do something... */};
+
+network.onPeerLeave = (peerId) =&gt; { /* do something... */};
+
+// Joins the network with the key provided by A
+network.join(key)
+  .then(() =&gt; {
+    /*
+      B has joined successfully.
+      From now onPeerJoin handler will be called in A&apos;s browser and
+      onPeerJoin handler will be called in B&apos;s browser too
+      (because of A who is already the network member).
+    */
+  })</code>
+</code></pre><p><strong>A</strong> or <strong>B</strong> gives <strong>C</strong> the <code>key</code>. <strong>C</strong> joins the network, then he sends one message to all member and one private message to <strong>B</strong>:</p><pre><code class="lang-javascript"><code class="source-code prettyprint">// Creates network with default settings
+let network = netflux.create();
+
+network.onMessage = (peerId, msg, isBroadcast) =&gt; { /* do something... */};
+
+network.onPeerJoin = (peerId) =&gt; { /* do something... */};
+
+network.onPeerLeave = (peerId) =&gt; { /* do something... */};
+
+// Joins the network with the key provided by A
+network.join(key)
+  .then(() =&gt; {
+    /*
+      C has joined successfully.
+      From now onPeerJoin handler will be called in A&apos;s browser once, in B&apos;s
+      browser once and in C&apos;s browser twice (because of A and B).
+    */
+
+    // C sends a message to all network members
+    network.send(&apos;Hello everyone! It is C.&apos;)
+
+    // C sends a private message to B
+    network.sendTo(idOfB, &apos;Pss, B, you know, A cannot hear us!&apos;)
+  })</code>
+</code></pre></div>
+        <a data-ice="link" href="manual/3peers.html"></a>
+      </div>
+    </div>
+</div>
+</div>
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(1.0.2)</span><img src="./image/esdoc-logo-mini-black.png"></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>

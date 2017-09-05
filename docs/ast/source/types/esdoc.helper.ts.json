@@ -1,0 +1,354 @@
+{
+  "type": "File",
+  "start": 0,
+  "end": 2869,
+  "loc": {
+    "start": {
+      "line": 1,
+      "column": 0
+    },
+    "end": {
+      "line": 56,
+      "column": 0
+    }
+  },
+  "program": {
+    "type": "Program",
+    "start": 0,
+    "end": 2869,
+    "loc": {
+      "start": {
+        "line": 1,
+        "column": 0
+      },
+      "end": {
+        "line": 56,
+        "column": 0
+      }
+    },
+    "sourceType": "module",
+    "body": [],
+    "directives": [],
+    "leadingComments": null,
+    "innerComments": [
+      {
+        "type": "CommentBlock",
+        "value": "*\n * @typedef {Object} Topology\n * @property {number} [FULL_MESH=0] Full mesh topology.\n ",
+        "start": 0,
+        "end": 93,
+        "loc": {
+          "start": {
+            "line": 1,
+            "column": 0
+          },
+          "end": {
+            "line": 4,
+            "column": 3
+          }
+        }
+      },
+      {
+        "type": "CommentBlock",
+        "value": "*\n * The state fo the signaling server for WebRTC.\n * @typedef {Object} SignalingState\n * @property {number} [CONNECTING=0] The connection is not yet open.\n * @property {number} [OPEN=1] The connection is open and ready to communicate.\n * @property {number} [FIRST_CONNECTED=2] `RTCDataChannel` has been established\n * with one of the web group member. From now the signaling is no longer needed,\n * because the next of the joining process will pass through this member.\n * @property {number} [READY_TO_JOIN_OTHERS=3] You are successfully joined a\n * web group and ready to join others.\n * @property {number} [CLOSED=4] The connection is closed.\n ",
+        "start": 94,
+        "end": 745,
+        "loc": {
+          "start": {
+            "line": 5,
+            "column": 0
+          },
+          "end": {
+            "line": 16,
+            "column": 3
+          }
+        }
+      },
+      {
+        "type": "CommentBlock",
+        "value": "*\n * The state of the web group.\n * @typedef {Object} WebGroupState\n * @property {number} [JOINING=0] You are joining the web group.\n * @property {number} [JOINED=1] You have successfully joined the web group\n * and ready to broadcast messages via `send` method.\n * @property {number} [LEFT=2] You have left the web group. If the connection\n * to the web group has lost and `autoRejoin=true`, then the state would be `LEFT`,\n * (usually during a relatively short period) before the rejoining process start.\n ",
+        "start": 746,
+        "end": 1258,
+        "loc": {
+          "start": {
+            "line": 17,
+            "column": 0
+          },
+          "end": {
+            "line": 26,
+            "column": 3
+          }
+        }
+      },
+      {
+        "type": "CommentBlock",
+        "value": "*\n * @external {RTCIceServer} https://developer.mozilla.org/en/docs/Web/API/RTCIceServer\n ",
+        "start": 1259,
+        "end": 1353,
+        "loc": {
+          "start": {
+            "line": 27,
+            "column": 0
+          },
+          "end": {
+            "line": 29,
+            "column": 3
+          }
+        }
+      },
+      {
+        "type": "CommentBlock",
+        "value": "*\n * @typedef {Object} WebGroupOptions\n * @property {Topology} [topology=Topology.FULL_MESH] Topology identifier\n * (Full mesh is the only one supported by Netflux for now).\n * @property {string} [signalingURL=\"wss://www.coedit.re:20473\"] Signaling URL for WebRTC.\n * @property {RTCIceServer[]} [iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]\n * Array of Ice servers for WebRTC.\n * @property {boolean} [autoRejoin=true] Whether to automatically rejoin\n * the web group on disconnect or not. Its value may be modified after\n * `WebGroup` instantiation at any time.\n ",
+        "start": 1354,
+        "end": 1930,
+        "loc": {
+          "start": {
+            "line": 30,
+            "column": 0
+          },
+          "end": {
+            "line": 40,
+            "column": 3
+          }
+        }
+      },
+      {
+        "type": "CommentBlock",
+        "value": "*\n * @typedef {Object} WebGroupBotServerOptions\n * @property {Topology} [topology=WebGroupOptions.topology] Topology identifier\n * (Full mesh is the only one supported by Netflux for now).\n * @property {string} [signalingURL=WebGroupOptions.signalingURL] Signaling URL for WebRTC.\n * @property {RTCIceServer[]} [iceServers=WebGroupOptions.iceServers]\n * Array of Ice servers for WebRTC.\n * @property {boolean} [autoRejoin=WebGroupOptions.autoRejoin] Whether to automatically rejoin\n * the web group on disconnect or not. Its value may be modified after\n * `WebGroup` instantiation at any time.\n * @property {Object} [bot] Server related options of the bot.\n * @property {string} [bot.url=''] Bot server URL open to outside.\n * @property {Object} [bot.server=undefined] [µWebSockets](https://github.com/uNetworking/uWebSockets) `Server` object.\n * @property {boolean} [bot.perMessageDeflate=false] Enable/disable permessage-deflate.\n ",
+        "start": 1931,
+        "end": 2868,
+        "loc": {
+          "start": {
+            "line": 41,
+            "column": 0
+          },
+          "end": {
+            "line": 55,
+            "column": 3
+          }
+        }
+      }
+    ]
+  },
+  "comments": [
+    {
+      "type": "CommentBlock",
+      "value": "*\n * @typedef {Object} Topology\n * @property {number} [FULL_MESH=0] Full mesh topology.\n ",
+      "start": 0,
+      "end": 93,
+      "loc": {
+        "start": {
+          "line": 1,
+          "column": 0
+        },
+        "end": {
+          "line": 4,
+          "column": 3
+        }
+      }
+    },
+    {
+      "type": "CommentBlock",
+      "value": "*\n * The state fo the signaling server for WebRTC.\n * @typedef {Object} SignalingState\n * @property {number} [CONNECTING=0] The connection is not yet open.\n * @property {number} [OPEN=1] The connection is open and ready to communicate.\n * @property {number} [FIRST_CONNECTED=2] `RTCDataChannel` has been established\n * with one of the web group member. From now the signaling is no longer needed,\n * because the next of the joining process will pass through this member.\n * @property {number} [READY_TO_JOIN_OTHERS=3] You are successfully joined a\n * web group and ready to join others.\n * @property {number} [CLOSED=4] The connection is closed.\n ",
+      "start": 94,
+      "end": 745,
+      "loc": {
+        "start": {
+          "line": 5,
+          "column": 0
+        },
+        "end": {
+          "line": 16,
+          "column": 3
+        }
+      }
+    },
+    {
+      "type": "CommentBlock",
+      "value": "*\n * The state of the web group.\n * @typedef {Object} WebGroupState\n * @property {number} [JOINING=0] You are joining the web group.\n * @property {number} [JOINED=1] You have successfully joined the web group\n * and ready to broadcast messages via `send` method.\n * @property {number} [LEFT=2] You have left the web group. If the connection\n * to the web group has lost and `autoRejoin=true`, then the state would be `LEFT`,\n * (usually during a relatively short period) before the rejoining process start.\n ",
+      "start": 746,
+      "end": 1258,
+      "loc": {
+        "start": {
+          "line": 17,
+          "column": 0
+        },
+        "end": {
+          "line": 26,
+          "column": 3
+        }
+      }
+    },
+    {
+      "type": "CommentBlock",
+      "value": "*\n * @external {RTCIceServer} https://developer.mozilla.org/en/docs/Web/API/RTCIceServer\n ",
+      "start": 1259,
+      "end": 1353,
+      "loc": {
+        "start": {
+          "line": 27,
+          "column": 0
+        },
+        "end": {
+          "line": 29,
+          "column": 3
+        }
+      }
+    },
+    {
+      "type": "CommentBlock",
+      "value": "*\n * @typedef {Object} WebGroupOptions\n * @property {Topology} [topology=Topology.FULL_MESH] Topology identifier\n * (Full mesh is the only one supported by Netflux for now).\n * @property {string} [signalingURL=\"wss://www.coedit.re:20473\"] Signaling URL for WebRTC.\n * @property {RTCIceServer[]} [iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]\n * Array of Ice servers for WebRTC.\n * @property {boolean} [autoRejoin=true] Whether to automatically rejoin\n * the web group on disconnect or not. Its value may be modified after\n * `WebGroup` instantiation at any time.\n ",
+      "start": 1354,
+      "end": 1930,
+      "loc": {
+        "start": {
+          "line": 30,
+          "column": 0
+        },
+        "end": {
+          "line": 40,
+          "column": 3
+        }
+      }
+    },
+    {
+      "type": "CommentBlock",
+      "value": "*\n * @typedef {Object} WebGroupBotServerOptions\n * @property {Topology} [topology=WebGroupOptions.topology] Topology identifier\n * (Full mesh is the only one supported by Netflux for now).\n * @property {string} [signalingURL=WebGroupOptions.signalingURL] Signaling URL for WebRTC.\n * @property {RTCIceServer[]} [iceServers=WebGroupOptions.iceServers]\n * Array of Ice servers for WebRTC.\n * @property {boolean} [autoRejoin=WebGroupOptions.autoRejoin] Whether to automatically rejoin\n * the web group on disconnect or not. Its value may be modified after\n * `WebGroup` instantiation at any time.\n * @property {Object} [bot] Server related options of the bot.\n * @property {string} [bot.url=''] Bot server URL open to outside.\n * @property {Object} [bot.server=undefined] [µWebSockets](https://github.com/uNetworking/uWebSockets) `Server` object.\n * @property {boolean} [bot.perMessageDeflate=false] Enable/disable permessage-deflate.\n ",
+      "start": 1931,
+      "end": 2868,
+      "loc": {
+        "start": {
+          "line": 41,
+          "column": 0
+        },
+        "end": {
+          "line": 55,
+          "column": 3
+        }
+      }
+    }
+  ],
+  "tokens": [
+    {
+      "type": "CommentBlock",
+      "value": "*\n * @typedef {Object} Topology\n * @property {number} [FULL_MESH=0] Full mesh topology.\n ",
+      "start": 0,
+      "end": 93,
+      "loc": {
+        "start": {
+          "line": 1,
+          "column": 0
+        },
+        "end": {
+          "line": 4,
+          "column": 3
+        }
+      }
+    },
+    {
+      "type": "CommentBlock",
+      "value": "*\n * The state fo the signaling server for WebRTC.\n * @typedef {Object} SignalingState\n * @property {number} [CONNECTING=0] The connection is not yet open.\n * @property {number} [OPEN=1] The connection is open and ready to communicate.\n * @property {number} [FIRST_CONNECTED=2] `RTCDataChannel` has been established\n * with one of the web group member. From now the signaling is no longer needed,\n * because the next of the joining process will pass through this member.\n * @property {number} [READY_TO_JOIN_OTHERS=3] You are successfully joined a\n * web group and ready to join others.\n * @property {number} [CLOSED=4] The connection is closed.\n ",
+      "start": 94,
+      "end": 745,
+      "loc": {
+        "start": {
+          "line": 5,
+          "column": 0
+        },
+        "end": {
+          "line": 16,
+          "column": 3
+        }
+      }
+    },
+    {
+      "type": "CommentBlock",
+      "value": "*\n * The state of the web group.\n * @typedef {Object} WebGroupState\n * @property {number} [JOINING=0] You are joining the web group.\n * @property {number} [JOINED=1] You have successfully joined the web group\n * and ready to broadcast messages via `send` method.\n * @property {number} [LEFT=2] You have left the web group. If the connection\n * to the web group has lost and `autoRejoin=true`, then the state would be `LEFT`,\n * (usually during a relatively short period) before the rejoining process start.\n ",
+      "start": 746,
+      "end": 1258,
+      "loc": {
+        "start": {
+          "line": 17,
+          "column": 0
+        },
+        "end": {
+          "line": 26,
+          "column": 3
+        }
+      }
+    },
+    {
+      "type": "CommentBlock",
+      "value": "*\n * @external {RTCIceServer} https://developer.mozilla.org/en/docs/Web/API/RTCIceServer\n ",
+      "start": 1259,
+      "end": 1353,
+      "loc": {
+        "start": {
+          "line": 27,
+          "column": 0
+        },
+        "end": {
+          "line": 29,
+          "column": 3
+        }
+      }
+    },
+    {
+      "type": "CommentBlock",
+      "value": "*\n * @typedef {Object} WebGroupOptions\n * @property {Topology} [topology=Topology.FULL_MESH] Topology identifier\n * (Full mesh is the only one supported by Netflux for now).\n * @property {string} [signalingURL=\"wss://www.coedit.re:20473\"] Signaling URL for WebRTC.\n * @property {RTCIceServer[]} [iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]\n * Array of Ice servers for WebRTC.\n * @property {boolean} [autoRejoin=true] Whether to automatically rejoin\n * the web group on disconnect or not. Its value may be modified after\n * `WebGroup` instantiation at any time.\n ",
+      "start": 1354,
+      "end": 1930,
+      "loc": {
+        "start": {
+          "line": 30,
+          "column": 0
+        },
+        "end": {
+          "line": 40,
+          "column": 3
+        }
+      }
+    },
+    {
+      "type": "CommentBlock",
+      "value": "*\n * @typedef {Object} WebGroupBotServerOptions\n * @property {Topology} [topology=WebGroupOptions.topology] Topology identifier\n * (Full mesh is the only one supported by Netflux for now).\n * @property {string} [signalingURL=WebGroupOptions.signalingURL] Signaling URL for WebRTC.\n * @property {RTCIceServer[]} [iceServers=WebGroupOptions.iceServers]\n * Array of Ice servers for WebRTC.\n * @property {boolean} [autoRejoin=WebGroupOptions.autoRejoin] Whether to automatically rejoin\n * the web group on disconnect or not. Its value may be modified after\n * `WebGroup` instantiation at any time.\n * @property {Object} [bot] Server related options of the bot.\n * @property {string} [bot.url=''] Bot server URL open to outside.\n * @property {Object} [bot.server=undefined] [µWebSockets](https://github.com/uNetworking/uWebSockets) `Server` object.\n * @property {boolean} [bot.perMessageDeflate=false] Enable/disable permessage-deflate.\n ",
+      "start": 1931,
+      "end": 2868,
+      "loc": {
+        "start": {
+          "line": 41,
+          "column": 0
+        },
+        "end": {
+          "line": 55,
+          "column": 3
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "eof",
+        "beforeExpr": false,
+        "startsExpr": false,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null,
+        "updateContext": null
+      },
+      "start": 2869,
+      "end": 2869,
+      "loc": {
+        "start": {
+          "line": 56,
+          "column": 0
+        },
+        "end": {
+          "line": 56,
+          "column": 0
+        }
+      }
+    }
+  ]
+}

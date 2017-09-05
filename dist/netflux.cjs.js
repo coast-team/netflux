@@ -8738,26 +8738,46 @@ var WebChannel = (function (_super) {
 }(Service$1));
 
 var wcs = new WeakMap();
+/**
+ * BotServer can listen on web socket. A peer can invite bot to join his `WebChannel`.
+ * He can also join one of the bot's `WebChannel`.
+ */
 var WebGroup = (function () {
+    /**
+     * Create instance of WebGroup.
+     * @param {WebGroupOptions} options [description]
+     */
     function WebGroup(options) {
         wcs.set(this, new WebChannel(options));
     }
     Object.defineProperty(WebGroup.prototype, "id", {
+        /**
+         * WebGroup id. The same value for all members.
+         */
         get: function () { return wcs.get(this).id; },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(WebGroup.prototype, "myId", {
+        /**
+         * Your unique member id.
+         */
         get: function () { return wcs.get(this).myId; },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(WebGroup.prototype, "members", {
+        /**
+         * An array of member ids.
+         */
         get: function () { return wcs.get(this).members; },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(WebGroup.prototype, "topology", {
+        /**
+         * Topology id.
+         */
         get: function () { return wcs.get(this).topology; },
         enumerable: true,
         configurable: true
@@ -8979,7 +8999,6 @@ var WebGroupBotServer = (function () {
      * plus `host` and `port` parameters.
      */
     function WebGroupBotServer(options) {
-        if (options === void 0) { options = {}; }
         botServer = new BotServer(options);
     }
     Object.defineProperty(WebGroupBotServer.prototype, "server", {
