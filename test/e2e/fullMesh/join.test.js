@@ -94,7 +94,7 @@ describe('Fully connected', () => {
     })
   })
 
-  xdescribe('Should ping', () => {
+  describe('Should ping', () => {
     let wgs
 
     afterEach(() => wgs.forEach(wg => wg.leave()))
