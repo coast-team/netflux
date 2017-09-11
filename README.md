@@ -62,7 +62,7 @@
  - `dist/netflux.umd.js` ES5 code, UMD format for browsers.
 
 ## Documentation
-Website: https://doc.esdoc.org/github.com/coast-team/netflux
+Website: https://coast-team.github.io/netflux
 
 [WebSocket]: https://developer.mozilla.org/en/docs/Web/API/WebSocket
 [RTCDataChannel]: https://developer.mozilla.org/en/docs/Web/API/RTCDataChannel
