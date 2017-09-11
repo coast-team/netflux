@@ -11,19 +11,20 @@
         "unexportedIdentifier": {"enable": false},
         "typeInference": {"enable": false},
         "brand": {
+          "logo": "./manual/asset/logo_favicon.jpg",
           "title": "Netflux",
           "description": "Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done.",
           "repository": "https://github.com/coast-team/netflux"
         },
         "manual": {
-          "index": "./README.md",
+          "index": "./manual/index.md",
           "globalIndex": true,
           "asset": "./manual/asset",
           "files": [
-            "./manual/overview.md",
-            "./manual/configuration.md",
             "./manual/installation.md",
-            "./manual/examples/3peers.md"
+            "./manual/usage.md",
+            "./manual/bestpractices.md",
+            "./manual/faq.md"
           ]
         }
       }

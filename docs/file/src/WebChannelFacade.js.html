@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl" href="../../">
+  <title data-ice="title">src/WebChannelFacade.js | Netflux</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  <script src="script/manual.js"></script>
+<meta name="description" content="Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done."><meta property="twitter:card" content="summary"><meta property="twitter:title" content="Netflux"><meta property="twitter:description" content="Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done."></head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./" style="display: flex; align-items: center;"><img src="./image/brand_logo.png" style="width:34px;"></a>
+  
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+<a style="position:relative; top:3px;" href="https://github.com/coast-team/netflux"><img width="20px" src="./image/github.png"></a></header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/BotServerFacade.js~WebGroupBotServer.html">WebGroupBotServer</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span></span></li>
+<li data-ice="doc"><a data-ice="dirPath" class="nav-dir-path" href="identifiers.html#types">types</a><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-DataTypeView">DataTypeView</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-SignalingState">SignalingState</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-Topology">Topology</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupBotServerOptions">WebGroupBotServerOptions</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupOptions">WebGroupOptions</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupState">WebGroupState</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/http.html#http_class_http_server">NodeJS.http.Server</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/https.html#https_class_https_server">NodeJS.https.Server</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://developer.mozilla.org/en/docs/Web/API/RTCIceServer">RTCIceServer</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array">Uint8Array</a></span></span></li>
+</ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><h1 data-ice="title">src/WebChannelFacade.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">import { WebChannel } from &apos;./service/WebChannel&apos;;
+/**
+ * @ignore
+ */
+export const wcs = new WeakMap();
+/**
+ * This class is an API starting point. It represents a peer to peer network,
+ * simply called a group. Each group member can send/receive broadcast
+ * as well as personal messages, invite other persons or bots (see {@link WebGroupBotServer}).
+ * @example
+ * // Create a WebGroup with full mesh topology, autorejoin feature and
+ * // specified Signaling and ICE servers for WebRTC.
+ *
+ * const wg = new WebGroup({
+ *   signalingURL: &apos;wss://mysignaling.com&apos;
+ *   iceServers: [
+ *     {
+ *       urls: &apos;stun.l.google.com:19302&apos;
+ *     },
+ *     {
+ *       urls: [&apos;turn:myturn.com?transport=udp&apos;, &apos;turn:myturn?transport=tcp&apos;],
+ *       username: &apos;user&apos;,
+ *       password: &apos;password&apos;
+ *     }
+ *   ]
+ * })
+ *
+ * wg.onPeerJoin = (id) =&gt; {
+ *   // TODO...
+ * }
+ * wg.onPeerLeave = (id) =&gt; {
+ *   // TODO...
+ * }
+ * wg.onMessage = (id, msg, isBroadcast) =&gt; {
+ *   // TODO...
+ * }
+ * wg.onStateChanged = (state) =&gt; {
+ *   // TODO...
+ * }
+ * wg.onSignalingStateChanged = (state) =&gt; {
+ *   // TODO...
+ * }
+ */
+export class WebGroup {
+    /**
+     * @param {WebGroupOptions} [options]
+     * @param {Topology} [options.topology=Topology.FULL_MESH]
+     * @param {string} [options.signalingURL=&apos;wss://www.coedit.re:20473&apos;]
+     * @param {RTCIceServer[]} [options.iceServers=[{urls: &apos;stun:stun3.l.google.com:19302&apos;}]]
+     * @param {boolean} [options.autoRejoin=true]
+     */
+    constructor(options = {}) {
+        wcs.set(this, new WebChannel(options));
+    }
+    /**
+     * {@link WebGroup} identifier. The same value for all members.
+     * @type {number}
+     */
+    get id() { return wcs.get(this).id; }
+    /**
+     * Your unique member identifier in the group.
+     * @type {number}
+     */
+    get myId() { return wcs.get(this).myId; }
+    /**
+     * An array of member identifiers (except yours).
+     * @type {number[]}
+     */
+    get members() { return wcs.get(this).members; }
+    /**
+     * Topology identifier.
+     * @type {Topology}
+     */
+    get topology() { return wcs.get(this).topology; }
+    /**
+     * The state of the {@link WebGroup} connection.
+     * @type {WebGroupState}
+     */
+    get state() { return wcs.get(this).state; }
+    /**
+     * The state of the signaling server.
+     * @type {SignalingState}
+     */
+    get signalingState() { return wcs.get(this).signaling.state; }
+    /**
+     * The signaling server URL.
+     * @type {string}
+     */
+    get signalingURL() { return wcs.get(this).signaling.url; }
+    /**
+     * If equals to true, auto rejoin feature is enabled.
+     * @type {boolean}
+     */
+    get autoRejoin() { return wcs.get(this).autoRejoin; }
+    /**
+     * Enable/Desable the auto rejoin feature.
+     * @type {boolean}
+     */
+    set autoRejoin(value) { wcs.get(this).autoRejoin = value; }
+    /**
+     * This handler is called when a message has been received from the group.
+     * @type {function(id: number, msg: DataTypeView, isBroadcast: boolean)}
+     */
+    set onMessage(handler) { wcs.get(this).onMessage = handler; }
+    /**
+     * This handler is called when a new member has joined the group.
+     * @type {function(id: number)}
+     */
+    set onPeerJoin(handler) { wcs.get(this).onPeerJoin = handler; }
+    /**
+     * This handler is called when a member hes left the group.
+     * @type {function(id: number)}
+     */
+    set onPeerLeave(handler) { wcs.get(this).onPeerLeave = handler; }
+    /**
+     * This handler is called when the group state has changed.
+     * @type {function(state: WebGroupState)}
+     */
+    set onStateChanged(handler) { wcs.get(this).onStateChanged = handler; }
+    /**
+     * This handler is called when the signaling state has changed.
+     * @type {function(state: SignalingState)}
+     */
+    set onSignalingStateChanged(handler) { wcs.get(this).onSignalingStateChanged = handler; }
+    /**
+     * Join the group identified by a key provided by one of the group member.
+     * @param {string} key
+     */
+    join(key) { return wcs.get(this).join(key); }
+    /**
+     * Invite a bot server to join this group.
+     * @param {string} url - Bot server URL (See {@link WebGroupBotServerOptions})
+     */
+    invite(url) { return wcs.get(this).invite(url); }
+    /**
+     * Close the connection with Signaling server.
+     */
+    closeSignaling() { return wcs.get(this).closeSignaling(); }
+    /**
+     * Leave the group which means close channels with all members and connection
+     * with Signaling server.
+     */
+    leave() { return wcs.get(this).leave(); }
+    /**
+     * Broadcast a message to the group.
+     * @param {DataTypeView} data
+     */
+    send(data) { return wcs.get(this).send(data); }
+    /**
+     * Send a message to a particular group member.
+     * @param {number}    id Member identifier
+     * @param {DataTypeView}  data Message
+     */
+    sendTo(id, data) { return wcs.get(this).sendTo(id, data); }
+    /**
+     * Get web group latency
+     * @return {Promise&lt;number&gt;} Latency in milliseconds
+     */
+    ping() { return wcs.get(this).ping(); }
+}
+</code></pre>
+
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(1.0.2)</span><img src="./image/esdoc-logo-mini-black.png"></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>

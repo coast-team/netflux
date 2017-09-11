@@ -1,0 +1,3344 @@
+{
+  "type": "File",
+  "start": 0,
+  "end": 2451,
+  "loc": {
+    "start": {
+      "line": 1,
+      "column": 0
+    },
+    "end": {
+      "line": 71,
+      "column": 0
+    }
+  },
+  "program": {
+    "type": "Program",
+    "start": 0,
+    "end": 2451,
+    "loc": {
+      "start": {
+        "line": 1,
+        "column": 0
+      },
+      "end": {
+        "line": 71,
+        "column": 0
+      }
+    },
+    "sourceType": "module",
+    "body": [
+      {
+        "type": "ImportDeclaration",
+        "start": 0,
+        "end": 40,
+        "loc": {
+          "start": {
+            "line": 1,
+            "column": 0
+          },
+          "end": {
+            "line": 1,
+            "column": 40
+          }
+        },
+        "specifiers": [
+          {
+            "type": "ImportSpecifier",
+            "start": 9,
+            "end": 18,
+            "loc": {
+              "start": {
+                "line": 1,
+                "column": 9
+              },
+              "end": {
+                "line": 1,
+                "column": 18
+              }
+            },
+            "imported": {
+              "type": "Identifier",
+              "start": 9,
+              "end": 18,
+              "loc": {
+                "start": {
+                  "line": 1,
+                  "column": 9
+                },
+                "end": {
+                  "line": 1,
+                  "column": 18
+                },
+                "identifierName": "BotServer"
+              },
+              "name": "BotServer"
+            },
+            "local": {
+              "type": "Identifier",
+              "start": 9,
+              "end": 18,
+              "loc": {
+                "start": {
+                  "line": 1,
+                  "column": 9
+                },
+                "end": {
+                  "line": 1,
+                  "column": 18
+                },
+                "identifierName": "BotServer"
+              },
+              "name": "BotServer"
+            }
+          }
+        ],
+        "source": {
+          "type": "StringLiteral",
+          "start": 26,
+          "end": 39,
+          "loc": {
+            "start": {
+              "line": 1,
+              "column": 26
+            },
+            "end": {
+              "line": 1,
+              "column": 39
+            }
+          },
+          "extra": {
+            "rawValue": "./BotServer",
+            "raw": "'./BotServer'"
+          },
+          "value": "./BotServer"
+        }
+      },
+      {
+        "type": "VariableDeclaration",
+        "start": 41,
+        "end": 55,
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0
+          },
+          "end": {
+            "line": 2,
+            "column": 14
+          }
+        },
+        "declarations": [
+          {
+            "type": "VariableDeclarator",
+            "start": 45,
+            "end": 54,
+            "loc": {
+              "start": {
+                "line": 2,
+                "column": 4
+              },
+              "end": {
+                "line": 2,
+                "column": 13
+              }
+            },
+            "id": {
+              "type": "Identifier",
+              "start": 45,
+              "end": 54,
+              "loc": {
+                "start": {
+                  "line": 2,
+                  "column": 4
+                },
+                "end": {
+                  "line": 2,
+                  "column": 13
+                },
+                "identifierName": "botServer"
+              },
+              "name": "botServer"
+            },
+            "init": null
+          }
+        ],
+        "kind": "let",
+        "trailingComments": [
+          {
+            "type": "CommentBlock",
+            "value": "*\n * Bot server may be a member of severals groups. Each group is isolated.\n * He can be invited by a group member via {@link WebGroup#invite} method.\n * @example\n * // In NodeJS:\n * // Create a bot server with full mesh topology, without autorejoin feature\n * // and with specified Signaling and ICE servers for WebRTC.\n * // Bot server is listening on 'ws://BOT_HOST:BOT_PORT'.\n *\n * const http = require('http')\n * const server = http.createServer(app.callback())\n * const bot = new WebGroupBotServer({\n *   signalingURL: 'wss://mysignaling.com'\n *   iceServers: [\n *     {\n *       urls: 'stun.l.google.com:19302'\n *     },\n *     {\n *       urls: ['turn:myturn.com?transport=udp', 'turn:myturn?transport=tcp'],\n *       username: 'user',\n *       password: 'password'\n *     }\n *   ],\n *   bot: { server }\n * })\n *\n * bot.onWebGroup = (wg) => {\n *   // TODO...\n * }\n *\n * server.listen(BOT_PORT, BOT_HOST)\n ",
+            "start": 56,
+            "end": 972,
+            "loc": {
+              "start": {
+                "line": 3,
+                "column": 0
+              },
+              "end": {
+                "line": 34,
+                "column": 3
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "ExportNamedDeclaration",
+        "start": 973,
+        "end": 2450,
+        "loc": {
+          "start": {
+            "line": 35,
+            "column": 0
+          },
+          "end": {
+            "line": 70,
+            "column": 1
+          }
+        },
+        "specifiers": [],
+        "source": null,
+        "declaration": {
+          "type": "ClassDeclaration",
+          "start": 980,
+          "end": 2450,
+          "loc": {
+            "start": {
+              "line": 35,
+              "column": 7
+            },
+            "end": {
+              "line": 70,
+              "column": 1
+            }
+          },
+          "id": {
+            "type": "Identifier",
+            "start": 986,
+            "end": 1003,
+            "loc": {
+              "start": {
+                "line": 35,
+                "column": 13
+              },
+              "end": {
+                "line": 35,
+                "column": 30
+              },
+              "identifierName": "WebGroupBotServer"
+            },
+            "name": "WebGroupBotServer",
+            "leadingComments": null
+          },
+          "superClass": null,
+          "body": {
+            "type": "ClassBody",
+            "start": 1004,
+            "end": 2450,
+            "loc": {
+              "start": {
+                "line": 35,
+                "column": 31
+              },
+              "end": {
+                "line": 70,
+                "column": 1
+              }
+            },
+            "body": [
+              {
+                "type": "ClassMethod",
+                "start": 1643,
+                "end": 1715,
+                "loc": {
+                  "start": {
+                    "line": 47,
+                    "column": 4
+                  },
+                  "end": {
+                    "line": 49,
+                    "column": 5
+                  }
+                },
+                "computed": false,
+                "key": {
+                  "type": "Identifier",
+                  "start": 1643,
+                  "end": 1654,
+                  "loc": {
+                    "start": {
+                      "line": 47,
+                      "column": 4
+                    },
+                    "end": {
+                      "line": 47,
+                      "column": 15
+                    },
+                    "identifierName": "constructor"
+                  },
+                  "name": "constructor",
+                  "leadingComments": null
+                },
+                "static": false,
+                "kind": "constructor",
+                "id": null,
+                "generator": false,
+                "expression": false,
+                "async": false,
+                "params": [
+                  {
+                    "type": "Identifier",
+                    "start": 1655,
+                    "end": 1662,
+                    "loc": {
+                      "start": {
+                        "line": 47,
+                        "column": 16
+                      },
+                      "end": {
+                        "line": 47,
+                        "column": 23
+                      },
+                      "identifierName": "options"
+                    },
+                    "name": "options"
+                  }
+                ],
+                "body": {
+                  "type": "BlockStatement",
+                  "start": 1664,
+                  "end": 1715,
+                  "loc": {
+                    "start": {
+                      "line": 47,
+                      "column": 25
+                    },
+                    "end": {
+                      "line": 49,
+                      "column": 5
+                    }
+                  },
+                  "body": [
+                    {
+                      "type": "ExpressionStatement",
+                      "start": 1674,
+                      "end": 1709,
+                      "loc": {
+                        "start": {
+                          "line": 48,
+                          "column": 8
+                        },
+                        "end": {
+                          "line": 48,
+                          "column": 43
+                        }
+                      },
+                      "expression": {
+                        "type": "AssignmentExpression",
+                        "start": 1674,
+                        "end": 1708,
+                        "loc": {
+                          "start": {
+                            "line": 48,
+                            "column": 8
+                          },
+                          "end": {
+                            "line": 48,
+                            "column": 42
+                          }
+                        },
+                        "operator": "=",
+                        "left": {
+                          "type": "Identifier",
+                          "start": 1674,
+                          "end": 1683,
+                          "loc": {
+                            "start": {
+                              "line": 48,
+                              "column": 8
+                            },
+                            "end": {
+                              "line": 48,
+                              "column": 17
+                            },
+                            "identifierName": "botServer"
+                          },
+                          "name": "botServer"
+                        },
+                        "right": {
+                          "type": "NewExpression",
+                          "start": 1686,
+                          "end": 1708,
+                          "loc": {
+                            "start": {
+                              "line": 48,
+                              "column": 20
+                            },
+                            "end": {
+                              "line": 48,
+                              "column": 42
+                            }
+                          },
+                          "callee": {
+                            "type": "Identifier",
+                            "start": 1690,
+                            "end": 1699,
+                            "loc": {
+                              "start": {
+                                "line": 48,
+                                "column": 24
+                              },
+                              "end": {
+                                "line": 48,
+                                "column": 33
+                              },
+                              "identifierName": "BotServer"
+                            },
+                            "name": "BotServer"
+                          },
+                          "arguments": [
+                            {
+                              "type": "Identifier",
+                              "start": 1700,
+                              "end": 1707,
+                              "loc": {
+                                "start": {
+                                  "line": 48,
+                                  "column": 34
+                                },
+                                "end": {
+                                  "line": 48,
+                                  "column": 41
+                                },
+                                "identifierName": "options"
+                              },
+                              "name": "options"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ],
+                  "directives": [],
+                  "trailingComments": null
+                },
+                "leadingComments": [
+                  {
+                    "type": "CommentBlock",
+                    "value": "*\n     * @param {WebGroupBotServerOptions} options\n     * @param {Topology} [options.topology=Topology.FULL_MESH]\n     * @param {string} [options.signalingURL='wss://www.coedit.re:20473']\n     * @param {RTCIceServer[]} [options.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]\n     * @param {boolean} [options.autoRejoin=false]\n     * @param {Object} options.bot\n     * @param {NodeJS.http.Server|NodeJS.https.Server} options.bot.server NodeJS http(s) server.\n     * @param {string} [options.bot.url] Bot server URL.\n     * @param {boolean} [options.bot.perMessageDeflate=false] Enable/disable permessage-deflate.\n     ",
+                    "start": 1010,
+                    "end": 1638,
+                    "loc": {
+                      "start": {
+                        "line": 36,
+                        "column": 4
+                      },
+                      "end": {
+                        "line": 46,
+                        "column": 7
+                      }
+                    }
+                  }
+                ],
+                "trailingComments": [
+                  {
+                    "type": "CommentBlock",
+                    "value": "*\n     * NodeJS http server instance (See https://nodejs.org/api/http.html)\n     * @type {NodeJS.http.Server|NodeJS.https.Server}\n     ",
+                    "start": 1720,
+                    "end": 1859,
+                    "loc": {
+                      "start": {
+                        "line": 50,
+                        "column": 4
+                      },
+                      "end": {
+                        "line": 53,
+                        "column": 7
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "ClassMethod",
+                "start": 1864,
+                "end": 1905,
+                "loc": {
+                  "start": {
+                    "line": 54,
+                    "column": 4
+                  },
+                  "end": {
+                    "line": 54,
+                    "column": 45
+                  }
+                },
+                "computed": false,
+                "key": {
+                  "type": "Identifier",
+                  "start": 1868,
+                  "end": 1874,
+                  "loc": {
+                    "start": {
+                      "line": 54,
+                      "column": 8
+                    },
+                    "end": {
+                      "line": 54,
+                      "column": 14
+                    },
+                    "identifierName": "server"
+                  },
+                  "name": "server"
+                },
+                "static": false,
+                "kind": "get",
+                "id": null,
+                "generator": false,
+                "expression": false,
+                "async": false,
+                "params": [],
+                "body": {
+                  "type": "BlockStatement",
+                  "start": 1877,
+                  "end": 1905,
+                  "loc": {
+                    "start": {
+                      "line": 54,
+                      "column": 17
+                    },
+                    "end": {
+                      "line": 54,
+                      "column": 45
+                    }
+                  },
+                  "body": [
+                    {
+                      "type": "ReturnStatement",
+                      "start": 1879,
+                      "end": 1903,
+                      "loc": {
+                        "start": {
+                          "line": 54,
+                          "column": 19
+                        },
+                        "end": {
+                          "line": 54,
+                          "column": 43
+                        }
+                      },
+                      "argument": {
+                        "type": "MemberExpression",
+                        "start": 1886,
+                        "end": 1902,
+                        "loc": {
+                          "start": {
+                            "line": 54,
+                            "column": 26
+                          },
+                          "end": {
+                            "line": 54,
+                            "column": 42
+                          }
+                        },
+                        "object": {
+                          "type": "Identifier",
+                          "start": 1886,
+                          "end": 1895,
+                          "loc": {
+                            "start": {
+                              "line": 54,
+                              "column": 26
+                            },
+                            "end": {
+                              "line": 54,
+                              "column": 35
+                            },
+                            "identifierName": "botServer"
+                          },
+                          "name": "botServer"
+                        },
+                        "property": {
+                          "type": "Identifier",
+                          "start": 1896,
+                          "end": 1902,
+                          "loc": {
+                            "start": {
+                              "line": 54,
+                              "column": 36
+                            },
+                            "end": {
+                              "line": 54,
+                              "column": 42
+                            },
+                            "identifierName": "server"
+                          },
+                          "name": "server"
+                        },
+                        "computed": false
+                      }
+                    }
+                  ],
+                  "directives": [],
+                  "trailingComments": null
+                },
+                "leadingComments": [
+                  {
+                    "type": "CommentBlock",
+                    "value": "*\n     * NodeJS http server instance (See https://nodejs.org/api/http.html)\n     * @type {NodeJS.http.Server|NodeJS.https.Server}\n     ",
+                    "start": 1720,
+                    "end": 1859,
+                    "loc": {
+                      "start": {
+                        "line": 50,
+                        "column": 4
+                      },
+                      "end": {
+                        "line": 53,
+                        "column": 7
+                      }
+                    }
+                  }
+                ],
+                "trailingComments": [
+                  {
+                    "type": "CommentBlock",
+                    "value": "*\n     * Set of web groups the bot is member of.\n     * @type {Set<WebGroup>}\n     ",
+                    "start": 1910,
+                    "end": 1997,
+                    "loc": {
+                      "start": {
+                        "line": 55,
+                        "column": 4
+                      },
+                      "end": {
+                        "line": 58,
+                        "column": 7
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "ClassMethod",
+                "start": 2002,
+                "end": 2049,
+                "loc": {
+                  "start": {
+                    "line": 59,
+                    "column": 4
+                  },
+                  "end": {
+                    "line": 59,
+                    "column": 51
+                  }
+                },
+                "computed": false,
+                "key": {
+                  "type": "Identifier",
+                  "start": 2006,
+                  "end": 2015,
+                  "loc": {
+                    "start": {
+                      "line": 59,
+                      "column": 8
+                    },
+                    "end": {
+                      "line": 59,
+                      "column": 17
+                    },
+                    "identifierName": "webGroups"
+                  },
+                  "name": "webGroups"
+                },
+                "static": false,
+                "kind": "get",
+                "id": null,
+                "generator": false,
+                "expression": false,
+                "async": false,
+                "params": [],
+                "body": {
+                  "type": "BlockStatement",
+                  "start": 2018,
+                  "end": 2049,
+                  "loc": {
+                    "start": {
+                      "line": 59,
+                      "column": 20
+                    },
+                    "end": {
+                      "line": 59,
+                      "column": 51
+                    }
+                  },
+                  "body": [
+                    {
+                      "type": "ReturnStatement",
+                      "start": 2020,
+                      "end": 2047,
+                      "loc": {
+                        "start": {
+                          "line": 59,
+                          "column": 22
+                        },
+                        "end": {
+                          "line": 59,
+                          "column": 49
+                        }
+                      },
+                      "argument": {
+                        "type": "MemberExpression",
+                        "start": 2027,
+                        "end": 2046,
+                        "loc": {
+                          "start": {
+                            "line": 59,
+                            "column": 29
+                          },
+                          "end": {
+                            "line": 59,
+                            "column": 48
+                          }
+                        },
+                        "object": {
+                          "type": "Identifier",
+                          "start": 2027,
+                          "end": 2036,
+                          "loc": {
+                            "start": {
+                              "line": 59,
+                              "column": 29
+                            },
+                            "end": {
+                              "line": 59,
+                              "column": 38
+                            },
+                            "identifierName": "botServer"
+                          },
+                          "name": "botServer"
+                        },
+                        "property": {
+                          "type": "Identifier",
+                          "start": 2037,
+                          "end": 2046,
+                          "loc": {
+                            "start": {
+                              "line": 59,
+                              "column": 39
+                            },
+                            "end": {
+                              "line": 59,
+                              "column": 48
+                            },
+                            "identifierName": "webGroups"
+                          },
+                          "name": "webGroups"
+                        },
+                        "computed": false
+                      }
+                    }
+                  ],
+                  "directives": [],
+                  "trailingComments": null
+                },
+                "leadingComments": [
+                  {
+                    "type": "CommentBlock",
+                    "value": "*\n     * Set of web groups the bot is member of.\n     * @type {Set<WebGroup>}\n     ",
+                    "start": 1910,
+                    "end": 1997,
+                    "loc": {
+                      "start": {
+                        "line": 55,
+                        "column": 4
+                      },
+                      "end": {
+                        "line": 58,
+                        "column": 7
+                      }
+                    }
+                  }
+                ],
+                "trailingComments": [
+                  {
+                    "type": "CommentBlock",
+                    "value": "*\n     * Bot server url. Used to invite the bot in a web group via {@link WebGroup#invite} method.\n     * @type {string}\n     ",
+                    "start": 2054,
+                    "end": 2184,
+                    "loc": {
+                      "start": {
+                        "line": 60,
+                        "column": 4
+                      },
+                      "end": {
+                        "line": 63,
+                        "column": 7
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "ClassMethod",
+                "start": 2189,
+                "end": 2224,
+                "loc": {
+                  "start": {
+                    "line": 64,
+                    "column": 4
+                  },
+                  "end": {
+                    "line": 64,
+                    "column": 39
+                  }
+                },
+                "computed": false,
+                "key": {
+                  "type": "Identifier",
+                  "start": 2193,
+                  "end": 2196,
+                  "loc": {
+                    "start": {
+                      "line": 64,
+                      "column": 8
+                    },
+                    "end": {
+                      "line": 64,
+                      "column": 11
+                    },
+                    "identifierName": "url"
+                  },
+                  "name": "url"
+                },
+                "static": false,
+                "kind": "get",
+                "id": null,
+                "generator": false,
+                "expression": false,
+                "async": false,
+                "params": [],
+                "body": {
+                  "type": "BlockStatement",
+                  "start": 2199,
+                  "end": 2224,
+                  "loc": {
+                    "start": {
+                      "line": 64,
+                      "column": 14
+                    },
+                    "end": {
+                      "line": 64,
+                      "column": 39
+                    }
+                  },
+                  "body": [
+                    {
+                      "type": "ReturnStatement",
+                      "start": 2201,
+                      "end": 2222,
+                      "loc": {
+                        "start": {
+                          "line": 64,
+                          "column": 16
+                        },
+                        "end": {
+                          "line": 64,
+                          "column": 37
+                        }
+                      },
+                      "argument": {
+                        "type": "MemberExpression",
+                        "start": 2208,
+                        "end": 2221,
+                        "loc": {
+                          "start": {
+                            "line": 64,
+                            "column": 23
+                          },
+                          "end": {
+                            "line": 64,
+                            "column": 36
+                          }
+                        },
+                        "object": {
+                          "type": "Identifier",
+                          "start": 2208,
+                          "end": 2217,
+                          "loc": {
+                            "start": {
+                              "line": 64,
+                              "column": 23
+                            },
+                            "end": {
+                              "line": 64,
+                              "column": 32
+                            },
+                            "identifierName": "botServer"
+                          },
+                          "name": "botServer"
+                        },
+                        "property": {
+                          "type": "Identifier",
+                          "start": 2218,
+                          "end": 2221,
+                          "loc": {
+                            "start": {
+                              "line": 64,
+                              "column": 33
+                            },
+                            "end": {
+                              "line": 64,
+                              "column": 36
+                            },
+                            "identifierName": "url"
+                          },
+                          "name": "url"
+                        },
+                        "computed": false
+                      }
+                    }
+                  ],
+                  "directives": [],
+                  "trailingComments": null
+                },
+                "leadingComments": [
+                  {
+                    "type": "CommentBlock",
+                    "value": "*\n     * Bot server url. Used to invite the bot in a web group via {@link WebGroup#invite} method.\n     * @type {string}\n     ",
+                    "start": 2054,
+                    "end": 2184,
+                    "loc": {
+                      "start": {
+                        "line": 60,
+                        "column": 4
+                      },
+                      "end": {
+                        "line": 63,
+                        "column": 7
+                      }
+                    }
+                  }
+                ],
+                "trailingComments": [
+                  {
+                    "type": "CommentBlock",
+                    "value": "*\n     * This handler is called when the bot has been invited into a web group by one its members.\n     * @type  {function(wg: WebGroup)} handler\n     ",
+                    "start": 2229,
+                    "end": 2384,
+                    "loc": {
+                      "start": {
+                        "line": 65,
+                        "column": 4
+                      },
+                      "end": {
+                        "line": 68,
+                        "column": 7
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "ClassMethod",
+                "start": 2389,
+                "end": 2448,
+                "loc": {
+                  "start": {
+                    "line": 69,
+                    "column": 4
+                  },
+                  "end": {
+                    "line": 69,
+                    "column": 63
+                  }
+                },
+                "computed": false,
+                "key": {
+                  "type": "Identifier",
+                  "start": 2393,
+                  "end": 2403,
+                  "loc": {
+                    "start": {
+                      "line": 69,
+                      "column": 8
+                    },
+                    "end": {
+                      "line": 69,
+                      "column": 18
+                    },
+                    "identifierName": "onWebGroup"
+                  },
+                  "name": "onWebGroup"
+                },
+                "static": false,
+                "kind": "set",
+                "id": null,
+                "generator": false,
+                "expression": false,
+                "async": false,
+                "params": [
+                  {
+                    "type": "Identifier",
+                    "start": 2404,
+                    "end": 2411,
+                    "loc": {
+                      "start": {
+                        "line": 69,
+                        "column": 19
+                      },
+                      "end": {
+                        "line": 69,
+                        "column": 26
+                      },
+                      "identifierName": "handler"
+                    },
+                    "name": "handler"
+                  }
+                ],
+                "body": {
+                  "type": "BlockStatement",
+                  "start": 2413,
+                  "end": 2448,
+                  "loc": {
+                    "start": {
+                      "line": 69,
+                      "column": 28
+                    },
+                    "end": {
+                      "line": 69,
+                      "column": 63
+                    }
+                  },
+                  "body": [
+                    {
+                      "type": "ExpressionStatement",
+                      "start": 2415,
+                      "end": 2446,
+                      "loc": {
+                        "start": {
+                          "line": 69,
+                          "column": 30
+                        },
+                        "end": {
+                          "line": 69,
+                          "column": 61
+                        }
+                      },
+                      "expression": {
+                        "type": "AssignmentExpression",
+                        "start": 2415,
+                        "end": 2445,
+                        "loc": {
+                          "start": {
+                            "line": 69,
+                            "column": 30
+                          },
+                          "end": {
+                            "line": 69,
+                            "column": 60
+                          }
+                        },
+                        "operator": "=",
+                        "left": {
+                          "type": "MemberExpression",
+                          "start": 2415,
+                          "end": 2435,
+                          "loc": {
+                            "start": {
+                              "line": 69,
+                              "column": 30
+                            },
+                            "end": {
+                              "line": 69,
+                              "column": 50
+                            }
+                          },
+                          "object": {
+                            "type": "Identifier",
+                            "start": 2415,
+                            "end": 2424,
+                            "loc": {
+                              "start": {
+                                "line": 69,
+                                "column": 30
+                              },
+                              "end": {
+                                "line": 69,
+                                "column": 39
+                              },
+                              "identifierName": "botServer"
+                            },
+                            "name": "botServer"
+                          },
+                          "property": {
+                            "type": "Identifier",
+                            "start": 2425,
+                            "end": 2435,
+                            "loc": {
+                              "start": {
+                                "line": 69,
+                                "column": 40
+                              },
+                              "end": {
+                                "line": 69,
+                                "column": 50
+                              },
+                              "identifierName": "onWebGroup"
+                            },
+                            "name": "onWebGroup"
+                          },
+                          "computed": false
+                        },
+                        "right": {
+                          "type": "Identifier",
+                          "start": 2438,
+                          "end": 2445,
+                          "loc": {
+                            "start": {
+                              "line": 69,
+                              "column": 53
+                            },
+                            "end": {
+                              "line": 69,
+                              "column": 60
+                            },
+                            "identifierName": "handler"
+                          },
+                          "name": "handler"
+                        }
+                      }
+                    }
+                  ],
+                  "directives": []
+                },
+                "leadingComments": [
+                  {
+                    "type": "CommentBlock",
+                    "value": "*\n     * This handler is called when the bot has been invited into a web group by one its members.\n     * @type  {function(wg: WebGroup)} handler\n     ",
+                    "start": 2229,
+                    "end": 2384,
+                    "loc": {
+                      "start": {
+                        "line": 65,
+                        "column": 4
+                      },
+                      "end": {
+                        "line": 68,
+                        "column": 7
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "leadingComments": [
+            {
+              "type": "CommentBlock",
+              "value": "*\n * Bot server may be a member of severals groups. Each group is isolated.\n * He can be invited by a group member via {@link WebGroup#invite} method.\n * @example\n * // In NodeJS:\n * // Create a bot server with full mesh topology, without autorejoin feature\n * // and with specified Signaling and ICE servers for WebRTC.\n * // Bot server is listening on 'ws://BOT_HOST:BOT_PORT'.\n *\n * const http = require('http')\n * const server = http.createServer(app.callback())\n * const bot = new WebGroupBotServer({\n *   signalingURL: 'wss://mysignaling.com'\n *   iceServers: [\n *     {\n *       urls: 'stun.l.google.com:19302'\n *     },\n *     {\n *       urls: ['turn:myturn.com?transport=udp', 'turn:myturn?transport=tcp'],\n *       username: 'user',\n *       password: 'password'\n *     }\n *   ],\n *   bot: { server }\n * })\n *\n * bot.onWebGroup = (wg) => {\n *   // TODO...\n * }\n *\n * server.listen(BOT_PORT, BOT_HOST)\n ",
+              "start": 56,
+              "end": 972,
+              "loc": {
+                "start": {
+                  "line": 3,
+                  "column": 0
+                },
+                "end": {
+                  "line": 34,
+                  "column": 3
+                }
+              }
+            }
+          ],
+          "trailingComments": []
+        },
+        "leadingComments": [
+          {
+            "type": "CommentBlock",
+            "value": "*\n * Bot server may be a member of severals groups. Each group is isolated.\n * He can be invited by a group member via {@link WebGroup#invite} method.\n * @example\n * // In NodeJS:\n * // Create a bot server with full mesh topology, without autorejoin feature\n * // and with specified Signaling and ICE servers for WebRTC.\n * // Bot server is listening on 'ws://BOT_HOST:BOT_PORT'.\n *\n * const http = require('http')\n * const server = http.createServer(app.callback())\n * const bot = new WebGroupBotServer({\n *   signalingURL: 'wss://mysignaling.com'\n *   iceServers: [\n *     {\n *       urls: 'stun.l.google.com:19302'\n *     },\n *     {\n *       urls: ['turn:myturn.com?transport=udp', 'turn:myturn?transport=tcp'],\n *       username: 'user',\n *       password: 'password'\n *     }\n *   ],\n *   bot: { server }\n * })\n *\n * bot.onWebGroup = (wg) => {\n *   // TODO...\n * }\n *\n * server.listen(BOT_PORT, BOT_HOST)\n ",
+            "start": 56,
+            "end": 972,
+            "loc": {
+              "start": {
+                "line": 3,
+                "column": 0
+              },
+              "end": {
+                "line": 34,
+                "column": 3
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "directives": []
+  },
+  "comments": [
+    {
+      "type": "CommentBlock",
+      "value": "*\n * Bot server may be a member of severals groups. Each group is isolated.\n * He can be invited by a group member via {@link WebGroup#invite} method.\n * @example\n * // In NodeJS:\n * // Create a bot server with full mesh topology, without autorejoin feature\n * // and with specified Signaling and ICE servers for WebRTC.\n * // Bot server is listening on 'ws://BOT_HOST:BOT_PORT'.\n *\n * const http = require('http')\n * const server = http.createServer(app.callback())\n * const bot = new WebGroupBotServer({\n *   signalingURL: 'wss://mysignaling.com'\n *   iceServers: [\n *     {\n *       urls: 'stun.l.google.com:19302'\n *     },\n *     {\n *       urls: ['turn:myturn.com?transport=udp', 'turn:myturn?transport=tcp'],\n *       username: 'user',\n *       password: 'password'\n *     }\n *   ],\n *   bot: { server }\n * })\n *\n * bot.onWebGroup = (wg) => {\n *   // TODO...\n * }\n *\n * server.listen(BOT_PORT, BOT_HOST)\n ",
+      "start": 56,
+      "end": 972,
+      "loc": {
+        "start": {
+          "line": 3,
+          "column": 0
+        },
+        "end": {
+          "line": 34,
+          "column": 3
+        }
+      }
+    },
+    {
+      "type": "CommentBlock",
+      "value": "*\n     * @param {WebGroupBotServerOptions} options\n     * @param {Topology} [options.topology=Topology.FULL_MESH]\n     * @param {string} [options.signalingURL='wss://www.coedit.re:20473']\n     * @param {RTCIceServer[]} [options.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]\n     * @param {boolean} [options.autoRejoin=false]\n     * @param {Object} options.bot\n     * @param {NodeJS.http.Server|NodeJS.https.Server} options.bot.server NodeJS http(s) server.\n     * @param {string} [options.bot.url] Bot server URL.\n     * @param {boolean} [options.bot.perMessageDeflate=false] Enable/disable permessage-deflate.\n     ",
+      "start": 1010,
+      "end": 1638,
+      "loc": {
+        "start": {
+          "line": 36,
+          "column": 4
+        },
+        "end": {
+          "line": 46,
+          "column": 7
+        }
+      }
+    },
+    {
+      "type": "CommentBlock",
+      "value": "*\n     * NodeJS http server instance (See https://nodejs.org/api/http.html)\n     * @type {NodeJS.http.Server|NodeJS.https.Server}\n     ",
+      "start": 1720,
+      "end": 1859,
+      "loc": {
+        "start": {
+          "line": 50,
+          "column": 4
+        },
+        "end": {
+          "line": 53,
+          "column": 7
+        }
+      }
+    },
+    {
+      "type": "CommentBlock",
+      "value": "*\n     * Set of web groups the bot is member of.\n     * @type {Set<WebGroup>}\n     ",
+      "start": 1910,
+      "end": 1997,
+      "loc": {
+        "start": {
+          "line": 55,
+          "column": 4
+        },
+        "end": {
+          "line": 58,
+          "column": 7
+        }
+      }
+    },
+    {
+      "type": "CommentBlock",
+      "value": "*\n     * Bot server url. Used to invite the bot in a web group via {@link WebGroup#invite} method.\n     * @type {string}\n     ",
+      "start": 2054,
+      "end": 2184,
+      "loc": {
+        "start": {
+          "line": 60,
+          "column": 4
+        },
+        "end": {
+          "line": 63,
+          "column": 7
+        }
+      }
+    },
+    {
+      "type": "CommentBlock",
+      "value": "*\n     * This handler is called when the bot has been invited into a web group by one its members.\n     * @type  {function(wg: WebGroup)} handler\n     ",
+      "start": 2229,
+      "end": 2384,
+      "loc": {
+        "start": {
+          "line": 65,
+          "column": 4
+        },
+        "end": {
+          "line": 68,
+          "column": 7
+        }
+      }
+    }
+  ],
+  "tokens": [
+    {
+      "type": {
+        "label": "import",
+        "keyword": "import",
+        "beforeExpr": false,
+        "startsExpr": false,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null,
+        "updateContext": null
+      },
+      "value": "import",
+      "start": 0,
+      "end": 6,
+      "loc": {
+        "start": {
+          "line": 1,
+          "column": 0
+        },
+        "end": {
+          "line": 1,
+          "column": 6
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "{",
+        "beforeExpr": true,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "start": 7,
+      "end": 8,
+      "loc": {
+        "start": {
+          "line": 1,
+          "column": 7
+        },
+        "end": {
+          "line": 1,
+          "column": 8
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "name",
+        "beforeExpr": false,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "value": "BotServer",
+      "start": 9,
+      "end": 18,
+      "loc": {
+        "start": {
+          "line": 1,
+          "column": 9
+        },
+        "end": {
+          "line": 1,
+          "column": 18
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "}",
+        "beforeExpr": false,
+        "startsExpr": false,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "start": 19,
+      "end": 20,
+      "loc": {
+        "start": {
+          "line": 1,
+          "column": 19
+        },
+        "end": {
+          "line": 1,
+          "column": 20
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "name",
+        "beforeExpr": false,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "value": "from",
+      "start": 21,
+      "end": 25,
+      "loc": {
+        "start": {
+          "line": 1,
+          "column": 21
+        },
+        "end": {
+          "line": 1,
+          "column": 25
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "string",
+        "beforeExpr": false,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null,
+        "updateContext": null
+      },
+      "value": "./BotServer",
+      "start": 26,
+      "end": 39,
+      "loc": {
+        "start": {
+          "line": 1,
+          "column": 26
+        },
+        "end": {
+          "line": 1,
+          "column": 39
+        }
+      }
+    },
+    {
+      "type": {
+        "label": ";",
+        "beforeExpr": true,
+        "startsExpr": false,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null,
+        "updateContext": null
+      },
+      "start": 39,
+      "end": 40,
+      "loc": {
+        "start": {
+          "line": 1,
+          "column": 39
+        },
+        "end": {
+          "line": 1,
+          "column": 40
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "let",
+        "keyword": "let",
+        "beforeExpr": false,
+        "startsExpr": false,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null,
+        "updateContext": null
+      },
+      "value": "let",
+      "start": 41,
+      "end": 44,
+      "loc": {
+        "start": {
+          "line": 2,
+          "column": 0
+        },
+        "end": {
+          "line": 2,
+          "column": 3
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "name",
+        "beforeExpr": false,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "value": "botServer",
+      "start": 45,
+      "end": 54,
+      "loc": {
+        "start": {
+          "line": 2,
+          "column": 4
+        },
+        "end": {
+          "line": 2,
+          "column": 13
+        }
+      }
+    },
+    {
+      "type": {
+        "label": ";",
+        "beforeExpr": true,
+        "startsExpr": false,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null,
+        "updateContext": null
+      },
+      "start": 54,
+      "end": 55,
+      "loc": {
+        "start": {
+          "line": 2,
+          "column": 13
+        },
+        "end": {
+          "line": 2,
+          "column": 14
+        }
+      }
+    },
+    {
+      "type": "CommentBlock",
+      "value": "*\n * Bot server may be a member of severals groups. Each group is isolated.\n * He can be invited by a group member via {@link WebGroup#invite} method.\n * @example\n * // In NodeJS:\n * // Create a bot server with full mesh topology, without autorejoin feature\n * // and with specified Signaling and ICE servers for WebRTC.\n * // Bot server is listening on 'ws://BOT_HOST:BOT_PORT'.\n *\n * const http = require('http')\n * const server = http.createServer(app.callback())\n * const bot = new WebGroupBotServer({\n *   signalingURL: 'wss://mysignaling.com'\n *   iceServers: [\n *     {\n *       urls: 'stun.l.google.com:19302'\n *     },\n *     {\n *       urls: ['turn:myturn.com?transport=udp', 'turn:myturn?transport=tcp'],\n *       username: 'user',\n *       password: 'password'\n *     }\n *   ],\n *   bot: { server }\n * })\n *\n * bot.onWebGroup = (wg) => {\n *   // TODO...\n * }\n *\n * server.listen(BOT_PORT, BOT_HOST)\n ",
+      "start": 56,
+      "end": 972,
+      "loc": {
+        "start": {
+          "line": 3,
+          "column": 0
+        },
+        "end": {
+          "line": 34,
+          "column": 3
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "export",
+        "keyword": "export",
+        "beforeExpr": false,
+        "startsExpr": false,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null,
+        "updateContext": null
+      },
+      "value": "export",
+      "start": 973,
+      "end": 979,
+      "loc": {
+        "start": {
+          "line": 35,
+          "column": 0
+        },
+        "end": {
+          "line": 35,
+          "column": 6
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "class",
+        "keyword": "class",
+        "beforeExpr": false,
+        "startsExpr": false,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null,
+        "updateContext": null
+      },
+      "value": "class",
+      "start": 980,
+      "end": 985,
+      "loc": {
+        "start": {
+          "line": 35,
+          "column": 7
+        },
+        "end": {
+          "line": 35,
+          "column": 12
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "name",
+        "beforeExpr": false,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "value": "WebGroupBotServer",
+      "start": 986,
+      "end": 1003,
+      "loc": {
+        "start": {
+          "line": 35,
+          "column": 13
+        },
+        "end": {
+          "line": 35,
+          "column": 30
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "{",
+        "beforeExpr": true,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "start": 1004,
+      "end": 1005,
+      "loc": {
+        "start": {
+          "line": 35,
+          "column": 31
+        },
+        "end": {
+          "line": 35,
+          "column": 32
+        }
+      }
+    },
+    {
+      "type": "CommentBlock",
+      "value": "*\n     * @param {WebGroupBotServerOptions} options\n     * @param {Topology} [options.topology=Topology.FULL_MESH]\n     * @param {string} [options.signalingURL='wss://www.coedit.re:20473']\n     * @param {RTCIceServer[]} [options.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]\n     * @param {boolean} [options.autoRejoin=false]\n     * @param {Object} options.bot\n     * @param {NodeJS.http.Server|NodeJS.https.Server} options.bot.server NodeJS http(s) server.\n     * @param {string} [options.bot.url] Bot server URL.\n     * @param {boolean} [options.bot.perMessageDeflate=false] Enable/disable permessage-deflate.\n     ",
+      "start": 1010,
+      "end": 1638,
+      "loc": {
+        "start": {
+          "line": 36,
+          "column": 4
+        },
+        "end": {
+          "line": 46,
+          "column": 7
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "name",
+        "beforeExpr": false,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "value": "constructor",
+      "start": 1643,
+      "end": 1654,
+      "loc": {
+        "start": {
+          "line": 47,
+          "column": 4
+        },
+        "end": {
+          "line": 47,
+          "column": 15
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "(",
+        "beforeExpr": true,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "start": 1654,
+      "end": 1655,
+      "loc": {
+        "start": {
+          "line": 47,
+          "column": 15
+        },
+        "end": {
+          "line": 47,
+          "column": 16
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "name",
+        "beforeExpr": false,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "value": "options",
+      "start": 1655,
+      "end": 1662,
+      "loc": {
+        "start": {
+          "line": 47,
+          "column": 16
+        },
+        "end": {
+          "line": 47,
+          "column": 23
+        }
+      }
+    },
+    {
+      "type": {
+        "label": ")",
+        "beforeExpr": false,
+        "startsExpr": false,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "start": 1662,
+      "end": 1663,
+      "loc": {
+        "start": {
+          "line": 47,
+          "column": 23
+        },
+        "end": {
+          "line": 47,
+          "column": 24
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "{",
+        "beforeExpr": true,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "start": 1664,
+      "end": 1665,
+      "loc": {
+        "start": {
+          "line": 47,
+          "column": 25
+        },
+        "end": {
+          "line": 47,
+          "column": 26
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "name",
+        "beforeExpr": false,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "value": "botServer",
+      "start": 1674,
+      "end": 1683,
+      "loc": {
+        "start": {
+          "line": 48,
+          "column": 8
+        },
+        "end": {
+          "line": 48,
+          "column": 17
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "=",
+        "beforeExpr": true,
+        "startsExpr": false,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": true,
+        "prefix": false,
+        "postfix": false,
+        "binop": null,
+        "updateContext": null
+      },
+      "value": "=",
+      "start": 1684,
+      "end": 1685,
+      "loc": {
+        "start": {
+          "line": 48,
+          "column": 18
+        },
+        "end": {
+          "line": 48,
+          "column": 19
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "new",
+        "keyword": "new",
+        "beforeExpr": true,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null,
+        "updateContext": null
+      },
+      "value": "new",
+      "start": 1686,
+      "end": 1689,
+      "loc": {
+        "start": {
+          "line": 48,
+          "column": 20
+        },
+        "end": {
+          "line": 48,
+          "column": 23
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "name",
+        "beforeExpr": false,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "value": "BotServer",
+      "start": 1690,
+      "end": 1699,
+      "loc": {
+        "start": {
+          "line": 48,
+          "column": 24
+        },
+        "end": {
+          "line": 48,
+          "column": 33
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "(",
+        "beforeExpr": true,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "start": 1699,
+      "end": 1700,
+      "loc": {
+        "start": {
+          "line": 48,
+          "column": 33
+        },
+        "end": {
+          "line": 48,
+          "column": 34
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "name",
+        "beforeExpr": false,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "value": "options",
+      "start": 1700,
+      "end": 1707,
+      "loc": {
+        "start": {
+          "line": 48,
+          "column": 34
+        },
+        "end": {
+          "line": 48,
+          "column": 41
+        }
+      }
+    },
+    {
+      "type": {
+        "label": ")",
+        "beforeExpr": false,
+        "startsExpr": false,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "start": 1707,
+      "end": 1708,
+      "loc": {
+        "start": {
+          "line": 48,
+          "column": 41
+        },
+        "end": {
+          "line": 48,
+          "column": 42
+        }
+      }
+    },
+    {
+      "type": {
+        "label": ";",
+        "beforeExpr": true,
+        "startsExpr": false,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null,
+        "updateContext": null
+      },
+      "start": 1708,
+      "end": 1709,
+      "loc": {
+        "start": {
+          "line": 48,
+          "column": 42
+        },
+        "end": {
+          "line": 48,
+          "column": 43
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "}",
+        "beforeExpr": false,
+        "startsExpr": false,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "start": 1714,
+      "end": 1715,
+      "loc": {
+        "start": {
+          "line": 49,
+          "column": 4
+        },
+        "end": {
+          "line": 49,
+          "column": 5
+        }
+      }
+    },
+    {
+      "type": "CommentBlock",
+      "value": "*\n     * NodeJS http server instance (See https://nodejs.org/api/http.html)\n     * @type {NodeJS.http.Server|NodeJS.https.Server}\n     ",
+      "start": 1720,
+      "end": 1859,
+      "loc": {
+        "start": {
+          "line": 50,
+          "column": 4
+        },
+        "end": {
+          "line": 53,
+          "column": 7
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "name",
+        "beforeExpr": false,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "value": "get",
+      "start": 1864,
+      "end": 1867,
+      "loc": {
+        "start": {
+          "line": 54,
+          "column": 4
+        },
+        "end": {
+          "line": 54,
+          "column": 7
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "name",
+        "beforeExpr": false,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "value": "server",
+      "start": 1868,
+      "end": 1874,
+      "loc": {
+        "start": {
+          "line": 54,
+          "column": 8
+        },
+        "end": {
+          "line": 54,
+          "column": 14
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "(",
+        "beforeExpr": true,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "start": 1874,
+      "end": 1875,
+      "loc": {
+        "start": {
+          "line": 54,
+          "column": 14
+        },
+        "end": {
+          "line": 54,
+          "column": 15
+        }
+      }
+    },
+    {
+      "type": {
+        "label": ")",
+        "beforeExpr": false,
+        "startsExpr": false,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "start": 1875,
+      "end": 1876,
+      "loc": {
+        "start": {
+          "line": 54,
+          "column": 15
+        },
+        "end": {
+          "line": 54,
+          "column": 16
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "{",
+        "beforeExpr": true,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "start": 1877,
+      "end": 1878,
+      "loc": {
+        "start": {
+          "line": 54,
+          "column": 17
+        },
+        "end": {
+          "line": 54,
+          "column": 18
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "return",
+        "keyword": "return",
+        "beforeExpr": true,
+        "startsExpr": false,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null,
+        "updateContext": null
+      },
+      "value": "return",
+      "start": 1879,
+      "end": 1885,
+      "loc": {
+        "start": {
+          "line": 54,
+          "column": 19
+        },
+        "end": {
+          "line": 54,
+          "column": 25
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "name",
+        "beforeExpr": false,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "value": "botServer",
+      "start": 1886,
+      "end": 1895,
+      "loc": {
+        "start": {
+          "line": 54,
+          "column": 26
+        },
+        "end": {
+          "line": 54,
+          "column": 35
+        }
+      }
+    },
+    {
+      "type": {
+        "label": ".",
+        "beforeExpr": false,
+        "startsExpr": false,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null,
+        "updateContext": null
+      },
+      "start": 1895,
+      "end": 1896,
+      "loc": {
+        "start": {
+          "line": 54,
+          "column": 35
+        },
+        "end": {
+          "line": 54,
+          "column": 36
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "name",
+        "beforeExpr": false,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "value": "server",
+      "start": 1896,
+      "end": 1902,
+      "loc": {
+        "start": {
+          "line": 54,
+          "column": 36
+        },
+        "end": {
+          "line": 54,
+          "column": 42
+        }
+      }
+    },
+    {
+      "type": {
+        "label": ";",
+        "beforeExpr": true,
+        "startsExpr": false,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null,
+        "updateContext": null
+      },
+      "start": 1902,
+      "end": 1903,
+      "loc": {
+        "start": {
+          "line": 54,
+          "column": 42
+        },
+        "end": {
+          "line": 54,
+          "column": 43
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "}",
+        "beforeExpr": false,
+        "startsExpr": false,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "start": 1904,
+      "end": 1905,
+      "loc": {
+        "start": {
+          "line": 54,
+          "column": 44
+        },
+        "end": {
+          "line": 54,
+          "column": 45
+        }
+      }
+    },
+    {
+      "type": "CommentBlock",
+      "value": "*\n     * Set of web groups the bot is member of.\n     * @type {Set<WebGroup>}\n     ",
+      "start": 1910,
+      "end": 1997,
+      "loc": {
+        "start": {
+          "line": 55,
+          "column": 4
+        },
+        "end": {
+          "line": 58,
+          "column": 7
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "name",
+        "beforeExpr": false,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "value": "get",
+      "start": 2002,
+      "end": 2005,
+      "loc": {
+        "start": {
+          "line": 59,
+          "column": 4
+        },
+        "end": {
+          "line": 59,
+          "column": 7
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "name",
+        "beforeExpr": false,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "value": "webGroups",
+      "start": 2006,
+      "end": 2015,
+      "loc": {
+        "start": {
+          "line": 59,
+          "column": 8
+        },
+        "end": {
+          "line": 59,
+          "column": 17
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "(",
+        "beforeExpr": true,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "start": 2015,
+      "end": 2016,
+      "loc": {
+        "start": {
+          "line": 59,
+          "column": 17
+        },
+        "end": {
+          "line": 59,
+          "column": 18
+        }
+      }
+    },
+    {
+      "type": {
+        "label": ")",
+        "beforeExpr": false,
+        "startsExpr": false,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "start": 2016,
+      "end": 2017,
+      "loc": {
+        "start": {
+          "line": 59,
+          "column": 18
+        },
+        "end": {
+          "line": 59,
+          "column": 19
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "{",
+        "beforeExpr": true,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "start": 2018,
+      "end": 2019,
+      "loc": {
+        "start": {
+          "line": 59,
+          "column": 20
+        },
+        "end": {
+          "line": 59,
+          "column": 21
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "return",
+        "keyword": "return",
+        "beforeExpr": true,
+        "startsExpr": false,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null,
+        "updateContext": null
+      },
+      "value": "return",
+      "start": 2020,
+      "end": 2026,
+      "loc": {
+        "start": {
+          "line": 59,
+          "column": 22
+        },
+        "end": {
+          "line": 59,
+          "column": 28
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "name",
+        "beforeExpr": false,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "value": "botServer",
+      "start": 2027,
+      "end": 2036,
+      "loc": {
+        "start": {
+          "line": 59,
+          "column": 29
+        },
+        "end": {
+          "line": 59,
+          "column": 38
+        }
+      }
+    },
+    {
+      "type": {
+        "label": ".",
+        "beforeExpr": false,
+        "startsExpr": false,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null,
+        "updateContext": null
+      },
+      "start": 2036,
+      "end": 2037,
+      "loc": {
+        "start": {
+          "line": 59,
+          "column": 38
+        },
+        "end": {
+          "line": 59,
+          "column": 39
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "name",
+        "beforeExpr": false,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "value": "webGroups",
+      "start": 2037,
+      "end": 2046,
+      "loc": {
+        "start": {
+          "line": 59,
+          "column": 39
+        },
+        "end": {
+          "line": 59,
+          "column": 48
+        }
+      }
+    },
+    {
+      "type": {
+        "label": ";",
+        "beforeExpr": true,
+        "startsExpr": false,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null,
+        "updateContext": null
+      },
+      "start": 2046,
+      "end": 2047,
+      "loc": {
+        "start": {
+          "line": 59,
+          "column": 48
+        },
+        "end": {
+          "line": 59,
+          "column": 49
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "}",
+        "beforeExpr": false,
+        "startsExpr": false,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "start": 2048,
+      "end": 2049,
+      "loc": {
+        "start": {
+          "line": 59,
+          "column": 50
+        },
+        "end": {
+          "line": 59,
+          "column": 51
+        }
+      }
+    },
+    {
+      "type": "CommentBlock",
+      "value": "*\n     * Bot server url. Used to invite the bot in a web group via {@link WebGroup#invite} method.\n     * @type {string}\n     ",
+      "start": 2054,
+      "end": 2184,
+      "loc": {
+        "start": {
+          "line": 60,
+          "column": 4
+        },
+        "end": {
+          "line": 63,
+          "column": 7
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "name",
+        "beforeExpr": false,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "value": "get",
+      "start": 2189,
+      "end": 2192,
+      "loc": {
+        "start": {
+          "line": 64,
+          "column": 4
+        },
+        "end": {
+          "line": 64,
+          "column": 7
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "name",
+        "beforeExpr": false,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "value": "url",
+      "start": 2193,
+      "end": 2196,
+      "loc": {
+        "start": {
+          "line": 64,
+          "column": 8
+        },
+        "end": {
+          "line": 64,
+          "column": 11
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "(",
+        "beforeExpr": true,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "start": 2196,
+      "end": 2197,
+      "loc": {
+        "start": {
+          "line": 64,
+          "column": 11
+        },
+        "end": {
+          "line": 64,
+          "column": 12
+        }
+      }
+    },
+    {
+      "type": {
+        "label": ")",
+        "beforeExpr": false,
+        "startsExpr": false,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "start": 2197,
+      "end": 2198,
+      "loc": {
+        "start": {
+          "line": 64,
+          "column": 12
+        },
+        "end": {
+          "line": 64,
+          "column": 13
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "{",
+        "beforeExpr": true,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "start": 2199,
+      "end": 2200,
+      "loc": {
+        "start": {
+          "line": 64,
+          "column": 14
+        },
+        "end": {
+          "line": 64,
+          "column": 15
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "return",
+        "keyword": "return",
+        "beforeExpr": true,
+        "startsExpr": false,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null,
+        "updateContext": null
+      },
+      "value": "return",
+      "start": 2201,
+      "end": 2207,
+      "loc": {
+        "start": {
+          "line": 64,
+          "column": 16
+        },
+        "end": {
+          "line": 64,
+          "column": 22
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "name",
+        "beforeExpr": false,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "value": "botServer",
+      "start": 2208,
+      "end": 2217,
+      "loc": {
+        "start": {
+          "line": 64,
+          "column": 23
+        },
+        "end": {
+          "line": 64,
+          "column": 32
+        }
+      }
+    },
+    {
+      "type": {
+        "label": ".",
+        "beforeExpr": false,
+        "startsExpr": false,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null,
+        "updateContext": null
+      },
+      "start": 2217,
+      "end": 2218,
+      "loc": {
+        "start": {
+          "line": 64,
+          "column": 32
+        },
+        "end": {
+          "line": 64,
+          "column": 33
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "name",
+        "beforeExpr": false,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "value": "url",
+      "start": 2218,
+      "end": 2221,
+      "loc": {
+        "start": {
+          "line": 64,
+          "column": 33
+        },
+        "end": {
+          "line": 64,
+          "column": 36
+        }
+      }
+    },
+    {
+      "type": {
+        "label": ";",
+        "beforeExpr": true,
+        "startsExpr": false,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null,
+        "updateContext": null
+      },
+      "start": 2221,
+      "end": 2222,
+      "loc": {
+        "start": {
+          "line": 64,
+          "column": 36
+        },
+        "end": {
+          "line": 64,
+          "column": 37
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "}",
+        "beforeExpr": false,
+        "startsExpr": false,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "start": 2223,
+      "end": 2224,
+      "loc": {
+        "start": {
+          "line": 64,
+          "column": 38
+        },
+        "end": {
+          "line": 64,
+          "column": 39
+        }
+      }
+    },
+    {
+      "type": "CommentBlock",
+      "value": "*\n     * This handler is called when the bot has been invited into a web group by one its members.\n     * @type  {function(wg: WebGroup)} handler\n     ",
+      "start": 2229,
+      "end": 2384,
+      "loc": {
+        "start": {
+          "line": 65,
+          "column": 4
+        },
+        "end": {
+          "line": 68,
+          "column": 7
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "name",
+        "beforeExpr": false,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "value": "set",
+      "start": 2389,
+      "end": 2392,
+      "loc": {
+        "start": {
+          "line": 69,
+          "column": 4
+        },
+        "end": {
+          "line": 69,
+          "column": 7
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "name",
+        "beforeExpr": false,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "value": "onWebGroup",
+      "start": 2393,
+      "end": 2403,
+      "loc": {
+        "start": {
+          "line": 69,
+          "column": 8
+        },
+        "end": {
+          "line": 69,
+          "column": 18
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "(",
+        "beforeExpr": true,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "start": 2403,
+      "end": 2404,
+      "loc": {
+        "start": {
+          "line": 69,
+          "column": 18
+        },
+        "end": {
+          "line": 69,
+          "column": 19
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "name",
+        "beforeExpr": false,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "value": "handler",
+      "start": 2404,
+      "end": 2411,
+      "loc": {
+        "start": {
+          "line": 69,
+          "column": 19
+        },
+        "end": {
+          "line": 69,
+          "column": 26
+        }
+      }
+    },
+    {
+      "type": {
+        "label": ")",
+        "beforeExpr": false,
+        "startsExpr": false,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "start": 2411,
+      "end": 2412,
+      "loc": {
+        "start": {
+          "line": 69,
+          "column": 26
+        },
+        "end": {
+          "line": 69,
+          "column": 27
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "{",
+        "beforeExpr": true,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "start": 2413,
+      "end": 2414,
+      "loc": {
+        "start": {
+          "line": 69,
+          "column": 28
+        },
+        "end": {
+          "line": 69,
+          "column": 29
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "name",
+        "beforeExpr": false,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "value": "botServer",
+      "start": 2415,
+      "end": 2424,
+      "loc": {
+        "start": {
+          "line": 69,
+          "column": 30
+        },
+        "end": {
+          "line": 69,
+          "column": 39
+        }
+      }
+    },
+    {
+      "type": {
+        "label": ".",
+        "beforeExpr": false,
+        "startsExpr": false,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null,
+        "updateContext": null
+      },
+      "start": 2424,
+      "end": 2425,
+      "loc": {
+        "start": {
+          "line": 69,
+          "column": 39
+        },
+        "end": {
+          "line": 69,
+          "column": 40
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "name",
+        "beforeExpr": false,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "value": "onWebGroup",
+      "start": 2425,
+      "end": 2435,
+      "loc": {
+        "start": {
+          "line": 69,
+          "column": 40
+        },
+        "end": {
+          "line": 69,
+          "column": 50
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "=",
+        "beforeExpr": true,
+        "startsExpr": false,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": true,
+        "prefix": false,
+        "postfix": false,
+        "binop": null,
+        "updateContext": null
+      },
+      "value": "=",
+      "start": 2436,
+      "end": 2437,
+      "loc": {
+        "start": {
+          "line": 69,
+          "column": 51
+        },
+        "end": {
+          "line": 69,
+          "column": 52
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "name",
+        "beforeExpr": false,
+        "startsExpr": true,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "value": "handler",
+      "start": 2438,
+      "end": 2445,
+      "loc": {
+        "start": {
+          "line": 69,
+          "column": 53
+        },
+        "end": {
+          "line": 69,
+          "column": 60
+        }
+      }
+    },
+    {
+      "type": {
+        "label": ";",
+        "beforeExpr": true,
+        "startsExpr": false,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null,
+        "updateContext": null
+      },
+      "start": 2445,
+      "end": 2446,
+      "loc": {
+        "start": {
+          "line": 69,
+          "column": 60
+        },
+        "end": {
+          "line": 69,
+          "column": 61
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "}",
+        "beforeExpr": false,
+        "startsExpr": false,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "start": 2447,
+      "end": 2448,
+      "loc": {
+        "start": {
+          "line": 69,
+          "column": 62
+        },
+        "end": {
+          "line": 69,
+          "column": 63
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "}",
+        "beforeExpr": false,
+        "startsExpr": false,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null
+      },
+      "start": 2449,
+      "end": 2450,
+      "loc": {
+        "start": {
+          "line": 70,
+          "column": 0
+        },
+        "end": {
+          "line": 70,
+          "column": 1
+        }
+      }
+    },
+    {
+      "type": {
+        "label": "eof",
+        "beforeExpr": false,
+        "startsExpr": false,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null,
+        "updateContext": null
+      },
+      "start": 2451,
+      "end": 2451,
+      "loc": {
+        "start": {
+          "line": 71,
+          "column": 0
+        },
+        "end": {
+          "line": 71,
+          "column": 0
+        }
+      }
+    }
+  ]
+}

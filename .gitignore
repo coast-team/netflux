@@ -8,8 +8,5 @@ npm-debug*
 # Code coverage
 coverage
 
-# Documentation
-docs
-
 # Other
 .rpt2_cache

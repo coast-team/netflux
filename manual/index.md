@@ -1,10 +1,7 @@
-<p align="center"><img src="manual/asset/logo.png" /></p>
+![Netflux logo][logo]
 
-<p align="center">
-  Universal Javascript <strong style="font-weight: bold">peer to peer</strong> transport API for client and server.<br />
-  Full mesh peer to peer network based on <strong style="font-weight: bold">RTCDataChannel</strong> and <strong style="font-weight: bold">WebSocket</strong>.<br />
-  Send/receive <strong style="font-weight: bold">String</strong> and <strong style="font-weight: bold">Uint8Array</strong> data types.
-</p>
+Universal Javascript **peer to peer** transport API for client and server. Full mesh peer to peer network based on **RTCDataChannel** and **WebSocket**. Send/receive **String** and **Uint8Array** data types.
+
 
 <p align="center">
   <a href="https://www.npmjs.com/package/netflux">
@@ -45,7 +42,6 @@
 
 ## Features
 - Universal API (works in Chrome/Firefox and NodeJS).
-- TypeScript declaration files are included.
 - Create peer to peer full mesh network.
 - Send/receive [String][String], [Uint8Array][Uint8Array] data types.
 - Automatic rejoin when the connection with Signaling has lost.
@@ -60,9 +56,6 @@
  - `dist/netflux.node.esm.js` ES5 code, ECMAScript 6 module format for NodeJS (see *package.json#module*).
  - `dist/netflux.browser.esm.js` ES5 code, ECMAScript 6 module format for browsers (see *package.json#browser*).
  - `dist/netflux.umd.js` ES5 code, UMD format for browsers.
-
-## Documentation
-Website: https://doc.esdoc.org/github.com/coast-team/netflux
 
 [WebSocket]: https://developer.mozilla.org/en/docs/Web/API/WebSocket
 [RTCDataChannel]: https://developer.mozilla.org/en/docs/Web/API/RTCDataChannel
@@ -85,3 +78,5 @@ Website: https://doc.esdoc.org/github.com/coast-team/netflux
 
 [doc]: https://doc.esdoc.org/github.com/coast-team/netflux/badge.svg
 [doc-url]: https://doc.esdoc.org/github.com/coast-team/netflux
+
+[logo]: manual/asset/logo_big.png "Netflux logo"

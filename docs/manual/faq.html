@@ -67,59 +67,22 @@
 </div>
 </nav>
 
-<div class="content" data-ice="content"><div class="github-markdown" data-ice="content"><h1 id="installation">Installation</h1><h2 id="npm">NPM</h2><pre><code class="lang-shell"><code class="source-code prettyprint">npm install -S netflux</code>
-</code></pre>
-<p>Netflux has an optional peer dependency: <code>wrtc</code>. This package provides WebRTC API in NodeJS. It is optional because Netflux can use <code>WebSocket</code> instead. For some use cases maybe you still want to connect your server to the peer to peer network via <code>RTCDataChannel</code>, then you have to successfully install this dependency, checkout <a href="https://github.com/js-platform/node-webrtc">wrtc repository</a> then.</p>
-<h2 id="what-you-need">What you need</h2><p>Signaling server is only mandatory server for Netflux, but for a fully functional peer to peer network (to support all use cases) we also need STUN and TURN servers.</p>
-<p>Netflux comes with Signaling and STUN servers by default for easier quickstart. For TURN server two solutions are possible: either deploy your own or rent one at <a href="https://xirsys.com/">Xirsys</a> for example or any other similar services.</p>
-<h3 id="signaling-server">Signaling server</h3><p><strong>Default</strong>: <code>wss://www.coedit.re:20443</code>.</p>
-<p>We developed a Signaling server: <a href="https://github.com/coast-team/sigver">Sigver</a>. It is the only signaling server (signaling mechanism) which is supported by Netflux for now.</p>
-<p><strong>TIP</strong>: we recommend to deploy your own instance of Sigver for production.</p>
-<h3 id="stun-server">STUN server</h3><p><strong>Default</strong>: <code>stun:stun3.l.google.com:19302</code></p>
-<p>There many other free STUN servers available in the Web.</p>
-<h3 id="turn-servers">TURN servers</h3><p>No free TURN server available in the Web. Checkout <a href="https://xirsys.com/">Xirsys</a> to rent one or deploy your own.</p>
-<h2 id="how-to-deploy-stun-turn-servers">How to deploy STUN/TURN servers</h2><p>This guide present a basic configuration for <a href="https://github.com/coturn/coturn">coturn</a>.
-It allow us to deploy our own STUN/TURN server in order to connect users behind a NAT or Firewall.</p>
-<p>For more informations or options, see coturn <a href="https://github.com/coturn/coturn/wiki/README">documentation</a>.</p>
-<p>On most Linux Distribution, the package is in the repo:
-<code>apt-get install coturn</code></p>
-<p>You must have SQLite installed:
-<code>sudo apt-get install sqlite3 libsqlite3-dev</code></p>
-<p>Config file can be found at:
-<code>/etc/turnserver.conf</code></p>
-<p>Simple config file should look like this:</p>
-<pre><code class="lang-bash"><code class="source-code prettyprint"># you can listen ports 3478 and 5349 instead of 80/443
-listening-port=80
-tls-listening-port=443
-
-listening-ip=your-ip-address
-
-relay-ip=your-ip-address
-external-ip=your-ip-address
-
-realm=yourdomain.com
-server-name=yourdomain.com
-
-# webRTC authentication method
-lt-cred-mech
-
-# Database location
-userdb=/var/lib/turn/turndb
-
-# Add ssl certificate for your server
-cert=/etc/ssl/certificate.pem
-pkey=/etc/ssl/private.key
-
-no-stdout-log</code>
-</code></pre>
-<p>If you don&apos;t have any SSL certificate, you may use <a href="https://letsencrypt.org/">Let&apos;s Encrypt</a>.</p>
-<p>Create a user in order to access your Turn server:
-<code>turnadmin -a -u userName -p password -r yourdomain.com</code></p>
-<p>Launch your server:
-<code>turnserver</code>
-or in daemon:
-<code>turnserver -o</code></p>
-<p>Verify that your server is up and running with <a href="https://webrtc.github.io/samples/src/content/peerconnection/trickle-ice/">Trickle ICE</a>.</p>
+<div class="content" data-ice="content"><div class="github-markdown" data-ice="content"><h1 id="faq">FAQ</h1><h4 id="-strong-how--code-rtcdatachannel--code--and--code-websocket--code--are-used---strong-"><strong>How <code>RTCDataChannel</code> and <code>WebSocket</code> are used?</strong></h4><p>Netflux can create a peer to peer network with the following connection types:</p>
+<ul>
+<li><code>RTCDataChannel</code> (WebRTC)</li>
+<li><code>WebSocket</code></li>
+</ul>
+<p><code>RTCDataChannel</code> connection could be established between:</p>
+<ul>
+<li>Browser &amp; Browser</li>
+<li>Browser &amp; Server (If server supports)</li>
+<li>Server &amp; Server (If both servers support)</li>
+</ul>
+<p>On the other hand, a <code>WebSocket</code> could be created only between:</p>
+<ul>
+<li>Browser &amp; Server</li>
+<li>Server &amp; Server</li>
+</ul>
 </div>
 </div>
 

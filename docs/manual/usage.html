@@ -67,59 +67,86 @@
 </div>
 </nav>
 
-<div class="content" data-ice="content"><div class="github-markdown" data-ice="content"><h1 id="installation">Installation</h1><h2 id="npm">NPM</h2><pre><code class="lang-shell"><code class="source-code prettyprint">npm install -S netflux</code>
+<div class="content" data-ice="content"><div class="github-markdown" data-ice="content"><h1 id="usage">Usage</h1><p>There are 4 builds (all ES5 code):</p>
+<ul>
+<li><code>dist/netflux.cjs.js</code> CommonJS format for NodeJS.</li>
+<li><code>dist/netflux.node.esm.js</code> ECMAScript 6 module format for NodeJS.</li>
+<li><code>dist/netflux.browser.esm.js</code> ECMAScript 6 module format for browsers.</li>
+<li><code>dist/netflux.umd.js</code> UMD format for browsers.</li>
+</ul>
+<p>The <code>package.json</code> contains the following fields:</p>
+<pre><code class="lang-json"><code class="source-code prettyprint">...
+&quot;main&quot;: &quot;dist/netflux.cjs.js&quot;,
+&quot;module&quot;: &quot;dist/netflux.node.esm.js&quot;,
+&quot;browser&quot;: &quot;netflux.browser.esm.js&quot;,
+...</code>
 </code></pre>
-<p>Netflux has an optional peer dependency: <code>wrtc</code>. This package provides WebRTC API in NodeJS. It is optional because Netflux can use <code>WebSocket</code> instead. For some use cases maybe you still want to connect your server to the peer to peer network via <code>RTCDataChannel</code>, then you have to successfully install this dependency, checkout <a href="https://github.com/js-platform/node-webrtc">wrtc repository</a> then.</p>
-<h2 id="what-you-need">What you need</h2><p>Signaling server is only mandatory server for Netflux, but for a fully functional peer to peer network (to support all use cases) we also need STUN and TURN servers.</p>
-<p>Netflux comes with Signaling and STUN servers by default for easier quickstart. For TURN server two solutions are possible: either deploy your own or rent one at <a href="https://xirsys.com/">Xirsys</a> for example or any other similar services.</p>
-<h3 id="signaling-server">Signaling server</h3><p><strong>Default</strong>: <code>wss://www.coedit.re:20443</code>.</p>
-<p>We developed a Signaling server: <a href="https://github.com/coast-team/sigver">Sigver</a>. It is the only signaling server (signaling mechanism) which is supported by Netflux for now.</p>
-<p><strong>TIP</strong>: we recommend to deploy your own instance of Sigver for production.</p>
-<h3 id="stun-server">STUN server</h3><p><strong>Default</strong>: <code>stun:stun3.l.google.com:19302</code></p>
-<p>There many other free STUN servers available in the Web.</p>
-<h3 id="turn-servers">TURN servers</h3><p>No free TURN server available in the Web. Checkout <a href="https://xirsys.com/">Xirsys</a> to rent one or deploy your own.</p>
-<h2 id="how-to-deploy-stun-turn-servers">How to deploy STUN/TURN servers</h2><p>This guide present a basic configuration for <a href="https://github.com/coturn/coturn">coturn</a>.
-It allow us to deploy our own STUN/TURN server in order to connect users behind a NAT or Firewall.</p>
-<p>For more informations or options, see coturn <a href="https://github.com/coturn/coturn/wiki/README">documentation</a>.</p>
-<p>On most Linux Distribution, the package is in the repo:
-<code>apt-get install coturn</code></p>
-<p>You must have SQLite installed:
-<code>sudo apt-get install sqlite3 libsqlite3-dev</code></p>
-<p>Config file can be found at:
-<code>/etc/turnserver.conf</code></p>
-<p>Simple config file should look like this:</p>
-<pre><code class="lang-bash"><code class="source-code prettyprint"># you can listen ports 3478 and 5349 instead of 80/443
-listening-port=80
-tls-listening-port=443
-
-listening-ip=your-ip-address
-
-relay-ip=your-ip-address
-external-ip=your-ip-address
-
-realm=yourdomain.com
-server-name=yourdomain.com
-
-# webRTC authentication method
-lt-cred-mech
-
-# Database location
-userdb=/var/lib/turn/turndb
-
-# Add ssl certificate for your server
-cert=/etc/ssl/certificate.pem
-pkey=/etc/ssl/private.key
-
-no-stdout-log</code>
+<p>All builds are either for NodeJS or for Browser environment.</p>
+<p><strong>For browser environment</strong> exported members are:</p>
+<ul>
+<li><code>WebGroup</code></li>
+<li><code>DataTypeView</code> type</li>
+<li><code>WebGroupOption</code> type</li>
+<li><code>WebGroupState</code> enum</li>
+<li><code>SignalingState</code> enum</li>
+<li><code>Topology</code> enum</li>
+</ul>
+<p><strong>For NodeJS environment</strong> exported members are the same as for browser plus:</p>
+<ul>
+<li><code>WebGroupBotServer</code></li>
+<li><code>WebGroupBotServerOptions</code> type.</li>
+</ul>
+<h2 id="ecmascript-module">ECMAScript module</h2><p> <strong>Webpack, Browserify etc.</strong>: <code>netflux.node.esm.js</code> and <code>netflux.browser.esm.js</code> are suitable for these tools or any alike (as they understand <code>module</code> and <code>browser</code> properties).</p>
+<pre><code class="lang-javascript"><code class="source-code prettyprint">export {WebGroup, WebGroupState, WebGroupBotServer, WebGroupBotServerOptions} from &apos;netflux&apos;
+const wg = new WebGroup()</code>
 </code></pre>
-<p>If you don&apos;t have any SSL certificate, you may use <a href="https://letsencrypt.org/">Let&apos;s Encrypt</a>.</p>
-<p>Create a user in order to access your Turn server:
-<code>turnadmin -a -u userName -p password -r yourdomain.com</code></p>
-<p>Launch your server:
-<code>turnserver</code>
-or in daemon:
-<code>turnserver -o</code></p>
-<p>Verify that your server is up and running with <a href="https://webrtc.github.io/samples/src/content/peerconnection/trickle-ice/">Trickle ICE</a>.</p>
+<h2 id="commonjs-format">CommonJS format</h2><p><code>dist/netflux.cjs.js</code> - CommonJS format, built for NodeJS.</p>
+<pre><code class="lang-Javascript"><code class="source-code prettyprint">// NodeJS
+const netflux = require(&apos;netflux&apos;)
+var wg = new netflux.WebGroup()</code>
+</code></pre>
+<h2 id="umd-format">UMD format</h2><p><code>dist/netflux.umd.js</code> - Universal Module Definition module is compatible with AMD, CommonJS and &quot;global&quot; modules. Built for browser.</p>
+<pre><code class="lang-html"><code class="source-code prettyprint">&lt;!--Browser--&gt;
+&lt;script src=&quot;netflux.es5.umd.js&quot;&gt;
+  window.netflux !== undefined // true
+  var wg = new window.netflux.WebGroup()
+&lt;/script&gt;</code>
+</code></pre>
+<h2 id="configuration">Configuration</h2><p>For a <code>WebGroup</code> object all options are optional.</p>
+<pre><code class="lang-javascript"><code class="source-code prettyprint">const wg = new WebGroup({
+  signalingURL: &apos;MY_SIGNALING_URL&apos;,
+  iceServers: [
+    {
+      urls: &apos;stun.l.google.com:19302&apos;
+    },
+    {
+      urls: [&apos;turn:myturn.com?transport=udp&apos;, &apos;turn:myturn?transport=tcp&apos;],
+      username: &apos;user&apos;,
+      password: &apos;password&apos;
+    }
+  ]
+})</code>
+</code></pre>
+<p>For <code>WebGroupBotServer</code> the server option is mandatory.</p>
+<pre><code class="lang-javascript"><code class="source-code prettyprint">const http = require(&apos;http&apos;)
+const myServer = http.createServer()
+const wg = new WebGroupBotServer({
+  signalingURL: &apos;MY_SIGNALING_URL&apos;,
+  iceServers: [
+    {
+      urls: &apos;stun.l.google.com:19302&apos;
+    },
+    {
+      urls: [&apos;turn:myturn.com?transport=udp&apos;, &apos;turn:myturn?transport=tcp&apos;],
+      username: &apos;user&apos;,
+      password: &apos;password&apos;
+    }
+  ],
+  bot: {
+    server: myServer
+  }
+})</code>
+</code></pre>
 </div>
 </div>
 
