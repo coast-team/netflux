@@ -102,10 +102,10 @@ const wg = new WebGroup({
   ]
 })
 
-wg.onPeerJoin = (id) =&gt; {
+wg.onMemberJoin = (id) =&gt; {
   // TODO...
 }
-wg.onPeerLeave = (id) =&gt; {
+wg.onMemberLeave = (id) =&gt; {
   // TODO...
 }
 wg.onMessage = (id, msg, isBroadcast) =&gt; {
@@ -325,36 +325,7 @@ wg.onSignalingStateChanged = (state) =&gt; {
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-set-onMessage">onMessage</a></span></span><span class="code" data-ice="signature">: <span><span>function</span><span>(id: <span>number</span>, msg: <span><a href="typedef/index.html#static-typedef-DataTypeView">DataTypeView</a></span>, isBroadcast: <span>boolean</span>)</span></span></span>
-        </p>
-      </div>
-      <div>
-        
-        
-        <div data-ice="description"><p>This handler is called when a message has been received from the group.</p>
-</div>
-      </div>
-    </td>
-    <td>
-      
-      
-    </td>
-  </tr>
-<tr data-ice="target">
-    <td>
-      <span class="access" data-ice="access">public</span>
-      
-      <span class="kind" data-ice="kind">set</span>
-      
-      <span class="override" data-ice="override"></span>
-    </td>
-    <td>
-      <div>
-        <p>
-          
-          
-          
-          <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-set-onPeerJoin">onPeerJoin</a></span></span><span class="code" data-ice="signature">: <span><span>function</span><span>(id: <span>number</span>)</span></span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-set-onMemberJoin">onMemberJoin</a></span></span><span class="code" data-ice="signature">: <span><span>function</span><span>(id: <span>number</span>)</span></span></span>
         </p>
       </div>
       <div>
@@ -383,13 +354,42 @@ wg.onSignalingStateChanged = (state) =&gt; {
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-set-onPeerLeave">onPeerLeave</a></span></span><span class="code" data-ice="signature">: <span><span>function</span><span>(id: <span>number</span>)</span></span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-set-onMemberLeave">onMemberLeave</a></span></span><span class="code" data-ice="signature">: <span><span>function</span><span>(id: <span>number</span>)</span></span></span>
         </p>
       </div>
       <div>
         
         
         <div data-ice="description"><p>This handler is called when a member hes left the group.</p>
+</div>
+      </div>
+    </td>
+    <td>
+      
+      
+    </td>
+  </tr>
+<tr data-ice="target">
+    <td>
+      <span class="access" data-ice="access">public</span>
+      
+      <span class="kind" data-ice="kind">set</span>
+      
+      <span class="override" data-ice="override"></span>
+    </td>
+    <td>
+      <div>
+        <p>
+          
+          
+          
+          <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-set-onMessage">onMessage</a></span></span><span class="code" data-ice="signature">: <span><span>function</span><span>(id: <span>number</span>, msg: <span><a href="typedef/index.html#static-typedef-DataTypeView">DataTypeView</a></span>, isBroadcast: <span>boolean</span>)</span></span></span>
+        </p>
+      </div>
+      <div>
+        
+        
+        <div data-ice="description"><p>This handler is called when a message has been received from the group.</p>
 </div>
       </div>
     </td>
@@ -1104,58 +1104,14 @@ with Signaling server.</p>
   
 </div>
 <div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="instance-set-onMessage">
+  <h3 data-ice="anchor" id="instance-set-onMemberJoin">
     <span class="access" data-ice="access">public</span>
     
     <span class="kind" data-ice="kind">set</span>
     
     
     
-    <span class="code" data-ice="name">onMessage</span><span class="code" data-ice="signature">: <span><span>function</span><span>(id: <span>number</span>, msg: <span><a href="typedef/index.html#static-typedef-DataTypeView">DataTypeView</a></span>, isBroadcast: <span>boolean</span>)</span></span></span>
-    <span class="right-info">
-      
-      
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber104">source</a></span></span>
-    </span>
-  </h3>
-
-  
-  
-  
-  <div data-ice="description"><p>This handler is called when a message has been received from the group.</p>
-</div>
-
-  
-
-  <div data-ice="properties">
-</div>
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-  
-</div>
-<div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="instance-set-onPeerJoin">
-    <span class="access" data-ice="access">public</span>
-    
-    <span class="kind" data-ice="kind">set</span>
-    
-    
-    
-    <span class="code" data-ice="name">onPeerJoin</span><span class="code" data-ice="signature">: <span><span>function</span><span>(id: <span>number</span>)</span></span></span>
+    <span class="code" data-ice="name">onMemberJoin</span><span class="code" data-ice="signature">: <span><span>function</span><span>(id: <span>number</span>)</span></span></span>
     <span class="right-info">
       
       
@@ -1192,14 +1148,14 @@ with Signaling server.</p>
   
 </div>
 <div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="instance-set-onPeerLeave">
+  <h3 data-ice="anchor" id="instance-set-onMemberLeave">
     <span class="access" data-ice="access">public</span>
     
     <span class="kind" data-ice="kind">set</span>
     
     
     
-    <span class="code" data-ice="name">onPeerLeave</span><span class="code" data-ice="signature">: <span><span>function</span><span>(id: <span>number</span>)</span></span></span>
+    <span class="code" data-ice="name">onMemberLeave</span><span class="code" data-ice="signature">: <span><span>function</span><span>(id: <span>number</span>)</span></span></span>
     <span class="right-info">
       
       
@@ -1211,6 +1167,50 @@ with Signaling server.</p>
   
   
   <div data-ice="description"><p>This handler is called when a member hes left the group.</p>
+</div>
+
+  
+
+  <div data-ice="properties">
+</div>
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+</div>
+<div class="detail" data-ice="detail">
+  <h3 data-ice="anchor" id="instance-set-onMessage">
+    <span class="access" data-ice="access">public</span>
+    
+    <span class="kind" data-ice="kind">set</span>
+    
+    
+    
+    <span class="code" data-ice="name">onMessage</span><span class="code" data-ice="signature">: <span><span>function</span><span>(id: <span>number</span>, msg: <span><a href="typedef/index.html#static-typedef-DataTypeView">DataTypeView</a></span>, isBroadcast: <span>boolean</span>)</span></span></span>
+    <span class="right-info">
+      
+      
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber104">source</a></span></span>
+    </span>
+  </h3>
+
+  
+  
+  
+  <div data-ice="description"><p>This handler is called when a message has been received from the group.</p>
 </div>
 
   

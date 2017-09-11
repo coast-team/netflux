@@ -52,8 +52,8 @@ export class WebChannel extends Service {
         this.key = undefined;
         this.autoRejoin = autoRejoin;
         // PUBLIC EVENT HANDLERS
-        this.onPeerJoin = () => { };
-        this.onPeerLeave = () => { };
+        this.onMemberJoin = () => { };
+        this.onMemberLeave = () => { };
         this.onMessage = () => { };
         this.onStateChanged = () => { };
         this.onSignalingStateChanged = () => { };
@@ -215,13 +215,13 @@ export class WebChannel extends Service {
             return Promise.reject(new Error('No peers to ping'));
         }
     }
-    onPeerJoinProxy(id) {
+    onMemberJoinProxy(id) {
         this.members[this.members.length] = id;
-        this.onPeerJoin(id);
+        this.onMemberJoin(id);
     }
-    onPeerLeaveProxy(id) {
+    onMemberLeaveProxy(id) {
         this.members.splice(this.members.indexOf(id), 1);
-        this.onPeerLeave(id);
+        this.onMemberLeave(id);
         if (this.members.length === 0
             && (this.signaling.state === SignalingState.CONNECTING
                 || this.signaling.state === SignalingState.CLOSED)) {

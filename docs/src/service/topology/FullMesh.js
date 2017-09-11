@@ -84,8 +84,8 @@ export class FullMesh extends Service {
             this.wc.joinSubject.next(new Error(`Intermediary channel closed: ${event.type}`));
         }
         if (this.channels.delete(channel)) {
-            this.wc.onPeerLeaveProxy(channel.peerId);
-            console.info(this.wc.myId + ' onPeerLeaveProxy ' + channel.peerId);
+            this.wc.onMemberLeaveProxy(channel.peerId);
+            console.info(this.wc.myId + ' onMemberLeaveProxy ' + channel.peerId);
         }
     }
     onChannelError(evt, channel) {
@@ -169,7 +169,7 @@ export class FullMesh extends Service {
     }
     peerJoined(ch) {
         this.channels.add(ch);
-        this.wc.onPeerJoinProxy(ch.peerId);
+        this.wc.onMemberJoinProxy(ch.peerId);
         this.jps.delete(ch.peerId);
         console.info(this.wc.myId + ' peerJoined ' + ch.peerId);
     }

@@ -53,7 +53,7 @@
 - Full control over WebRTC servers: Signaling, STUN and TURN.
  - Deploy your own Signaling server ([Sigver][Sigver]) or use one provided by default.
  - Configure STUN and TURN servers.
-- Small Signaling server payload (servers serves to establish the first connection with
+- Small Signaling server payload (server is necessary to establish the first connection with
   one of the group member, then this member acts as a Signaling server to establish connections with the rest of the group members.
 - 4 builds:
   - `dist/netflux.cjs.js` ES5 code, CommonJS format for NodeJS (see *package.json#main*)

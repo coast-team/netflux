@@ -114,21 +114,21 @@ window.esdocSearchIndex = [
     "member"
   ],
   [
+    "src/webchannelfacade.js~webgroup#onmemberjoin",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-set-onMemberJoin",
+    "src/WebChannelFacade.js~WebGroup#onMemberJoin",
+    "member"
+  ],
+  [
+    "src/webchannelfacade.js~webgroup#onmemberleave",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-set-onMemberLeave",
+    "src/WebChannelFacade.js~WebGroup#onMemberLeave",
+    "member"
+  ],
+  [
     "src/webchannelfacade.js~webgroup#onmessage",
     "class/src/WebChannelFacade.js~WebGroup.html#instance-set-onMessage",
     "src/WebChannelFacade.js~WebGroup#onMessage",
-    "member"
-  ],
-  [
-    "src/webchannelfacade.js~webgroup#onpeerjoin",
-    "class/src/WebChannelFacade.js~WebGroup.html#instance-set-onPeerJoin",
-    "src/WebChannelFacade.js~WebGroup#onPeerJoin",
-    "member"
-  ],
-  [
-    "src/webchannelfacade.js~webgroup#onpeerleave",
-    "class/src/WebChannelFacade.js~WebGroup.html#instance-set-onPeerLeave",
-    "src/WebChannelFacade.js~WebGroup#onPeerLeave",
     "member"
   ],
   [
