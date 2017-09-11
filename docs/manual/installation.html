@@ -72,7 +72,7 @@
 <p>Netflux has an optional peer dependency: <code>wrtc</code>. This package provides WebRTC API in NodeJS. It is optional because Netflux can use <code>WebSocket</code> instead. For some use cases maybe you still want to connect your server to the peer to peer network via <code>RTCDataChannel</code>, then you have to successfully install this dependency, checkout <a href="https://github.com/js-platform/node-webrtc">wrtc repository</a> then.</p>
 <h2 id="what-you-need">What you need</h2><p>Signaling server is only mandatory server for Netflux, but for a fully functional peer to peer network (to support all use cases) we also need STUN and TURN servers.</p>
 <p>Netflux comes with Signaling and STUN servers by default for easier quickstart. For TURN server two solutions are possible: either deploy your own or rent one at <a href="https://xirsys.com/">Xirsys</a> for example or any other similar services.</p>
-<h3 id="signaling-server">Signaling server</h3><p><strong>Default</strong>: <code>wss://www.coedit.re:20443</code>.</p>
+<h3 id="signaling-server">Signaling server</h3><p><strong>Default</strong>: <code>wss://www.coedit.re:20443</code></p>
 <p>We developed a Signaling server: <a href="https://github.com/coast-team/sigver">Sigver</a>. It is the only signaling server (signaling mechanism) which is supported by Netflux for now.</p>
 <p><strong>TIP</strong>: we recommend to deploy your own instance of Sigver for production.</p>
 <h3 id="stun-server">STUN server</h3><p><strong>Default</strong>: <code>stun:stun3.l.google.com:19302</code></p>

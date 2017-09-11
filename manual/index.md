@@ -42,6 +42,7 @@ Universal Javascript **peer to peer** transport API for client and server. Full 
 
 ## Features
 - Universal API (works in Chrome/Firefox and NodeJS).
+- TypeScript declaration files are included.
 - Create peer to peer full mesh network.
 - Send/receive [String][String], [Uint8Array][Uint8Array] data types.
 - Automatic rejoin when the connection with Signaling has lost.
@@ -52,10 +53,10 @@ Universal Javascript **peer to peer** transport API for client and server. Full 
 - Small Signaling server payload (servers serves to establish the first connection with
   one of the group member, then this member acts as a Signaling server to establish connections with the rest of the group members.
 - 4 builds:
- - `dist/netflux.cjs.js` ES5 code, CommonJS format for NodeJS (see *package.json#main*)
- - `dist/netflux.node.esm.js` ES5 code, ECMAScript 6 module format for NodeJS (see *package.json#module*).
- - `dist/netflux.browser.esm.js` ES5 code, ECMAScript 6 module format for browsers (see *package.json#browser*).
- - `dist/netflux.umd.js` ES5 code, UMD format for browsers.
+  - `dist/netflux.cjs.js` ES5 code, CommonJS format for NodeJS (see *package.json#main*)
+  - `dist/netflux.node.esm.js` ES5 code, ECMAScript 6 module format for NodeJS (see *package.json#module*).
+  - `dist/netflux.browser.esm.js` ES5 code, ECMAScript 6 module format for browsers (see *package.json#browser*).
+  - `dist/netflux.umd.js` ES5 code, UMD format for browsers.
 
 [WebSocket]: https://developer.mozilla.org/en/docs/Web/API/WebSocket
 [RTCDataChannel]: https://developer.mozilla.org/en/docs/Web/API/RTCDataChannel
