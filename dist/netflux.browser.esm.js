@@ -11408,22 +11408,64 @@ var WebChannel = (function (_super) {
     return WebChannel;
 }(Service$1));
 
+/**
+ * @ignore
+ */
 var wcs = new WeakMap();
 /**
- * BotServer can listen on web socket. A peer can invite bot to join his `WebChannel`.
- * He can also join one of the bot's `WebChannel`.
+ * This class is an API starting point. It represents a peer to peer network,
+ * simply called a group. Each group member can send/receive broadcast
+ * as well as personal messages, invite other persons or bots (see {@link WebGroupBotServer}).
+ * @example
+ * // Create a WebGroup with full mesh topology, autorejoin feature and
+ * // specified Signaling and ICE servers for WebRTC.
+ *
+ * const wg = new WebGroup({
+ *   signalingURL: 'wss://mysignaling.com'
+ *   iceServers: [
+ *     {
+ *       urls: 'stun.l.google.com:19302'
+ *     },
+ *     {
+ *       urls: ['turn:myturn.com?transport=udp', 'turn:myturn?transport=tcp'],
+ *       username: 'user',
+ *       password: 'password'
+ *     }
+ *   ]
+ * })
+ *
+ * wg.onPeerJoin = (id) => {
+ *   // TODO...
+ * }
+ * wg.onPeerLeave = (id) => {
+ *   // TODO...
+ * }
+ * wg.onMessage = (id, msg, isBroadcast) => {
+ *   // TODO...
+ * }
+ * wg.onStateChanged = (state) => {
+ *   // TODO...
+ * }
+ * wg.onSignalingStateChanged = (state) => {
+ *   // TODO...
+ * }
  */
 var WebGroup = (function () {
     /**
-     * Create instance of WebGroup.
-     * @param {WebGroupOptions} options [description]
+     * @param {WebGroupOptions} [options]
+     * @param {Topology} [options.topology=Topology.FULL_MESH]
+     * @param {string} [options.signalingURL='wss://www.coedit.re:20473']
+     * @param {RTCIceServer[]} [options.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]
+     * @param {boolean} [options.autoRejoin=true]
      */
     function WebGroup(options) {
+        if (options === void 0) { options = {}; }
         wcs.set(this, new WebChannel(options));
     }
     Object.defineProperty(WebGroup.prototype, "id", {
         /**
-         * WebGroup id. The same value for all members.
+         * {@link WebGroup} identifier. The same value for all members.
+         * @type {number}
          */
         get: function () { return wcs.get(this).id; },
         enumerable: true,
@@ -11431,7 +11473,8 @@ var WebGroup = (function () {
     });
     Object.defineProperty(WebGroup.prototype, "myId", {
         /**
-         * Your unique member id.
+         * Your unique member identifier in the group.
+         * @type {number}
          */
         get: function () { return wcs.get(this).myId; },
         enumerable: true,
@@ -11439,7 +11482,8 @@ var WebGroup = (function () {
     });
     Object.defineProperty(WebGroup.prototype, "members", {
         /**
-         * An array of member ids.
+         * An array of member identifiers (except yours).
+         * @type {number[]}
          */
         get: function () { return wcs.get(this).members; },
         enumerable: true,
@@ -11447,64 +11491,133 @@ var WebGroup = (function () {
     });
     Object.defineProperty(WebGroup.prototype, "topology", {
         /**
-         * Topology id.
+         * Topology identifier.
+         * @type {Topology}
          */
         get: function () { return wcs.get(this).topology; },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(WebGroup.prototype, "state", {
+        /**
+         * The state of the {@link WebGroup} connection.
+         * @type {WebGroupState}
+         */
         get: function () { return wcs.get(this).state; },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(WebGroup.prototype, "signalingState", {
+        /**
+         * The state of the signaling server.
+         * @type {SignalingState}
+         */
         get: function () { return wcs.get(this).signaling.state; },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(WebGroup.prototype, "signalingURL", {
+        /**
+         * The signaling server URL.
+         * @type {string}
+         */
         get: function () { return wcs.get(this).signaling.url; },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(WebGroup.prototype, "autoRejoin", {
+        /**
+         * If equals to true, auto rejoin feature is enabled.
+         * @type {boolean}
+         */
         get: function () { return wcs.get(this).autoRejoin; },
+        /**
+         * Enable/Desable the auto rejoin feature.
+         * @type {boolean}
+         */
         set: function (value) { wcs.get(this).autoRejoin = value; },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(WebGroup.prototype, "onMessage", {
+        /**
+         * This handler is called when a message has been received from the group.
+         * @type {function(id: number, msg: DataTypeView, isBroadcast: boolean)}
+         */
         set: function (handler) { wcs.get(this).onMessage = handler; },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(WebGroup.prototype, "onPeerJoin", {
+        /**
+         * This handler is called when a new member has joined the group.
+         * @type {function(id: number)}
+         */
         set: function (handler) { wcs.get(this).onPeerJoin = handler; },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(WebGroup.prototype, "onPeerLeave", {
+        /**
+         * This handler is called when a member hes left the group.
+         * @type {function(id: number)}
+         */
         set: function (handler) { wcs.get(this).onPeerLeave = handler; },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(WebGroup.prototype, "onStateChanged", {
+        /**
+         * This handler is called when the group state has changed.
+         * @type {function(state: WebGroupState)}
+         */
         set: function (handler) { wcs.get(this).onStateChanged = handler; },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(WebGroup.prototype, "onSignalingStateChanged", {
+        /**
+         * This handler is called when the signaling state has changed.
+         * @type {function(state: SignalingState)}
+         */
         set: function (handler) { wcs.get(this).onSignalingStateChanged = handler; },
         enumerable: true,
         configurable: true
     });
+    /**
+     * Join the group identified by a key provided by one of the group member.
+     * @param {string} key
+     */
     WebGroup.prototype.join = function (key) { return wcs.get(this).join(key); };
+    /**
+     * Invite a bot server to join this group.
+     * @param {string} url - Bot server URL (See {@link WebGroupBotServerOptions})
+     */
     WebGroup.prototype.invite = function (url) { return wcs.get(this).invite(url); };
+    /**
+     * Close the connection with Signaling server.
+     */
     WebGroup.prototype.closeSignaling = function () { return wcs.get(this).closeSignaling(); };
+    /**
+     * Leave the group which means close channels with all members and connection
+     * with Signaling server.
+     */
     WebGroup.prototype.leave = function () { return wcs.get(this).leave(); };
+    /**
+     * Broadcast a message to the group.
+     * @param {DataTypeView} data
+     */
     WebGroup.prototype.send = function (data) { return wcs.get(this).send(data); };
+    /**
+     * Send a message to a particular group member.
+     * @param {number}    id Member identifier
+     * @param {DataTypeView}  data Message
+     */
     WebGroup.prototype.sendTo = function (id, data) { return wcs.get(this).sendTo(id, data); };
+    /**
+     * Get web group latency
+     * @return {Promise<number>} Latency in milliseconds
+     */
     WebGroup.prototype.ping = function () { return wcs.get(this).ping(); };
     return WebGroup;
 }());

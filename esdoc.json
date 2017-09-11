@@ -1,17 +1,15 @@
 {
-  "source": "./src",
+  "source": "./docs/src",
   "destination": "./docs",
-  "includes": [".*Facade.*\\.ts"],
-  "excludes": [".*\\.(js|proto|d\\.ts)$", "BotServer\\.ts$", "Proto.*\\.ts$", "service.*\\.ts$", "Channel\\.ts$", "Signaling.*\\.ts$", "UserMessage.*\\.ts$", "WebSocketBuilder.*\\.ts$", "Util.*\\.ts$", "index.*\\.ts$", "polyfills.*\\.ts$", "Util.*\\.ts$"],
+  "includes": [".*Facade\\.js$", ".*esdoc\\.helper\\.js"],
   "plugins": [
-    {"name": "esdoc-typescript-plugin", "option": {"enable": true}},
     {
       "name": "esdoc-standard-plugin",
       "option": {
         "accessor": {"access": ["public", "protected", "private"], "autoPrivate": false},
         "undocumentIdentifier": {"enable": false},
         "unexportedIdentifier": {"enable": false},
-        "typeInference": {"enable": true},
+        "typeInference": {"enable": false},
         "brand": {
           "title": "Netflux",
           "description": "Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done.",

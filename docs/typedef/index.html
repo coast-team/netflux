@@ -29,14 +29,18 @@
 <nav class="navigation" data-ice="nav"><div>
   <ul>
     
-  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/BotServerFacade.ts~WebGroupBotServer.html">WebGroupBotServer</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.ts~WebGroup.html">WebGroup</a></span></span></li>
-<li data-ice="doc"><a data-ice="dirPath" class="nav-dir-path" href="identifiers.html#types">types</a><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-SignalingState">SignalingState</a></span></span></li>
+  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/BotServerFacade.js~WebGroupBotServer.html">WebGroupBotServer</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span></span></li>
+<li data-ice="doc"><a data-ice="dirPath" class="nav-dir-path" href="identifiers.html#types">types</a><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-DataTypeView">DataTypeView</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-SignalingState">SignalingState</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-Topology">Topology</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupBotServerOptions">WebGroupBotServerOptions</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupOptions">WebGroupOptions</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupState">WebGroupState</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/http.html#http_class_http_server">NodeJS.http.Server</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/https.html#https_class_https_server">NodeJS.https.Server</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://developer.mozilla.org/en/docs/Web/API/RTCIceServer">RTCIceServer</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array">Uint8Array</a></span></span></li>
 </ul>
 </div>
 </nav>
@@ -47,6 +51,35 @@
   <tbody>
   
   <tr data-ice="target">
+    <td>
+      <span class="access" data-ice="access">public</span>
+      
+      
+      
+      <span class="override" data-ice="override"></span>
+    </td>
+    <td>
+      <div>
+        <p>
+          
+          
+          
+          <span class="code" data-ice="name"><span><a href="typedef/index.html#static-typedef-DataTypeView">DataTypeView</a></span></span><span class="code" data-ice="signature">: <span>string</span> | <span><a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array">Uint8Array</a></span></span>
+        </p>
+      </div>
+      <div>
+        
+        
+        <div data-ice="description"><p>Is a helper type representing types that can be sent/received over a web group.</p>
+</div>
+      </div>
+    </td>
+    <td>
+      
+      
+    </td>
+  </tr>
+<tr data-ice="target">
     <td>
       <span class="access" data-ice="access">public</span>
       
@@ -95,7 +128,8 @@
       <div>
         
         
-        
+        <div data-ice="description"><p>Topology enum.</p>
+</div>
       </div>
     </td>
     <td>
@@ -123,7 +157,8 @@
       <div>
         
         
-        
+        <div data-ice="description"><p>The options to be passed into <span><a href="class/src/BotServerFacade.js~WebGroupBotServer.html">WebGroupBotServer</a></span> constructor.</p>
+</div>
       </div>
     </td>
     <td>
@@ -151,7 +186,8 @@
       <div>
         
         
-        
+        <div data-ice="description"><p>The options to be passed into <span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span> constructor.</p>
+</div>
       </div>
     </td>
     <td>
@@ -179,7 +215,7 @@
       <div>
         
         
-        <div data-ice="description"><p>The state of the web group.</p>
+        <div data-ice="description"><p><span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span> state enum.</p>
 </div>
       </div>
     </td>
@@ -194,6 +230,50 @@
 <div data-ice="details"><h2 data-ice="title">Static Public </h2>
 
 <div class="detail" data-ice="detail">
+  <h3 data-ice="anchor" id="static-typedef-DataTypeView">
+    <span class="access" data-ice="access">public</span>
+    
+    
+    
+    
+    
+    <span class="code" data-ice="name">DataTypeView</span><span class="code" data-ice="signature">: <span>string</span> | <span><a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array">Uint8Array</a></span></span>
+    <span class="right-info">
+      
+      
+      <span data-ice="source"><span><a href="file/src/types/esdoc.helper.js.html#lineNumberundefined">source</a></span></span>
+    </span>
+  </h3>
+
+  
+  
+  
+  <div data-ice="description"><p>Is a helper type representing types that can be sent/received over a web group.</p>
+</div>
+
+  
+
+  <div data-ice="properties">
+</div>
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+</div>
+<div class="detail" data-ice="detail">
   <h3 data-ice="anchor" id="static-typedef-SignalingState">
     <span class="access" data-ice="access">public</span>
     
@@ -205,7 +285,7 @@
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/types/esdoc.helper.ts.html#lineNumberundefined">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/types/esdoc.helper.js.html#lineNumberundefined">source</a></span></span>
     </span>
   </h3>
 
@@ -302,14 +382,15 @@ web group and ready to join others.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/types/esdoc.helper.ts.html#lineNumberundefined">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/types/esdoc.helper.js.html#lineNumberundefined">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  
+  <div data-ice="description"><p>Topology enum.</p>
+</div>
 
   
 
@@ -363,14 +444,15 @@ web group and ready to join others.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/types/esdoc.helper.ts.html#lineNumberundefined">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/types/esdoc.helper.js.html#lineNumberundefined">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  
+  <div data-ice="description"><p>The options to be passed into <span><a href="class/src/BotServerFacade.js~WebGroupBotServer.html">WebGroupBotServer</a></span> constructor.</p>
+</div>
 
   
 
@@ -385,66 +467,56 @@ web group and ready to join others.</p>
     <tr data-ice="property" data-depth="0">
       <td data-ice="name" class="code" data-depth="0">topology</td>
       <td data-ice="type" class="code"><span><a href="typedef/index.html#static-typedef-Topology">Topology</a></span></td>
-      <td data-ice="appendix"><ul><li>optional</li>
-<li>default: WebGroupOptions.topology</li></ul></td>
-      <td data-ice="description"><p>Topology identifier
-(Full mesh is the only one supported by Netflux for now).</p>
+      <td data-ice="appendix"><ul><li>optional</li></ul></td>
+      <td data-ice="description"><p>See WebGroupOptions.topology</p>
 </td>
     </tr>
 <tr data-ice="property" data-depth="0">
       <td data-ice="name" class="code" data-depth="0">signalingURL</td>
       <td data-ice="type" class="code"><span>string</span></td>
-      <td data-ice="appendix"><ul><li>optional</li>
-<li>default: WebGroupOptions.signalingURL</li></ul></td>
-      <td data-ice="description"><p>Signaling URL for WebRTC.</p>
+      <td data-ice="appendix"><ul><li>optional</li></ul></td>
+      <td data-ice="description"><p>See WebGroupOptions.signalingURL</p>
 </td>
     </tr>
 <tr data-ice="property" data-depth="0">
       <td data-ice="name" class="code" data-depth="0">iceServers</td>
       <td data-ice="type" class="code"><span><span><a href="https://developer.mozilla.org/en/docs/Web/API/RTCIceServer">RTCIceServer</a></span><span>[]</span></span></td>
-      <td data-ice="appendix"><ul><li>optional</li>
-<li>default: WebGroupOptions.iceServers</li></ul></td>
-      <td data-ice="description"><p>Array of Ice servers for WebRTC.</p>
+      <td data-ice="appendix"><ul><li>optional</li></ul></td>
+      <td data-ice="description"><p>See WebGroupOptions.iceServers</p>
 </td>
     </tr>
 <tr data-ice="property" data-depth="0">
       <td data-ice="name" class="code" data-depth="0">autoRejoin</td>
       <td data-ice="type" class="code"><span>boolean</span></td>
-      <td data-ice="appendix"><ul><li>optional</li>
-<li>default: WebGroupOptions.autoRejoin</li></ul></td>
-      <td data-ice="description"><p>Whether to automatically rejoin
-the web group on disconnect or not. Its value may be modified after
-<code>WebGroup</code> instantiation at any time.</p>
+      <td data-ice="appendix"><ul><li>optional</li></ul></td>
+      <td data-ice="description"><p>See WebGroupOptions.autoRejoin</p>
 </td>
     </tr>
 <tr data-ice="property" data-depth="0">
       <td data-ice="name" class="code" data-depth="0">bot</td>
       <td data-ice="type" class="code"><span>Object</span></td>
-      <td data-ice="appendix"><ul><li>optional</li></ul></td>
+      <td data-ice="appendix"></td>
       <td data-ice="description"><p>Server related options of the bot.</p>
+</td>
+    </tr>
+<tr data-ice="property" data-depth="1">
+      <td data-ice="name" class="code" data-depth="1">bot.server</td>
+      <td data-ice="type" class="code"><span><a href="https://nodejs.org/api/http.html#http_class_http_server">NodeJS.http.Server</a></span> | <span><a href="https://nodejs.org/api/https.html#https_class_https_server">NodeJS.https.Server</a></span></td>
+      <td data-ice="appendix"></td>
+      <td data-ice="description"><p>NodeJS http(s) server.</p>
 </td>
     </tr>
 <tr data-ice="property" data-depth="1">
       <td data-ice="name" class="code" data-depth="1">bot.url</td>
       <td data-ice="type" class="code"><span>string</span></td>
-      <td data-ice="appendix"><ul><li>optional</li>
-<li>default: &apos;&apos;</li></ul></td>
-      <td data-ice="description"><p>Bot server URL open to outside.</p>
-</td>
-    </tr>
-<tr data-ice="property" data-depth="1">
-      <td data-ice="name" class="code" data-depth="1">bot.server</td>
-      <td data-ice="type" class="code"><span>Object</span></td>
-      <td data-ice="appendix"><ul><li>optional</li>
-<li>default: undefined</li></ul></td>
-      <td data-ice="description"><p><a href="https://github.com/uNetworking/uWebSockets">&#xB5;WebSockets</a> <code>Server</code> object.</p>
+      <td data-ice="appendix"><ul><li>optional</li></ul></td>
+      <td data-ice="description"><p>Bot server URL.</p>
 </td>
     </tr>
 <tr data-ice="property" data-depth="1">
       <td data-ice="name" class="code" data-depth="1">bot.perMessageDeflate</td>
       <td data-ice="type" class="code"><span>boolean</span></td>
-      <td data-ice="appendix"><ul><li>optional</li>
-<li>default: false</li></ul></td>
+      <td data-ice="appendix"><ul><li>optional</li></ul></td>
       <td data-ice="description"><p>Enable/disable permessage-deflate.</p>
 </td>
     </tr>
@@ -482,14 +554,15 @@ the web group on disconnect or not. Its value may be modified after
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/types/esdoc.helper.ts.html#lineNumberundefined">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/types/esdoc.helper.js.html#lineNumberundefined">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  
+  <div data-ice="description"><p>The options to be passed into <span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span> constructor.</p>
+</div>
 
   
 
@@ -504,8 +577,7 @@ the web group on disconnect or not. Its value may be modified after
     <tr data-ice="property" data-depth="0">
       <td data-ice="name" class="code" data-depth="0">topology</td>
       <td data-ice="type" class="code"><span><a href="typedef/index.html#static-typedef-Topology">Topology</a></span></td>
-      <td data-ice="appendix"><ul><li>optional</li>
-<li>default: Topology.FULL_MESH</li></ul></td>
+      <td data-ice="appendix"></td>
       <td data-ice="description"><p>Topology identifier
 (Full mesh is the only one supported by Netflux for now).</p>
 </td>
@@ -513,27 +585,24 @@ the web group on disconnect or not. Its value may be modified after
 <tr data-ice="property" data-depth="0">
       <td data-ice="name" class="code" data-depth="0">signalingURL</td>
       <td data-ice="type" class="code"><span>string</span></td>
-      <td data-ice="appendix"><ul><li>optional</li>
-<li>default: &quot;wss://www.coedit.re:20473&quot;</li></ul></td>
+      <td data-ice="appendix"></td>
       <td data-ice="description"><p>Signaling URL for WebRTC.</p>
 </td>
     </tr>
 <tr data-ice="property" data-depth="0">
       <td data-ice="name" class="code" data-depth="0">iceServers</td>
       <td data-ice="type" class="code"><span><span><a href="https://developer.mozilla.org/en/docs/Web/API/RTCIceServer">RTCIceServer</a></span><span>[]</span></span></td>
-      <td data-ice="appendix"><ul><li>optional</li>
-<li>default: [{urls: &apos;stun:stun3.l.google.com:19302&apos;}]</li></ul></td>
+      <td data-ice="appendix"></td>
       <td data-ice="description"><p>Array of Ice servers for WebRTC.</p>
 </td>
     </tr>
 <tr data-ice="property" data-depth="0">
       <td data-ice="name" class="code" data-depth="0">autoRejoin</td>
       <td data-ice="type" class="code"><span>boolean</span></td>
-      <td data-ice="appendix"><ul><li>optional</li>
-<li>default: true</li></ul></td>
-      <td data-ice="description"><p>Whether to automatically rejoin
-the web group on disconnect or not. Its value may be modified after
-<code>WebGroup</code> instantiation at any time.</p>
+      <td data-ice="appendix"></td>
+      <td data-ice="description"><p>Whether to automatically rejoin the web group
+on disconnect or not. Its value may be modified after <span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span>
+instantiation at any time.</p>
 </td>
     </tr>
 </tbody>
@@ -570,14 +639,14 @@ the web group on disconnect or not. Its value may be modified after
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/types/esdoc.helper.ts.html#lineNumberundefined">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/types/esdoc.helper.js.html#lineNumberundefined">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  <div data-ice="description"><p>The state of the web group.</p>
+  <div data-ice="description"><p><span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span> state enum.</p>
 </div>
 
   

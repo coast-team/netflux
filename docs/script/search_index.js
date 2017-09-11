@@ -1,230 +1,254 @@
 window.esdocSearchIndex = [
   [
-    "netflux/src/webchannelfacade.ts~webgroup",
-    "class/src/WebChannelFacade.ts~WebGroup.html",
-    "<span>WebGroup</span> <span class=\"search-result-import-path\">netflux/src/WebChannelFacade.ts</span>",
+    "netflux/src/webchannelfacade.js~webgroup",
+    "class/src/WebChannelFacade.js~WebGroup.html",
+    "<span>WebGroup</span> <span class=\"search-result-import-path\">netflux/src/WebChannelFacade.js</span>",
     "class"
   ],
   [
-    "netflux/src/botserverfacade.ts~webgroupbotserver",
-    "class/src/BotServerFacade.ts~WebGroupBotServer.html",
-    "<span>WebGroupBotServer</span> <span class=\"search-result-import-path\">netflux/src/BotServerFacade.ts</span>",
+    "netflux/src/botserverfacade.js~webgroupbotserver",
+    "class/src/BotServerFacade.js~WebGroupBotServer.html",
+    "<span>WebGroupBotServer</span> <span class=\"search-result-import-path\">netflux/src/BotServerFacade.js</span>",
     "class"
   ],
   [
-    "src/botserverfacade.ts",
-    "file/src/BotServerFacade.ts.html",
-    "src/BotServerFacade.ts",
+    "src/botserverfacade.js",
+    "file/src/BotServerFacade.js.html",
+    "src/BotServerFacade.js",
     "file"
   ],
   [
-    "src/botserverfacade.ts~webgroupbotserver#constructor",
-    "class/src/BotServerFacade.ts~WebGroupBotServer.html#instance-constructor-constructor",
-    "src/BotServerFacade.ts~WebGroupBotServer#constructor",
+    "src/botserverfacade.js~webgroupbotserver#constructor",
+    "class/src/BotServerFacade.js~WebGroupBotServer.html#instance-constructor-constructor",
+    "src/BotServerFacade.js~WebGroupBotServer#constructor",
     "method"
   ],
   [
-    "src/botserverfacade.ts~webgroupbotserver#onwebgroup",
-    "class/src/BotServerFacade.ts~WebGroupBotServer.html#instance-set-onWebGroup",
-    "src/BotServerFacade.ts~WebGroupBotServer#onWebGroup",
+    "src/botserverfacade.js~webgroupbotserver#onwebgroup",
+    "class/src/BotServerFacade.js~WebGroupBotServer.html#instance-set-onWebGroup",
+    "src/BotServerFacade.js~WebGroupBotServer#onWebGroup",
     "member"
   ],
   [
-    "src/botserverfacade.ts~webgroupbotserver#server",
-    "class/src/BotServerFacade.ts~WebGroupBotServer.html#instance-get-server",
-    "src/BotServerFacade.ts~WebGroupBotServer#server",
+    "src/botserverfacade.js~webgroupbotserver#server",
+    "class/src/BotServerFacade.js~WebGroupBotServer.html#instance-get-server",
+    "src/BotServerFacade.js~WebGroupBotServer#server",
     "member"
   ],
   [
-    "src/botserverfacade.ts~webgroupbotserver#url",
-    "class/src/BotServerFacade.ts~WebGroupBotServer.html#instance-get-url",
-    "src/BotServerFacade.ts~WebGroupBotServer#url",
+    "src/botserverfacade.js~webgroupbotserver#url",
+    "class/src/BotServerFacade.js~WebGroupBotServer.html#instance-get-url",
+    "src/BotServerFacade.js~WebGroupBotServer#url",
     "member"
   ],
   [
-    "src/botserverfacade.ts~webgroupbotserver#webgroups",
-    "class/src/BotServerFacade.ts~WebGroupBotServer.html#instance-get-webGroups",
-    "src/BotServerFacade.ts~WebGroupBotServer#webGroups",
+    "src/botserverfacade.js~webgroupbotserver#webgroups",
+    "class/src/BotServerFacade.js~WebGroupBotServer.html#instance-get-webGroups",
+    "src/BotServerFacade.js~WebGroupBotServer#webGroups",
     "member"
   ],
   [
-    "src/webchannelfacade.ts",
-    "file/src/WebChannelFacade.ts.html",
-    "src/WebChannelFacade.ts",
+    "src/webchannelfacade.js",
+    "file/src/WebChannelFacade.js.html",
+    "src/WebChannelFacade.js",
     "file"
   ],
   [
-    "src/webchannelfacade.ts~webgroup#autorejoin",
-    "class/src/WebChannelFacade.ts~WebGroup.html#instance-set-autoRejoin",
-    "src/WebChannelFacade.ts~WebGroup#autoRejoin",
+    "src/webchannelfacade.js~webgroup#autorejoin",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-get-autoRejoin",
+    "src/WebChannelFacade.js~WebGroup#autoRejoin",
     "member"
   ],
   [
-    "src/webchannelfacade.ts~webgroup#autorejoin",
-    "class/src/WebChannelFacade.ts~WebGroup.html#instance-get-autoRejoin",
-    "src/WebChannelFacade.ts~WebGroup#autoRejoin",
+    "src/webchannelfacade.js~webgroup#autorejoin",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-set-autoRejoin",
+    "src/WebChannelFacade.js~WebGroup#autoRejoin",
     "member"
   ],
   [
-    "src/webchannelfacade.ts~webgroup#closesignaling",
-    "class/src/WebChannelFacade.ts~WebGroup.html#instance-method-closeSignaling",
-    "src/WebChannelFacade.ts~WebGroup#closeSignaling",
+    "src/webchannelfacade.js~webgroup#closesignaling",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-method-closeSignaling",
+    "src/WebChannelFacade.js~WebGroup#closeSignaling",
     "method"
   ],
   [
-    "src/webchannelfacade.ts~webgroup#constructor",
-    "class/src/WebChannelFacade.ts~WebGroup.html#instance-constructor-constructor",
-    "src/WebChannelFacade.ts~WebGroup#constructor",
+    "src/webchannelfacade.js~webgroup#constructor",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-constructor-constructor",
+    "src/WebChannelFacade.js~WebGroup#constructor",
     "method"
   ],
   [
-    "src/webchannelfacade.ts~webgroup#id",
-    "class/src/WebChannelFacade.ts~WebGroup.html#instance-get-id",
-    "src/WebChannelFacade.ts~WebGroup#id",
+    "src/webchannelfacade.js~webgroup#id",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-get-id",
+    "src/WebChannelFacade.js~WebGroup#id",
     "member"
   ],
   [
-    "src/webchannelfacade.ts~webgroup#invite",
-    "class/src/WebChannelFacade.ts~WebGroup.html#instance-method-invite",
-    "src/WebChannelFacade.ts~WebGroup#invite",
+    "src/webchannelfacade.js~webgroup#invite",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-method-invite",
+    "src/WebChannelFacade.js~WebGroup#invite",
     "method"
   ],
   [
-    "src/webchannelfacade.ts~webgroup#join",
-    "class/src/WebChannelFacade.ts~WebGroup.html#instance-method-join",
-    "src/WebChannelFacade.ts~WebGroup#join",
+    "src/webchannelfacade.js~webgroup#join",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-method-join",
+    "src/WebChannelFacade.js~WebGroup#join",
     "method"
   ],
   [
-    "src/webchannelfacade.ts~webgroup#leave",
-    "class/src/WebChannelFacade.ts~WebGroup.html#instance-method-leave",
-    "src/WebChannelFacade.ts~WebGroup#leave",
+    "src/webchannelfacade.js~webgroup#leave",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-method-leave",
+    "src/WebChannelFacade.js~WebGroup#leave",
     "method"
   ],
   [
-    "src/webchannelfacade.ts~webgroup#members",
-    "class/src/WebChannelFacade.ts~WebGroup.html#instance-get-members",
-    "src/WebChannelFacade.ts~WebGroup#members",
+    "src/webchannelfacade.js~webgroup#members",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-get-members",
+    "src/WebChannelFacade.js~WebGroup#members",
     "member"
   ],
   [
-    "src/webchannelfacade.ts~webgroup#myid",
-    "class/src/WebChannelFacade.ts~WebGroup.html#instance-get-myId",
-    "src/WebChannelFacade.ts~WebGroup#myId",
+    "src/webchannelfacade.js~webgroup#myid",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-get-myId",
+    "src/WebChannelFacade.js~WebGroup#myId",
     "member"
   ],
   [
-    "src/webchannelfacade.ts~webgroup#onmessage",
-    "class/src/WebChannelFacade.ts~WebGroup.html#instance-set-onMessage",
-    "src/WebChannelFacade.ts~WebGroup#onMessage",
+    "src/webchannelfacade.js~webgroup#onmessage",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-set-onMessage",
+    "src/WebChannelFacade.js~WebGroup#onMessage",
     "member"
   ],
   [
-    "src/webchannelfacade.ts~webgroup#onpeerjoin",
-    "class/src/WebChannelFacade.ts~WebGroup.html#instance-set-onPeerJoin",
-    "src/WebChannelFacade.ts~WebGroup#onPeerJoin",
+    "src/webchannelfacade.js~webgroup#onpeerjoin",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-set-onPeerJoin",
+    "src/WebChannelFacade.js~WebGroup#onPeerJoin",
     "member"
   ],
   [
-    "src/webchannelfacade.ts~webgroup#onpeerleave",
-    "class/src/WebChannelFacade.ts~WebGroup.html#instance-set-onPeerLeave",
-    "src/WebChannelFacade.ts~WebGroup#onPeerLeave",
+    "src/webchannelfacade.js~webgroup#onpeerleave",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-set-onPeerLeave",
+    "src/WebChannelFacade.js~WebGroup#onPeerLeave",
     "member"
   ],
   [
-    "src/webchannelfacade.ts~webgroup#onsignalingstatechanged",
-    "class/src/WebChannelFacade.ts~WebGroup.html#instance-set-onSignalingStateChanged",
-    "src/WebChannelFacade.ts~WebGroup#onSignalingStateChanged",
+    "src/webchannelfacade.js~webgroup#onsignalingstatechanged",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-set-onSignalingStateChanged",
+    "src/WebChannelFacade.js~WebGroup#onSignalingStateChanged",
     "member"
   ],
   [
-    "src/webchannelfacade.ts~webgroup#onstatechanged",
-    "class/src/WebChannelFacade.ts~WebGroup.html#instance-set-onStateChanged",
-    "src/WebChannelFacade.ts~WebGroup#onStateChanged",
+    "src/webchannelfacade.js~webgroup#onstatechanged",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-set-onStateChanged",
+    "src/WebChannelFacade.js~WebGroup#onStateChanged",
     "member"
   ],
   [
-    "src/webchannelfacade.ts~webgroup#ping",
-    "class/src/WebChannelFacade.ts~WebGroup.html#instance-method-ping",
-    "src/WebChannelFacade.ts~WebGroup#ping",
+    "src/webchannelfacade.js~webgroup#ping",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-method-ping",
+    "src/WebChannelFacade.js~WebGroup#ping",
     "method"
   ],
   [
-    "src/webchannelfacade.ts~webgroup#send",
-    "class/src/WebChannelFacade.ts~WebGroup.html#instance-method-send",
-    "src/WebChannelFacade.ts~WebGroup#send",
+    "src/webchannelfacade.js~webgroup#send",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-method-send",
+    "src/WebChannelFacade.js~WebGroup#send",
     "method"
   ],
   [
-    "src/webchannelfacade.ts~webgroup#sendto",
-    "class/src/WebChannelFacade.ts~WebGroup.html#instance-method-sendTo",
-    "src/WebChannelFacade.ts~WebGroup#sendTo",
+    "src/webchannelfacade.js~webgroup#sendto",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-method-sendTo",
+    "src/WebChannelFacade.js~WebGroup#sendTo",
     "method"
   ],
   [
-    "src/webchannelfacade.ts~webgroup#signalingstate",
-    "class/src/WebChannelFacade.ts~WebGroup.html#instance-get-signalingState",
-    "src/WebChannelFacade.ts~WebGroup#signalingState",
+    "src/webchannelfacade.js~webgroup#signalingstate",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-get-signalingState",
+    "src/WebChannelFacade.js~WebGroup#signalingState",
     "member"
   ],
   [
-    "src/webchannelfacade.ts~webgroup#signalingurl",
-    "class/src/WebChannelFacade.ts~WebGroup.html#instance-get-signalingURL",
-    "src/WebChannelFacade.ts~WebGroup#signalingURL",
+    "src/webchannelfacade.js~webgroup#signalingurl",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-get-signalingURL",
+    "src/WebChannelFacade.js~WebGroup#signalingURL",
     "member"
   ],
   [
-    "src/webchannelfacade.ts~webgroup#state",
-    "class/src/WebChannelFacade.ts~WebGroup.html#instance-get-state",
-    "src/WebChannelFacade.ts~WebGroup#state",
+    "src/webchannelfacade.js~webgroup#state",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-get-state",
+    "src/WebChannelFacade.js~WebGroup#state",
     "member"
   ],
   [
-    "src/webchannelfacade.ts~webgroup#topology",
-    "class/src/WebChannelFacade.ts~WebGroup.html#instance-get-topology",
-    "src/WebChannelFacade.ts~WebGroup#topology",
+    "src/webchannelfacade.js~webgroup#topology",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-get-topology",
+    "src/WebChannelFacade.js~WebGroup#topology",
     "member"
   ],
   [
-    "src/types/esdoc.helper.ts",
-    "file/src/types/esdoc.helper.ts.html",
-    "src/types/esdoc.helper.ts",
+    "src/types/esdoc.helper.js",
+    "file/src/types/esdoc.helper.js.html",
+    "src/types/esdoc.helper.js",
     "file"
   ],
   [
-    "src/types/esdoc.helper.ts~rtciceserver",
-    "https://developer.mozilla.org/en/docs/Web/API/RTCIceServer",
-    "src/types/esdoc.helper.ts~RTCIceServer",
+    "src/types/esdoc.helper.js~datatypeview",
+    "typedef/index.html#static-typedef-DataTypeView",
+    "src/types/esdoc.helper.js~DataTypeView",
+    "typedef"
+  ],
+  [
+    "src/types/esdoc.helper.js~nodejs.http.server",
+    "https://nodejs.org/api/http.html#http_class_http_server",
+    "src/types/esdoc.helper.js~NodeJS.http.Server",
     "external"
   ],
   [
-    "src/types/esdoc.helper.ts~signalingstate",
+    "src/types/esdoc.helper.js~nodejs.https.server",
+    "https://nodejs.org/api/https.html#https_class_https_server",
+    "src/types/esdoc.helper.js~NodeJS.https.Server",
+    "external"
+  ],
+  [
+    "src/types/esdoc.helper.js~rtciceserver",
+    "https://developer.mozilla.org/en/docs/Web/API/RTCIceServer",
+    "src/types/esdoc.helper.js~RTCIceServer",
+    "external"
+  ],
+  [
+    "src/types/esdoc.helper.js~signalingstate",
     "typedef/index.html#static-typedef-SignalingState",
-    "src/types/esdoc.helper.ts~SignalingState",
+    "src/types/esdoc.helper.js~SignalingState",
     "typedef"
   ],
   [
-    "src/types/esdoc.helper.ts~topology",
+    "src/types/esdoc.helper.js~topology",
     "typedef/index.html#static-typedef-Topology",
-    "src/types/esdoc.helper.ts~Topology",
+    "src/types/esdoc.helper.js~Topology",
     "typedef"
   ],
   [
-    "src/types/esdoc.helper.ts~webgroupbotserveroptions",
+    "src/types/esdoc.helper.js~uint8array",
+    "https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array",
+    "src/types/esdoc.helper.js~Uint8Array",
+    "external"
+  ],
+  [
+    "src/types/esdoc.helper.js~webgroupbotserveroptions",
     "typedef/index.html#static-typedef-WebGroupBotServerOptions",
-    "src/types/esdoc.helper.ts~WebGroupBotServerOptions",
+    "src/types/esdoc.helper.js~WebGroupBotServerOptions",
     "typedef"
   ],
   [
-    "src/types/esdoc.helper.ts~webgroupoptions",
+    "src/types/esdoc.helper.js~webgroupoptions",
     "typedef/index.html#static-typedef-WebGroupOptions",
-    "src/types/esdoc.helper.ts~WebGroupOptions",
+    "src/types/esdoc.helper.js~WebGroupOptions",
     "typedef"
   ],
   [
-    "src/types/esdoc.helper.ts~webgroupstate",
+    "src/types/esdoc.helper.js~webgroupstate",
     "typedef/index.html#static-typedef-WebGroupState",
-    "src/types/esdoc.helper.ts~WebGroupState",
+    "src/types/esdoc.helper.js~WebGroupState",
     "typedef"
   ]
 ]

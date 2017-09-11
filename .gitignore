@@ -9,7 +9,7 @@ npm-debug*
 coverage
 
 # Documentation
-esdoc
+docs
 
 # Other
 .rpt2_cache

@@ -30,7 +30,7 @@
     "dist/"
   ],
   "scripts": {
-    "build": "rm -rf dist && rollup --config && mkdir -p 'dist/ts/proto' && cp -r src/proto/index.d.ts dist/ts/proto/index.d.ts",
+    "build": "rm -rf dist && rollup --config && mkdir -p 'dist/ts/proto' && cp -r src/proto/index.d.ts dist/ts/proto/index.d.ts && cp src/misc/typings.d.ts dist/ts/misc/typings.d.ts",
     "build:testbot": "rollup -c test/util/rollup.config.js",
     "start:testbot": "pm2 gracefulReload test/util/process.yml",
     "pretest": "npm run build && npm run build:testbot && npm run start:testbot",
@@ -43,6 +43,7 @@
     "proto": "pbjs -t static-module -w es6 --no-verify --no-delimited --no-convert src/proto/index.proto -o src/proto/index.es6.js && pbts src/proto/index.es6.js -o src/proto/index.d.ts",
     "postproto": "babel -o src/proto/index.js src/proto/index.es6.js; rm src/proto/index.es6.js",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
+    "predoc": "tsc -p tsconfig.docs.json",
     "doc": "esdoc -c esdoc.json",
     "lint": "tslint src/* -e 'src/**/*.proto' -e 'src/index.d.ts' ",
     "precommit": "npm run test:coverage",
@@ -55,13 +56,13 @@
     "rxjs": "^5.4.3",
     "text-encoding": "^0.6.4",
     "uws": "^8.14.0",
-    "webrtc-adapter": "^5.0.1"
+    "webrtc-adapter": "^5.0.1",
+    "@types/text-encoding": "0.0.32"
   },
   "peerDependencies": {
     "wrtc": "0.0.x"
   },
   "devDependencies": {
-    "@types/text-encoding": "0.0.32",
     "babel-cli": "^6.26.0",
     "babel-preset-env": "^1.6.0",
     "commitizen": "^2.4.6",
