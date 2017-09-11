@@ -28,10 +28,10 @@ export declare type DataTypeView = string | Uint8Array;
  *   ]
  * })
  *
- * wg.onPeerJoin = (id) => {
+ * wg.onMemberJoin = (id) => {
  *   // TODO...
  * }
- * wg.onPeerLeave = (id) => {
+ * wg.onMemberLeave = (id) => {
  *   // TODO...
  * }
  * wg.onMessage = (id, msg, isBroadcast) => {
@@ -106,12 +106,12 @@ export declare class WebGroup {
      * This handler is called when a new member has joined the group.
      * @type {function(id: number)}
      */
-    onPeerJoin: (id: number) => void;
+    onMemberJoin: (id: number) => void;
     /**
      * This handler is called when a member hes left the group.
      * @type {function(id: number)}
      */
-    onPeerLeave: (id: number) => void;
+    onMemberLeave: (id: number) => void;
     /**
      * This handler is called when the group state has changed.
      * @type {function(state: WebGroupState)}

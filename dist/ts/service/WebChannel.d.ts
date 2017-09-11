@@ -64,11 +64,11 @@ export declare class WebChannel extends Service {
     /**
      * This handler is called when a new peer has joined the network.
      */
-    onPeerJoin: (id: number) => void;
+    onMemberJoin: (id: number) => void;
     /**
      * This handler is called when a peer hes left the network.
      */
-    onPeerLeave: (id: number) => void;
+    onMemberLeave: (id: number) => void;
     /**
      *  This handler is called when a message has been received from the network.
      */
@@ -127,8 +127,8 @@ export declare class WebChannel extends Service {
      * corresponds to the longest ping to each network member.
      */
     ping(): Promise<number>;
-    onPeerJoinProxy(id: number): void;
-    onPeerLeaveProxy(id: number): void;
+    onMemberJoinProxy(id: number): void;
+    onMemberLeaveProxy(id: number): void;
     /**
      * Send service message to a particular peer in the network.
      */

@@ -96,12 +96,12 @@ export class WebChannel extends Service {
   /**
    * This handler is called when a new peer has joined the network.
    */
-  public onPeerJoin: (id: number) => void
+  public onMemberJoin: (id: number) => void
 
   /**
    * This handler is called when a peer hes left the network.
    */
-  public onPeerLeave: (id: number) => void
+  public onMemberLeave: (id: number) => void
 
   /**
    *  This handler is called when a message has been received from the network.
@@ -145,8 +145,8 @@ export class WebChannel extends Service {
     this.autoRejoin = autoRejoin
 
     // PUBLIC EVENT HANDLERS
-    this.onPeerJoin = () => {}
-    this.onPeerLeave = () => {}
+    this.onMemberJoin = () => {}
+    this.onMemberLeave = () => {}
     this.onMessage = () => {}
     this.onStateChanged = () => {}
     this.onSignalingStateChanged = () => {}
@@ -321,14 +321,14 @@ export class WebChannel extends Service {
     }
   }
 
-  onPeerJoinProxy (id: number): void {
+  onMemberJoinProxy (id: number): void {
     this.members[this.members.length] = id
-    this.onPeerJoin(id)
+    this.onMemberJoin(id)
   }
 
-  onPeerLeaveProxy (id: number): void {
+  onMemberLeaveProxy (id: number): void {
     this.members.splice(this.members.indexOf(id), 1)
-    this.onPeerLeave(id)
+    this.onMemberLeave(id)
     if (this.members.length === 0
       && (this.signaling.state === SignalingState.CONNECTING
       || this.signaling.state === SignalingState.CLOSED)

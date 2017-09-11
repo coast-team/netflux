@@ -6328,8 +6328,8 @@ var FullMesh = (function (_super) {
             this.wc.joinSubject.next(new Error("Intermediary channel closed: " + event.type));
         }
         if (this.channels.delete(channel)) {
-            this.wc.onPeerLeaveProxy(channel.peerId);
-            console.info(this.wc.myId + ' onPeerLeaveProxy ' + channel.peerId);
+            this.wc.onMemberLeaveProxy(channel.peerId);
+            console.info(this.wc.myId + ' onMemberLeaveProxy ' + channel.peerId);
         }
     };
     FullMesh.prototype.onChannelError = function (evt, channel) {
@@ -6430,7 +6430,7 @@ var FullMesh = (function (_super) {
     };
     FullMesh.prototype.peerJoined = function (ch) {
         this.channels.add(ch);
-        this.wc.onPeerJoinProxy(ch.peerId);
+        this.wc.onMemberJoinProxy(ch.peerId);
         this.jps.delete(ch.peerId);
         console.info(this.wc.myId + ' peerJoined ' + ch.peerId);
     };
@@ -8349,8 +8349,8 @@ var WebChannel = (function (_super) {
         _this.key = undefined;
         _this.autoRejoin = autoRejoin;
         // PUBLIC EVENT HANDLERS
-        _this.onPeerJoin = function () { };
-        _this.onPeerLeave = function () { };
+        _this.onMemberJoin = function () { };
+        _this.onMemberLeave = function () { };
         _this.onMessage = function () { };
         _this.onStateChanged = function () { };
         _this.onSignalingStateChanged = function () { };
@@ -8538,13 +8538,13 @@ var WebChannel = (function (_super) {
             return Promise.reject(new Error('No peers to ping'));
         }
     };
-    WebChannel.prototype.onPeerJoinProxy = function (id) {
+    WebChannel.prototype.onMemberJoinProxy = function (id) {
         this.members[this.members.length] = id;
-        this.onPeerJoin(id);
+        this.onMemberJoin(id);
     };
-    WebChannel.prototype.onPeerLeaveProxy = function (id) {
+    WebChannel.prototype.onMemberLeaveProxy = function (id) {
         this.members.splice(this.members.indexOf(id), 1);
-        this.onPeerLeave(id);
+        this.onMemberLeave(id);
         if (this.members.length === 0
             && (this.signaling.state === SignalingState.CONNECTING
                 || this.signaling.state === SignalingState.CLOSED)) {
@@ -8760,10 +8760,10 @@ var wcs = new WeakMap();
  *   ]
  * })
  *
- * wg.onPeerJoin = (id) => {
+ * wg.onMemberJoin = (id) => {
  *   // TODO...
  * }
- * wg.onPeerLeave = (id) => {
+ * wg.onMemberLeave = (id) => {
  *   // TODO...
  * }
  * wg.onMessage = (id, msg, isBroadcast) => {
@@ -8874,21 +8874,21 @@ var WebGroup = (function () {
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(WebGroup.prototype, "onPeerJoin", {
+    Object.defineProperty(WebGroup.prototype, "onMemberJoin", {
         /**
          * This handler is called when a new member has joined the group.
          * @type {function(id: number)}
          */
-        set: function (handler) { wcs.get(this).onPeerJoin = handler; },
+        set: function (handler) { wcs.get(this).onMemberJoin = handler; },
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(WebGroup.prototype, "onPeerLeave", {
+    Object.defineProperty(WebGroup.prototype, "onMemberLeave", {
         /**
          * This handler is called when a member hes left the group.
          * @type {function(id: number)}
          */
-        set: function (handler) { wcs.get(this).onPeerLeave = handler; },
+        set: function (handler) { wcs.get(this).onMemberLeave = handler; },
         enumerable: true,
         configurable: true
     });

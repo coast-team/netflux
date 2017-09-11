@@ -37,9 +37,9 @@ describe('Fully connected', () => {
         wgs.forEach((wg, index) => {
           console.log('WebGroup: ', wg)
           expect(wg.state).toBe(WebGroupState.LEFT)
-          wg.onPeerJoinCalledTimes = 0
-          wg.onPeerJoin = id => {
-            wg.onPeerJoinCalledTimes++
+          wg.onMemberJoinCalledTimes = 0
+          wg.onMemberJoin = id => {
+            wg.onMemberJoinCalledTimes++
             // Joined peer's id should be among WebGroup members ids
             expect(wg.members.includes(id)).toBeTruthy()
 
@@ -81,7 +81,7 @@ describe('Fully connected', () => {
               helper.expectMembers(wgs, scenario.nbPeers)
               wgs.forEach(wg => {
                 expect(wg.state).toBe(WebGroupState.JOINED)
-                expect(wg.onPeerJoinCalledTimes).toBe(scenario.nbPeers - 1)
+                expect(wg.onMemberJoinCalledTimes).toBe(scenario.nbPeers - 1)
                 expect(wg.onStateChangedCalledTimes).toBe(2)
               })
               done()
@@ -170,9 +170,9 @@ describe('Fully connected', () => {
             wgs = webChannels
             wgs.forEach(wg => {
               expect(wg.state).toBe(WebGroupState.JOINED)
-              wg.onPeerLeaveCalledTimes = 0
-              wg.onPeerLeave = id => {
-                wg.onPeerLeaveCalledTimes++
+              wg.onMemberLeaveCalledTimes = 0
+              wg.onMemberLeave = id => {
+                wg.onMemberLeaveCalledTimes++
                 expect(wg.members.includes(id)).toBeFalsy()
               }
               wg.onStateChangedCalledTimes = 0
@@ -194,7 +194,7 @@ describe('Fully connected', () => {
             wgs.forEach((wg, index) => {
               expect(wg.state).toBe(WebGroupState.LEFT)
               expect(wg.members.length).toBe(0)
-              expect(wg.onPeerLeaveCalledTimes).toBe(numberOfPeers - 1)
+              expect(wg.onMemberLeaveCalledTimes).toBe(numberOfPeers - 1)
               expect(wg.onStateChangedCalledTimes).toBe(1)
             })
           })

@@ -31,10 +31,10 @@ export type DataTypeView = string|Uint8Array
  *   ]
  * })
  *
- * wg.onPeerJoin = (id) => {
+ * wg.onMemberJoin = (id) => {
  *   // TODO...
  * }
- * wg.onPeerLeave = (id) => {
+ * wg.onMemberLeave = (id) => {
  *   // TODO...
  * }
  * wg.onMessage = (id, msg, isBroadcast) => {
@@ -124,13 +124,13 @@ export class WebGroup {
    * This handler is called when a new member has joined the group.
    * @type {function(id: number)}
    */
-  set onPeerJoin (handler: (id: number) => void) { wcs.get(this).onPeerJoin = handler }
+  set onMemberJoin (handler: (id: number) => void) { wcs.get(this).onMemberJoin = handler }
 
   /**
    * This handler is called when a member hes left the group.
    * @type {function(id: number)}
    */
-  set onPeerLeave (handler: (id: number) => void) { wcs.get(this).onPeerLeave = handler }
+  set onMemberLeave (handler: (id: number) => void) { wcs.get(this).onMemberLeave = handler }
 
   /**
    * This handler is called when the group state has changed.

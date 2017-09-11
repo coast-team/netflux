@@ -677,6 +677,7 @@ module.exports = adapterFactory({window: global.window});
 
 'use strict';
 
+var utils = require('./utils');
 // Shimming starts here.
 module.exports = function(dependencies, opts) {
   var window = dependencies && dependencies.window;
@@ -695,7 +696,6 @@ module.exports = function(dependencies, opts) {
   }
 
   // Utils.
-  var utils = require('./utils');
   var logging = utils.log;
   var browserDetails = utils.detectBrowser(window);
 
@@ -731,10 +731,10 @@ module.exports = function(dependencies, opts) {
       logging('adapter.js shimming chrome.');
       // Export to the adapter global object visible in the browser.
       adapter.browserShim = chromeShim;
+      commonShim.shimCreateObjectURL(window);
 
       chromeShim.shimGetUserMedia(window);
       chromeShim.shimMediaStream(window);
-      utils.shimCreateObjectURL(window);
       chromeShim.shimSourceObject(window);
       chromeShim.shimPeerConnection(window);
       chromeShim.shimOnTrack(window);
@@ -752,9 +752,9 @@ module.exports = function(dependencies, opts) {
       logging('adapter.js shimming firefox.');
       // Export to the adapter global object visible in the browser.
       adapter.browserShim = firefoxShim;
+      commonShim.shimCreateObjectURL(window);
 
       firefoxShim.shimGetUserMedia(window);
-      utils.shimCreateObjectURL(window);
       firefoxShim.shimSourceObject(window);
       firefoxShim.shimPeerConnection(window);
       firefoxShim.shimOnTrack(window);
@@ -769,9 +769,9 @@ module.exports = function(dependencies, opts) {
       logging('adapter.js shimming edge.');
       // Export to the adapter global object visible in the browser.
       adapter.browserShim = edgeShim;
+      commonShim.shimCreateObjectURL(window);
 
       edgeShim.shimGetUserMedia(window);
-      utils.shimCreateObjectURL(window);
       edgeShim.shimPeerConnection(window);
       edgeShim.shimReplaceTrack(window);
 
@@ -785,8 +785,8 @@ module.exports = function(dependencies, opts) {
       logging('adapter.js shimming safari.');
       // Export to the adapter global object visible in the browser.
       adapter.browserShim = safariShim;
-      // shim window.URL.createObjectURL Safari (technical preview)
-      utils.shimCreateObjectURL(window);
+      commonShim.shimCreateObjectURL(window);
+
       safariShim.shimRTCIceServerUrls(window);
       safariShim.shimCallbacksAPI(window);
       safariShim.shimLocalStreamsAPI(window);
@@ -1728,6 +1728,7 @@ module.exports = function(window) {
 'use strict';
 
 var SDPUtils = require('sdp');
+var utils = require('./utils');
 
 // Wraps the peerconnection event eventNameToWrap in a function
 // which returns the modified event object.
@@ -1827,10 +1828,63 @@ module.exports = {
       }
       return e;
     });
+  },
+
+  // shimCreateObjectURL must be called before shimSourceObject to avoid loop.
+
+  shimCreateObjectURL: function(window) {
+    var URL = window && window.URL;
+
+    if (!(typeof window === 'object' && window.HTMLMediaElement &&
+          'srcObject' in window.HTMLMediaElement.prototype &&
+        URL.createObjectURL && URL.revokeObjectURL)) {
+      // Only shim CreateObjectURL using srcObject if srcObject exists.
+      return undefined;
+    }
+
+    var nativeCreateObjectURL = URL.createObjectURL.bind(URL);
+    var nativeRevokeObjectURL = URL.revokeObjectURL.bind(URL);
+    var streams = new Map(), newId = 0;
+
+    URL.createObjectURL = function(stream) {
+      if ('getTracks' in stream) {
+        var url = 'polyblob:' + (++newId);
+        streams.set(url, stream);
+        utils.deprecated('URL.createObjectURL(stream)',
+            'elem.srcObject = stream');
+        return url;
+      }
+      return nativeCreateObjectURL(stream);
+    };
+    URL.revokeObjectURL = function(url) {
+      nativeRevokeObjectURL(url);
+      streams.delete(url);
+    };
+
+    var dsc = Object.getOwnPropertyDescriptor(window.HTMLMediaElement.prototype,
+                                              'src');
+    Object.defineProperty(window.HTMLMediaElement.prototype, 'src', {
+      get: function() {
+        return dsc.get.apply(this);
+      },
+      set: function(url) {
+        this.srcObject = streams.get(url) || null;
+        return dsc.set.apply(this, [url]);
+      }
+    });
+
+    var nativeSetAttribute = window.HTMLMediaElement.prototype.setAttribute;
+    window.HTMLMediaElement.prototype.setAttribute = function() {
+      if (arguments.length === 2 &&
+          ('' + arguments[0]).toLowerCase() === 'src') {
+        this.srcObject = streams.get(arguments[1]) || null;
+      }
+      return nativeSetAttribute.apply(this, arguments);
+    };
   }
 };
 
-},{"sdp":2}],8:[function(require,module,exports){
+},{"./utils":11,"sdp":2}],8:[function(require,module,exports){
 /*
  *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
  *
@@ -1870,7 +1924,7 @@ var firefoxShim = {
         }
       });
     }
-    if (typeof window === 'object' && window.RTCPeerConnection &&
+    if (typeof window === 'object' && window.RTCTrackEvent &&
         ('receiver' in window.RTCTrackEvent.prototype) &&
         !('transceiver' in window.RTCTrackEvent.prototype)) {
       Object.defineProperty(window.RTCTrackEvent.prototype, 'transceiver', {
@@ -2654,58 +2708,6 @@ var utils = {
     return result;
   },
 
-  // shimCreateObjectURL must be called before shimSourceObject to avoid loop.
-
-  shimCreateObjectURL: function(window) {
-    var URL = window && window.URL;
-
-    if (!(typeof window === 'object' && window.HTMLMediaElement &&
-          'srcObject' in window.HTMLMediaElement.prototype &&
-        URL.createObjectURL && URL.revokeObjectURL)) {
-      // Only shim CreateObjectURL using srcObject if srcObject exists.
-      return undefined;
-    }
-
-    var nativeCreateObjectURL = URL.createObjectURL.bind(URL);
-    var nativeRevokeObjectURL = URL.revokeObjectURL.bind(URL);
-    var streams = new Map(), newId = 0;
-
-    URL.createObjectURL = function(stream) {
-      if ('getTracks' in stream) {
-        var url = 'polyblob:' + (++newId);
-        streams.set(url, stream);
-        utils.deprecated('URL.createObjectURL(stream)',
-            'elem.srcObject = stream');
-        return url;
-      }
-      return nativeCreateObjectURL(stream);
-    };
-    URL.revokeObjectURL = function(url) {
-      nativeRevokeObjectURL(url);
-      streams.delete(url);
-    };
-
-    var dsc = Object.getOwnPropertyDescriptor(window.HTMLMediaElement.prototype,
-                                              'src');
-    Object.defineProperty(window.HTMLMediaElement.prototype, 'src', {
-      get: function() {
-        return dsc.get.apply(this);
-      },
-      set: function(url) {
-        this.srcObject = streams.get(url) || null;
-        return dsc.set.apply(this, [url]);
-      }
-    });
-
-    var nativeSetAttribute = window.HTMLMediaElement.prototype.setAttribute;
-    window.HTMLMediaElement.prototype.setAttribute = function() {
-      if (arguments.length === 2 &&
-          ('' + arguments[0]).toLowerCase() === 'src') {
-        this.srcObject = streams.get(arguments[1]) || null;
-      }
-      return nativeSetAttribute.apply(this, arguments);
-    };
-  }
 };
 
 // Export.
@@ -9017,8 +9019,8 @@ var FullMesh = (function (_super) {
             this.wc.joinSubject.next(new Error("Intermediary channel closed: " + event.type));
         }
         if (this.channels.delete(channel)) {
-            this.wc.onPeerLeaveProxy(channel.peerId);
-            console.info(this.wc.myId + ' onPeerLeaveProxy ' + channel.peerId);
+            this.wc.onMemberLeaveProxy(channel.peerId);
+            console.info(this.wc.myId + ' onMemberLeaveProxy ' + channel.peerId);
         }
     };
     FullMesh.prototype.onChannelError = function (evt, channel) {
@@ -9119,7 +9121,7 @@ var FullMesh = (function (_super) {
     };
     FullMesh.prototype.peerJoined = function (ch) {
         this.channels.add(ch);
-        this.wc.onPeerJoinProxy(ch.peerId);
+        this.wc.onMemberJoinProxy(ch.peerId);
         this.jps.delete(ch.peerId);
         console.info(this.wc.myId + ' peerJoined ' + ch.peerId);
     };
@@ -11023,8 +11025,8 @@ var WebChannel = (function (_super) {
         _this.key = undefined;
         _this.autoRejoin = autoRejoin;
         // PUBLIC EVENT HANDLERS
-        _this.onPeerJoin = function () { };
-        _this.onPeerLeave = function () { };
+        _this.onMemberJoin = function () { };
+        _this.onMemberLeave = function () { };
         _this.onMessage = function () { };
         _this.onStateChanged = function () { };
         _this.onSignalingStateChanged = function () { };
@@ -11212,13 +11214,13 @@ var WebChannel = (function (_super) {
             return Promise.reject(new Error('No peers to ping'));
         }
     };
-    WebChannel.prototype.onPeerJoinProxy = function (id) {
+    WebChannel.prototype.onMemberJoinProxy = function (id) {
         this.members[this.members.length] = id;
-        this.onPeerJoin(id);
+        this.onMemberJoin(id);
     };
-    WebChannel.prototype.onPeerLeaveProxy = function (id) {
+    WebChannel.prototype.onMemberLeaveProxy = function (id) {
         this.members.splice(this.members.indexOf(id), 1);
-        this.onPeerLeave(id);
+        this.onMemberLeave(id);
         if (this.members.length === 0
             && (this.signaling.state === SignalingState.CONNECTING
                 || this.signaling.state === SignalingState.CLOSED)) {
@@ -11434,10 +11436,10 @@ var wcs = new WeakMap();
  *   ]
  * })
  *
- * wg.onPeerJoin = (id) => {
+ * wg.onMemberJoin = (id) => {
  *   // TODO...
  * }
- * wg.onPeerLeave = (id) => {
+ * wg.onMemberLeave = (id) => {
  *   // TODO...
  * }
  * wg.onMessage = (id, msg, isBroadcast) => {
@@ -11548,21 +11550,21 @@ var WebGroup = (function () {
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(WebGroup.prototype, "onPeerJoin", {
+    Object.defineProperty(WebGroup.prototype, "onMemberJoin", {
         /**
          * This handler is called when a new member has joined the group.
          * @type {function(id: number)}
          */
-        set: function (handler) { wcs.get(this).onPeerJoin = handler; },
+        set: function (handler) { wcs.get(this).onMemberJoin = handler; },
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(WebGroup.prototype, "onPeerLeave", {
+    Object.defineProperty(WebGroup.prototype, "onMemberLeave", {
         /**
          * This handler is called when a member hes left the group.
          * @type {function(id: number)}
          */
-        set: function (handler) { wcs.get(this).onPeerLeave = handler; },
+        set: function (handler) { wcs.get(this).onMemberLeave = handler; },
         enumerable: true,
         configurable: true
     });
