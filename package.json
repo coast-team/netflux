@@ -30,7 +30,8 @@
     "dist/"
   ],
   "scripts": {
-    "build": "rm -rf dist && rollup --config && mkdir -p 'dist/ts/proto' && cp -r src/proto/index.d.ts dist/ts/proto/index.d.ts && cp src/misc/typings.d.ts dist/ts/misc/typings.d.ts",
+    "build": "rm -rf dist && rollup --config && mkdir -p 'dist/ts/proto' && cp -r src/proto/index.d.ts dist/ts/proto/index.d.ts && cp src/misc/typings.d.ts dist/ts/typings.d.ts",
+    "postbuild": "sed -i '1s/^/\\/\\/\\/ <reference path=\\\".\\/typings.d.ts\\\"\\/>\\n/' dist/ts/index.d.ts",
     "build:testbot": "rollup -c test/util/rollup.config.js",
     "start:testbot": "pm2 gracefulReload test/util/process.yml",
     "pretest": "npm run build && npm run build:testbot && npm run start:testbot",

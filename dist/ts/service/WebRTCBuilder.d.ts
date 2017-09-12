@@ -1,4 +1,3 @@
-/// <reference path="../../../src/misc/typings.d.ts" />
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/map';
 import { Service } from './Service';

@@ -2723,7 +2723,6 @@ module.exports = {
 
 },{}]},{},[3]);
 
-/// <reference path="../misc/typings.d.ts" />
 /* tslint:disable:variable-name */
 // #if WEBRTC_ADAPTER
 
@@ -10354,10 +10353,6 @@ var ReplayEvent = (function () {
     return ReplayEvent;
 }());
 
-/// <reference path="../misc/typings.d.ts" />
-/**
- * WebRTC builder module.
- */
 /**
  * Service id.
  */

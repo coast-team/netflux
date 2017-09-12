@@ -1,3 +1,4 @@
+/// <reference path="./typings.d.ts"/>
 import './misc/polyfills';
 export { WebGroup, DataTypeView } from './WebChannelFacade';
 export { WebChannelOptions as WebGroupOptions, WebChannelState as WebGroupState } from './service/WebChannel';

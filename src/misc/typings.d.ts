@@ -1,3 +1,5 @@
+/// <reference types="text-encoding" />
+
 /**
  * Polyfills globals for NodeJS
  */
