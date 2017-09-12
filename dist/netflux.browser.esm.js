@@ -4019,7 +4019,7 @@ var MAX_KEY_LENGTH = 512;
 /**
  * Wrapper class for `RTCDataChannel` and `WebSocket`.
  */
-var Channel = (function () {
+var Channel = /** @class */ (function () {
     /**
      * Creates a channel from existing `RTCDataChannel` or `WebSocket`.
      */
@@ -8844,7 +8844,7 @@ var signaling = $root.signaling = function () {
  * Each service has `.proto` file containing the desciption of its
  * communication protocol.
  */
-var Service$1 = (function () {
+var Service$1 = /** @class */ (function () {
     function Service(id, protoMessage, serviceMessageSubject) {
         this.serviceId = id;
         this.protoMessage = protoMessage;
@@ -8904,7 +8904,7 @@ var MAX_JOIN_ATTEMPTS = 100;
  *
  * @extends module:webChannelManager~WebChannelTopologyInterface
  */
-var FullMesh = (function (_super) {
+var FullMesh = /** @class */ (function (_super) {
     __extends(FullMesh, _super);
     function FullMesh(wc) {
         var _this = _super.call(this, FULL_MESH, fullMesh.Message, wc.serviceMessageSubject) || this;
@@ -9149,7 +9149,7 @@ var SignalingState;
  * is open, then clients can join the `WebChannel` through this peer. There are as
  * many doors as peers in the `WebChannel` and each of them can be closed or opened.
  */
-var Signaling = (function () {
+var Signaling = /** @class */ (function () {
     function Signaling(wc, url) {
         // public
         this.url = url.endsWith('/') ? url : url + '/';
@@ -9479,7 +9479,7 @@ var listenSubject = new BehaviorSubject_2('');
  * Service class responsible to establish connections between peers via
  * `WebSocket`.
  */
-var WebSocketBuilder = (function () {
+var WebSocketBuilder = /** @class */ (function () {
     function WebSocketBuilder(wc) {
         this.wc = wc;
         this.channelsSubject = new Subject_2();
@@ -10368,7 +10368,7 @@ var ID = 0;
  * signaling server or `WebChannel`.
  *
  */
-var WebRTCBuilder = (function (_super) {
+var WebRTCBuilder = /** @class */ (function (_super) {
     __extends(WebRTCBuilder, _super);
     function WebRTCBuilder(wc, iceServers) {
         var _this = _super.call(this, ID, webRTCBuilder.Message, wc.serviceMessageSubject) || this;
@@ -10668,7 +10668,7 @@ var response;
  * Its algorithm determine which channel (socket or dataChannel) should be created
  * based on the services availability and peers' preferences.
  */
-var ChannelBuilder = (function (_super) {
+var ChannelBuilder = /** @class */ (function (_super) {
     __extends(ChannelBuilder, _super);
     function ChannelBuilder(wc) {
         var _this = _super.call(this, 20, channelBuilder.Message, wc.serviceMessageSubject) || this;
@@ -10837,7 +10837,7 @@ var textDecoder = new TextDecoder();
  * big messages (more then 16ko) sent by users. Internal messages are always less
  * 16ko.
  */
-var UserMessage = (function () {
+var UserMessage = /** @class */ (function () {
     function UserMessage() {
         this.buffers = new Map();
     }
@@ -10945,7 +10945,7 @@ var UserMessage = (function () {
  * peer id of the sender and message id (in case if the peer sent more then
  * 1 big message at a time).
  */
-var Buffer$1 = (function () {
+var Buffer$1 = /** @class */ (function () {
     function Buffer(totalLength, data, chunkNb) {
         this.fullData = new Uint8Array(totalLength);
         this.currentLength = 0;
@@ -11009,7 +11009,7 @@ var PING_TIMEOUT = 5000;
  * preserving the current `WebChannel` structure (network topology).
  * [[include:installation.md]]
  */
-var WebChannel = (function (_super) {
+var WebChannel = /** @class */ (function (_super) {
     __extends(WebChannel, _super);
     /**
      * @param options Web channel settings
@@ -11090,7 +11090,7 @@ var WebChannel = (function (_super) {
         if (this.state === WebChannelState.LEFT && this.signaling.state === SignalingState.CLOSED) {
             this.isRejoinDisabled = !this.autoRejoin;
             this.setState(WebChannelState.JOINING);
-            if ((typeof key === 'string' || key instanceof String) && key.length < MAX_KEY_LENGTH) {
+            if (typeof key === 'string' && key.length < MAX_KEY_LENGTH) {
                 this.key = key;
             }
             else {
@@ -11452,7 +11452,7 @@ var wcs = new WeakMap();
  *   // TODO...
  * }
  */
-var WebGroup = (function () {
+var WebGroup = /** @class */ (function () {
     /**
      * @param {WebGroupOptions} [options]
      * @param {Topology} [options.topology=Topology.FULL_MESH]

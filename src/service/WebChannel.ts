@@ -214,11 +214,11 @@ export class WebChannel extends Service {
   /**
    * Join the network via a key provided by one of the network member or a `Channel`.
    */
-  join (key = generateKey()): void {
+  join (key: string = generateKey()): void {
     if (this.state === WebChannelState.LEFT && this.signaling.state === SignalingState.CLOSED) {
       this.isRejoinDisabled = !this.autoRejoin
       this.setState(WebChannelState.JOINING)
-      if ((typeof key === 'string' || key instanceof String) && key.length < MAX_KEY_LENGTH) {
+      if (typeof key === 'string' && key.length < MAX_KEY_LENGTH) {
         this.key = key
       } else {
         throw new Error('Parameter of the join function should be either a Channel or a string')
