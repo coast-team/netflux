@@ -50,7 +50,7 @@ Universal Javascript **peer to peer** transport API for client and server. Full 
 - Full control over WebRTC servers: Signaling, STUN and TURN.
   - Deploy your own Signaling server ([Sigver][Sigver]) or use one provided by default.
   - Configure STUN and TURN servers.
-- Small Signaling server payload (server is necessary to establish the first connection with
+- Small Signaling server payload: server is necessary to establish the first connection with
   one of the group member, then this member acts as a Signaling server to establish connections with the rest of the group members.
 - 4 builds (ES5 code):
   - `dist/netflux.cjs.js` - CommonJS format for NodeJS (see *package.json#main*)
