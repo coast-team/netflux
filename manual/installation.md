@@ -25,7 +25,7 @@ We developed a Signaling server: [Sigver](https://github.com/coast-team/sigver).
 
 There many other free STUN servers available in the Web.
 
-### TURN servers
+### TURN server
 No free TURN server available in the Web. Checkout [Xirsys](https://xirsys.com/) to rent one or deploy your own.
 
 ## How to deploy STUN/TURN servers

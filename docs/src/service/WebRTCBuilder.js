@@ -1,13 +1,9 @@
-/// <reference path="../misc/typings.d.ts" />
 import { ReplaySubject } from 'rxjs/ReplaySubject';
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/map';
 import { Service } from './Service';
 import { webRTCBuilder } from '../proto';
 import { Channel } from '../Channel';
-/**
- * WebRTC builder module.
- */
 /**
  * Service id.
  */

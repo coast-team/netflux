@@ -28,7 +28,7 @@ All builds are either for NodeJS or for Browser environment.
 - `WebGroupBotServer`
 - `WebGroupBotServerOptions` type.
 
-## ECMAScript module
+## ES module
 
  **Webpack, Browserify etc.**: `netflux.node.esm.js` and `netflux.browser.esm.js` are suitable for these tools or any alike (as they understand `module` and `browser` properties).
 
@@ -37,7 +37,7 @@ export {WebGroup, WebGroupState, WebGroupBotServer, WebGroupBotServerOptions} fr
 const wg = new WebGroup()
 ```
 
-## CommonJS format
+## CommonJS
 `dist/netflux.cjs.js` - CommonJS format, built for NodeJS.
 
 ```Javascript
@@ -46,7 +46,7 @@ const netflux = require('netflux')
 var wg = new netflux.WebGroup()
 ```
 
-## UMD format
+## UMD
 `dist/netflux.umd.js` - Universal Module Definition module is compatible with AMD, CommonJS and "global" modules. Built for browser.
 
 ```html
