@@ -1,6 +1,4 @@
-/**
- * WebRTC builder module.
- */
+/// <reference path="../misc/typings.d.ts" />
 
 import { ReplaySubject } from 'rxjs/ReplaySubject'
 import { Subject } from 'rxjs/Subject'
@@ -32,6 +30,13 @@ export interface SignalingConnection {
  *
  */
 export class WebRTCBuilder extends Service {
+  /**
+   * Indicates whether WebRTC is supported by the environment.
+   */
+  static get isSupported (): boolean {
+    return RTCPeerConnection !== undefined
+  }
+
   private wc: WebChannel
   private rtcConfiguration: RTCConfiguration
   private clients: Map<number, [RTCPeerConnection, ReplaySubject<webRTCBuilder.IIceCandidate>]>
@@ -42,14 +47,6 @@ export class WebRTCBuilder extends Service {
     this.rtcConfiguration = { iceServers }
     this.clients = new Map()
   }
-
-  /**
-   * Indicates whether WebRTC is supported by the environment.
-   */
-  static get isSupported (): boolean {
-    return RTCPeerConnection !== undefined
-  }
-
   onChannelFromWebChannel () {
     if (WebRTCBuilder.isSupported) {
       return this.onChannel(

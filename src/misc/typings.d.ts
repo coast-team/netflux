@@ -15,8 +15,9 @@ declare module NodeJS  {
 }
 
 /**
- * WebRTC missing declarations
+ * Extends lib.d.ts with WebRTC missing declarations.
  */
+
 interface RTCPeerConnection {
   iceCandidateState: RTCIceConnectionState
   ondatachannel: (event: RTCDataChannelEvent) => void

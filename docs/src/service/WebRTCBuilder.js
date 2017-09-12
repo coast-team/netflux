@@ -1,6 +1,4 @@
-/**
- * WebRTC builder module.
- */
+/// <reference path="../misc/typings.d.ts" />
 import { ReplaySubject } from 'rxjs/ReplaySubject';
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/map';
@@ -20,17 +18,17 @@ const ID = 0;
  *
  */
 export class WebRTCBuilder extends Service {
-    constructor(wc, iceServers) {
-        super(ID, webRTCBuilder.Message, wc.serviceMessageSubject);
-        this.wc = wc;
-        this.rtcConfiguration = { iceServers };
-        this.clients = new Map();
-    }
     /**
      * Indicates whether WebRTC is supported by the environment.
      */
     static get isSupported() {
         return RTCPeerConnection !== undefined;
+    }
+    constructor(wc, iceServers) {
+        super(ID, webRTCBuilder.Message, wc.serviceMessageSubject);
+        this.wc = wc;
+        this.rtcConfiguration = { iceServers };
+        this.clients = new Map();
     }
     onChannelFromWebChannel() {
         if (WebRTCBuilder.isSupported) {

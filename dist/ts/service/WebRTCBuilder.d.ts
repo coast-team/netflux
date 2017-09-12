@@ -1,3 +1,4 @@
+/// <reference path="../../../src/misc/typings.d.ts" />
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/map';
 import { Service } from './Service';
@@ -14,14 +15,14 @@ export interface SignalingConnection {
  *
  */
 export declare class WebRTCBuilder extends Service {
-    private wc;
-    private rtcConfiguration;
-    private clients;
-    constructor(wc: WebChannel, iceServers: RTCIceServer[]);
     /**
      * Indicates whether WebRTC is supported by the environment.
      */
     static readonly isSupported: boolean;
+    private wc;
+    private rtcConfiguration;
+    private clients;
+    constructor(wc: WebChannel, iceServers: RTCIceServer[]);
     onChannelFromWebChannel(): Observable<Channel>;
     /**
      * Establish an `RTCDataChannel` with a peer identified by `id` trough `WebChannel`.

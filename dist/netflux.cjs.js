@@ -2,6 +2,7 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
+/// <reference path="../misc/typings.d.ts" />
 /* tslint:disable:variable-name */
 
 // #if NODE
@@ -7681,9 +7682,7 @@ var ReplayEvent = (function () {
     return ReplayEvent;
 }());
 
-/**
- * WebRTC builder module.
- */
+/// <reference path="../misc/typings.d.ts" />
 /**
  * WebRTC builder module.
  */

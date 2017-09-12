@@ -115,7 +115,7 @@ export class WebChannel extends Service {
         if (this.state === WebChannelState.LEFT && this.signaling.state === SignalingState.CLOSED) {
             this.isRejoinDisabled = !this.autoRejoin;
             this.setState(WebChannelState.JOINING);
-            if ((typeof key === 'string' || key instanceof String) && key.length < MAX_KEY_LENGTH) {
+            if (typeof key === 'string' && key.length < MAX_KEY_LENGTH) {
                 this.key = key;
             }
             else {

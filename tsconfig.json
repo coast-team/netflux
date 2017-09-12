@@ -4,13 +4,12 @@
     "module": "es6",
     "lib": [ "es2016", "dom" ],
     "moduleResolution": "node",
-    "downlevelIteration": true
+    "downlevelIteration": true,
+    "types": ["node", "text-encoding"]
   },
+  "files": ["src/misc/typings.d.ts"],
   "include": [
-    "src/**/*.ts"
+    "src/**/*"
   ],
-  "exclude": [
-    "node_modules",
-    "!node_modules/@types"
-  ]
+  "exclude": ["**/*types/esdoc.helper.ts"]
 }

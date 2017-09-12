@@ -1,3 +1,5 @@
+/// <reference path="../misc/typings.d.ts" />
+
 /* tslint:disable:variable-name */
 // #if WEBRTC_ADAPTER
 import 'webrtc-adapter/out/adapter_no_edge_no_global'
