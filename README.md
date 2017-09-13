@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://coast-team.github.io/netflux" target="_blank">
+  <a href="https://coast-team.github.io/netflux" target="\_blank">
     <img src="manual/asset/logo.png" />
   </a>
 </p>
@@ -71,8 +71,7 @@ Website: https://coast-team.github.io/netflux
 [WebSocket]: https://developer.mozilla.org/en/docs/Web/API/WebSocket
 [RTCDataChannel]: https://developer.mozilla.org/en/docs/Web/API/RTCDataChannel
 [String]: https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/String
-[ArrayBuffer]: https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer
-[TypedArray]: https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/TypedArray
+[Uint8Array]: https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array
 [Sigver]: https://github.com/coast-team/sigver
 
 [commitizen]: https://img.shields.io/badge/commitizen-friendly-brightgreen.svg?style=flat-square
