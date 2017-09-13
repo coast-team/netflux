@@ -1,4 +1,8 @@
-<p align="center"><img src="manual/asset/logo.png" /></p>
+<p align="center">
+  <a href="https://coast-team.github.io/netflux" target="_blank">
+    <img src="manual/asset/logo.png" />
+  </a>
+</p>
 
 <p align="center">
   Universal Javascript <strong style="font-weight: bold">peer to peer</strong> transport API for client and server.<br />
