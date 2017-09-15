@@ -55,6 +55,9 @@ Universal Javascript **peer to peer** transport API for client and server. Full 
   - `dist/netflux.browser.esm.js` - ECMAScript 6 module format for browsers (see *package.json#browser*).
   - `dist/netflux.umd.js` - UMD format for browsers.
 
+## Demo
+Netflux is used by our team for Multi User Text Editor ([MUTE repo](https://github.com/coast-team/mute)) development. The demo version is available on: https://www.coedit.re
+
 [WebSocket]: https://developer.mozilla.org/en/docs/Web/API/WebSocket
 [RTCDataChannel]: https://developer.mozilla.org/en/docs/Web/API/RTCDataChannel
 [String]: https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/String
