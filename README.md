@@ -7,7 +7,8 @@
 <p align="center">
   Universal Javascript <strong style="font-weight: bold">peer to peer</strong> transport API for client and server.<br />
   Full mesh peer to peer network based on <strong style="font-weight: bold">RTCDataChannel</strong> and <strong style="font-weight: bold">WebSocket</strong>.<br />
-  Send/receive <strong style="font-weight: bold">String</strong> and <strong style="font-weight: bold">Uint8Array</strong> data types.
+  Send/receive <strong style="font-weight: bold">String</strong> and <strong style="font-weight: bold">Uint8Array</strong> data types.<br />
+  Documentation: https://coast-team.github.io/netflux
 </p>
 
 <p align="center">
@@ -65,8 +66,8 @@
   - `dist/netflux.browser.esm.js` - ECMAScript 6 module format for browsers (see *package.json#browser*).
   - `dist/netflux.umd.js` - UMD format for browsers.
 
-## Documentation
-Website: https://coast-team.github.io/netflux
+## Demo
+Netflux is used by our team for Multi User Text Editor ([MUTE repo](https://github.com/coast-team/mute)) development. The demo version is available on: https://www.coedit.re
 
 [WebSocket]: https://developer.mozilla.org/en/docs/Web/API/WebSocket
 [RTCDataChannel]: https://developer.mozilla.org/en/docs/Web/API/RTCDataChannel

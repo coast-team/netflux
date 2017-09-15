@@ -55,6 +55,8 @@
       
     <li data-ice="manualNav" class="indent-h1" data-link="manual/bestpractices.html"><a href="manual/bestpractices.html" data-ice="link">Best practices</a></li>
 <li data-ice="manualNav" class="indent-h2" data-link="manual/bestpractices.html"><a href="manual/bestpractices.html#leave-webgroup-before-browser-tab-close" data-ice="link">Leave WebGroup before Browser/Tab close</a></li>
+<li data-ice="manualNav" class="indent-h2" data-link="manual/bestpractices.html"><a href="manual/bestpractices.html#listen-on-online-offline-events" data-ice="link">Listen on Online/Offline events</a></li>
+<li data-ice="manualNav" class="indent-h2" data-link="manual/bestpractices.html"><a href="manual/bestpractices.html#page-visibility-api-might-be-useful-in-some-scenarios" data-ice="link">Page Visibility API might be useful in some scenarios</a></li>
 </ul>
   </div>
 <div data-ice="manual">
@@ -67,10 +69,53 @@
 </div>
 </nav>
 
-<div class="content" data-ice="content"><div class="github-markdown" data-ice="content"><h1 id="best-practices">Best practices</h1><h2 id="leave-webgroup-before-browser-tab-close">Leave WebGroup before Browser/Tab close</h2><p>Clean leave is always preferable. Other members will be notified immediately.</p>
-<pre><code class="lang-Javascript"><code class="source-code prettyprint">window.addEventListener(&apos;beforeunload&apos;, () =&gt; {
-  if (webGroup !== undefined) {
+<div class="content" data-ice="content"><div class="github-markdown" data-ice="content"><h1 id="best-practices">Best practices</h1><p>The behavior of Chrome and Firefox on Linux/MacOS (likely on Windows also, but not tested) concerning holding JS execution, <a href="https://developer.mozilla.org/en/docs/Online_and_offline_events">Online/Offline</a> and <a href="https://developer.mozilla.org/en/docs/Web/API/Page_Visibility_API">Page Visibility</a> APIs maybe different when OS goes into sleep mode and resumes from it. That why the practices listed here might be useful for these scenarios and not only.</p>
+<h2 id="leave-webgroup-before-browser-tab-close">Leave WebGroup before Browser/Tab close</h2><p>Clean leave is always preferable. Other members will be notified immediately.</p>
+<pre><code class="lang-Javascript"><code class="source-code prettyprint">// &quot;webGroup&quot; variable has been defined earlier.
+window.addEventListener(&apos;beforeunload&apos;, () =&gt; {
     webGroup.leave()
+})</code>
+</code></pre>
+<h2 id="listen-on-online-offline-events">Listen on Online/Offline events</h2><p>Maybe useful to not rejoin a web group if the client is offline anyway. Checkout <a href="https://developer.mozilla.org/en/docs/Online_and_offline_events">Online/Offline API doc</a> for more details and to understand what <em>Online</em> actually means.</p>
+<pre><code class="lang-Javascript"><code class="source-code prettyprint">// &quot;webGroup&quot; variable has been defined earlier.
+
+window.addEventListener(&apos;offline&apos;, () =&gt; {
+    // You are offline, then leave the web group
+    webGroup.leave()
+})
+window.addEventListener(&apos;online&apos;, () =&gt; {
+    // You are online again, try to rejoin if necessary.
+    webGroup.join()
+})</code>
+</code></pre>
+<p><strong>Remark</strong>: It was noticed for Chrome browser on some operating systems that when the OS resumes from a sleep mode, the <em>Offline</em>/<em>Online</em> events fired twice in a very short period of time, this may cause a problem for Netflux to rejoin, so consider to do something like:</p>
+<pre><code class="lang-Javascript"><code class="source-code prettyprint">// &quot;webGroup&quot; variable has been defined earlier.
+
+let timer
+window.addEventListener(&apos;online&apos;, () =&gt; {
+  if (timer !== undefined) {
+    timer = setTimeout(() =&gt; {
+      webGroup.join()
+      timer = undefined
+    }, 500)
+  }
+})</code>
+</code></pre>
+<h2 id="page-visibility-api-might-be-useful-in-some-scenarios">Page Visibility API might be useful in some scenarios</h2><p>It was noticed that when MacOS goes into sleep mode, Chrome and Firefox do not stop JS execution, but close WebRTC connections and do not allow to create new. However the WebSocket connection is maintained. This cause problem as you are no longer connected to other peers, but the connection with Signaling server is still alive. For this reason it might be useful to do something like (checkout <a href="https://developer.mozilla.org/en/docs/Web/API/Page_Visibility_API">Page Visibility API doc</a>):</p>
+<pre><code class="lang-Javascript"><code class="source-code prettyprint">// &quot;webGroup&quot; variable has been defined earlier.
+
+webGroup.onMemberLeave = () =&gt; {
+  if (webGroup.members.length === 0 &amp;&amp; window.document.visibilityState === &apos;hidden&apos;) {
+    webGroup.leave()
+  }
+}
+
+window.addEventListener(&apos;visibilitychange&apos;, () =&gt; {
+  if (window.navigator.onLine &amp;&amp;
+      window.document.visibilityState === &apos;visible&apos; &amp;&amp;
+      webGroup.state === WebGroupState.LEFT
+  ) {
+    webGroup.join()
   }
 })</code>
 </code></pre>
