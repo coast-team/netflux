@@ -233,7 +233,7 @@
     "__docId__": 7,
     "kind": "file",
     "name": "src/WebChannelFacade.js",
-    "content": "import { WebChannel } from './service/WebChannel';\n/**\n * @ignore\n */\nexport const wcs = new WeakMap();\n/**\n * This class is an API starting point. It represents a peer to peer network,\n * simply called a group. Each group member can send/receive broadcast\n * as well as personal messages, invite other persons or bots (see {@link WebGroupBotServer}).\n * @example\n * // Create a WebGroup with full mesh topology, autorejoin feature and\n * // specified Signaling and ICE servers for WebRTC.\n *\n * const wg = new WebGroup({\n *   signalingURL: 'wss://mysignaling.com'\n *   iceServers: [\n *     {\n *       urls: 'stun.l.google.com:19302'\n *     },\n *     {\n *       urls: ['turn:myturn.com?transport=udp', 'turn:myturn?transport=tcp'],\n *       username: 'user',\n *       password: 'password'\n *     }\n *   ]\n * })\n *\n * wg.onMemberJoin = (id) => {\n *   // TODO...\n * }\n * wg.onMemberLeave = (id) => {\n *   // TODO...\n * }\n * wg.onMessage = (id, msg, isBroadcast) => {\n *   // TODO...\n * }\n * wg.onStateChanged = (state) => {\n *   // TODO...\n * }\n * wg.onSignalingStateChanged = (state) => {\n *   // TODO...\n * }\n */\nexport class WebGroup {\n    /**\n     * @param {WebGroupOptions} [options]\n     * @param {Topology} [options.topology=Topology.FULL_MESH]\n     * @param {string} [options.signalingURL='wss://www.coedit.re:20473']\n     * @param {RTCIceServer[]} [options.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]\n     * @param {boolean} [options.autoRejoin=true]\n     */\n    constructor(options = {}) {\n        wcs.set(this, new WebChannel(options));\n    }\n    /**\n     * {@link WebGroup} identifier. The same value for all members.\n     * @type {number}\n     */\n    get id() { return wcs.get(this).id; }\n    /**\n     * Your unique member identifier in the group.\n     * @type {number}\n     */\n    get myId() { return wcs.get(this).myId; }\n    /**\n     * An array of member identifiers (except yours).\n     * @type {number[]}\n     */\n    get members() { return wcs.get(this).members; }\n    /**\n     * Topology identifier.\n     * @type {Topology}\n     */\n    get topology() { return wcs.get(this).topology; }\n    /**\n     * The state of the {@link WebGroup} connection.\n     * @type {WebGroupState}\n     */\n    get state() { return wcs.get(this).state; }\n    /**\n     * The state of the signaling server.\n     * @type {SignalingState}\n     */\n    get signalingState() { return wcs.get(this).signaling.state; }\n    /**\n     * The signaling server URL.\n     * @type {string}\n     */\n    get signalingURL() { return wcs.get(this).signaling.url; }\n    /**\n     * If equals to true, auto rejoin feature is enabled.\n     * @type {boolean}\n     */\n    get autoRejoin() { return wcs.get(this).autoRejoin; }\n    /**\n     * Enable/Desable the auto rejoin feature.\n     * @type {boolean}\n     */\n    set autoRejoin(value) { wcs.get(this).autoRejoin = value; }\n    /**\n     * This handler is called when a message has been received from the group.\n     * @type {function(id: number, msg: DataTypeView, isBroadcast: boolean)}\n     */\n    set onMessage(handler) { wcs.get(this).onMessage = handler; }\n    /**\n     * This handler is called when a new member has joined the group.\n     * @type {function(id: number)}\n     */\n    set onMemberJoin(handler) { wcs.get(this).onMemberJoin = handler; }\n    /**\n     * This handler is called when a member hes left the group.\n     * @type {function(id: number)}\n     */\n    set onMemberLeave(handler) { wcs.get(this).onMemberLeave = handler; }\n    /**\n     * This handler is called when the group state has changed.\n     * @type {function(state: WebGroupState)}\n     */\n    set onStateChanged(handler) { wcs.get(this).onStateChanged = handler; }\n    /**\n     * This handler is called when the signaling state has changed.\n     * @type {function(state: SignalingState)}\n     */\n    set onSignalingStateChanged(handler) { wcs.get(this).onSignalingStateChanged = handler; }\n    /**\n     * Join the group identified by a key provided by one of the group member.\n     * @param {string} key\n     */\n    join(key) { return wcs.get(this).join(key); }\n    /**\n     * Invite a bot server to join this group.\n     * @param {string} url - Bot server URL (See {@link WebGroupBotServerOptions})\n     */\n    invite(url) { return wcs.get(this).invite(url); }\n    /**\n     * Close the connection with Signaling server.\n     */\n    closeSignaling() { return wcs.get(this).closeSignaling(); }\n    /**\n     * Leave the group which means close channels with all members and connection\n     * with Signaling server.\n     */\n    leave() { return wcs.get(this).leave(); }\n    /**\n     * Broadcast a message to the group.\n     * @param {DataTypeView} data\n     */\n    send(data) { return wcs.get(this).send(data); }\n    /**\n     * Send a message to a particular group member.\n     * @param {number}    id Member identifier\n     * @param {DataTypeView}  data Message\n     */\n    sendTo(id, data) { return wcs.get(this).sendTo(id, data); }\n    /**\n     * Get web group latency\n     * @return {Promise<number>} Latency in milliseconds\n     */\n    ping() { return wcs.get(this).ping(); }\n}\n",
+    "content": "import { WebChannel } from './service/WebChannel';\n/**\n * @ignore\n */\nexport const wcs = new WeakMap();\n/**\n * This class is an API starting point. It represents a peer to peer network,\n * simply called a group. Each group member can send/receive broadcast\n * as well as personal messages, invite other persons or bots (see {@link WebGroupBotServer}).\n * @example\n * // Create a WebGroup with full mesh topology, autorejoin feature and\n * // specified Signaling and ICE servers for WebRTC.\n *\n * const wg = new WebGroup({\n *   signalingURL: 'wss://mysignaling.com'\n *   iceServers: [\n *     {\n *       urls: 'stun.l.google.com:19302'\n *     },\n *     {\n *       urls: ['turn:myturn.com?transport=udp', 'turn:myturn?transport=tcp'],\n *       username: 'user',\n *       password: 'password'\n *     }\n *   ]\n * })\n *\n * wg.onMemberJoin = (id) => {\n *   // TODO...\n * }\n * wg.onMemberLeave = (id) => {\n *   // TODO...\n * }\n * wg.onMessage = (id, msg, isBroadcast) => {\n *   // TODO...\n * }\n * wg.onStateChanged = (state) => {\n *   // TODO...\n * }\n * wg.onSignalingStateChanged = (state) => {\n *   // TODO...\n * }\n */\nexport class WebGroup {\n    /**\n     * @param {WebGroupOptions} [options]\n     * @param {Topology} [options.topology=Topology.FULL_MESH]\n     * @param {string} [options.signalingURL='wss://www.coedit.re:20473']\n     * @param {RTCIceServer[]} [options.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]\n     * @param {boolean} [options.autoRejoin=true]\n     */\n    constructor(options = {}) {\n        wcs.set(this, new WebChannel(options));\n    }\n    /**\n     * {@link WebGroup} identifier. The same value for all members.\n     * @type {number}\n     */\n    get id() { return wcs.get(this).id; }\n    /**\n     * Your unique member identifier in the group.\n     * @type {number}\n     */\n    get myId() { return wcs.get(this).myId; }\n    /**\n     * Group session identifier. Equals to an empty string before calling {@link WebGroup#join}.\n     * Different to {@link WebGroup#id}. This key is known and used by Signaling server\n     * in order to join new members, on the other hand Signaling does not know {@link WebGroup#id}.\n     * @type {string}\n     */\n    get key() { return wcs.get(this).key; }\n    /**\n     * An array of member identifiers (except yours).\n     * @type {number[]}\n     */\n    get members() { return wcs.get(this).members; }\n    /**\n     * Topology identifier.\n     * @type {Topology}\n     */\n    get topology() { return wcs.get(this).topology; }\n    /**\n     * The state of the {@link WebGroup} connection.\n     * @type {WebGroupState}\n     */\n    get state() { return wcs.get(this).state; }\n    /**\n     * The state of the signaling server.\n     * @type {SignalingState}\n     */\n    get signalingState() { return wcs.get(this).signaling.state; }\n    /**\n     * The signaling server URL.\n     * @type {string}\n     */\n    get signalingURL() { return wcs.get(this).signaling.url; }\n    /**\n     * If equals to true, auto rejoin feature is enabled.\n     * @type {boolean}\n     */\n    get autoRejoin() { return wcs.get(this).autoRejoin; }\n    /**\n     * Enable/Desable the auto rejoin feature.\n     * @type {boolean}\n     */\n    set autoRejoin(value) { wcs.get(this).autoRejoin = value; }\n    /**\n     * This handler is called when a message has been received from the group.\n     * @type {function(id: number, msg: DataTypeView, isBroadcast: boolean)}\n     */\n    set onMessage(handler) { wcs.get(this).onMessage = handler; }\n    /**\n     * This handler is called when a new member has joined the group.\n     * @type {function(id: number)}\n     */\n    set onMemberJoin(handler) { wcs.get(this).onMemberJoin = handler; }\n    /**\n     * This handler is called when a member hes left the group.\n     * @type {function(id: number)}\n     */\n    set onMemberLeave(handler) { wcs.get(this).onMemberLeave = handler; }\n    /**\n     * This handler is called when the group state has changed.\n     * @type {function(state: WebGroupState)}\n     */\n    set onStateChanged(handler) { wcs.get(this).onStateChanged = handler; }\n    /**\n     * This handler is called when the signaling state has changed.\n     * @type {function(state: SignalingState)}\n     */\n    set onSignalingStateChanged(handler) { wcs.get(this).onSignalingStateChanged = handler; }\n    /**\n     * Join the group identified by a key provided by one of the group member.\n     * @param {string} key\n     */\n    join(key) { return wcs.get(this).join(key); }\n    /**\n     * Invite a bot server to join this group.\n     * @param {string} url - Bot server URL (See {@link WebGroupBotServerOptions})\n     */\n    invite(url) { return wcs.get(this).invite(url); }\n    /**\n     * Close the connection with Signaling server.\n     */\n    closeSignaling() { return wcs.get(this).closeSignaling(); }\n    /**\n     * Leave the group which means close channels with all members and connection\n     * with Signaling server.\n     */\n    leave() { return wcs.get(this).leave(); }\n    /**\n     * Broadcast a message to the group.\n     * @param {DataTypeView} data\n     */\n    send(data) { return wcs.get(this).send(data); }\n    /**\n     * Send a message to a particular group member.\n     * @param {number}    id Member identifier\n     * @param {DataTypeView}  data Message\n     */\n    sendTo(id, data) { return wcs.get(this).sendTo(id, data); }\n    /**\n     * Get web group latency\n     * @return {Promise<number>} Latency in milliseconds\n     */\n    ping() { return wcs.get(this).ping(); }\n}\n",
     "static": true,
     "longname": "/home/philippe/workspace/netflux/docs/src/WebChannelFacade.js",
     "access": "public",
@@ -391,99 +391,15 @@
   {
     "__docId__": 13,
     "kind": "get",
-    "name": "members",
+    "name": "key",
     "memberof": "src/WebChannelFacade.js~WebGroup",
     "generator": false,
     "async": false,
     "static": false,
-    "longname": "src/WebChannelFacade.js~WebGroup#members",
+    "longname": "src/WebChannelFacade.js~WebGroup#key",
     "access": "public",
-    "description": "An array of member identifiers (except yours).",
-    "lineNumber": 69,
-    "type": {
-      "nullable": null,
-      "types": [
-        "number[]"
-      ],
-      "spread": false,
-      "description": null
-    }
-  },
-  {
-    "__docId__": 14,
-    "kind": "get",
-    "name": "topology",
-    "memberof": "src/WebChannelFacade.js~WebGroup",
-    "generator": false,
-    "async": false,
-    "static": false,
-    "longname": "src/WebChannelFacade.js~WebGroup#topology",
-    "access": "public",
-    "description": "Topology identifier.",
-    "lineNumber": 74,
-    "type": {
-      "nullable": null,
-      "types": [
-        "Topology"
-      ],
-      "spread": false,
-      "description": null
-    }
-  },
-  {
-    "__docId__": 15,
-    "kind": "get",
-    "name": "state",
-    "memberof": "src/WebChannelFacade.js~WebGroup",
-    "generator": false,
-    "async": false,
-    "static": false,
-    "longname": "src/WebChannelFacade.js~WebGroup#state",
-    "access": "public",
-    "description": "The state of the {@link WebGroup} connection.",
-    "lineNumber": 79,
-    "type": {
-      "nullable": null,
-      "types": [
-        "WebGroupState"
-      ],
-      "spread": false,
-      "description": null
-    }
-  },
-  {
-    "__docId__": 16,
-    "kind": "get",
-    "name": "signalingState",
-    "memberof": "src/WebChannelFacade.js~WebGroup",
-    "generator": false,
-    "async": false,
-    "static": false,
-    "longname": "src/WebChannelFacade.js~WebGroup#signalingState",
-    "access": "public",
-    "description": "The state of the signaling server.",
-    "lineNumber": 84,
-    "type": {
-      "nullable": null,
-      "types": [
-        "SignalingState"
-      ],
-      "spread": false,
-      "description": null
-    }
-  },
-  {
-    "__docId__": 17,
-    "kind": "get",
-    "name": "signalingURL",
-    "memberof": "src/WebChannelFacade.js~WebGroup",
-    "generator": false,
-    "async": false,
-    "static": false,
-    "longname": "src/WebChannelFacade.js~WebGroup#signalingURL",
-    "access": "public",
-    "description": "The signaling server URL.",
-    "lineNumber": 89,
+    "description": "Group session identifier. Equals to an empty string before calling {@link WebGroup#join}.\nDifferent to {@link WebGroup#id}. This key is known and used by Signaling server\nin order to join new members, on the other hand Signaling does not know {@link WebGroup#id}.",
+    "lineNumber": 71,
     "type": {
       "nullable": null,
       "types": [
@@ -494,7 +410,112 @@
     }
   },
   {
+    "__docId__": 14,
+    "kind": "get",
+    "name": "members",
+    "memberof": "src/WebChannelFacade.js~WebGroup",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/WebChannelFacade.js~WebGroup#members",
+    "access": "public",
+    "description": "An array of member identifiers (except yours).",
+    "lineNumber": 76,
+    "type": {
+      "nullable": null,
+      "types": [
+        "number[]"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 15,
+    "kind": "get",
+    "name": "topology",
+    "memberof": "src/WebChannelFacade.js~WebGroup",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/WebChannelFacade.js~WebGroup#topology",
+    "access": "public",
+    "description": "Topology identifier.",
+    "lineNumber": 81,
+    "type": {
+      "nullable": null,
+      "types": [
+        "Topology"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 16,
+    "kind": "get",
+    "name": "state",
+    "memberof": "src/WebChannelFacade.js~WebGroup",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/WebChannelFacade.js~WebGroup#state",
+    "access": "public",
+    "description": "The state of the {@link WebGroup} connection.",
+    "lineNumber": 86,
+    "type": {
+      "nullable": null,
+      "types": [
+        "WebGroupState"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 17,
+    "kind": "get",
+    "name": "signalingState",
+    "memberof": "src/WebChannelFacade.js~WebGroup",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/WebChannelFacade.js~WebGroup#signalingState",
+    "access": "public",
+    "description": "The state of the signaling server.",
+    "lineNumber": 91,
+    "type": {
+      "nullable": null,
+      "types": [
+        "SignalingState"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
     "__docId__": 18,
+    "kind": "get",
+    "name": "signalingURL",
+    "memberof": "src/WebChannelFacade.js~WebGroup",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/WebChannelFacade.js~WebGroup#signalingURL",
+    "access": "public",
+    "description": "The signaling server URL.",
+    "lineNumber": 96,
+    "type": {
+      "nullable": null,
+      "types": [
+        "string"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 19,
     "kind": "get",
     "name": "autoRejoin",
     "memberof": "src/WebChannelFacade.js~WebGroup",
@@ -504,28 +525,7 @@
     "longname": "src/WebChannelFacade.js~WebGroup#autoRejoin",
     "access": "public",
     "description": "If equals to true, auto rejoin feature is enabled.",
-    "lineNumber": 94,
-    "type": {
-      "nullable": null,
-      "types": [
-        "boolean"
-      ],
-      "spread": false,
-      "description": null
-    }
-  },
-  {
-    "__docId__": 19,
-    "kind": "set",
-    "name": "autoRejoin",
-    "memberof": "src/WebChannelFacade.js~WebGroup",
-    "generator": false,
-    "async": false,
-    "static": false,
-    "longname": "src/WebChannelFacade.js~WebGroup#autoRejoin",
-    "access": "public",
-    "description": "Enable/Desable the auto rejoin feature.",
-    "lineNumber": 99,
+    "lineNumber": 101,
     "type": {
       "nullable": null,
       "types": [
@@ -538,6 +538,27 @@
   {
     "__docId__": 20,
     "kind": "set",
+    "name": "autoRejoin",
+    "memberof": "src/WebChannelFacade.js~WebGroup",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/WebChannelFacade.js~WebGroup#autoRejoin",
+    "access": "public",
+    "description": "Enable/Desable the auto rejoin feature.",
+    "lineNumber": 106,
+    "type": {
+      "nullable": null,
+      "types": [
+        "boolean"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 21,
+    "kind": "set",
     "name": "onMessage",
     "memberof": "src/WebChannelFacade.js~WebGroup",
     "generator": false,
@@ -546,7 +567,7 @@
     "longname": "src/WebChannelFacade.js~WebGroup#onMessage",
     "access": "public",
     "description": "This handler is called when a message has been received from the group.",
-    "lineNumber": 104,
+    "lineNumber": 111,
     "type": {
       "nullable": null,
       "types": [
@@ -557,7 +578,7 @@
     }
   },
   {
-    "__docId__": 21,
+    "__docId__": 22,
     "kind": "set",
     "name": "onMemberJoin",
     "memberof": "src/WebChannelFacade.js~WebGroup",
@@ -567,28 +588,7 @@
     "longname": "src/WebChannelFacade.js~WebGroup#onMemberJoin",
     "access": "public",
     "description": "This handler is called when a new member has joined the group.",
-    "lineNumber": 109,
-    "type": {
-      "nullable": null,
-      "types": [
-        "function(id: number)"
-      ],
-      "spread": false,
-      "description": null
-    }
-  },
-  {
-    "__docId__": 22,
-    "kind": "set",
-    "name": "onMemberLeave",
-    "memberof": "src/WebChannelFacade.js~WebGroup",
-    "generator": false,
-    "async": false,
-    "static": false,
-    "longname": "src/WebChannelFacade.js~WebGroup#onMemberLeave",
-    "access": "public",
-    "description": "This handler is called when a member hes left the group.",
-    "lineNumber": 114,
+    "lineNumber": 116,
     "type": {
       "nullable": null,
       "types": [
@@ -601,6 +601,27 @@
   {
     "__docId__": 23,
     "kind": "set",
+    "name": "onMemberLeave",
+    "memberof": "src/WebChannelFacade.js~WebGroup",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "src/WebChannelFacade.js~WebGroup#onMemberLeave",
+    "access": "public",
+    "description": "This handler is called when a member hes left the group.",
+    "lineNumber": 121,
+    "type": {
+      "nullable": null,
+      "types": [
+        "function(id: number)"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 24,
+    "kind": "set",
     "name": "onStateChanged",
     "memberof": "src/WebChannelFacade.js~WebGroup",
     "generator": false,
@@ -609,7 +630,7 @@
     "longname": "src/WebChannelFacade.js~WebGroup#onStateChanged",
     "access": "public",
     "description": "This handler is called when the group state has changed.",
-    "lineNumber": 119,
+    "lineNumber": 126,
     "type": {
       "nullable": null,
       "types": [
@@ -620,7 +641,7 @@
     }
   },
   {
-    "__docId__": 24,
+    "__docId__": 25,
     "kind": "set",
     "name": "onSignalingStateChanged",
     "memberof": "src/WebChannelFacade.js~WebGroup",
@@ -630,7 +651,7 @@
     "longname": "src/WebChannelFacade.js~WebGroup#onSignalingStateChanged",
     "access": "public",
     "description": "This handler is called when the signaling state has changed.",
-    "lineNumber": 124,
+    "lineNumber": 131,
     "type": {
       "nullable": null,
       "types": [
@@ -641,7 +662,7 @@
     }
   },
   {
-    "__docId__": 25,
+    "__docId__": 26,
     "kind": "method",
     "name": "join",
     "memberof": "src/WebChannelFacade.js~WebGroup",
@@ -651,7 +672,7 @@
     "longname": "src/WebChannelFacade.js~WebGroup#join",
     "access": "public",
     "description": "Join the group identified by a key provided by one of the group member.",
-    "lineNumber": 129,
+    "lineNumber": 136,
     "params": [
       {
         "nullable": null,
@@ -666,7 +687,7 @@
     ]
   },
   {
-    "__docId__": 26,
+    "__docId__": 27,
     "kind": "method",
     "name": "invite",
     "memberof": "src/WebChannelFacade.js~WebGroup",
@@ -676,7 +697,7 @@
     "longname": "src/WebChannelFacade.js~WebGroup#invite",
     "access": "public",
     "description": "Invite a bot server to join this group.",
-    "lineNumber": 134,
+    "lineNumber": 141,
     "params": [
       {
         "nullable": null,
@@ -691,7 +712,7 @@
     ]
   },
   {
-    "__docId__": 27,
+    "__docId__": 28,
     "kind": "method",
     "name": "closeSignaling",
     "memberof": "src/WebChannelFacade.js~WebGroup",
@@ -701,10 +722,10 @@
     "longname": "src/WebChannelFacade.js~WebGroup#closeSignaling",
     "access": "public",
     "description": "Close the connection with Signaling server.",
-    "lineNumber": 138
+    "lineNumber": 145
   },
   {
-    "__docId__": 28,
+    "__docId__": 29,
     "kind": "method",
     "name": "leave",
     "memberof": "src/WebChannelFacade.js~WebGroup",
@@ -714,10 +735,10 @@
     "longname": "src/WebChannelFacade.js~WebGroup#leave",
     "access": "public",
     "description": "Leave the group which means close channels with all members and connection\nwith Signaling server.",
-    "lineNumber": 143
+    "lineNumber": 150
   },
   {
-    "__docId__": 29,
+    "__docId__": 30,
     "kind": "method",
     "name": "send",
     "memberof": "src/WebChannelFacade.js~WebGroup",
@@ -727,7 +748,7 @@
     "longname": "src/WebChannelFacade.js~WebGroup#send",
     "access": "public",
     "description": "Broadcast a message to the group.",
-    "lineNumber": 148,
+    "lineNumber": 155,
     "params": [
       {
         "nullable": null,
@@ -742,7 +763,7 @@
     ]
   },
   {
-    "__docId__": 30,
+    "__docId__": 31,
     "kind": "method",
     "name": "sendTo",
     "memberof": "src/WebChannelFacade.js~WebGroup",
@@ -752,7 +773,7 @@
     "longname": "src/WebChannelFacade.js~WebGroup#sendTo",
     "access": "public",
     "description": "Send a message to a particular group member.",
-    "lineNumber": 154,
+    "lineNumber": 161,
     "params": [
       {
         "nullable": null,
@@ -777,7 +798,7 @@
     ]
   },
   {
-    "__docId__": 31,
+    "__docId__": 32,
     "kind": "method",
     "name": "ping",
     "memberof": "src/WebChannelFacade.js~WebGroup",
@@ -787,7 +808,7 @@
     "longname": "src/WebChannelFacade.js~WebGroup#ping",
     "access": "public",
     "description": "Get web group latency",
-    "lineNumber": 159,
+    "lineNumber": 166,
     "return": {
       "nullable": null,
       "types": [
@@ -798,7 +819,7 @@
     }
   },
   {
-    "__docId__": 32,
+    "__docId__": 33,
     "kind": "file",
     "name": "src/types/esdoc.helper.js",
     "content": "/**\n * Is a helper type representing types that can be sent/received over a web group.\n * @typedef {string|Uint8Array} DataTypeView\n */\n/**\n * Topology enum.\n * @typedef {Object} Topology\n * @property {number} [FULL_MESH=0] Full mesh topology.\n */\n/**\n * The state fo the signaling server for WebRTC.\n * @typedef {Object} SignalingState\n * @property {number} [CONNECTING=0] The connection is not yet open.\n * @property {number} [OPEN=1] The connection is open and ready to communicate.\n * @property {number} [FIRST_CONNECTED=2] `RTCDataChannel` has been established\n * with one of the web group member. From now the signaling is no longer needed,\n * because the next of the joining process will pass through this member.\n * @property {number} [READY_TO_JOIN_OTHERS=3] You are successfully joined a\n * web group and ready to join others.\n * @property {number} [CLOSED=4] The connection is closed.\n */\n/**\n * {@link WebGroup} state enum.\n * @typedef {Object} WebGroupState\n * @property {number} [JOINING=0] You are joining the web group.\n * @property {number} [JOINED=1] You have successfully joined the web group\n * and ready to broadcast messages via `send` method.\n * @property {number} [LEFT=2] You have left the web group. If the connection\n * to the web group has lost and `autoRejoin=true`, then the state would be `LEFT`,\n * (usually during a relatively short period) before the rejoining process start.\n */\n/**\n * The options to be passed into {@link WebGroup} constructor.\n * @typedef {Object} WebGroupOptions\n * @property {Topology} topology Topology identifier\n * (Full mesh is the only one supported by Netflux for now).\n * @property {string} signalingURL Signaling URL for WebRTC.\n * @property {RTCIceServer[]} iceServers Array of Ice servers for WebRTC.\n * @property {boolean} autoRejoin Whether to automatically rejoin the web group\n * on disconnect or not. Its value may be modified after {@link WebGroup}\n * instantiation at any time.\n */\n/**\n * The options to be passed into {@link WebGroupBotServer} constructor.\n * @typedef {Object} WebGroupBotServerOptions\n * @property {Topology} [topology] See WebGroupOptions.topology\n * @property {string} [signalingURL] See WebGroupOptions.signalingURL\n * @property {RTCIceServer[]} [iceServers] See WebGroupOptions.iceServers\n * @property {boolean} [autoRejoin] See WebGroupOptions.autoRejoin\n * @property {Object} bot Server related options of the bot.\n * @property {NodeJS.http.Server|NodeJS.https.Server} bot.server NodeJS http(s) server.\n * @property {string} [bot.url] Bot server URL.\n * @property {boolean} [bot.perMessageDeflate] Enable/disable permessage-deflate.\n */\n/**\n * @external {RTCIceServer} https://developer.mozilla.org/en/docs/Web/API/RTCIceServer\n */\n/**\n * @external {Uint8Array} https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array\n */\n/**\n * @external {NodeJS.http.Server} https://nodejs.org/api/http.html#http_class_http_server\n */\n/**\n * @external {NodeJS.https.Server} https://nodejs.org/api/https.html#https_class_https_server\n */\n",
@@ -809,7 +830,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 33,
+    "__docId__": 34,
     "kind": "typedef",
     "name": "DataTypeView",
     "memberof": "src/types/esdoc.helper.js",
@@ -827,7 +848,7 @@
     }
   },
   {
-    "__docId__": 34,
+    "__docId__": 35,
     "kind": "typedef",
     "name": "Topology",
     "memberof": "src/types/esdoc.helper.js",
@@ -858,7 +879,7 @@
     }
   },
   {
-    "__docId__": 35,
+    "__docId__": 36,
     "kind": "typedef",
     "name": "SignalingState",
     "memberof": "src/types/esdoc.helper.js",
@@ -937,7 +958,7 @@
     }
   },
   {
-    "__docId__": 36,
+    "__docId__": 37,
     "kind": "typedef",
     "name": "WebGroupState",
     "memberof": "src/types/esdoc.helper.js",
@@ -992,7 +1013,7 @@
     }
   },
   {
-    "__docId__": 37,
+    "__docId__": 38,
     "kind": "typedef",
     "name": "WebGroupOptions",
     "memberof": "src/types/esdoc.helper.js",
@@ -1051,7 +1072,7 @@
     }
   },
   {
-    "__docId__": 38,
+    "__docId__": 39,
     "kind": "typedef",
     "name": "WebGroupBotServerOptions",
     "memberof": "src/types/esdoc.helper.js",
@@ -1151,7 +1172,7 @@
     }
   },
   {
-    "__docId__": 39,
+    "__docId__": 40,
     "kind": "external",
     "name": "RTCIceServer",
     "externalLink": "https://developer.mozilla.org/en/docs/Web/API/RTCIceServer",
@@ -1162,7 +1183,7 @@
     "description": ""
   },
   {
-    "__docId__": 40,
+    "__docId__": 41,
     "kind": "external",
     "name": "Uint8Array",
     "externalLink": "https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array",
@@ -1173,7 +1194,7 @@
     "description": ""
   },
   {
-    "__docId__": 41,
+    "__docId__": 42,
     "kind": "external",
     "name": "NodeJS.http.Server",
     "externalLink": "https://nodejs.org/api/http.html#http_class_http_server",
@@ -1184,7 +1205,7 @@
     "description": ""
   },
   {
-    "__docId__": 42,
+    "__docId__": 43,
     "kind": "external",
     "name": "NodeJS.https.Server",
     "externalLink": "https://nodejs.org/api/https.html#https_class_https_server",
@@ -1196,7 +1217,7 @@
   },
   {
     "kind": "index",
-    "content": "<p align=\"center\"><img src=\"manual/asset/logo.png\" /></p>\n\n<p align=\"center\">\n  Universal Javascript <strong style=\"font-weight: bold\">peer to peer</strong> transport API for client and server.<br />\n  Full mesh peer to peer network based on <strong style=\"font-weight: bold\">RTCDataChannel</strong> and <strong style=\"font-weight: bold\">WebSocket</strong>.<br />\n  Send/receive <strong style=\"font-weight: bold\">String</strong> and <strong style=\"font-weight: bold\">Uint8Array</strong> data types.\n</p>\n\n<p align=\"center\">\n  <a href=\"https://www.npmjs.com/package/netflux\">\n    <img src=\"https://img.shields.io/npm/v/netflux.svg?style=flat-square\" />\n  </a>&nbsp;\n  <a href=\"https://travis-ci.org/coast-team/netflux\">\n    <img src=\"https://travis-ci.org/coast-team/netflux.svg?branch=master\" />\n  </a>&nbsp;\n  <a href=\"https://github.com/semantic-release/semantic-release\">\n    <img src=\"https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg?style=flat-square\" />\n  </a>&nbsp;\n  <a href=\"https://gitter.im/coast-team/netflux?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge\">\n    <img src=\"https://img.shields.io/badge/GITTER-join%20chat-green.svg?style=flat-square\" />\n  </a>\n\n  <br />\n\n  <a href=\"http://commitizen.github.io/cz-cli\">\n    <img src=\"https://img.shields.io/badge/commitizen-friendly-brightgreen.svg?style=flat-square\" />\n  </a>&nbsp;\n  <a href=\"https://www.bithound.io/github/coast-team/netflux\">\n    <img src=\"https://www.bithound.io/github/coast-team/netflux/badges/score.svg\" />\n  </a>&nbsp;\n  <a href=\"https://codeclimate.com/github/coast-team/netflux\">\n    <img src=\"https://codeclimate.com/github/coast-team/netflux/badges/gpa.svg\" />\n  </a>&nbsp;\n  <a href=\"https://codeclimate.com/github/coast-team/netflux/coverage\">\n    <img src=\"https://codeclimate.com/github/coast-team/netflux/badges/coverage.svg\" />\n  </a>&nbsp;\n  <a href=\"https://doc.esdoc.org/github.com/coast-team/netflux\">\n    <img src=\"https://doc.esdoc.org/github.com/coast-team/netflux/badge.svg\" />\n  </a>\n</p>\n\n<p align=\"center\">\n  <img src=\"manual/asset/example_support.png\" />\n</p>\n\n## Features\n- Universal API (works in Chrome/Firefox and NodeJS).\n- TypeScript declaration files are included.\n- Create peer to peer full mesh network.\n- Send/receive [String][String], [Uint8Array][Uint8Array] data types.\n- Automatic rejoin when the connection with Signaling has lost.\n- Automatic selection between [WebSocket][WebSocket] & [RTCDataChannel][RTCDataChannel].\n- Full control over WebRTC servers: Signaling, STUN and TURN.\n  - Deploy your own Signaling server ([Sigver][Sigver]) or use one provided by default.\n  - Configure STUN and TURN servers.\n- Small Signaling server payload: server is necessary to establish the first connection with\n  one of the group member, then this member acts as a Signaling server to establish connections with the rest of the group members.\n- 4 builds (ES5 code):\n  - `dist/netflux.cjs.js` - CommonJS format for NodeJS (see *package.json#main*)\n  - `dist/netflux.node.esm.js` - ECMAScript 6 module format for NodeJS (see *package.json#module*).\n  - `dist/netflux.browser.esm.js` - ECMAScript 6 module format for browsers (see *package.json#browser*).\n  - `dist/netflux.umd.js` - UMD format for browsers.\n\n## Documentation\nWebsite: https://coast-team.github.io/netflux\n\n[WebSocket]: https://developer.mozilla.org/en/docs/Web/API/WebSocket\n[RTCDataChannel]: https://developer.mozilla.org/en/docs/Web/API/RTCDataChannel\n[String]: https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/String\n[ArrayBuffer]: https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer\n[TypedArray]: https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/TypedArray\n[Sigver]: https://github.com/coast-team/sigver\n\n[commitizen]: https://img.shields.io/badge/commitizen-friendly-brightgreen.svg?style=flat-square\n[commitizen-url]: http://commitizen.github.io/cz-cli\n\n[bithound]: https://www.bithound.io/github/coast-team/netflux/badges/score.svg\n[bithound-url]: https://www.bithound.io/github/coast-team/netflux\n\n[codeclimate]: https://codeclimate.com/github/coast-team/netflux/badges/gpa.svg\n[codeclimate-url]: https://codeclimate.com/github/coast-team/netflux\n\n[coverage]: https://codeclimate.com/github/coast-team/netflux/badges/coverage.svg\n[coverage-url]: https://codeclimate.com/github/coast-team/netflux/coverage\n\n[doc]: https://doc.esdoc.org/github.com/coast-team/netflux/badge.svg\n[doc-url]: https://doc.esdoc.org/github.com/coast-team/netflux\n",
+    "content": "<p align=\"center\">\n  <a href=\"https://coast-team.github.io/netflux\">\n    <img src=\"manual/asset/logo_cropped.png\" />\n  </a>\n</p>\n\n<p align=\"center\">\n  Universal Javascript <strong style=\"font-weight: bold\">peer to peer</strong> transport API for client and server.<br />\n  Full mesh peer to peer network based on <strong style=\"font-weight: bold\">RTCDataChannel</strong> and <strong style=\"font-weight: bold\">WebSocket</strong>.<br />\n  Send/receive <strong style=\"font-weight: bold\">String</strong> and <strong style=\"font-weight: bold\">Uint8Array</strong> data types.\n</p>\n\n<p align=\"center\">\n  <a href=\"https://www.npmjs.com/package/netflux\">\n    <img src=\"https://img.shields.io/npm/v/netflux.svg?style=flat-square\" />\n  </a>&nbsp;\n  <a href=\"https://travis-ci.org/coast-team/netflux\">\n    <img src=\"https://travis-ci.org/coast-team/netflux.svg?branch=master\" />\n  </a>&nbsp;\n  <a href=\"https://github.com/semantic-release/semantic-release\">\n    <img src=\"https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg?style=flat-square\" />\n  </a>&nbsp;\n  <a href=\"https://gitter.im/coast-team/netflux?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge\">\n    <img src=\"https://img.shields.io/badge/GITTER-join%20chat-green.svg?style=flat-square\" />\n  </a>\n\n  <br />\n\n  <a href=\"http://commitizen.github.io/cz-cli\">\n    <img src=\"https://img.shields.io/badge/commitizen-friendly-brightgreen.svg?style=flat-square\" />\n  </a>&nbsp;\n  <a href=\"https://www.bithound.io/github/coast-team/netflux\">\n    <img src=\"https://www.bithound.io/github/coast-team/netflux/badges/score.svg\" />\n  </a>&nbsp;\n  <a href=\"https://codeclimate.com/github/coast-team/netflux\">\n    <img src=\"https://codeclimate.com/github/coast-team/netflux/badges/gpa.svg\" />\n  </a>&nbsp;\n  <a href=\"https://codeclimate.com/github/coast-team/netflux/coverage\">\n    <img src=\"https://codeclimate.com/github/coast-team/netflux/badges/coverage.svg\" />\n  </a>&nbsp;\n  <a href=\"https://doc.esdoc.org/github.com/coast-team/netflux\">\n    <img src=\"https://doc.esdoc.org/github.com/coast-team/netflux/badge.svg\" />\n  </a>\n</p>\n\n<p align=\"center\">\n  <img src=\"manual/asset/example_support.png\" />\n</p>\n\n## Features\n- Universal API (works in Chrome/Firefox and NodeJS).\n- TypeScript declaration files are included.\n- Create peer to peer full mesh network.\n- Send/receive [String][String], [Uint8Array][Uint8Array] data types.\n- Automatic rejoin when the connection with Signaling has lost.\n- Automatic selection between [WebSocket][WebSocket] & [RTCDataChannel][RTCDataChannel].\n- Full control over WebRTC servers: Signaling, STUN and TURN.\n  - Deploy your own Signaling server ([Sigver][Sigver]) or use one provided by default.\n  - Configure STUN and TURN servers.\n- Small Signaling server payload: server is necessary to establish the first connection with\n  one of the group member, then this member acts as a Signaling server to establish connections with the rest of the group members.\n- 4 builds (ES5 code):\n  - `dist/netflux.cjs.js` - CommonJS format for NodeJS (see *package.json#main*)\n  - `dist/netflux.node.esm.js` - ECMAScript 6 module format for NodeJS (see *package.json#module*).\n  - `dist/netflux.browser.esm.js` - ECMAScript 6 module format for browsers (see *package.json#browser*).\n  - `dist/netflux.umd.js` - UMD format for browsers.\n\n## Documentation\nWebsite: https://coast-team.github.io/netflux\n\n[WebSocket]: https://developer.mozilla.org/en/docs/Web/API/WebSocket\n[RTCDataChannel]: https://developer.mozilla.org/en/docs/Web/API/RTCDataChannel\n[String]: https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/String\n[Uint8Array]: https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array\n[Sigver]: https://github.com/coast-team/sigver\n\n[commitizen]: https://img.shields.io/badge/commitizen-friendly-brightgreen.svg?style=flat-square\n[commitizen-url]: http://commitizen.github.io/cz-cli\n\n[bithound]: https://www.bithound.io/github/coast-team/netflux/badges/score.svg\n[bithound-url]: https://www.bithound.io/github/coast-team/netflux\n\n[codeclimate]: https://codeclimate.com/github/coast-team/netflux/badges/gpa.svg\n[codeclimate-url]: https://codeclimate.com/github/coast-team/netflux\n\n[coverage]: https://codeclimate.com/github/coast-team/netflux/badges/coverage.svg\n[coverage-url]: https://codeclimate.com/github/coast-team/netflux/coverage\n\n[doc]: https://doc.esdoc.org/github.com/coast-team/netflux/badge.svg\n[doc-url]: https://doc.esdoc.org/github.com/coast-team/netflux\n",
     "longname": "/home/philippe/workspace/netflux/README.md",
     "name": "./README.md",
     "static": true,

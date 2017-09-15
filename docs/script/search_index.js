@@ -96,6 +96,12 @@ window.esdocSearchIndex = [
     "method"
   ],
   [
+    "src/webchannelfacade.js~webgroup#key",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-get-key",
+    "src/WebChannelFacade.js~WebGroup#key",
+    "member"
+  ],
+  [
     "src/webchannelfacade.js~webgroup#leave",
     "class/src/WebChannelFacade.js~WebGroup.html#instance-method-leave",
     "src/WebChannelFacade.js~WebGroup#leave",

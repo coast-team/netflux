@@ -1,6 +1,6 @@
 <p align="center">
-  <a href="https://coast-team.github.io/netflux" target="\_blank">
-    <img src="manual/asset/logo.png" />
+  <a href="https://coast-team.github.io/netflux">
+    <img src="manual/asset/logo_cropped.png" />
   </a>
 </p>
 

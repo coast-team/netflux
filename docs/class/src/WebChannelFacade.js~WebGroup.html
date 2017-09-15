@@ -267,6 +267,35 @@ wg.onSignalingStateChanged = (state) =&gt; {
           
           
           
+          <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-get-key">key</a></span></span><span class="code" data-ice="signature">: <span>string</span></span>
+        </p>
+      </div>
+      <div>
+        
+        
+        <div data-ice="description"><p>Group session identifier.</p>
+</div>
+      </div>
+    </td>
+    <td>
+      
+      
+    </td>
+  </tr>
+<tr data-ice="target">
+    <td>
+      <span class="access" data-ice="access">public</span>
+      
+      <span class="kind" data-ice="kind">get</span>
+      
+      <span class="override" data-ice="override"></span>
+    </td>
+    <td>
+      <div>
+        <p>
+          
+          
+          
           <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-get-members">members</a></span></span><span class="code" data-ice="signature">: <span><span>number</span><span>[]</span></span></span>
         </p>
       </div>
@@ -895,7 +924,7 @@ with Signaling server.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber94">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber101">source</a></span></span>
     </span>
   </h3>
 
@@ -939,7 +968,7 @@ with Signaling server.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber99">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber106">source</a></span></span>
     </span>
   </h3>
 
@@ -1016,6 +1045,52 @@ with Signaling server.</p>
   
 </div>
 <div class="detail" data-ice="detail">
+  <h3 data-ice="anchor" id="instance-get-key">
+    <span class="access" data-ice="access">public</span>
+    
+    <span class="kind" data-ice="kind">get</span>
+    
+    
+    
+    <span class="code" data-ice="name">key</span><span class="code" data-ice="signature">: <span>string</span></span>
+    <span class="right-info">
+      
+      
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber71">source</a></span></span>
+    </span>
+  </h3>
+
+  
+  
+  
+  <div data-ice="description"><p>Group session identifier. Equals to an empty string before calling <span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-method-join">WebGroup#join</a></span>.
+Different to <span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-get-id">WebGroup#id</a></span>. This key is known and used by Signaling server
+in order to join new members, on the other hand Signaling does not know <span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-get-id">WebGroup#id</a></span>.</p>
+</div>
+
+  
+
+  <div data-ice="properties">
+</div>
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+</div>
+<div class="detail" data-ice="detail">
   <h3 data-ice="anchor" id="instance-get-members">
     <span class="access" data-ice="access">public</span>
     
@@ -1027,7 +1102,7 @@ with Signaling server.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber69">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber76">source</a></span></span>
     </span>
   </h3>
 
@@ -1115,7 +1190,7 @@ with Signaling server.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber109">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber116">source</a></span></span>
     </span>
   </h3>
 
@@ -1159,7 +1234,7 @@ with Signaling server.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber114">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber121">source</a></span></span>
     </span>
   </h3>
 
@@ -1203,7 +1278,7 @@ with Signaling server.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber104">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber111">source</a></span></span>
     </span>
   </h3>
 
@@ -1247,7 +1322,7 @@ with Signaling server.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber124">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber131">source</a></span></span>
     </span>
   </h3>
 
@@ -1291,7 +1366,7 @@ with Signaling server.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber119">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber126">source</a></span></span>
     </span>
   </h3>
 
@@ -1335,7 +1410,7 @@ with Signaling server.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber84">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber91">source</a></span></span>
     </span>
   </h3>
 
@@ -1379,7 +1454,7 @@ with Signaling server.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber89">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber96">source</a></span></span>
     </span>
   </h3>
 
@@ -1423,7 +1498,7 @@ with Signaling server.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber79">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber86">source</a></span></span>
     </span>
   </h3>
 
@@ -1467,7 +1542,7 @@ with Signaling server.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber74">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber81">source</a></span></span>
     </span>
   </h3>
 
@@ -1514,7 +1589,7 @@ with Signaling server.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber138">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber145">source</a></span></span>
     </span>
   </h3>
 
@@ -1558,7 +1633,7 @@ with Signaling server.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber134">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber141">source</a></span></span>
     </span>
   </h3>
 
@@ -1619,7 +1694,7 @@ with Signaling server.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber129">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber136">source</a></span></span>
     </span>
   </h3>
 
@@ -1679,7 +1754,7 @@ with Signaling server.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber143">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber150">source</a></span></span>
     </span>
   </h3>
 
@@ -1724,7 +1799,7 @@ with Signaling server.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber159">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber166">source</a></span></span>
     </span>
   </h3>
 
@@ -1781,7 +1856,7 @@ with Signaling server.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber148">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber155">source</a></span></span>
     </span>
   </h3>
 
@@ -1841,7 +1916,7 @@ with Signaling server.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber154">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber161">source</a></span></span>
     </span>
   </h3>
 

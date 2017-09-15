@@ -49,7 +49,7 @@ export class WebChannel extends Service {
         this.topology = topology;
         this.id = this.generateId();
         this.myId = this.generateId();
-        this.key = undefined;
+        this.key = '';
         this.autoRejoin = autoRejoin;
         // PUBLIC EVENT HANDLERS
         this.onMemberJoin = () => { };
