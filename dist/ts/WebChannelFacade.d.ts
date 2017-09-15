@@ -64,6 +64,13 @@ export declare class WebGroup {
      */
     readonly myId: number;
     /**
+     * Group session identifier. Equals to an empty string before calling {@link WebGroup#join}.
+     * Different to {@link WebGroup#id}. This key is known and used by Signaling server
+     * in order to join new members, on the other hand Signaling does not know {@link WebGroup#id}.
+     * @type {string}
+     */
+    readonly key: string;
+    /**
      * An array of member identifiers (except yours).
      * @type {number[]}
      */

@@ -203,7 +203,13 @@ export class Signaling {
           ws.send(pongMsg)
         }
       },
-      close: (code = 1000, reason = '') => ws.close(code, reason)
+      close: (code = 1000, reason = '') => {
+        ws.onclose = undefined
+        ws.close(code, reason)
+        this.setState(SignalingState.CLOSED)
+        clearInterval(this.pingInterval)
+        subject.complete()
+      }
     }
   }
 }

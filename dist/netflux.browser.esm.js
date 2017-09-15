@@ -9203,12 +9203,14 @@ var Signaling = /** @class */ (function () {
             _this.rxWs.onMessage.subscribe(function (msg) {
                 switch (msg.type) {
                     case 'ping':
+                        console.log('Ping received from Signaling');
                         _this.rxWs.pong();
                         break;
                     case 'pong':
                         _this.pongReceived = true;
                         break;
                     case 'isFirst':
+                        console.log('Message from signaling: isFirst: ', msg.isFirst);
                         if (msg.isFirst) {
                             _this.setState(SignalingState.READY_TO_JOIN_OTHERS);
                         }
@@ -9316,7 +9318,11 @@ var Signaling = /** @class */ (function () {
             close: function (code, reason) {
                 if (code === void 0) { code = 1000; }
                 if (reason === void 0) { reason = ''; }
-                return ws.close(code, reason);
+                ws.onclose = undefined;
+                ws.close(code, reason);
+                _this.setState(SignalingState.CLOSED);
+                clearInterval(_this.pingInterval);
+                subject.complete();
             }
         };
     };
@@ -11016,7 +11022,7 @@ var WebChannel = /** @class */ (function (_super) {
         _this.topology = topology;
         _this.id = _this.generateId();
         _this.myId = _this.generateId();
-        _this.key = undefined;
+        _this.key = '';
         _this.autoRejoin = autoRejoin;
         // PUBLIC EVENT HANDLERS
         _this.onMemberJoin = function () { };
@@ -11295,6 +11301,7 @@ var WebChannel = /** @class */ (function (_super) {
         var channel = _a.channel, senderId = _a.senderId, recipientId = _a.recipientId, msg = _a.msg;
         switch (msg.type) {
             case 'init': {
+                console.log(this.myId + ' received init ', msg.init);
                 // Check whether the intermidiary peer is already a member of your
                 // network (possible when merging two networks (works with FullMesh)).
                 // If it is a case then you are already a member of the network.
@@ -11314,7 +11321,9 @@ var WebChannel = /** @class */ (function (_super) {
                     }
                     this.setTopology(topology);
                     if (generatedIds.includes(this.myId)) {
+                        var oldId = this.myId;
                         this.myId = this.generateId(generatedIds);
+                        console.log(oldId + ' changing id to ' + this.myId);
                     }
                     this.id = wcId;
                     channel.peerId = senderId;
@@ -11323,10 +11332,12 @@ var WebChannel = /** @class */ (function (_super) {
                         recipientId: channel.peerId,
                         content: _super.prototype.encode.call(this, { initOk: { members: this.members } })
                     }));
+                    console.log(this.myId + ' sending initOk ', this.members);
                 }
                 break;
             }
             case 'initOk': {
+                console.log(this.myId + ' send initOk ', msg.initOk);
                 channel.peerId = senderId;
                 this.topologyService.addJoining(channel, msg.initOk.members);
                 break;
@@ -11371,6 +11382,11 @@ var WebChannel = /** @class */ (function (_super) {
                 } })
         });
         ch.send(msg);
+        console.log(this.myId + ' send init ', {
+            topology: this.topology,
+            wcId: this.id,
+            generatedIds: this.members
+        });
     };
     WebChannel.prototype.setTopology = function (topology) {
         if (this.topologyService !== undefined) {
@@ -11473,6 +11489,17 @@ var WebGroup = /** @class */ (function () {
          * @type {number}
          */
         get: function () { return wcs.get(this).myId; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(WebGroup.prototype, "key", {
+        /**
+         * Group session identifier. Equals to an empty string before calling {@link WebGroup#join}.
+         * Different to {@link WebGroup#id}. This key is known and used by Signaling server
+         * in order to join new members, on the other hand Signaling does not know {@link WebGroup#id}.
+         * @type {string}
+         */
+        get: function () { return wcs.get(this).key; },
         enumerable: true,
         configurable: true
     });
