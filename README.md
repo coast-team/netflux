@@ -36,8 +36,8 @@
   <a href="https://codeclimate.com/github/coast-team/netflux">
     <img src="https://codeclimate.com/github/coast-team/netflux/badges/gpa.svg" />
   </a>&nbsp;
-  <a href="https://doc.esdoc.org/github.com/coast-team/netflux">
-    <img src="https://doc.esdoc.org/github.com/coast-team/netflux/badge.svg" />
+  <a href="https://coast-team.github.io/netflux">
+    <img src="https://coast-team.github.io/netflux/badge.svg" />
   </a>
 </p>
 
