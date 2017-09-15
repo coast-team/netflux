@@ -1,6 +1,5 @@
 {
   "rulesDirectory": [
-    "node_modules/tslint-eslint-rules/dist/rules"
   ],
   "rules": {
     "class-name": true,
@@ -13,7 +12,8 @@
     "forin": true,
     "indent": [
       true,
-      "spaces"
+      "spaces",
+      2
     ],
     "label-position": true,
     "max-line-length": [
