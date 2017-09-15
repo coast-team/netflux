@@ -10,7 +10,9 @@ ratings:
     "src/**/*.ts"
 exclude_paths:
 - "**.d.ts"
+- "**.txt"
 - "**.js"
+- "**.md"
 - "**/esdoc.helper.ts"
 - "dist/**"
 - "docs/**"
