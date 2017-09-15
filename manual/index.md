@@ -28,9 +28,6 @@ Universal Javascript **peer to peer** transport API for client and server. Full 
   <a href="https://codeclimate.com/github/coast-team/netflux">
     <img src="https://codeclimate.com/github/coast-team/netflux/badges/gpa.svg" />
   </a>&nbsp;
-  <a href="https://codeclimate.com/github/coast-team/netflux/coverage">
-    <img src="https://codeclimate.com/github/coast-team/netflux/badges/coverage.svg" />
-  </a>&nbsp;
   <a href="https://doc.esdoc.org/github.com/coast-team/netflux">
     <img src="https://doc.esdoc.org/github.com/coast-team/netflux/badge.svg" />
   </a>
@@ -77,7 +74,7 @@ Universal Javascript **peer to peer** transport API for client and server. Full 
 [coverage]: https://codeclimate.com/github/coast-team/netflux/badges/coverage.svg
 [coverage-url]: https://codeclimate.com/github/coast-team/netflux/coverage
 
-[doc]: https://doc.esdoc.org/github.com/coast-team/netflux/badge.svg
-[doc-url]: https://doc.esdoc.org/github.com/coast-team/netflux
+[doc]: https://coast-team.github.io/netflux/badge.svg
+[doc-url]: https://coast-team.github.io/netflux/netflux
 
 [logo]: manual/asset/logo_big.png "Netflux logo"
