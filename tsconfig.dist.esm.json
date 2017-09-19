@@ -2,7 +2,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "declaration": true,
-    "declarationDir": "dist/ts",
-    "noResolve": true
-  }
+    "declarationDir": "dist/esm"
+  },
+  "include": ["src/**/*.ts"]
 }

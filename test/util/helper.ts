@@ -1,8 +1,8 @@
 import { Subject } from 'rxjs/Subject'
 
-import { isBrowser } from '../../src/misc/Util'
-import { WebGroup, WebGroupState } from '../../src/index'
-import chunk50kb from './50kb.txt'
+import { WebGroup, WebGroupState } from '../../src'
+
+const isBrowser = (typeof window === 'undefined') ? false : true
 
 // Main signaling server for all tests
 export const SIGNALING_URL = 'ws://localhost:8000'
@@ -17,11 +17,6 @@ const BOT_FETCH_URL = `http://${BOT_HOST}:${BOT_PORT}`
 export const MSG_NUMBER = 100
 
 export const LEAVE_CODE = 1
-
-export const INSTANCES = [
-  String,
-  Uint8Array
-]
 
 export function createWebGroups (numberOfPeers) {
   const wgs = []
@@ -47,9 +42,9 @@ export function createAndConnectWebGroups (numberOfPeers) {
     }
   }
 
-  return new Promise ((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     network.subscribe(
-      (index) => {
+      (index: number ) => {
         if (index === numberOfPeers) {
           resolve(wgs)
         } else {
@@ -78,22 +73,6 @@ export function expectMembers (wgs, totalNumberOfPeers) {
   }
 }
 
-export function expectBotMembers (wgId, wgs, totalNumberOfPeers) {
-  return fetch(`${BOT_FETCH_URL}/members/${wgId}`)
-    .then(res => res.json())
-    .then(({ id, members }) => {
-      expect(members.length).toEqual(totalNumberOfPeers - 1)
-      wgs.forEach(wg => {
-        expect(wg.members.includes(id)).toBeTruthy()
-        expect(members.includes(wg.myId)).toBeTruthy()
-      })
-    })
-}
-
-export function botWaitJoin (wgId) {
-  return fetch(`${BOT_FETCH_URL}/waitJoin/${wgId}`)
-}
-
 export function sendAndExpectOnMessage (wgs, isBroadcast, withBot = false) {
   const promises = []
 
@@ -114,7 +93,7 @@ export function sendAndExpectOnMessage (wgs, isBroadcast, withBot = false) {
         let msgId
         const flag = flags.get(id)
         expect(flag).toBeDefined()
-        if (typeof msg === 'string' || msg instanceof String) {
+        if (typeof msg === 'string') {
           let msgObj = JSON.parse(msg)
           msgId = msgObj.id
 
@@ -179,7 +158,7 @@ function sendMessages (wg, isBroadcast) {
   const msgString = JSON.stringify({ id: wg.myId })
 
   // String chunk of 50Kb
-  const msgChunk = JSON.stringify({ id: wg.myId, data: chunk50kb })
+  const msgChunk = JSON.stringify({ id: wg.myId, data: randStr(50) })
 
   // ArrayBuffer
   const msgArrayBuffer = new Uint32Array(1)
@@ -201,67 +180,6 @@ function sendMessages (wg, isBroadcast) {
   }
 }
 
-export function randData (Instance) {
-  let res
-  if (Instance === String) {
-    res = randStr()
-  } else {
-    const lengthBuf = 64 + 64 * Math.ceil(Math.random() * 100)
-    const buffer = new ArrayBuffer(lengthBuf)
-    if (Instance === ArrayBuffer) {
-      return buffer
-    }
-  }
-  return res
-}
-
-export function randKey () {
-  const MIN_LENGTH = 5
-  const DELTA_LENGTH = 0
-  const MASK = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-  let result = ''
-  const length = MIN_LENGTH + Math.round(Math.random() * DELTA_LENGTH)
-
-  for (let i = 0; i < length; i++) {
-    result += MASK[Math.round(Math.random() * (MASK.length - 1))]
-  }
-  return result
-}
-
-function randStr () {
-  const MIN_LENGTH = 1
-  const MAX_LENGTH = 500 // To limit message  size to less than 16kb (4 bytes per character)
-  let res = ''
-  const length = MIN_LENGTH + Math.ceil(Math.random() * (MAX_LENGTH - MIN_LENGTH))
-
-  for (let i = 0; i < length; i++) {
-    res += String.fromCharCode(0x0000 + Math.ceil(Math.random() * 10000))
-  }
-  return res
-}
-
-export function itBrowser (shouldSkip, ...args) {
-  if (isBrowser) Reflect.apply(it, undefined, args)
-  else if (shouldSkip) Reflect.apply(xit, undefined, args)
-}
-
-export function xitBrowser (shouldSkip, ...args) {
-  if (isBrowser) Reflect.apply(xit, undefined, args)
-  else if (shouldSkip) Reflect.apply(xit, undefined, args)
-}
-
-export function itNode (shouldSkip, ...args) {
-  if (isBrowser) {
-    if (shouldSkip) Reflect.apply(xit, undefined, args)
-  } else Reflect.apply(it, undefined, args)
-}
-
-export function xitNode (shouldSkip, ...args) {
-  if (isBrowser) {
-    if (shouldSkip) Reflect.apply(xit, undefined, args)
-  } else Reflect.apply(xit, undefined, args)
-}
-
 export function env () {
   if (isBrowser) {
     const sUsrAg = navigator.userAgent
@@ -274,6 +192,22 @@ export function env () {
   return 'NODE'
 }
 
+export function expectBotMembers (wgId, wgs, totalNumberOfPeers) {
+  return fetch(`${BOT_FETCH_URL}/members/${wgId}`)
+    .then(res => res.json())
+    .then(({ id, members }) => {
+      expect(members.length).toEqual(totalNumberOfPeers - 1)
+      wgs.forEach(wg => {
+        expect(wg.members.includes(id)).toBeTruthy()
+        expect(members.includes(wg.myId)).toBeTruthy()
+      })
+    })
+}
+
+export function botWaitJoin (wgId) {
+  return fetch(`${BOT_FETCH_URL}/waitJoin/${wgId}`)
+}
+
 export function onMessageForBot (wg, id, msg, isBroadcast) {
   try {
     const data = JSON.parse(msg)
@@ -283,8 +217,11 @@ export function onMessageForBot (wg, id, msg, isBroadcast) {
         break
     }
   } catch (err) {
-    if (isBroadcast) wg.send(msg)
-    else wg.sendTo(id, msg)
+    if (isBroadcast) {
+      wg.send(msg)
+    } else {
+      wg.sendTo(id, msg)
+    }
   }
 }
 
@@ -293,11 +230,13 @@ function tellBotToSend (wgId) {
 }
 
 export class Scenario {
-  constructor (template) {
+  public template: string
+
+  constructor (template: string) {
     this.template = template
   }
 
-  get nbClients () {
+  get nbBrowsers () {
     let count = 0
     for (let i = 0; i < this.template.length; i++) {
       if (this.template[i] === 'c') {
@@ -307,7 +246,7 @@ export class Scenario {
     return count
   }
 
-  get nbPeers () {
+  get nbMembers () {
     return this.template.length
   }
 
@@ -331,5 +270,63 @@ export class Scenario {
       }
     }
     return false
+  }
+}
+
+export function randStr (sizeInKb = 14) {
+  const length = sizeInKb * 256
+  let str = ''
+  for (let i = 0; i < length; i++) {
+    str += String.fromCharCode(0x0000 + Math.ceil(Math.random() * 10000))
+  }
+  return str
+}
+
+export function randKey () {
+  const MIN_LENGTH = 5
+  const DELTA_LENGTH = 0
+  const MASK = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  let result = ''
+  const length = MIN_LENGTH + Math.round(Math.random() * DELTA_LENGTH)
+
+  for (let i = 0; i < length; i++) {
+    result += MASK[Math.round(Math.random() * (MASK.length - 1))]
+  }
+  return result
+}
+
+export function itBrowser (shouldSkip, ...args) {
+  if (isBrowser) {
+    Reflect.apply(it, undefined, args)
+  } else if (shouldSkip) {
+    Reflect.apply(xit, undefined, args)
+  }
+}
+
+export function xitBrowser (shouldSkip, ...args) {
+  if (isBrowser) {
+    Reflect.apply(xit, undefined, args)
+  } else if (shouldSkip) {
+    Reflect.apply(xit, undefined, args)
+  }
+}
+
+export function itNode (shouldSkip, ...args) {
+  if (isBrowser) {
+    if (shouldSkip) {
+      Reflect.apply(xit, undefined, args)
+    }
+  } else {
+    Reflect.apply(it, undefined, args)
+  }
+}
+
+export function xitNode (shouldSkip, ...args) {
+  if (isBrowser) {
+    if (shouldSkip) {
+      Reflect.apply(xit, undefined, args)
+    }
+  } else {
+    Reflect.apply(xit, undefined, args)
   }
 }

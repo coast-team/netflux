@@ -1,8 +1,8 @@
+/// <reference types='jasmine' />
 import { Subject } from 'rxjs/Subject'
 
-import * as helper from '../../util/helper'
-import bigStr from '../../util/4mb.txt'
-import { WebGroup, WebGroupState } from '../../../src/index'
+import * as helper from '../util/helper'
+import { WebGroup, WebGroupState } from '../../src/index'
 
 const USE_CASES = [2, 3, 7]
 const scenarios = [
@@ -33,7 +33,7 @@ describe('Fully connected', () => {
         let nextJoiningIndex = 0
         let botJoined = false
         const key = helper.randKey()
-        wgs = helper.createWebGroups(scenario.nbClients)
+        wgs = helper.createWebGroups(scenario.nbBrowsers)
         wgs.forEach((wg, index) => {
           expect(wg.state).toBe(WebGroupState.LEFT)
           wg.onMemberJoinCalledTimes = 0
@@ -57,7 +57,9 @@ describe('Fully connected', () => {
         network.subscribe(
           ({wg, isBot}) => {
             nextJoiningIndex = isBot ? nextJoiningIndex : nextJoiningIndex + 1
-            if ((nextJoiningIndex === scenario.nbClients && !scenario.hasBot()) || (nextJoiningIndex === scenario.nbClients && scenario.hasBot() && botJoined)) {
+            if ((nextJoiningIndex === scenario.nbBrowsers && !scenario.hasBot()) ||
+              (nextJoiningIndex === scenario.nbBrowsers && scenario.hasBot() && botJoined)
+            ) {
               network.complete()
             } else if (nextJoiningIndex === scenario.botIndex && !isBot) {
               wg.invite(helper.BOT_URL)
@@ -74,13 +76,13 @@ describe('Fully connected', () => {
           () => {
             let botCheck = Promise.resolve()
             if (scenario.hasBot()) {
-              botCheck = helper.expectBotMembers(wgs[0].id, wgs, scenario.nbPeers)
+              botCheck = helper.expectBotMembers(wgs[0].id, wgs, scenario.nbMembers)
             }
             botCheck.then(() => {
-              helper.expectMembers(wgs, scenario.nbPeers)
+              helper.expectMembers(wgs, scenario.nbMembers)
               wgs.forEach(wg => {
                 expect(wg.state).toBe(WebGroupState.JOINED)
-                expect(wg.onMemberJoinCalledTimes).toBe(scenario.nbPeers - 1)
+                expect(wg.onMemberJoinCalledTimes).toBe(scenario.nbMembers - 1)
                 expect(wg.onStateChangeCalledTimes).toBe(2)
               })
               done()
@@ -89,7 +91,7 @@ describe('Fully connected', () => {
           }
         )
         wgs[0].join(key)
-      }, scenario.nbAgents * 2000)
+      }, scenario.nbMembers * 2000)
     })
   })
 
@@ -144,15 +146,16 @@ describe('Fully connected', () => {
     afterEach(() => wgs.forEach(wg => wg.leave()))
 
     helper.itBrowser(true, 'should send/receive ~4 MB string', done => {
+      const str = helper.randStr()
       helper.createAndConnectWebGroups(2)
         .then(webChannels => (wgs = webChannels))
         .then(() => {
           wgs[0].onMessage = (id, msg) => {
             expect(id).toEqual(wgs[1].myId)
-            expect(msg === bigStr).toBeTruthy()
+            expect(msg === str).toBeTruthy()
             done()
           }
-          wgs[1].sendTo(wgs[0].myId, bigStr)
+          wgs[1].sendTo(wgs[0].myId, str)
         })
     }, 10000)
   })

@@ -2,7 +2,7 @@ import 'rxjs/add/operator/map'
 import { Subscription } from 'rxjs/Subscription'
 
 import { TopologyInterface } from './Topology'
-import { fullMesh, IMessage } from '../../proto'
+import { fullMesh, IMessage } from '../../proto/index'
 import { WebChannel } from '../WebChannel'
 import { Channel } from '../../Channel'
 import { Service, ServiceMessageDecoded } from '../Service'

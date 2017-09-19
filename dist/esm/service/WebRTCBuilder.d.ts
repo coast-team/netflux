@@ -1,7 +1,7 @@
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/map';
 import { Service } from './Service';
-import { signaling } from '../proto';
+import { signaling } from '../proto/index';
 import { Channel } from '../Channel';
 import { WebChannel } from './WebChannel';
 export interface SignalingConnection {

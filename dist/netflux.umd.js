@@ -4,2752 +4,20 @@
 	(factory((global.netflux = {})));
 }(this, (function (exports) { 'use strict';
 
+/* tslint:disable:variable-name */
+// #if WEBRTC_ADAPTER
+// import 'webrtc-adapter/out/adapter_no_edge_no_global'
+// #endif
+
 var commonjsGlobal = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
-function commonjsRequire () {
-	throw new Error('Dynamic requires are not currently supported by rollup-plugin-commonjs');
-}
+
 
 
 
 function createCommonjsModule(fn, module) {
 	return module = { exports: {} }, fn(module, module.exports), module.exports;
 }
-
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof commonjsRequire=="function"&&commonjsRequire;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r);}return n[o].exports}var i=typeof commonjsRequire=="function"&&commonjsRequire;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-
-},{}],2:[function(require,module,exports){
- /* eslint-env node */
-'use strict';
-
-// SDP helpers.
-var SDPUtils = {};
-
-// Generate an alphanumeric identifier for cname or mids.
-// TODO: use UUIDs instead? https://gist.github.com/jed/982883
-SDPUtils.generateIdentifier = function() {
-  return Math.random().toString(36).substr(2, 10);
-};
-
-// The RTCP CNAME used by all peerconnections from the same JS.
-SDPUtils.localCName = SDPUtils.generateIdentifier();
-
-// Splits SDP into lines, dealing with both CRLF and LF.
-SDPUtils.splitLines = function(blob) {
-  return blob.trim().split('\n').map(function(line) {
-    return line.trim();
-  });
-};
-// Splits SDP into sessionpart and mediasections. Ensures CRLF.
-SDPUtils.splitSections = function(blob) {
-  var parts = blob.split('\nm=');
-  return parts.map(function(part, index) {
-    return (index > 0 ? 'm=' + part : part).trim() + '\r\n';
-  });
-};
-
-// Returns lines that start with a certain prefix.
-SDPUtils.matchPrefix = function(blob, prefix) {
-  return SDPUtils.splitLines(blob).filter(function(line) {
-    return line.indexOf(prefix) === 0;
-  });
-};
-
-// Parses an ICE candidate line. Sample input:
-// candidate:702786350 2 udp 41819902 8.8.8.8 60769 typ relay raddr 8.8.8.8
-// rport 55996"
-SDPUtils.parseCandidate = function(line) {
-  var parts;
-  // Parse both variants.
-  if (line.indexOf('a=candidate:') === 0) {
-    parts = line.substring(12).split(' ');
-  } else {
-    parts = line.substring(10).split(' ');
-  }
-
-  var candidate = {
-    foundation: parts[0],
-    component: parseInt(parts[1], 10),
-    protocol: parts[2].toLowerCase(),
-    priority: parseInt(parts[3], 10),
-    ip: parts[4],
-    port: parseInt(parts[5], 10),
-    // skip parts[6] == 'typ'
-    type: parts[7]
-  };
-
-  for (var i = 8; i < parts.length; i += 2) {
-    switch (parts[i]) {
-      case 'raddr':
-        candidate.relatedAddress = parts[i + 1];
-        break;
-      case 'rport':
-        candidate.relatedPort = parseInt(parts[i + 1], 10);
-        break;
-      case 'tcptype':
-        candidate.tcpType = parts[i + 1];
-        break;
-      case 'ufrag':
-        candidate.ufrag = parts[i + 1]; // for backward compability.
-        candidate.usernameFragment = parts[i + 1];
-        break;
-      default: // extension handling, in particular ufrag
-        candidate[parts[i]] = parts[i + 1];
-        break;
-    }
-  }
-  return candidate;
-};
-
-// Translates a candidate object into SDP candidate attribute.
-SDPUtils.writeCandidate = function(candidate) {
-  var sdp = [];
-  sdp.push(candidate.foundation);
-  sdp.push(candidate.component);
-  sdp.push(candidate.protocol.toUpperCase());
-  sdp.push(candidate.priority);
-  sdp.push(candidate.ip);
-  sdp.push(candidate.port);
-
-  var type = candidate.type;
-  sdp.push('typ');
-  sdp.push(type);
-  if (type !== 'host' && candidate.relatedAddress &&
-      candidate.relatedPort) {
-    sdp.push('raddr');
-    sdp.push(candidate.relatedAddress); // was: relAddr
-    sdp.push('rport');
-    sdp.push(candidate.relatedPort); // was: relPort
-  }
-  if (candidate.tcpType && candidate.protocol.toLowerCase() === 'tcp') {
-    sdp.push('tcptype');
-    sdp.push(candidate.tcpType);
-  }
-  if (candidate.ufrag) {
-    sdp.push('ufrag');
-    sdp.push(candidate.ufrag);
-  }
-  return 'candidate:' + sdp.join(' ');
-};
-
-// Parses an ice-options line, returns an array of option tags.
-// a=ice-options:foo bar
-SDPUtils.parseIceOptions = function(line) {
-  return line.substr(14).split(' ');
-};
-
-// Parses an rtpmap line, returns RTCRtpCoddecParameters. Sample input:
-// a=rtpmap:111 opus/48000/2
-SDPUtils.parseRtpMap = function(line) {
-  var parts = line.substr(9).split(' ');
-  var parsed = {
-    payloadType: parseInt(parts.shift(), 10) // was: id
-  };
-
-  parts = parts[0].split('/');
-
-  parsed.name = parts[0];
-  parsed.clockRate = parseInt(parts[1], 10); // was: clockrate
-  // was: channels
-  parsed.numChannels = parts.length === 3 ? parseInt(parts[2], 10) : 1;
-  return parsed;
-};
-
-// Generate an a=rtpmap line from RTCRtpCodecCapability or
-// RTCRtpCodecParameters.
-SDPUtils.writeRtpMap = function(codec) {
-  var pt = codec.payloadType;
-  if (codec.preferredPayloadType !== undefined) {
-    pt = codec.preferredPayloadType;
-  }
-  return 'a=rtpmap:' + pt + ' ' + codec.name + '/' + codec.clockRate +
-      (codec.numChannels !== 1 ? '/' + codec.numChannels : '') + '\r\n';
-};
-
-// Parses an a=extmap line (headerextension from RFC 5285). Sample input:
-// a=extmap:2 urn:ietf:params:rtp-hdrext:toffset
-// a=extmap:2/sendonly urn:ietf:params:rtp-hdrext:toffset
-SDPUtils.parseExtmap = function(line) {
-  var parts = line.substr(9).split(' ');
-  return {
-    id: parseInt(parts[0], 10),
-    direction: parts[0].indexOf('/') > 0 ? parts[0].split('/')[1] : 'sendrecv',
-    uri: parts[1]
-  };
-};
-
-// Generates a=extmap line from RTCRtpHeaderExtensionParameters or
-// RTCRtpHeaderExtension.
-SDPUtils.writeExtmap = function(headerExtension) {
-  return 'a=extmap:' + (headerExtension.id || headerExtension.preferredId) +
-      (headerExtension.direction && headerExtension.direction !== 'sendrecv'
-          ? '/' + headerExtension.direction
-          : '') +
-      ' ' + headerExtension.uri + '\r\n';
-};
-
-// Parses an ftmp line, returns dictionary. Sample input:
-// a=fmtp:96 vbr=on;cng=on
-// Also deals with vbr=on; cng=on
-SDPUtils.parseFmtp = function(line) {
-  var parsed = {};
-  var kv;
-  var parts = line.substr(line.indexOf(' ') + 1).split(';');
-  for (var j = 0; j < parts.length; j++) {
-    kv = parts[j].trim().split('=');
-    parsed[kv[0].trim()] = kv[1];
-  }
-  return parsed;
-};
-
-// Generates an a=ftmp line from RTCRtpCodecCapability or RTCRtpCodecParameters.
-SDPUtils.writeFmtp = function(codec) {
-  var line = '';
-  var pt = codec.payloadType;
-  if (codec.preferredPayloadType !== undefined) {
-    pt = codec.preferredPayloadType;
-  }
-  if (codec.parameters && Object.keys(codec.parameters).length) {
-    var params = [];
-    Object.keys(codec.parameters).forEach(function(param) {
-      params.push(param + '=' + codec.parameters[param]);
-    });
-    line += 'a=fmtp:' + pt + ' ' + params.join(';') + '\r\n';
-  }
-  return line;
-};
-
-// Parses an rtcp-fb line, returns RTCPRtcpFeedback object. Sample input:
-// a=rtcp-fb:98 nack rpsi
-SDPUtils.parseRtcpFb = function(line) {
-  var parts = line.substr(line.indexOf(' ') + 1).split(' ');
-  return {
-    type: parts.shift(),
-    parameter: parts.join(' ')
-  };
-};
-// Generate a=rtcp-fb lines from RTCRtpCodecCapability or RTCRtpCodecParameters.
-SDPUtils.writeRtcpFb = function(codec) {
-  var lines = '';
-  var pt = codec.payloadType;
-  if (codec.preferredPayloadType !== undefined) {
-    pt = codec.preferredPayloadType;
-  }
-  if (codec.rtcpFeedback && codec.rtcpFeedback.length) {
-    // FIXME: special handling for trr-int?
-    codec.rtcpFeedback.forEach(function(fb) {
-      lines += 'a=rtcp-fb:' + pt + ' ' + fb.type +
-      (fb.parameter && fb.parameter.length ? ' ' + fb.parameter : '') +
-          '\r\n';
-    });
-  }
-  return lines;
-};
-
-// Parses an RFC 5576 ssrc media attribute. Sample input:
-// a=ssrc:3735928559 cname:something
-SDPUtils.parseSsrcMedia = function(line) {
-  var sp = line.indexOf(' ');
-  var parts = {
-    ssrc: parseInt(line.substr(7, sp - 7), 10)
-  };
-  var colon = line.indexOf(':', sp);
-  if (colon > -1) {
-    parts.attribute = line.substr(sp + 1, colon - sp - 1);
-    parts.value = line.substr(colon + 1);
-  } else {
-    parts.attribute = line.substr(sp + 1);
-  }
-  return parts;
-};
-
-// Extracts the MID (RFC 5888) from a media section.
-// returns the MID or undefined if no mid line was found.
-SDPUtils.getMid = function(mediaSection) {
-  var mid = SDPUtils.matchPrefix(mediaSection, 'a=mid:')[0];
-  if (mid) {
-    return mid.substr(6);
-  }
-};
-
-SDPUtils.parseFingerprint = function(line) {
-  var parts = line.substr(14).split(' ');
-  return {
-    algorithm: parts[0].toLowerCase(), // algorithm is case-sensitive in Edge.
-    value: parts[1]
-  };
-};
-
-// Extracts DTLS parameters from SDP media section or sessionpart.
-// FIXME: for consistency with other functions this should only
-//   get the fingerprint line as input. See also getIceParameters.
-SDPUtils.getDtlsParameters = function(mediaSection, sessionpart) {
-  var lines = SDPUtils.matchPrefix(mediaSection + sessionpart,
-      'a=fingerprint:');
-  // Note: a=setup line is ignored since we use the 'auto' role.
-  // Note2: 'algorithm' is not case sensitive except in Edge.
-  return {
-    role: 'auto',
-    fingerprints: lines.map(SDPUtils.parseFingerprint)
-  };
-};
-
-// Serializes DTLS parameters to SDP.
-SDPUtils.writeDtlsParameters = function(params, setupType) {
-  var sdp = 'a=setup:' + setupType + '\r\n';
-  params.fingerprints.forEach(function(fp) {
-    sdp += 'a=fingerprint:' + fp.algorithm + ' ' + fp.value + '\r\n';
-  });
-  return sdp;
-};
-// Parses ICE information from SDP media section or sessionpart.
-// FIXME: for consistency with other functions this should only
-//   get the ice-ufrag and ice-pwd lines as input.
-SDPUtils.getIceParameters = function(mediaSection, sessionpart) {
-  var lines = SDPUtils.splitLines(mediaSection);
-  // Search in session part, too.
-  lines = lines.concat(SDPUtils.splitLines(sessionpart));
-  var iceParameters = {
-    usernameFragment: lines.filter(function(line) {
-      return line.indexOf('a=ice-ufrag:') === 0;
-    })[0].substr(12),
-    password: lines.filter(function(line) {
-      return line.indexOf('a=ice-pwd:') === 0;
-    })[0].substr(10)
-  };
-  return iceParameters;
-};
-
-// Serializes ICE parameters to SDP.
-SDPUtils.writeIceParameters = function(params) {
-  return 'a=ice-ufrag:' + params.usernameFragment + '\r\n' +
-      'a=ice-pwd:' + params.password + '\r\n';
-};
-
-// Parses the SDP media section and returns RTCRtpParameters.
-SDPUtils.parseRtpParameters = function(mediaSection) {
-  var description = {
-    codecs: [],
-    headerExtensions: [],
-    fecMechanisms: [],
-    rtcp: []
-  };
-  var lines = SDPUtils.splitLines(mediaSection);
-  var mline = lines[0].split(' ');
-  for (var i = 3; i < mline.length; i++) { // find all codecs from mline[3..]
-    var pt = mline[i];
-    var rtpmapline = SDPUtils.matchPrefix(
-        mediaSection, 'a=rtpmap:' + pt + ' ')[0];
-    if (rtpmapline) {
-      var codec = SDPUtils.parseRtpMap(rtpmapline);
-      var fmtps = SDPUtils.matchPrefix(
-          mediaSection, 'a=fmtp:' + pt + ' ');
-      // Only the first a=fmtp:<pt> is considered.
-      codec.parameters = fmtps.length ? SDPUtils.parseFmtp(fmtps[0]) : {};
-      codec.rtcpFeedback = SDPUtils.matchPrefix(
-          mediaSection, 'a=rtcp-fb:' + pt + ' ')
-        .map(SDPUtils.parseRtcpFb);
-      description.codecs.push(codec);
-      // parse FEC mechanisms from rtpmap lines.
-      switch (codec.name.toUpperCase()) {
-        case 'RED':
-        case 'ULPFEC':
-          description.fecMechanisms.push(codec.name.toUpperCase());
-          break;
-        default: // only RED and ULPFEC are recognized as FEC mechanisms.
-          break;
-      }
-    }
-  }
-  SDPUtils.matchPrefix(mediaSection, 'a=extmap:').forEach(function(line) {
-    description.headerExtensions.push(SDPUtils.parseExtmap(line));
-  });
-  // FIXME: parse rtcp.
-  return description;
-};
-
-// Generates parts of the SDP media section describing the capabilities /
-// parameters.
-SDPUtils.writeRtpDescription = function(kind, caps) {
-  var sdp = '';
-
-  // Build the mline.
-  sdp += 'm=' + kind + ' ';
-  sdp += caps.codecs.length > 0 ? '9' : '0'; // reject if no codecs.
-  sdp += ' UDP/TLS/RTP/SAVPF ';
-  sdp += caps.codecs.map(function(codec) {
-    if (codec.preferredPayloadType !== undefined) {
-      return codec.preferredPayloadType;
-    }
-    return codec.payloadType;
-  }).join(' ') + '\r\n';
-
-  sdp += 'c=IN IP4 0.0.0.0\r\n';
-  sdp += 'a=rtcp:9 IN IP4 0.0.0.0\r\n';
-
-  // Add a=rtpmap lines for each codec. Also fmtp and rtcp-fb.
-  caps.codecs.forEach(function(codec) {
-    sdp += SDPUtils.writeRtpMap(codec);
-    sdp += SDPUtils.writeFmtp(codec);
-    sdp += SDPUtils.writeRtcpFb(codec);
-  });
-  var maxptime = 0;
-  caps.codecs.forEach(function(codec) {
-    if (codec.maxptime > maxptime) {
-      maxptime = codec.maxptime;
-    }
-  });
-  if (maxptime > 0) {
-    sdp += 'a=maxptime:' + maxptime + '\r\n';
-  }
-  sdp += 'a=rtcp-mux\r\n';
-
-  caps.headerExtensions.forEach(function(extension) {
-    sdp += SDPUtils.writeExtmap(extension);
-  });
-  // FIXME: write fecMechanisms.
-  return sdp;
-};
-
-// Parses the SDP media section and returns an array of
-// RTCRtpEncodingParameters.
-SDPUtils.parseRtpEncodingParameters = function(mediaSection) {
-  var encodingParameters = [];
-  var description = SDPUtils.parseRtpParameters(mediaSection);
-  var hasRed = description.fecMechanisms.indexOf('RED') !== -1;
-  var hasUlpfec = description.fecMechanisms.indexOf('ULPFEC') !== -1;
-
-  // filter a=ssrc:... cname:, ignore PlanB-msid
-  var ssrcs = SDPUtils.matchPrefix(mediaSection, 'a=ssrc:')
-  .map(function(line) {
-    return SDPUtils.parseSsrcMedia(line);
-  })
-  .filter(function(parts) {
-    return parts.attribute === 'cname';
-  });
-  var primarySsrc = ssrcs.length > 0 && ssrcs[0].ssrc;
-  var secondarySsrc;
-
-  var flows = SDPUtils.matchPrefix(mediaSection, 'a=ssrc-group:FID')
-  .map(function(line) {
-    var parts = line.split(' ');
-    parts.shift();
-    return parts.map(function(part) {
-      return parseInt(part, 10);
-    });
-  });
-  if (flows.length > 0 && flows[0].length > 1 && flows[0][0] === primarySsrc) {
-    secondarySsrc = flows[0][1];
-  }
-
-  description.codecs.forEach(function(codec) {
-    if (codec.name.toUpperCase() === 'RTX' && codec.parameters.apt) {
-      var encParam = {
-        ssrc: primarySsrc,
-        codecPayloadType: parseInt(codec.parameters.apt, 10),
-        rtx: {
-          ssrc: secondarySsrc
-        }
-      };
-      encodingParameters.push(encParam);
-      if (hasRed) {
-        encParam = JSON.parse(JSON.stringify(encParam));
-        encParam.fec = {
-          ssrc: secondarySsrc,
-          mechanism: hasUlpfec ? 'red+ulpfec' : 'red'
-        };
-        encodingParameters.push(encParam);
-      }
-    }
-  });
-  if (encodingParameters.length === 0 && primarySsrc) {
-    encodingParameters.push({
-      ssrc: primarySsrc
-    });
-  }
-
-  // we support both b=AS and b=TIAS but interpret AS as TIAS.
-  var bandwidth = SDPUtils.matchPrefix(mediaSection, 'b=');
-  if (bandwidth.length) {
-    if (bandwidth[0].indexOf('b=TIAS:') === 0) {
-      bandwidth = parseInt(bandwidth[0].substr(7), 10);
-    } else if (bandwidth[0].indexOf('b=AS:') === 0) {
-      // use formula from JSEP to convert b=AS to TIAS value.
-      bandwidth = parseInt(bandwidth[0].substr(5), 10) * 1000 * 0.95
-          - (50 * 40 * 8);
-    } else {
-      bandwidth = undefined;
-    }
-    encodingParameters.forEach(function(params) {
-      params.maxBitrate = bandwidth;
-    });
-  }
-  return encodingParameters;
-};
-
-// parses http://draft.ortc.org/#rtcrtcpparameters*
-SDPUtils.parseRtcpParameters = function(mediaSection) {
-  var rtcpParameters = {};
-
-  var remoteSsrc = SDPUtils.matchPrefix(mediaSection, 'a=ssrc:')
-      .map(function(line) {
-        return SDPUtils.parseSsrcMedia(line);
-      })
-      .filter(function(obj) {
-        return obj.attribute === 'cname';
-      })[0];
-  if (remoteSsrc) {
-    rtcpParameters.cname = remoteSsrc.value;
-    rtcpParameters.ssrc = remoteSsrc.ssrc;
-  }
-
-  // Edge uses the compound attribute instead of reducedSize
-  // compound is !reducedSize
-  var rsize = SDPUtils.matchPrefix(mediaSection, 'a=rtcp-rsize');
-  rtcpParameters.reducedSize = rsize.length > 0;
-  rtcpParameters.compound = rsize.length === 0;
-
-  // parses the rtcp-mux attrіbute.
-  // Note that Edge does not support unmuxed RTCP.
-  var mux = SDPUtils.matchPrefix(mediaSection, 'a=rtcp-mux');
-  rtcpParameters.mux = mux.length > 0;
-
-  return rtcpParameters;
-};
-
-// parses either a=msid: or a=ssrc:... msid lines and returns
-// the id of the MediaStream and MediaStreamTrack.
-SDPUtils.parseMsid = function(mediaSection) {
-  var parts;
-  var spec = SDPUtils.matchPrefix(mediaSection, 'a=msid:');
-  if (spec.length === 1) {
-    parts = spec[0].substr(7).split(' ');
-    return {stream: parts[0], track: parts[1]};
-  }
-  var planB = SDPUtils.matchPrefix(mediaSection, 'a=ssrc:')
-  .map(function(line) {
-    return SDPUtils.parseSsrcMedia(line);
-  })
-  .filter(function(parts) {
-    return parts.attribute === 'msid';
-  });
-  if (planB.length > 0) {
-    parts = planB[0].value.split(' ');
-    return {stream: parts[0], track: parts[1]};
-  }
-};
-
-// Generate a session ID for SDP.
-// https://tools.ietf.org/html/draft-ietf-rtcweb-jsep-20#section-5.2.1
-// recommends using a cryptographically random +ve 64-bit value
-// but right now this should be acceptable and within the right range
-SDPUtils.generateSessionId = function() {
-  return Math.random().toString().substr(2, 21);
-};
-
-// Write boilder plate for start of SDP
-// sessId argument is optional - if not supplied it will
-// be generated randomly
-// sessVersion is optional and defaults to 2
-SDPUtils.writeSessionBoilerplate = function(sessId, sessVer) {
-  var sessionId;
-  var version = sessVer !== undefined ? sessVer : 2;
-  if (sessId) {
-    sessionId = sessId;
-  } else {
-    sessionId = SDPUtils.generateSessionId();
-  }
-  // FIXME: sess-id should be an NTP timestamp.
-  return 'v=0\r\n' +
-      'o=thisisadapterortc ' + sessionId + ' ' + version + ' IN IP4 127.0.0.1\r\n' +
-      's=-\r\n' +
-      't=0 0\r\n';
-};
-
-SDPUtils.writeMediaSection = function(transceiver, caps, type, stream) {
-  var sdp = SDPUtils.writeRtpDescription(transceiver.kind, caps);
-
-  // Map ICE parameters (ufrag, pwd) to SDP.
-  sdp += SDPUtils.writeIceParameters(
-      transceiver.iceGatherer.getLocalParameters());
-
-  // Map DTLS parameters to SDP.
-  sdp += SDPUtils.writeDtlsParameters(
-      transceiver.dtlsTransport.getLocalParameters(),
-      type === 'offer' ? 'actpass' : 'active');
-
-  sdp += 'a=mid:' + transceiver.mid + '\r\n';
-
-  if (transceiver.direction) {
-    sdp += 'a=' + transceiver.direction + '\r\n';
-  } else if (transceiver.rtpSender && transceiver.rtpReceiver) {
-    sdp += 'a=sendrecv\r\n';
-  } else if (transceiver.rtpSender) {
-    sdp += 'a=sendonly\r\n';
-  } else if (transceiver.rtpReceiver) {
-    sdp += 'a=recvonly\r\n';
-  } else {
-    sdp += 'a=inactive\r\n';
-  }
-
-  if (transceiver.rtpSender) {
-    // spec.
-    var msid = 'msid:' + stream.id + ' ' +
-        transceiver.rtpSender.track.id + '\r\n';
-    sdp += 'a=' + msid;
-
-    // for Chrome.
-    sdp += 'a=ssrc:' + transceiver.sendEncodingParameters[0].ssrc +
-        ' ' + msid;
-    if (transceiver.sendEncodingParameters[0].rtx) {
-      sdp += 'a=ssrc:' + transceiver.sendEncodingParameters[0].rtx.ssrc +
-          ' ' + msid;
-      sdp += 'a=ssrc-group:FID ' +
-          transceiver.sendEncodingParameters[0].ssrc + ' ' +
-          transceiver.sendEncodingParameters[0].rtx.ssrc +
-          '\r\n';
-    }
-  }
-  // FIXME: this should be written by writeRtpDescription.
-  sdp += 'a=ssrc:' + transceiver.sendEncodingParameters[0].ssrc +
-      ' cname:' + SDPUtils.localCName + '\r\n';
-  if (transceiver.rtpSender && transceiver.sendEncodingParameters[0].rtx) {
-    sdp += 'a=ssrc:' + transceiver.sendEncodingParameters[0].rtx.ssrc +
-        ' cname:' + SDPUtils.localCName + '\r\n';
-  }
-  return sdp;
-};
-
-// Gets the direction from the mediaSection or the sessionpart.
-SDPUtils.getDirection = function(mediaSection, sessionpart) {
-  // Look for sendrecv, sendonly, recvonly, inactive, default to sendrecv.
-  var lines = SDPUtils.splitLines(mediaSection);
-  for (var i = 0; i < lines.length; i++) {
-    switch (lines[i]) {
-      case 'a=sendrecv':
-      case 'a=sendonly':
-      case 'a=recvonly':
-      case 'a=inactive':
-        return lines[i].substr(2);
-      default:
-        // FIXME: What should happen here?
-    }
-  }
-  if (sessionpart) {
-    return SDPUtils.getDirection(sessionpart);
-  }
-  return 'sendrecv';
-};
-
-SDPUtils.getKind = function(mediaSection) {
-  var lines = SDPUtils.splitLines(mediaSection);
-  var mline = lines[0].split(' ');
-  return mline[0].substr(2);
-};
-
-SDPUtils.isRejected = function(mediaSection) {
-  return mediaSection.split(' ', 2)[1] === '0';
-};
-
-SDPUtils.parseMLine = function(mediaSection) {
-  var lines = SDPUtils.splitLines(mediaSection);
-  var mline = lines[0].split(' ');
-  return {
-    kind: mline[0].substr(2),
-    port: parseInt(mline[1], 10),
-    protocol: mline[2],
-    fmt: mline.slice(3).join(' ')
-  };
-};
-
-// Expose public methods.
-if (typeof module === 'object') {
-  module.exports = SDPUtils;
-}
-
-},{}],3:[function(require,module,exports){
-(function (global){
-/*
- *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
- *
- *  Use of this source code is governed by a BSD-style license
- *  that can be found in the LICENSE file in the root of the source
- *  tree.
- */
- /* eslint-env node */
-
-'use strict';
-
-var adapterFactory = require('./adapter_factory.js');
-module.exports = adapterFactory({window: global.window});
-
-}).call(this,typeof commonjsGlobal !== "undefined" ? commonjsGlobal : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {});
-},{"./adapter_factory.js":4}],4:[function(require,module,exports){
-/*
- *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
- *
- *  Use of this source code is governed by a BSD-style license
- *  that can be found in the LICENSE file in the root of the source
- *  tree.
- */
- /* eslint-env node */
-
-'use strict';
-
-var utils = require('./utils');
-// Shimming starts here.
-module.exports = function(dependencies, opts) {
-  var window = dependencies && dependencies.window;
-
-  var options = {
-    shimChrome: true,
-    shimFirefox: true,
-    shimEdge: true,
-    shimSafari: true,
-  };
-
-  for (var key in opts) {
-    if (hasOwnProperty.call(opts, key)) {
-      options[key] = opts[key];
-    }
-  }
-
-  // Utils.
-  var logging = utils.log;
-  var browserDetails = utils.detectBrowser(window);
-
-  // Export to the adapter global object visible in the browser.
-  var adapter = {
-    browserDetails: browserDetails,
-    extractVersion: utils.extractVersion,
-    disableLog: utils.disableLog,
-    disableWarnings: utils.disableWarnings
-  };
-
-  // Uncomment the line below if you want logging to occur, including logging
-  // for the switch statement below. Can also be turned on in the browser via
-  // adapter.disableLog(false), but then logging from the switch statement below
-  // will not appear.
-  // require('./utils').disableLog(false);
-
-  // Browser shims.
-  var chromeShim = require('./chrome/chrome_shim') || null;
-  var edgeShim = require('./edge/edge_shim') || null;
-  var firefoxShim = require('./firefox/firefox_shim') || null;
-  var safariShim = require('./safari/safari_shim') || null;
-  var commonShim = require('./common_shim') || null;
-
-  // Shim browser if found.
-  switch (browserDetails.browser) {
-    case 'chrome':
-      if (!chromeShim || !chromeShim.shimPeerConnection ||
-          !options.shimChrome) {
-        logging('Chrome shim is not included in this adapter release.');
-        return adapter;
-      }
-      logging('adapter.js shimming chrome.');
-      // Export to the adapter global object visible in the browser.
-      adapter.browserShim = chromeShim;
-      commonShim.shimCreateObjectURL(window);
-
-      chromeShim.shimGetUserMedia(window);
-      chromeShim.shimMediaStream(window);
-      chromeShim.shimSourceObject(window);
-      chromeShim.shimPeerConnection(window);
-      chromeShim.shimOnTrack(window);
-      chromeShim.shimAddTrackRemoveTrack(window);
-      chromeShim.shimGetSendersWithDtmf(window);
-
-      commonShim.shimRTCIceCandidate(window);
-      break;
-    case 'firefox':
-      if (!firefoxShim || !firefoxShim.shimPeerConnection ||
-          !options.shimFirefox) {
-        logging('Firefox shim is not included in this adapter release.');
-        return adapter;
-      }
-      logging('adapter.js shimming firefox.');
-      // Export to the adapter global object visible in the browser.
-      adapter.browserShim = firefoxShim;
-      commonShim.shimCreateObjectURL(window);
-
-      firefoxShim.shimGetUserMedia(window);
-      firefoxShim.shimSourceObject(window);
-      firefoxShim.shimPeerConnection(window);
-      firefoxShim.shimOnTrack(window);
-
-      commonShim.shimRTCIceCandidate(window);
-      break;
-    case 'edge':
-      if (!edgeShim || !edgeShim.shimPeerConnection || !options.shimEdge) {
-        logging('MS edge shim is not included in this adapter release.');
-        return adapter;
-      }
-      logging('adapter.js shimming edge.');
-      // Export to the adapter global object visible in the browser.
-      adapter.browserShim = edgeShim;
-      commonShim.shimCreateObjectURL(window);
-
-      edgeShim.shimGetUserMedia(window);
-      edgeShim.shimPeerConnection(window);
-      edgeShim.shimReplaceTrack(window);
-
-      // the edge shim implements the full RTCIceCandidate object.
-      break;
-    case 'safari':
-      if (!safariShim || !options.shimSafari) {
-        logging('Safari shim is not included in this adapter release.');
-        return adapter;
-      }
-      logging('adapter.js shimming safari.');
-      // Export to the adapter global object visible in the browser.
-      adapter.browserShim = safariShim;
-      commonShim.shimCreateObjectURL(window);
-
-      safariShim.shimRTCIceServerUrls(window);
-      safariShim.shimCallbacksAPI(window);
-      safariShim.shimLocalStreamsAPI(window);
-      safariShim.shimRemoteStreamsAPI(window);
-      safariShim.shimTrackEventTransceiver(window);
-      safariShim.shimGetUserMedia(window);
-
-      commonShim.shimRTCIceCandidate(window);
-      break;
-    default:
-      logging('Unsupported browser!');
-      break;
-  }
-
-  return adapter;
-};
-
-},{"./chrome/chrome_shim":5,"./common_shim":7,"./edge/edge_shim":1,"./firefox/firefox_shim":8,"./safari/safari_shim":10,"./utils":11}],5:[function(require,module,exports){
-
-/*
- *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
- *
- *  Use of this source code is governed by a BSD-style license
- *  that can be found in the LICENSE file in the root of the source
- *  tree.
- */
- /* eslint-env node */
-'use strict';
-var utils = require('../utils.js');
-var logging = utils.log;
-
-var chromeShim = {
-  shimMediaStream: function(window) {
-    window.MediaStream = window.MediaStream || window.webkitMediaStream;
-  },
-
-  shimOnTrack: function(window) {
-    if (typeof window === 'object' && window.RTCPeerConnection && !('ontrack' in
-        window.RTCPeerConnection.prototype)) {
-      Object.defineProperty(window.RTCPeerConnection.prototype, 'ontrack', {
-        get: function() {
-          return this._ontrack;
-        },
-        set: function(f) {
-          if (this._ontrack) {
-            this.removeEventListener('track', this._ontrack);
-          }
-          this.addEventListener('track', this._ontrack = f);
-        }
-      });
-      var origSetRemoteDescription =
-          window.RTCPeerConnection.prototype.setRemoteDescription;
-      window.RTCPeerConnection.prototype.setRemoteDescription = function() {
-        var pc = this;
-        if (!pc._ontrackpoly) {
-          pc._ontrackpoly = function(e) {
-            // onaddstream does not fire when a track is added to an existing
-            // stream. But stream.onaddtrack is implemented so we use that.
-            e.stream.addEventListener('addtrack', function(te) {
-              var receiver;
-              if (window.RTCPeerConnection.prototype.getReceivers) {
-                receiver = pc.getReceivers().find(function(r) {
-                  return r.track && r.track.id === te.track.id;
-                });
-              } else {
-                receiver = {track: te.track};
-              }
-
-              var event = new Event('track');
-              event.track = te.track;
-              event.receiver = receiver;
-              event.transceiver = {receiver: receiver};
-              event.streams = [e.stream];
-              pc.dispatchEvent(event);
-            });
-            e.stream.getTracks().forEach(function(track) {
-              var receiver;
-              if (window.RTCPeerConnection.prototype.getReceivers) {
-                receiver = pc.getReceivers().find(function(r) {
-                  return r.track && r.track.id === track.id;
-                });
-              } else {
-                receiver = {track: track};
-              }
-              var event = new Event('track');
-              event.track = track;
-              event.receiver = receiver;
-              event.transceiver = {receiver: receiver};
-              event.streams = [e.stream];
-              pc.dispatchEvent(event);
-            });
-          };
-          pc.addEventListener('addstream', pc._ontrackpoly);
-        }
-        return origSetRemoteDescription.apply(pc, arguments);
-      };
-    }
-  },
-
-  shimGetSendersWithDtmf: function(window) {
-    // Overrides addTrack/removeTrack, depends on shimAddTrackRemoveTrack.
-    if (typeof window === 'object' && window.RTCPeerConnection &&
-        !('getSenders' in window.RTCPeerConnection.prototype) &&
-        'createDTMFSender' in window.RTCPeerConnection.prototype) {
-      var shimSenderWithDtmf = function(pc, track) {
-        return {
-          track: track,
-          get dtmf() {
-            if (this._dtmf === undefined) {
-              if (track.kind === 'audio') {
-                this._dtmf = pc.createDTMFSender(track);
-              } else {
-                this._dtmf = null;
-              }
-            }
-            return this._dtmf;
-          },
-          _pc: pc
-        };
-      };
-
-      // augment addTrack when getSenders is not available.
-      if (!window.RTCPeerConnection.prototype.getSenders) {
-        window.RTCPeerConnection.prototype.getSenders = function() {
-          this._senders = this._senders || [];
-          return this._senders.slice(); // return a copy of the internal state.
-        };
-        var origAddTrack = window.RTCPeerConnection.prototype.addTrack;
-        window.RTCPeerConnection.prototype.addTrack = function(track, stream) {
-          var pc = this;
-          var sender = origAddTrack.apply(pc, arguments);
-          if (!sender) {
-            sender = shimSenderWithDtmf(pc, track);
-            pc._senders.push(sender);
-          }
-          return sender;
-        };
-
-        var origRemoveTrack = window.RTCPeerConnection.prototype.removeTrack;
-        window.RTCPeerConnection.prototype.removeTrack = function(sender) {
-          var pc = this;
-          origRemoveTrack.apply(pc, arguments);
-          var idx = pc._senders.indexOf(sender);
-          if (idx !== -1) {
-            pc._senders.splice(idx, 1);
-          }
-        };
-      }
-      var origAddStream = window.RTCPeerConnection.prototype.addStream;
-      window.RTCPeerConnection.prototype.addStream = function(stream) {
-        var pc = this;
-        pc._senders = pc._senders || [];
-        origAddStream.apply(pc, [stream]);
-        stream.getTracks().forEach(function(track) {
-          pc._senders.push(shimSenderWithDtmf(pc, track));
-        });
-      };
-
-      var origRemoveStream = window.RTCPeerConnection.prototype.removeStream;
-      window.RTCPeerConnection.prototype.removeStream = function(stream) {
-        var pc = this;
-        pc._senders = pc._senders || [];
-        origRemoveStream.apply(pc, [(pc._streams[stream.id] || stream)]);
-
-        stream.getTracks().forEach(function(track) {
-          var sender = pc._senders.find(function(s) {
-            return s.track === track;
-          });
-          if (sender) {
-            pc._senders.splice(pc._senders.indexOf(sender), 1); // remove sender
-          }
-        });
-      };
-    } else if (typeof window === 'object' && window.RTCPeerConnection &&
-               'getSenders' in window.RTCPeerConnection.prototype &&
-               'createDTMFSender' in window.RTCPeerConnection.prototype &&
-               window.RTCRtpSender &&
-               !('dtmf' in window.RTCRtpSender.prototype)) {
-      var origGetSenders = window.RTCPeerConnection.prototype.getSenders;
-      window.RTCPeerConnection.prototype.getSenders = function() {
-        var pc = this;
-        var senders = origGetSenders.apply(pc, []);
-        senders.forEach(function(sender) {
-          sender._pc = pc;
-        });
-        return senders;
-      };
-
-      Object.defineProperty(window.RTCRtpSender.prototype, 'dtmf', {
-        get: function() {
-          if (this._dtmf === undefined) {
-            if (this.track.kind === 'audio') {
-              this._dtmf = this._pc.createDTMFSender(this.track);
-            } else {
-              this._dtmf = null;
-            }
-          }
-          return this._dtmf;
-        }
-      });
-    }
-  },
-
-  shimSourceObject: function(window) {
-    var URL = window && window.URL;
-
-    if (typeof window === 'object') {
-      if (window.HTMLMediaElement &&
-        !('srcObject' in window.HTMLMediaElement.prototype)) {
-        // Shim the srcObject property, once, when HTMLMediaElement is found.
-        Object.defineProperty(window.HTMLMediaElement.prototype, 'srcObject', {
-          get: function() {
-            return this._srcObject;
-          },
-          set: function(stream) {
-            var self = this;
-            // Use _srcObject as a private property for this shim
-            this._srcObject = stream;
-            if (this.src) {
-              URL.revokeObjectURL(this.src);
-            }
-
-            if (!stream) {
-              this.src = '';
-              return undefined;
-            }
-            this.src = URL.createObjectURL(stream);
-            // We need to recreate the blob url when a track is added or
-            // removed. Doing it manually since we want to avoid a recursion.
-            stream.addEventListener('addtrack', function() {
-              if (self.src) {
-                URL.revokeObjectURL(self.src);
-              }
-              self.src = URL.createObjectURL(stream);
-            });
-            stream.addEventListener('removetrack', function() {
-              if (self.src) {
-                URL.revokeObjectURL(self.src);
-              }
-              self.src = URL.createObjectURL(stream);
-            });
-          }
-        });
-      }
-    }
-  },
-
-  shimAddTrackRemoveTrack: function(window) {
-    var browserDetails = utils.detectBrowser(window);
-    // shim addTrack and removeTrack.
-    if (window.RTCPeerConnection.prototype.addTrack &&
-        browserDetails.version >= 62) {
-      return;
-    }
-
-    // also shim pc.getLocalStreams when addTrack is shimmed
-    // to return the original streams.
-    var origGetLocalStreams = window.RTCPeerConnection.prototype
-        .getLocalStreams;
-    window.RTCPeerConnection.prototype.getLocalStreams = function() {
-      var self = this;
-      var nativeStreams = origGetLocalStreams.apply(this);
-      self._reverseStreams = self._reverseStreams || {};
-      return nativeStreams.map(function(stream) {
-        return self._reverseStreams[stream.id];
-      });
-    };
-
-    var origAddStream = window.RTCPeerConnection.prototype.addStream;
-    window.RTCPeerConnection.prototype.addStream = function(stream) {
-      var pc = this;
-      pc._streams = pc._streams || {};
-      pc._reverseStreams = pc._reverseStreams || {};
-
-      stream.getTracks().forEach(function(track) {
-        var alreadyExists = pc.getSenders().find(function(s) {
-          return s.track === track;
-        });
-        if (alreadyExists) {
-          throw new DOMException('Track already exists.',
-              'InvalidAccessError');
-        }
-      });
-      // Add identity mapping for consistency with addTrack.
-      // Unless this is being used with a stream from addTrack.
-      if (!pc._reverseStreams[stream.id]) {
-        var newStream = new window.MediaStream(stream.getTracks());
-        pc._streams[stream.id] = newStream;
-        pc._reverseStreams[newStream.id] = stream;
-        stream = newStream;
-      }
-      origAddStream.apply(pc, [stream]);
-    };
-
-    var origRemoveStream = window.RTCPeerConnection.prototype.removeStream;
-    window.RTCPeerConnection.prototype.removeStream = function(stream) {
-      var pc = this;
-      pc._streams = pc._streams || {};
-      pc._reverseStreams = pc._reverseStreams || {};
-
-      origRemoveStream.apply(pc, [(pc._streams[stream.id] || stream)]);
-      delete pc._reverseStreams[(pc._streams[stream.id] ?
-          pc._streams[stream.id].id : stream.id)];
-      delete pc._streams[stream.id];
-    };
-
-    window.RTCPeerConnection.prototype.addTrack = function(track, stream) {
-      var pc = this;
-      if (pc.signalingState === 'closed') {
-        throw new DOMException(
-          'The RTCPeerConnection\'s signalingState is \'closed\'.',
-          'InvalidStateError');
-      }
-      var streams = [].slice.call(arguments, 1);
-      if (streams.length !== 1 ||
-          !streams[0].getTracks().find(function(t) {
-            return t === track;
-          })) {
-        // this is not fully correct but all we can manage without
-        // [[associated MediaStreams]] internal slot.
-        throw new DOMException(
-          'The adapter.js addTrack polyfill only supports a single ' +
-          ' stream which is associated with the specified track.',
-          'NotSupportedError');
-      }
-
-      var alreadyExists = pc.getSenders().find(function(s) {
-        return s.track === track;
-      });
-      if (alreadyExists) {
-        throw new DOMException('Track already exists.',
-            'InvalidAccessError');
-      }
-
-      pc._streams = pc._streams || {};
-      pc._reverseStreams = pc._reverseStreams || {};
-      var oldStream = pc._streams[stream.id];
-      if (oldStream) {
-        // this is using odd Chrome behaviour, use with caution:
-        // https://bugs.chromium.org/p/webrtc/issues/detail?id=7815
-        // Note: we rely on the high-level addTrack/dtmf shim to
-        // create the sender with a dtmf sender.
-        oldStream.addTrack(track);
-
-        // Trigger ONN async.
-        Promise.resolve().then(function() {
-          pc.dispatchEvent(new Event('negotiationneeded'));
-        });
-      } else {
-        var newStream = new window.MediaStream([track]);
-        pc._streams[stream.id] = newStream;
-        pc._reverseStreams[newStream.id] = stream;
-        pc.addStream(newStream);
-      }
-      return pc.getSenders().find(function(s) {
-        return s.track === track;
-      });
-    };
-
-    // replace the internal stream id with the external one and
-    // vice versa.
-    function replaceInternalStreamId(pc, description) {
-      var sdp = description.sdp;
-      Object.keys(pc._reverseStreams || []).forEach(function(internalId) {
-        var externalStream = pc._reverseStreams[internalId];
-        var internalStream = pc._streams[externalStream.id];
-        sdp = sdp.replace(new RegExp(internalStream.id, 'g'),
-            externalStream.id);
-      });
-      return new RTCSessionDescription({
-        type: description.type,
-        sdp: sdp
-      });
-    }
-    function replaceExternalStreamId(pc, description) {
-      var sdp = description.sdp;
-      Object.keys(pc._reverseStreams || []).forEach(function(internalId) {
-        var externalStream = pc._reverseStreams[internalId];
-        var internalStream = pc._streams[externalStream.id];
-        sdp = sdp.replace(new RegExp(externalStream.id, 'g'),
-            internalStream.id);
-      });
-      return new RTCSessionDescription({
-        type: description.type,
-        sdp: sdp
-      });
-    }
-    ['createOffer', 'createAnswer'].forEach(function(method) {
-      var nativeMethod = window.RTCPeerConnection.prototype[method];
-      window.RTCPeerConnection.prototype[method] = function() {
-        var pc = this;
-        var args = arguments;
-        var isLegacyCall = arguments.length &&
-            typeof arguments[0] === 'function';
-        if (isLegacyCall) {
-          return nativeMethod.apply(pc, [
-            function(description) {
-              var desc = replaceInternalStreamId(pc, description);
-              args[0].apply(null, [desc]);
-            },
-            function(err) {
-              if (args[1]) {
-                args[1].apply(null, err);
-              }
-            }, arguments[2]
-          ]);
-        }
-        return nativeMethod.apply(pc, arguments)
-        .then(function(description) {
-          return replaceInternalStreamId(pc, description);
-        });
-      };
-    });
-
-    var origSetLocalDescription =
-        window.RTCPeerConnection.prototype.setLocalDescription;
-    window.RTCPeerConnection.prototype.setLocalDescription = function() {
-      var pc = this;
-      if (!arguments.length || !arguments[0].type) {
-        return origSetLocalDescription.apply(pc, arguments);
-      }
-      arguments[0] = replaceExternalStreamId(pc, arguments[0]);
-      return origSetLocalDescription.apply(pc, arguments);
-    };
-
-    // TODO: mangle getStats: https://w3c.github.io/webrtc-stats/#dom-rtcmediastreamstats-streamidentifier
-
-    var origLocalDescription = Object.getOwnPropertyDescriptor(
-        window.RTCPeerConnection.prototype, 'localDescription');
-    Object.defineProperty(window.RTCPeerConnection.prototype,
-        'localDescription', {
-          get: function() {
-            var pc = this;
-            var description = origLocalDescription.get.apply(this);
-            if (description.type === '') {
-              return description;
-            }
-            return replaceInternalStreamId(pc, description);
-          }
-        });
-
-    window.RTCPeerConnection.prototype.removeTrack = function(sender) {
-      var pc = this;
-      if (pc.signalingState === 'closed') {
-        throw new DOMException(
-          'The RTCPeerConnection\'s signalingState is \'closed\'.',
-          'InvalidStateError');
-      }
-      // We can not yet check for sender instanceof RTCRtpSender
-      // since we shim RTPSender. So we check if sender._pc is set.
-      if (!sender._pc) {
-        throw new DOMException('Argument 1 of RTCPeerConnection.removeTrack ' +
-            'does not implement interface RTCRtpSender.', 'TypeError');
-      }
-      var isLocal = sender._pc === pc;
-      if (!isLocal) {
-        throw new DOMException('Sender was not created by this connection.',
-            'InvalidAccessError');
-      }
-
-      // Search for the native stream the senders track belongs to.
-      pc._streams = pc._streams || {};
-      var stream;
-      Object.keys(pc._streams).forEach(function(streamid) {
-        var hasTrack = pc._streams[streamid].getTracks().find(function(track) {
-          return sender.track === track;
-        });
-        if (hasTrack) {
-          stream = pc._streams[streamid];
-        }
-      });
-
-      if (stream) {
-        if (stream.getTracks().length === 1) {
-          // if this is the last track of the stream, remove the stream. This
-          // takes care of any shimmed _senders.
-          pc.removeStream(stream);
-        } else {
-          // relying on the same odd chrome behaviour as above.
-          stream.removeTrack(sender.track);
-        }
-        pc.dispatchEvent(new Event('negotiationneeded'));
-      }
-    };
-  },
-
-  shimPeerConnection: function(window) {
-    var browserDetails = utils.detectBrowser(window);
-
-    // The RTCPeerConnection object.
-    if (!window.RTCPeerConnection) {
-      window.RTCPeerConnection = function(pcConfig, pcConstraints) {
-        // Translate iceTransportPolicy to iceTransports,
-        // see https://code.google.com/p/webrtc/issues/detail?id=4869
-        // this was fixed in M56 along with unprefixing RTCPeerConnection.
-        logging('PeerConnection');
-        if (pcConfig && pcConfig.iceTransportPolicy) {
-          pcConfig.iceTransports = pcConfig.iceTransportPolicy;
-        }
-
-        return new window.webkitRTCPeerConnection(pcConfig, pcConstraints);
-      };
-      window.RTCPeerConnection.prototype =
-          window.webkitRTCPeerConnection.prototype;
-      // wrap static methods. Currently just generateCertificate.
-      if (window.webkitRTCPeerConnection.generateCertificate) {
-        Object.defineProperty(window.RTCPeerConnection, 'generateCertificate', {
-          get: function() {
-            return window.webkitRTCPeerConnection.generateCertificate;
-          }
-        });
-      }
-    } else {
-      // migrate from non-spec RTCIceServer.url to RTCIceServer.urls
-      var OrigPeerConnection = window.RTCPeerConnection;
-      window.RTCPeerConnection = function(pcConfig, pcConstraints) {
-        if (pcConfig && pcConfig.iceServers) {
-          var newIceServers = [];
-          for (var i = 0; i < pcConfig.iceServers.length; i++) {
-            var server = pcConfig.iceServers[i];
-            if (!server.hasOwnProperty('urls') &&
-                server.hasOwnProperty('url')) {
-              utils.deprecated('RTCIceServer.url', 'RTCIceServer.urls');
-              server = JSON.parse(JSON.stringify(server));
-              server.urls = server.url;
-              newIceServers.push(server);
-            } else {
-              newIceServers.push(pcConfig.iceServers[i]);
-            }
-          }
-          pcConfig.iceServers = newIceServers;
-        }
-        return new OrigPeerConnection(pcConfig, pcConstraints);
-      };
-      window.RTCPeerConnection.prototype = OrigPeerConnection.prototype;
-      // wrap static methods. Currently just generateCertificate.
-      Object.defineProperty(window.RTCPeerConnection, 'generateCertificate', {
-        get: function() {
-          return OrigPeerConnection.generateCertificate;
-        }
-      });
-    }
-
-    var origGetStats = window.RTCPeerConnection.prototype.getStats;
-    window.RTCPeerConnection.prototype.getStats = function(selector,
-        successCallback, errorCallback) {
-      var self = this;
-      var args = arguments;
-
-      // If selector is a function then we are in the old style stats so just
-      // pass back the original getStats format to avoid breaking old users.
-      if (arguments.length > 0 && typeof selector === 'function') {
-        return origGetStats.apply(this, arguments);
-      }
-
-      // When spec-style getStats is supported, return those when called with
-      // either no arguments or the selector argument is null.
-      if (origGetStats.length === 0 && (arguments.length === 0 ||
-          typeof arguments[0] !== 'function')) {
-        return origGetStats.apply(this, []);
-      }
-
-      var fixChromeStats_ = function(response) {
-        var standardReport = {};
-        var reports = response.result();
-        reports.forEach(function(report) {
-          var standardStats = {
-            id: report.id,
-            timestamp: report.timestamp,
-            type: {
-              localcandidate: 'local-candidate',
-              remotecandidate: 'remote-candidate'
-            }[report.type] || report.type
-          };
-          report.names().forEach(function(name) {
-            standardStats[name] = report.stat(name);
-          });
-          standardReport[standardStats.id] = standardStats;
-        });
-
-        return standardReport;
-      };
-
-      // shim getStats with maplike support
-      var makeMapStats = function(stats) {
-        return new Map(Object.keys(stats).map(function(key) {
-          return [key, stats[key]];
-        }));
-      };
-
-      if (arguments.length >= 2) {
-        var successCallbackWrapper_ = function(response) {
-          args[1](makeMapStats(fixChromeStats_(response)));
-        };
-
-        return origGetStats.apply(this, [successCallbackWrapper_,
-          arguments[0]]);
-      }
-
-      // promise-support
-      return new Promise(function(resolve, reject) {
-        origGetStats.apply(self, [
-          function(response) {
-            resolve(makeMapStats(fixChromeStats_(response)));
-          }, reject]);
-      }).then(successCallback, errorCallback);
-    };
-
-    // add promise support -- natively available in Chrome 51
-    if (browserDetails.version < 51) {
-      ['setLocalDescription', 'setRemoteDescription', 'addIceCandidate']
-          .forEach(function(method) {
-            var nativeMethod = window.RTCPeerConnection.prototype[method];
-            window.RTCPeerConnection.prototype[method] = function() {
-              var args = arguments;
-              var self = this;
-              var promise = new Promise(function(resolve, reject) {
-                nativeMethod.apply(self, [args[0], resolve, reject]);
-              });
-              if (args.length < 2) {
-                return promise;
-              }
-              return promise.then(function() {
-                args[1].apply(null, []);
-              },
-              function(err) {
-                if (args.length >= 3) {
-                  args[2].apply(null, [err]);
-                }
-              });
-            };
-          });
-    }
-
-    // promise support for createOffer and createAnswer. Available (without
-    // bugs) since M52: crbug/619289
-    if (browserDetails.version < 52) {
-      ['createOffer', 'createAnswer'].forEach(function(method) {
-        var nativeMethod = window.RTCPeerConnection.prototype[method];
-        window.RTCPeerConnection.prototype[method] = function() {
-          var self = this;
-          if (arguments.length < 1 || (arguments.length === 1 &&
-              typeof arguments[0] === 'object')) {
-            var opts = arguments.length === 1 ? arguments[0] : undefined;
-            return new Promise(function(resolve, reject) {
-              nativeMethod.apply(self, [resolve, reject, opts]);
-            });
-          }
-          return nativeMethod.apply(this, arguments);
-        };
-      });
-    }
-
-    // shim implicit creation of RTCSessionDescription/RTCIceCandidate
-    ['setLocalDescription', 'setRemoteDescription', 'addIceCandidate']
-        .forEach(function(method) {
-          var nativeMethod = window.RTCPeerConnection.prototype[method];
-          window.RTCPeerConnection.prototype[method] = function() {
-            arguments[0] = new ((method === 'addIceCandidate') ?
-                window.RTCIceCandidate :
-                window.RTCSessionDescription)(arguments[0]);
-            return nativeMethod.apply(this, arguments);
-          };
-        });
-
-    // support for addIceCandidate(null or undefined)
-    var nativeAddIceCandidate =
-        window.RTCPeerConnection.prototype.addIceCandidate;
-    window.RTCPeerConnection.prototype.addIceCandidate = function() {
-      if (!arguments[0]) {
-        if (arguments[1]) {
-          arguments[1].apply(null);
-        }
-        return Promise.resolve();
-      }
-      return nativeAddIceCandidate.apply(this, arguments);
-    };
-  }
-};
-
-
-// Expose public methods.
-module.exports = {
-  shimMediaStream: chromeShim.shimMediaStream,
-  shimOnTrack: chromeShim.shimOnTrack,
-  shimAddTrackRemoveTrack: chromeShim.shimAddTrackRemoveTrack,
-  shimGetSendersWithDtmf: chromeShim.shimGetSendersWithDtmf,
-  shimSourceObject: chromeShim.shimSourceObject,
-  shimPeerConnection: chromeShim.shimPeerConnection,
-  shimGetUserMedia: require('./getusermedia')
-};
-
-},{"../utils.js":11,"./getusermedia":6}],6:[function(require,module,exports){
-/*
- *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
- *
- *  Use of this source code is governed by a BSD-style license
- *  that can be found in the LICENSE file in the root of the source
- *  tree.
- */
- /* eslint-env node */
-'use strict';
-var utils = require('../utils.js');
-var logging = utils.log;
-
-// Expose public methods.
-module.exports = function(window) {
-  var browserDetails = utils.detectBrowser(window);
-  var navigator = window && window.navigator;
-
-  var constraintsToChrome_ = function(c) {
-    if (typeof c !== 'object' || c.mandatory || c.optional) {
-      return c;
-    }
-    var cc = {};
-    Object.keys(c).forEach(function(key) {
-      if (key === 'require' || key === 'advanced' || key === 'mediaSource') {
-        return;
-      }
-      var r = (typeof c[key] === 'object') ? c[key] : {ideal: c[key]};
-      if (r.exact !== undefined && typeof r.exact === 'number') {
-        r.min = r.max = r.exact;
-      }
-      var oldname_ = function(prefix, name) {
-        if (prefix) {
-          return prefix + name.charAt(0).toUpperCase() + name.slice(1);
-        }
-        return (name === 'deviceId') ? 'sourceId' : name;
-      };
-      if (r.ideal !== undefined) {
-        cc.optional = cc.optional || [];
-        var oc = {};
-        if (typeof r.ideal === 'number') {
-          oc[oldname_('min', key)] = r.ideal;
-          cc.optional.push(oc);
-          oc = {};
-          oc[oldname_('max', key)] = r.ideal;
-          cc.optional.push(oc);
-        } else {
-          oc[oldname_('', key)] = r.ideal;
-          cc.optional.push(oc);
-        }
-      }
-      if (r.exact !== undefined && typeof r.exact !== 'number') {
-        cc.mandatory = cc.mandatory || {};
-        cc.mandatory[oldname_('', key)] = r.exact;
-      } else {
-        ['min', 'max'].forEach(function(mix) {
-          if (r[mix] !== undefined) {
-            cc.mandatory = cc.mandatory || {};
-            cc.mandatory[oldname_(mix, key)] = r[mix];
-          }
-        });
-      }
-    });
-    if (c.advanced) {
-      cc.optional = (cc.optional || []).concat(c.advanced);
-    }
-    return cc;
-  };
-
-  var shimConstraints_ = function(constraints, func) {
-    constraints = JSON.parse(JSON.stringify(constraints));
-    if (constraints && typeof constraints.audio === 'object') {
-      var remap = function(obj, a, b) {
-        if (a in obj && !(b in obj)) {
-          obj[b] = obj[a];
-          delete obj[a];
-        }
-      };
-      constraints = JSON.parse(JSON.stringify(constraints));
-      remap(constraints.audio, 'autoGainControl', 'googAutoGainControl');
-      remap(constraints.audio, 'noiseSuppression', 'googNoiseSuppression');
-      constraints.audio = constraintsToChrome_(constraints.audio);
-    }
-    if (constraints && typeof constraints.video === 'object') {
-      // Shim facingMode for mobile & surface pro.
-      var face = constraints.video.facingMode;
-      face = face && ((typeof face === 'object') ? face : {ideal: face});
-      var getSupportedFacingModeLies = browserDetails.version < 61;
-
-      if ((face && (face.exact === 'user' || face.exact === 'environment' ||
-                    face.ideal === 'user' || face.ideal === 'environment')) &&
-          !(navigator.mediaDevices.getSupportedConstraints &&
-            navigator.mediaDevices.getSupportedConstraints().facingMode &&
-            !getSupportedFacingModeLies)) {
-        delete constraints.video.facingMode;
-        var matches;
-        if (face.exact === 'environment' || face.ideal === 'environment') {
-          matches = ['back', 'rear'];
-        } else if (face.exact === 'user' || face.ideal === 'user') {
-          matches = ['front'];
-        }
-        if (matches) {
-          // Look for matches in label, or use last cam for back (typical).
-          return navigator.mediaDevices.enumerateDevices()
-          .then(function(devices) {
-            devices = devices.filter(function(d) {
-              return d.kind === 'videoinput';
-            });
-            var dev = devices.find(function(d) {
-              return matches.some(function(match) {
-                return d.label.toLowerCase().indexOf(match) !== -1;
-              });
-            });
-            if (!dev && devices.length && matches.indexOf('back') !== -1) {
-              dev = devices[devices.length - 1]; // more likely the back cam
-            }
-            if (dev) {
-              constraints.video.deviceId = face.exact ? {exact: dev.deviceId} :
-                                                        {ideal: dev.deviceId};
-            }
-            constraints.video = constraintsToChrome_(constraints.video);
-            logging('chrome: ' + JSON.stringify(constraints));
-            return func(constraints);
-          });
-        }
-      }
-      constraints.video = constraintsToChrome_(constraints.video);
-    }
-    logging('chrome: ' + JSON.stringify(constraints));
-    return func(constraints);
-  };
-
-  var shimError_ = function(e) {
-    return {
-      name: {
-        PermissionDeniedError: 'NotAllowedError',
-        InvalidStateError: 'NotReadableError',
-        DevicesNotFoundError: 'NotFoundError',
-        ConstraintNotSatisfiedError: 'OverconstrainedError',
-        TrackStartError: 'NotReadableError',
-        MediaDeviceFailedDueToShutdown: 'NotReadableError',
-        MediaDeviceKillSwitchOn: 'NotReadableError'
-      }[e.name] || e.name,
-      message: e.message,
-      constraint: e.constraintName,
-      toString: function() {
-        return this.name + (this.message && ': ') + this.message;
-      }
-    };
-  };
-
-  var getUserMedia_ = function(constraints, onSuccess, onError) {
-    shimConstraints_(constraints, function(c) {
-      navigator.webkitGetUserMedia(c, onSuccess, function(e) {
-        if (onError) {
-          onError(shimError_(e));
-        }
-      });
-    });
-  };
-
-  navigator.getUserMedia = getUserMedia_;
-
-  // Returns the result of getUserMedia as a Promise.
-  var getUserMediaPromise_ = function(constraints) {
-    return new Promise(function(resolve, reject) {
-      navigator.getUserMedia(constraints, resolve, reject);
-    });
-  };
-
-  if (!navigator.mediaDevices) {
-    navigator.mediaDevices = {
-      getUserMedia: getUserMediaPromise_,
-      enumerateDevices: function() {
-        return new Promise(function(resolve) {
-          var kinds = {audio: 'audioinput', video: 'videoinput'};
-          return window.MediaStreamTrack.getSources(function(devices) {
-            resolve(devices.map(function(device) {
-              return {label: device.label,
-                kind: kinds[device.kind],
-                deviceId: device.id,
-                groupId: ''};
-            }));
-          });
-        });
-      },
-      getSupportedConstraints: function() {
-        return {
-          deviceId: true, echoCancellation: true, facingMode: true,
-          frameRate: true, height: true, width: true
-        };
-      }
-    };
-  }
-
-  // A shim for getUserMedia method on the mediaDevices object.
-  // TODO(KaptenJansson) remove once implemented in Chrome stable.
-  if (!navigator.mediaDevices.getUserMedia) {
-    navigator.mediaDevices.getUserMedia = function(constraints) {
-      return getUserMediaPromise_(constraints);
-    };
-  } else {
-    // Even though Chrome 45 has navigator.mediaDevices and a getUserMedia
-    // function which returns a Promise, it does not accept spec-style
-    // constraints.
-    var origGetUserMedia = navigator.mediaDevices.getUserMedia.
-        bind(navigator.mediaDevices);
-    navigator.mediaDevices.getUserMedia = function(cs) {
-      return shimConstraints_(cs, function(c) {
-        return origGetUserMedia(c).then(function(stream) {
-          if (c.audio && !stream.getAudioTracks().length ||
-              c.video && !stream.getVideoTracks().length) {
-            stream.getTracks().forEach(function(track) {
-              track.stop();
-            });
-            throw new DOMException('', 'NotFoundError');
-          }
-          return stream;
-        }, function(e) {
-          return Promise.reject(shimError_(e));
-        });
-      });
-    };
-  }
-
-  // Dummy devicechange event methods.
-  // TODO(KaptenJansson) remove once implemented in Chrome stable.
-  if (typeof navigator.mediaDevices.addEventListener === 'undefined') {
-    navigator.mediaDevices.addEventListener = function() {
-      logging('Dummy mediaDevices.addEventListener called.');
-    };
-  }
-  if (typeof navigator.mediaDevices.removeEventListener === 'undefined') {
-    navigator.mediaDevices.removeEventListener = function() {
-      logging('Dummy mediaDevices.removeEventListener called.');
-    };
-  }
-};
-
-},{"../utils.js":11}],7:[function(require,module,exports){
-/*
- *  Copyright (c) 2017 The WebRTC project authors. All Rights Reserved.
- *
- *  Use of this source code is governed by a BSD-style license
- *  that can be found in the LICENSE file in the root of the source
- *  tree.
- */
- /* eslint-env node */
-'use strict';
-
-var SDPUtils = require('sdp');
-var utils = require('./utils');
-
-// Wraps the peerconnection event eventNameToWrap in a function
-// which returns the modified event object.
-function wrapPeerConnectionEvent(window, eventNameToWrap, wrapper) {
-  if (!window.RTCPeerConnection) {
-    return;
-  }
-  var proto = window.RTCPeerConnection.prototype;
-  var nativeAddEventListener = proto.addEventListener;
-  proto.addEventListener = function(nativeEventName, cb) {
-    if (nativeEventName !== eventNameToWrap) {
-      return nativeAddEventListener.apply(this, arguments);
-    }
-    var wrappedCallback = function(e) {
-      cb(wrapper(e));
-    };
-    this._eventMap = this._eventMap || {};
-    this._eventMap[cb] = wrappedCallback;
-    return nativeAddEventListener.apply(this, [nativeEventName,
-      wrappedCallback]);
-  };
-
-  var nativeRemoveEventListener = proto.removeEventListener;
-  proto.removeEventListener = function(nativeEventName, cb) {
-    if (nativeEventName !== eventNameToWrap || !this._eventMap
-        || !this._eventMap[cb]) {
-      return nativeRemoveEventListener.apply(this, arguments);
-    }
-    var unwrappedCb = this._eventMap[cb];
-    delete this._eventMap[cb];
-    return nativeRemoveEventListener.apply(this, [nativeEventName,
-      unwrappedCb]);
-  };
-
-  Object.defineProperty(proto, 'on' + eventNameToWrap, {
-    get: function() {
-      return this['_on' + eventNameToWrap];
-    },
-    set: function(cb) {
-      if (this['_on' + eventNameToWrap]) {
-        this.removeEventListener(eventNameToWrap,
-            this['_on' + eventNameToWrap]);
-        delete this['_on' + eventNameToWrap];
-      }
-      if (cb) {
-        this.addEventListener(eventNameToWrap,
-            this['_on' + eventNameToWrap] = cb);
-      }
-    }
-  });
-}
-
-module.exports = {
-  shimRTCIceCandidate: function(window) {
-    // foundation is arbitrarily chosen as an indicator for full support for
-    // https://w3c.github.io/webrtc-pc/#rtcicecandidate-interface
-    if (window.RTCIceCandidate && 'foundation' in
-        window.RTCIceCandidate.prototype) {
-      return;
-    }
-
-    var NativeRTCIceCandidate = window.RTCIceCandidate;
-    window.RTCIceCandidate = function(args) {
-      // Remove the a= which shouldn't be part of the candidate string.
-      if (typeof args === 'object' && args.candidate &&
-          args.candidate.indexOf('a=') === 0) {
-        args = JSON.parse(JSON.stringify(args));
-        args.candidate = args.candidate.substr(2);
-      }
-
-      // Augment the native candidate with the parsed fields.
-      var nativeCandidate = new NativeRTCIceCandidate(args);
-      var parsedCandidate = SDPUtils.parseCandidate(args.candidate);
-      var augmentedCandidate = Object.assign(nativeCandidate,
-          parsedCandidate);
-
-      // Add a serializer that does not serialize the extra attributes.
-      augmentedCandidate.toJSON = function() {
-        return {
-          candidate: augmentedCandidate.candidate,
-          sdpMid: augmentedCandidate.sdpMid,
-          sdpMLineIndex: augmentedCandidate.sdpMLineIndex,
-          usernameFragment: augmentedCandidate.usernameFragment,
-        };
-      };
-      return augmentedCandidate;
-    };
-
-    // Hook up the augmented candidate in onicecandidate and
-    // addEventListener('icecandidate', ...)
-    wrapPeerConnectionEvent(window, 'icecandidate', function(e) {
-      if (e.candidate) {
-        Object.defineProperty(e, 'candidate', {
-          value: new window.RTCIceCandidate(e.candidate),
-          writable: 'false'
-        });
-      }
-      return e;
-    });
-  },
-
-  // shimCreateObjectURL must be called before shimSourceObject to avoid loop.
-
-  shimCreateObjectURL: function(window) {
-    var URL = window && window.URL;
-
-    if (!(typeof window === 'object' && window.HTMLMediaElement &&
-          'srcObject' in window.HTMLMediaElement.prototype &&
-        URL.createObjectURL && URL.revokeObjectURL)) {
-      // Only shim CreateObjectURL using srcObject if srcObject exists.
-      return undefined;
-    }
-
-    var nativeCreateObjectURL = URL.createObjectURL.bind(URL);
-    var nativeRevokeObjectURL = URL.revokeObjectURL.bind(URL);
-    var streams = new Map(), newId = 0;
-
-    URL.createObjectURL = function(stream) {
-      if ('getTracks' in stream) {
-        var url = 'polyblob:' + (++newId);
-        streams.set(url, stream);
-        utils.deprecated('URL.createObjectURL(stream)',
-            'elem.srcObject = stream');
-        return url;
-      }
-      return nativeCreateObjectURL(stream);
-    };
-    URL.revokeObjectURL = function(url) {
-      nativeRevokeObjectURL(url);
-      streams.delete(url);
-    };
-
-    var dsc = Object.getOwnPropertyDescriptor(window.HTMLMediaElement.prototype,
-                                              'src');
-    Object.defineProperty(window.HTMLMediaElement.prototype, 'src', {
-      get: function() {
-        return dsc.get.apply(this);
-      },
-      set: function(url) {
-        this.srcObject = streams.get(url) || null;
-        return dsc.set.apply(this, [url]);
-      }
-    });
-
-    var nativeSetAttribute = window.HTMLMediaElement.prototype.setAttribute;
-    window.HTMLMediaElement.prototype.setAttribute = function() {
-      if (arguments.length === 2 &&
-          ('' + arguments[0]).toLowerCase() === 'src') {
-        this.srcObject = streams.get(arguments[1]) || null;
-      }
-      return nativeSetAttribute.apply(this, arguments);
-    };
-  }
-};
-
-},{"./utils":11,"sdp":2}],8:[function(require,module,exports){
-/*
- *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
- *
- *  Use of this source code is governed by a BSD-style license
- *  that can be found in the LICENSE file in the root of the source
- *  tree.
- */
- /* eslint-env node */
-'use strict';
-
-var utils = require('../utils');
-
-var firefoxShim = {
-  shimOnTrack: function(window) {
-    if (typeof window === 'object' && window.RTCPeerConnection && !('ontrack' in
-        window.RTCPeerConnection.prototype)) {
-      Object.defineProperty(window.RTCPeerConnection.prototype, 'ontrack', {
-        get: function() {
-          return this._ontrack;
-        },
-        set: function(f) {
-          if (this._ontrack) {
-            this.removeEventListener('track', this._ontrack);
-            this.removeEventListener('addstream', this._ontrackpoly);
-          }
-          this.addEventListener('track', this._ontrack = f);
-          this.addEventListener('addstream', this._ontrackpoly = function(e) {
-            e.stream.getTracks().forEach(function(track) {
-              var event = new Event('track');
-              event.track = track;
-              event.receiver = {track: track};
-              event.transceiver = {receiver: event.receiver};
-              event.streams = [e.stream];
-              this.dispatchEvent(event);
-            }.bind(this));
-          }.bind(this));
-        }
-      });
-    }
-    if (typeof window === 'object' && window.RTCTrackEvent &&
-        ('receiver' in window.RTCTrackEvent.prototype) &&
-        !('transceiver' in window.RTCTrackEvent.prototype)) {
-      Object.defineProperty(window.RTCTrackEvent.prototype, 'transceiver', {
-        get: function() {
-          return {receiver: this.receiver};
-        }
-      });
-    }
-  },
-
-  shimSourceObject: function(window) {
-    // Firefox has supported mozSrcObject since FF22, unprefixed in 42.
-    if (typeof window === 'object') {
-      if (window.HTMLMediaElement &&
-        !('srcObject' in window.HTMLMediaElement.prototype)) {
-        // Shim the srcObject property, once, when HTMLMediaElement is found.
-        Object.defineProperty(window.HTMLMediaElement.prototype, 'srcObject', {
-          get: function() {
-            return this.mozSrcObject;
-          },
-          set: function(stream) {
-            this.mozSrcObject = stream;
-          }
-        });
-      }
-    }
-  },
-
-  shimPeerConnection: function(window) {
-    var browserDetails = utils.detectBrowser(window);
-
-    if (typeof window !== 'object' || !(window.RTCPeerConnection ||
-        window.mozRTCPeerConnection)) {
-      return; // probably media.peerconnection.enabled=false in about:config
-    }
-    // The RTCPeerConnection object.
-    if (!window.RTCPeerConnection) {
-      window.RTCPeerConnection = function(pcConfig, pcConstraints) {
-        if (browserDetails.version < 38) {
-          // .urls is not supported in FF < 38.
-          // create RTCIceServers with a single url.
-          if (pcConfig && pcConfig.iceServers) {
-            var newIceServers = [];
-            for (var i = 0; i < pcConfig.iceServers.length; i++) {
-              var server = pcConfig.iceServers[i];
-              if (server.hasOwnProperty('urls')) {
-                for (var j = 0; j < server.urls.length; j++) {
-                  var newServer = {
-                    url: server.urls[j]
-                  };
-                  if (server.urls[j].indexOf('turn') === 0) {
-                    newServer.username = server.username;
-                    newServer.credential = server.credential;
-                  }
-                  newIceServers.push(newServer);
-                }
-              } else {
-                newIceServers.push(pcConfig.iceServers[i]);
-              }
-            }
-            pcConfig.iceServers = newIceServers;
-          }
-        }
-        return new window.mozRTCPeerConnection(pcConfig, pcConstraints);
-      };
-      window.RTCPeerConnection.prototype =
-          window.mozRTCPeerConnection.prototype;
-
-      // wrap static methods. Currently just generateCertificate.
-      if (window.mozRTCPeerConnection.generateCertificate) {
-        Object.defineProperty(window.RTCPeerConnection, 'generateCertificate', {
-          get: function() {
-            return window.mozRTCPeerConnection.generateCertificate;
-          }
-        });
-      }
-
-      window.RTCSessionDescription = window.mozRTCSessionDescription;
-      window.RTCIceCandidate = window.mozRTCIceCandidate;
-    }
-
-    // shim away need for obsolete RTCIceCandidate/RTCSessionDescription.
-    ['setLocalDescription', 'setRemoteDescription', 'addIceCandidate']
-        .forEach(function(method) {
-          var nativeMethod = window.RTCPeerConnection.prototype[method];
-          window.RTCPeerConnection.prototype[method] = function() {
-            arguments[0] = new ((method === 'addIceCandidate') ?
-                window.RTCIceCandidate :
-                window.RTCSessionDescription)(arguments[0]);
-            return nativeMethod.apply(this, arguments);
-          };
-        });
-
-    // support for addIceCandidate(null or undefined)
-    var nativeAddIceCandidate =
-        window.RTCPeerConnection.prototype.addIceCandidate;
-    window.RTCPeerConnection.prototype.addIceCandidate = function() {
-      if (!arguments[0]) {
-        if (arguments[1]) {
-          arguments[1].apply(null);
-        }
-        return Promise.resolve();
-      }
-      return nativeAddIceCandidate.apply(this, arguments);
-    };
-
-    // shim getStats with maplike support
-    var makeMapStats = function(stats) {
-      var map = new Map();
-      Object.keys(stats).forEach(function(key) {
-        map.set(key, stats[key]);
-        map[key] = stats[key];
-      });
-      return map;
-    };
-
-    var modernStatsTypes = {
-      inboundrtp: 'inbound-rtp',
-      outboundrtp: 'outbound-rtp',
-      candidatepair: 'candidate-pair',
-      localcandidate: 'local-candidate',
-      remotecandidate: 'remote-candidate'
-    };
-
-    var nativeGetStats = window.RTCPeerConnection.prototype.getStats;
-    window.RTCPeerConnection.prototype.getStats = function(
-      selector,
-      onSucc,
-      onErr
-    ) {
-      return nativeGetStats.apply(this, [selector || null])
-        .then(function(stats) {
-          if (browserDetails.version < 48) {
-            stats = makeMapStats(stats);
-          }
-          if (browserDetails.version < 53 && !onSucc) {
-            // Shim only promise getStats with spec-hyphens in type names
-            // Leave callback version alone; misc old uses of forEach before Map
-            try {
-              stats.forEach(function(stat) {
-                stat.type = modernStatsTypes[stat.type] || stat.type;
-              });
-            } catch (e) {
-              if (e.name !== 'TypeError') {
-                throw e;
-              }
-              // Avoid TypeError: "type" is read-only, in old versions. 34-43ish
-              stats.forEach(function(stat, i) {
-                stats.set(i, Object.assign({}, stat, {
-                  type: modernStatsTypes[stat.type] || stat.type
-                }));
-              });
-            }
-          }
-          return stats;
-        })
-        .then(onSucc, onErr);
-    };
-  }
-};
-
-// Expose public methods.
-module.exports = {
-  shimOnTrack: firefoxShim.shimOnTrack,
-  shimSourceObject: firefoxShim.shimSourceObject,
-  shimPeerConnection: firefoxShim.shimPeerConnection,
-  shimGetUserMedia: require('./getusermedia')
-};
-
-},{"../utils":11,"./getusermedia":9}],9:[function(require,module,exports){
-/*
- *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
- *
- *  Use of this source code is governed by a BSD-style license
- *  that can be found in the LICENSE file in the root of the source
- *  tree.
- */
- /* eslint-env node */
-'use strict';
-
-var utils = require('../utils');
-var logging = utils.log;
-
-// Expose public methods.
-module.exports = function(window) {
-  var browserDetails = utils.detectBrowser(window);
-  var navigator = window && window.navigator;
-  var MediaStreamTrack = window && window.MediaStreamTrack;
-
-  var shimError_ = function(e) {
-    return {
-      name: {
-        InternalError: 'NotReadableError',
-        NotSupportedError: 'TypeError',
-        PermissionDeniedError: 'NotAllowedError',
-        SecurityError: 'NotAllowedError'
-      }[e.name] || e.name,
-      message: {
-        'The operation is insecure.': 'The request is not allowed by the ' +
-        'user agent or the platform in the current context.'
-      }[e.message] || e.message,
-      constraint: e.constraint,
-      toString: function() {
-        return this.name + (this.message && ': ') + this.message;
-      }
-    };
-  };
-
-  // getUserMedia constraints shim.
-  var getUserMedia_ = function(constraints, onSuccess, onError) {
-    var constraintsToFF37_ = function(c) {
-      if (typeof c !== 'object' || c.require) {
-        return c;
-      }
-      var require = [];
-      Object.keys(c).forEach(function(key) {
-        if (key === 'require' || key === 'advanced' || key === 'mediaSource') {
-          return;
-        }
-        var r = c[key] = (typeof c[key] === 'object') ?
-            c[key] : {ideal: c[key]};
-        if (r.min !== undefined ||
-            r.max !== undefined || r.exact !== undefined) {
-          require.push(key);
-        }
-        if (r.exact !== undefined) {
-          if (typeof r.exact === 'number') {
-            r. min = r.max = r.exact;
-          } else {
-            c[key] = r.exact;
-          }
-          delete r.exact;
-        }
-        if (r.ideal !== undefined) {
-          c.advanced = c.advanced || [];
-          var oc = {};
-          if (typeof r.ideal === 'number') {
-            oc[key] = {min: r.ideal, max: r.ideal};
-          } else {
-            oc[key] = r.ideal;
-          }
-          c.advanced.push(oc);
-          delete r.ideal;
-          if (!Object.keys(r).length) {
-            delete c[key];
-          }
-        }
-      });
-      if (require.length) {
-        c.require = require;
-      }
-      return c;
-    };
-    constraints = JSON.parse(JSON.stringify(constraints));
-    if (browserDetails.version < 38) {
-      logging('spec: ' + JSON.stringify(constraints));
-      if (constraints.audio) {
-        constraints.audio = constraintsToFF37_(constraints.audio);
-      }
-      if (constraints.video) {
-        constraints.video = constraintsToFF37_(constraints.video);
-      }
-      logging('ff37: ' + JSON.stringify(constraints));
-    }
-    return navigator.mozGetUserMedia(constraints, onSuccess, function(e) {
-      onError(shimError_(e));
-    });
-  };
-
-  // Returns the result of getUserMedia as a Promise.
-  var getUserMediaPromise_ = function(constraints) {
-    return new Promise(function(resolve, reject) {
-      getUserMedia_(constraints, resolve, reject);
-    });
-  };
-
-  // Shim for mediaDevices on older versions.
-  if (!navigator.mediaDevices) {
-    navigator.mediaDevices = {getUserMedia: getUserMediaPromise_,
-      addEventListener: function() { },
-      removeEventListener: function() { }
-    };
-  }
-  navigator.mediaDevices.enumerateDevices =
-      navigator.mediaDevices.enumerateDevices || function() {
-        return new Promise(function(resolve) {
-          var infos = [
-            {kind: 'audioinput', deviceId: 'default', label: '', groupId: ''},
-            {kind: 'videoinput', deviceId: 'default', label: '', groupId: ''}
-          ];
-          resolve(infos);
-        });
-      };
-
-  if (browserDetails.version < 41) {
-    // Work around http://bugzil.la/1169665
-    var orgEnumerateDevices =
-        navigator.mediaDevices.enumerateDevices.bind(navigator.mediaDevices);
-    navigator.mediaDevices.enumerateDevices = function() {
-      return orgEnumerateDevices().then(undefined, function(e) {
-        if (e.name === 'NotFoundError') {
-          return [];
-        }
-        throw e;
-      });
-    };
-  }
-  if (browserDetails.version < 49) {
-    var origGetUserMedia = navigator.mediaDevices.getUserMedia.
-        bind(navigator.mediaDevices);
-    navigator.mediaDevices.getUserMedia = function(c) {
-      return origGetUserMedia(c).then(function(stream) {
-        // Work around https://bugzil.la/802326
-        if (c.audio && !stream.getAudioTracks().length ||
-            c.video && !stream.getVideoTracks().length) {
-          stream.getTracks().forEach(function(track) {
-            track.stop();
-          });
-          throw new DOMException('The object can not be found here.',
-                                 'NotFoundError');
-        }
-        return stream;
-      }, function(e) {
-        return Promise.reject(shimError_(e));
-      });
-    };
-  }
-  if (!(browserDetails.version > 55 &&
-      'autoGainControl' in navigator.mediaDevices.getSupportedConstraints())) {
-    var remap = function(obj, a, b) {
-      if (a in obj && !(b in obj)) {
-        obj[b] = obj[a];
-        delete obj[a];
-      }
-    };
-
-    var nativeGetUserMedia = navigator.mediaDevices.getUserMedia.
-        bind(navigator.mediaDevices);
-    navigator.mediaDevices.getUserMedia = function(c) {
-      if (typeof c === 'object' && typeof c.audio === 'object') {
-        c = JSON.parse(JSON.stringify(c));
-        remap(c.audio, 'autoGainControl', 'mozAutoGainControl');
-        remap(c.audio, 'noiseSuppression', 'mozNoiseSuppression');
-      }
-      return nativeGetUserMedia(c);
-    };
-
-    if (MediaStreamTrack && MediaStreamTrack.prototype.getSettings) {
-      var nativeGetSettings = MediaStreamTrack.prototype.getSettings;
-      MediaStreamTrack.prototype.getSettings = function() {
-        var obj = nativeGetSettings.apply(this, arguments);
-        remap(obj, 'mozAutoGainControl', 'autoGainControl');
-        remap(obj, 'mozNoiseSuppression', 'noiseSuppression');
-        return obj;
-      };
-    }
-
-    if (MediaStreamTrack && MediaStreamTrack.prototype.applyConstraints) {
-      var nativeApplyConstraints = MediaStreamTrack.prototype.applyConstraints;
-      MediaStreamTrack.prototype.applyConstraints = function(c) {
-        if (this.kind === 'audio' && typeof c === 'object') {
-          c = JSON.parse(JSON.stringify(c));
-          remap(c, 'autoGainControl', 'mozAutoGainControl');
-          remap(c, 'noiseSuppression', 'mozNoiseSuppression');
-        }
-        return nativeApplyConstraints.apply(this, [c]);
-      };
-    }
-  }
-  navigator.getUserMedia = function(constraints, onSuccess, onError) {
-    if (browserDetails.version < 44) {
-      return getUserMedia_(constraints, onSuccess, onError);
-    }
-    // Replace Firefox 44+'s deprecation warning with unprefixed version.
-    utils.deprecated('navigator.getUserMedia',
-        'navigator.mediaDevices.getUserMedia');
-    navigator.mediaDevices.getUserMedia(constraints).then(onSuccess, onError);
-  };
-};
-
-},{"../utils":11}],10:[function(require,module,exports){
-/*
- *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
- *
- *  Use of this source code is governed by a BSD-style license
- *  that can be found in the LICENSE file in the root of the source
- *  tree.
- */
-'use strict';
-var utils = require('../utils');
-
-var safariShim = {
-  // TODO: DrAlex, should be here, double check against LayoutTests
-
-  // TODO: once the back-end for the mac port is done, add.
-  // TODO: check for webkitGTK+
-  // shimPeerConnection: function() { },
-
-  shimLocalStreamsAPI: function(window) {
-    if (typeof window !== 'object' || !window.RTCPeerConnection) {
-      return;
-    }
-    if (!('getLocalStreams' in window.RTCPeerConnection.prototype)) {
-      window.RTCPeerConnection.prototype.getLocalStreams = function() {
-        if (!this._localStreams) {
-          this._localStreams = [];
-        }
-        return this._localStreams;
-      };
-    }
-    if (!('getStreamById' in window.RTCPeerConnection.prototype)) {
-      window.RTCPeerConnection.prototype.getStreamById = function(id) {
-        var result = null;
-        if (this._localStreams) {
-          this._localStreams.forEach(function(stream) {
-            if (stream.id === id) {
-              result = stream;
-            }
-          });
-        }
-        if (this._remoteStreams) {
-          this._remoteStreams.forEach(function(stream) {
-            if (stream.id === id) {
-              result = stream;
-            }
-          });
-        }
-        return result;
-      };
-    }
-    if (!('addStream' in window.RTCPeerConnection.prototype)) {
-      var _addTrack = window.RTCPeerConnection.prototype.addTrack;
-      window.RTCPeerConnection.prototype.addStream = function(stream) {
-        if (!this._localStreams) {
-          this._localStreams = [];
-        }
-        if (this._localStreams.indexOf(stream) === -1) {
-          this._localStreams.push(stream);
-        }
-        var self = this;
-        stream.getTracks().forEach(function(track) {
-          _addTrack.call(self, track, stream);
-        });
-      };
-
-      window.RTCPeerConnection.prototype.addTrack = function(track, stream) {
-        if (stream) {
-          if (!this._localStreams) {
-            this._localStreams = [stream];
-          } else if (this._localStreams.indexOf(stream) === -1) {
-            this._localStreams.push(stream);
-          }
-        }
-        _addTrack.call(this, track, stream);
-      };
-    }
-    if (!('removeStream' in window.RTCPeerConnection.prototype)) {
-      window.RTCPeerConnection.prototype.removeStream = function(stream) {
-        if (!this._localStreams) {
-          this._localStreams = [];
-        }
-        var index = this._localStreams.indexOf(stream);
-        if (index === -1) {
-          return;
-        }
-        this._localStreams.splice(index, 1);
-        var self = this;
-        var tracks = stream.getTracks();
-        this.getSenders().forEach(function(sender) {
-          if (tracks.indexOf(sender.track) !== -1) {
-            self.removeTrack(sender);
-          }
-        });
-      };
-    }
-  },
-  shimRemoteStreamsAPI: function(window) {
-    if (typeof window !== 'object' || !window.RTCPeerConnection) {
-      return;
-    }
-    if (!('getRemoteStreams' in window.RTCPeerConnection.prototype)) {
-      window.RTCPeerConnection.prototype.getRemoteStreams = function() {
-        return this._remoteStreams ? this._remoteStreams : [];
-      };
-    }
-    if (!('onaddstream' in window.RTCPeerConnection.prototype)) {
-      Object.defineProperty(window.RTCPeerConnection.prototype, 'onaddstream', {
-        get: function() {
-          return this._onaddstream;
-        },
-        set: function(f) {
-          if (this._onaddstream) {
-            this.removeEventListener('addstream', this._onaddstream);
-            this.removeEventListener('track', this._onaddstreampoly);
-          }
-          this.addEventListener('addstream', this._onaddstream = f);
-          this.addEventListener('track', this._onaddstreampoly = function(e) {
-            var stream = e.streams[0];
-            if (!this._remoteStreams) {
-              this._remoteStreams = [];
-            }
-            if (this._remoteStreams.indexOf(stream) >= 0) {
-              return;
-            }
-            this._remoteStreams.push(stream);
-            var event = new Event('addstream');
-            event.stream = e.streams[0];
-            this.dispatchEvent(event);
-          }.bind(this));
-        }
-      });
-    }
-  },
-  shimCallbacksAPI: function(window) {
-    if (typeof window !== 'object' || !window.RTCPeerConnection) {
-      return;
-    }
-    var prototype = window.RTCPeerConnection.prototype;
-    var createOffer = prototype.createOffer;
-    var createAnswer = prototype.createAnswer;
-    var setLocalDescription = prototype.setLocalDescription;
-    var setRemoteDescription = prototype.setRemoteDescription;
-    var addIceCandidate = prototype.addIceCandidate;
-
-    prototype.createOffer = function(successCallback, failureCallback) {
-      var options = (arguments.length >= 2) ? arguments[2] : arguments[0];
-      var promise = createOffer.apply(this, [options]);
-      if (!failureCallback) {
-        return promise;
-      }
-      promise.then(successCallback, failureCallback);
-      return Promise.resolve();
-    };
-
-    prototype.createAnswer = function(successCallback, failureCallback) {
-      var options = (arguments.length >= 2) ? arguments[2] : arguments[0];
-      var promise = createAnswer.apply(this, [options]);
-      if (!failureCallback) {
-        return promise;
-      }
-      promise.then(successCallback, failureCallback);
-      return Promise.resolve();
-    };
-
-    var withCallback = function(description, successCallback, failureCallback) {
-      var promise = setLocalDescription.apply(this, [description]);
-      if (!failureCallback) {
-        return promise;
-      }
-      promise.then(successCallback, failureCallback);
-      return Promise.resolve();
-    };
-    prototype.setLocalDescription = withCallback;
-
-    withCallback = function(description, successCallback, failureCallback) {
-      var promise = setRemoteDescription.apply(this, [description]);
-      if (!failureCallback) {
-        return promise;
-      }
-      promise.then(successCallback, failureCallback);
-      return Promise.resolve();
-    };
-    prototype.setRemoteDescription = withCallback;
-
-    withCallback = function(candidate, successCallback, failureCallback) {
-      var promise = addIceCandidate.apply(this, [candidate]);
-      if (!failureCallback) {
-        return promise;
-      }
-      promise.then(successCallback, failureCallback);
-      return Promise.resolve();
-    };
-    prototype.addIceCandidate = withCallback;
-  },
-  shimGetUserMedia: function(window) {
-    var navigator = window && window.navigator;
-
-    if (!navigator.getUserMedia) {
-      if (navigator.webkitGetUserMedia) {
-        navigator.getUserMedia = navigator.webkitGetUserMedia.bind(navigator);
-      } else if (navigator.mediaDevices &&
-          navigator.mediaDevices.getUserMedia) {
-        navigator.getUserMedia = function(constraints, cb, errcb) {
-          navigator.mediaDevices.getUserMedia(constraints)
-          .then(cb, errcb);
-        }.bind(navigator);
-      }
-    }
-  },
-  shimRTCIceServerUrls: function(window) {
-    // migrate from non-spec RTCIceServer.url to RTCIceServer.urls
-    var OrigPeerConnection = window.RTCPeerConnection;
-    window.RTCPeerConnection = function(pcConfig, pcConstraints) {
-      if (pcConfig && pcConfig.iceServers) {
-        var newIceServers = [];
-        for (var i = 0; i < pcConfig.iceServers.length; i++) {
-          var server = pcConfig.iceServers[i];
-          if (!server.hasOwnProperty('urls') &&
-              server.hasOwnProperty('url')) {
-            utils.deprecated('RTCIceServer.url', 'RTCIceServer.urls');
-            server = JSON.parse(JSON.stringify(server));
-            server.urls = server.url;
-            delete server.url;
-            newIceServers.push(server);
-          } else {
-            newIceServers.push(pcConfig.iceServers[i]);
-          }
-        }
-        pcConfig.iceServers = newIceServers;
-      }
-      return new OrigPeerConnection(pcConfig, pcConstraints);
-    };
-    window.RTCPeerConnection.prototype = OrigPeerConnection.prototype;
-    // wrap static methods. Currently just generateCertificate.
-    if ('generateCertificate' in window.RTCPeerConnection) {
-      Object.defineProperty(window.RTCPeerConnection, 'generateCertificate', {
-        get: function() {
-          return OrigPeerConnection.generateCertificate;
-        }
-      });
-    }
-  },
-  shimTrackEventTransceiver: function(window) {
-    // Add event.transceiver member over deprecated event.receiver
-    if (typeof window === 'object' && window.RTCPeerConnection &&
-        ('receiver' in window.RTCTrackEvent.prototype) &&
-        // can't check 'transceiver' in window.RTCTrackEvent.prototype, as it is
-        // defined for some reason even when window.RTCTransceiver is not.
-        !window.RTCTransceiver) {
-      Object.defineProperty(window.RTCTrackEvent.prototype, 'transceiver', {
-        get: function() {
-          return {receiver: this.receiver};
-        }
-      });
-    }
-  }
-};
-
-// Expose public methods.
-module.exports = {
-  shimCallbacksAPI: safariShim.shimCallbacksAPI,
-  shimLocalStreamsAPI: safariShim.shimLocalStreamsAPI,
-  shimRemoteStreamsAPI: safariShim.shimRemoteStreamsAPI,
-  shimGetUserMedia: safariShim.shimGetUserMedia,
-  shimRTCIceServerUrls: safariShim.shimRTCIceServerUrls,
-  shimTrackEventTransceiver: safariShim.shimTrackEventTransceiver
-  // TODO
-  // shimPeerConnection: safariShim.shimPeerConnection
-};
-
-},{"../utils":11}],11:[function(require,module,exports){
-/*
- *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
- *
- *  Use of this source code is governed by a BSD-style license
- *  that can be found in the LICENSE file in the root of the source
- *  tree.
- */
- /* eslint-env node */
-'use strict';
-
-var logDisabled_ = true;
-var deprecationWarnings_ = true;
-
-// Utility methods.
-var utils = {
-  disableLog: function(bool) {
-    if (typeof bool !== 'boolean') {
-      return new Error('Argument type: ' + typeof bool +
-          '. Please use a boolean.');
-    }
-    logDisabled_ = bool;
-    return (bool) ? 'adapter.js logging disabled' :
-        'adapter.js logging enabled';
-  },
-
-  /**
-   * Disable or enable deprecation warnings
-   * @param {!boolean} bool set to true to disable warnings.
-   */
-  disableWarnings: function(bool) {
-    if (typeof bool !== 'boolean') {
-      return new Error('Argument type: ' + typeof bool +
-          '. Please use a boolean.');
-    }
-    deprecationWarnings_ = !bool;
-    return 'adapter.js deprecation warnings ' + (bool ? 'disabled' : 'enabled');
-  },
-
-  log: function() {
-    if (typeof window === 'object') {
-      if (logDisabled_) {
-        return;
-      }
-      if (typeof console !== 'undefined' && typeof console.log === 'function') {
-        console.log.apply(console, arguments);
-      }
-    }
-  },
-
-  /**
-   * Shows a deprecation warning suggesting the modern and spec-compatible API.
-   */
-  deprecated: function(oldMethod, newMethod) {
-    if (!deprecationWarnings_) {
-      return;
-    }
-    console.warn(oldMethod + ' is deprecated, please use ' + newMethod +
-        ' instead.');
-  },
-
-  /**
-   * Extract browser version out of the provided user agent string.
-   *
-   * @param {!string} uastring userAgent string.
-   * @param {!string} expr Regular expression used as match criteria.
-   * @param {!number} pos position in the version string to be returned.
-   * @return {!number} browser version.
-   */
-  extractVersion: function(uastring, expr, pos) {
-    var match = uastring.match(expr);
-    return match && match.length >= pos && parseInt(match[pos], 10);
-  },
-
-  /**
-   * Browser detector.
-   *
-   * @return {object} result containing browser and version
-   *     properties.
-   */
-  detectBrowser: function(window) {
-    var navigator = window && window.navigator;
-
-    // Returned result object.
-    var result = {};
-    result.browser = null;
-    result.version = null;
-
-    // Fail early if it's not a browser
-    if (typeof window === 'undefined' || !window.navigator) {
-      result.browser = 'Not a browser.';
-      return result;
-    }
-
-    // Firefox.
-    if (navigator.mozGetUserMedia) {
-      result.browser = 'firefox';
-      result.version = this.extractVersion(navigator.userAgent,
-          /Firefox\/(\d+)\./, 1);
-    } else if (navigator.webkitGetUserMedia) {
-      // Chrome, Chromium, Webview, Opera, all use the chrome shim for now
-      if (window.webkitRTCPeerConnection) {
-        result.browser = 'chrome';
-        result.version = this.extractVersion(navigator.userAgent,
-          /Chrom(e|ium)\/(\d+)\./, 2);
-      } else { // Safari (in an unpublished version) or unknown webkit-based.
-        if (navigator.userAgent.match(/Version\/(\d+).(\d+)/)) {
-          result.browser = 'safari';
-          result.version = this.extractVersion(navigator.userAgent,
-            /AppleWebKit\/(\d+)\./, 1);
-        } else { // unknown webkit-based browser.
-          result.browser = 'Unsupported webkit-based browser ' +
-              'with GUM support but no WebRTC support.';
-          return result;
-        }
-      }
-    } else if (navigator.mediaDevices &&
-        navigator.userAgent.match(/Edge\/(\d+).(\d+)$/)) { // Edge.
-      result.browser = 'edge';
-      result.version = this.extractVersion(navigator.userAgent,
-          /Edge\/(\d+).(\d+)$/, 2);
-    } else if (navigator.mediaDevices &&
-        navigator.userAgent.match(/AppleWebKit\/(\d+)\./)) {
-        // Safari, with webkitGetUserMedia removed.
-      result.browser = 'safari';
-      result.version = this.extractVersion(navigator.userAgent,
-          /AppleWebKit\/(\d+)\./, 1);
-    } else { // Default fallthrough: not supported.
-      result.browser = 'Not a supported browser.';
-      return result;
-    }
-
-    return result;
-  },
-
-};
-
-// Export.
-module.exports = {
-  log: utils.log,
-  deprecated: utils.deprecated,
-  disableLog: utils.disableLog,
-  disableWarnings: utils.disableWarnings,
-  extractVersion: utils.extractVersion,
-  shimCreateObjectURL: utils.shimCreateObjectURL,
-  detectBrowser: utils.detectBrowser.bind(utils)
-};
-
-},{}]},{},[3]);
-
-/* tslint:disable:variable-name */
-// #if WEBRTC_ADAPTER
-
-// #endif
 
 "use strict";
 // CommonJS / Node have global context exposed as "global" variable.
@@ -3928,7 +1196,18 @@ var Subject_1 = {
 	AnonymousSubject: AnonymousSubject_1
 };
 
+var commonjsGlobal$1 = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
+
+
+
+
+
+function createCommonjsModule$1(fn, module) {
+	return module = { exports: {} }, fn(module, module.exports), module.exports;
+}
+
 "use strict";
+
 var aspromise = asPromise;
 
 /**
@@ -3948,25 +1227,23 @@ var aspromise = asPromise;
  * @param {...*} params Function arguments
  * @returns {Promise<*>} Promisified function
  */
-function asPromise(fn, ctx/*, varargs */) {
-    var params  = new Array(arguments.length - 1),
-        offset  = 0,
-        index   = 2,
+function asPromise(fn, ctx /*, varargs */) {
+    var params = new Array(arguments.length - 1),
+        offset = 0,
+        index = 2,
         pending = true;
-    while (index < arguments.length)
+    while (index < arguments.length) {
         params[offset++] = arguments[index++];
-    return new Promise(function executor(resolve, reject) {
-        params[offset] = function callback(err/*, varargs */) {
+    }return new Promise(function executor(resolve, reject) {
+        params[offset] = function callback(err /*, varargs */) {
             if (pending) {
                 pending = false;
-                if (err)
-                    reject(err);
-                else {
+                if (err) reject(err);else {
                     var params = new Array(arguments.length - 1),
                         offset = 0;
-                    while (offset < params.length)
+                    while (offset < params.length) {
                         params[offset++] = arguments[offset];
-                    resolve.apply(null, params);
+                    }resolve.apply(null, params);
                 }
             }
         };
@@ -3981,149 +1258,148 @@ function asPromise(fn, ctx/*, varargs */) {
     });
 }
 
-var base64_1 = createCommonjsModule(function (module, exports) {
-"use strict";
+var base64_1 = createCommonjsModule$1(function (module, exports) {
+    "use strict";
 
-/**
- * A minimal base64 implementation for number arrays.
- * @memberof util
- * @namespace
- */
-var base64 = exports;
+    /**
+     * A minimal base64 implementation for number arrays.
+     * @memberof util
+     * @namespace
+     */
 
-/**
- * Calculates the byte length of a base64 encoded string.
- * @param {string} string Base64 encoded string
- * @returns {number} Byte length
- */
-base64.length = function length(string) {
-    var p = string.length;
-    if (!p)
-        return 0;
-    var n = 0;
-    while (--p % 4 > 1 && string.charAt(p) === "=")
-        ++n;
-    return Math.ceil(string.length * 3) / 4 - n;
-};
+    var base64 = exports;
 
-// Base64 encoding table
-var b64 = new Array(64);
+    /**
+     * Calculates the byte length of a base64 encoded string.
+     * @param {string} string Base64 encoded string
+     * @returns {number} Byte length
+     */
+    base64.length = function length(string) {
+        var p = string.length;
+        if (!p) return 0;
+        var n = 0;
+        while (--p % 4 > 1 && string.charAt(p) === "=") {
+            ++n;
+        }return Math.ceil(string.length * 3) / 4 - n;
+    };
 
-// Base64 decoding table
-var s64 = new Array(123);
+    // Base64 encoding table
+    var b64 = new Array(64);
 
-// 65..90, 97..122, 48..57, 43, 47
-for (var i = 0; i < 64;)
-    s64[b64[i] = i < 26 ? i + 65 : i < 52 ? i + 71 : i < 62 ? i - 4 : i - 59 | 43] = i++;
+    // Base64 decoding table
+    var s64 = new Array(123);
 
-/**
- * Encodes a buffer to a base64 encoded string.
- * @param {Uint8Array} buffer Source buffer
- * @param {number} start Source start
- * @param {number} end Source end
- * @returns {string} Base64 encoded string
- */
-base64.encode = function encode(buffer, start, end) {
-    var parts = null,
-        chunk = [];
-    var i = 0, // output index
-        j = 0, // goto index
-        t;     // temporary
-    while (start < end) {
-        var b = buffer[start++];
-        switch (j) {
-            case 0:
-                chunk[i++] = b64[b >> 2];
-                t = (b & 3) << 4;
-                j = 1;
-                break;
-            case 1:
-                chunk[i++] = b64[t | b >> 4];
-                t = (b & 15) << 2;
-                j = 2;
-                break;
-            case 2:
-                chunk[i++] = b64[t | b >> 6];
-                chunk[i++] = b64[b & 63];
-                j = 0;
-                break;
+    // 65..90, 97..122, 48..57, 43, 47
+    for (var i = 0; i < 64;) {
+        s64[b64[i] = i < 26 ? i + 65 : i < 52 ? i + 71 : i < 62 ? i - 4 : i - 59 | 43] = i++;
+    } /**
+       * Encodes a buffer to a base64 encoded string.
+       * @param {Uint8Array} buffer Source buffer
+       * @param {number} start Source start
+       * @param {number} end Source end
+       * @returns {string} Base64 encoded string
+       */
+    base64.encode = function encode(buffer, start, end) {
+        var parts = null,
+            chunk = [];
+        var i = 0,
+            // output index
+        j = 0,
+            // goto index
+        t; // temporary
+        while (start < end) {
+            var b = buffer[start++];
+            switch (j) {
+                case 0:
+                    chunk[i++] = b64[b >> 2];
+                    t = (b & 3) << 4;
+                    j = 1;
+                    break;
+                case 1:
+                    chunk[i++] = b64[t | b >> 4];
+                    t = (b & 15) << 2;
+                    j = 2;
+                    break;
+                case 2:
+                    chunk[i++] = b64[t | b >> 6];
+                    chunk[i++] = b64[b & 63];
+                    j = 0;
+                    break;
+            }
+            if (i > 8191) {
+                (parts || (parts = [])).push(String.fromCharCode.apply(String, chunk));
+                i = 0;
+            }
         }
-        if (i > 8191) {
-            (parts || (parts = [])).push(String.fromCharCode.apply(String, chunk));
-            i = 0;
-        }
-    }
-    if (j) {
-        chunk[i++] = b64[t];
-        chunk[i++] = 61;
-        if (j === 1)
+        if (j) {
+            chunk[i++] = b64[t];
             chunk[i++] = 61;
-    }
-    if (parts) {
-        if (i)
-            parts.push(String.fromCharCode.apply(String, chunk.slice(0, i)));
-        return parts.join("");
-    }
-    return String.fromCharCode.apply(String, chunk.slice(0, i));
-};
-
-var invalidEncoding = "invalid encoding";
-
-/**
- * Decodes a base64 encoded string to a buffer.
- * @param {string} string Source string
- * @param {Uint8Array} buffer Destination buffer
- * @param {number} offset Destination offset
- * @returns {number} Number of bytes written
- * @throws {Error} If encoding is invalid
- */
-base64.decode = function decode(string, buffer, offset) {
-    var start = offset;
-    var j = 0, // goto index
-        t;     // temporary
-    for (var i = 0; i < string.length;) {
-        var c = string.charCodeAt(i++);
-        if (c === 61 && j > 1)
-            break;
-        if ((c = s64[c]) === undefined)
-            throw Error(invalidEncoding);
-        switch (j) {
-            case 0:
-                t = c;
-                j = 1;
-                break;
-            case 1:
-                buffer[offset++] = t << 2 | (c & 48) >> 4;
-                t = c;
-                j = 2;
-                break;
-            case 2:
-                buffer[offset++] = (t & 15) << 4 | (c & 60) >> 2;
-                t = c;
-                j = 3;
-                break;
-            case 3:
-                buffer[offset++] = (t & 3) << 6 | c;
-                j = 0;
-                break;
+            if (j === 1) chunk[i++] = 61;
         }
-    }
-    if (j === 1)
-        throw Error(invalidEncoding);
-    return offset - start;
-};
+        if (parts) {
+            if (i) parts.push(String.fromCharCode.apply(String, chunk.slice(0, i)));
+            return parts.join("");
+        }
+        return String.fromCharCode.apply(String, chunk.slice(0, i));
+    };
 
-/**
- * Tests if the specified string appears to be base64 encoded.
- * @param {string} string String to test
- * @returns {boolean} `true` if probably base64 encoded, otherwise false
- */
-base64.test = function test(string) {
-    return /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(string);
-};
+    var invalidEncoding = "invalid encoding";
+
+    /**
+     * Decodes a base64 encoded string to a buffer.
+     * @param {string} string Source string
+     * @param {Uint8Array} buffer Destination buffer
+     * @param {number} offset Destination offset
+     * @returns {number} Number of bytes written
+     * @throws {Error} If encoding is invalid
+     */
+    base64.decode = function decode(string, buffer, offset) {
+        var start = offset;
+        var j = 0,
+            // goto index
+        t; // temporary
+        for (var i = 0; i < string.length;) {
+            var c = string.charCodeAt(i++);
+            if (c === 61 && j > 1) break;
+            if ((c = s64[c]) === undefined) throw Error(invalidEncoding);
+            switch (j) {
+                case 0:
+                    t = c;
+                    j = 1;
+                    break;
+                case 1:
+                    buffer[offset++] = t << 2 | (c & 48) >> 4;
+                    t = c;
+                    j = 2;
+                    break;
+                case 2:
+                    buffer[offset++] = (t & 15) << 4 | (c & 60) >> 2;
+                    t = c;
+                    j = 3;
+                    break;
+                case 3:
+                    buffer[offset++] = (t & 3) << 6 | c;
+                    j = 0;
+                    break;
+            }
+        }
+        if (j === 1) throw Error(invalidEncoding);
+        return offset - start;
+    };
+
+    /**
+     * Tests if the specified string appears to be base64 encoded.
+     * @param {string} string String to test
+     * @returns {boolean} `true` if probably base64 encoded, otherwise false
+     */
+    base64.test = function test(string) {
+        return (/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(string)
+        );
+    };
 });
 
 "use strict";
+
 var eventemitter = EventEmitter;
 
 /**
@@ -4151,8 +1427,8 @@ function EventEmitter() {
  */
 EventEmitter.prototype.on = function on(evt, fn, ctx) {
     (this._listeners[evt] || (this._listeners[evt] = [])).push({
-        fn  : fn,
-        ctx : ctx || this
+        fn: fn,
+        ctx: ctx || this
     });
     return this;
 };
@@ -4164,18 +1440,12 @@ EventEmitter.prototype.on = function on(evt, fn, ctx) {
  * @returns {util.EventEmitter} `this`
  */
 EventEmitter.prototype.off = function off(evt, fn) {
-    if (evt === undefined)
-        this._listeners = {};
-    else {
-        if (fn === undefined)
-            this._listeners[evt] = [];
-        else {
+    if (evt === undefined) this._listeners = {};else {
+        if (fn === undefined) this._listeners[evt] = [];else {
             var listeners = this._listeners[evt];
-            for (var i = 0; i < listeners.length;)
-                if (listeners[i].fn === fn)
-                    listeners.splice(i, 1);
-                else
-                    ++i;
+            for (var i = 0; i < listeners.length;) {
+                if (listeners[i].fn === fn) listeners.splice(i, 1);else ++i;
+            }
         }
     }
     return this;
@@ -4192,10 +1462,11 @@ EventEmitter.prototype.emit = function emit(evt) {
     if (listeners) {
         var args = [],
             i = 1;
-        for (; i < arguments.length;)
+        for (; i < arguments.length;) {
             args.push(arguments[i++]);
-        for (i = 0; i < listeners.length;)
+        }for (i = 0; i < listeners.length;) {
             listeners[i].fn.apply(listeners[i++].ctx, args);
+        }
     }
     return this;
 };
@@ -4290,15 +1561,15 @@ var float_1 = factory(factory);
 function factory(exports) {
 
     // float: typed array
-    if (typeof Float32Array !== "undefined") (function() {
+    if (typeof Float32Array !== "undefined") (function () {
 
-        var f32 = new Float32Array([ -0 ]),
+        var f32 = new Float32Array([-0]),
             f8b = new Uint8Array(f32.buffer),
-            le  = f8b[3] === 128;
+            le = f8b[3] === 128;
 
         function writeFloat_f32_cpy(val, buf, pos) {
             f32[0] = val;
-            buf[pos    ] = f8b[0];
+            buf[pos] = f8b[0];
             buf[pos + 1] = f8b[1];
             buf[pos + 2] = f8b[2];
             buf[pos + 3] = f8b[3];
@@ -4306,7 +1577,7 @@ function factory(exports) {
 
         function writeFloat_f32_rev(val, buf, pos) {
             f32[0] = val;
-            buf[pos    ] = f8b[3];
+            buf[pos] = f8b[3];
             buf[pos + 1] = f8b[2];
             buf[pos + 2] = f8b[1];
             buf[pos + 3] = f8b[0];
@@ -4318,7 +1589,7 @@ function factory(exports) {
         exports.writeFloatBE = le ? writeFloat_f32_rev : writeFloat_f32_cpy;
 
         function readFloat_f32_cpy(buf, pos) {
-            f8b[0] = buf[pos    ];
+            f8b[0] = buf[pos];
             f8b[1] = buf[pos + 1];
             f8b[2] = buf[pos + 2];
             f8b[3] = buf[pos + 3];
@@ -4326,7 +1597,7 @@ function factory(exports) {
         }
 
         function readFloat_f32_rev(buf, pos) {
-            f8b[3] = buf[pos    ];
+            f8b[3] = buf[pos];
             f8b[2] = buf[pos + 1];
             f8b[1] = buf[pos + 2];
             f8b[0] = buf[pos + 3];
@@ -4338,22 +1609,15 @@ function factory(exports) {
         /* istanbul ignore next */
         exports.readFloatBE = le ? readFloat_f32_rev : readFloat_f32_cpy;
 
-    // float: ieee754
-    })(); else (function() {
+        // float: ieee754
+    })();else (function () {
 
         function writeFloat_ieee754(writeUint, val, buf, pos) {
             var sign = val < 0 ? 1 : 0;
-            if (sign)
-                val = -val;
-            if (val === 0)
-                writeUint(1 / val > 0 ? /* positive */ 0 : /* negative 0 */ 2147483648, buf, pos);
-            else if (isNaN(val))
-                writeUint(2143289344, buf, pos);
-            else if (val > 3.4028234663852886e+38) // +-Infinity
-                writeUint((sign << 31 | 2139095040) >>> 0, buf, pos);
-            else if (val < 1.1754943508222875e-38) // denormal
-                writeUint((sign << 31 | Math.round(val / 1.401298464324817e-45)) >>> 0, buf, pos);
-            else {
+            if (sign) val = -val;
+            if (val === 0) writeUint(1 / val > 0 ? /* positive */0 : /* negative 0 */2147483648, buf, pos);else if (isNaN(val)) writeUint(2143289344, buf, pos);else if (val > 3.4028234663852886e+38) // +-Infinity
+                writeUint((sign << 31 | 2139095040) >>> 0, buf, pos);else if (val < 1.1754943508222875e-38) // denormal
+                writeUint((sign << 31 | Math.round(val / 1.401298464324817e-45)) >>> 0, buf, pos);else {
                 var exponent = Math.floor(Math.log(val) / Math.LN2),
                     mantissa = Math.round(val * Math.pow(2, -exponent) * 8388608) & 8388607;
                 writeUint((sign << 31 | exponent + 127 << 23 | mantissa) >>> 0, buf, pos);
@@ -4368,30 +1632,24 @@ function factory(exports) {
                 sign = (uint >> 31) * 2 + 1,
                 exponent = uint >>> 23 & 255,
                 mantissa = uint & 8388607;
-            return exponent === 255
-                ? mantissa
-                ? NaN
-                : sign * Infinity
-                : exponent === 0 // denormal
-                ? sign * 1.401298464324817e-45 * mantissa
-                : sign * Math.pow(2, exponent - 150) * (mantissa + 8388608);
+            return exponent === 255 ? mantissa ? NaN : sign * Infinity : exponent === 0 // denormal
+            ? sign * 1.401298464324817e-45 * mantissa : sign * Math.pow(2, exponent - 150) * (mantissa + 8388608);
         }
 
         exports.readFloatLE = readFloat_ieee754.bind(null, readUintLE);
         exports.readFloatBE = readFloat_ieee754.bind(null, readUintBE);
-
     })();
 
     // double: typed array
-    if (typeof Float64Array !== "undefined") (function() {
+    if (typeof Float64Array !== "undefined") (function () {
 
         var f64 = new Float64Array([-0]),
             f8b = new Uint8Array(f64.buffer),
-            le  = f8b[7] === 128;
+            le = f8b[7] === 128;
 
         function writeDouble_f64_cpy(val, buf, pos) {
             f64[0] = val;
-            buf[pos    ] = f8b[0];
+            buf[pos] = f8b[0];
             buf[pos + 1] = f8b[1];
             buf[pos + 2] = f8b[2];
             buf[pos + 3] = f8b[3];
@@ -4403,7 +1661,7 @@ function factory(exports) {
 
         function writeDouble_f64_rev(val, buf, pos) {
             f64[0] = val;
-            buf[pos    ] = f8b[7];
+            buf[pos] = f8b[7];
             buf[pos + 1] = f8b[6];
             buf[pos + 2] = f8b[5];
             buf[pos + 3] = f8b[4];
@@ -4419,7 +1677,7 @@ function factory(exports) {
         exports.writeDoubleBE = le ? writeDouble_f64_rev : writeDouble_f64_cpy;
 
         function readDouble_f64_cpy(buf, pos) {
-            f8b[0] = buf[pos    ];
+            f8b[0] = buf[pos];
             f8b[1] = buf[pos + 1];
             f8b[2] = buf[pos + 2];
             f8b[3] = buf[pos + 3];
@@ -4431,7 +1689,7 @@ function factory(exports) {
         }
 
         function readDouble_f64_rev(buf, pos) {
-            f8b[7] = buf[pos    ];
+            f8b[7] = buf[pos];
             f8b[6] = buf[pos + 1];
             f8b[5] = buf[pos + 2];
             f8b[4] = buf[pos + 3];
@@ -4447,32 +1705,32 @@ function factory(exports) {
         /* istanbul ignore next */
         exports.readDoubleBE = le ? readDouble_f64_rev : readDouble_f64_cpy;
 
-    // double: ieee754
-    })(); else (function() {
+        // double: ieee754
+    })();else (function () {
 
         function writeDouble_ieee754(writeUint, off0, off1, val, buf, pos) {
             var sign = val < 0 ? 1 : 0;
-            if (sign)
-                val = -val;
+            if (sign) val = -val;
             if (val === 0) {
                 writeUint(0, buf, pos + off0);
-                writeUint(1 / val > 0 ? /* positive */ 0 : /* negative 0 */ 2147483648, buf, pos + off1);
+                writeUint(1 / val > 0 ? /* positive */0 : /* negative 0 */2147483648, buf, pos + off1);
             } else if (isNaN(val)) {
                 writeUint(0, buf, pos + off0);
                 writeUint(2146959360, buf, pos + off1);
-            } else if (val > 1.7976931348623157e+308) { // +-Infinity
+            } else if (val > 1.7976931348623157e+308) {
+                // +-Infinity
                 writeUint(0, buf, pos + off0);
                 writeUint((sign << 31 | 2146435072) >>> 0, buf, pos + off1);
             } else {
                 var mantissa;
-                if (val < 2.2250738585072014e-308) { // denormal
+                if (val < 2.2250738585072014e-308) {
+                    // denormal
                     mantissa = val / 5e-324;
                     writeUint(mantissa >>> 0, buf, pos + off0);
                     writeUint((sign << 31 | mantissa / 4294967296) >>> 0, buf, pos + off1);
                 } else {
                     var exponent = Math.floor(Math.log(val) / Math.LN2);
-                    if (exponent === 1024)
-                        exponent = 1023;
+                    if (exponent === 1024) exponent = 1023;
                     mantissa = val * Math.pow(2, -exponent);
                     writeUint(mantissa * 4503599627370496 >>> 0, buf, pos + off0);
                     writeUint((sign << 31 | exponent + 1023 << 20 | mantissa * 1048576 & 1048575) >>> 0, buf, pos + off1);
@@ -4489,18 +1747,12 @@ function factory(exports) {
             var sign = (hi >> 31) * 2 + 1,
                 exponent = hi >>> 20 & 2047,
                 mantissa = 4294967296 * (hi & 1048575) + lo;
-            return exponent === 2047
-                ? mantissa
-                ? NaN
-                : sign * Infinity
-                : exponent === 0 // denormal
-                ? sign * 5e-324 * mantissa
-                : sign * Math.pow(2, exponent - 1075) * (mantissa + 4503599627370496);
+            return exponent === 2047 ? mantissa ? NaN : sign * Infinity : exponent === 0 // denormal
+            ? sign * 5e-324 * mantissa : sign * Math.pow(2, exponent - 1075) * (mantissa + 4503599627370496);
         }
 
         exports.readDoubleLE = readDouble_ieee754.bind(null, readUintLE, 0, 4);
         exports.readDoubleBE = readDouble_ieee754.bind(null, readUintBE, 4, 0);
-
     })();
 
     return exports;
@@ -4509,34 +1761,29 @@ function factory(exports) {
 // uint helpers
 
 function writeUintLE(val, buf, pos) {
-    buf[pos    ] =  val        & 255;
-    buf[pos + 1] =  val >>> 8  & 255;
-    buf[pos + 2] =  val >>> 16 & 255;
-    buf[pos + 3] =  val >>> 24;
+    buf[pos] = val & 255;
+    buf[pos + 1] = val >>> 8 & 255;
+    buf[pos + 2] = val >>> 16 & 255;
+    buf[pos + 3] = val >>> 24;
 }
 
 function writeUintBE(val, buf, pos) {
-    buf[pos    ] =  val >>> 24;
-    buf[pos + 1] =  val >>> 16 & 255;
-    buf[pos + 2] =  val >>> 8  & 255;
-    buf[pos + 3] =  val        & 255;
+    buf[pos] = val >>> 24;
+    buf[pos + 1] = val >>> 16 & 255;
+    buf[pos + 2] = val >>> 8 & 255;
+    buf[pos + 3] = val & 255;
 }
 
 function readUintLE(buf, pos) {
-    return (buf[pos    ]
-          | buf[pos + 1] << 8
-          | buf[pos + 2] << 16
-          | buf[pos + 3] << 24) >>> 0;
+    return (buf[pos] | buf[pos + 1] << 8 | buf[pos + 2] << 16 | buf[pos + 3] << 24) >>> 0;
 }
 
 function readUintBE(buf, pos) {
-    return (buf[pos    ] << 24
-          | buf[pos + 1] << 16
-          | buf[pos + 2] << 8
-          | buf[pos + 3]) >>> 0;
+    return (buf[pos] << 24 | buf[pos + 1] << 16 | buf[pos + 2] << 8 | buf[pos + 3]) >>> 0;
 }
 
 "use strict";
+
 var inquire_1 = inquire;
 
 /**
@@ -4548,121 +1795,112 @@ var inquire_1 = inquire;
 function inquire(moduleName) {
     try {
         var mod = undefined; // eslint-disable-line no-eval
-        if (mod && (mod.length || Object.keys(mod).length))
-            return mod;
+        if (mod && (mod.length || Object.keys(mod).length)) return mod;
     } catch (e) {} // eslint-disable-line no-empty
     return null;
 }
 
-var utf8_1 = createCommonjsModule(function (module, exports) {
-"use strict";
+var utf8_1 = createCommonjsModule$1(function (module, exports) {
+    "use strict";
 
-/**
- * A minimal UTF8 implementation for number arrays.
- * @memberof util
- * @namespace
- */
-var utf8 = exports;
+    /**
+     * A minimal UTF8 implementation for number arrays.
+     * @memberof util
+     * @namespace
+     */
 
-/**
- * Calculates the UTF8 byte length of a string.
- * @param {string} string String
- * @returns {number} Byte length
- */
-utf8.length = function utf8_length(string) {
-    var len = 0,
-        c = 0;
-    for (var i = 0; i < string.length; ++i) {
-        c = string.charCodeAt(i);
-        if (c < 128)
-            len += 1;
-        else if (c < 2048)
-            len += 2;
-        else if ((c & 0xFC00) === 0xD800 && (string.charCodeAt(i + 1) & 0xFC00) === 0xDC00) {
-            ++i;
-            len += 4;
-        } else
-            len += 3;
-    }
-    return len;
-};
+    var utf8 = exports;
 
-/**
- * Reads UTF8 bytes as a string.
- * @param {Uint8Array} buffer Source buffer
- * @param {number} start Source start
- * @param {number} end Source end
- * @returns {string} String read
- */
-utf8.read = function utf8_read(buffer, start, end) {
-    var len = end - start;
-    if (len < 1)
-        return "";
-    var parts = null,
-        chunk = [],
-        i = 0, // char offset
-        t;     // temporary
-    while (start < end) {
-        t = buffer[start++];
-        if (t < 128)
-            chunk[i++] = t;
-        else if (t > 191 && t < 224)
-            chunk[i++] = (t & 31) << 6 | buffer[start++] & 63;
-        else if (t > 239 && t < 365) {
-            t = ((t & 7) << 18 | (buffer[start++] & 63) << 12 | (buffer[start++] & 63) << 6 | buffer[start++] & 63) - 0x10000;
-            chunk[i++] = 0xD800 + (t >> 10);
-            chunk[i++] = 0xDC00 + (t & 1023);
-        } else
-            chunk[i++] = (t & 15) << 12 | (buffer[start++] & 63) << 6 | buffer[start++] & 63;
-        if (i > 8191) {
-            (parts || (parts = [])).push(String.fromCharCode.apply(String, chunk));
-            i = 0;
+    /**
+     * Calculates the UTF8 byte length of a string.
+     * @param {string} string String
+     * @returns {number} Byte length
+     */
+    utf8.length = function utf8_length(string) {
+        var len = 0,
+            c = 0;
+        for (var i = 0; i < string.length; ++i) {
+            c = string.charCodeAt(i);
+            if (c < 128) len += 1;else if (c < 2048) len += 2;else if ((c & 0xFC00) === 0xD800 && (string.charCodeAt(i + 1) & 0xFC00) === 0xDC00) {
+                ++i;
+                len += 4;
+            } else len += 3;
         }
-    }
-    if (parts) {
-        if (i)
-            parts.push(String.fromCharCode.apply(String, chunk.slice(0, i)));
-        return parts.join("");
-    }
-    return String.fromCharCode.apply(String, chunk.slice(0, i));
-};
+        return len;
+    };
 
-/**
- * Writes a string as UTF8 bytes.
- * @param {string} string Source string
- * @param {Uint8Array} buffer Destination buffer
- * @param {number} offset Destination offset
- * @returns {number} Bytes written
- */
-utf8.write = function utf8_write(string, buffer, offset) {
-    var start = offset,
-        c1, // character 1
+    /**
+     * Reads UTF8 bytes as a string.
+     * @param {Uint8Array} buffer Source buffer
+     * @param {number} start Source start
+     * @param {number} end Source end
+     * @returns {string} String read
+     */
+    utf8.read = function utf8_read(buffer, start, end) {
+        var len = end - start;
+        if (len < 1) return "";
+        var parts = null,
+            chunk = [],
+            i = 0,
+            // char offset
+        t; // temporary
+        while (start < end) {
+            t = buffer[start++];
+            if (t < 128) chunk[i++] = t;else if (t > 191 && t < 224) chunk[i++] = (t & 31) << 6 | buffer[start++] & 63;else if (t > 239 && t < 365) {
+                t = ((t & 7) << 18 | (buffer[start++] & 63) << 12 | (buffer[start++] & 63) << 6 | buffer[start++] & 63) - 0x10000;
+                chunk[i++] = 0xD800 + (t >> 10);
+                chunk[i++] = 0xDC00 + (t & 1023);
+            } else chunk[i++] = (t & 15) << 12 | (buffer[start++] & 63) << 6 | buffer[start++] & 63;
+            if (i > 8191) {
+                (parts || (parts = [])).push(String.fromCharCode.apply(String, chunk));
+                i = 0;
+            }
+        }
+        if (parts) {
+            if (i) parts.push(String.fromCharCode.apply(String, chunk.slice(0, i)));
+            return parts.join("");
+        }
+        return String.fromCharCode.apply(String, chunk.slice(0, i));
+    };
+
+    /**
+     * Writes a string as UTF8 bytes.
+     * @param {string} string Source string
+     * @param {Uint8Array} buffer Destination buffer
+     * @param {number} offset Destination offset
+     * @returns {number} Bytes written
+     */
+    utf8.write = function utf8_write(string, buffer, offset) {
+        var start = offset,
+            c1,
+            // character 1
         c2; // character 2
-    for (var i = 0; i < string.length; ++i) {
-        c1 = string.charCodeAt(i);
-        if (c1 < 128) {
-            buffer[offset++] = c1;
-        } else if (c1 < 2048) {
-            buffer[offset++] = c1 >> 6       | 192;
-            buffer[offset++] = c1       & 63 | 128;
-        } else if ((c1 & 0xFC00) === 0xD800 && ((c2 = string.charCodeAt(i + 1)) & 0xFC00) === 0xDC00) {
-            c1 = 0x10000 + ((c1 & 0x03FF) << 10) + (c2 & 0x03FF);
-            ++i;
-            buffer[offset++] = c1 >> 18      | 240;
-            buffer[offset++] = c1 >> 12 & 63 | 128;
-            buffer[offset++] = c1 >> 6  & 63 | 128;
-            buffer[offset++] = c1       & 63 | 128;
-        } else {
-            buffer[offset++] = c1 >> 12      | 224;
-            buffer[offset++] = c1 >> 6  & 63 | 128;
-            buffer[offset++] = c1       & 63 | 128;
+        for (var i = 0; i < string.length; ++i) {
+            c1 = string.charCodeAt(i);
+            if (c1 < 128) {
+                buffer[offset++] = c1;
+            } else if (c1 < 2048) {
+                buffer[offset++] = c1 >> 6 | 192;
+                buffer[offset++] = c1 & 63 | 128;
+            } else if ((c1 & 0xFC00) === 0xD800 && ((c2 = string.charCodeAt(i + 1)) & 0xFC00) === 0xDC00) {
+                c1 = 0x10000 + ((c1 & 0x03FF) << 10) + (c2 & 0x03FF);
+                ++i;
+                buffer[offset++] = c1 >> 18 | 240;
+                buffer[offset++] = c1 >> 12 & 63 | 128;
+                buffer[offset++] = c1 >> 6 & 63 | 128;
+                buffer[offset++] = c1 & 63 | 128;
+            } else {
+                buffer[offset++] = c1 >> 12 | 224;
+                buffer[offset++] = c1 >> 6 & 63 | 128;
+                buffer[offset++] = c1 & 63 | 128;
+            }
         }
-    }
-    return offset - start;
-};
+        return offset - start;
+    };
 });
 
 "use strict";
+
 var pool_1 = pool;
 
 /**
@@ -4693,13 +1931,12 @@ var pool_1 = pool;
  * @returns {PoolAllocator} Pooled allocator
  */
 function pool(alloc, slice, size) {
-    var SIZE   = size || 8192;
-    var MAX    = SIZE >>> 1;
-    var slab   = null;
+    var SIZE = size || 8192;
+    var MAX = SIZE >>> 1;
+    var slab = null;
     var offset = SIZE;
     return function pool_alloc(size) {
-        if (size < 1 || size > MAX)
-            return alloc(size);
+        if (size < 1 || size > MAX) return alloc(size);
         if (offset + size > SIZE) {
             slab = alloc(SIZE);
             offset = 0;
@@ -4713,8 +1950,6 @@ function pool(alloc, slice, size) {
 
 "use strict";
 var longbits = LongBits$1;
-
-
 
 /**
  * Constructs new long bits.
@@ -4749,9 +1984,15 @@ function LongBits$1(lo, hi) {
  */
 var zero = LongBits$1.zero = new LongBits$1(0, 0);
 
-zero.toNumber = function() { return 0; };
-zero.zzEncode = zero.zzDecode = function() { return this; };
-zero.length = function() { return 1; };
+zero.toNumber = function () {
+    return 0;
+};
+zero.zzEncode = zero.zzDecode = function () {
+    return this;
+};
+zero.length = function () {
+    return 1;
+};
 
 /**
  * Zero hash.
@@ -4766,11 +2007,9 @@ var zeroHash = LongBits$1.zeroHash = "\0\0\0\0\0\0\0\0";
  * @returns {util.LongBits} Instance
  */
 LongBits$1.fromNumber = function fromNumber(value) {
-    if (value === 0)
-        return zero;
+    if (value === 0) return zero;
     var sign = value < 0;
-    if (sign)
-        value = -value;
+    if (sign) value = -value;
     var lo = value >>> 0,
         hi = (value - lo) / 4294967296 >>> 0;
     if (sign) {
@@ -4778,8 +2017,7 @@ LongBits$1.fromNumber = function fromNumber(value) {
         lo = ~lo >>> 0;
         if (++lo > 4294967295) {
             lo = 0;
-            if (++hi > 4294967295)
-                hi = 0;
+            if (++hi > 4294967295) hi = 0;
         }
     }
     return new LongBits$1(lo, hi);
@@ -4791,14 +2029,10 @@ LongBits$1.fromNumber = function fromNumber(value) {
  * @returns {util.LongBits} Instance
  */
 LongBits$1.from = function from(value) {
-    if (typeof value === "number")
-        return LongBits$1.fromNumber(value);
+    if (typeof value === "number") return LongBits$1.fromNumber(value);
     if (minimal$2.isString(value)) {
         /* istanbul ignore else */
-        if (minimal$2.Long)
-            value = minimal$2.Long.fromString(value);
-        else
-            return LongBits$1.fromNumber(parseInt(value, 10));
+        if (minimal$2.Long) value = minimal$2.Long.fromString(value);else return LongBits$1.fromNumber(parseInt(value, 10));
     }
     return value.low || value.high ? new LongBits$1(value.low >>> 0, value.high >>> 0) : zero;
 };
@@ -4811,9 +2045,8 @@ LongBits$1.from = function from(value) {
 LongBits$1.prototype.toNumber = function toNumber(unsigned) {
     if (!unsigned && this.hi >>> 31) {
         var lo = ~this.lo + 1 >>> 0,
-            hi = ~this.hi     >>> 0;
-        if (!lo)
-            hi = hi + 1 >>> 0;
+            hi = ~this.hi >>> 0;
+        if (!lo) hi = hi + 1 >>> 0;
         return -(lo + hi * 4294967296);
     }
     return this.lo + this.hi * 4294967296;
@@ -4825,10 +2058,9 @@ LongBits$1.prototype.toNumber = function toNumber(unsigned) {
  * @returns {Long} Long
  */
 LongBits$1.prototype.toLong = function toLong(unsigned) {
-    return minimal$2.Long
-        ? new minimal$2.Long(this.lo | 0, this.hi | 0, Boolean(unsigned))
-        /* istanbul ignore next */
-        : { low: this.lo | 0, high: this.hi | 0, unsigned: Boolean(unsigned) };
+    return minimal$2.Long ? new minimal$2.Long(this.lo | 0, this.hi | 0, Boolean(unsigned))
+    /* istanbul ignore next */
+    : { low: this.lo | 0, high: this.hi | 0, unsigned: Boolean(unsigned) };
 };
 
 var charCodeAt = String.prototype.charCodeAt;
@@ -4839,19 +2071,8 @@ var charCodeAt = String.prototype.charCodeAt;
  * @returns {util.LongBits} Bits
  */
 LongBits$1.fromHash = function fromHash(hash) {
-    if (hash === zeroHash)
-        return zero;
-    return new LongBits$1(
-        ( charCodeAt.call(hash, 0)
-        | charCodeAt.call(hash, 1) << 8
-        | charCodeAt.call(hash, 2) << 16
-        | charCodeAt.call(hash, 3) << 24) >>> 0
-    ,
-        ( charCodeAt.call(hash, 4)
-        | charCodeAt.call(hash, 5) << 8
-        | charCodeAt.call(hash, 6) << 16
-        | charCodeAt.call(hash, 7) << 24) >>> 0
-    );
+    if (hash === zeroHash) return zero;
+    return new LongBits$1((charCodeAt.call(hash, 0) | charCodeAt.call(hash, 1) << 8 | charCodeAt.call(hash, 2) << 16 | charCodeAt.call(hash, 3) << 24) >>> 0, (charCodeAt.call(hash, 4) | charCodeAt.call(hash, 5) << 8 | charCodeAt.call(hash, 6) << 16 | charCodeAt.call(hash, 7) << 24) >>> 0);
 };
 
 /**
@@ -4859,16 +2080,7 @@ LongBits$1.fromHash = function fromHash(hash) {
  * @returns {string} Hash
  */
 LongBits$1.prototype.toHash = function toHash() {
-    return String.fromCharCode(
-        this.lo        & 255,
-        this.lo >>> 8  & 255,
-        this.lo >>> 16 & 255,
-        this.lo >>> 24      ,
-        this.hi        & 255,
-        this.hi >>> 8  & 255,
-        this.hi >>> 16 & 255,
-        this.hi >>> 24
-    );
+    return String.fromCharCode(this.lo & 255, this.lo >>> 8 & 255, this.lo >>> 16 & 255, this.lo >>> 24, this.hi & 255, this.hi >>> 8 & 255, this.hi >>> 16 & 255, this.hi >>> 24);
 };
 
 /**
@@ -4876,9 +2088,9 @@ LongBits$1.prototype.toHash = function toHash() {
  * @returns {util.LongBits} `this`
  */
 LongBits$1.prototype.zzEncode = function zzEncode() {
-    var mask =   this.hi >> 31;
-    this.hi  = ((this.hi << 1 | this.lo >>> 31) ^ mask) >>> 0;
-    this.lo  = ( this.lo << 1                   ^ mask) >>> 0;
+    var mask = this.hi >> 31;
+    this.hi = ((this.hi << 1 | this.lo >>> 31) ^ mask) >>> 0;
+    this.lo = (this.lo << 1 ^ mask) >>> 0;
     return this;
 };
 
@@ -4888,8 +2100,8 @@ LongBits$1.prototype.zzEncode = function zzEncode() {
  */
 LongBits$1.prototype.zzDecode = function zzDecode() {
     var mask = -(this.lo & 1);
-    this.lo  = ((this.lo >>> 1 | this.hi << 31) ^ mask) >>> 0;
-    this.hi  = ( this.hi >>> 1                  ^ mask) >>> 0;
+    this.lo = ((this.lo >>> 1 | this.hi << 31) ^ mask) >>> 0;
+    this.hi = (this.hi >>> 1 ^ mask) >>> 0;
     return this;
 };
 
@@ -4898,438 +2110,420 @@ LongBits$1.prototype.zzDecode = function zzDecode() {
  * @returns {number} Length
  */
 LongBits$1.prototype.length = function length() {
-    var part0 =  this.lo,
+    var part0 = this.lo,
         part1 = (this.lo >>> 28 | this.hi << 4) >>> 0,
-        part2 =  this.hi >>> 24;
-    return part2 === 0
-         ? part1 === 0
-           ? part0 < 16384
-             ? part0 < 128 ? 1 : 2
-             : part0 < 2097152 ? 3 : 4
-           : part1 < 16384
-             ? part1 < 128 ? 5 : 6
-             : part1 < 2097152 ? 7 : 8
-         : part2 < 128 ? 9 : 10;
+        part2 = this.hi >>> 24;
+    return part2 === 0 ? part1 === 0 ? part0 < 16384 ? part0 < 128 ? 1 : 2 : part0 < 2097152 ? 3 : 4 : part1 < 16384 ? part1 < 128 ? 5 : 6 : part1 < 2097152 ? 7 : 8 : part2 < 128 ? 9 : 10;
 };
 
-var minimal$2 = createCommonjsModule(function (module, exports) {
-"use strict";
-var util = exports;
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-// used to return a Promise where callback is omitted
-util.asPromise = aspromise;
+var minimal$2 = createCommonjsModule$1(function (module, exports) {
+    "use strict";
 
-// converts to / from base64 encoded strings
-util.base64 = base64_1;
+    var util = exports;
 
-// base class of rpc.Service
-util.EventEmitter = eventemitter;
+    // used to return a Promise where callback is omitted
+    util.asPromise = aspromise;
 
-// float handling accross browsers
-util.float = float_1;
+    // converts to / from base64 encoded strings
+    util.base64 = base64_1;
 
-// requires modules optionally and hides the call from bundlers
-util.inquire = inquire_1;
+    // base class of rpc.Service
+    util.EventEmitter = eventemitter;
 
-// converts to / from utf8 encoded strings
-util.utf8 = utf8_1;
+    // float handling accross browsers
+    util.float = float_1;
 
-// provides a node-like buffer pool in the browser
-util.pool = pool_1;
+    // requires modules optionally and hides the call from bundlers
+    util.inquire = inquire_1;
 
-// utility to work with the low and high bits of a 64 bit value
-util.LongBits = longbits;
+    // converts to / from utf8 encoded strings
+    util.utf8 = utf8_1;
 
-/**
- * An immuable empty array.
- * @memberof util
- * @type {Array.<*>}
- * @const
- */
-util.emptyArray = Object.freeze ? Object.freeze([]) : /* istanbul ignore next */ []; // used on prototypes
+    // provides a node-like buffer pool in the browser
+    util.pool = pool_1;
 
-/**
- * An immutable empty object.
- * @type {Object}
- * @const
- */
-util.emptyObject = Object.freeze ? Object.freeze({}) : /* istanbul ignore next */ {}; // used on prototypes
-
-/**
- * Whether running within node or not.
- * @memberof util
- * @type {boolean}
- * @const
- */
-util.isNode = Boolean(commonjsGlobal.process && commonjsGlobal.process.versions && commonjsGlobal.process.versions.node);
-
-/**
- * Tests if the specified value is an integer.
- * @function
- * @param {*} value Value to test
- * @returns {boolean} `true` if the value is an integer
- */
-util.isInteger = Number.isInteger || /* istanbul ignore next */ function isInteger(value) {
-    return typeof value === "number" && isFinite(value) && Math.floor(value) === value;
-};
-
-/**
- * Tests if the specified value is a string.
- * @param {*} value Value to test
- * @returns {boolean} `true` if the value is a string
- */
-util.isString = function isString(value) {
-    return typeof value === "string" || value instanceof String;
-};
-
-/**
- * Tests if the specified value is a non-null object.
- * @param {*} value Value to test
- * @returns {boolean} `true` if the value is a non-null object
- */
-util.isObject = function isObject(value) {
-    return value && typeof value === "object";
-};
-
-/**
- * Checks if a property on a message is considered to be present.
- * This is an alias of {@link util.isSet}.
- * @function
- * @param {Object} obj Plain object or message instance
- * @param {string} prop Property name
- * @returns {boolean} `true` if considered to be present, otherwise `false`
- */
-util.isset =
-
-/**
- * Checks if a property on a message is considered to be present.
- * @param {Object} obj Plain object or message instance
- * @param {string} prop Property name
- * @returns {boolean} `true` if considered to be present, otherwise `false`
- */
-util.isSet = function isSet(obj, prop) {
-    var value = obj[prop];
-    if (value != null && obj.hasOwnProperty(prop)) // eslint-disable-line eqeqeq, no-prototype-builtins
-        return typeof value !== "object" || (Array.isArray(value) ? value.length : Object.keys(value).length) > 0;
-    return false;
-};
-
-/**
- * Any compatible Buffer instance.
- * This is a minimal stand-alone definition of a Buffer instance. The actual type is that exported by node's typings.
- * @interface Buffer
- * @extends Uint8Array
- */
-
-/**
- * Node's Buffer class if available.
- * @type {Constructor<Buffer>}
- */
-util.Buffer = (function() {
-    try {
-        var Buffer = util.inquire("buffer").Buffer;
-        // refuse to use non-node buffers if not explicitly assigned (perf reasons):
-        return Buffer.prototype.utf8Write ? Buffer : /* istanbul ignore next */ null;
-    } catch (e) {
-        /* istanbul ignore next */
-        return null;
-    }
-})();
-
-// Internal alias of or polyfull for Buffer.from.
-util._Buffer_from = null;
-
-// Internal alias of or polyfill for Buffer.allocUnsafe.
-util._Buffer_allocUnsafe = null;
-
-/**
- * Creates a new buffer of whatever type supported by the environment.
- * @param {number|number[]} [sizeOrArray=0] Buffer size or number array
- * @returns {Uint8Array|Buffer} Buffer
- */
-util.newBuffer = function newBuffer(sizeOrArray) {
-    /* istanbul ignore next */
-    return typeof sizeOrArray === "number"
-        ? util.Buffer
-            ? util._Buffer_allocUnsafe(sizeOrArray)
-            : new util.Array(sizeOrArray)
-        : util.Buffer
-            ? util._Buffer_from(sizeOrArray)
-            : typeof Uint8Array === "undefined"
-                ? sizeOrArray
-                : new Uint8Array(sizeOrArray);
-};
-
-/**
- * Array implementation used in the browser. `Uint8Array` if supported, otherwise `Array`.
- * @type {Constructor<Uint8Array>}
- */
-util.Array = typeof Uint8Array !== "undefined" ? Uint8Array /* istanbul ignore next */ : Array;
-
-/**
- * Any compatible Long instance.
- * This is a minimal stand-alone definition of a Long instance. The actual type is that exported by long.js.
- * @interface Long
- * @property {number} low Low bits
- * @property {number} high High bits
- * @property {boolean} unsigned Whether unsigned or not
- */
-
-/**
- * Long.js's Long class if available.
- * @type {Constructor<Long>}
- */
-util.Long = /* istanbul ignore next */ commonjsGlobal.dcodeIO && /* istanbul ignore next */ commonjsGlobal.dcodeIO.Long || util.inquire("long");
-
-/**
- * Regular expression used to verify 2 bit (`bool`) map keys.
- * @type {RegExp}
- * @const
- */
-util.key2Re = /^true|false|0|1$/;
-
-/**
- * Regular expression used to verify 32 bit (`int32` etc.) map keys.
- * @type {RegExp}
- * @const
- */
-util.key32Re = /^-?(?:0|[1-9][0-9]*)$/;
-
-/**
- * Regular expression used to verify 64 bit (`int64` etc.) map keys.
- * @type {RegExp}
- * @const
- */
-util.key64Re = /^(?:[\\x00-\\xff]{8}|-?(?:0|[1-9][0-9]*))$/;
-
-/**
- * Converts a number or long to an 8 characters long hash string.
- * @param {Long|number} value Value to convert
- * @returns {string} Hash
- */
-util.longToHash = function longToHash(value) {
-    return value
-        ? util.LongBits.from(value).toHash()
-        : util.LongBits.zeroHash;
-};
-
-/**
- * Converts an 8 characters long hash string to a long or number.
- * @param {string} hash Hash
- * @param {boolean} [unsigned=false] Whether unsigned or not
- * @returns {Long|number} Original value
- */
-util.longFromHash = function longFromHash(hash, unsigned) {
-    var bits = util.LongBits.fromHash(hash);
-    if (util.Long)
-        return util.Long.fromBits(bits.lo, bits.hi, unsigned);
-    return bits.toNumber(Boolean(unsigned));
-};
-
-/**
- * Merges the properties of the source object into the destination object.
- * @memberof util
- * @param {Object.<string,*>} dst Destination object
- * @param {Object.<string,*>} src Source object
- * @param {boolean} [ifNotSet=false] Merges only if the key is not already set
- * @returns {Object.<string,*>} Destination object
- */
-function merge(dst, src, ifNotSet) { // used by converters
-    for (var keys = Object.keys(src), i = 0; i < keys.length; ++i)
-        if (dst[keys[i]] === undefined || !ifNotSet)
-            dst[keys[i]] = src[keys[i]];
-    return dst;
-}
-
-util.merge = merge;
-
-/**
- * Converts the first character of a string to lower case.
- * @param {string} str String to convert
- * @returns {string} Converted string
- */
-util.lcFirst = function lcFirst(str) {
-    return str.charAt(0).toLowerCase() + str.substring(1);
-};
-
-/**
- * Creates a custom error constructor.
- * @memberof util
- * @param {string} name Error name
- * @returns {Constructor<Error>} Custom error constructor
- */
-function newError(name) {
-
-    function CustomError(message, properties) {
-
-        if (!(this instanceof CustomError))
-            return new CustomError(message, properties);
-
-        // Error.call(this, message);
-        // ^ just returns a new error instance because the ctor can be called as a function
-
-        Object.defineProperty(this, "message", { get: function() { return message; } });
-
-        /* istanbul ignore next */
-        if (Error.captureStackTrace) // node
-            Error.captureStackTrace(this, CustomError);
-        else
-            Object.defineProperty(this, "stack", { value: (new Error()).stack || "" });
-
-        if (properties)
-            merge(this, properties);
-    }
-
-    (CustomError.prototype = Object.create(Error.prototype)).constructor = CustomError;
-
-    Object.defineProperty(CustomError.prototype, "name", { get: function() { return name; } });
-
-    CustomError.prototype.toString = function toString() {
-        return this.name + ": " + this.message;
-    };
-
-    return CustomError;
-}
-
-util.newError = newError;
-
-/**
- * Constructs a new protocol error.
- * @classdesc Error subclass indicating a protocol specifc error.
- * @memberof util
- * @extends Error
- * @template T extends Message<T>
- * @constructor
- * @param {string} message Error message
- * @param {Object.<string,*>} [properties] Additional properties
- * @example
- * try {
- *     MyMessage.decode(someBuffer); // throws if required fields are missing
- * } catch (e) {
- *     if (e instanceof ProtocolError && e.instance)
- *         console.log("decoded so far: " + JSON.stringify(e.instance));
- * }
- */
-util.ProtocolError = newError("ProtocolError");
-
-/**
- * So far decoded message instance.
- * @name util.ProtocolError#instance
- * @type {Message<T>}
- */
-
-/**
- * A OneOf getter as returned by {@link util.oneOfGetter}.
- * @typedef OneOfGetter
- * @type {function}
- * @returns {string|undefined} Set field name, if any
- */
-
-/**
- * Builds a getter for a oneof's present field name.
- * @param {string[]} fieldNames Field names
- * @returns {OneOfGetter} Unbound getter
- */
-util.oneOfGetter = function getOneOf(fieldNames) {
-    var fieldMap = {};
-    for (var i = 0; i < fieldNames.length; ++i)
-        fieldMap[fieldNames[i]] = 1;
+    // utility to work with the low and high bits of a 64 bit value
+    util.LongBits = longbits;
 
     /**
+     * An immuable empty array.
+     * @memberof util
+     * @type {Array.<*>}
+     * @const
+     */
+    util.emptyArray = Object.freeze ? Object.freeze([]) : /* istanbul ignore next */[]; // used on prototypes
+
+    /**
+     * An immutable empty object.
+     * @type {Object}
+     * @const
+     */
+    util.emptyObject = Object.freeze ? Object.freeze({}) : /* istanbul ignore next */{}; // used on prototypes
+
+    /**
+     * Whether running within node or not.
+     * @memberof util
+     * @type {boolean}
+     * @const
+     */
+    util.isNode = Boolean(commonjsGlobal$1.process && commonjsGlobal$1.process.versions && commonjsGlobal$1.process.versions.node);
+
+    /**
+     * Tests if the specified value is an integer.
+     * @function
+     * @param {*} value Value to test
+     * @returns {boolean} `true` if the value is an integer
+     */
+    util.isInteger = Number.isInteger || /* istanbul ignore next */function isInteger(value) {
+        return typeof value === "number" && isFinite(value) && Math.floor(value) === value;
+    };
+
+    /**
+     * Tests if the specified value is a string.
+     * @param {*} value Value to test
+     * @returns {boolean} `true` if the value is a string
+     */
+    util.isString = function isString(value) {
+        return typeof value === "string" || value instanceof String;
+    };
+
+    /**
+     * Tests if the specified value is a non-null object.
+     * @param {*} value Value to test
+     * @returns {boolean} `true` if the value is a non-null object
+     */
+    util.isObject = function isObject(value) {
+        return value && (typeof value === 'undefined' ? 'undefined' : _typeof(value)) === "object";
+    };
+
+    /**
+     * Checks if a property on a message is considered to be present.
+     * This is an alias of {@link util.isSet}.
+     * @function
+     * @param {Object} obj Plain object or message instance
+     * @param {string} prop Property name
+     * @returns {boolean} `true` if considered to be present, otherwise `false`
+     */
+    util.isset =
+
+    /**
+     * Checks if a property on a message is considered to be present.
+     * @param {Object} obj Plain object or message instance
+     * @param {string} prop Property name
+     * @returns {boolean} `true` if considered to be present, otherwise `false`
+     */
+    util.isSet = function isSet(obj, prop) {
+        var value = obj[prop];
+        if (value != null && obj.hasOwnProperty(prop)) // eslint-disable-line eqeqeq, no-prototype-builtins
+            return (typeof value === 'undefined' ? 'undefined' : _typeof(value)) !== "object" || (Array.isArray(value) ? value.length : Object.keys(value).length) > 0;
+        return false;
+    };
+
+    /**
+     * Any compatible Buffer instance.
+     * This is a minimal stand-alone definition of a Buffer instance. The actual type is that exported by node's typings.
+     * @interface Buffer
+     * @extends Uint8Array
+     */
+
+    /**
+     * Node's Buffer class if available.
+     * @type {Constructor<Buffer>}
+     */
+    util.Buffer = function () {
+        try {
+            var Buffer = util.inquire("buffer").Buffer;
+            // refuse to use non-node buffers if not explicitly assigned (perf reasons):
+            return Buffer.prototype.utf8Write ? Buffer : /* istanbul ignore next */null;
+        } catch (e) {
+            /* istanbul ignore next */
+            return null;
+        }
+    }();
+
+    // Internal alias of or polyfull for Buffer.from.
+    util._Buffer_from = null;
+
+    // Internal alias of or polyfill for Buffer.allocUnsafe.
+    util._Buffer_allocUnsafe = null;
+
+    /**
+     * Creates a new buffer of whatever type supported by the environment.
+     * @param {number|number[]} [sizeOrArray=0] Buffer size or number array
+     * @returns {Uint8Array|Buffer} Buffer
+     */
+    util.newBuffer = function newBuffer(sizeOrArray) {
+        /* istanbul ignore next */
+        return typeof sizeOrArray === "number" ? util.Buffer ? util._Buffer_allocUnsafe(sizeOrArray) : new util.Array(sizeOrArray) : util.Buffer ? util._Buffer_from(sizeOrArray) : typeof Uint8Array === "undefined" ? sizeOrArray : new Uint8Array(sizeOrArray);
+    };
+
+    /**
+     * Array implementation used in the browser. `Uint8Array` if supported, otherwise `Array`.
+     * @type {Constructor<Uint8Array>}
+     */
+    util.Array = typeof Uint8Array !== "undefined" ? Uint8Array /* istanbul ignore next */ : Array;
+
+    /**
+     * Any compatible Long instance.
+     * This is a minimal stand-alone definition of a Long instance. The actual type is that exported by long.js.
+     * @interface Long
+     * @property {number} low Low bits
+     * @property {number} high High bits
+     * @property {boolean} unsigned Whether unsigned or not
+     */
+
+    /**
+     * Long.js's Long class if available.
+     * @type {Constructor<Long>}
+     */
+    util.Long = /* istanbul ignore next */commonjsGlobal$1.dcodeIO && /* istanbul ignore next */commonjsGlobal$1.dcodeIO.Long || util.inquire("long");
+
+    /**
+     * Regular expression used to verify 2 bit (`bool`) map keys.
+     * @type {RegExp}
+     * @const
+     */
+    util.key2Re = /^true|false|0|1$/;
+
+    /**
+     * Regular expression used to verify 32 bit (`int32` etc.) map keys.
+     * @type {RegExp}
+     * @const
+     */
+    util.key32Re = /^-?(?:0|[1-9][0-9]*)$/;
+
+    /**
+     * Regular expression used to verify 64 bit (`int64` etc.) map keys.
+     * @type {RegExp}
+     * @const
+     */
+    util.key64Re = /^(?:[\\x00-\\xff]{8}|-?(?:0|[1-9][0-9]*))$/;
+
+    /**
+     * Converts a number or long to an 8 characters long hash string.
+     * @param {Long|number} value Value to convert
+     * @returns {string} Hash
+     */
+    util.longToHash = function longToHash(value) {
+        return value ? util.LongBits.from(value).toHash() : util.LongBits.zeroHash;
+    };
+
+    /**
+     * Converts an 8 characters long hash string to a long or number.
+     * @param {string} hash Hash
+     * @param {boolean} [unsigned=false] Whether unsigned or not
+     * @returns {Long|number} Original value
+     */
+    util.longFromHash = function longFromHash(hash, unsigned) {
+        var bits = util.LongBits.fromHash(hash);
+        if (util.Long) return util.Long.fromBits(bits.lo, bits.hi, unsigned);
+        return bits.toNumber(Boolean(unsigned));
+    };
+
+    /**
+     * Merges the properties of the source object into the destination object.
+     * @memberof util
+     * @param {Object.<string,*>} dst Destination object
+     * @param {Object.<string,*>} src Source object
+     * @param {boolean} [ifNotSet=false] Merges only if the key is not already set
+     * @returns {Object.<string,*>} Destination object
+     */
+    function merge(dst, src, ifNotSet) {
+        // used by converters
+        for (var keys = Object.keys(src), i = 0; i < keys.length; ++i) {
+            if (dst[keys[i]] === undefined || !ifNotSet) dst[keys[i]] = src[keys[i]];
+        }return dst;
+    }
+
+    util.merge = merge;
+
+    /**
+     * Converts the first character of a string to lower case.
+     * @param {string} str String to convert
+     * @returns {string} Converted string
+     */
+    util.lcFirst = function lcFirst(str) {
+        return str.charAt(0).toLowerCase() + str.substring(1);
+    };
+
+    /**
+     * Creates a custom error constructor.
+     * @memberof util
+     * @param {string} name Error name
+     * @returns {Constructor<Error>} Custom error constructor
+     */
+    function newError(name) {
+
+        function CustomError(message, properties) {
+
+            if (!(this instanceof CustomError)) return new CustomError(message, properties);
+
+            // Error.call(this, message);
+            // ^ just returns a new error instance because the ctor can be called as a function
+
+            Object.defineProperty(this, "message", { get: function get() {
+                    return message;
+                } });
+
+            /* istanbul ignore next */
+            if (Error.captureStackTrace) // node
+                Error.captureStackTrace(this, CustomError);else Object.defineProperty(this, "stack", { value: new Error().stack || "" });
+
+            if (properties) merge(this, properties);
+        }
+
+        (CustomError.prototype = Object.create(Error.prototype)).constructor = CustomError;
+
+        Object.defineProperty(CustomError.prototype, "name", { get: function get() {
+                return name;
+            } });
+
+        CustomError.prototype.toString = function toString() {
+            return this.name + ": " + this.message;
+        };
+
+        return CustomError;
+    }
+
+    util.newError = newError;
+
+    /**
+     * Constructs a new protocol error.
+     * @classdesc Error subclass indicating a protocol specifc error.
+     * @memberof util
+     * @extends Error
+     * @template T extends Message<T>
+     * @constructor
+     * @param {string} message Error message
+     * @param {Object.<string,*>} [properties] Additional properties
+     * @example
+     * try {
+     *     MyMessage.decode(someBuffer); // throws if required fields are missing
+     * } catch (e) {
+     *     if (e instanceof ProtocolError && e.instance)
+     *         console.log("decoded so far: " + JSON.stringify(e.instance));
+     * }
+     */
+    util.ProtocolError = newError("ProtocolError");
+
+    /**
+     * So far decoded message instance.
+     * @name util.ProtocolError#instance
+     * @type {Message<T>}
+     */
+
+    /**
+     * A OneOf getter as returned by {@link util.oneOfGetter}.
+     * @typedef OneOfGetter
+     * @type {function}
      * @returns {string|undefined} Set field name, if any
-     * @this Object
-     * @ignore
      */
-    return function() { // eslint-disable-line consistent-return
-        for (var keys = Object.keys(this), i = keys.length - 1; i > -1; --i)
-            if (fieldMap[keys[i]] === 1 && this[keys[i]] !== undefined && this[keys[i]] !== null)
-                return keys[i];
-    };
-};
-
-/**
- * A OneOf setter as returned by {@link util.oneOfSetter}.
- * @typedef OneOfSetter
- * @type {function}
- * @param {string|undefined} value Field name
- * @returns {undefined}
- */
-
-/**
- * Builds a setter for a oneof's present field name.
- * @param {string[]} fieldNames Field names
- * @returns {OneOfSetter} Unbound setter
- */
-util.oneOfSetter = function setOneOf(fieldNames) {
 
     /**
-     * @param {string} name Field name
-     * @returns {undefined}
-     * @this Object
-     * @ignore
+     * Builds a getter for a oneof's present field name.
+     * @param {string[]} fieldNames Field names
+     * @returns {OneOfGetter} Unbound getter
      */
-    return function(name) {
-        for (var i = 0; i < fieldNames.length; ++i)
-            if (fieldNames[i] !== name)
-                delete this[fieldNames[i]];
+    util.oneOfGetter = function getOneOf(fieldNames) {
+        var fieldMap = {};
+        for (var i = 0; i < fieldNames.length; ++i) {
+            fieldMap[fieldNames[i]] = 1;
+        } /**
+           * @returns {string|undefined} Set field name, if any
+           * @this Object
+           * @ignore
+           */
+        return function () {
+            // eslint-disable-line consistent-return
+            for (var keys = Object.keys(this), i = keys.length - 1; i > -1; --i) {
+                if (fieldMap[keys[i]] === 1 && this[keys[i]] !== undefined && this[keys[i]] !== null) return keys[i];
+            }
+        };
     };
-};
 
-/**
- * Default conversion options used for {@link Message#toJSON} implementations.
- *
- * These options are close to proto3's JSON mapping with the exception that internal types like Any are handled just like messages. More precisely:
- *
- * - Longs become strings
- * - Enums become string keys
- * - Bytes become base64 encoded strings
- * - (Sub-)Messages become plain objects
- * - Maps become plain objects with all string keys
- * - Repeated fields become arrays
- * - NaN and Infinity for float and double fields become strings
- *
- * @type {IConversionOptions}
- * @see https://developers.google.com/protocol-buffers/docs/proto3?hl=en#json
- */
-util.toJSONOptions = {
-    longs: String,
-    enums: String,
-    bytes: String,
-    json: true
-};
+    /**
+     * A OneOf setter as returned by {@link util.oneOfSetter}.
+     * @typedef OneOfSetter
+     * @type {function}
+     * @param {string|undefined} value Field name
+     * @returns {undefined}
+     */
 
-util._configure = function() {
-    var Buffer = util.Buffer;
-    /* istanbul ignore if */
-    if (!Buffer) {
-        util._Buffer_from = util._Buffer_allocUnsafe = null;
-        return;
-    }
-    // because node 4.x buffers are incompatible & immutable
-    // see: https://github.com/dcodeIO/protobuf.js/pull/665
-    util._Buffer_from = Buffer.from !== Uint8Array.from && Buffer.from ||
+    /**
+     * Builds a setter for a oneof's present field name.
+     * @param {string[]} fieldNames Field names
+     * @returns {OneOfSetter} Unbound setter
+     */
+    util.oneOfSetter = function setOneOf(fieldNames) {
+
+        /**
+         * @param {string} name Field name
+         * @returns {undefined}
+         * @this Object
+         * @ignore
+         */
+        return function (name) {
+            for (var i = 0; i < fieldNames.length; ++i) {
+                if (fieldNames[i] !== name) delete this[fieldNames[i]];
+            }
+        };
+    };
+
+    /**
+     * Default conversion options used for {@link Message#toJSON} implementations.
+     *
+     * These options are close to proto3's JSON mapping with the exception that internal types like Any are handled just like messages. More precisely:
+     *
+     * - Longs become strings
+     * - Enums become string keys
+     * - Bytes become base64 encoded strings
+     * - (Sub-)Messages become plain objects
+     * - Maps become plain objects with all string keys
+     * - Repeated fields become arrays
+     * - NaN and Infinity for float and double fields become strings
+     *
+     * @type {IConversionOptions}
+     * @see https://developers.google.com/protocol-buffers/docs/proto3?hl=en#json
+     */
+    util.toJSONOptions = {
+        longs: String,
+        enums: String,
+        bytes: String,
+        json: true
+    };
+
+    util._configure = function () {
+        var Buffer = util.Buffer;
+        /* istanbul ignore if */
+        if (!Buffer) {
+            util._Buffer_from = util._Buffer_allocUnsafe = null;
+            return;
+        }
+        // because node 4.x buffers are incompatible & immutable
+        // see: https://github.com/dcodeIO/protobuf.js/pull/665
+        util._Buffer_from = Buffer.from !== Uint8Array.from && Buffer.from ||
         /* istanbul ignore next */
         function Buffer_from(value, encoding) {
             return new Buffer(value, encoding);
         };
-    util._Buffer_allocUnsafe = Buffer.allocUnsafe ||
+        util._Buffer_allocUnsafe = Buffer.allocUnsafe ||
         /* istanbul ignore next */
         function Buffer_allocUnsafe(size) {
             return new Buffer(size);
         };
-};
+    };
 });
 
 "use strict";
 var writer = Writer;
 
-
-
 var BufferWriter; // cyclic
 
-var LongBits  = minimal$2.LongBits;
-var base64    = minimal$2.base64;
-var utf8      = minimal$2.utf8;
+var LongBits = minimal$2.LongBits;
+var base64 = minimal$2.base64;
+var utf8 = minimal$2.utf8;
 
 /**
  * Constructs a new writer operation instance.
@@ -5448,16 +2642,15 @@ function Writer() {
  * @function
  * @returns {BufferWriter|Writer} A {@link BufferWriter} when Buffers are supported, otherwise a {@link Writer}
  */
-Writer.create = minimal$2.Buffer
-    ? function create_buffer_setup() {
-        return (Writer.create = function create_buffer() {
-            return new BufferWriter();
-        })();
-    }
-    /* istanbul ignore next */
-    : function create_array() {
-        return new Writer();
-    };
+Writer.create = minimal$2.Buffer ? function create_buffer_setup() {
+    return (Writer.create = function create_buffer() {
+        return new BufferWriter();
+    })();
+}
+/* istanbul ignore next */
+: function create_array() {
+    return new Writer();
+};
 
 /**
  * Allocates a buffer of the specified size.
@@ -5470,8 +2663,7 @@ Writer.alloc = function alloc(size) {
 
 // Use Uint8Array buffer pool in the browser, just like node does with buffers
 /* istanbul ignore else */
-if (minimal$2.Array !== Array)
-    Writer.alloc = minimal$2.pool(Writer.alloc, minimal$2.Array.prototype.subarray);
+if (minimal$2.Array !== Array) Writer.alloc = minimal$2.pool(Writer.alloc, minimal$2.Array.prototype.subarray);
 
 /**
  * Pushes a new operation to the queue.
@@ -5525,14 +2717,7 @@ VarintOp.prototype.fn = writeVarint32;
 Writer.prototype.uint32 = function write_uint32(value) {
     // here, the call to this.push has been inlined and a varint specific Op subclass is used.
     // uint32 is by far the most frequently used operation and benefits significantly from this.
-    this.len += (this.tail = this.tail.next = new VarintOp(
-        (value = value >>> 0)
-                < 128       ? 1
-        : value < 16384     ? 2
-        : value < 2097152   ? 3
-        : value < 268435456 ? 4
-        :                     5,
-    value)).len;
+    this.len += (this.tail = this.tail.next = new VarintOp((value = value >>> 0) < 128 ? 1 : value < 16384 ? 2 : value < 2097152 ? 3 : value < 268435456 ? 4 : 5, value)).len;
     return this;
 };
 
@@ -5543,9 +2728,8 @@ Writer.prototype.uint32 = function write_uint32(value) {
  * @returns {Writer} `this`
  */
 Writer.prototype.int32 = function write_int32(value) {
-    return value < 0
-        ? this._push(writeVarint64, 10, LongBits.fromNumber(value)) // 10 bytes per spec
-        : this.uint32(value);
+    return value < 0 ? this._push(writeVarint64, 10, LongBits.fromNumber(value)) // 10 bytes per spec
+    : this.uint32(value);
 };
 
 /**
@@ -5611,10 +2795,10 @@ Writer.prototype.bool = function write_bool(value) {
 };
 
 function writeFixed32(val, buf, pos) {
-    buf[pos    ] =  val         & 255;
-    buf[pos + 1] =  val >>> 8   & 255;
-    buf[pos + 2] =  val >>> 16  & 255;
-    buf[pos + 3] =  val >>> 24;
+    buf[pos] = val & 255;
+    buf[pos + 1] = val >>> 8 & 255;
+    buf[pos + 2] = val >>> 16 & 255;
+    buf[pos + 3] = val >>> 24;
 }
 
 /**
@@ -5674,15 +2858,15 @@ Writer.prototype.double = function write_double(value) {
     return this._push(minimal$2.float.writeDoubleLE, 8, value);
 };
 
-var writeBytes = minimal$2.Array.prototype.set
-    ? function writeBytes_set(val, buf, pos) {
-        buf.set(val, pos); // also works for plain array values
+var writeBytes = minimal$2.Array.prototype.set ? function writeBytes_set(val, buf, pos) {
+    buf.set(val, pos); // also works for plain array values
+}
+/* istanbul ignore next */
+: function writeBytes_for(val, buf, pos) {
+    for (var i = 0; i < val.length; ++i) {
+        buf[pos + i] = val[i];
     }
-    /* istanbul ignore next */
-    : function writeBytes_for(val, buf, pos) {
-        for (var i = 0; i < val.length; ++i)
-            buf[pos + i] = val[i];
-    };
+};
 
 /**
  * Writes a sequence of bytes.
@@ -5691,8 +2875,7 @@ var writeBytes = minimal$2.Array.prototype.set
  */
 Writer.prototype.bytes = function write_bytes(value) {
     var len = value.length >>> 0;
-    if (!len)
-        return this._push(writeByte, 1, 0);
+    if (!len) return this._push(writeByte, 1, 0);
     if (minimal$2.isString(value)) {
         var buf = Writer.alloc(len = base64.length(value));
         base64.decode(value, buf, 0);
@@ -5708,9 +2891,7 @@ Writer.prototype.bytes = function write_bytes(value) {
  */
 Writer.prototype.string = function write_string(value) {
     var len = utf8.length(value);
-    return len
-        ? this.uint32(len)._push(utf8.write, len, value)
-        : this._push(writeByte, 1, 0);
+    return len ? this.uint32(len)._push(utf8.write, len, value) : this._push(writeByte, 1, 0);
 };
 
 /**
@@ -5731,13 +2912,13 @@ Writer.prototype.fork = function fork() {
  */
 Writer.prototype.reset = function reset() {
     if (this.states) {
-        this.head   = this.states.head;
-        this.tail   = this.states.tail;
-        this.len    = this.states.len;
+        this.head = this.states.head;
+        this.tail = this.states.tail;
+        this.len = this.states.len;
         this.states = this.states.next;
     } else {
         this.head = this.tail = new Op(noop, 0, 0);
-        this.len  = 0;
+        this.len = 0;
     }
     return this;
 };
@@ -5749,7 +2930,7 @@ Writer.prototype.reset = function reset() {
 Writer.prototype.ldelim = function ldelim() {
     var head = this.head,
         tail = this.tail,
-        len  = this.len;
+        len = this.len;
     this.reset().uint32(len);
     if (len) {
         this.tail.next = head.next; // skip noop
@@ -5764,9 +2945,10 @@ Writer.prototype.ldelim = function ldelim() {
  * @returns {Uint8Array} Finished buffer
  */
 Writer.prototype.finish = function finish() {
-    var head = this.head.next, // skip noop
-        buf  = this.constructor.alloc(this.len),
-        pos  = 0;
+    var head = this.head.next,
+        // skip noop
+    buf = this.constructor.alloc(this.len),
+        pos = 0;
     while (head) {
         head.fn(head.val, buf, pos);
         pos += head.len;
@@ -5776,7 +2958,7 @@ Writer.prototype.finish = function finish() {
     return buf;
 };
 
-Writer._configure = function(BufferWriter_) {
+Writer._configure = function (BufferWriter_) {
     BufferWriter = BufferWriter_;
 };
 
@@ -5786,8 +2968,6 @@ var writer_buffer = BufferWriter$1;
 // extends Writer
 
 (BufferWriter$1.prototype = Object.create(writer.prototype)).constructor = BufferWriter$1;
-
-
 
 var Buffer = minimal$2.Buffer;
 
@@ -5810,37 +2990,33 @@ BufferWriter$1.alloc = function alloc_buffer(size) {
     return (BufferWriter$1.alloc = minimal$2._Buffer_allocUnsafe)(size);
 };
 
-var writeBytesBuffer = Buffer && Buffer.prototype instanceof Uint8Array && Buffer.prototype.set.name === "set"
-    ? function writeBytesBuffer_set(val, buf, pos) {
-        buf.set(val, pos); // faster than copy (requires node >= 4 where Buffers extend Uint8Array and set is properly inherited)
-                           // also works for plain array values
+var writeBytesBuffer = Buffer && Buffer.prototype instanceof Uint8Array && Buffer.prototype.set.name === "set" ? function writeBytesBuffer_set(val, buf, pos) {
+    buf.set(val, pos); // faster than copy (requires node >= 4 where Buffers extend Uint8Array and set is properly inherited)
+    // also works for plain array values
+}
+/* istanbul ignore next */
+: function writeBytesBuffer_copy(val, buf, pos) {
+    if (val.copy) // Buffer values
+        val.copy(buf, pos, 0, val.length);else for (var i = 0; i < val.length;) {
+        // plain array values
+        buf[pos++] = val[i++];
     }
-    /* istanbul ignore next */
-    : function writeBytesBuffer_copy(val, buf, pos) {
-        if (val.copy) // Buffer values
-            val.copy(buf, pos, 0, val.length);
-        else for (var i = 0; i < val.length;) // plain array values
-            buf[pos++] = val[i++];
-    };
+};
 
 /**
  * @override
  */
 BufferWriter$1.prototype.bytes = function write_bytes_buffer(value) {
-    if (minimal$2.isString(value))
-        value = minimal$2._Buffer_from(value, "base64");
+    if (minimal$2.isString(value)) value = minimal$2._Buffer_from(value, "base64");
     var len = value.length >>> 0;
     this.uint32(len);
-    if (len)
-        this._push(writeBytesBuffer, len, value);
+    if (len) this._push(writeBytesBuffer, len, value);
     return this;
 };
 
 function writeStringBuffer(val, buf, pos) {
     if (val.length < 40) // plain js is faster for short strings (probably due to redundant assertions)
-        minimal$2.utf8.write(val, buf, pos);
-    else
-        buf.utf8Write(val, pos);
+        minimal$2.utf8.write(val, buf, pos);else buf.utf8Write(val, pos);
 }
 
 /**
@@ -5849,11 +3025,9 @@ function writeStringBuffer(val, buf, pos) {
 BufferWriter$1.prototype.string = function write_string_buffer(value) {
     var len = Buffer.byteLength(value);
     this.uint32(len);
-    if (len)
-        this._push(writeStringBuffer, len, value);
+    if (len) this._push(writeStringBuffer, len, value);
     return this;
 };
-
 
 /**
  * Finishes the write operation.
@@ -5865,12 +3039,10 @@ BufferWriter$1.prototype.string = function write_string_buffer(value) {
 "use strict";
 var reader = Reader;
 
-
-
 var BufferReader; // cyclic
 
-var LongBits$2  = minimal$2.LongBits;
-var utf8$1      = minimal$2.utf8;
+var LongBits$2 = minimal$2.LongBits;
+var utf8$1 = minimal$2.utf8;
 
 /* istanbul ignore next */
 function indexOutOfRange(reader, writeLength) {
@@ -5904,18 +3076,15 @@ function Reader(buffer) {
     this.len = buffer.length;
 }
 
-var create_array = typeof Uint8Array !== "undefined"
-    ? function create_typed_array(buffer) {
-        if (buffer instanceof Uint8Array || Array.isArray(buffer))
-            return new Reader(buffer);
-        throw Error("illegal buffer");
-    }
-    /* istanbul ignore next */
-    : function create_array(buffer) {
-        if (Array.isArray(buffer))
-            return new Reader(buffer);
-        throw Error("illegal buffer");
-    };
+var create_array = typeof Uint8Array !== "undefined" ? function create_typed_array(buffer) {
+    if (buffer instanceof Uint8Array || Array.isArray(buffer)) return new Reader(buffer);
+    throw Error("illegal buffer");
+}
+/* istanbul ignore next */
+: function create_array(buffer) {
+    if (Array.isArray(buffer)) return new Reader(buffer);
+    throw Error("illegal buffer");
+};
 
 /**
  * Creates a new reader using the specified buffer.
@@ -5924,33 +3093,31 @@ var create_array = typeof Uint8Array !== "undefined"
  * @returns {Reader|BufferReader} A {@link BufferReader} if `buffer` is a Buffer, otherwise a {@link Reader}
  * @throws {Error} If `buffer` is not a valid buffer
  */
-Reader.create = minimal$2.Buffer
-    ? function create_buffer_setup(buffer) {
-        return (Reader.create = function create_buffer(buffer) {
-            return minimal$2.Buffer.isBuffer(buffer)
-                ? new BufferReader(buffer)
-                /* istanbul ignore next */
-                : create_array(buffer);
-        })(buffer);
-    }
-    /* istanbul ignore next */
-    : create_array;
+Reader.create = minimal$2.Buffer ? function create_buffer_setup(buffer) {
+    return (Reader.create = function create_buffer(buffer) {
+        return minimal$2.Buffer.isBuffer(buffer) ? new BufferReader(buffer)
+        /* istanbul ignore next */
+        : create_array(buffer);
+    })(buffer);
+}
+/* istanbul ignore next */
+: create_array;
 
-Reader.prototype._slice = minimal$2.Array.prototype.subarray || /* istanbul ignore next */ minimal$2.Array.prototype.slice;
+Reader.prototype._slice = minimal$2.Array.prototype.subarray || /* istanbul ignore next */minimal$2.Array.prototype.slice;
 
 /**
  * Reads a varint as an unsigned 32 bit value.
  * @function
  * @returns {number} Value read
  */
-Reader.prototype.uint32 = (function read_uint32_setup() {
+Reader.prototype.uint32 = function read_uint32_setup() {
     var value = 4294967295; // optimizer type-hint, tends to deopt otherwise (?!)
     return function read_uint32() {
-        value = (         this.buf[this.pos] & 127       ) >>> 0; if (this.buf[this.pos++] < 128) return value;
-        value = (value | (this.buf[this.pos] & 127) <<  7) >>> 0; if (this.buf[this.pos++] < 128) return value;
-        value = (value | (this.buf[this.pos] & 127) << 14) >>> 0; if (this.buf[this.pos++] < 128) return value;
-        value = (value | (this.buf[this.pos] & 127) << 21) >>> 0; if (this.buf[this.pos++] < 128) return value;
-        value = (value | (this.buf[this.pos] &  15) << 28) >>> 0; if (this.buf[this.pos++] < 128) return value;
+        value = (this.buf[this.pos] & 127) >>> 0;if (this.buf[this.pos++] < 128) return value;
+        value = (value | (this.buf[this.pos] & 127) << 7) >>> 0;if (this.buf[this.pos++] < 128) return value;
+        value = (value | (this.buf[this.pos] & 127) << 14) >>> 0;if (this.buf[this.pos++] < 128) return value;
+        value = (value | (this.buf[this.pos] & 127) << 21) >>> 0;if (this.buf[this.pos++] < 128) return value;
+        value = (value | (this.buf[this.pos] & 15) << 28) >>> 0;if (this.buf[this.pos++] < 128) return value;
 
         /* istanbul ignore if */
         if ((this.pos += 5) > this.len) {
@@ -5959,7 +3126,7 @@ Reader.prototype.uint32 = (function read_uint32_setup() {
         }
         return value;
     };
-})();
+}();
 
 /**
  * Reads a varint as a signed 32 bit value.
@@ -5984,49 +3151,44 @@ function readLongVarint() {
     // tends to deopt with local vars for octet etc.
     var bits = new LongBits$2(0, 0);
     var i = 0;
-    if (this.len - this.pos > 4) { // fast route (lo)
+    if (this.len - this.pos > 4) {
+        // fast route (lo)
         for (; i < 4; ++i) {
             // 1st..4th
             bits.lo = (bits.lo | (this.buf[this.pos] & 127) << i * 7) >>> 0;
-            if (this.buf[this.pos++] < 128)
-                return bits;
+            if (this.buf[this.pos++] < 128) return bits;
         }
         // 5th
         bits.lo = (bits.lo | (this.buf[this.pos] & 127) << 28) >>> 0;
-        bits.hi = (bits.hi | (this.buf[this.pos] & 127) >>  4) >>> 0;
-        if (this.buf[this.pos++] < 128)
-            return bits;
+        bits.hi = (bits.hi | (this.buf[this.pos] & 127) >> 4) >>> 0;
+        if (this.buf[this.pos++] < 128) return bits;
         i = 0;
     } else {
         for (; i < 3; ++i) {
             /* istanbul ignore if */
-            if (this.pos >= this.len)
-                throw indexOutOfRange(this);
+            if (this.pos >= this.len) throw indexOutOfRange(this);
             // 1st..3th
             bits.lo = (bits.lo | (this.buf[this.pos] & 127) << i * 7) >>> 0;
-            if (this.buf[this.pos++] < 128)
-                return bits;
+            if (this.buf[this.pos++] < 128) return bits;
         }
         // 4th
         bits.lo = (bits.lo | (this.buf[this.pos++] & 127) << i * 7) >>> 0;
         return bits;
     }
-    if (this.len - this.pos > 4) { // fast route (hi)
+    if (this.len - this.pos > 4) {
+        // fast route (hi)
         for (; i < 5; ++i) {
             // 6th..10th
             bits.hi = (bits.hi | (this.buf[this.pos] & 127) << i * 7 + 3) >>> 0;
-            if (this.buf[this.pos++] < 128)
-                return bits;
+            if (this.buf[this.pos++] < 128) return bits;
         }
     } else {
         for (; i < 5; ++i) {
             /* istanbul ignore if */
-            if (this.pos >= this.len)
-                throw indexOutOfRange(this);
+            if (this.pos >= this.len) throw indexOutOfRange(this);
             // 6th..10th
             bits.hi = (bits.hi | (this.buf[this.pos] & 127) << i * 7 + 3) >>> 0;
-            if (this.buf[this.pos++] < 128)
-                return bits;
+            if (this.buf[this.pos++] < 128) return bits;
         }
     }
     /* istanbul ignore next */
@@ -6064,11 +3226,9 @@ Reader.prototype.bool = function read_bool() {
     return this.uint32() !== 0;
 };
 
-function readFixed32_end(buf, end) { // note that this uses `end`, not `pos`
-    return (buf[end - 4]
-          | buf[end - 3] << 8
-          | buf[end - 2] << 16
-          | buf[end - 1] << 24) >>> 0;
+function readFixed32_end(buf, end) {
+    // note that this uses `end`, not `pos`
+    return (buf[end - 4] | buf[end - 3] << 8 | buf[end - 2] << 16 | buf[end - 1] << 24) >>> 0;
 }
 
 /**
@@ -6078,8 +3238,7 @@ function readFixed32_end(buf, end) { // note that this uses `end`, not `pos`
 Reader.prototype.fixed32 = function read_fixed32() {
 
     /* istanbul ignore if */
-    if (this.pos + 4 > this.len)
-        throw indexOutOfRange(this, 4);
+    if (this.pos + 4 > this.len) throw indexOutOfRange(this, 4);
 
     return readFixed32_end(this.buf, this.pos += 4);
 };
@@ -6091,19 +3250,17 @@ Reader.prototype.fixed32 = function read_fixed32() {
 Reader.prototype.sfixed32 = function read_sfixed32() {
 
     /* istanbul ignore if */
-    if (this.pos + 4 > this.len)
-        throw indexOutOfRange(this, 4);
+    if (this.pos + 4 > this.len) throw indexOutOfRange(this, 4);
 
     return readFixed32_end(this.buf, this.pos += 4) | 0;
 };
 
 /* eslint-disable no-invalid-this */
 
-function readFixed64(/* this: Reader */) {
+function readFixed64() /* this: Reader */{
 
     /* istanbul ignore if */
-    if (this.pos + 8 > this.len)
-        throw indexOutOfRange(this, 8);
+    if (this.pos + 8 > this.len) throw indexOutOfRange(this, 8);
 
     return new LongBits$2(readFixed32_end(this.buf, this.pos += 4), readFixed32_end(this.buf, this.pos += 4));
 }
@@ -6132,8 +3289,7 @@ function readFixed64(/* this: Reader */) {
 Reader.prototype.float = function read_float() {
 
     /* istanbul ignore if */
-    if (this.pos + 4 > this.len)
-        throw indexOutOfRange(this, 4);
+    if (this.pos + 4 > this.len) throw indexOutOfRange(this, 4);
 
     var value = minimal$2.float.readFloatLE(this.buf, this.pos);
     this.pos += 4;
@@ -6148,8 +3304,7 @@ Reader.prototype.float = function read_float() {
 Reader.prototype.double = function read_double() {
 
     /* istanbul ignore if */
-    if (this.pos + 8 > this.len)
-        throw indexOutOfRange(this, 4);
+    if (this.pos + 8 > this.len) throw indexOutOfRange(this, 4);
 
     var value = minimal$2.float.readDoubleLE(this.buf, this.pos);
     this.pos += 8;
@@ -6162,19 +3317,17 @@ Reader.prototype.double = function read_double() {
  */
 Reader.prototype.bytes = function read_bytes() {
     var length = this.uint32(),
-        start  = this.pos,
-        end    = this.pos + length;
+        start = this.pos,
+        end = this.pos + length;
 
     /* istanbul ignore if */
-    if (end > this.len)
-        throw indexOutOfRange(this, length);
+    if (end > this.len) throw indexOutOfRange(this, length);
 
     this.pos += length;
     if (Array.isArray(this.buf)) // plain array
         return this.buf.slice(start, end);
     return start === end // fix for IE 10/Win8 and others' subarray returning array of size 1
-        ? new this.buf.constructor(0)
-        : this._slice.call(this.buf, start, end);
+    ? new this.buf.constructor(0) : this._slice.call(this.buf, start, end);
 };
 
 /**
@@ -6194,14 +3347,12 @@ Reader.prototype.string = function read_string() {
 Reader.prototype.skip = function skip(length) {
     if (typeof length === "number") {
         /* istanbul ignore if */
-        if (this.pos + length > this.len)
-            throw indexOutOfRange(this, length);
+        if (this.pos + length > this.len) throw indexOutOfRange(this, length);
         this.pos += length;
     } else {
         do {
             /* istanbul ignore if */
-            if (this.pos >= this.len)
-                throw indexOutOfRange(this);
+            if (this.pos >= this.len) throw indexOutOfRange(this);
         } while (this.buf[this.pos++] & 128);
     }
     return this;
@@ -6212,7 +3363,7 @@ Reader.prototype.skip = function skip(length) {
  * @param {number} wireType Wire type received
  * @returns {Reader} `this`
  */
-Reader.prototype.skipType = function(wireType) {
+Reader.prototype.skipType = function (wireType) {
     switch (wireType) {
         case 0:
             this.skip();
@@ -6224,9 +3375,9 @@ Reader.prototype.skipType = function(wireType) {
             this.skip(this.uint32());
             break;
         case 3:
-            do { // eslint-disable-line no-constant-condition
-                if ((wireType = this.uint32() & 7) === 4)
-                    break;
+            do {
+                // eslint-disable-line no-constant-condition
+                if ((wireType = this.uint32() & 7) === 4) break;
                 this.skipType(wireType);
             } while (true);
             break;
@@ -6241,10 +3392,10 @@ Reader.prototype.skipType = function(wireType) {
     return this;
 };
 
-Reader._configure = function(BufferReader_) {
+Reader._configure = function (BufferReader_) {
     BufferReader = BufferReader_;
 
-    var fn = minimal$2.Long ? "toLong" : /* istanbul ignore next */ "toNumber";
+    var fn = minimal$2.Long ? "toLong" : /* istanbul ignore next */"toNumber";
     minimal$2.merge(Reader.prototype, {
 
         int64: function read_int64() {
@@ -6277,8 +3428,6 @@ var reader_buffer = BufferReader$1;
 
 (BufferReader$1.prototype = Object.create(reader.prototype)).constructor = BufferReader$1;
 
-
-
 /**
  * Constructs a new buffer reader instance.
  * @classdesc Wire format reader using node buffers.
@@ -6287,25 +3436,24 @@ var reader_buffer = BufferReader$1;
  * @param {Buffer} buffer Buffer to read from
  */
 function BufferReader$1(buffer) {
-    reader.call(this, buffer);
+  reader.call(this, buffer);
 
-    /**
-     * Read buffer.
-     * @name BufferReader#buf
-     * @type {Buffer}
-     */
+  /**
+   * Read buffer.
+   * @name BufferReader#buf
+   * @type {Buffer}
+   */
 }
 
 /* istanbul ignore else */
-if (minimal$2.Buffer)
-    BufferReader$1.prototype._slice = minimal$2.Buffer.prototype.slice;
+if (minimal$2.Buffer) BufferReader$1.prototype._slice = minimal$2.Buffer.prototype.slice;
 
 /**
  * @override
  */
 BufferReader$1.prototype.string = function read_string_buffer() {
-    var len = this.uint32(); // modifies pos
-    return this.buf.utf8Slice(this.pos, this.pos = Math.min(this.pos + len, this.len));
+  var len = this.uint32(); // modifies pos
+  return this.buf.utf8Slice(this.pos, this.pos = Math.min(this.pos + len, this.len));
 };
 
 /**
@@ -6317,8 +3465,6 @@ BufferReader$1.prototype.string = function read_string_buffer() {
 
 "use strict";
 var service$1 = Service;
-
-
 
 // Extends EventEmitter
 (Service.prototype = Object.create(minimal$2.EventEmitter.prototype)).constructor = Service;
@@ -6358,8 +3504,7 @@ var service$1 = Service;
  */
 function Service(rpcImpl, requestDelimited, responseDelimited) {
 
-    if (typeof rpcImpl !== "function")
-        throw TypeError("rpcImpl must be a function");
+    if (typeof rpcImpl !== "function") throw TypeError("rpcImpl must be a function");
 
     minimal$2.EventEmitter.call(this);
 
@@ -6395,50 +3540,48 @@ function Service(rpcImpl, requestDelimited, responseDelimited) {
  */
 Service.prototype.rpcCall = function rpcCall(method, requestCtor, responseCtor, request, callback) {
 
-    if (!request)
-        throw TypeError("request must be specified");
+    if (!request) throw TypeError("request must be specified");
 
     var self = this;
-    if (!callback)
-        return minimal$2.asPromise(rpcCall, self, method, requestCtor, responseCtor, request);
+    if (!callback) return minimal$2.asPromise(rpcCall, self, method, requestCtor, responseCtor, request);
 
     if (!self.rpcImpl) {
-        setTimeout(function() { callback(Error("already ended")); }, 0);
+        setTimeout(function () {
+            callback(Error("already ended"));
+        }, 0);
         return undefined;
     }
 
     try {
-        return self.rpcImpl(
-            method,
-            requestCtor[self.requestDelimited ? "encodeDelimited" : "encode"](request).finish(),
-            function rpcCallback(err, response) {
+        return self.rpcImpl(method, requestCtor[self.requestDelimited ? "encodeDelimited" : "encode"](request).finish(), function rpcCallback(err, response) {
 
-                if (err) {
+            if (err) {
+                self.emit("error", err, method);
+                return callback(err);
+            }
+
+            if (response === null) {
+                self.end( /* endedByRPC */true);
+                return undefined;
+            }
+
+            if (!(response instanceof responseCtor)) {
+                try {
+                    response = responseCtor[self.responseDelimited ? "decodeDelimited" : "decode"](response);
+                } catch (err) {
                     self.emit("error", err, method);
                     return callback(err);
                 }
-
-                if (response === null) {
-                    self.end(/* endedByRPC */ true);
-                    return undefined;
-                }
-
-                if (!(response instanceof responseCtor)) {
-                    try {
-                        response = responseCtor[self.responseDelimited ? "decodeDelimited" : "decode"](response);
-                    } catch (err) {
-                        self.emit("error", err, method);
-                        return callback(err);
-                    }
-                }
-
-                self.emit("data", response, method);
-                return callback(null, response);
             }
-        );
+
+            self.emit("data", response, method);
+            return callback(null, response);
+        });
     } catch (err) {
         self.emit("error", err, method);
-        setTimeout(function() { callback(err); }, 0);
+        setTimeout(function () {
+            callback(err);
+        }, 0);
         return undefined;
     }
 };
@@ -6458,46 +3601,48 @@ Service.prototype.end = function end(endedByRPC) {
     return this;
 };
 
-var rpc_1 = createCommonjsModule(function (module, exports) {
-"use strict";
+var rpc_1 = createCommonjsModule$1(function (module, exports) {
+  "use strict";
 
-/**
- * Streaming RPC helpers.
- * @namespace
- */
-var rpc = exports;
+  /**
+   * Streaming RPC helpers.
+   * @namespace
+   */
 
-/**
- * RPC implementation passed to {@link Service#create} performing a service request on network level, i.e. by utilizing http requests or websockets.
- * @typedef RPCImpl
- * @type {function}
- * @param {Method|rpc.ServiceMethod<Message<{}>,Message<{}>>} method Reflected or static method being called
- * @param {Uint8Array} requestData Request data
- * @param {RPCImplCallback} callback Callback function
- * @returns {undefined}
- * @example
- * function rpcImpl(method, requestData, callback) {
- *     if (protobuf.util.lcFirst(method.name) !== "myMethod") // compatible with static code
- *         throw Error("no such method");
- *     asynchronouslyObtainAResponse(requestData, function(err, responseData) {
- *         callback(err, responseData);
- *     });
- * }
- */
+  var rpc = exports;
 
-/**
- * Node-style callback as used by {@link RPCImpl}.
- * @typedef RPCImplCallback
- * @type {function}
- * @param {Error|null} error Error, if any, otherwise `null`
- * @param {Uint8Array|null} [response] Response data or `null` to signal end of stream, if there hasn't been an error
- * @returns {undefined}
- */
+  /**
+   * RPC implementation passed to {@link Service#create} performing a service request on network level, i.e. by utilizing http requests or websockets.
+   * @typedef RPCImpl
+   * @type {function}
+   * @param {Method|rpc.ServiceMethod<Message<{}>,Message<{}>>} method Reflected or static method being called
+   * @param {Uint8Array} requestData Request data
+   * @param {RPCImplCallback} callback Callback function
+   * @returns {undefined}
+   * @example
+   * function rpcImpl(method, requestData, callback) {
+   *     if (protobuf.util.lcFirst(method.name) !== "myMethod") // compatible with static code
+   *         throw Error("no such method");
+   *     asynchronouslyObtainAResponse(requestData, function(err, responseData) {
+   *         callback(err, responseData);
+   *     });
+   * }
+   */
 
-rpc.Service = service$1;
+  /**
+   * Node-style callback as used by {@link RPCImpl}.
+   * @typedef RPCImplCallback
+   * @type {function}
+   * @param {Error|null} error Error, if any, otherwise `null`
+   * @param {Uint8Array|null} [response] Response data or `null` to signal end of stream, if there hasn't been an error
+   * @returns {undefined}
+   */
+
+  rpc.Service = service$1;
 });
 
 "use strict";
+
 var roots = {};
 
 /**
@@ -6516,43 +3661,44 @@ var roots = {};
  * var root = protobuf.roots["myroot"];
  */
 
-var indexMinimal = createCommonjsModule(function (module, exports) {
-"use strict";
-var protobuf = exports;
+var indexMinimal = createCommonjsModule$1(function (module, exports) {
+  "use strict";
 
-/**
- * Build type, one of `"full"`, `"light"` or `"minimal"`.
- * @name build
- * @type {string}
- * @const
- */
-protobuf.build = "minimal";
+  var protobuf = exports;
 
-// Serialization
-protobuf.Writer       = writer;
-protobuf.BufferWriter = writer_buffer;
-protobuf.Reader       = reader;
-protobuf.BufferReader = reader_buffer;
+  /**
+   * Build type, one of `"full"`, `"light"` or `"minimal"`.
+   * @name build
+   * @type {string}
+   * @const
+   */
+  protobuf.build = "minimal";
 
-// Utility
-protobuf.util         = minimal$2;
-protobuf.rpc          = rpc_1;
-protobuf.roots        = roots;
-protobuf.configure    = configure;
+  // Serialization
+  protobuf.Writer = writer;
+  protobuf.BufferWriter = writer_buffer;
+  protobuf.Reader = reader;
+  protobuf.BufferReader = reader_buffer;
 
-/* istanbul ignore next */
-/**
- * Reconfigures the library according to the environment.
- * @returns {undefined}
- */
-function configure() {
+  // Utility
+  protobuf.util = minimal$2;
+  protobuf.rpc = rpc_1;
+  protobuf.roots = roots;
+  protobuf.configure = configure;
+
+  /* istanbul ignore next */
+  /**
+   * Reconfigures the library according to the environment.
+   * @returns {undefined}
+   */
+  function configure() {
     protobuf.Reader._configure(protobuf.BufferReader);
     protobuf.util._configure();
-}
+  }
 
-// Configure serialization
-protobuf.Writer._configure(protobuf.BufferWriter);
-configure();
+  // Configure serialization
+  protobuf.Writer._configure(protobuf.BufferWriter);
+  configure();
 });
 
 // minimal library entry point.
@@ -11118,20 +8264,22 @@ var WebChannel = (function (_super) {
      */
     WebChannel.prototype.join = function (key) {
         if (key === void 0) { key = generateKey(); }
-        if (this.state === WebChannelState.LEFT && this.signaling.state === SignalingState$1.CLOSED) {
-            this.isRejoinDisabled = !this.autoRejoin;
-            this.setState(WebChannelState.JOINING);
-            if (typeof key === 'string' && key.length < MAX_KEY_LENGTH) {
-                this.key = key;
-            }
-            else {
-                throw new Error('Parameter of the join function should be either a Channel or a string');
-            }
-            this.signaling.join(this.key);
+        if (typeof key !== 'string') {
+            throw new Error("Failed to join: the key type " + typeof key + " is not a 'string'");
         }
-        else {
-            console.warn('Failed to join: already joining or joined');
+        else if (key === '') {
+            throw new Error("Failed to join: the key is an empty string'");
         }
+        else if (key.length > MAX_KEY_LENGTH) {
+            throw new Error("Failed to join : the key length of " + key.length + " exceeds the maximum of " + MAX_KEY_LENGTH + " charecters");
+        }
+        if (this.state !== WebChannelState.LEFT || this.signaling.state !== SignalingState$1.CLOSED) {
+            this.leave();
+        }
+        this.setState(WebChannelState.JOINING);
+        this.key = key;
+        this.isRejoinDisabled = !this.autoRejoin;
+        this.signaling.join(this.key);
     };
     /**
      * Invite a server peer to join the network.
@@ -11442,6 +8590,10 @@ var WebChannel = (function (_super) {
 }(Service$1));
 
 /**
+ * Is a helper type representing types that can be sent/received over a web group.
+ * @typedef {string|Uint8Array} DataType
+ */
+/**
  * @ignore
  */
 var wcs = new WeakMap();
@@ -11558,7 +8710,7 @@ var WebGroupState = (function () {
 var WebGroup = (function () {
     /**
      * @param {WebGroupOptions} [options]
-     * @param {TopologyEnum} [options.topology=TopologyEnum.FULL_MESH]
+     * @param {Topology} [options.topology=Topology.FULL_MESH]
      * @param {string} [options.signalingURL='wss://www.coedit.re:20473']
      * @param {RTCIceServer[]} [options.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]
      * @param {boolean} [options.autoRejoin=true]
@@ -11568,19 +8720,19 @@ var WebGroup = (function () {
         var wc = new WebChannel(options);
         wcs.set(this, wc);
         /**
-         * {@link WebGroup} identifier. The same value for all members.
+         * The read-only {@link WebGroup} identifier. The same value for all members.
          * @type {number}
          */
         this.id = undefined;
         Reflect.defineProperty(this, 'id', { configurable: false, enumerable: true, get: function () { return wc.id; } });
         /**
-         * Your unique member identifier in the group.
+         * The read-only your unique member identifier in the group.
          * @type {number}
          */
         this.myId = undefined;
         Reflect.defineProperty(this, 'myId', { configurable: false, enumerable: true, get: function () { return wc.myId; } });
         /**
-         * Group session identifier. Equals to an empty string before calling {@link WebGroup#join}.
+         * The read-only group session identifier. Equals to an empty string before calling {@link WebGroup#join}.
          * Different to {@link WebGroup#id}. This key is known and used by Signaling server
          * in order to join new members, on the other hand Signaling does not know {@link WebGroup#id}.
          * @type {string}
@@ -11588,32 +8740,32 @@ var WebGroup = (function () {
         this.key = undefined;
         Reflect.defineProperty(this, 'key', { configurable: false, enumerable: true, get: function () { return wc.key; } });
         /**
-         * An array of member identifiers (except yours).
+         * The read-only array of member identifiers (except yours).
          * @type {number[]}
          */
         this.members = undefined;
         Reflect.defineProperty(this, 'members', { configurable: false, enumerable: true, get: function () { return wc.members; } });
         /**
-         * The read-only property which is an enum of type {@link TopologyEnum}
+         * The read-only property which is an enum of type {@link Topology}
          * indicating the topology used for this {@link WebGroup} instance.
-         * @type {TopologyEnum}
+         * @type {Topology}
          */
         this.topology = undefined;
         Reflect.defineProperty(this, 'topology', { configurable: false, enumerable: true, get: function () { return wc.topology; } });
         /**
-         * The state of the {@link WebGroup} connection.
+         * The read-only state of the {@link WebGroup} connection.
          * @type {WebGroupState}
          */
         this.state = undefined;
         Reflect.defineProperty(this, 'state', { configurable: false, enumerable: true, get: function () { return wc.state; } });
         /**
-         * The state of the signaling server.
+         * The read-only state of the signaling server.
          * @type {SignalingState}
          */
         this.signalingState = undefined;
         Reflect.defineProperty(this, 'signalingState', { configurable: false, enumerable: true, get: function () { return wc.signaling.state; } });
         /**
-         * The signaling server URL.
+         * The read-only signaling server URL.
          * @type {string}
          */
         this.signalingURL = undefined;
@@ -11633,6 +8785,9 @@ var WebGroup = (function () {
     Object.defineProperty(WebGroup.prototype, "onMessage", {
         /**
          * This handler is called when a message has been received from the group.
+         * `id` is an identifier of the member who sent this message.
+         * `isBroadcast` aquals to true if the data is sent via {@link WebGroup#send}
+         * and false if sent via {@link WebGroup#sendTo}.
          * @type {function(id: number, data: DataType, isBroadcast: boolean)}
          */
         set: function (handler) { wcs.get(this).onMessage = handler; },
@@ -11641,7 +8796,7 @@ var WebGroup = (function () {
     });
     Object.defineProperty(WebGroup.prototype, "onMemberJoin", {
         /**
-         * This handler is called when a new member has joined the group.
+         * This handler is called when a new member with `id` as identifier has joined the group.
          * @type {function(id: number)}
          */
         set: function (handler) { wcs.get(this).onMemberJoin = handler; },
@@ -11650,7 +8805,7 @@ var WebGroup = (function () {
     });
     Object.defineProperty(WebGroup.prototype, "onMemberLeave", {
         /**
-         * This handler is called when a member hes left the group.
+         * This handler is called when a member with `id` as identifier hes left the group.
          * @type {function(id: number)}
          */
         set: function (handler) { wcs.get(this).onMemberLeave = handler; },
@@ -11679,10 +8834,8 @@ var WebGroup = (function () {
      * Join the group identified by a key provided by one of the group member.
      * If the current {@link WebGroup#state} value is not {@link WebGroupState#LEFT} or
      * {@link WebGroup#signalingState} value is not {@link SignalingState.CLOSED},
-     * then first calls {@link WebGroup#leave} and then join normally.
-     * @param {string} key
-     * @emits {StateEvent}
-     * @emits {SignalingStateEvent}
+     * then first calls {@link WebGroup#leave} and then joins normally.
+     * @param {string} [key] Will be generated if not provided
      */
     WebGroup.prototype.join = function (key) { return wcs.get(this).join(key); };
     /**
@@ -11691,17 +8844,16 @@ var WebGroup = (function () {
      */
     WebGroup.prototype.invite = function (url) { return wcs.get(this).invite(url); };
     /**
-     * Close the connection with Signaling server.
-     * @emits {StateEvent} This event is only fired if there is no one left in the group.
-     * @emits {SignalingStateEvent} This event is fired if {@link WebGroup#signalingState}
+     * Close the connection with Signaling server. It fires Signaling state event
+     * if {@link WebGroup#signalingState} value does not equal to
+     * {@link SignalingState.CLOSED} already.It may also fire state event only
+     * if there is no one left in the group.
      * value does not equal to {@link SignalingState.CLOSED} already.
      */
     WebGroup.prototype.closeSignaling = function () { return wcs.get(this).closeSignaling(); };
     /**
      * Leave the group which means close channels with all members and connection
      * with the Signaling server.
-     * @emits {StateEvent}
-     * @emits {SignalingStateEvent}
      */
     WebGroup.prototype.leave = function () { return wcs.get(this).leave(); };
     /**
@@ -11849,6 +9001,42 @@ var Topology = (function () {
     });
     return Topology;
 }());
+
+/**
+ * The options to be passed into {@link WebGroup} constructor.
+ * @typedef {Object} WebGroupOptions
+ * @property {Topology} [topology] Topology identifier
+ * (Full mesh is the only one supported by Netflux for now).
+ * @property {string} [signalingURL] Signaling URL for WebRTC.
+ * @property {RTCIceServer[]} [iceServers] Array of Ice servers for WebRTC.
+ * @property {boolean} [autoRejoin] Whether to automatically rejoin the web group
+ * on disconnect or not. Its value may be modified after {@link WebGroup}
+ * instantiation at any time.
+ */
+/**
+ * The options to be passed into {@link WebGroupBotServer} constructor.
+ * @typedef {Object} WebGroupBotServerOptions
+ * @property {Topology} [topology] See WebGroupOptions.topology
+ * @property {string} [signalingURL] See WebGroupOptions.signalingURL
+ * @property {RTCIceServer[]} [iceServers] See WebGroupOptions.iceServers
+ * @property {boolean} [autoRejoin] See WebGroupOptions.autoRejoin
+ * @property {Object} bot Server related options of the bot.
+ * @property {NodeJSHttpServer|NodeJSHttpsServer} bot.server NodeJS http(s) server.
+ * @property {string} [bot.url] Bot server URL.
+ * @property {boolean} [bot.perMessageDeflate] Enable/disable permessage-deflate.
+ */
+/**
+ * @external {RTCIceServer} https://developer.mozilla.org/en/docs/Web/API/RTCIceServer
+ */
+/**
+ * @external {Uint8Array} https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array
+ */
+/**
+ * @external {NodeJSHttpServer} https://nodejs.org/api/http.html#http_class_http_server
+ */
+/**
+ * @external {NodeJSHttpsServer} https://nodejs.org/api/https.html#https_class_https_server
+ */
 
 exports.SignalingState = SignalingState$$1;
 exports.Topology = Topology;

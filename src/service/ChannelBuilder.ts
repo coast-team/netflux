@@ -2,7 +2,7 @@ import { Subject } from 'rxjs/Subject'
 import { Observable } from 'rxjs/Observable'
 
 import { Service, ServiceMessageDecoded } from './Service'
-import { channelBuilder } from '../proto'
+import { channelBuilder } from '../proto/index'
 import { WebSocketBuilder } from '../WebSocketBuilder'
 import { Channel } from '../Channel'
 import { WebRTCBuilder } from './WebRTCBuilder'

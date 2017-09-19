@@ -2,12 +2,14 @@
   "compilerOptions": {
     "target": "es5",
     "module": "es6",
-    "lib": [ "es2016", "dom" ],
+    "lib": [ "es2017", "dom" ],
     "moduleResolution": "node",
     "downlevelIteration": true,
     "types": ["node", "text-encoding"]
   },
   "include": [
-    "src/**/*"
-  ]
+    "src/**/*",
+    "test/**/*"
+  ],
+  "exclude": ["**/proto/index.d.ts"]
 }

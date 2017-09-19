@@ -42,7 +42,7 @@ export declare class WebGroupBotServer {
     url: string;
     /**
      * @param {WebGroupBotServerOptions} options
-     * @param {TopologyEnum} [options.topology=TopologyEnum.FULL_MESH]
+     * @param {Topology} [options.topology=Topology.FULL_MESH]
      * @param {string} [options.signalingURL='wss://www.coedit.re:20473']
      * @param {RTCIceServer[]} [options.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]
      * @param {boolean} [options.autoRejoin=false]
@@ -53,7 +53,7 @@ export declare class WebGroupBotServer {
      */
     constructor(options: WebGroupBotServerOptions);
     /**
-     * This handler is called when the bot has been invited into a web group by one its members.
+     * This handler is called when the bot has been invited into a group by one of its members.
      * @type  {function(wg: WebGroup)} handler
      */
     onWebGroup: (wg: WebGroup) => void;

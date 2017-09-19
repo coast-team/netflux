@@ -14,12 +14,15 @@ module.exports = (config) => {
 
     // frameworks to use
     // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
-    frameworks: ['jasmine'],
+    frameworks: ['jasmine', 'karma-typescript'],
 
     // list of files / patterns to load in the browser
     files: [
       // 'test/unit/**/*.test.js',
-      'test/e2e/fullMesh/join.test.js'
+      // 'test/functional/join.test.js'
+      { pattern: 'src/**/*.+(js|ts)', included: false, served: false },
+      'test/functional/1peer.test.ts',
+      'test/util/helper.ts'
     ],
 
     // list of files to exclude
@@ -28,14 +31,28 @@ module.exports = (config) => {
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
     preprocessors: {
-      'test/**/*.test.js': ['rollup']
+      'test/**/*.+(js|ts)': ['karma-typescript']
+    },
+
+    karmaTypescriptConfig: {
+      compilerOptions: {
+        module: 'CommonJS',
+        target: 'ES5',
+        lib: [ 'es2017', 'dom' ],
+        moduleResolution: 'node',
+        downlevelIteration: true,
+        sourceMap: true,
+        types: ['node', 'text-encoding'],
+        allowJs: true
+      },
+      bundlerOptions: {
+        addNodeGlobals: false,
+        exclude: ['wrtc', 'text-encoding', 'uws', 'node-webcrypto-ossl']
+      }
     },
 
     rollupPreprocessor: {
       plugins: [
-        require('rollup-plugin-string')({
-          include: 'test/**/*.txt'
-        }),
         require('rollup-plugin-re')({
           defines: {
             BROWSER: true,
@@ -62,7 +79,7 @@ module.exports = (config) => {
     // test results reporter to use
     // possible values: 'dots', 'progress'
     // available reporters: https://npmjs.org/browse/keyword/karma-reporter
-    reporters: ['spec'],
+    reporters: ['spec', 'karma-typescript'],
 
     specReporter: {
       showSpecTiming: true

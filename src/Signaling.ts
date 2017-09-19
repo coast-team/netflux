@@ -1,7 +1,7 @@
 import { Subject } from 'rxjs/Subject'
 import { Observable } from 'rxjs/Observable'
 
-import { signaling } from './proto'
+import { signaling } from './proto/index'
 import { WebChannel } from './service/WebChannel'
 import { Channel } from './Channel'
 

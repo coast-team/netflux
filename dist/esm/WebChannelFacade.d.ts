@@ -2,6 +2,10 @@ import { WebChannel, WebChannelState, Options as WebGroupOptions } from './servi
 import { TopologyEnum } from './service/topology/Topology';
 import { SignalingState } from './Signaling';
 /**
+ * Is a helper type representing types that can be sent/received over a web group.
+ * @typedef {string|Uint8Array} DataType
+ */
+/**
  * @ignore
  */
 export declare const wcs: WeakMap<WebGroup, WebChannel>;
@@ -87,7 +91,7 @@ export declare class WebGroup {
     autoRejoin: boolean;
     /**
      * @param {WebGroupOptions} [options]
-     * @param {TopologyEnum} [options.topology=TopologyEnum.FULL_MESH]
+     * @param {Topology} [options.topology=Topology.FULL_MESH]
      * @param {string} [options.signalingURL='wss://www.coedit.re:20473']
      * @param {RTCIceServer[]} [options.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]
      * @param {boolean} [options.autoRejoin=true]
@@ -95,16 +99,19 @@ export declare class WebGroup {
     constructor(options?: WebGroupOptions);
     /**
      * This handler is called when a message has been received from the group.
+     * `id` is an identifier of the member who sent this message.
+     * `isBroadcast` aquals to true if the data is sent via {@link WebGroup#send}
+     * and false if sent via {@link WebGroup#sendTo}.
      * @type {function(id: number, data: DataType, isBroadcast: boolean)}
      */
     onMessage: (id: number, data: DataType, isBroadcast: boolean) => void;
     /**
-     * This handler is called when a new member has joined the group.
+     * This handler is called when a new member with `id` as identifier has joined the group.
      * @type {function(id: number)}
      */
     onMemberJoin: (id: number) => void;
     /**
-     * This handler is called when a member hes left the group.
+     * This handler is called when a member with `id` as identifier hes left the group.
      * @type {function(id: number)}
      */
     onMemberLeave: (id: number) => void;
@@ -122,29 +129,26 @@ export declare class WebGroup {
      * Join the group identified by a key provided by one of the group member.
      * If the current {@link WebGroup#state} value is not {@link WebGroupState#LEFT} or
      * {@link WebGroup#signalingState} value is not {@link SignalingState.CLOSED},
-     * then first calls {@link WebGroup#leave} and then join normally.
-     * @param {string} key
-     * @emits {StateEvent}
-     * @emits {SignalingStateEvent}
+     * then first calls {@link WebGroup#leave} and then joins normally.
+     * @param {string} [key] Will be generated if not provided
      */
-    join(key: string): void;
+    join(key?: string): void;
     /**
      * Invite a bot server to join this group.
      * @param {string} url - Bot server URL (See {@link WebGroupBotServerOptions})
      */
     invite(url: string): void;
     /**
-     * Close the connection with Signaling server.
-     * @emits {StateEvent} This event is only fired if there is no one left in the group.
-     * @emits {SignalingStateEvent} This event is fired if {@link WebGroup#signalingState}
+     * Close the connection with Signaling server. It fires Signaling state event
+     * if {@link WebGroup#signalingState} value does not equal to
+     * {@link SignalingState.CLOSED} already.It may also fire state event only
+     * if there is no one left in the group.
      * value does not equal to {@link SignalingState.CLOSED} already.
      */
     closeSignaling(): void;
     /**
      * Leave the group which means close channels with all members and connection
      * with the Signaling server.
-     * @emits {StateEvent}
-     * @emits {SignalingStateEvent}
      */
     leave(): void;
     /**

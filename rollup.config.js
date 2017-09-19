@@ -6,117 +6,90 @@ import pkg from './package.json'
 import typescript from 'rollup-plugin-typescript2'
 import uglify from 'rollup-plugin-uglify'
 
+const tsConfig =  {
+  include: ['src/**/*.ts']
+}
+
+const commonjsConfig = {
+  namedExports: {
+    'node_modules/protobufjs/minimal.js': [ 'Reader', 'Writer', 'util', 'roots' ]
+  }
+}
+
+const filesizeConfig = { format: { round: 0 } }
+
+const protobufjsEvalFixPattern = {
+  test: /eval.*\(moduleName\);/g,
+  replace: 'undefined;'
+}
+
+const replaceConfigForBrowser = {
+  defines: {
+    WEBRTC_ADAPTER: true,
+    NODE: false
+  },
+  patterns: [protobufjsEvalFixPattern]
+}
+
 export default [
   {
     input: 'src/index.ts',
-    output: [
-      { file: pkg.main, format: 'cjs', sourcemap: true },
-      { file: pkg.module, format: 'es', sourcemap: true }
-    ],
-    external: ['wrtc', 'uws', 'text-encoding'],
+    output: [{ file: pkg.main, format: 'cjs', sourcemap: true }],
     plugins: [
-      typescript(),
+      typescript(tsConfig),
       replace({
         defines: {
           WEBRTC_ADAPTER: false,
           NODE: true
         },
-        patterns: [
-          {
-            test: /eval.*\(moduleName\);/g,
-            replace: 'undefined;'
-          }
-        ]
+        patterns: [protobufjsEvalFixPattern]
       }),
       resolve(),
-      commonjs({
-        namedExports: {
-          'node_modules/protobufjs/minimal.js': [ 'Reader', 'Writer', 'util', 'roots' ]
-        }
-      }),
-      filesize({ format: { round: 0 } })
+      commonjs(commonjsConfig),
+      filesize(filesizeConfig)
     ]
   },
   {
     input: 'src/index.ts',
-    output: { file: pkg.browser, format: 'es', sourcemap: true },
+    output: [{ file: pkg.module, format: 'es', sourcemap: true }],
     plugins: [
       typescript({
-        tsconfig: 'tsconfig.dist.json',
+        tsconfig: 'tsconfig.dist.esm.json',
         useTsconfigDeclarationDir: true
       }),
       replace({
         defines: {
           WEBRTC_ADAPTER: true,
-          NODE: false
+          NODE: true
         },
-        patterns: [
-          {
-            test: /eval.*\(moduleName\);/g,
-            replace: 'undefined;'
-          }
-        ]
+        patterns: [protobufjsEvalFixPattern]
       }),
       resolve(),
-      commonjs({
-        namedExports: {
-          'node_modules/protobufjs/minimal.js': [ 'Reader', 'Writer', 'util', 'roots' ]
-        }
-      }),
-      filesize({ format: { round: 0 } })
+      commonjs(commonjsConfig),
+      filesize(filesizeConfig)
     ]
   },
   {
     input: 'src/index.ts',
-    output: { file: 'dist/netflux.umd.js', format: 'umd', name: 'netflux', sourcemap: true },
+    output: { file: pkg.browser, format: 'umd', name: 'netflux', sourcemap: true },
     plugins: [
-      typescript(),
-      replace({
-        defines: {
-          WEBRTC_ADAPTER: true,
-          NODE: false
-        },
-        patterns: [
-          {
-            test: /eval.*\(moduleName\);/g,
-            replace: 'undefined;'
-          }
-        ]
-      }),
+      typescript(tsConfig),
+      replace(replaceConfigForBrowser),
       resolve(),
-      commonjs({
-        namedExports: {
-          'node_modules/protobufjs/minimal.js': [ 'Reader', 'Writer', 'util', 'roots' ]
-        }
-      }),
-      filesize({ format: { round: 0 } })
+      commonjs(commonjsConfig),
+      filesize(filesizeConfig)
     ]
   },
   {
     input: 'src/index.ts',
     output: { file: 'dist/netflux.umd.min.js', format: 'umd', name: 'netflux', sourcemap: true },
     plugins: [
-      typescript(),
-      replace({
-        defines: {
-          WEBRTC_ADAPTER: true,
-          NODE: false
-        },
-        patterns: [
-          {
-            test: /eval.*\(moduleName\);/g,
-            replace: 'undefined;'
-          }
-        ]
-      }),
+      typescript(tsConfig),
+      replace(replaceConfigForBrowser),
       resolve(),
-      commonjs({
-        namedExports: {
-          'node_modules/protobufjs/minimal.js': [ 'Reader', 'Writer', 'util', 'roots' ]
-        }
-      }),
+      commonjs(commonjsConfig),
       uglify(),
-      filesize({ format: { round: 0 } })
+      filesize(filesizeConfig)
     ]
   }
 ]

@@ -1,4 +1,4 @@
-import { user } from './proto'
+import { user } from './proto/index'
 
 /**
  * Maximum size of the user message sent over `Channel` (without metadata).

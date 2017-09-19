@@ -4,8 +4,8 @@
   "version": "2.0.0-rc.0",
   "license": "AGPL-3.0",
   "main": "dist/netflux.cjs.js",
-  "module": "dist/netflux.node.esm.js",
-  "browser": "dist/netflux.browser.esm.js",
+  "module": "dist/esm/index.js",
+  "browser": "dist/netflux.umd.js",
   "types": "dist/ts/index.d.ts",
   "homepage": "https://doc.esdoc.org/github.com/coast-team/netflux",
   "repository": {
@@ -30,8 +30,8 @@
     "dist/"
   ],
   "scripts": {
-    "build": "rm -rf dist && rollup --config && mkdir -p 'dist/ts/proto' && cp -r src/proto/index.d.ts dist/ts/proto/index.d.ts && cp src/misc/typings.d.ts dist/ts/typings.d.ts",
-    "postbuild": "sed -i '1s/^/\\/\\/\\/ <reference path=\\\".\\/typings.d.ts\\\"\\/>\\n/' dist/ts/index.d.ts",
+    "build": "rm -rf dist && rollup --config",
+    "postbuild": "mkdir -p 'dist/esm/proto' && cp -r src/proto/index.d.ts dist/esm/proto/index.d.ts && cp src/misc/typings.d.ts dist/esm/typings.d.ts && sed -i '1s/^/\\/\\/\\/ <reference path=\\\".\\/typings.d.ts\\\"\\/>\\n/' dist/esm/index.d.ts",
     "build:testbot": "rollup -c test/util/rollup.config.js",
     "start:testbot": "pm2 gracefulReload test/util/process.yml",
     "pretest": "npm run build && npm run build:testbot && npm run start:testbot",
@@ -42,7 +42,7 @@
     "test:travis": "npm run test -- -- travis",
     "test:node": "npm run pretest && node jasmine.conf.js",
     "proto": "pbjs -t static-module -w es6 --no-verify --no-delimited --no-convert src/proto/index.proto -o src/proto/index.es6.js && pbts src/proto/index.es6.js -o src/proto/index.d.ts",
-    "postproto": "babel -o src/proto/index.js src/proto/index.es6.js; rm src/proto/index.es6.js",
+    "postproto": "rollup -c rollup.config.proto.js && rm src/proto/index.es6.js",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
     "predoc": "tsc -p tsconfig.docs.json",
     "doc": "esdoc -c esdoc.json",
@@ -64,6 +64,7 @@
     "wrtc": "0.0.x"
   },
   "devDependencies": {
+    "@types/jasmine": "^2.6.0",
     "babel-cli": "^6.26.0",
     "babel-preset-env": "^1.6.0",
     "commitizen": "^2.9.6",
@@ -84,11 +85,14 @@
     "karma-jasmine": "^1.0.2",
     "karma-rollup-preprocessor": "^5.0.1",
     "karma-spec-reporter": "0.0.31",
+    "karma-typescript": "^3.0.6",
+    "karma-typescript-es6-transform": "^1.0.2",
     "kcors": "^2.2.1",
     "koa": "^2.2.0",
     "koa-router": "^7.1.1",
     "pm2": "^2.7.0",
     "rollup": "^0.49.3",
+    "rollup-plugin-babel": "^3.0.2",
     "rollup-plugin-commonjs": "^8.2.1",
     "rollup-plugin-filesize": "^1.0.0",
     "rollup-plugin-istanbul": "^1.0.0",
@@ -104,7 +108,7 @@
     "tslint": "^5.7.0",
     "tslint-eslint-rules": "^4.1.1",
     "typescript": "~2.5.2",
-    "uglify-js": "^3.1.0",
+    "uglify-js": "^3.1.1",
     "validate-commit-msg": "^2.14.0"
   },
   "config": {

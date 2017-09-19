@@ -7,7 +7,7 @@ import { Signaling, SignalingState } from '../Signaling'
 import { ChannelBuilder } from './ChannelBuilder'
 import { WebSocketBuilder } from '../WebSocketBuilder'
 import { WebRTCBuilder } from './WebRTCBuilder'
-import { IMessage, Message, webChannel, service } from '../proto'
+import { IMessage, Message, webChannel, service } from '../proto/index'
 import { UserMessage, UserDataType } from '../UserMessage'
 import { isURL, generateKey, MAX_KEY_LENGTH } from '../misc/Util'
 import { TopologyInterface, TopologyEnum } from './topology/Topology'
@@ -225,18 +225,20 @@ export class WebChannel extends Service {
    * Join the network via a key provided by one of the network member or a `Channel`.
    */
   join (key: string = generateKey()): void {
-    if (this.state === WebChannelState.LEFT && this.signaling.state === SignalingState.CLOSED) {
-      this.isRejoinDisabled = !this.autoRejoin
-      this.setState(WebChannelState.JOINING)
-      if (typeof key === 'string' && key.length < MAX_KEY_LENGTH) {
-        this.key = key
-      } else {
-        throw new Error('Parameter of the join function should be either a Channel or a string')
-      }
-      this.signaling.join(this.key)
-    } else {
-      console.warn('Failed to join: already joining or joined')
+    if (typeof key !== 'string') {
+      throw new Error(`Failed to join: the key type ${typeof key} is not a 'string'`)
+    } else if (key === '') {
+      throw new Error(`Failed to join: the key is an empty string'`)
+    } else if (key.length > MAX_KEY_LENGTH) {
+      throw new Error(`Failed to join : the key length of ${key.length} exceeds the maximum of ${MAX_KEY_LENGTH} charecters`)
     }
+    if (this.state !== WebChannelState.LEFT || this.signaling.state !== SignalingState.CLOSED) {
+      this.leave()
+    }
+    this.setState(WebChannelState.JOINING)
+    this.key = key
+    this.isRejoinDisabled = !this.autoRejoin
+    this.signaling.join(this.key)
   }
 
   /**
