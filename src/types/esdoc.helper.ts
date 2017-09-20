@@ -33,7 +33,7 @@
 /**
  * The options to be passed into {@link WebGroup} constructor.
  * @typedef {Object} WebGroupOptions
- * @property {TopologyEnum} topology Topology identifier
+ * @property {Topology} topology Topology identifier
  * (Full mesh is the only one supported by Netflux for now).
  * @property {string} signalingURL Signaling URL for WebRTC.
  * @property {RTCIceServer[]} iceServers Array of Ice servers for WebRTC.
@@ -45,7 +45,7 @@
 /**
  * The options to be passed into {@link WebGroupBotServer} constructor.
  * @typedef {Object} WebGroupBotServerOptions
- * @property {TopologyEnum} [topology] See WebGroupOptions.topology
+ * @property {Topology} [topology] See WebGroupOptions.topology
  * @property {string} [signalingURL] See WebGroupOptions.signalingURL
  * @property {RTCIceServer[]} [iceServers] See WebGroupOptions.iceServers
  * @property {boolean} [autoRejoin] See WebGroupOptions.autoRejoin

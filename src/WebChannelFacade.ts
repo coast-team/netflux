@@ -114,7 +114,7 @@ export class WebGroup {
 
   /**
    * @param {WebGroupOptions} [options]
-   * @param {TopologyEnum} [options.topology=TopologyEnum.FULL_MESH]
+   * @param {Topology} [options.topology=Topology.FULL_MESH]
    * @param {string} [options.signalingURL='wss://www.coedit.re:20473']
    * @param {RTCIceServer[]} [options.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]
    * @param {boolean} [options.autoRejoin=true]
@@ -150,9 +150,9 @@ export class WebGroup {
     this.members = undefined
     Reflect.defineProperty(this, 'members', { configurable: false, enumerable: true, get: () => wc.members })
     /**
-     * The read-only property which is an enum of type {@link TopologyEnum}
+     * The read-only property which is an enum of type {@link Topology}
      * indicating the topology used for this {@link WebGroup} instance.
-     * @type {TopologyEnum}
+     * @type {Topology}
      */
     this.topology = undefined
     Reflect.defineProperty(this, 'topology', { configurable: false, enumerable: true, get: () => wc.topology })
