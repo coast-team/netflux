@@ -1,15 +1,15 @@
 /**
  * Is a helper type representing types that can be sent/received over a web group.
- * @typedef {string|Uint8Array} DataTypeView
+ * @typedef {string|Uint8Array} DataType
  */
 /**
  * Topology enum.
- * @typedef {Object} Topology
+ * @typedef {Object} TopologyEnum
  * @property {number} [FULL_MESH=0] Full mesh topology.
  */
 /**
  * The state fo the signaling server for WebRTC.
- * @typedef {Object} SignalingState
+ * @typedef {Object} SignalingStateEnum
  * @property {number} [CONNECTING=0] The connection is not yet open.
  * @property {number} [OPEN=1] The connection is open and ready to communicate.
  * @property {number} [FIRST_CONNECTED=2] `RTCDataChannel` has been established
@@ -21,7 +21,7 @@
  */
 /**
  * {@link WebGroup} state enum.
- * @typedef {Object} WebGroupState
+ * @typedef {Object} StateEnum
  * @property {number} [JOINING=0] You are joining the web group.
  * @property {number} [JOINED=1] You have successfully joined the web group
  * and ready to broadcast messages via `send` method.
@@ -32,7 +32,7 @@
 /**
  * The options to be passed into {@link WebGroup} constructor.
  * @typedef {Object} WebGroupOptions
- * @property {Topology} topology Topology identifier
+ * @property {TopologyEnum} topology Topology identifier
  * (Full mesh is the only one supported by Netflux for now).
  * @property {string} signalingURL Signaling URL for WebRTC.
  * @property {RTCIceServer[]} iceServers Array of Ice servers for WebRTC.
@@ -43,12 +43,12 @@
 /**
  * The options to be passed into {@link WebGroupBotServer} constructor.
  * @typedef {Object} WebGroupBotServerOptions
- * @property {Topology} [topology] See WebGroupOptions.topology
+ * @property {TopologyEnum} [topology] See WebGroupOptions.topology
  * @property {string} [signalingURL] See WebGroupOptions.signalingURL
  * @property {RTCIceServer[]} [iceServers] See WebGroupOptions.iceServers
  * @property {boolean} [autoRejoin] See WebGroupOptions.autoRejoin
  * @property {Object} bot Server related options of the bot.
- * @property {NodeJS.http.Server|NodeJS.https.Server} bot.server NodeJS http(s) server.
+ * @property {NodeJSHttpServer|NodeJSHttpsServer} bot.server NodeJS http(s) server.
  * @property {string} [bot.url] Bot server URL.
  * @property {boolean} [bot.perMessageDeflate] Enable/disable permessage-deflate.
  */
@@ -59,8 +59,8 @@
  * @external {Uint8Array} https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array
  */
 /**
- * @external {NodeJS.http.Server} https://nodejs.org/api/http.html#http_class_http_server
+ * @external {NodeJSHttpServer} https://nodejs.org/api/http.html#http_class_http_server
  */
 /**
- * @external {NodeJS.https.Server} https://nodejs.org/api/https.html#https_class_https_server
+ * @external {NodeJSHttpsServer} https://nodejs.org/api/https.html#https_class_https_server
  */

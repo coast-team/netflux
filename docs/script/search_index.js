@@ -31,19 +31,19 @@ window.esdocSearchIndex = [
   ],
   [
     "src/botserverfacade.js~webgroupbotserver#server",
-    "class/src/BotServerFacade.js~WebGroupBotServer.html#instance-get-server",
+    "class/src/BotServerFacade.js~WebGroupBotServer.html#instance-member-server",
     "src/BotServerFacade.js~WebGroupBotServer#server",
     "member"
   ],
   [
     "src/botserverfacade.js~webgroupbotserver#url",
-    "class/src/BotServerFacade.js~WebGroupBotServer.html#instance-get-url",
+    "class/src/BotServerFacade.js~WebGroupBotServer.html#instance-member-url",
     "src/BotServerFacade.js~WebGroupBotServer#url",
     "member"
   ],
   [
     "src/botserverfacade.js~webgroupbotserver#webgroups",
-    "class/src/BotServerFacade.js~WebGroupBotServer.html#instance-get-webGroups",
+    "class/src/BotServerFacade.js~WebGroupBotServer.html#instance-member-webGroups",
     "src/BotServerFacade.js~WebGroupBotServer#webGroups",
     "member"
   ],
@@ -192,21 +192,21 @@ window.esdocSearchIndex = [
     "file"
   ],
   [
-    "src/types/esdoc.helper.js~datatypeview",
-    "typedef/index.html#static-typedef-DataTypeView",
-    "src/types/esdoc.helper.js~DataTypeView",
+    "src/types/esdoc.helper.js~datatype",
+    "typedef/index.html#static-typedef-DataType",
+    "src/types/esdoc.helper.js~DataType",
     "typedef"
   ],
   [
-    "src/types/esdoc.helper.js~nodejs.http.server",
+    "src/types/esdoc.helper.js~nodejshttpserver",
     "https://nodejs.org/api/http.html#http_class_http_server",
-    "src/types/esdoc.helper.js~NodeJS.http.Server",
+    "src/types/esdoc.helper.js~NodeJSHttpServer",
     "external"
   ],
   [
-    "src/types/esdoc.helper.js~nodejs.https.server",
+    "src/types/esdoc.helper.js~nodejshttpsserver",
     "https://nodejs.org/api/https.html#https_class_https_server",
-    "src/types/esdoc.helper.js~NodeJS.https.Server",
+    "src/types/esdoc.helper.js~NodeJSHttpsServer",
     "external"
   ],
   [
@@ -216,15 +216,21 @@ window.esdocSearchIndex = [
     "external"
   ],
   [
-    "src/types/esdoc.helper.js~signalingstate",
-    "typedef/index.html#static-typedef-SignalingState",
-    "src/types/esdoc.helper.js~SignalingState",
+    "src/types/esdoc.helper.js~signalingstateenum",
+    "typedef/index.html#static-typedef-SignalingStateEnum",
+    "src/types/esdoc.helper.js~SignalingStateEnum",
     "typedef"
   ],
   [
-    "src/types/esdoc.helper.js~topology",
-    "typedef/index.html#static-typedef-Topology",
-    "src/types/esdoc.helper.js~Topology",
+    "src/types/esdoc.helper.js~stateenum",
+    "typedef/index.html#static-typedef-StateEnum",
+    "src/types/esdoc.helper.js~StateEnum",
+    "typedef"
+  ],
+  [
+    "src/types/esdoc.helper.js~topologyenum",
+    "typedef/index.html#static-typedef-TopologyEnum",
+    "src/types/esdoc.helper.js~TopologyEnum",
     "typedef"
   ],
   [
@@ -243,12 +249,6 @@ window.esdocSearchIndex = [
     "src/types/esdoc.helper.js~webgroupoptions",
     "typedef/index.html#static-typedef-WebGroupOptions",
     "src/types/esdoc.helper.js~WebGroupOptions",
-    "typedef"
-  ],
-  [
-    "src/types/esdoc.helper.js~webgroupstate",
-    "typedef/index.html#static-typedef-WebGroupState",
-    "src/types/esdoc.helper.js~WebGroupState",
     "typedef"
   ]
 ]

@@ -2,7 +2,7 @@ import { Service } from '../Service'
 import { Channel } from '../../Channel'
 import { IMessage } from '../../proto'
 
-export enum Topology {
+export enum TopologyEnum {
   FULL_MESH
 }
 

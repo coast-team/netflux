@@ -1,3 +1,6 @@
+import { Server as NodeJSHttpServer } from 'http'
+import { Server as NodeJSHttpsServer } from 'https'
+
 import { WebSocketBuilder } from './WebSocketBuilder'
 import { WebGroup } from './WebChannelFacade'
 import { BotServer, BotServerOptions as WebGroupBotServerOptions } from './BotServer'
@@ -38,38 +41,43 @@ let botServer: BotServer
  */
 export class WebGroupBotServer {
 
+  public server: NodeJSHttpServer | NodeJSHttpsServer
+  public webGroups: Set<WebGroup>
+  public url: string
+
   /**
    * @param {WebGroupBotServerOptions} options
-   * @param {Topology} [options.topology=Topology.FULL_MESH]
+   * @param {TopologyEnum} [options.topology=TopologyEnum.FULL_MESH]
    * @param {string} [options.signalingURL='wss://www.coedit.re:20473']
    * @param {RTCIceServer[]} [options.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]
    * @param {boolean} [options.autoRejoin=false]
    * @param {Object} options.bot
-   * @param {NodeJS.http.Server|NodeJS.https.Server} options.bot.server NodeJS http(s) server.
+   * @param {NodeJSHttpServer|NodeJSHttpsServer} options.bot.server NodeJS http(s) server.
    * @param {string} [options.bot.url] Bot server URL.
    * @param {boolean} [options.bot.perMessageDeflate=false] Enable/disable permessage-deflate.
    */
   constructor (options: WebGroupBotServerOptions) {
     botServer = new BotServer(options)
+
+    /**
+     * NodeJS http server instance (See https://nodejs.org/api/http.html)
+     * @type {NodeJSHttpServer|NodeJSHttpsServer}
+     */
+    this.server = undefined
+    Reflect.defineProperty(this, 'server', { configurable: false, enumerable: true, get: () => botServer.server })
+    /**
+     * Set of web groups the bot is member of.
+     * @type {Set<WebGroup>}
+     */
+    this.webGroups = undefined
+    Reflect.defineProperty(this, 'webGroups', { configurable: false, enumerable: true, get: () => botServer.webGroups })
+    /**
+     * Bot server url. Used to invite the bot in a web group via {@link WebGroup#invite} method.
+     * @type {string}
+     */
+    this.url = undefined
+    Reflect.defineProperty(this, 'url', { configurable: false, enumerable: true, get: () => botServer.url })
   }
-
-  /**
-   * NodeJS http server instance (See https://nodejs.org/api/http.html)
-   * @type {NodeJS.http.Server|NodeJS.https.Server}
-   */
-  get server (): any { return botServer.server }
-
-  /**
-   * Set of web groups the bot is member of.
-   * @type {Set<WebGroup>}
-   */
-  get webGroups (): Set<WebGroup> { return botServer.webGroups }
-
-  /**
-   * Bot server url. Used to invite the bot in a web group via {@link WebGroup#invite} method.
-   * @type {string}
-   */
-  get url (): string { return botServer.url }
 
   /**
    * This handler is called when the bot has been invited into a web group by one its members.

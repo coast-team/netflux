@@ -1,20 +1,20 @@
 import { Subject } from 'rxjs/Subject';
 import { Channel } from '../Channel';
 import { Service, ServiceMessageEncoded } from './Service';
-import { Signaling, SignalingState } from '../Signaling';
+import { Signaling, SignalingStateEnum } from '../Signaling';
 import { ChannelBuilder } from './ChannelBuilder';
 import { WebSocketBuilder } from '../WebSocketBuilder';
 import { WebRTCBuilder } from './WebRTCBuilder';
 import { UserDataType } from '../UserMessage';
-import { TopologyInterface, Topology } from './topology/Topology';
-export interface WebChannelOptions {
-    topology: Topology;
+import { TopologyInterface, TopologyEnum } from './topology/Topology';
+export interface Options {
+    topology: TopologyEnum;
     signalingURL: string;
     iceServers: RTCIceServer[];
     autoRejoin: boolean;
 }
-export declare const wcDefaults: WebChannelOptions;
-export declare enum WebChannelState {
+export declare const defaultOptions: Options;
+export declare enum StateEnum {
     JOINING = 0,
     JOINED = 1,
     LEFT = 2,
@@ -35,7 +35,7 @@ export declare class WebChannel extends Service {
     /**
      * Topology id.
      */
-    topology: Topology;
+    topology: TopologyEnum;
     /**
      * WebChannel id.
      */
@@ -56,11 +56,11 @@ export declare class WebChannel extends Service {
     /**
      * Thi handler is called each time the state of Signaling server changes.
      */
-    onSignalingStateChange: (state: SignalingState) => void;
+    onSignalingStateChange: (state: SignalingStateEnum) => void;
     /**
      * Thi handler is called each time the state of the network changes.
      */
-    onStateChange: (state: WebChannelState) => void;
+    onStateChange: (state: StateEnum) => void;
     /**
      * This handler is called when a new peer has joined the network.
      */
@@ -79,7 +79,7 @@ export declare class WebChannel extends Service {
     webSocketBuilder: WebSocketBuilder;
     channelBuilder: ChannelBuilder;
     topologyService: TopologyInterface;
-    state: WebChannelState;
+    state: StateEnum;
     signaling: Signaling;
     private userMsg;
     private pingTime;
@@ -92,7 +92,7 @@ export declare class WebChannel extends Service {
      * @param options Web channel settings
      */
     constructor({topology, signalingURL, iceServers, autoRejoin}?: {
-        topology?: Topology;
+        topology?: TopologyEnum;
         signalingURL?: string;
         iceServers?: RTCIceServer[];
         autoRejoin?: boolean;

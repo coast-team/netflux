@@ -1,3 +1,6 @@
+/// <reference types="node" />
+import { Server as NodeJSHttpServer } from 'http';
+import { Server as NodeJSHttpsServer } from 'https';
 import { WebGroup } from './WebChannelFacade';
 export interface BotServerOptions {
     url: string;
@@ -16,7 +19,7 @@ export declare const bsDefaults: {
  * He can also join one of the bot's `WebChannel`.
  */
 export declare class BotServer {
-    server: any;
+    server: NodeJSHttpServer | NodeJSHttpsServer;
     webGroups: Set<WebGroup>;
     onWebGroup: (wg: WebGroup) => void;
     onError: (err) => void;

@@ -1,13 +1,13 @@
-import { WebChannel, WebChannelOptions as WebGroupOptions, WebChannelState as WebGroupState, wcDefaults } from './service/WebChannel'
-import { Topology } from './service/topology/Topology'
-import { SignalingState } from './Signaling'
+import { WebChannel, Options as WebGroupOptions, StateEnum, defaultOptions } from './service/WebChannel'
+import { TopologyEnum } from './service/topology/Topology'
+import { SignalingStateEnum } from './Signaling'
 
 /**
  * @ignore
  */
 export const wcs: WeakMap<WebGroup, WebChannel> = new WeakMap()
 
-export type DataTypeView = string|Uint8Array
+export type DataType = string|Uint8Array
 
 /**
  * This class is an API starting point. It represents a peer to peer network,
@@ -37,7 +37,7 @@ export type DataTypeView = string|Uint8Array
  * wg.onMemberLeave = (id) => {
  *   // TODO...
  * }
- * wg.onMessage = (id, msg, isBroadcast) => {
+ * wg.onMessage = (id, data, isBroadcast) => {
  *   // TODO...
  * }
  * wg.onStateChange = (state) => {
@@ -53,15 +53,15 @@ export class WebGroup {
   public myId: number
   public key: string
   public members: number[]
-  public topology: Topology
-  public state: WebGroupState
-  public signalingState: SignalingState
+  public topology: TopologyEnum
+  public state: StateEnum
+  public signalingState: SignalingStateEnum
   public signalingURL: string
   public autoRejoin: boolean
 
   /**
    * @param {WebGroupOptions} [options]
-   * @param {Topology} [options.topology=Topology.FULL_MESH]
+   * @param {TopologyEnum} [options.topology=TopologyEnum.FULL_MESH]
    * @param {string} [options.signalingURL='wss://www.coedit.re:20473']
    * @param {RTCIceServer[]} [options.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]
    * @param {boolean} [options.autoRejoin=true]
@@ -97,20 +97,21 @@ export class WebGroup {
     this.members = undefined
     Reflect.defineProperty(this, 'members', { configurable: false, enumerable: true, get: () => wc.members })
     /**
-     * Topology identifier.
-     * @type {Topology}
+     * The read-only property which is an enum of type {@link TopologyEnum}
+     * indicating the topology used for this {@link WebGroup} instance.
+     * @type {TopologyEnum}
      */
     this.topology = undefined
     Reflect.defineProperty(this, 'topology', { configurable: false, enumerable: true, get: () => wc.topology })
     /**
      * The state of the {@link WebGroup} connection.
-     * @type {WebGroupState}
+     * @type {StateEnum}
      */
     this.state = undefined
     Reflect.defineProperty(this, 'state', { configurable: false, enumerable: true, get: () => wc.state })
     /**
      * The state of the signaling server.
-     * @type {SignalingState}
+     * @type {SignalingStateEnum}
      */
     this.signalingState = undefined
     Reflect.defineProperty(this, 'signalingState', { configurable: false, enumerable: true, get: () => wc.signaling.state })
@@ -135,9 +136,9 @@ export class WebGroup {
 
   /**
    * This handler is called when a message has been received from the group.
-   * @type {function(id: number, msg: DataTypeView, isBroadcast: boolean)}
+   * @type {function(id: number, data: DataType, isBroadcast: boolean)}
    */
-  set onMessage (handler: (id: number, msg: DataTypeView, isBroadcast: boolean) => void) { wcs.get(this).onMessage = handler }
+  set onMessage (handler: (id: number, data: DataType, isBroadcast: boolean) => void) { wcs.get(this).onMessage = handler }
 
   /**
    * This handler is called when a new member has joined the group.
@@ -153,15 +154,15 @@ export class WebGroup {
 
   /**
    * This handler is called when the group state has changed.
-   * @type {function(state: WebGroupState)}
+   * @type {function(state: StateEnum)}
    */
-  set onStateChange (handler: (state: WebGroupState) => void) { wcs.get(this).onStateChange = handler }
+  set onStateChange (handler: (state: StateEnum) => void) { wcs.get(this).onStateChange = handler }
 
   /**
    * This handler is called when the signaling state has changed.
-   * @type {function(state: SignalingState)}
+   * @type {function(state: SignalingStateEnum)}
    */
-  set onSignalingStateChange (handler: (state: SignalingState) => void) { wcs.get(this).onSignalingStateChange = handler }
+  set onSignalingStateChange (handler: (state: SignalingStateEnum) => void) { wcs.get(this).onSignalingStateChange = handler }
 
   /**
    * Join the group identified by a key provided by one of the group member.
@@ -188,16 +189,16 @@ export class WebGroup {
 
   /**
    * Broadcast a message to the group.
-   * @param {DataTypeView} data
+   * @param {DataType} data
    */
-  send (data: DataTypeView): void { return wcs.get(this).send(data) }
+  send (data: DataType): void { return wcs.get(this).send(data) }
 
   /**
    * Send a message to a particular group member.
    * @param {number}    id Member identifier
-   * @param {DataTypeView}  data Message
+   * @param {DataType}  data Message
    */
-  sendTo (id: number, data: DataTypeView): void { return wcs.get(this).sendTo(id, data) }
+  sendTo (id: number, data: DataType): void { return wcs.get(this).sendTo(id, data) }
 
   /**
    * Get web group latency

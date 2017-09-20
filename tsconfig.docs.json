@@ -3,5 +3,9 @@
   "compilerOptions": {
     "outDir": "docs/src",
     "target": "ESNext"
-  }
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": []
 }

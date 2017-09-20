@@ -9153,14 +9153,14 @@ var FIRST_CONNECTION_ERROR_CODE = 4002;
 /* Preconstructed messages */
 var pingMsg = signaling.Message.encode(signaling.Message.create({ ping: true })).finish();
 var pongMsg = signaling.Message.encode(signaling.Message.create({ pong: true })).finish();
-var SignalingState;
-(function (SignalingState) {
-    SignalingState[SignalingState["CONNECTING"] = 0] = "CONNECTING";
-    SignalingState[SignalingState["OPEN"] = 1] = "OPEN";
-    SignalingState[SignalingState["FIRST_CONNECTED"] = 2] = "FIRST_CONNECTED";
-    SignalingState[SignalingState["READY_TO_JOIN_OTHERS"] = 3] = "READY_TO_JOIN_OTHERS";
-    SignalingState[SignalingState["CLOSED"] = 4] = "CLOSED";
-})(SignalingState || (SignalingState = {}));
+var SignalingStateEnum;
+(function (SignalingStateEnum) {
+    SignalingStateEnum[SignalingStateEnum["CONNECTING"] = 0] = "CONNECTING";
+    SignalingStateEnum[SignalingStateEnum["OPEN"] = 1] = "OPEN";
+    SignalingStateEnum[SignalingStateEnum["FIRST_CONNECTED"] = 2] = "FIRST_CONNECTED";
+    SignalingStateEnum[SignalingStateEnum["READY_TO_JOIN_OTHERS"] = 3] = "READY_TO_JOIN_OTHERS";
+    SignalingStateEnum[SignalingStateEnum["CLOSED"] = 4] = "CLOSED";
+})(SignalingStateEnum || (SignalingStateEnum = {}));
 /**
  * This class represents a door of the `WebChannel` for the current peer. If the door
  * is open, then clients can join the `WebChannel` through this peer. There are as
@@ -9170,7 +9170,7 @@ var Signaling = (function () {
     function Signaling(wc, url) {
         // public
         this.url = url.endsWith('/') ? url : url + '/';
-        this.state = SignalingState.CLOSED;
+        this.state = SignalingStateEnum.CLOSED;
         // private
         this.wc = wc;
         this.stateSubject = new Subject_2();
@@ -9198,23 +9198,23 @@ var Signaling = (function () {
      * to join new peers to the network.
      */
     Signaling.prototype.open = function () {
-        if (this.state === SignalingState.FIRST_CONNECTED) {
+        if (this.state === SignalingStateEnum.FIRST_CONNECTED) {
             this.rxWs.send({ joined: true });
-            this.setState(SignalingState.READY_TO_JOIN_OTHERS);
+            this.setState(SignalingStateEnum.READY_TO_JOIN_OTHERS);
         }
     };
     Signaling.prototype.join = function (key) {
         var _this = this;
-        if (this.state === SignalingState.READY_TO_JOIN_OTHERS) {
+        if (this.state === SignalingStateEnum.READY_TO_JOIN_OTHERS) {
             throw new Error('Failed to join via signaling: connection with signaling is already opened');
         }
-        if (this.state !== SignalingState.CLOSED) {
+        if (this.state !== SignalingStateEnum.CLOSED) {
             this.close();
         }
-        this.setState(SignalingState.CONNECTING);
+        this.setState(SignalingStateEnum.CONNECTING);
         this.wc.webSocketBuilder.connect(this.url + key)
             .then(function (ws) {
-            _this.setState(SignalingState.OPEN);
+            _this.setState(SignalingStateEnum.OPEN);
             _this.rxWs = _this.createRxWs(ws);
             _this.startPingInterval();
             _this.rxWs.onMessage.subscribe(function (msg) {
@@ -9227,7 +9227,7 @@ var Signaling = (function () {
                         break;
                     case 'isFirst':
                         if (msg.isFirst) {
-                            _this.setState(SignalingState.READY_TO_JOIN_OTHERS);
+                            _this.setState(SignalingStateEnum.READY_TO_JOIN_OTHERS);
                         }
                         else {
                             _this.wc.webRTCBuilder.connectOverSignaling({
@@ -9238,7 +9238,7 @@ var Signaling = (function () {
                                 }),
                                 send: function (msg) { return _this.rxWs.send({ content: msg }); }
                             })
-                                .then(function () { return _this.setState(SignalingState.FIRST_CONNECTED); })
+                                .then(function () { return _this.setState(SignalingStateEnum.FIRST_CONNECTED); })
                                 .catch(function (err) {
                                 _this.rxWs.close(FIRST_CONNECTION_ERROR_CODE, "Failed to join over Signaling: " + err.message);
                             });
@@ -9247,7 +9247,7 @@ var Signaling = (function () {
                 }
             });
         })
-            .catch(function (err) { return _this.setState(SignalingState.CLOSED); });
+            .catch(function (err) { return _this.setState(SignalingStateEnum.CLOSED); });
     };
     /**
      * Close the `WebSocket` with Signaling server.
@@ -9262,7 +9262,7 @@ var Signaling = (function () {
         if (this.state !== state) {
             this.state = state;
             this.stateSubject.next(state);
-            if (state === SignalingState.READY_TO_JOIN_OTHERS) {
+            if (state === SignalingStateEnum.READY_TO_JOIN_OTHERS) {
                 this.wc.webRTCBuilder.onChannelFromSignaling({
                     onMessage: this.rxWs.onMessage.filter(function (msg) { return msg.type === 'content'; })
                         .map(function (_a) {
@@ -9278,7 +9278,7 @@ var Signaling = (function () {
         var _this = this;
         this.rxWs.ping();
         this.pingInterval = setInterval(function () {
-            if (_this.state !== SignalingState.CLOSED) {
+            if (_this.state !== SignalingStateEnum.CLOSED) {
                 if (!_this.pongReceived) {
                     clearInterval(_this.pingInterval);
                     _this.rxWs.close(PING_ERROR_CODE, 'Signaling is not responding');
@@ -9305,7 +9305,7 @@ var Signaling = (function () {
         ws.onerror = function (err) { return subject.error(err); };
         ws.onclose = function (closeEvt) {
             clearInterval(_this.pingInterval);
-            _this.setState(SignalingState.CLOSED);
+            _this.setState(SignalingStateEnum.CLOSED);
             if (closeEvt.code === 1000) {
                 subject.complete();
             }
@@ -9335,7 +9335,7 @@ var Signaling = (function () {
                 if (reason === void 0) { reason = ''; }
                 ws.onclose = undefined;
                 ws.close(code, reason);
-                _this.setState(SignalingState.CLOSED);
+                _this.setState(SignalingStateEnum.CLOSED);
                 clearInterval(_this.pingInterval);
                 subject.complete();
             }
@@ -10991,25 +10991,25 @@ var Buffer$1 = (function () {
     return Buffer;
 }());
 
-var Topology;
-(function (Topology) {
-    Topology[Topology["FULL_MESH"] = 0] = "FULL_MESH";
-})(Topology || (Topology = {}));
+var TopologyEnum;
+(function (TopologyEnum) {
+    TopologyEnum[TopologyEnum["FULL_MESH"] = 0] = "FULL_MESH";
+})(TopologyEnum || (TopologyEnum = {}));
 
-var wcDefaults = {
-    topology: Topology.FULL_MESH,
+var defaultOptions = {
+    topology: TopologyEnum.FULL_MESH,
     signalingURL: 'wss://www.coedit.re:10473',
     iceServers: [
         { urls: 'stun:stun3.l.google.com:19302' }
     ],
     autoRejoin: true
 };
-var WebChannelState;
-(function (WebChannelState) {
-    WebChannelState[WebChannelState["JOINING"] = 0] = "JOINING";
-    WebChannelState[WebChannelState["JOINED"] = 1] = "JOINED";
-    WebChannelState[WebChannelState["LEFT"] = 2] = "LEFT";
-})(WebChannelState || (WebChannelState = {}));
+var StateEnum;
+(function (StateEnum) {
+    StateEnum[StateEnum["JOINING"] = 0] = "JOINING";
+    StateEnum[StateEnum["JOINED"] = 1] = "JOINED";
+    StateEnum[StateEnum["LEFT"] = 2] = "LEFT";
+})(StateEnum || (StateEnum = {}));
 var REJOIN_TIMEOUT = 3000;
 /**
  * Timout for ping `WebChannel` in milliseconds.
@@ -11030,7 +11030,7 @@ var WebChannel = (function (_super) {
      * @param options Web channel settings
      */
     function WebChannel(_a) {
-        var _b = _a === void 0 ? {} : _a, _c = _b.topology, topology = _c === void 0 ? wcDefaults.topology : _c, _d = _b.signalingURL, signalingURL = _d === void 0 ? wcDefaults.signalingURL : _d, _e = _b.iceServers, iceServers = _e === void 0 ? wcDefaults.iceServers : _e, _f = _b.autoRejoin, autoRejoin = _f === void 0 ? wcDefaults.autoRejoin : _f;
+        var _b = _a === void 0 ? {} : _a, _c = _b.topology, topology = _c === void 0 ? defaultOptions.topology : _c, _d = _b.signalingURL, signalingURL = _d === void 0 ? defaultOptions.signalingURL : _d, _e = _b.iceServers, iceServers = _e === void 0 ? defaultOptions.iceServers : _e, _f = _b.autoRejoin, autoRejoin = _f === void 0 ? defaultOptions.autoRejoin : _f;
         var _this = _super.call(this, 10, webChannel.Message) || this;
         // PUBLIC MEMBERS
         _this.members = [];
@@ -11046,7 +11046,7 @@ var WebChannel = (function (_super) {
         _this.onStateChange = function () { };
         _this.onSignalingStateChange = function () { };
         // PRIVATE
-        _this.state = WebChannelState.LEFT;
+        _this.state = StateEnum.LEFT;
         _this.userMsg = new UserMessage();
         // Signaling init
         _this.signaling = new Signaling(_this, signalingURL);
@@ -11054,15 +11054,15 @@ var WebChannel = (function (_super) {
         _this.signaling.onState.subscribe(function (state) {
             _this.onSignalingStateChange(state);
             switch (state) {
-                case SignalingState.OPEN:
-                    _this.setState(WebChannelState.JOINING);
+                case SignalingStateEnum.OPEN:
+                    _this.setState(StateEnum.JOINING);
                     break;
-                case SignalingState.READY_TO_JOIN_OTHERS:
-                    _this.setState(WebChannelState.JOINED);
+                case SignalingStateEnum.READY_TO_JOIN_OTHERS:
+                    _this.setState(StateEnum.JOINED);
                     break;
-                case SignalingState.CLOSED:
+                case SignalingStateEnum.CLOSED:
                     if (_this.members.length === 0) {
-                        _this.setState(WebChannelState.LEFT);
+                        _this.setState(StateEnum.LEFT);
                     }
                     if (!_this.isRejoinDisabled) {
                         _this.rejoin();
@@ -11086,7 +11086,7 @@ var WebChannel = (function (_super) {
                 _this.signaling.close();
             }
             else {
-                _this.setState(WebChannelState.JOINED);
+                _this.setState(StateEnum.JOINED);
                 _this.signaling.open();
             }
         });
@@ -11102,9 +11102,9 @@ var WebChannel = (function (_super) {
      */
     WebChannel.prototype.join = function (key) {
         if (key === void 0) { key = generateKey(); }
-        if (this.state === WebChannelState.LEFT && this.signaling.state === SignalingState.CLOSED) {
+        if (this.state === StateEnum.LEFT && this.signaling.state === SignalingStateEnum.CLOSED) {
             this.isRejoinDisabled = !this.autoRejoin;
-            this.setState(WebChannelState.JOINING);
+            this.setState(StateEnum.JOINING);
             if (typeof key === 'string' && key.length < MAX_KEY_LENGTH) {
                 this.key = key;
             }
@@ -11237,9 +11237,9 @@ var WebChannel = (function (_super) {
         this.members.splice(this.members.indexOf(id), 1);
         this.onMemberLeave(id);
         if (this.members.length === 0
-            && (this.signaling.state === SignalingState.CONNECTING
-                || this.signaling.state === SignalingState.CLOSED)) {
-            this.setState(WebChannelState.LEFT);
+            && (this.signaling.state === SignalingStateEnum.CONNECTING
+                || this.signaling.state === SignalingStateEnum.CLOSED)) {
+            this.setState(StateEnum.LEFT);
         }
     };
     /**
@@ -11320,7 +11320,7 @@ var WebChannel = (function (_super) {
                 // network (possible when merging two networks (works with FullMesh)).
                 // If it is a case then you are already a member of the network.
                 if (this.members.includes(senderId)) {
-                    this.setState(WebChannelState.JOINED);
+                    this.setState(StateEnum.JOINED);
                     this.signaling.open();
                     channel.close();
                 }
@@ -11457,7 +11457,7 @@ var wcs = new WeakMap();
  * wg.onMemberLeave = (id) => {
  *   // TODO...
  * }
- * wg.onMessage = (id, msg, isBroadcast) => {
+ * wg.onMessage = (id, data, isBroadcast) => {
  *   // TODO...
  * }
  * wg.onStateChange = (state) => {
@@ -11470,7 +11470,7 @@ var wcs = new WeakMap();
 var WebGroup = (function () {
     /**
      * @param {WebGroupOptions} [options]
-     * @param {Topology} [options.topology=Topology.FULL_MESH]
+     * @param {TopologyEnum} [options.topology=TopologyEnum.FULL_MESH]
      * @param {string} [options.signalingURL='wss://www.coedit.re:20473']
      * @param {RTCIceServer[]} [options.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]
      * @param {boolean} [options.autoRejoin=true]
@@ -11484,13 +11484,13 @@ var WebGroup = (function () {
          * @type {number}
          */
         this.id = undefined;
-        Reflect.defineProperty(this, 'id', { enumerable: true, get: function () { return wc.id; } });
+        Reflect.defineProperty(this, 'id', { configurable: false, enumerable: true, get: function () { return wc.id; } });
         /**
          * Your unique member identifier in the group.
          * @type {number}
          */
         this.myId = undefined;
-        Reflect.defineProperty(this, 'myId', { enumerable: true, get: function () { return wc.myId; } });
+        Reflect.defineProperty(this, 'myId', { configurable: false, enumerable: true, get: function () { return wc.myId; } });
         /**
          * Group session identifier. Equals to an empty string before calling {@link WebGroup#join}.
          * Different to {@link WebGroup#id}. This key is known and used by Signaling server
@@ -11498,43 +11498,45 @@ var WebGroup = (function () {
          * @type {string}
          */
         this.key = undefined;
-        Reflect.defineProperty(this, 'key', { enumerable: true, get: function () { return wc.key; } });
+        Reflect.defineProperty(this, 'key', { configurable: false, enumerable: true, get: function () { return wc.key; } });
         /**
          * An array of member identifiers (except yours).
          * @type {number[]}
          */
         this.members = undefined;
-        Reflect.defineProperty(this, 'members', { enumerable: true, get: function () { return wc.members; } });
+        Reflect.defineProperty(this, 'members', { configurable: false, enumerable: true, get: function () { return wc.members; } });
         /**
-         * Topology identifier.
-         * @type {Topology}
+         * The read-only property which is an enum of type {@link TopologyEnum}
+         * indicating the topology used for this {@link WebGroup} instance.
+         * @type {TopologyEnum}
          */
         this.topology = undefined;
-        Reflect.defineProperty(this, 'topology', { enumerable: true, get: function () { return wc.topology; } });
+        Reflect.defineProperty(this, 'topology', { configurable: false, enumerable: true, get: function () { return wc.topology; } });
         /**
          * The state of the {@link WebGroup} connection.
-         * @type {WebGroupState}
+         * @type {StateEnum}
          */
         this.state = undefined;
-        Reflect.defineProperty(this, 'state', { enumerable: true, get: function () { return wc.state; } });
+        Reflect.defineProperty(this, 'state', { configurable: false, enumerable: true, get: function () { return wc.state; } });
         /**
          * The state of the signaling server.
-         * @type {SignalingState}
+         * @type {SignalingStateEnum}
          */
         this.signalingState = undefined;
-        Reflect.defineProperty(this, 'signalingState', { enumerable: true, get: function () { return wc.signaling.state; } });
+        Reflect.defineProperty(this, 'signalingState', { configurable: false, enumerable: true, get: function () { return wc.signaling.state; } });
         /**
          * The signaling server URL.
          * @type {string}
          */
         this.signalingURL = undefined;
-        Reflect.defineProperty(this, 'signalingURL', { enumerable: true, get: function () { return wc.signaling.url; } });
+        Reflect.defineProperty(this, 'signalingURL', { configurable: false, enumerable: true, get: function () { return wc.signaling.url; } });
         /**
          * Enable/Desable the auto rejoin feature.
          * @type {boolean}
          */
         this.autoRejoin = undefined;
         Reflect.defineProperty(this, 'autoRejoin', {
+            configurable: false,
             enumerable: true,
             get: function () { return wc.signaling.url; },
             set: function (value) { return wc.autoRejoin = true; }
@@ -11543,7 +11545,7 @@ var WebGroup = (function () {
     Object.defineProperty(WebGroup.prototype, "onMessage", {
         /**
          * This handler is called when a message has been received from the group.
-         * @type {function(id: number, msg: DataTypeView, isBroadcast: boolean)}
+         * @type {function(id: number, data: DataType, isBroadcast: boolean)}
          */
         set: function (handler) { wcs.get(this).onMessage = handler; },
         enumerable: true,
@@ -11570,7 +11572,7 @@ var WebGroup = (function () {
     Object.defineProperty(WebGroup.prototype, "onStateChange", {
         /**
          * This handler is called when the group state has changed.
-         * @type {function(state: WebGroupState)}
+         * @type {function(state: StateEnum)}
          */
         set: function (handler) { wcs.get(this).onStateChange = handler; },
         enumerable: true,
@@ -11579,7 +11581,7 @@ var WebGroup = (function () {
     Object.defineProperty(WebGroup.prototype, "onSignalingStateChange", {
         /**
          * This handler is called when the signaling state has changed.
-         * @type {function(state: SignalingState)}
+         * @type {function(state: SignalingStateEnum)}
          */
         set: function (handler) { wcs.get(this).onSignalingStateChange = handler; },
         enumerable: true,
@@ -11606,13 +11608,13 @@ var WebGroup = (function () {
     WebGroup.prototype.leave = function () { return wcs.get(this).leave(); };
     /**
      * Broadcast a message to the group.
-     * @param {DataTypeView} data
+     * @param {DataType} data
      */
     WebGroup.prototype.send = function (data) { return wcs.get(this).send(data); };
     /**
      * Send a message to a particular group member.
      * @param {number}    id Member identifier
-     * @param {DataTypeView}  data Message
+     * @param {DataType}  data Message
      */
     WebGroup.prototype.sendTo = function (id, data) { return wcs.get(this).sendTo(id, data); };
     /**
@@ -11623,5 +11625,5 @@ var WebGroup = (function () {
     return WebGroup;
 }());
 
-export { WebGroup, WebChannelState as WebGroupState, Topology, SignalingState };
+export { WebGroup, StateEnum, TopologyEnum, SignalingStateEnum };
 //# sourceMappingURL=netflux.browser.esm.js.map

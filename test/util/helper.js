@@ -1,7 +1,7 @@
 import { Subject } from 'rxjs/Subject'
 
 import { isBrowser } from '../../src/misc/Util'
-import { WebGroup, WebGroupState } from '../../src/index'
+import { WebGroup, StateEnum } from '../../src/index'
 import chunk50kb from './50kb.txt'
 
 // Main signaling server for all tests
@@ -41,7 +41,7 @@ export function createAndConnectWebGroups (numberOfPeers) {
   for (let i = 0; i < numberOfPeers; i++) {
     wgs[i] = new WebGroup({signalingURL: SIGNALING_URL})
     wgs[i].onStateChange = state => {
-      if (state === WebGroupState.JOINED) {
+      if (state === StateEnum.JOINED) {
         network.next(++i)
       }
     }

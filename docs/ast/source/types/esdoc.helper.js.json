@@ -33,9 +33,9 @@
     "innerComments": [
       {
         "type": "CommentBlock",
-        "value": "*\n * Is a helper type representing types that can be sent/received over a web group.\n * @typedef {string|Uint8Array} DataTypeView\n ",
+        "value": "*\n * Is a helper type representing types that can be sent/received over a web group.\n * @typedef {string|Uint8Array} DataType\n ",
         "start": 0,
-        "end": 135,
+        "end": 131,
         "loc": {
           "start": {
             "line": 1,
@@ -49,8 +49,8 @@
       },
       {
         "type": "CommentBlock",
-        "value": "*\n * Topology enum.\n * @typedef {Object} Topology\n * @property {number} [FULL_MESH=0] Full mesh topology.\n ",
-        "start": 136,
+        "value": "*\n * Topology enum.\n * @typedef {Object} TopologyEnum\n * @property {number} [FULL_MESH=0] Full mesh topology.\n ",
+        "start": 132,
         "end": 247,
         "loc": {
           "start": {
@@ -65,9 +65,9 @@
       },
       {
         "type": "CommentBlock",
-        "value": "*\n * The state fo the signaling server for WebRTC.\n * @typedef {Object} SignalingState\n * @property {number} [CONNECTING=0] The connection is not yet open.\n * @property {number} [OPEN=1] The connection is open and ready to communicate.\n * @property {number} [FIRST_CONNECTED=2] `RTCDataChannel` has been established\n * with one of the web group member. From now the signaling is no longer needed,\n * because the next of the joining process will pass through this member.\n * @property {number} [READY_TO_JOIN_OTHERS=3] You are successfully joined a\n * web group and ready to join others.\n * @property {number} [CLOSED=4] The connection is closed.\n ",
+        "value": "*\n * The state fo the signaling server for WebRTC.\n * @typedef {Object} SignalingStateEnum\n * @property {number} [CONNECTING=0] The connection is not yet open.\n * @property {number} [OPEN=1] The connection is open and ready to communicate.\n * @property {number} [FIRST_CONNECTED=2] `RTCDataChannel` has been established\n * with one of the web group member. From now the signaling is no longer needed,\n * because the next of the joining process will pass through this member.\n * @property {number} [READY_TO_JOIN_OTHERS=3] You are successfully joined a\n * web group and ready to join others.\n * @property {number} [CLOSED=4] The connection is closed.\n ",
         "start": 248,
-        "end": 899,
+        "end": 903,
         "loc": {
           "start": {
             "line": 10,
@@ -81,8 +81,8 @@
       },
       {
         "type": "CommentBlock",
-        "value": "*\n * {@link WebGroup} state enum.\n * @typedef {Object} WebGroupState\n * @property {number} [JOINING=0] You are joining the web group.\n * @property {number} [JOINED=1] You have successfully joined the web group\n * and ready to broadcast messages via `send` method.\n * @property {number} [LEFT=2] You have left the web group. If the connection\n * to the web group has lost and `autoRejoin=true`, then the state would be `LEFT`,\n * (usually during a relatively short period) before the rejoining process start.\n ",
-        "start": 900,
+        "value": "*\n * {@link WebGroup} state enum.\n * @typedef {Object} StateEnum\n * @property {number} [JOINING=0] You are joining the web group.\n * @property {number} [JOINED=1] You have successfully joined the web group\n * and ready to broadcast messages via `send` method.\n * @property {number} [LEFT=2] You have left the web group. If the connection\n * to the web group has lost and `autoRejoin=true`, then the state would be `LEFT`,\n * (usually during a relatively short period) before the rejoining process start.\n ",
+        "start": 904,
         "end": 1413,
         "loc": {
           "start": {
@@ -97,9 +97,9 @@
       },
       {
         "type": "CommentBlock",
-        "value": "*\n * The options to be passed into {@link WebGroup} constructor.\n * @typedef {Object} WebGroupOptions\n * @property {Topology} topology Topology identifier\n * (Full mesh is the only one supported by Netflux for now).\n * @property {string} signalingURL Signaling URL for WebRTC.\n * @property {RTCIceServer[]} iceServers Array of Ice servers for WebRTC.\n * @property {boolean} autoRejoin Whether to automatically rejoin the web group\n * on disconnect or not. Its value may be modified after {@link WebGroup}\n * instantiation at any time.\n ",
+        "value": "*\n * The options to be passed into {@link WebGroup} constructor.\n * @typedef {Object} WebGroupOptions\n * @property {TopologyEnum} topology Topology identifier\n * (Full mesh is the only one supported by Netflux for now).\n * @property {string} signalingURL Signaling URL for WebRTC.\n * @property {RTCIceServer[]} iceServers Array of Ice servers for WebRTC.\n * @property {boolean} autoRejoin Whether to automatically rejoin the web group\n * on disconnect or not. Its value may be modified after {@link WebGroup}\n * instantiation at any time.\n ",
         "start": 1414,
-        "end": 1954,
+        "end": 1958,
         "loc": {
           "start": {
             "line": 32,
@@ -113,9 +113,9 @@
       },
       {
         "type": "CommentBlock",
-        "value": "*\n * The options to be passed into {@link WebGroupBotServer} constructor.\n * @typedef {Object} WebGroupBotServerOptions\n * @property {Topology} [topology] See WebGroupOptions.topology\n * @property {string} [signalingURL] See WebGroupOptions.signalingURL\n * @property {RTCIceServer[]} [iceServers] See WebGroupOptions.iceServers\n * @property {boolean} [autoRejoin] See WebGroupOptions.autoRejoin\n * @property {Object} bot Server related options of the bot.\n * @property {NodeJS.http.Server|NodeJS.https.Server} bot.server NodeJS http(s) server.\n * @property {string} [bot.url] Bot server URL.\n * @property {boolean} [bot.perMessageDeflate] Enable/disable permessage-deflate.\n ",
-        "start": 1955,
-        "end": 2634,
+        "value": "*\n * The options to be passed into {@link WebGroupBotServer} constructor.\n * @typedef {Object} WebGroupBotServerOptions\n * @property {TopologyEnum} [topology] See WebGroupOptions.topology\n * @property {string} [signalingURL] See WebGroupOptions.signalingURL\n * @property {RTCIceServer[]} [iceServers] See WebGroupOptions.iceServers\n * @property {boolean} [autoRejoin] See WebGroupOptions.autoRejoin\n * @property {Object} bot Server related options of the bot.\n * @property {NodeJSHttpServer|NodeJSHttpsServer} bot.server NodeJS http(s) server.\n * @property {string} [bot.url] Bot server URL.\n * @property {boolean} [bot.perMessageDeflate] Enable/disable permessage-deflate.\n ",
+        "start": 1959,
+        "end": 2638,
         "loc": {
           "start": {
             "line": 43,
@@ -130,8 +130,8 @@
       {
         "type": "CommentBlock",
         "value": "*\n * @external {RTCIceServer} https://developer.mozilla.org/en/docs/Web/API/RTCIceServer\n ",
-        "start": 2635,
-        "end": 2729,
+        "start": 2639,
+        "end": 2733,
         "loc": {
           "start": {
             "line": 55,
@@ -146,8 +146,8 @@
       {
         "type": "CommentBlock",
         "value": "*\n * @external {Uint8Array} https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array\n ",
-        "start": 2730,
-        "end": 2852,
+        "start": 2734,
+        "end": 2856,
         "loc": {
           "start": {
             "line": 58,
@@ -161,9 +161,9 @@
       },
       {
         "type": "CommentBlock",
-        "value": "*\n * @external {NodeJS.http.Server} https://nodejs.org/api/http.html#http_class_http_server\n ",
-        "start": 2853,
-        "end": 2950,
+        "value": "*\n * @external {NodeJSHttpServer} https://nodejs.org/api/http.html#http_class_http_server\n ",
+        "start": 2857,
+        "end": 2952,
         "loc": {
           "start": {
             "line": 61,
@@ -177,8 +177,8 @@
       },
       {
         "type": "CommentBlock",
-        "value": "*\n * @external {NodeJS.https.Server} https://nodejs.org/api/https.html#https_class_https_server\n ",
-        "start": 2951,
+        "value": "*\n * @external {NodeJSHttpsServer} https://nodejs.org/api/https.html#https_class_https_server\n ",
+        "start": 2953,
         "end": 3052,
         "loc": {
           "start": {
@@ -196,9 +196,9 @@
   "comments": [
     {
       "type": "CommentBlock",
-      "value": "*\n * Is a helper type representing types that can be sent/received over a web group.\n * @typedef {string|Uint8Array} DataTypeView\n ",
+      "value": "*\n * Is a helper type representing types that can be sent/received over a web group.\n * @typedef {string|Uint8Array} DataType\n ",
       "start": 0,
-      "end": 135,
+      "end": 131,
       "loc": {
         "start": {
           "line": 1,
@@ -212,8 +212,8 @@
     },
     {
       "type": "CommentBlock",
-      "value": "*\n * Topology enum.\n * @typedef {Object} Topology\n * @property {number} [FULL_MESH=0] Full mesh topology.\n ",
-      "start": 136,
+      "value": "*\n * Topology enum.\n * @typedef {Object} TopologyEnum\n * @property {number} [FULL_MESH=0] Full mesh topology.\n ",
+      "start": 132,
       "end": 247,
       "loc": {
         "start": {
@@ -228,9 +228,9 @@
     },
     {
       "type": "CommentBlock",
-      "value": "*\n * The state fo the signaling server for WebRTC.\n * @typedef {Object} SignalingState\n * @property {number} [CONNECTING=0] The connection is not yet open.\n * @property {number} [OPEN=1] The connection is open and ready to communicate.\n * @property {number} [FIRST_CONNECTED=2] `RTCDataChannel` has been established\n * with one of the web group member. From now the signaling is no longer needed,\n * because the next of the joining process will pass through this member.\n * @property {number} [READY_TO_JOIN_OTHERS=3] You are successfully joined a\n * web group and ready to join others.\n * @property {number} [CLOSED=4] The connection is closed.\n ",
+      "value": "*\n * The state fo the signaling server for WebRTC.\n * @typedef {Object} SignalingStateEnum\n * @property {number} [CONNECTING=0] The connection is not yet open.\n * @property {number} [OPEN=1] The connection is open and ready to communicate.\n * @property {number} [FIRST_CONNECTED=2] `RTCDataChannel` has been established\n * with one of the web group member. From now the signaling is no longer needed,\n * because the next of the joining process will pass through this member.\n * @property {number} [READY_TO_JOIN_OTHERS=3] You are successfully joined a\n * web group and ready to join others.\n * @property {number} [CLOSED=4] The connection is closed.\n ",
       "start": 248,
-      "end": 899,
+      "end": 903,
       "loc": {
         "start": {
           "line": 10,
@@ -244,8 +244,8 @@
     },
     {
       "type": "CommentBlock",
-      "value": "*\n * {@link WebGroup} state enum.\n * @typedef {Object} WebGroupState\n * @property {number} [JOINING=0] You are joining the web group.\n * @property {number} [JOINED=1] You have successfully joined the web group\n * and ready to broadcast messages via `send` method.\n * @property {number} [LEFT=2] You have left the web group. If the connection\n * to the web group has lost and `autoRejoin=true`, then the state would be `LEFT`,\n * (usually during a relatively short period) before the rejoining process start.\n ",
-      "start": 900,
+      "value": "*\n * {@link WebGroup} state enum.\n * @typedef {Object} StateEnum\n * @property {number} [JOINING=0] You are joining the web group.\n * @property {number} [JOINED=1] You have successfully joined the web group\n * and ready to broadcast messages via `send` method.\n * @property {number} [LEFT=2] You have left the web group. If the connection\n * to the web group has lost and `autoRejoin=true`, then the state would be `LEFT`,\n * (usually during a relatively short period) before the rejoining process start.\n ",
+      "start": 904,
       "end": 1413,
       "loc": {
         "start": {
@@ -260,9 +260,9 @@
     },
     {
       "type": "CommentBlock",
-      "value": "*\n * The options to be passed into {@link WebGroup} constructor.\n * @typedef {Object} WebGroupOptions\n * @property {Topology} topology Topology identifier\n * (Full mesh is the only one supported by Netflux for now).\n * @property {string} signalingURL Signaling URL for WebRTC.\n * @property {RTCIceServer[]} iceServers Array of Ice servers for WebRTC.\n * @property {boolean} autoRejoin Whether to automatically rejoin the web group\n * on disconnect or not. Its value may be modified after {@link WebGroup}\n * instantiation at any time.\n ",
+      "value": "*\n * The options to be passed into {@link WebGroup} constructor.\n * @typedef {Object} WebGroupOptions\n * @property {TopologyEnum} topology Topology identifier\n * (Full mesh is the only one supported by Netflux for now).\n * @property {string} signalingURL Signaling URL for WebRTC.\n * @property {RTCIceServer[]} iceServers Array of Ice servers for WebRTC.\n * @property {boolean} autoRejoin Whether to automatically rejoin the web group\n * on disconnect or not. Its value may be modified after {@link WebGroup}\n * instantiation at any time.\n ",
       "start": 1414,
-      "end": 1954,
+      "end": 1958,
       "loc": {
         "start": {
           "line": 32,
@@ -276,9 +276,9 @@
     },
     {
       "type": "CommentBlock",
-      "value": "*\n * The options to be passed into {@link WebGroupBotServer} constructor.\n * @typedef {Object} WebGroupBotServerOptions\n * @property {Topology} [topology] See WebGroupOptions.topology\n * @property {string} [signalingURL] See WebGroupOptions.signalingURL\n * @property {RTCIceServer[]} [iceServers] See WebGroupOptions.iceServers\n * @property {boolean} [autoRejoin] See WebGroupOptions.autoRejoin\n * @property {Object} bot Server related options of the bot.\n * @property {NodeJS.http.Server|NodeJS.https.Server} bot.server NodeJS http(s) server.\n * @property {string} [bot.url] Bot server URL.\n * @property {boolean} [bot.perMessageDeflate] Enable/disable permessage-deflate.\n ",
-      "start": 1955,
-      "end": 2634,
+      "value": "*\n * The options to be passed into {@link WebGroupBotServer} constructor.\n * @typedef {Object} WebGroupBotServerOptions\n * @property {TopologyEnum} [topology] See WebGroupOptions.topology\n * @property {string} [signalingURL] See WebGroupOptions.signalingURL\n * @property {RTCIceServer[]} [iceServers] See WebGroupOptions.iceServers\n * @property {boolean} [autoRejoin] See WebGroupOptions.autoRejoin\n * @property {Object} bot Server related options of the bot.\n * @property {NodeJSHttpServer|NodeJSHttpsServer} bot.server NodeJS http(s) server.\n * @property {string} [bot.url] Bot server URL.\n * @property {boolean} [bot.perMessageDeflate] Enable/disable permessage-deflate.\n ",
+      "start": 1959,
+      "end": 2638,
       "loc": {
         "start": {
           "line": 43,
@@ -293,8 +293,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n * @external {RTCIceServer} https://developer.mozilla.org/en/docs/Web/API/RTCIceServer\n ",
-      "start": 2635,
-      "end": 2729,
+      "start": 2639,
+      "end": 2733,
       "loc": {
         "start": {
           "line": 55,
@@ -309,8 +309,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n * @external {Uint8Array} https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array\n ",
-      "start": 2730,
-      "end": 2852,
+      "start": 2734,
+      "end": 2856,
       "loc": {
         "start": {
           "line": 58,
@@ -324,9 +324,9 @@
     },
     {
       "type": "CommentBlock",
-      "value": "*\n * @external {NodeJS.http.Server} https://nodejs.org/api/http.html#http_class_http_server\n ",
-      "start": 2853,
-      "end": 2950,
+      "value": "*\n * @external {NodeJSHttpServer} https://nodejs.org/api/http.html#http_class_http_server\n ",
+      "start": 2857,
+      "end": 2952,
       "loc": {
         "start": {
           "line": 61,
@@ -340,8 +340,8 @@
     },
     {
       "type": "CommentBlock",
-      "value": "*\n * @external {NodeJS.https.Server} https://nodejs.org/api/https.html#https_class_https_server\n ",
-      "start": 2951,
+      "value": "*\n * @external {NodeJSHttpsServer} https://nodejs.org/api/https.html#https_class_https_server\n ",
+      "start": 2953,
       "end": 3052,
       "loc": {
         "start": {
@@ -358,9 +358,9 @@
   "tokens": [
     {
       "type": "CommentBlock",
-      "value": "*\n * Is a helper type representing types that can be sent/received over a web group.\n * @typedef {string|Uint8Array} DataTypeView\n ",
+      "value": "*\n * Is a helper type representing types that can be sent/received over a web group.\n * @typedef {string|Uint8Array} DataType\n ",
       "start": 0,
-      "end": 135,
+      "end": 131,
       "loc": {
         "start": {
           "line": 1,
@@ -374,8 +374,8 @@
     },
     {
       "type": "CommentBlock",
-      "value": "*\n * Topology enum.\n * @typedef {Object} Topology\n * @property {number} [FULL_MESH=0] Full mesh topology.\n ",
-      "start": 136,
+      "value": "*\n * Topology enum.\n * @typedef {Object} TopologyEnum\n * @property {number} [FULL_MESH=0] Full mesh topology.\n ",
+      "start": 132,
       "end": 247,
       "loc": {
         "start": {
@@ -390,9 +390,9 @@
     },
     {
       "type": "CommentBlock",
-      "value": "*\n * The state fo the signaling server for WebRTC.\n * @typedef {Object} SignalingState\n * @property {number} [CONNECTING=0] The connection is not yet open.\n * @property {number} [OPEN=1] The connection is open and ready to communicate.\n * @property {number} [FIRST_CONNECTED=2] `RTCDataChannel` has been established\n * with one of the web group member. From now the signaling is no longer needed,\n * because the next of the joining process will pass through this member.\n * @property {number} [READY_TO_JOIN_OTHERS=3] You are successfully joined a\n * web group and ready to join others.\n * @property {number} [CLOSED=4] The connection is closed.\n ",
+      "value": "*\n * The state fo the signaling server for WebRTC.\n * @typedef {Object} SignalingStateEnum\n * @property {number} [CONNECTING=0] The connection is not yet open.\n * @property {number} [OPEN=1] The connection is open and ready to communicate.\n * @property {number} [FIRST_CONNECTED=2] `RTCDataChannel` has been established\n * with one of the web group member. From now the signaling is no longer needed,\n * because the next of the joining process will pass through this member.\n * @property {number} [READY_TO_JOIN_OTHERS=3] You are successfully joined a\n * web group and ready to join others.\n * @property {number} [CLOSED=4] The connection is closed.\n ",
       "start": 248,
-      "end": 899,
+      "end": 903,
       "loc": {
         "start": {
           "line": 10,
@@ -406,8 +406,8 @@
     },
     {
       "type": "CommentBlock",
-      "value": "*\n * {@link WebGroup} state enum.\n * @typedef {Object} WebGroupState\n * @property {number} [JOINING=0] You are joining the web group.\n * @property {number} [JOINED=1] You have successfully joined the web group\n * and ready to broadcast messages via `send` method.\n * @property {number} [LEFT=2] You have left the web group. If the connection\n * to the web group has lost and `autoRejoin=true`, then the state would be `LEFT`,\n * (usually during a relatively short period) before the rejoining process start.\n ",
-      "start": 900,
+      "value": "*\n * {@link WebGroup} state enum.\n * @typedef {Object} StateEnum\n * @property {number} [JOINING=0] You are joining the web group.\n * @property {number} [JOINED=1] You have successfully joined the web group\n * and ready to broadcast messages via `send` method.\n * @property {number} [LEFT=2] You have left the web group. If the connection\n * to the web group has lost and `autoRejoin=true`, then the state would be `LEFT`,\n * (usually during a relatively short period) before the rejoining process start.\n ",
+      "start": 904,
       "end": 1413,
       "loc": {
         "start": {
@@ -422,9 +422,9 @@
     },
     {
       "type": "CommentBlock",
-      "value": "*\n * The options to be passed into {@link WebGroup} constructor.\n * @typedef {Object} WebGroupOptions\n * @property {Topology} topology Topology identifier\n * (Full mesh is the only one supported by Netflux for now).\n * @property {string} signalingURL Signaling URL for WebRTC.\n * @property {RTCIceServer[]} iceServers Array of Ice servers for WebRTC.\n * @property {boolean} autoRejoin Whether to automatically rejoin the web group\n * on disconnect or not. Its value may be modified after {@link WebGroup}\n * instantiation at any time.\n ",
+      "value": "*\n * The options to be passed into {@link WebGroup} constructor.\n * @typedef {Object} WebGroupOptions\n * @property {TopologyEnum} topology Topology identifier\n * (Full mesh is the only one supported by Netflux for now).\n * @property {string} signalingURL Signaling URL for WebRTC.\n * @property {RTCIceServer[]} iceServers Array of Ice servers for WebRTC.\n * @property {boolean} autoRejoin Whether to automatically rejoin the web group\n * on disconnect or not. Its value may be modified after {@link WebGroup}\n * instantiation at any time.\n ",
       "start": 1414,
-      "end": 1954,
+      "end": 1958,
       "loc": {
         "start": {
           "line": 32,
@@ -438,9 +438,9 @@
     },
     {
       "type": "CommentBlock",
-      "value": "*\n * The options to be passed into {@link WebGroupBotServer} constructor.\n * @typedef {Object} WebGroupBotServerOptions\n * @property {Topology} [topology] See WebGroupOptions.topology\n * @property {string} [signalingURL] See WebGroupOptions.signalingURL\n * @property {RTCIceServer[]} [iceServers] See WebGroupOptions.iceServers\n * @property {boolean} [autoRejoin] See WebGroupOptions.autoRejoin\n * @property {Object} bot Server related options of the bot.\n * @property {NodeJS.http.Server|NodeJS.https.Server} bot.server NodeJS http(s) server.\n * @property {string} [bot.url] Bot server URL.\n * @property {boolean} [bot.perMessageDeflate] Enable/disable permessage-deflate.\n ",
-      "start": 1955,
-      "end": 2634,
+      "value": "*\n * The options to be passed into {@link WebGroupBotServer} constructor.\n * @typedef {Object} WebGroupBotServerOptions\n * @property {TopologyEnum} [topology] See WebGroupOptions.topology\n * @property {string} [signalingURL] See WebGroupOptions.signalingURL\n * @property {RTCIceServer[]} [iceServers] See WebGroupOptions.iceServers\n * @property {boolean} [autoRejoin] See WebGroupOptions.autoRejoin\n * @property {Object} bot Server related options of the bot.\n * @property {NodeJSHttpServer|NodeJSHttpsServer} bot.server NodeJS http(s) server.\n * @property {string} [bot.url] Bot server URL.\n * @property {boolean} [bot.perMessageDeflate] Enable/disable permessage-deflate.\n ",
+      "start": 1959,
+      "end": 2638,
       "loc": {
         "start": {
           "line": 43,
@@ -455,8 +455,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n * @external {RTCIceServer} https://developer.mozilla.org/en/docs/Web/API/RTCIceServer\n ",
-      "start": 2635,
-      "end": 2729,
+      "start": 2639,
+      "end": 2733,
       "loc": {
         "start": {
           "line": 55,
@@ -471,8 +471,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n * @external {Uint8Array} https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array\n ",
-      "start": 2730,
-      "end": 2852,
+      "start": 2734,
+      "end": 2856,
       "loc": {
         "start": {
           "line": 58,
@@ -486,9 +486,9 @@
     },
     {
       "type": "CommentBlock",
-      "value": "*\n * @external {NodeJS.http.Server} https://nodejs.org/api/http.html#http_class_http_server\n ",
-      "start": 2853,
-      "end": 2950,
+      "value": "*\n * @external {NodeJSHttpServer} https://nodejs.org/api/http.html#http_class_http_server\n ",
+      "start": 2857,
+      "end": 2952,
       "loc": {
         "start": {
           "line": 61,
@@ -502,8 +502,8 @@
     },
     {
       "type": "CommentBlock",
-      "value": "*\n * @external {NodeJS.https.Server} https://nodejs.org/api/https.html#https_class_https_server\n ",
-      "start": 2951,
+      "value": "*\n * @external {NodeJSHttpsServer} https://nodejs.org/api/https.html#https_class_https_server\n ",
+      "start": 2953,
       "end": 3052,
       "loc": {
         "start": {

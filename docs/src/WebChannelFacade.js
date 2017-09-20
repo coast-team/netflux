@@ -31,7 +31,7 @@ export const wcs = new WeakMap();
  * wg.onMemberLeave = (id) => {
  *   // TODO...
  * }
- * wg.onMessage = (id, msg, isBroadcast) => {
+ * wg.onMessage = (id, data, isBroadcast) => {
  *   // TODO...
  * }
  * wg.onStateChange = (state) => {
@@ -44,7 +44,7 @@ export const wcs = new WeakMap();
 export class WebGroup {
     /**
      * @param {WebGroupOptions} [options]
-     * @param {Topology} [options.topology=Topology.FULL_MESH]
+     * @param {TopologyEnum} [options.topology=TopologyEnum.FULL_MESH]
      * @param {string} [options.signalingURL='wss://www.coedit.re:20473']
      * @param {RTCIceServer[]} [options.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]
      * @param {boolean} [options.autoRejoin=true]
@@ -57,13 +57,13 @@ export class WebGroup {
          * @type {number}
          */
         this.id = undefined;
-        Reflect.defineProperty(this, 'id', { enumerable: true, get: () => wc.id });
+        Reflect.defineProperty(this, 'id', { configurable: false, enumerable: true, get: () => wc.id });
         /**
          * Your unique member identifier in the group.
          * @type {number}
          */
         this.myId = undefined;
-        Reflect.defineProperty(this, 'myId', { enumerable: true, get: () => wc.myId });
+        Reflect.defineProperty(this, 'myId', { configurable: false, enumerable: true, get: () => wc.myId });
         /**
          * Group session identifier. Equals to an empty string before calling {@link WebGroup#join}.
          * Different to {@link WebGroup#id}. This key is known and used by Signaling server
@@ -71,43 +71,45 @@ export class WebGroup {
          * @type {string}
          */
         this.key = undefined;
-        Reflect.defineProperty(this, 'key', { enumerable: true, get: () => wc.key });
+        Reflect.defineProperty(this, 'key', { configurable: false, enumerable: true, get: () => wc.key });
         /**
          * An array of member identifiers (except yours).
          * @type {number[]}
          */
         this.members = undefined;
-        Reflect.defineProperty(this, 'members', { enumerable: true, get: () => wc.members });
+        Reflect.defineProperty(this, 'members', { configurable: false, enumerable: true, get: () => wc.members });
         /**
-         * Topology identifier.
-         * @type {Topology}
+         * The read-only property which is an enum of type {@link TopologyEnum}
+         * indicating the topology used for this {@link WebGroup} instance.
+         * @type {TopologyEnum}
          */
         this.topology = undefined;
-        Reflect.defineProperty(this, 'topology', { enumerable: true, get: () => wc.topology });
+        Reflect.defineProperty(this, 'topology', { configurable: false, enumerable: true, get: () => wc.topology });
         /**
          * The state of the {@link WebGroup} connection.
-         * @type {WebGroupState}
+         * @type {StateEnum}
          */
         this.state = undefined;
-        Reflect.defineProperty(this, 'state', { enumerable: true, get: () => wc.state });
+        Reflect.defineProperty(this, 'state', { configurable: false, enumerable: true, get: () => wc.state });
         /**
          * The state of the signaling server.
-         * @type {SignalingState}
+         * @type {SignalingStateEnum}
          */
         this.signalingState = undefined;
-        Reflect.defineProperty(this, 'signalingState', { enumerable: true, get: () => wc.signaling.state });
+        Reflect.defineProperty(this, 'signalingState', { configurable: false, enumerable: true, get: () => wc.signaling.state });
         /**
          * The signaling server URL.
          * @type {string}
          */
         this.signalingURL = undefined;
-        Reflect.defineProperty(this, 'signalingURL', { enumerable: true, get: () => wc.signaling.url });
+        Reflect.defineProperty(this, 'signalingURL', { configurable: false, enumerable: true, get: () => wc.signaling.url });
         /**
          * Enable/Desable the auto rejoin feature.
          * @type {boolean}
          */
         this.autoRejoin = undefined;
         Reflect.defineProperty(this, 'autoRejoin', {
+            configurable: false,
             enumerable: true,
             get: () => wc.signaling.url,
             set: (value) => wc.autoRejoin = true
@@ -115,7 +117,7 @@ export class WebGroup {
     }
     /**
      * This handler is called when a message has been received from the group.
-     * @type {function(id: number, msg: DataTypeView, isBroadcast: boolean)}
+     * @type {function(id: number, data: DataType, isBroadcast: boolean)}
      */
     set onMessage(handler) { wcs.get(this).onMessage = handler; }
     /**
@@ -130,12 +132,12 @@ export class WebGroup {
     set onMemberLeave(handler) { wcs.get(this).onMemberLeave = handler; }
     /**
      * This handler is called when the group state has changed.
-     * @type {function(state: WebGroupState)}
+     * @type {function(state: StateEnum)}
      */
     set onStateChange(handler) { wcs.get(this).onStateChange = handler; }
     /**
      * This handler is called when the signaling state has changed.
-     * @type {function(state: SignalingState)}
+     * @type {function(state: SignalingStateEnum)}
      */
     set onSignalingStateChange(handler) { wcs.get(this).onSignalingStateChange = handler; }
     /**
@@ -159,13 +161,13 @@ export class WebGroup {
     leave() { return wcs.get(this).leave(); }
     /**
      * Broadcast a message to the group.
-     * @param {DataTypeView} data
+     * @param {DataType} data
      */
     send(data) { return wcs.get(this).send(data); }
     /**
      * Send a message to a particular group member.
      * @param {number}    id Member identifier
-     * @param {DataTypeView}  data Message
+     * @param {DataType}  data Message
      */
     sendTo(id, data) { return wcs.get(this).sendTo(id, data); }
     /**

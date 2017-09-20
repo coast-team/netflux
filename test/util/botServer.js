@@ -1,6 +1,6 @@
 import { ReplaySubject } from 'rxjs/ReplaySubject'
 
-import { WebGroup, WebGroupState, WebGroupBotServer } from '../../src/index'
+import { WebGroup, StateEnum, WebGroupBotServer } from '../../src/index'
 import { onMessageForBot, SIGNALING_URL, BOT_HOST, BOT_PORT } from './helper'
 
 // Require dependencies
@@ -40,11 +40,11 @@ try {
         webChannels.filter(wc => wc.id === wcId)
           .subscribe(
             wc => {
-              if (wc.state === WebGroupState.JOINED) {
+              if (wc.state === StateEnum.JOINED) {
                 resolve()
               } else {
                 wc.onStateChange = state => {
-                  if (state === WebGroupState.JOINED) {
+                  if (state === StateEnum.JOINED) {
                     resolve()
                   }
                 }

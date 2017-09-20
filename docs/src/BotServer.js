@@ -1,5 +1,5 @@
 import { WebSocketBuilder } from './WebSocketBuilder';
-import { wcDefaults } from './service/WebChannel';
+import { defaultOptions } from './service/WebChannel';
 import { WebGroup, wcs } from './WebChannelFacade';
 import { Channel } from './Channel';
 export const bsDefaults = {
@@ -35,7 +35,7 @@ export class BotServer {
                 perMessageDeflate: false
             }
         };
-        let wcOptions = Object.assign({}, wcDefaults, options);
+        let wcOptions = Object.assign({}, defaultOptions, options);
         this.wcSettings = {
             topology: wcOptions.topology,
             signalingURL: wcOptions.signalingURL,

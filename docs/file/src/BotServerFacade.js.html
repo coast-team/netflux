@@ -31,14 +31,14 @@
     
   <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/BotServerFacade.js~WebGroupBotServer.html">WebGroupBotServer</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span></span></li>
-<li data-ice="doc"><a data-ice="dirPath" class="nav-dir-path" href="identifiers.html#types">types</a><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-DataTypeView">DataTypeView</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-SignalingState">SignalingState</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-Topology">Topology</a></span></span></li>
+<li data-ice="doc"><a data-ice="dirPath" class="nav-dir-path" href="identifiers.html#types">types</a><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-DataType">DataType</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-SignalingStateEnum">SignalingStateEnum</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-StateEnum">StateEnum</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-TopologyEnum">TopologyEnum</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupBotServerOptions">WebGroupBotServerOptions</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupOptions">WebGroupOptions</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupState">WebGroupState</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/http.html#http_class_http_server">NodeJS.http.Server</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/https.html#https_class_https_server">NodeJS.https.Server</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/http.html#http_class_http_server">NodeJSHttpServer</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/https.html#https_class_https_server">NodeJSHttpsServer</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://developer.mozilla.org/en/docs/Web/API/RTCIceServer">RTCIceServer</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array">Uint8Array</a></span></span></li>
 </ul>
@@ -83,33 +83,36 @@ let botServer;
 export class WebGroupBotServer {
     /**
      * @param {WebGroupBotServerOptions} options
-     * @param {Topology} [options.topology=Topology.FULL_MESH]
+     * @param {TopologyEnum} [options.topology=TopologyEnum.FULL_MESH]
      * @param {string} [options.signalingURL=&apos;wss://www.coedit.re:20473&apos;]
      * @param {RTCIceServer[]} [options.iceServers=[{urls: &apos;stun:stun3.l.google.com:19302&apos;}]]
      * @param {boolean} [options.autoRejoin=false]
      * @param {Object} options.bot
-     * @param {NodeJS.http.Server|NodeJS.https.Server} options.bot.server NodeJS http(s) server.
+     * @param {NodeJSHttpServer|NodeJSHttpsServer} options.bot.server NodeJS http(s) server.
      * @param {string} [options.bot.url] Bot server URL.
      * @param {boolean} [options.bot.perMessageDeflate=false] Enable/disable permessage-deflate.
      */
     constructor(options) {
         botServer = new BotServer(options);
+        /**
+         * NodeJS http server instance (See https://nodejs.org/api/http.html)
+         * @type {NodeJSHttpServer|NodeJSHttpsServer}
+         */
+        this.server = undefined;
+        Reflect.defineProperty(this, &apos;server&apos;, { configurable: false, enumerable: true, get: () =&gt; botServer.server });
+        /**
+         * Set of web groups the bot is member of.
+         * @type {Set&lt;WebGroup&gt;}
+         */
+        this.webGroups = undefined;
+        Reflect.defineProperty(this, &apos;webGroups&apos;, { configurable: false, enumerable: true, get: () =&gt; botServer.webGroups });
+        /**
+         * Bot server url. Used to invite the bot in a web group via {@link WebGroup#invite} method.
+         * @type {string}
+         */
+        this.url = undefined;
+        Reflect.defineProperty(this, &apos;url&apos;, { configurable: false, enumerable: true, get: () =&gt; botServer.url });
     }
-    /**
-     * NodeJS http server instance (See https://nodejs.org/api/http.html)
-     * @type {NodeJS.http.Server|NodeJS.https.Server}
-     */
-    get server() { return botServer.server; }
-    /**
-     * Set of web groups the bot is member of.
-     * @type {Set&lt;WebGroup&gt;}
-     */
-    get webGroups() { return botServer.webGroups; }
-    /**
-     * Bot server url. Used to invite the bot in a web group via {@link WebGroup#invite} method.
-     * @type {string}
-     */
-    get url() { return botServer.url; }
     /**
      * This handler is called when the bot has been invited into a web group by one its members.
      * @type  {function(wg: WebGroup)} handler

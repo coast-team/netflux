@@ -1,5 +1,8 @@
+import { Server as NodeJSHttpServer } from 'http'
+import { Server as NodeJSHttpsServer } from 'https'
+
 import { WebSocketBuilder } from './WebSocketBuilder'
-import { WebChannel, WebChannelOptions, wcDefaults } from './service/WebChannel'
+import { WebChannel, Options, defaultOptions } from './service/WebChannel'
 import { WebGroup, wcs } from './WebChannelFacade'
 import { Channel } from './Channel'
 
@@ -25,12 +28,12 @@ const url = require('url')
  */
 export class BotServer {
 
-  public server: any
+  public server: NodeJSHttpServer | NodeJSHttpsServer
   public webGroups: Set<WebGroup>
   public onWebGroup: (wg: WebGroup) => void
   public onError: (err) => void
 
-  private wcSettings: WebChannelOptions
+  private wcSettings: Options
   private botSettings: BotServerOptions
   private serverSettings: {
     perMessageDeflate: boolean,
@@ -59,7 +62,7 @@ export class BotServer {
       }
     }
 
-    let wcOptions = Object.assign({}, wcDefaults, options)
+    let wcOptions = Object.assign({}, defaultOptions, options)
     this.wcSettings = {
       topology: wcOptions.topology,
       signalingURL: wcOptions.signalingURL,

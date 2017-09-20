@@ -1,3 +1,6 @@
+/// <reference types="node" />
+import { Server as NodeJSHttpServer } from 'http';
+import { Server as NodeJSHttpsServer } from 'https';
 import { WebGroup } from './WebChannelFacade';
 import { BotServerOptions as WebGroupBotServerOptions } from './BotServer';
 /**
@@ -33,33 +36,21 @@ import { BotServerOptions as WebGroupBotServerOptions } from './BotServer';
  * server.listen(BOT_PORT, BOT_HOST)
  */
 export declare class WebGroupBotServer {
+    server: NodeJSHttpServer | NodeJSHttpsServer;
+    webGroups: Set<WebGroup>;
+    url: string;
     /**
      * @param {WebGroupBotServerOptions} options
-     * @param {Topology} [options.topology=Topology.FULL_MESH]
+     * @param {TopologyEnum} [options.topology=TopologyEnum.FULL_MESH]
      * @param {string} [options.signalingURL='wss://www.coedit.re:20473']
      * @param {RTCIceServer[]} [options.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]
      * @param {boolean} [options.autoRejoin=false]
      * @param {Object} options.bot
-     * @param {NodeJS.http.Server|NodeJS.https.Server} options.bot.server NodeJS http(s) server.
+     * @param {NodeJSHttpServer|NodeJSHttpsServer} options.bot.server NodeJS http(s) server.
      * @param {string} [options.bot.url] Bot server URL.
      * @param {boolean} [options.bot.perMessageDeflate=false] Enable/disable permessage-deflate.
      */
     constructor(options: WebGroupBotServerOptions);
-    /**
-     * NodeJS http server instance (See https://nodejs.org/api/http.html)
-     * @type {NodeJS.http.Server|NodeJS.https.Server}
-     */
-    readonly server: any;
-    /**
-     * Set of web groups the bot is member of.
-     * @type {Set<WebGroup>}
-     */
-    readonly webGroups: Set<WebGroup>;
-    /**
-     * Bot server url. Used to invite the bot in a web group via {@link WebGroup#invite} method.
-     * @type {string}
-     */
-    readonly url: string;
     /**
      * This handler is called when the bot has been invited into a web group by one its members.
      * @type  {function(wg: WebGroup)} handler

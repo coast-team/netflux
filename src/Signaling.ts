@@ -26,7 +26,7 @@ const FIRST_CONNECTION_ERROR_CODE = 4002
 const pingMsg = signaling.Message.encode(signaling.Message.create({ ping: true })).finish()
 const pongMsg = signaling.Message.encode(signaling.Message.create({ pong: true })).finish()
 
-export enum SignalingState {
+export enum SignalingStateEnum {
   CONNECTING,
   OPEN,
   FIRST_CONNECTED,
@@ -42,10 +42,10 @@ export enum SignalingState {
 export class Signaling {
 
   public url: string
-  public state: SignalingState
+  public state: SignalingStateEnum
 
   private wc: WebChannel
-  private stateSubject: Subject<SignalingState>
+  private stateSubject: Subject<SignalingStateEnum>
   private channelSubject: Subject<Channel>
   private rxWs: SignalingConnection
   private pingInterval: any
@@ -54,18 +54,18 @@ export class Signaling {
   constructor (wc: WebChannel, url: string) {
     // public
     this.url = url.endsWith('/') ? url : url + '/'
-    this.state = SignalingState.CLOSED
+    this.state = SignalingStateEnum.CLOSED
 
     // private
     this.wc = wc
-    this.stateSubject = new Subject<SignalingState>()
+    this.stateSubject = new Subject<SignalingStateEnum>()
     this.channelSubject = new Subject<Channel>()
     this.rxWs = undefined
     this.pingInterval = undefined
     this.pongReceived = false
   }
 
-  get onState (): Observable<SignalingState> {
+  get onState (): Observable<SignalingStateEnum> {
     return this.stateSubject.asObservable()
   }
 
@@ -78,23 +78,23 @@ export class Signaling {
    * to join new peers to the network.
    */
   open (): void {
-    if (this.state === SignalingState.FIRST_CONNECTED) {
+    if (this.state === SignalingStateEnum.FIRST_CONNECTED) {
       this.rxWs.send({ joined: true })
-      this.setState(SignalingState.READY_TO_JOIN_OTHERS)
+      this.setState(SignalingStateEnum.READY_TO_JOIN_OTHERS)
     }
   }
 
   join (key: string): void {
-    if (this.state === SignalingState.READY_TO_JOIN_OTHERS) {
+    if (this.state === SignalingStateEnum.READY_TO_JOIN_OTHERS) {
       throw new Error('Failed to join via signaling: connection with signaling is already opened')
     }
-    if (this.state !== SignalingState.CLOSED) {
+    if (this.state !== SignalingStateEnum.CLOSED) {
       this.close()
     }
-    this.setState(SignalingState.CONNECTING)
+    this.setState(SignalingStateEnum.CONNECTING)
     this.wc.webSocketBuilder.connect(this.url + key)
       .then(ws => {
-        this.setState(SignalingState.OPEN)
+        this.setState(SignalingStateEnum.OPEN)
         this.rxWs = this.createRxWs(ws)
         this.startPingInterval()
         this.rxWs.onMessage.subscribe(
@@ -108,14 +108,14 @@ export class Signaling {
               break
             case 'isFirst':
               if (msg.isFirst) {
-                this.setState(SignalingState.READY_TO_JOIN_OTHERS)
+                this.setState(SignalingStateEnum.READY_TO_JOIN_OTHERS)
               } else {
                 this.wc.webRTCBuilder.connectOverSignaling({
                   onMessage: this.rxWs.onMessage.filter(msg => msg.type === 'content')
                     .map(({ content }) => content),
                   send: (msg) => this.rxWs.send({ content: msg })
                 })
-                  .then(() => this.setState(SignalingState.FIRST_CONNECTED))
+                  .then(() => this.setState(SignalingStateEnum.FIRST_CONNECTED))
                   .catch(err => {
                     this.rxWs.close(FIRST_CONNECTION_ERROR_CODE, `Failed to join over Signaling: ${err.message}`)
                   })
@@ -125,7 +125,7 @@ export class Signaling {
           }
         )
       })
-      .catch(err => this.setState(SignalingState.CLOSED))
+      .catch(err => this.setState(SignalingStateEnum.CLOSED))
   }
 
   /**
@@ -137,11 +137,11 @@ export class Signaling {
     }
   }
 
-  private setState (state: SignalingState) {
+  private setState (state: SignalingStateEnum) {
     if (this.state !== state) {
       this.state = state
       this.stateSubject.next(state)
-      if (state === SignalingState.READY_TO_JOIN_OTHERS) {
+      if (state === SignalingStateEnum.READY_TO_JOIN_OTHERS) {
         this.wc.webRTCBuilder.onChannelFromSignaling({
           onMessage: this.rxWs.onMessage.filter(msg => msg.type === 'content')
             .map(({ content }) => content),
@@ -154,7 +154,7 @@ export class Signaling {
   private startPingInterval () {
     this.rxWs.ping()
     this.pingInterval = setInterval(() => {
-      if (this.state !== SignalingState.CLOSED) {
+      if (this.state !== SignalingStateEnum.CLOSED) {
         if (!this.pongReceived) {
           clearInterval(this.pingInterval)
           this.rxWs.close(PING_ERROR_CODE, 'Signaling is not responding')
@@ -179,7 +179,7 @@ export class Signaling {
     ws.onerror = err => subject.error(err)
     ws.onclose = closeEvt => {
       clearInterval(this.pingInterval)
-      this.setState(SignalingState.CLOSED)
+      this.setState(SignalingStateEnum.CLOSED)
       if (closeEvt.code === 1000) {
         subject.complete()
       } else {
@@ -206,7 +206,7 @@ export class Signaling {
       close: (code = 1000, reason = '') => {
         ws.onclose = undefined
         ws.close(code, reason)
-        this.setState(SignalingState.CLOSED)
+        this.setState(SignalingStateEnum.CLOSED)
         clearInterval(this.pingInterval)
         subject.complete()
       }
