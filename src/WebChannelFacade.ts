@@ -75,13 +75,13 @@ export class WebGroup {
      * @type {number}
      */
     this.id = undefined
-    Reflect.defineProperty(this, 'id', { enumerable: true, get: () => wc.id })
+    Reflect.defineProperty(this, 'id', { configurable: false, enumerable: true, get: () => wc.id })
     /**
      * Your unique member identifier in the group.
      * @type {number}
      */
     this.myId = undefined
-    Reflect.defineProperty(this, 'myId', { enumerable: true, get: () => wc.myId })
+    Reflect.defineProperty(this, 'myId', { configurable: false, enumerable: true, get: () => wc.myId })
     /**
      * Group session identifier. Equals to an empty string before calling {@link WebGroup#join}.
      * Different to {@link WebGroup#id}. This key is known and used by Signaling server
@@ -89,43 +89,44 @@ export class WebGroup {
      * @type {string}
      */
     this.key = undefined
-    Reflect.defineProperty(this, 'key', { enumerable: true, get: () => wc.key })
+    Reflect.defineProperty(this, 'key', { configurable: false, enumerable: true, get: () => wc.key })
     /**
      * An array of member identifiers (except yours).
      * @type {number[]}
      */
     this.members = undefined
-    Reflect.defineProperty(this, 'members', { enumerable: true, get: () => wc.members })
+    Reflect.defineProperty(this, 'members', { configurable: false, enumerable: true, get: () => wc.members })
     /**
      * Topology identifier.
      * @type {Topology}
      */
     this.topology = undefined
-    Reflect.defineProperty(this, 'topology', { enumerable: true, get: () => wc.topology })
+    Reflect.defineProperty(this, 'topology', { configurable: false, enumerable: true, get: () => wc.topology })
     /**
      * The state of the {@link WebGroup} connection.
      * @type {WebGroupState}
      */
     this.state = undefined
-    Reflect.defineProperty(this, 'state', { enumerable: true, get: () => wc.state })
+    Reflect.defineProperty(this, 'state', { configurable: false, enumerable: true, get: () => wc.state })
     /**
      * The state of the signaling server.
      * @type {SignalingState}
      */
     this.signalingState = undefined
-    Reflect.defineProperty(this, 'signalingState', { enumerable: true, get: () => wc.signaling.state })
+    Reflect.defineProperty(this, 'signalingState', { configurable: false, enumerable: true, get: () => wc.signaling.state })
     /**
      * The signaling server URL.
      * @type {string}
      */
     this.signalingURL = undefined
-    Reflect.defineProperty(this, 'signalingURL', { enumerable: true, get: () => wc.signaling.url })
+    Reflect.defineProperty(this, 'signalingURL', { configurable: false, enumerable: true, get: () => wc.signaling.url })
     /**
      * Enable/Desable the auto rejoin feature.
      * @type {boolean}
      */
     this.autoRejoin = undefined
     Reflect.defineProperty(this, 'autoRejoin', {
+      configurable: false,
       enumerable: true,
       get: () => wc.signaling.url,
       set: (value: boolean) => wc.autoRejoin = true
