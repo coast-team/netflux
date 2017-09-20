@@ -31,12 +31,16 @@
     
   <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/BotServerFacade.js~WebGroupBotServer.html">WebGroupBotServer</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroupState.html">WebGroupState</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.js~SignalingState.html">SignalingState</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.js~Topology.html">Topology</a></span></span></li>
 <li data-ice="doc"><a data-ice="dirPath" class="nav-dir-path" href="identifiers.html#types">types</a><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-DataType">DataType</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-SignalingStateEnum">SignalingStateEnum</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-StateEnum">StateEnum</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-TopologyEnum">TopologyEnum</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-MemberEvent">MemberEvent</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-MessageEvent">MessageEvent</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-SignalingStateEvent">SignalingStateEvent</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupBotServerOptions">WebGroupBotServerOptions</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupOptions">WebGroupOptions</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupStateEvent">WebGroupStateEvent</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/http.html#http_class_http_server">NodeJSHttpServer</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/https.html#https_class_https_server">NodeJSHttpsServer</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://developer.mozilla.org/en/docs/Web/API/RTCIceServer">RTCIceServer</a></span></span></li>
@@ -46,11 +50,56 @@
 </nav>
 
 <div class="content" data-ice="content"><h1 data-ice="title">src/WebChannelFacade.js</h1>
-<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">import { WebChannel } from &apos;./service/WebChannel&apos;;
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">import { WebChannel, WebChannelState } from &apos;./service/WebChannel&apos;;
 /**
  * @ignore
  */
 export const wcs = new WeakMap();
+/**
+ * {@link WebGroup} state enum.
+ * @type {Object}
+ * @property {number} [JOINING=0] You are joining the web group.
+ * @property {number} [JOINED=1] You have successfully joined the web group
+ * and ready to broadcast messages via `send` method.
+ * @property {number} [LEFT=2] You have left the web group. If the connection
+ * to the web group has lost and `autoRejoin=true`, then the state would be `LEFT`,
+ * (usually during a relatively short period) before the rejoining process start.
+ */
+export class WebGroupState {
+    /**
+     * Joining the group...
+     * @type {number}
+     */
+    static get JOINING() { return WebChannelState.JOINING; }
+    /**
+     * Equals to `&apos;JOINING&apos;`.
+     * @type {string}
+     */
+    static get [WebGroupState.JOINING]() { return WebChannelState[WebChannelState.JOINING]; }
+    /**
+     * Joined the group successfully.
+     * @type {number}
+     */
+    static get JOINED() { return WebChannelState.JOINED; }
+    /**
+     * Equals to `&apos;JOINED&apos;`.
+     * @type {string}
+     */
+    static get [WebGroupState.JOINED]() { return WebChannelState[WebChannelState.JOINED]; }
+    /**
+     * Left the group. If the connection to the web group has lost other then
+     * by calling {@link WebGroup#leave} or {@link WebGroup#closeSignaling} methods
+     * and {@link WebGroup#autoRejoin} is true, then the state would be `LEFT`,
+     * (usually during a relatively short period) before the rejoining process start.
+     * @type {number}
+     */
+    static get LEFT() { return WebChannelState.LEFT; }
+    /**
+     * Equals to `&apos;LEFT&apos;`.
+     * @type {string}
+     */
+    static get [WebGroupState.LEFT]() { return WebChannelState[WebChannelState.LEFT]; }
+}
 /**
  * This class is an API starting point. It represents a peer to peer network,
  * simply called a group. Each group member can send/receive broadcast
@@ -135,13 +184,13 @@ export class WebGroup {
         Reflect.defineProperty(this, &apos;topology&apos;, { configurable: false, enumerable: true, get: () =&gt; wc.topology });
         /**
          * The state of the {@link WebGroup} connection.
-         * @type {StateEnum}
+         * @type {WebGroupState}
          */
         this.state = undefined;
         Reflect.defineProperty(this, &apos;state&apos;, { configurable: false, enumerable: true, get: () =&gt; wc.state });
         /**
          * The state of the signaling server.
-         * @type {SignalingStateEnum}
+         * @type {SignalingState}
          */
         this.signalingState = undefined;
         Reflect.defineProperty(this, &apos;signalingState&apos;, { configurable: false, enumerable: true, get: () =&gt; wc.signaling.state });
@@ -180,17 +229,22 @@ export class WebGroup {
     set onMemberLeave(handler) { wcs.get(this).onMemberLeave = handler; }
     /**
      * This handler is called when the group state has changed.
-     * @type {function(state: StateEnum)}
+     * @type {function(state: WebGroupState)}
      */
     set onStateChange(handler) { wcs.get(this).onStateChange = handler; }
     /**
      * This handler is called when the signaling state has changed.
-     * @type {function(state: SignalingStateEnum)}
+     * @type {function(state: SignalingState)}
      */
     set onSignalingStateChange(handler) { wcs.get(this).onSignalingStateChange = handler; }
     /**
      * Join the group identified by a key provided by one of the group member.
+     * If the current {@link WebGroup#state} value is not {@link WebGroupState#LEFT} or
+     * {@link WebGroup#signalingState} value is not {@link SignalingState.CLOSED},
+     * then first calls {@link WebGroup#leave} and then join normally.
      * @param {string} key
+     * @emits {StateEvent}
+     * @emits {SignalingStateEvent}
      */
     join(key) { return wcs.get(this).join(key); }
     /**
@@ -200,11 +254,16 @@ export class WebGroup {
     invite(url) { return wcs.get(this).invite(url); }
     /**
      * Close the connection with Signaling server.
+     * @emits {StateEvent} This event is only fired if there is no one left in the group.
+     * @emits {SignalingStateEvent} This event is fired if {@link WebGroup#signalingState}
+     * value does not equal to {@link SignalingState.CLOSED} already.
      */
     closeSignaling() { return wcs.get(this).closeSignaling(); }
     /**
      * Leave the group which means close channels with all members and connection
-     * with Signaling server.
+     * with the Signaling server.
+     * @emits {StateEvent}
+     * @emits {SignalingStateEvent}
      */
     leave() { return wcs.get(this).leave(); }
     /**

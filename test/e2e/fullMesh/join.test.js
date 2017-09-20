@@ -2,7 +2,7 @@ import { Subject } from 'rxjs/Subject'
 
 import * as helper from '../../util/helper'
 import bigStr from '../../util/4mb.txt'
-import { WebGroup, StateEnum } from '../../../src/index'
+import { WebGroup, WebGroupState } from '../../../src/index'
 
 const USE_CASES = [2, 3, 7]
 const scenarios = [
@@ -35,7 +35,7 @@ describe('Fully connected', () => {
         const key = helper.randKey()
         wgs = helper.createWebGroups(scenario.nbClients)
         wgs.forEach((wg, index) => {
-          expect(wg.state).toBe(StateEnum.LEFT)
+          expect(wg.state).toBe(WebGroupState.LEFT)
           wg.onMemberJoinCalledTimes = 0
           wg.onMemberJoin = id => {
             wg.onMemberJoinCalledTimes++
@@ -48,7 +48,7 @@ describe('Fully connected', () => {
           wg.onStateChangeCalledTimes = 0
           wg.onStateChange = state => {
             wg.onStateChangeCalledTimes++
-            if (state === StateEnum.JOINED) {
+            if (state === WebGroupState.JOINED) {
               network.next({wg, isBot: false})
             }
           }
@@ -79,7 +79,7 @@ describe('Fully connected', () => {
             botCheck.then(() => {
               helper.expectMembers(wgs, scenario.nbPeers)
               wgs.forEach(wg => {
-                expect(wg.state).toBe(StateEnum.JOINED)
+                expect(wg.state).toBe(WebGroupState.JOINED)
                 expect(wg.onMemberJoinCalledTimes).toBe(scenario.nbPeers - 1)
                 expect(wg.onStateChangeCalledTimes).toBe(2)
               })
@@ -168,7 +168,7 @@ describe('Fully connected', () => {
             let res = []
             wgs = webChannels
             wgs.forEach(wg => {
-              expect(wg.state).toBe(StateEnum.JOINED)
+              expect(wg.state).toBe(WebGroupState.JOINED)
               wg.onMemberLeaveCalledTimes = 0
               wg.onMemberLeave = id => {
                 wg.onMemberLeaveCalledTimes++
@@ -178,7 +178,7 @@ describe('Fully connected', () => {
               res.push(new Promise(resolve => {
                 wg.onStateChange = state => {
                   wg.onStateChangeCalledTimes++
-                  if (state === StateEnum.LEFT) {
+                  if (state === WebGroupState.LEFT) {
                     resolve()
                   }
                 }
@@ -191,7 +191,7 @@ describe('Fully connected', () => {
           })
           .then(() => {
             wgs.forEach((wg, index) => {
-              expect(wg.state).toBe(StateEnum.LEFT)
+              expect(wg.state).toBe(WebGroupState.LEFT)
               expect(wg.members.length).toBe(0)
               expect(wg.onMemberLeaveCalledTimes).toBe(numberOfPeers - 1)
               expect(wg.onStateChangeCalledTimes).toBe(1)

@@ -3,9 +3,9 @@ import { Server as NodeJSHttpServer } from 'http';
 import { Server as NodeJSHttpsServer } from 'https';
 import { WebGroup } from './WebChannelFacade';
 export interface BotServerOptions {
-    url: string;
+    url?: string;
     server: any;
-    perMessageDeflate: boolean;
+    perMessageDeflate?: boolean;
 }
 export declare const bsDefaults: {
     bot: {

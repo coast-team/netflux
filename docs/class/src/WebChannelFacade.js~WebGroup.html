@@ -31,12 +31,16 @@
     
   <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/BotServerFacade.js~WebGroupBotServer.html">WebGroupBotServer</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroupState.html">WebGroupState</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.js~SignalingState.html">SignalingState</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.js~Topology.html">Topology</a></span></span></li>
 <li data-ice="doc"><a data-ice="dirPath" class="nav-dir-path" href="identifiers.html#types">types</a><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-DataType">DataType</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-SignalingStateEnum">SignalingStateEnum</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-StateEnum">StateEnum</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-TopologyEnum">TopologyEnum</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-MemberEvent">MemberEvent</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-MessageEvent">MessageEvent</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-SignalingStateEvent">SignalingStateEvent</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupBotServerOptions">WebGroupBotServerOptions</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupOptions">WebGroupOptions</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupStateEvent">WebGroupStateEvent</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/http.html#http_class_http_server">NodeJSHttpServer</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/https.html#https_class_https_server">NodeJSHttpsServer</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://developer.mozilla.org/en/docs/Web/API/RTCIceServer">RTCIceServer</a></span></span></li>
@@ -46,13 +50,13 @@
 </nav>
 
 <div class="content" data-ice="content"><div class="header-notice">
-  <div data-ice="importPath" class="import-path"><pre class="prettyprint"><code data-ice="importPathCode">import {WebGroup} from &apos;<span><a href="file/src/WebChannelFacade.js.html#lineNumber44">netflux/src/WebChannelFacade.js</a></span>&apos;</code></pre></div>
+  <div data-ice="importPath" class="import-path"><pre class="prettyprint"><code data-ice="importPathCode">import {WebGroup} from &apos;<span><a href="file/src/WebChannelFacade.js.html#lineNumber89">netflux/src/WebChannelFacade.js</a></span>&apos;</code></pre></div>
   <span data-ice="access">public</span>
   <span data-ice="kind">class</span>
   
   
   
-  <span data-ice="source">| <span><a href="file/src/WebChannelFacade.js.html#lineNumber44">source</a></span></span>
+  <span data-ice="source">| <span><a href="file/src/WebChannelFacade.js.html#lineNumber89">source</a></span></span>
 </div>
 
 <div class="self-detail detail">
@@ -412,7 +416,7 @@ wg.onSignalingStateChange = (state) =&gt; {
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-set-onSignalingStateChange">onSignalingStateChange</a></span></span><span class="code" data-ice="signature">: <span><span>function</span><span>(state: <span><a href="typedef/index.html#static-typedef-SignalingStateEnum">SignalingStateEnum</a></span>)</span></span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-set-onSignalingStateChange">onSignalingStateChange</a></span></span><span class="code" data-ice="signature">: <span><span>function</span><span>(state: <span><a href="class/src/index.js~SignalingState.html">SignalingState</a></span>)</span></span></span>
         </p>
       </div>
       <div>
@@ -441,7 +445,7 @@ wg.onSignalingStateChange = (state) =&gt; {
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-set-onStateChange">onStateChange</a></span></span><span class="code" data-ice="signature">: <span><span>function</span><span>(state: <span><a href="typedef/index.html#static-typedef-StateEnum">StateEnum</a></span>)</span></span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-set-onStateChange">onStateChange</a></span></span><span class="code" data-ice="signature">: <span><span>function</span><span>(state: <span><a href="class/src/WebChannelFacade.js~WebGroupState.html">WebGroupState</a></span>)</span></span></span>
         </p>
       </div>
       <div>
@@ -470,7 +474,7 @@ wg.onSignalingStateChange = (state) =&gt; {
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-member-signalingState">signalingState</a></span></span><span class="code" data-ice="signature">: <span><a href="typedef/index.html#static-typedef-SignalingStateEnum">SignalingStateEnum</a></span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-member-signalingState">signalingState</a></span></span><span class="code" data-ice="signature">: <span><a href="class/src/index.js~SignalingState.html">SignalingState</a></span></span>
         </p>
       </div>
       <div>
@@ -528,7 +532,7 @@ wg.onSignalingStateChange = (state) =&gt; {
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-member-state">state</a></span></span><span class="code" data-ice="signature">: <span><a href="typedef/index.html#static-typedef-StateEnum">StateEnum</a></span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-member-state">state</a></span></span><span class="code" data-ice="signature">: <span><a href="class/src/WebChannelFacade.js~WebGroupState.html">WebGroupState</a></span></span>
         </p>
       </div>
       <div>
@@ -557,13 +561,13 @@ wg.onSignalingStateChange = (state) =&gt; {
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-member-topology">topology</a></span></span><span class="code" data-ice="signature">: <span><a href="typedef/index.html#static-typedef-TopologyEnum">TopologyEnum</a></span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-member-topology">topology</a></span></span><span class="code" data-ice="signature">: <span>TopologyEnum</span></span>
         </p>
       </div>
       <div>
         
         
-        <div data-ice="description"><p>The read-only property which is an enum of type <span><a href="typedef/index.html#static-typedef-TopologyEnum">TopologyEnum</a></span>
+        <div data-ice="description"><p>The read-only property which is an enum of type <span>TopologyEnum</span>
 indicating the topology used for this <span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span> instance.</p>
 </div>
       </div>
@@ -688,7 +692,7 @@ indicating the topology used for this <span><a href="class/src/WebChannelFacade.
         
         
         <div data-ice="description"><p>Leave the group which means close channels with all members and connection
-with Signaling server.</p>
+with the Signaling server.</p>
 </div>
       </div>
     </td>
@@ -806,7 +810,7 @@ with Signaling server.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber52">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber97">source</a></span></span>
     </span>
   </h3>
 
@@ -833,7 +837,7 @@ with Signaling server.</p>
     </tr>
 <tr data-ice="property" data-depth="1">
       <td data-ice="name" class="code" data-depth="1">options.topology</td>
-      <td data-ice="type" class="code"><span><a href="typedef/index.html#static-typedef-TopologyEnum">TopologyEnum</a></span></td>
+      <td data-ice="type" class="code"><span>TopologyEnum</span></td>
       <td data-ice="appendix"><ul><li>optional</li>
 <li>default: TopologyEnum.FULL_MESH</li></ul></td>
       <td data-ice="description"></td>
@@ -896,7 +900,7 @@ with Signaling server.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber110">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber155">source</a></span></span>
     </span>
   </h3>
 
@@ -940,7 +944,7 @@ with Signaling server.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber59">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber104">source</a></span></span>
     </span>
   </h3>
 
@@ -984,7 +988,7 @@ with Signaling server.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber73">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber118">source</a></span></span>
     </span>
   </h3>
 
@@ -1030,7 +1034,7 @@ in order to join new members, on the other hand Signaling does not know <span><a
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber79">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber124">source</a></span></span>
     </span>
   </h3>
 
@@ -1074,7 +1078,7 @@ in order to join new members, on the other hand Signaling does not know <span><a
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber65">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber110">source</a></span></span>
     </span>
   </h3>
 
@@ -1118,7 +1122,7 @@ in order to join new members, on the other hand Signaling does not know <span><a
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber127">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber172">source</a></span></span>
     </span>
   </h3>
 
@@ -1162,7 +1166,7 @@ in order to join new members, on the other hand Signaling does not know <span><a
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber132">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber177">source</a></span></span>
     </span>
   </h3>
 
@@ -1206,7 +1210,7 @@ in order to join new members, on the other hand Signaling does not know <span><a
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber122">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber167">source</a></span></span>
     </span>
   </h3>
 
@@ -1246,11 +1250,11 @@ in order to join new members, on the other hand Signaling does not know <span><a
     
     
     
-    <span class="code" data-ice="name">onSignalingStateChange</span><span class="code" data-ice="signature">: <span><span>function</span><span>(state: <span><a href="typedef/index.html#static-typedef-SignalingStateEnum">SignalingStateEnum</a></span>)</span></span></span>
+    <span class="code" data-ice="name">onSignalingStateChange</span><span class="code" data-ice="signature">: <span><span>function</span><span>(state: <span><a href="class/src/index.js~SignalingState.html">SignalingState</a></span>)</span></span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber142">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber187">source</a></span></span>
     </span>
   </h3>
 
@@ -1290,11 +1294,11 @@ in order to join new members, on the other hand Signaling does not know <span><a
     
     
     
-    <span class="code" data-ice="name">onStateChange</span><span class="code" data-ice="signature">: <span><span>function</span><span>(state: <span><a href="typedef/index.html#static-typedef-StateEnum">StateEnum</a></span>)</span></span></span>
+    <span class="code" data-ice="name">onStateChange</span><span class="code" data-ice="signature">: <span><span>function</span><span>(state: <span><a href="class/src/WebChannelFacade.js~WebGroupState.html">WebGroupState</a></span>)</span></span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber137">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber182">source</a></span></span>
     </span>
   </h3>
 
@@ -1334,11 +1338,11 @@ in order to join new members, on the other hand Signaling does not know <span><a
     
     
     
-    <span class="code" data-ice="name">signalingState</span><span class="code" data-ice="signature">: <span><a href="typedef/index.html#static-typedef-SignalingStateEnum">SignalingStateEnum</a></span></span>
+    <span class="code" data-ice="name">signalingState</span><span class="code" data-ice="signature">: <span><a href="class/src/index.js~SignalingState.html">SignalingState</a></span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber98">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber143">source</a></span></span>
     </span>
   </h3>
 
@@ -1382,7 +1386,7 @@ in order to join new members, on the other hand Signaling does not know <span><a
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber104">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber149">source</a></span></span>
     </span>
   </h3>
 
@@ -1422,11 +1426,11 @@ in order to join new members, on the other hand Signaling does not know <span><a
     
     
     
-    <span class="code" data-ice="name">state</span><span class="code" data-ice="signature">: <span><a href="typedef/index.html#static-typedef-StateEnum">StateEnum</a></span></span>
+    <span class="code" data-ice="name">state</span><span class="code" data-ice="signature">: <span><a href="class/src/WebChannelFacade.js~WebGroupState.html">WebGroupState</a></span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber92">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber137">source</a></span></span>
     </span>
   </h3>
 
@@ -1466,18 +1470,18 @@ in order to join new members, on the other hand Signaling does not know <span><a
     
     
     
-    <span class="code" data-ice="name">topology</span><span class="code" data-ice="signature">: <span><a href="typedef/index.html#static-typedef-TopologyEnum">TopologyEnum</a></span></span>
+    <span class="code" data-ice="name">topology</span><span class="code" data-ice="signature">: <span>TopologyEnum</span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber86">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber131">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  <div data-ice="description"><p>The read-only property which is an enum of type <span><a href="typedef/index.html#static-typedef-TopologyEnum">TopologyEnum</a></span>
+  <div data-ice="description"><p>The read-only property which is an enum of type <span>TopologyEnum</span>
 indicating the topology used for this <span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span> instance.</p>
 </div>
 
@@ -1518,7 +1522,7 @@ indicating the topology used for this <span><a href="class/src/WebChannelFacade.
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber156">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber209">source</a></span></span>
     </span>
   </h3>
 
@@ -1535,7 +1539,25 @@ indicating the topology used for this <span><a href="class/src/WebChannelFacade.
 
   
 
-  
+  <div data-ice="emitWrap">
+    <h4>Emit:</h4>
+    <table>
+      <tbody>
+      
+      <tr class="emit" data-ice="emit">
+        <td><p data-ice="emitName"><span>StateEvent</span></p></td>
+        <td data-ice="emitDesc"><p>This event is only fired if there is no one left in the group.</p>
+</td>
+      </tr>
+<tr class="emit" data-ice="emit">
+        <td><p data-ice="emitName"><span><a href="typedef/index.html#static-typedef-SignalingStateEvent">SignalingStateEvent</a></span></p></td>
+        <td data-ice="emitDesc"><p>This event is fired if {@link WebGroup#signalingState}
+value does not equal to {@link SignalingState.CLOSED} already.</p>
+</td>
+      </tr>
+</tbody>
+    </table>
+  </div>
 
   
 
@@ -1562,7 +1584,7 @@ indicating the topology used for this <span><a href="class/src/WebChannelFacade.
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber152">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber202">source</a></span></span>
     </span>
   </h3>
 
@@ -1623,14 +1645,17 @@ indicating the topology used for this <span><a href="class/src/WebChannelFacade.
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber147">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber197">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  <div data-ice="description"><p>Join the group identified by a key provided by one of the group member.</p>
+  <div data-ice="description"><p>Join the group identified by a key provided by one of the group member.
+If the current <span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-member-state">WebGroup#state</a></span> value is not <span>WebGroupState#LEFT</span> or
+<span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-member-signalingState">WebGroup#signalingState</a></span> value is not <span><a href="class/src/index.js~SignalingState.html#static-get-CLOSED">SignalingState.CLOSED</a></span>,
+then first calls <span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-method-leave">WebGroup#leave</a></span> and then join normally.</p>
 </div>
 
   
@@ -1656,7 +1681,22 @@ indicating the topology used for this <span><a href="class/src/WebChannelFacade.
 
   
 
-  
+  <div data-ice="emitWrap">
+    <h4>Emit:</h4>
+    <table>
+      <tbody>
+      
+      <tr class="emit" data-ice="emit">
+        <td><p data-ice="emitName"><span>StateEvent</span></p></td>
+        
+      </tr>
+<tr class="emit" data-ice="emit">
+        <td><p data-ice="emitName"><span><a href="typedef/index.html#static-typedef-SignalingStateEvent">SignalingStateEvent</a></span></p></td>
+        
+      </tr>
+</tbody>
+    </table>
+  </div>
 
   
 
@@ -1683,7 +1723,7 @@ indicating the topology used for this <span><a href="class/src/WebChannelFacade.
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber161">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber216">source</a></span></span>
     </span>
   </h3>
 
@@ -1691,7 +1731,7 @@ indicating the topology used for this <span><a href="class/src/WebChannelFacade.
   
   
   <div data-ice="description"><p>Leave the group which means close channels with all members and connection
-with Signaling server.</p>
+with the Signaling server.</p>
 </div>
 
   
@@ -1701,7 +1741,22 @@ with Signaling server.</p>
 
   
 
-  
+  <div data-ice="emitWrap">
+    <h4>Emit:</h4>
+    <table>
+      <tbody>
+      
+      <tr class="emit" data-ice="emit">
+        <td><p data-ice="emitName"><span>StateEvent</span></p></td>
+        
+      </tr>
+<tr class="emit" data-ice="emit">
+        <td><p data-ice="emitName"><span><a href="typedef/index.html#static-typedef-SignalingStateEvent">SignalingStateEvent</a></span></p></td>
+        
+      </tr>
+</tbody>
+    </table>
+  </div>
 
   
 
@@ -1728,7 +1783,7 @@ with Signaling server.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber177">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber232">source</a></span></span>
     </span>
   </h3>
 
@@ -1785,7 +1840,7 @@ with Signaling server.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber166">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber221">source</a></span></span>
     </span>
   </h3>
 
@@ -1845,7 +1900,7 @@ with Signaling server.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber172">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber227">source</a></span></span>
     </span>
   </h3>
 

@@ -1,20 +1,30 @@
 import { Subject } from 'rxjs/Subject';
 import { Channel } from '../Channel';
 import { Service, ServiceMessageEncoded } from './Service';
-import { Signaling, SignalingStateEnum } from '../Signaling';
+import { Signaling, SignalingState } from '../Signaling';
 import { ChannelBuilder } from './ChannelBuilder';
 import { WebSocketBuilder } from '../WebSocketBuilder';
 import { WebRTCBuilder } from './WebRTCBuilder';
 import { UserDataType } from '../UserMessage';
 import { TopologyInterface, TopologyEnum } from './topology/Topology';
 export interface Options {
-    topology: TopologyEnum;
-    signalingURL: string;
-    iceServers: RTCIceServer[];
-    autoRejoin: boolean;
+    topology?: TopologyEnum;
+    signalingURL?: string;
+    iceServers?: RTCIceServer[];
+    autoRejoin?: boolean;
 }
 export declare const defaultOptions: Options;
-export declare enum StateEnum {
+/**
+ * OLLEEEEEEEEEEEEEEEEE
+ * @type {Object} WebChannelState
+ * @property {number} [JOINING=0] You are joining the web group.
+ * @property {number} [JOINED=1] You have successfully joined the web group
+ * and ready to broadcast messages via `send` method.
+ * @property {number} [LEFT=2] You have left the web group. If the connection
+ * to the web group has lost and `autoRejoin=true`, then the state would be `LEFT`,
+ * (usually during a relatively short period) before the rejoining process start.
+ */
+export declare enum WebChannelState {
     JOINING = 0,
     JOINED = 1,
     LEFT = 2,
@@ -56,11 +66,11 @@ export declare class WebChannel extends Service {
     /**
      * Thi handler is called each time the state of Signaling server changes.
      */
-    onSignalingStateChange: (state: SignalingStateEnum) => void;
+    onSignalingStateChange: (state: SignalingState) => void;
     /**
      * Thi handler is called each time the state of the network changes.
      */
-    onStateChange: (state: StateEnum) => void;
+    onStateChange: (state: WebChannelState) => void;
     /**
      * This handler is called when a new peer has joined the network.
      */
@@ -79,7 +89,7 @@ export declare class WebChannel extends Service {
     webSocketBuilder: WebSocketBuilder;
     channelBuilder: ChannelBuilder;
     topologyService: TopologyInterface;
-    state: StateEnum;
+    state: WebChannelState;
     signaling: Signaling;
     private userMsg;
     private pingTime;

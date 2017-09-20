@@ -1,14 +1,14 @@
 {
   "source": "./docs/src",
   "destination": "./docs",
-  "includes": [".*Facade\\.js$", ".*esdoc\\.helper\\.js"],
+  "includes": [".*Facade\\.js", ".*esdoc\\.helper\\.js", ".*index\\.js"],
   "plugins": [
     {
       "name": "esdoc-standard-plugin",
       "option": {
         "accessor": {"access": ["public", "protected", "private"], "autoPrivate": false},
         "undocumentIdentifier": {"enable": false},
-        "unexportedIdentifier": {"enable": false},
+        "unexportedIdentifier": {"enable": true},
         "typeInference": {"enable": false},
         "brand": {
           "logo": "./manual/asset/logo_favicon.jpg",

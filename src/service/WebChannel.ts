@@ -3,7 +3,7 @@ import { Subject } from 'rxjs/Subject'
 import { Channel } from '../Channel'
 import { FullMesh } from './topology/FullMesh'
 import { Service, ServiceMessageDecoded, ServiceMessageEncoded } from './Service'
-import { Signaling, SignalingStateEnum } from '../Signaling'
+import { Signaling, SignalingState } from '../Signaling'
 import { ChannelBuilder } from './ChannelBuilder'
 import { WebSocketBuilder } from '../WebSocketBuilder'
 import { WebRTCBuilder } from './WebRTCBuilder'
@@ -13,10 +13,10 @@ import { isURL, generateKey, MAX_KEY_LENGTH } from '../misc/Util'
 import { TopologyInterface, TopologyEnum } from './topology/Topology'
 
 export interface Options {
-  topology: TopologyEnum,
-  signalingURL: string,
-  iceServers: RTCIceServer[],
-  autoRejoin: boolean
+  topology?: TopologyEnum,
+  signalingURL?: string,
+  iceServers?: RTCIceServer[],
+  autoRejoin?: boolean
 }
 
 export const defaultOptions: Options = {
@@ -28,7 +28,17 @@ export const defaultOptions: Options = {
   autoRejoin: true
 }
 
-export enum StateEnum {
+/**
+ * OLLEEEEEEEEEEEEEEEEE
+ * @type {Object} WebChannelState
+ * @property {number} [JOINING=0] You are joining the web group.
+ * @property {number} [JOINED=1] You have successfully joined the web group
+ * and ready to broadcast messages via `send` method.
+ * @property {number} [LEFT=2] You have left the web group. If the connection
+ * to the web group has lost and `autoRejoin=true`, then the state would be `LEFT`,
+ * (usually during a relatively short period) before the rejoining process start.
+ */
+export enum WebChannelState {
   JOINING,
   JOINED,
   LEFT
@@ -86,12 +96,12 @@ export class WebChannel extends Service {
   /**
    * Thi handler is called each time the state of Signaling server changes.
    */
-  public onSignalingStateChange: (state: SignalingStateEnum) => void
+  public onSignalingStateChange: (state: SignalingState) => void
 
   /**
    * Thi handler is called each time the state of the network changes.
    */
-  public onStateChange: (state: StateEnum) => void
+  public onStateChange: (state: WebChannelState) => void
 
   /**
    * This handler is called when a new peer has joined the network.
@@ -114,7 +124,7 @@ export class WebChannel extends Service {
   public webSocketBuilder: WebSocketBuilder
   public channelBuilder: ChannelBuilder
   public topologyService: TopologyInterface
-  public state: StateEnum
+  public state: WebChannelState
   public signaling: Signaling
 
   private userMsg: UserMessage
@@ -152,25 +162,25 @@ export class WebChannel extends Service {
     this.onSignalingStateChange = () => {}
 
     // PRIVATE
-    this.state = StateEnum.LEFT
+    this.state = WebChannelState.LEFT
     this.userMsg = new UserMessage()
 
     // Signaling init
     this.signaling = new Signaling(this, signalingURL)
     this.signaling.onChannel.subscribe(ch => this.initChannel(ch))
     this.signaling.onState.subscribe(
-      (state: SignalingStateEnum) => {
+      (state: SignalingState) => {
         this.onSignalingStateChange(state)
         switch (state) {
-        case SignalingStateEnum.OPEN:
-          this.setState(StateEnum.JOINING)
+        case SignalingState.OPEN:
+          this.setState(WebChannelState.JOINING)
           break
-        case SignalingStateEnum.READY_TO_JOIN_OTHERS:
-          this.setState(StateEnum.JOINED)
+        case SignalingState.READY_TO_JOIN_OTHERS:
+          this.setState(WebChannelState.JOINED)
           break
-        case SignalingStateEnum.CLOSED:
+        case SignalingState.CLOSED:
           if (this.members.length === 0) {
-            this.setState(StateEnum.LEFT)
+            this.setState(WebChannelState.LEFT)
           }
           if (!this.isRejoinDisabled) {
             this.rejoin()
@@ -199,7 +209,7 @@ export class WebChannel extends Service {
         console.error('Failed to join: ' + err.message, err)
         this.signaling.close()
       } else {
-        this.setState(StateEnum.JOINED)
+        this.setState(WebChannelState.JOINED)
         this.signaling.open()
       }
     })
@@ -215,9 +225,9 @@ export class WebChannel extends Service {
    * Join the network via a key provided by one of the network member or a `Channel`.
    */
   join (key: string = generateKey()): void {
-    if (this.state === StateEnum.LEFT && this.signaling.state === SignalingStateEnum.CLOSED) {
+    if (this.state === WebChannelState.LEFT && this.signaling.state === SignalingState.CLOSED) {
       this.isRejoinDisabled = !this.autoRejoin
-      this.setState(StateEnum.JOINING)
+      this.setState(WebChannelState.JOINING)
       if (typeof key === 'string' && key.length < MAX_KEY_LENGTH) {
         this.key = key
       } else {
@@ -330,10 +340,10 @@ export class WebChannel extends Service {
     this.members.splice(this.members.indexOf(id), 1)
     this.onMemberLeave(id)
     if (this.members.length === 0
-      && (this.signaling.state === SignalingStateEnum.CONNECTING
-      || this.signaling.state === SignalingStateEnum.CLOSED)
+      && (this.signaling.state === SignalingState.CONNECTING
+      || this.signaling.state === SignalingState.CLOSED)
     ) {
-      this.setState(StateEnum.LEFT)
+      this.setState(WebChannelState.LEFT)
     }
   }
 
@@ -434,7 +444,7 @@ export class WebChannel extends Service {
       // network (possible when merging two networks (works with FullMesh)).
       // If it is a case then you are already a member of the network.
       if (this.members.includes(senderId)) {
-        this.setState(StateEnum.JOINED)
+        this.setState(WebChannelState.JOINED)
         this.signaling.open()
         channel.close()
       } else {
@@ -487,7 +497,7 @@ export class WebChannel extends Service {
     }
   }
 
-  private setState (state: StateEnum): void {
+  private setState (state: WebChannelState): void {
     if (this.state !== state) {
       this.state = state
       this.onStateChange(state)

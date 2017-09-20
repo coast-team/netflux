@@ -3,6 +3,7 @@ import { Server as NodeJSHttpServer } from 'http';
 import { Server as NodeJSHttpsServer } from 'https';
 import { WebGroup } from './WebChannelFacade';
 import { BotServerOptions as WebGroupBotServerOptions } from './BotServer';
+export { WebGroupBotServerOptions };
 /**
  * Bot server may be a member of severals groups. Each group is isolated.
  * He can be invited by a group member via {@link WebGroup#invite} method.

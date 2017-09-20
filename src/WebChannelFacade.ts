@@ -1,13 +1,66 @@
-import { WebChannel, Options as WebGroupOptions, StateEnum, defaultOptions } from './service/WebChannel'
+import { WebChannel, WebChannelState, Options as WebGroupOptions, defaultOptions } from './service/WebChannel'
 import { TopologyEnum } from './service/topology/Topology'
-import { SignalingStateEnum } from './Signaling'
+import { SignalingState } from './Signaling'
 
 /**
  * @ignore
  */
 export const wcs: WeakMap<WebGroup, WebChannel> = new WeakMap()
 
+export { WebGroupOptions }
+
 export type DataType = string|Uint8Array
+
+/**
+ * {@link WebGroup} state enum.
+ * @type {Object}
+ * @property {number} [JOINING=0] You are joining the web group.
+ * @property {number} [JOINED=1] You have successfully joined the web group
+ * and ready to broadcast messages via `send` method.
+ * @property {number} [LEFT=2] You have left the web group. If the connection
+ * to the web group has lost and `autoRejoin=true`, then the state would be `LEFT`,
+ * (usually during a relatively short period) before the rejoining process start.
+ */
+export class WebGroupState {
+  /**
+   * Joining the group...
+   * @type {number}
+   */
+  static get JOINING (): number { return WebChannelState.JOINING }
+
+  /**
+   * Equals to `'JOINING'`.
+   * @type {string}
+   */
+  static get [WebGroupState.JOINING] (): string { return WebChannelState[WebChannelState.JOINING] }
+
+  /**
+   * Joined the group successfully.
+   * @type {number}
+   */
+  static get JOINED (): number { return WebChannelState.JOINED }
+
+  /**
+   * Equals to `'JOINED'`.
+   * @type {string}
+   */
+  static get [WebGroupState.JOINED] (): string { return WebChannelState[WebChannelState.JOINED] }
+
+  /**
+   * Left the group. If the connection to the web group has lost other then
+   * by calling {@link WebGroup#leave} or {@link WebGroup#closeSignaling} methods
+   * and {@link WebGroup#autoRejoin} is true, then the state would be `LEFT`,
+   * (usually during a relatively short period) before the rejoining process start.
+   * @type {number}
+   */
+  static get LEFT (): number { return WebChannelState.LEFT }
+
+  /**
+   * Equals to `'LEFT'`.
+   * @type {string}
+   */
+  static get [WebGroupState.LEFT] (): string { return WebChannelState[WebChannelState.LEFT] }
+}
 
 /**
  * This class is an API starting point. It represents a peer to peer network,
@@ -54,8 +107,8 @@ export class WebGroup {
   public key: string
   public members: number[]
   public topology: TopologyEnum
-  public state: StateEnum
-  public signalingState: SignalingStateEnum
+  public state: WebChannelState
+  public signalingState: SignalingState
   public signalingURL: string
   public autoRejoin: boolean
 
@@ -66,7 +119,7 @@ export class WebGroup {
    * @param {RTCIceServer[]} [options.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]
    * @param {boolean} [options.autoRejoin=true]
    */
-  constructor (options: any = {}) {
+  constructor (options: WebGroupOptions = {}) {
     const wc = new WebChannel(options)
     wcs.set(this, wc)
 
@@ -105,13 +158,13 @@ export class WebGroup {
     Reflect.defineProperty(this, 'topology', { configurable: false, enumerable: true, get: () => wc.topology })
     /**
      * The state of the {@link WebGroup} connection.
-     * @type {StateEnum}
+     * @type {WebGroupState}
      */
     this.state = undefined
     Reflect.defineProperty(this, 'state', { configurable: false, enumerable: true, get: () => wc.state })
     /**
      * The state of the signaling server.
-     * @type {SignalingStateEnum}
+     * @type {SignalingState}
      */
     this.signalingState = undefined
     Reflect.defineProperty(this, 'signalingState', { configurable: false, enumerable: true, get: () => wc.signaling.state })
@@ -154,19 +207,24 @@ export class WebGroup {
 
   /**
    * This handler is called when the group state has changed.
-   * @type {function(state: StateEnum)}
+   * @type {function(state: WebGroupState)}
    */
-  set onStateChange (handler: (state: StateEnum) => void) { wcs.get(this).onStateChange = handler }
+  set onStateChange (handler: (state: WebChannelState) => void) { wcs.get(this).onStateChange = handler }
 
   /**
    * This handler is called when the signaling state has changed.
-   * @type {function(state: SignalingStateEnum)}
+   * @type {function(state: SignalingState)}
    */
-  set onSignalingStateChange (handler: (state: SignalingStateEnum) => void) { wcs.get(this).onSignalingStateChange = handler }
+  set onSignalingStateChange (handler: (state: SignalingState) => void) { wcs.get(this).onSignalingStateChange = handler }
 
   /**
    * Join the group identified by a key provided by one of the group member.
+   * If the current {@link WebGroup#state} value is not {@link WebGroupState#LEFT} or
+   * {@link WebGroup#signalingState} value is not {@link SignalingState.CLOSED},
+   * then first calls {@link WebGroup#leave} and then join normally.
    * @param {string} key
+   * @emits {StateEvent}
+   * @emits {SignalingStateEvent}
    */
   join (key: string): void { return wcs.get(this).join(key) }
 
@@ -178,12 +236,17 @@ export class WebGroup {
 
   /**
    * Close the connection with Signaling server.
+   * @emits {StateEvent} This event is only fired if there is no one left in the group.
+   * @emits {SignalingStateEvent} This event is fired if {@link WebGroup#signalingState}
+   * value does not equal to {@link SignalingState.CLOSED} already.
    */
   closeSignaling (): void { return wcs.get(this).closeSignaling() }
 
   /**
    * Leave the group which means close channels with all members and connection
-   * with Signaling server.
+   * with the Signaling server.
+   * @emits {StateEvent}
+   * @emits {SignalingStateEvent}
    */
   leave () { return wcs.get(this).leave() }
 

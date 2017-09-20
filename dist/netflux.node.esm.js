@@ -27,76 +27,6 @@ global.Event = (function () {
 }());
 // #endif
 
-/*! *****************************************************************************
-Copyright (c) Microsoft Corporation. All rights reserved.
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use
-this file except in compliance with the License. You may obtain a copy of the
-License at http://www.apache.org/licenses/LICENSE-2.0
-
-THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED
-WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE,
-MERCHANTABLITY OR NON-INFRINGEMENT.
-
-See the Apache Version 2.0 License for specific language governing permissions
-and limitations under the License.
-***************************************************************************** */
-/* global Reflect, Promise */
-
-var extendStatics = Object.setPrototypeOf ||
-    ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-    function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-
-function __extends(d, b) {
-    extendStatics(d, b);
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-function __values(o) {
-    var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
-    if (m) return m.call(o);
-    return {
-        next: function () {
-            if (o && i >= o.length) o = void 0;
-            return { value: o && o[i++], done: !o };
-        }
-    };
-}
-
-function __read(o, n) {
-    var m = typeof Symbol === "function" && o[Symbol.iterator];
-    if (!m) return o;
-    var i = m.call(o), r, ar = [], e;
-    try {
-        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
-    }
-    catch (error) { e = { error: error }; }
-    finally {
-        try {
-            if (r && !r.done && (m = i["return"])) m.call(i);
-        }
-        finally { if (e) throw e.error; }
-    }
-    return ar;
-}
-
 var commonjsGlobal = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
 
@@ -195,7 +125,7 @@ var tryCatch_1 = {
 };
 
 "use strict";
-var __extends$3 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+var __extends$2 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -205,7 +135,7 @@ var __extends$3 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b
  * `unsubscribe` of a {@link Subscription}.
  */
 var UnsubscriptionError = (function (_super) {
-    __extends$3(UnsubscriptionError, _super);
+    __extends$2(UnsubscriptionError, _super);
     function UnsubscriptionError(errors) {
         _super.call(this);
         this.errors = errors;
@@ -449,7 +379,7 @@ exports.$$rxSubscriber = exports.rxSubscriber;
 });
 
 "use strict";
-var __extends$2 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+var __extends$1 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -469,7 +399,7 @@ var __extends$2 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b
  * @class Subscriber<T>
  */
 var Subscriber = (function (_super) {
-    __extends$2(Subscriber, _super);
+    __extends$1(Subscriber, _super);
     /**
      * @param {Observer|function(value: T): void} [destinationOrNext] A partially
      * defined Observer or a `next` callback function.
@@ -602,7 +532,7 @@ var Subscriber_2 = Subscriber;
  * @extends {Ignored}
  */
 var SafeSubscriber = (function (_super) {
-    __extends$2(SafeSubscriber, _super);
+    __extends$1(SafeSubscriber, _super);
     function SafeSubscriber(_parentSubscriber, observerOrNext, error, complete) {
         _super.call(this);
         this._parentSubscriber = _parentSubscriber;
@@ -1033,7 +963,7 @@ var Observable_1 = {
 };
 
 "use strict";
-var __extends$4 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+var __extends$3 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -1048,7 +978,7 @@ var __extends$4 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b
  * @class ObjectUnsubscribedError
  */
 var ObjectUnsubscribedError = (function (_super) {
-    __extends$4(ObjectUnsubscribedError, _super);
+    __extends$3(ObjectUnsubscribedError, _super);
     function ObjectUnsubscribedError() {
         var err = _super.call(this, 'object unsubscribed');
         this.name = err.name = 'ObjectUnsubscribedError';
@@ -1065,7 +995,7 @@ var ObjectUnsubscribedError_1 = {
 };
 
 "use strict";
-var __extends$5 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+var __extends$4 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -1077,7 +1007,7 @@ var __extends$5 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b
  * @extends {Ignored}
  */
 var SubjectSubscription = (function (_super) {
-    __extends$5(SubjectSubscription, _super);
+    __extends$4(SubjectSubscription, _super);
     function SubjectSubscription(subject, subscriber) {
         _super.call(this);
         this.subject = subject;
@@ -1110,7 +1040,7 @@ var SubjectSubscription_1 = {
 };
 
 "use strict";
-var __extends$1 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+var __extends = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -1125,7 +1055,7 @@ var __extends$1 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b
  * @class SubjectSubscriber<T>
  */
 var SubjectSubscriber = (function (_super) {
-    __extends$1(SubjectSubscriber, _super);
+    __extends(SubjectSubscriber, _super);
     function SubjectSubscriber(destination) {
         _super.call(this, destination);
         this.destination = destination;
@@ -1137,7 +1067,7 @@ var SubjectSubscriber_1 = SubjectSubscriber;
  * @class Subject<T>
  */
 var Subject = (function (_super) {
-    __extends$1(Subject, _super);
+    __extends(Subject, _super);
     function Subject() {
         _super.call(this);
         this.observers = [];
@@ -1240,7 +1170,7 @@ var Subject_2 = Subject;
  * @class AnonymousSubject<T>
  */
 var AnonymousSubject = (function (_super) {
-    __extends$1(AnonymousSubject, _super);
+    __extends(AnonymousSubject, _super);
     function AnonymousSubject(destination, source) {
         _super.call(this);
         this.destination = destination;
@@ -1283,239 +1213,6 @@ var Subject_1 = {
 	Subject: Subject_2,
 	AnonymousSubject: AnonymousSubject_1
 };
-
-/**
- * Equals to true in any browser.
- */
-var isBrowser = (typeof window === 'undefined') ? false : true;
-/**
- * Equals to true in Firefox and false elsewhere.
- * Thanks to https://github.com/lancedikson/bowser
- */
-var isFirefox = (isBrowser &&
-    navigator !== undefined &&
-    navigator.userAgent !== undefined &&
-    /firefox|iceweasel|fxios/i.test(navigator.userAgent)) ? true : false;
-/**
- * Check whether the string is a valid URL.
- */
-function isURL(str) {
-    var regex = '^' +
-        // protocol identifier
-        '(?:wss|ws)://' +
-        // Host name/IP
-        '[^\\s]+' +
-        // port number
-        '(?::\\d{2,5})?' +
-        '$';
-    return (new RegExp(regex, 'i')).test(str);
-}
-/**
- * Generate random key which will be used to join the network.
- */
-function generateKey() {
-    var mask = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    var length = 20; // Should be less then MAX_KEY_LENGTH value
-    var values = new Uint32Array(length);
-    var result = '';
-    for (var i = 0; i < length; i++) {
-        result += mask[values[i] % mask.length];
-    }
-    return result;
-}
-var MAX_KEY_LENGTH = 512;
-
-/**
- * Wrapper class for `RTCDataChannel` and `WebSocket`.
- */
-var Channel = (function () {
-    /**
-     * Creates a channel from existing `RTCDataChannel` or `WebSocket`.
-     */
-    function Channel(wc, connection, options) {
-        if (options === void 0) { options = { id: -1 }; }
-        var _this = this;
-        this.wc = wc;
-        this.connection = connection;
-        this.peerId = options.id;
-        this.rtcPeerConnection = options.rtcPeerConnection;
-        // Configure `send` function
-        if (isBrowser) {
-            connection.binaryType = 'arraybuffer';
-            this.send = this.sendInBrowser;
-        }
-        else if (!this.rtcPeerConnection) {
-            this.send = this.sendInNodeViaWebSocket;
-        }
-        else {
-            connection.binaryType = 'arraybuffer';
-            this.send = this.sendInNodeViaDataChannel;
-        }
-        this.onClose = function (evt) {
-            console.info("NETFLUX: " + wc.myId + " ONCLOSE CALLBACK " + _this.peerId, {
-                readyState: _this.connection.readyState,
-                iceConnectionState: _this.rtcPeerConnection ? _this.rtcPeerConnection.iceConnectionState : '',
-                signalingState: _this.rtcPeerConnection ? _this.rtcPeerConnection.signalingState : ''
-            });
-            _this.connection.onclose = function () { };
-            _this.connection.onmessage = function () { };
-            _this.connection.onerror = function () { };
-            wc.topologyService.onChannelClose(evt, _this);
-            if (_this.rtcPeerConnection && _this.rtcPeerConnection.signalingState !== 'closed') {
-                _this.rtcPeerConnection.close();
-            }
-        };
-        // Configure handlers
-        this.connection.onmessage = function (_a) {
-            var data = _a.data;
-            return wc.onMessageProxy(_this, new Uint8Array(data));
-        };
-        this.connection.onclose = function (evt) { return _this.onClose(evt); };
-        this.connection.onerror = function (evt) { return wc.topologyService.onChannelError(evt, _this); };
-    }
-    Channel.prototype.close = function () {
-        if (this.connection.readyState !== 'closed' &&
-            this.connection.readyState !== 'closing' &&
-            this.connection.readyState !== WebSocket.CLOSED &&
-            this.connection.readyState !== WebSocket.CLOSING) {
-            console.info("NETFLUX: " + this.wc.myId + " CLOSE " + this.peerId, {
-                readyState: this.connection.readyState,
-                iceConnectionState: this.rtcPeerConnection ? this.rtcPeerConnection.iceConnectionState : '',
-                signalingState: this.rtcPeerConnection ? this.rtcPeerConnection.signalingState : ''
-            });
-            this.connection.close();
-            if (isFirefox && this.rtcPeerConnection && this.rtcPeerConnection.signalingState !== 'closed') {
-                this.onClose(new Event('close'));
-            }
-        }
-    };
-    Channel.prototype.sendInBrowser = function (data) {
-        // if (this.connection.readyState !== 'closed' && new Int8Array(data).length !== 0) {
-        if (this.isOpen()) {
-            try {
-                this.connection.send(data);
-            }
-            catch (err) {
-                console.error("Channel send: " + err.message);
-            }
-        }
-    };
-    Channel.prototype.sendInNodeViaWebSocket = function (data) {
-        if (this.isOpen()) {
-            try {
-                this.connection.send(data, { binary: true });
-            }
-            catch (err) {
-                console.error("Channel send: " + err.message);
-            }
-        }
-    };
-    Channel.prototype.sendInNodeViaDataChannel = function (data) {
-        this.sendInBrowser(data.slice(0));
-    };
-    Channel.prototype.isOpen = function () {
-        return this.connection.readyState === WebSocket.OPEN || this.connection.readyState === 'open';
-    };
-    return Channel;
-}());
-
-"use strict";
-var __extends$6 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
-
-/**
- * Applies a given `project` function to each value emitted by the source
- * Observable, and emits the resulting values as an Observable.
- *
- * <span class="informal">Like [Array.prototype.map()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map),
- * it passes each source value through a transformation function to get
- * corresponding output values.</span>
- *
- * <img src="./img/map.png" width="100%">
- *
- * Similar to the well known `Array.prototype.map` function, this operator
- * applies a projection to each value and emits that projection in the output
- * Observable.
- *
- * @example <caption>Map every click to the clientX position of that click</caption>
- * var clicks = Rx.Observable.fromEvent(document, 'click');
- * var positions = clicks.map(ev => ev.clientX);
- * positions.subscribe(x => console.log(x));
- *
- * @see {@link mapTo}
- * @see {@link pluck}
- *
- * @param {function(value: T, index: number): R} project The function to apply
- * to each `value` emitted by the source Observable. The `index` parameter is
- * the number `i` for the i-th emission that has happened since the
- * subscription, starting from the number `0`.
- * @param {any} [thisArg] An optional argument to define what `this` is in the
- * `project` function.
- * @return {Observable<R>} An Observable that emits the values from the source
- * Observable transformed by the given `project` function.
- * @method map
- * @owner Observable
- */
-function map$2(project, thisArg) {
-    if (typeof project !== 'function') {
-        throw new TypeError('argument is not a function. Are you looking for `mapTo()`?');
-    }
-    return this.lift(new MapOperator(project, thisArg));
-}
-var map_2 = map$2;
-var MapOperator = (function () {
-    function MapOperator(project, thisArg) {
-        this.project = project;
-        this.thisArg = thisArg;
-    }
-    MapOperator.prototype.call = function (subscriber, source) {
-        return source.subscribe(new MapSubscriber(subscriber, this.project, this.thisArg));
-    };
-    return MapOperator;
-}());
-var MapOperator_1 = MapOperator;
-/**
- * We need this JSDoc comment for affecting ESDoc.
- * @ignore
- * @extends {Ignored}
- */
-var MapSubscriber = (function (_super) {
-    __extends$6(MapSubscriber, _super);
-    function MapSubscriber(destination, project, thisArg) {
-        _super.call(this, destination);
-        this.project = project;
-        this.count = 0;
-        this.thisArg = thisArg || this;
-    }
-    // NOTE: This looks unoptimized, but it's actually purposefully NOT
-    // using try/catch optimizations.
-    MapSubscriber.prototype._next = function (value) {
-        var result;
-        try {
-            result = this.project.call(this.thisArg, value, this.count++);
-        }
-        catch (err) {
-            this.destination.error(err);
-            return;
-        }
-        this.destination.next(result);
-    };
-    return MapSubscriber;
-}(Subscriber_1.Subscriber));
-
-
-var map_1 = {
-	map: map_2,
-	MapOperator: MapOperator_1
-};
-
-"use strict";
-
-
-Observable_1.Observable.prototype.map = map_1.map;
 
 "use strict";
 var aspromise = asPromise;
@@ -6146,6 +5843,513 @@ var signaling = $root.signaling = function () {
     return signaling;
 }();
 
+var PING_INTERVAL = 3000;
+/* WebSocket error codes */
+var MESSAGE_ERROR_CODE = 4000;
+var PING_ERROR_CODE = 4001;
+var FIRST_CONNECTION_ERROR_CODE = 4002;
+/* Preconstructed messages */
+var pingMsg = signaling.Message.encode(signaling.Message.create({ ping: true })).finish();
+var pongMsg = signaling.Message.encode(signaling.Message.create({ pong: true })).finish();
+var SignalingState$1;
+(function (SignalingState) {
+    SignalingState[SignalingState["CONNECTING"] = 0] = "CONNECTING";
+    SignalingState[SignalingState["OPEN"] = 1] = "OPEN";
+    SignalingState[SignalingState["FIRST_CONNECTED"] = 2] = "FIRST_CONNECTED";
+    SignalingState[SignalingState["READY_TO_JOIN_OTHERS"] = 3] = "READY_TO_JOIN_OTHERS";
+    SignalingState[SignalingState["CLOSED"] = 4] = "CLOSED";
+})(SignalingState$1 || (SignalingState$1 = {}));
+/**
+ * This class represents a door of the `WebChannel` for the current peer. If the door
+ * is open, then clients can join the `WebChannel` through this peer. There are as
+ * many doors as peers in the `WebChannel` and each of them can be closed or opened.
+ */
+var Signaling = (function () {
+    function Signaling(wc, url) {
+        // public
+        this.url = url.endsWith('/') ? url : url + '/';
+        this.state = SignalingState$1.CLOSED;
+        // private
+        this.wc = wc;
+        this.stateSubject = new Subject_2();
+        this.channelSubject = new Subject_2();
+        this.rxWs = undefined;
+        this.pingInterval = undefined;
+        this.pongReceived = false;
+    }
+    Object.defineProperty(Signaling.prototype, "onState", {
+        get: function () {
+            return this.stateSubject.asObservable();
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Signaling.prototype, "onChannel", {
+        get: function () {
+            return this.channelSubject.asObservable();
+        },
+        enumerable: true,
+        configurable: true
+    });
+    /**
+     * Notify Signaling server that you had joined the network and ready
+     * to join new peers to the network.
+     */
+    Signaling.prototype.open = function () {
+        if (this.state === SignalingState$1.FIRST_CONNECTED) {
+            this.rxWs.send({ joined: true });
+            this.setState(SignalingState$1.READY_TO_JOIN_OTHERS);
+        }
+    };
+    Signaling.prototype.join = function (key) {
+        var _this = this;
+        if (this.state === SignalingState$1.READY_TO_JOIN_OTHERS) {
+            throw new Error('Failed to join via signaling: connection with signaling is already opened');
+        }
+        if (this.state !== SignalingState$1.CLOSED) {
+            this.close();
+        }
+        this.setState(SignalingState$1.CONNECTING);
+        this.wc.webSocketBuilder.connect(this.url + key)
+            .then(function (ws) {
+            _this.setState(SignalingState$1.OPEN);
+            _this.rxWs = _this.createRxWs(ws);
+            _this.startPingInterval();
+            _this.rxWs.onMessage.subscribe(function (msg) {
+                switch (msg.type) {
+                    case 'ping':
+                        _this.rxWs.pong();
+                        break;
+                    case 'pong':
+                        _this.pongReceived = true;
+                        break;
+                    case 'isFirst':
+                        if (msg.isFirst) {
+                            _this.setState(SignalingState$1.READY_TO_JOIN_OTHERS);
+                        }
+                        else {
+                            _this.wc.webRTCBuilder.connectOverSignaling({
+                                onMessage: _this.rxWs.onMessage.filter(function (msg) { return msg.type === 'content'; })
+                                    .map(function (_a) {
+                                    var content = _a.content;
+                                    return content;
+                                }),
+                                send: function (msg) { return _this.rxWs.send({ content: msg }); }
+                            })
+                                .then(function () { return _this.setState(SignalingState$1.FIRST_CONNECTED); })
+                                .catch(function (err) {
+                                _this.rxWs.close(FIRST_CONNECTION_ERROR_CODE, "Failed to join over Signaling: " + err.message);
+                            });
+                        }
+                        break;
+                }
+            });
+        })
+            .catch(function (err) { return _this.setState(SignalingState$1.CLOSED); });
+    };
+    /**
+     * Close the `WebSocket` with Signaling server.
+     */
+    Signaling.prototype.close = function () {
+        if (this.rxWs) {
+            this.rxWs.close(1000);
+        }
+    };
+    Signaling.prototype.setState = function (state) {
+        var _this = this;
+        if (this.state !== state) {
+            this.state = state;
+            this.stateSubject.next(state);
+            if (state === SignalingState$1.READY_TO_JOIN_OTHERS) {
+                this.wc.webRTCBuilder.onChannelFromSignaling({
+                    onMessage: this.rxWs.onMessage.filter(function (msg) { return msg.type === 'content'; })
+                        .map(function (_a) {
+                        var content = _a.content;
+                        return content;
+                    }),
+                    send: function (msg) { return _this.rxWs.send({ content: msg }); }
+                }).subscribe(function (ch) { return _this.channelSubject.next(ch); });
+            }
+        }
+    };
+    Signaling.prototype.startPingInterval = function () {
+        var _this = this;
+        this.rxWs.ping();
+        this.pingInterval = setInterval(function () {
+            if (_this.state !== SignalingState$1.CLOSED) {
+                if (!_this.pongReceived) {
+                    clearInterval(_this.pingInterval);
+                    _this.rxWs.close(PING_ERROR_CODE, 'Signaling is not responding');
+                }
+                else {
+                    _this.pongReceived = false;
+                    _this.rxWs.ping();
+                }
+            }
+        }, PING_INTERVAL);
+    };
+    Signaling.prototype.createRxWs = function (ws) {
+        var _this = this;
+        var subject = new Subject_2();
+        ws.binaryType = 'arraybuffer';
+        ws.onmessage = function (evt) {
+            try {
+                subject.next(signaling.Message.decode(new Uint8Array(evt.data)));
+            }
+            catch (err) {
+                ws.close(MESSAGE_ERROR_CODE, err.message);
+            }
+        };
+        ws.onerror = function (err) { return subject.error(err); };
+        ws.onclose = function (closeEvt) {
+            clearInterval(_this.pingInterval);
+            _this.setState(SignalingState$1.CLOSED);
+            if (closeEvt.code === 1000) {
+                subject.complete();
+            }
+            else {
+                subject.error(new Error("Connection with Signaling '" + _this.url + "' closed: " + closeEvt.code + ": " + closeEvt.reason));
+            }
+        };
+        return {
+            onMessage: subject.asObservable(),
+            send: function (msg) {
+                if (ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CLOSED) {
+                    ws.send(signaling.Message.encode(signaling.Message.create(msg)).finish());
+                }
+            },
+            ping: function () {
+                if (ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CLOSED) {
+                    ws.send(pingMsg);
+                }
+            },
+            pong: function () {
+                if (ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CLOSED) {
+                    ws.send(pongMsg);
+                }
+            },
+            close: function (code, reason) {
+                if (code === void 0) { code = 1000; }
+                if (reason === void 0) { reason = ''; }
+                ws.onclose = undefined;
+                ws.close(code, reason);
+                _this.setState(SignalingState$1.CLOSED);
+                clearInterval(_this.pingInterval);
+                subject.complete();
+            }
+        };
+    };
+    return Signaling;
+}());
+
+var TopologyEnum;
+(function (TopologyEnum) {
+    TopologyEnum[TopologyEnum["FULL_MESH"] = 0] = "FULL_MESH";
+})(TopologyEnum || (TopologyEnum = {}));
+
+/*! *****************************************************************************
+Copyright (c) Microsoft Corporation. All rights reserved.
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+this file except in compliance with the License. You may obtain a copy of the
+License at http://www.apache.org/licenses/LICENSE-2.0
+
+THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED
+WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE,
+MERCHANTABLITY OR NON-INFRINGEMENT.
+
+See the Apache Version 2.0 License for specific language governing permissions
+and limitations under the License.
+***************************************************************************** */
+/* global Reflect, Promise */
+
+var extendStatics = Object.setPrototypeOf ||
+    ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+    function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+
+function __extends$5(d, b) {
+    extendStatics(d, b);
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function __values(o) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
+    if (m) return m.call(o);
+    return {
+        next: function () {
+            if (o && i >= o.length) o = void 0;
+            return { value: o && o[i++], done: !o };
+        }
+    };
+}
+
+function __read(o, n) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator];
+    if (!m) return o;
+    var i = m.call(o), r, ar = [], e;
+    try {
+        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+    }
+    catch (error) { e = { error: error }; }
+    finally {
+        try {
+            if (r && !r.done && (m = i["return"])) m.call(i);
+        }
+        finally { if (e) throw e.error; }
+    }
+    return ar;
+}
+
+/**
+ * Equals to true in any browser.
+ */
+var isBrowser = (typeof window === 'undefined') ? false : true;
+/**
+ * Equals to true in Firefox and false elsewhere.
+ * Thanks to https://github.com/lancedikson/bowser
+ */
+var isFirefox = (isBrowser &&
+    navigator !== undefined &&
+    navigator.userAgent !== undefined &&
+    /firefox|iceweasel|fxios/i.test(navigator.userAgent)) ? true : false;
+/**
+ * Check whether the string is a valid URL.
+ */
+function isURL(str) {
+    var regex = '^' +
+        // protocol identifier
+        '(?:wss|ws)://' +
+        // Host name/IP
+        '[^\\s]+' +
+        // port number
+        '(?::\\d{2,5})?' +
+        '$';
+    return (new RegExp(regex, 'i')).test(str);
+}
+/**
+ * Generate random key which will be used to join the network.
+ */
+function generateKey() {
+    var mask = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    var length = 20; // Should be less then MAX_KEY_LENGTH value
+    var values = new Uint32Array(length);
+    var result = '';
+    for (var i = 0; i < length; i++) {
+        result += mask[values[i] % mask.length];
+    }
+    return result;
+}
+var MAX_KEY_LENGTH = 512;
+
+/**
+ * Wrapper class for `RTCDataChannel` and `WebSocket`.
+ */
+var Channel = (function () {
+    /**
+     * Creates a channel from existing `RTCDataChannel` or `WebSocket`.
+     */
+    function Channel(wc, connection, options) {
+        if (options === void 0) { options = { id: -1 }; }
+        var _this = this;
+        this.wc = wc;
+        this.connection = connection;
+        this.peerId = options.id;
+        this.rtcPeerConnection = options.rtcPeerConnection;
+        // Configure `send` function
+        if (isBrowser) {
+            connection.binaryType = 'arraybuffer';
+            this.send = this.sendInBrowser;
+        }
+        else if (!this.rtcPeerConnection) {
+            this.send = this.sendInNodeViaWebSocket;
+        }
+        else {
+            connection.binaryType = 'arraybuffer';
+            this.send = this.sendInNodeViaDataChannel;
+        }
+        this.onClose = function (evt) {
+            console.info("NETFLUX: " + wc.myId + " ONCLOSE CALLBACK " + _this.peerId, {
+                readyState: _this.connection.readyState,
+                iceConnectionState: _this.rtcPeerConnection ? _this.rtcPeerConnection.iceConnectionState : '',
+                signalingState: _this.rtcPeerConnection ? _this.rtcPeerConnection.signalingState : ''
+            });
+            _this.connection.onclose = function () { };
+            _this.connection.onmessage = function () { };
+            _this.connection.onerror = function () { };
+            wc.topologyService.onChannelClose(evt, _this);
+            if (_this.rtcPeerConnection && _this.rtcPeerConnection.signalingState !== 'closed') {
+                _this.rtcPeerConnection.close();
+            }
+        };
+        // Configure handlers
+        this.connection.onmessage = function (_a) {
+            var data = _a.data;
+            return wc.onMessageProxy(_this, new Uint8Array(data));
+        };
+        this.connection.onclose = function (evt) { return _this.onClose(evt); };
+        this.connection.onerror = function (evt) { return wc.topologyService.onChannelError(evt, _this); };
+    }
+    Channel.prototype.close = function () {
+        if (this.connection.readyState !== 'closed' &&
+            this.connection.readyState !== 'closing' &&
+            this.connection.readyState !== WebSocket.CLOSED &&
+            this.connection.readyState !== WebSocket.CLOSING) {
+            console.info("NETFLUX: " + this.wc.myId + " CLOSE " + this.peerId, {
+                readyState: this.connection.readyState,
+                iceConnectionState: this.rtcPeerConnection ? this.rtcPeerConnection.iceConnectionState : '',
+                signalingState: this.rtcPeerConnection ? this.rtcPeerConnection.signalingState : ''
+            });
+            this.connection.close();
+            if (isFirefox && this.rtcPeerConnection && this.rtcPeerConnection.signalingState !== 'closed') {
+                this.onClose(new Event('close'));
+            }
+        }
+    };
+    Channel.prototype.sendInBrowser = function (data) {
+        // if (this.connection.readyState !== 'closed' && new Int8Array(data).length !== 0) {
+        if (this.isOpen()) {
+            try {
+                this.connection.send(data);
+            }
+            catch (err) {
+                console.error("Channel send: " + err.message);
+            }
+        }
+    };
+    Channel.prototype.sendInNodeViaWebSocket = function (data) {
+        if (this.isOpen()) {
+            try {
+                this.connection.send(data, { binary: true });
+            }
+            catch (err) {
+                console.error("Channel send: " + err.message);
+            }
+        }
+    };
+    Channel.prototype.sendInNodeViaDataChannel = function (data) {
+        this.sendInBrowser(data.slice(0));
+    };
+    Channel.prototype.isOpen = function () {
+        return this.connection.readyState === WebSocket.OPEN || this.connection.readyState === 'open';
+    };
+    return Channel;
+}());
+
+"use strict";
+var __extends$6 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+
+/**
+ * Applies a given `project` function to each value emitted by the source
+ * Observable, and emits the resulting values as an Observable.
+ *
+ * <span class="informal">Like [Array.prototype.map()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map),
+ * it passes each source value through a transformation function to get
+ * corresponding output values.</span>
+ *
+ * <img src="./img/map.png" width="100%">
+ *
+ * Similar to the well known `Array.prototype.map` function, this operator
+ * applies a projection to each value and emits that projection in the output
+ * Observable.
+ *
+ * @example <caption>Map every click to the clientX position of that click</caption>
+ * var clicks = Rx.Observable.fromEvent(document, 'click');
+ * var positions = clicks.map(ev => ev.clientX);
+ * positions.subscribe(x => console.log(x));
+ *
+ * @see {@link mapTo}
+ * @see {@link pluck}
+ *
+ * @param {function(value: T, index: number): R} project The function to apply
+ * to each `value` emitted by the source Observable. The `index` parameter is
+ * the number `i` for the i-th emission that has happened since the
+ * subscription, starting from the number `0`.
+ * @param {any} [thisArg] An optional argument to define what `this` is in the
+ * `project` function.
+ * @return {Observable<R>} An Observable that emits the values from the source
+ * Observable transformed by the given `project` function.
+ * @method map
+ * @owner Observable
+ */
+function map$2(project, thisArg) {
+    if (typeof project !== 'function') {
+        throw new TypeError('argument is not a function. Are you looking for `mapTo()`?');
+    }
+    return this.lift(new MapOperator(project, thisArg));
+}
+var map_2 = map$2;
+var MapOperator = (function () {
+    function MapOperator(project, thisArg) {
+        this.project = project;
+        this.thisArg = thisArg;
+    }
+    MapOperator.prototype.call = function (subscriber, source) {
+        return source.subscribe(new MapSubscriber(subscriber, this.project, this.thisArg));
+    };
+    return MapOperator;
+}());
+var MapOperator_1 = MapOperator;
+/**
+ * We need this JSDoc comment for affecting ESDoc.
+ * @ignore
+ * @extends {Ignored}
+ */
+var MapSubscriber = (function (_super) {
+    __extends$6(MapSubscriber, _super);
+    function MapSubscriber(destination, project, thisArg) {
+        _super.call(this, destination);
+        this.project = project;
+        this.count = 0;
+        this.thisArg = thisArg || this;
+    }
+    // NOTE: This looks unoptimized, but it's actually purposefully NOT
+    // using try/catch optimizations.
+    MapSubscriber.prototype._next = function (value) {
+        var result;
+        try {
+            result = this.project.call(this.thisArg, value, this.count++);
+        }
+        catch (err) {
+            this.destination.error(err);
+            return;
+        }
+        this.destination.next(result);
+    };
+    return MapSubscriber;
+}(Subscriber_1.Subscriber));
+
+
+var map_1 = {
+	map: map_2,
+	MapOperator: MapOperator_1
+};
+
+"use strict";
+
+
+Observable_1.Observable.prototype.map = map_1.map;
+
 /**
  * Services are specific classes. Instance of such class communicates via
  * network with another instance of the same class. Indeed each peer in the
@@ -6214,7 +6418,7 @@ var MAX_JOIN_ATTEMPTS = 100;
  * @extends module:webChannelManager~WebChannelTopologyInterface
  */
 var FullMesh = (function (_super) {
-    __extends(FullMesh, _super);
+    __extends$5(FullMesh, _super);
     function FullMesh(wc) {
         var _this = _super.call(this, FULL_MESH, fullMesh.Message, wc.serviceMessageSubject) || this;
         _this.wc = wc;
@@ -6436,205 +6640,6 @@ var FullMesh = (function (_super) {
     };
     return FullMesh;
 }(Service$1));
-
-var PING_INTERVAL = 3000;
-/* WebSocket error codes */
-var MESSAGE_ERROR_CODE = 4000;
-var PING_ERROR_CODE = 4001;
-var FIRST_CONNECTION_ERROR_CODE = 4002;
-/* Preconstructed messages */
-var pingMsg = signaling.Message.encode(signaling.Message.create({ ping: true })).finish();
-var pongMsg = signaling.Message.encode(signaling.Message.create({ pong: true })).finish();
-var SignalingStateEnum;
-(function (SignalingStateEnum) {
-    SignalingStateEnum[SignalingStateEnum["CONNECTING"] = 0] = "CONNECTING";
-    SignalingStateEnum[SignalingStateEnum["OPEN"] = 1] = "OPEN";
-    SignalingStateEnum[SignalingStateEnum["FIRST_CONNECTED"] = 2] = "FIRST_CONNECTED";
-    SignalingStateEnum[SignalingStateEnum["READY_TO_JOIN_OTHERS"] = 3] = "READY_TO_JOIN_OTHERS";
-    SignalingStateEnum[SignalingStateEnum["CLOSED"] = 4] = "CLOSED";
-})(SignalingStateEnum || (SignalingStateEnum = {}));
-/**
- * This class represents a door of the `WebChannel` for the current peer. If the door
- * is open, then clients can join the `WebChannel` through this peer. There are as
- * many doors as peers in the `WebChannel` and each of them can be closed or opened.
- */
-var Signaling = (function () {
-    function Signaling(wc, url) {
-        // public
-        this.url = url.endsWith('/') ? url : url + '/';
-        this.state = SignalingStateEnum.CLOSED;
-        // private
-        this.wc = wc;
-        this.stateSubject = new Subject_2();
-        this.channelSubject = new Subject_2();
-        this.rxWs = undefined;
-        this.pingInterval = undefined;
-        this.pongReceived = false;
-    }
-    Object.defineProperty(Signaling.prototype, "onState", {
-        get: function () {
-            return this.stateSubject.asObservable();
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Signaling.prototype, "onChannel", {
-        get: function () {
-            return this.channelSubject.asObservable();
-        },
-        enumerable: true,
-        configurable: true
-    });
-    /**
-     * Notify Signaling server that you had joined the network and ready
-     * to join new peers to the network.
-     */
-    Signaling.prototype.open = function () {
-        if (this.state === SignalingStateEnum.FIRST_CONNECTED) {
-            this.rxWs.send({ joined: true });
-            this.setState(SignalingStateEnum.READY_TO_JOIN_OTHERS);
-        }
-    };
-    Signaling.prototype.join = function (key) {
-        var _this = this;
-        if (this.state === SignalingStateEnum.READY_TO_JOIN_OTHERS) {
-            throw new Error('Failed to join via signaling: connection with signaling is already opened');
-        }
-        if (this.state !== SignalingStateEnum.CLOSED) {
-            this.close();
-        }
-        this.setState(SignalingStateEnum.CONNECTING);
-        this.wc.webSocketBuilder.connect(this.url + key)
-            .then(function (ws) {
-            _this.setState(SignalingStateEnum.OPEN);
-            _this.rxWs = _this.createRxWs(ws);
-            _this.startPingInterval();
-            _this.rxWs.onMessage.subscribe(function (msg) {
-                switch (msg.type) {
-                    case 'ping':
-                        _this.rxWs.pong();
-                        break;
-                    case 'pong':
-                        _this.pongReceived = true;
-                        break;
-                    case 'isFirst':
-                        if (msg.isFirst) {
-                            _this.setState(SignalingStateEnum.READY_TO_JOIN_OTHERS);
-                        }
-                        else {
-                            _this.wc.webRTCBuilder.connectOverSignaling({
-                                onMessage: _this.rxWs.onMessage.filter(function (msg) { return msg.type === 'content'; })
-                                    .map(function (_a) {
-                                    var content = _a.content;
-                                    return content;
-                                }),
-                                send: function (msg) { return _this.rxWs.send({ content: msg }); }
-                            })
-                                .then(function () { return _this.setState(SignalingStateEnum.FIRST_CONNECTED); })
-                                .catch(function (err) {
-                                _this.rxWs.close(FIRST_CONNECTION_ERROR_CODE, "Failed to join over Signaling: " + err.message);
-                            });
-                        }
-                        break;
-                }
-            });
-        })
-            .catch(function (err) { return _this.setState(SignalingStateEnum.CLOSED); });
-    };
-    /**
-     * Close the `WebSocket` with Signaling server.
-     */
-    Signaling.prototype.close = function () {
-        if (this.rxWs) {
-            this.rxWs.close(1000);
-        }
-    };
-    Signaling.prototype.setState = function (state) {
-        var _this = this;
-        if (this.state !== state) {
-            this.state = state;
-            this.stateSubject.next(state);
-            if (state === SignalingStateEnum.READY_TO_JOIN_OTHERS) {
-                this.wc.webRTCBuilder.onChannelFromSignaling({
-                    onMessage: this.rxWs.onMessage.filter(function (msg) { return msg.type === 'content'; })
-                        .map(function (_a) {
-                        var content = _a.content;
-                        return content;
-                    }),
-                    send: function (msg) { return _this.rxWs.send({ content: msg }); }
-                }).subscribe(function (ch) { return _this.channelSubject.next(ch); });
-            }
-        }
-    };
-    Signaling.prototype.startPingInterval = function () {
-        var _this = this;
-        this.rxWs.ping();
-        this.pingInterval = setInterval(function () {
-            if (_this.state !== SignalingStateEnum.CLOSED) {
-                if (!_this.pongReceived) {
-                    clearInterval(_this.pingInterval);
-                    _this.rxWs.close(PING_ERROR_CODE, 'Signaling is not responding');
-                }
-                else {
-                    _this.pongReceived = false;
-                    _this.rxWs.ping();
-                }
-            }
-        }, PING_INTERVAL);
-    };
-    Signaling.prototype.createRxWs = function (ws) {
-        var _this = this;
-        var subject = new Subject_2();
-        ws.binaryType = 'arraybuffer';
-        ws.onmessage = function (evt) {
-            try {
-                subject.next(signaling.Message.decode(new Uint8Array(evt.data)));
-            }
-            catch (err) {
-                ws.close(MESSAGE_ERROR_CODE, err.message);
-            }
-        };
-        ws.onerror = function (err) { return subject.error(err); };
-        ws.onclose = function (closeEvt) {
-            clearInterval(_this.pingInterval);
-            _this.setState(SignalingStateEnum.CLOSED);
-            if (closeEvt.code === 1000) {
-                subject.complete();
-            }
-            else {
-                subject.error(new Error("Connection with Signaling '" + _this.url + "' closed: " + closeEvt.code + ": " + closeEvt.reason));
-            }
-        };
-        return {
-            onMessage: subject.asObservable(),
-            send: function (msg) {
-                if (ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CLOSED) {
-                    ws.send(signaling.Message.encode(signaling.Message.create(msg)).finish());
-                }
-            },
-            ping: function () {
-                if (ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CLOSED) {
-                    ws.send(pingMsg);
-                }
-            },
-            pong: function () {
-                if (ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CLOSED) {
-                    ws.send(pongMsg);
-                }
-            },
-            close: function (code, reason) {
-                if (code === void 0) { code = 1000; }
-                if (reason === void 0) { reason = ''; }
-                ws.onclose = undefined;
-                ws.close(code, reason);
-                _this.setState(SignalingStateEnum.CLOSED);
-                clearInterval(_this.pingInterval);
-                subject.complete();
-            }
-        };
-    };
-    return Signaling;
-}());
 
 "use strict";
 var __extends$7 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
@@ -7691,7 +7696,7 @@ var ID = 0;
  *
  */
 var WebRTCBuilder = (function (_super) {
-    __extends(WebRTCBuilder, _super);
+    __extends$5(WebRTCBuilder, _super);
     function WebRTCBuilder(wc, iceServers) {
         var _this = _super.call(this, ID, webRTCBuilder.Message, wc.serviceMessageSubject) || this;
         _this.wc = wc;
@@ -7991,7 +7996,7 @@ var response;
  * based on the services availability and peers' preferences.
  */
 var ChannelBuilder = (function (_super) {
-    __extends(ChannelBuilder, _super);
+    __extends$5(ChannelBuilder, _super);
     function ChannelBuilder(wc) {
         var _this = _super.call(this, 20, channelBuilder.Message, wc.serviceMessageSubject) || this;
         _this.wc = wc;
@@ -8298,11 +8303,6 @@ var Buffer$1 = (function () {
     return Buffer;
 }());
 
-var TopologyEnum;
-(function (TopologyEnum) {
-    TopologyEnum[TopologyEnum["FULL_MESH"] = 0] = "FULL_MESH";
-})(TopologyEnum || (TopologyEnum = {}));
-
 var defaultOptions = {
     topology: TopologyEnum.FULL_MESH,
     signalingURL: 'wss://www.coedit.re:10473',
@@ -8311,12 +8311,22 @@ var defaultOptions = {
     ],
     autoRejoin: true
 };
-var StateEnum;
-(function (StateEnum) {
-    StateEnum[StateEnum["JOINING"] = 0] = "JOINING";
-    StateEnum[StateEnum["JOINED"] = 1] = "JOINED";
-    StateEnum[StateEnum["LEFT"] = 2] = "LEFT";
-})(StateEnum || (StateEnum = {}));
+/**
+ * OLLEEEEEEEEEEEEEEEEE
+ * @type {Object} WebChannelState
+ * @property {number} [JOINING=0] You are joining the web group.
+ * @property {number} [JOINED=1] You have successfully joined the web group
+ * and ready to broadcast messages via `send` method.
+ * @property {number} [LEFT=2] You have left the web group. If the connection
+ * to the web group has lost and `autoRejoin=true`, then the state would be `LEFT`,
+ * (usually during a relatively short period) before the rejoining process start.
+ */
+var WebChannelState;
+(function (WebChannelState) {
+    WebChannelState[WebChannelState["JOINING"] = 0] = "JOINING";
+    WebChannelState[WebChannelState["JOINED"] = 1] = "JOINED";
+    WebChannelState[WebChannelState["LEFT"] = 2] = "LEFT";
+})(WebChannelState || (WebChannelState = {}));
 var REJOIN_TIMEOUT = 3000;
 /**
  * Timout for ping `WebChannel` in milliseconds.
@@ -8332,7 +8342,7 @@ var PING_TIMEOUT = 5000;
  * [[include:installation.md]]
  */
 var WebChannel = (function (_super) {
-    __extends(WebChannel, _super);
+    __extends$5(WebChannel, _super);
     /**
      * @param options Web channel settings
      */
@@ -8353,7 +8363,7 @@ var WebChannel = (function (_super) {
         _this.onStateChange = function () { };
         _this.onSignalingStateChange = function () { };
         // PRIVATE
-        _this.state = StateEnum.LEFT;
+        _this.state = WebChannelState.LEFT;
         _this.userMsg = new UserMessage();
         // Signaling init
         _this.signaling = new Signaling(_this, signalingURL);
@@ -8361,15 +8371,15 @@ var WebChannel = (function (_super) {
         _this.signaling.onState.subscribe(function (state) {
             _this.onSignalingStateChange(state);
             switch (state) {
-                case SignalingStateEnum.OPEN:
-                    _this.setState(StateEnum.JOINING);
+                case SignalingState$1.OPEN:
+                    _this.setState(WebChannelState.JOINING);
                     break;
-                case SignalingStateEnum.READY_TO_JOIN_OTHERS:
-                    _this.setState(StateEnum.JOINED);
+                case SignalingState$1.READY_TO_JOIN_OTHERS:
+                    _this.setState(WebChannelState.JOINED);
                     break;
-                case SignalingStateEnum.CLOSED:
+                case SignalingState$1.CLOSED:
                     if (_this.members.length === 0) {
-                        _this.setState(StateEnum.LEFT);
+                        _this.setState(WebChannelState.LEFT);
                     }
                     if (!_this.isRejoinDisabled) {
                         _this.rejoin();
@@ -8393,7 +8403,7 @@ var WebChannel = (function (_super) {
                 _this.signaling.close();
             }
             else {
-                _this.setState(StateEnum.JOINED);
+                _this.setState(WebChannelState.JOINED);
                 _this.signaling.open();
             }
         });
@@ -8409,9 +8419,9 @@ var WebChannel = (function (_super) {
      */
     WebChannel.prototype.join = function (key) {
         if (key === void 0) { key = generateKey(); }
-        if (this.state === StateEnum.LEFT && this.signaling.state === SignalingStateEnum.CLOSED) {
+        if (this.state === WebChannelState.LEFT && this.signaling.state === SignalingState$1.CLOSED) {
             this.isRejoinDisabled = !this.autoRejoin;
-            this.setState(StateEnum.JOINING);
+            this.setState(WebChannelState.JOINING);
             if (typeof key === 'string' && key.length < MAX_KEY_LENGTH) {
                 this.key = key;
             }
@@ -8544,9 +8554,9 @@ var WebChannel = (function (_super) {
         this.members.splice(this.members.indexOf(id), 1);
         this.onMemberLeave(id);
         if (this.members.length === 0
-            && (this.signaling.state === SignalingStateEnum.CONNECTING
-                || this.signaling.state === SignalingStateEnum.CLOSED)) {
-            this.setState(StateEnum.LEFT);
+            && (this.signaling.state === SignalingState$1.CONNECTING
+                || this.signaling.state === SignalingState$1.CLOSED)) {
+            this.setState(WebChannelState.LEFT);
         }
     };
     /**
@@ -8627,7 +8637,7 @@ var WebChannel = (function (_super) {
                 // network (possible when merging two networks (works with FullMesh)).
                 // If it is a case then you are already a member of the network.
                 if (this.members.includes(senderId)) {
-                    this.setState(StateEnum.JOINED);
+                    this.setState(WebChannelState.JOINED);
                     this.signaling.open();
                     channel.close();
                 }
@@ -8737,6 +8747,78 @@ var WebChannel = (function (_super) {
  */
 var wcs = new WeakMap();
 /**
+ * {@link WebGroup} state enum.
+ * @type {Object}
+ * @property {number} [JOINING=0] You are joining the web group.
+ * @property {number} [JOINED=1] You have successfully joined the web group
+ * and ready to broadcast messages via `send` method.
+ * @property {number} [LEFT=2] You have left the web group. If the connection
+ * to the web group has lost and `autoRejoin=true`, then the state would be `LEFT`,
+ * (usually during a relatively short period) before the rejoining process start.
+ */
+var WebGroupState = (function () {
+    function WebGroupState() {
+    }
+    Object.defineProperty(WebGroupState, "JOINING", {
+        /**
+         * Joining the group...
+         * @type {number}
+         */
+        get: function () { return WebChannelState.JOINING; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(WebGroupState, WebGroupState.JOINING, {
+        /**
+         * Equals to `'JOINING'`.
+         * @type {string}
+         */
+        get: function () { return WebChannelState[WebChannelState.JOINING]; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(WebGroupState, "JOINED", {
+        /**
+         * Joined the group successfully.
+         * @type {number}
+         */
+        get: function () { return WebChannelState.JOINED; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(WebGroupState, WebGroupState.JOINED, {
+        /**
+         * Equals to `'JOINED'`.
+         * @type {string}
+         */
+        get: function () { return WebChannelState[WebChannelState.JOINED]; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(WebGroupState, "LEFT", {
+        /**
+         * Left the group. If the connection to the web group has lost other then
+         * by calling {@link WebGroup#leave} or {@link WebGroup#closeSignaling} methods
+         * and {@link WebGroup#autoRejoin} is true, then the state would be `LEFT`,
+         * (usually during a relatively short period) before the rejoining process start.
+         * @type {number}
+         */
+        get: function () { return WebChannelState.LEFT; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(WebGroupState, WebGroupState.LEFT, {
+        /**
+         * Equals to `'LEFT'`.
+         * @type {string}
+         */
+        get: function () { return WebChannelState[WebChannelState.LEFT]; },
+        enumerable: true,
+        configurable: true
+    });
+    return WebGroupState;
+}());
+/**
  * This class is an API starting point. It represents a peer to peer network,
  * simply called a group. Each group member can send/receive broadcast
  * as well as personal messages, invite other persons or bots (see {@link WebGroupBotServer}).
@@ -8821,13 +8903,13 @@ var WebGroup = (function () {
         Reflect.defineProperty(this, 'topology', { configurable: false, enumerable: true, get: function () { return wc.topology; } });
         /**
          * The state of the {@link WebGroup} connection.
-         * @type {StateEnum}
+         * @type {WebGroupState}
          */
         this.state = undefined;
         Reflect.defineProperty(this, 'state', { configurable: false, enumerable: true, get: function () { return wc.state; } });
         /**
          * The state of the signaling server.
-         * @type {SignalingStateEnum}
+         * @type {SignalingState}
          */
         this.signalingState = undefined;
         Reflect.defineProperty(this, 'signalingState', { configurable: false, enumerable: true, get: function () { return wc.signaling.state; } });
@@ -8879,7 +8961,7 @@ var WebGroup = (function () {
     Object.defineProperty(WebGroup.prototype, "onStateChange", {
         /**
          * This handler is called when the group state has changed.
-         * @type {function(state: StateEnum)}
+         * @type {function(state: WebGroupState)}
          */
         set: function (handler) { wcs.get(this).onStateChange = handler; },
         enumerable: true,
@@ -8888,7 +8970,7 @@ var WebGroup = (function () {
     Object.defineProperty(WebGroup.prototype, "onSignalingStateChange", {
         /**
          * This handler is called when the signaling state has changed.
-         * @type {function(state: SignalingStateEnum)}
+         * @type {function(state: SignalingState)}
          */
         set: function (handler) { wcs.get(this).onSignalingStateChange = handler; },
         enumerable: true,
@@ -8896,7 +8978,12 @@ var WebGroup = (function () {
     });
     /**
      * Join the group identified by a key provided by one of the group member.
+     * If the current {@link WebGroup#state} value is not {@link WebGroupState#LEFT} or
+     * {@link WebGroup#signalingState} value is not {@link SignalingState.CLOSED},
+     * then first calls {@link WebGroup#leave} and then join normally.
      * @param {string} key
+     * @emits {StateEvent}
+     * @emits {SignalingStateEvent}
      */
     WebGroup.prototype.join = function (key) { return wcs.get(this).join(key); };
     /**
@@ -8906,11 +8993,16 @@ var WebGroup = (function () {
     WebGroup.prototype.invite = function (url) { return wcs.get(this).invite(url); };
     /**
      * Close the connection with Signaling server.
+     * @emits {StateEvent} This event is only fired if there is no one left in the group.
+     * @emits {SignalingStateEvent} This event is fired if {@link WebGroup#signalingState}
+     * value does not equal to {@link SignalingState.CLOSED} already.
      */
     WebGroup.prototype.closeSignaling = function () { return wcs.get(this).closeSignaling(); };
     /**
      * Leave the group which means close channels with all members and connection
-     * with Signaling server.
+     * with the Signaling server.
+     * @emits {StateEvent}
+     * @emits {SignalingStateEvent}
      */
     WebGroup.prototype.leave = function () { return wcs.get(this).leave(); };
     /**
@@ -9161,6 +9253,132 @@ var WebGroupBotServer = (function () {
 }());
 
 // #endif
+/**
+ * The state enum of the signaling server for WebRTC.
+ */
+var SignalingState$$1 = (function () {
+    function SignalingState$$1() {
+    }
+    Object.defineProperty(SignalingState$$1, "CONNECTING", {
+        /**
+         * The connection is not yet open.
+         * @type {number}
+         */
+        get: function () { return SignalingState$1.CONNECTING; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(SignalingState$$1, SignalingState$$1.CONNECTING, {
+        /**
+         * Equals to `'CONNECTING'`.
+         * @type {string}
+         */
+        get: function () { return SignalingState$1[SignalingState$1.CONNECTING]; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(SignalingState$$1, "OPEN", {
+        /**
+         * The connection is open and ready to communicate.
+         * @type {number}
+         */
+        get: function () { return SignalingState$1.OPEN; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(SignalingState$$1, SignalingState$$1.OPEN, {
+        /**
+         * Equals to `'OPEN'`.
+         * @type {string}
+         */
+        get: function () { return SignalingState$1[SignalingState$1.OPEN]; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(SignalingState$$1, "FIRST_CONNECTED", {
+        /**
+         * `RTCDataChannel` has been established with one of the group member.
+         * From now the signaling is no longer needed, because the joining process
+         * will continue with a help of this member.
+         * @type {number}
+         */
+        get: function () { return SignalingState$1.FIRST_CONNECTED; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(SignalingState$$1, SignalingState$$1.FIRST_CONNECTED, {
+        /**
+         * Equals to `'FIRST_CONNECTED'`.
+         * @type {string}
+         */
+        get: function () { return SignalingState$1[SignalingState$1.FIRST_CONNECTED]; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(SignalingState$$1, "READY_TO_JOIN_OTHERS", {
+        /**
+         * You has successfully been joined a web group and ready to help join others.
+         * @type {number}
+         */
+        get: function () { return SignalingState$1.READY_TO_JOIN_OTHERS; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(SignalingState$$1, SignalingState$$1.READY_TO_JOIN_OTHERS, {
+        /**
+         * Equals to `'READY_TO_JOIN_OTHERS'`.
+         * @type {string}
+         */
+        get: function () { return SignalingState$1[SignalingState$1.READY_TO_JOIN_OTHERS]; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(SignalingState$$1, "CLOSED", {
+        /**
+         * The connection is closed.
+         * @type {number}
+         */
+        get: function () { return SignalingState$1.CLOSED; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(SignalingState$$1, SignalingState$$1.CLOSED, {
+        /**
+         * Equals to `'CLOSED'`.
+         * @type {string}
+         */
+        get: function () { return SignalingState$1[SignalingState$1.CLOSED]; },
+        enumerable: true,
+        configurable: true
+    });
+    return SignalingState$$1;
+}());
+/**
+ * The topology enum.
+ */
+var Topology = (function () {
+    function Topology() {
+    }
+    Object.defineProperty(Topology, "FULL_MESH", {
+        /**
+         * Full mesh topology identifier.
+         * @type {number}
+         */
+        get: function () { return TopologyEnum.FULL_MESH; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Topology, Topology.FULL_MESH, {
+        /**
+         * Equals to `'FULL_MESH'`.
+         * @type {string}
+         */
+        get: function () { return TopologyEnum[TopologyEnum.FULL_MESH]; },
+        enumerable: true,
+        configurable: true
+    });
+    return Topology;
+}());
 
-export { WebGroup, StateEnum, TopologyEnum, SignalingStateEnum, WebGroupBotServer };
+export { SignalingState$$1 as SignalingState, Topology, WebGroup, WebGroupState, WebGroupBotServer };
 //# sourceMappingURL=netflux.node.esm.js.map

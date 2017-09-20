@@ -2,7 +2,7 @@ import { Subject } from 'rxjs/Subject';
 import { Channel } from '../Channel';
 import { FullMesh } from './topology/FullMesh';
 import { Service } from './Service';
-import { Signaling, SignalingStateEnum } from '../Signaling';
+import { Signaling, SignalingState } from '../Signaling';
 import { ChannelBuilder } from './ChannelBuilder';
 import { WebSocketBuilder } from '../WebSocketBuilder';
 import { WebRTCBuilder } from './WebRTCBuilder';
@@ -18,12 +18,22 @@ export const defaultOptions = {
     ],
     autoRejoin: true
 };
-export var StateEnum;
-(function (StateEnum) {
-    StateEnum[StateEnum["JOINING"] = 0] = "JOINING";
-    StateEnum[StateEnum["JOINED"] = 1] = "JOINED";
-    StateEnum[StateEnum["LEFT"] = 2] = "LEFT";
-})(StateEnum || (StateEnum = {}));
+/**
+ * OLLEEEEEEEEEEEEEEEEE
+ * @type {Object} WebChannelState
+ * @property {number} [JOINING=0] You are joining the web group.
+ * @property {number} [JOINED=1] You have successfully joined the web group
+ * and ready to broadcast messages via `send` method.
+ * @property {number} [LEFT=2] You have left the web group. If the connection
+ * to the web group has lost and `autoRejoin=true`, then the state would be `LEFT`,
+ * (usually during a relatively short period) before the rejoining process start.
+ */
+export var WebChannelState;
+(function (WebChannelState) {
+    WebChannelState[WebChannelState["JOINING"] = 0] = "JOINING";
+    WebChannelState[WebChannelState["JOINED"] = 1] = "JOINED";
+    WebChannelState[WebChannelState["LEFT"] = 2] = "LEFT";
+})(WebChannelState || (WebChannelState = {}));
 const REJOIN_TIMEOUT = 3000;
 /**
  * Timout for ping `WebChannel` in milliseconds.
@@ -58,7 +68,7 @@ export class WebChannel extends Service {
         this.onStateChange = () => { };
         this.onSignalingStateChange = () => { };
         // PRIVATE
-        this.state = StateEnum.LEFT;
+        this.state = WebChannelState.LEFT;
         this.userMsg = new UserMessage();
         // Signaling init
         this.signaling = new Signaling(this, signalingURL);
@@ -66,15 +76,15 @@ export class WebChannel extends Service {
         this.signaling.onState.subscribe((state) => {
             this.onSignalingStateChange(state);
             switch (state) {
-                case SignalingStateEnum.OPEN:
-                    this.setState(StateEnum.JOINING);
+                case SignalingState.OPEN:
+                    this.setState(WebChannelState.JOINING);
                     break;
-                case SignalingStateEnum.READY_TO_JOIN_OTHERS:
-                    this.setState(StateEnum.JOINED);
+                case SignalingState.READY_TO_JOIN_OTHERS:
+                    this.setState(WebChannelState.JOINED);
                     break;
-                case SignalingStateEnum.CLOSED:
+                case SignalingState.CLOSED:
                     if (this.members.length === 0) {
-                        this.setState(StateEnum.LEFT);
+                        this.setState(WebChannelState.LEFT);
                     }
                     if (!this.isRejoinDisabled) {
                         this.rejoin();
@@ -98,7 +108,7 @@ export class WebChannel extends Service {
                 this.signaling.close();
             }
             else {
-                this.setState(StateEnum.JOINED);
+                this.setState(WebChannelState.JOINED);
                 this.signaling.open();
             }
         });
@@ -112,9 +122,9 @@ export class WebChannel extends Service {
      * Join the network via a key provided by one of the network member or a `Channel`.
      */
     join(key = generateKey()) {
-        if (this.state === StateEnum.LEFT && this.signaling.state === SignalingStateEnum.CLOSED) {
+        if (this.state === WebChannelState.LEFT && this.signaling.state === SignalingState.CLOSED) {
             this.isRejoinDisabled = !this.autoRejoin;
-            this.setState(StateEnum.JOINING);
+            this.setState(WebChannelState.JOINING);
             if (typeof key === 'string' && key.length < MAX_KEY_LENGTH) {
                 this.key = key;
             }
@@ -223,9 +233,9 @@ export class WebChannel extends Service {
         this.members.splice(this.members.indexOf(id), 1);
         this.onMemberLeave(id);
         if (this.members.length === 0
-            && (this.signaling.state === SignalingStateEnum.CONNECTING
-                || this.signaling.state === SignalingStateEnum.CLOSED)) {
-            this.setState(StateEnum.LEFT);
+            && (this.signaling.state === SignalingState.CONNECTING
+                || this.signaling.state === SignalingState.CLOSED)) {
+            this.setState(WebChannelState.LEFT);
         }
     }
     /**
@@ -302,7 +312,7 @@ export class WebChannel extends Service {
                 // network (possible when merging two networks (works with FullMesh)).
                 // If it is a case then you are already a member of the network.
                 if (this.members.includes(senderId)) {
-                    this.setState(StateEnum.JOINED);
+                    this.setState(WebChannelState.JOINED);
                     this.signaling.open();
                     channel.close();
                 }

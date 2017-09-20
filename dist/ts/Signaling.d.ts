@@ -1,7 +1,7 @@
 import { Observable } from 'rxjs/Observable';
 import { WebChannel } from './service/WebChannel';
 import { Channel } from './Channel';
-export declare enum SignalingStateEnum {
+export declare enum SignalingState {
     CONNECTING = 0,
     OPEN = 1,
     FIRST_CONNECTED = 2,
@@ -15,7 +15,7 @@ export declare enum SignalingStateEnum {
  */
 export declare class Signaling {
     url: string;
-    state: SignalingStateEnum;
+    state: SignalingState;
     private wc;
     private stateSubject;
     private channelSubject;
@@ -23,7 +23,7 @@ export declare class Signaling {
     private pingInterval;
     private pongReceived;
     constructor(wc: WebChannel, url: string);
-    readonly onState: Observable<SignalingStateEnum>;
+    readonly onState: Observable<SignalingState>;
     readonly onChannel: Observable<Channel>;
     /**
      * Notify Signaling server that you had joined the network and ready

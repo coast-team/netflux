@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <base data-ice="baseUrl" href="../../">
-  <title data-ice="title">src/BotServerFacade.js | Netflux</title>
+  <title data-ice="title">src/index.js | Netflux</title>
   <link type="text/css" rel="stylesheet" href="css/style.css">
   <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
   <script src="script/prettify/prettify.js"></script>
@@ -49,79 +49,85 @@
 </div>
 </nav>
 
-<div class="content" data-ice="content"><h1 data-ice="title">src/BotServerFacade.js</h1>
-<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">import { BotServer } from &apos;./BotServer&apos;;
-let botServer;
+<div class="content" data-ice="content"><h1 data-ice="title">src/index.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">import &apos;./misc/polyfills&apos;;
+import { SignalingState as SigState } from &apos;./Signaling&apos;;
+import { TopologyEnum } from &apos;./service/topology/Topology&apos;;
+export { WebGroup, WebGroupState } from &apos;./WebChannelFacade&apos;;
+// #if NODE
+export { WebGroupBotServer } from &apos;./BotServerFacade&apos;;
+// #endif
 /**
- * Bot server may be a member of severals groups. Each group is isolated.
- * He can be invited by a group member via {@link WebGroup#invite} method.
- * @example
- * // In NodeJS:
- * // Create a bot server with full mesh topology, without autorejoin feature
- * // and with specified Signaling and ICE servers for WebRTC.
- * // Bot server is listening on &apos;ws://BOT_HOST:BOT_PORT&apos;.
- *
- * const http = require(&apos;http&apos;)
- * const server = http.createServer(app.callback())
- * const bot = new WebGroupBotServer({
- *   signalingURL: &apos;wss://mysignaling.com&apos;
- *   iceServers: [
- *     {
- *       urls: &apos;stun.l.google.com:19302&apos;
- *     },
- *     {
- *       urls: [&apos;turn:myturn.com?transport=udp&apos;, &apos;turn:myturn?transport=tcp&apos;],
- *       username: &apos;user&apos;,
- *       password: &apos;password&apos;
- *     }
- *   ],
- *   bot: { server }
- * })
- *
- * bot.onWebGroup = (wg) =&gt; {
- *   // TODO...
- * }
- *
- * server.listen(BOT_PORT, BOT_HOST)
+ * The state enum of the signaling server for WebRTC.
  */
-export class WebGroupBotServer {
+export class SignalingState {
     /**
-     * @param {WebGroupBotServerOptions} options
-     * @param {TopologyEnum} [options.topology=TopologyEnum.FULL_MESH]
-     * @param {string} [options.signalingURL=&apos;wss://www.coedit.re:20473&apos;]
-     * @param {RTCIceServer[]} [options.iceServers=[{urls: &apos;stun:stun3.l.google.com:19302&apos;}]]
-     * @param {boolean} [options.autoRejoin=false]
-     * @param {Object} options.bot
-     * @param {NodeJSHttpServer|NodeJSHttpsServer} options.bot.server NodeJS http(s) server.
-     * @param {string} [options.bot.url] Bot server URL.
-     * @param {boolean} [options.bot.perMessageDeflate=false] Enable/disable permessage-deflate.
+     * The connection is not yet open.
+     * @type {number}
      */
-    constructor(options) {
-        botServer = new BotServer(options);
-        /**
-         * NodeJS http server instance (See https://nodejs.org/api/http.html)
-         * @type {NodeJSHttpServer|NodeJSHttpsServer}
-         */
-        this.server = undefined;
-        Reflect.defineProperty(this, &apos;server&apos;, { configurable: false, enumerable: true, get: () =&gt; botServer.server });
-        /**
-         * Set of web groups the bot is member of.
-         * @type {Set&lt;WebGroup&gt;}
-         */
-        this.webGroups = undefined;
-        Reflect.defineProperty(this, &apos;webGroups&apos;, { configurable: false, enumerable: true, get: () =&gt; botServer.webGroups });
-        /**
-         * Bot server url. Used to invite the bot in a web group via {@link WebGroup#invite} method.
-         * @type {string}
-         */
-        this.url = undefined;
-        Reflect.defineProperty(this, &apos;url&apos;, { configurable: false, enumerable: true, get: () =&gt; botServer.url });
-    }
+    static get CONNECTING() { return SigState.CONNECTING; }
     /**
-     * This handler is called when the bot has been invited into a web group by one its members.
-     * @type  {function(wg: WebGroup)} handler
+     * Equals to `&apos;CONNECTING&apos;`.
+     * @type {string}
      */
-    set onWebGroup(handler) { botServer.onWebGroup = handler; }
+    static get [SignalingState.CONNECTING]() { return SigState[SigState.CONNECTING]; }
+    /**
+     * The connection is open and ready to communicate.
+     * @type {number}
+     */
+    static get OPEN() { return SigState.OPEN; }
+    /**
+     * Equals to `&apos;OPEN&apos;`.
+     * @type {string}
+     */
+    static get [SignalingState.OPEN]() { return SigState[SigState.OPEN]; }
+    /**
+     * `RTCDataChannel` has been established with one of the group member.
+     * From now the signaling is no longer needed, because the joining process
+     * will continue with a help of this member.
+     * @type {number}
+     */
+    static get FIRST_CONNECTED() { return SigState.FIRST_CONNECTED; }
+    /**
+     * Equals to `&apos;FIRST_CONNECTED&apos;`.
+     * @type {string}
+     */
+    static get [SignalingState.FIRST_CONNECTED]() { return SigState[SigState.FIRST_CONNECTED]; }
+    /**
+     * You has successfully been joined a web group and ready to help join others.
+     * @type {number}
+     */
+    static get READY_TO_JOIN_OTHERS() { return SigState.READY_TO_JOIN_OTHERS; }
+    /**
+     * Equals to `&apos;READY_TO_JOIN_OTHERS&apos;`.
+     * @type {string}
+     */
+    static get [SignalingState.READY_TO_JOIN_OTHERS]() { return SigState[SigState.READY_TO_JOIN_OTHERS]; }
+    /**
+     * The connection is closed.
+     * @type {number}
+     */
+    static get CLOSED() { return SigState.CLOSED; }
+    /**
+     * Equals to `&apos;CLOSED&apos;`.
+     * @type {string}
+     */
+    static get [SignalingState.CLOSED]() { return SigState[SigState.CLOSED]; }
+}
+/**
+ * The topology enum.
+ */
+export class Topology {
+    /**
+     * Full mesh topology identifier.
+     * @type {number}
+     */
+    static get FULL_MESH() { return TopologyEnum.FULL_MESH; }
+    /**
+     * Equals to `&apos;FULL_MESH&apos;`.
+     * @type {string}
+     */
+    static get [Topology.FULL_MESH]() { return TopologyEnum[TopologyEnum.FULL_MESH]; }
 }
 </code></pre>
 

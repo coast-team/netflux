@@ -2,8 +2,8 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <base data-ice="baseUrl" href="../../">
-  <title data-ice="title">src/BotServerFacade.js | Netflux</title>
+  <base data-ice="baseUrl" href="../">
+  <title data-ice="title">Variable | Netflux</title>
   <link type="text/css" rel="stylesheet" href="css/style.css">
   <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
   <script src="script/prettify/prettify.js"></script>
@@ -31,16 +31,16 @@
     
   <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/BotServerFacade.js~WebGroupBotServer.html">WebGroupBotServer</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroupState.html">WebGroupState</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.js~SignalingState.html">SignalingState</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.js~Topology.html">Topology</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.js~SignalingStateEnum.html">SignalingStateEnum</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.js~TopologyEnum.html">TopologyEnum</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-StateEnum">StateEnum</a></span></span></li>
 <li data-ice="doc"><a data-ice="dirPath" class="nav-dir-path" href="identifiers.html#types">types</a><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-DataType">DataType</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-MemberEvent">MemberEvent</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-MessageEvent">MessageEvent</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-SignalingStateEvent">SignalingStateEvent</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-StateEvent">StateEvent</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupBotServerOptions">WebGroupBotServerOptions</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupOptions">WebGroupOptions</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupStateEvent">WebGroupStateEvent</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/http.html#http_class_http_server">NodeJSHttpServer</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/https.html#https_class_https_server">NodeJSHttpsServer</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://developer.mozilla.org/en/docs/Web/API/RTCIceServer">RTCIceServer</a></span></span></li>
@@ -49,82 +49,127 @@
 </div>
 </nav>
 
-<div class="content" data-ice="content"><h1 data-ice="title">src/BotServerFacade.js</h1>
-<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">import { BotServer } from &apos;./BotServer&apos;;
-let botServer;
-/**
- * Bot server may be a member of severals groups. Each group is isolated.
- * He can be invited by a group member via {@link WebGroup#invite} method.
- * @example
- * // In NodeJS:
- * // Create a bot server with full mesh topology, without autorejoin feature
- * // and with specified Signaling and ICE servers for WebRTC.
- * // Bot server is listening on &apos;ws://BOT_HOST:BOT_PORT&apos;.
- *
- * const http = require(&apos;http&apos;)
- * const server = http.createServer(app.callback())
- * const bot = new WebGroupBotServer({
- *   signalingURL: &apos;wss://mysignaling.com&apos;
- *   iceServers: [
- *     {
- *       urls: &apos;stun.l.google.com:19302&apos;
- *     },
- *     {
- *       urls: [&apos;turn:myturn.com?transport=udp&apos;, &apos;turn:myturn?transport=tcp&apos;],
- *       username: &apos;user&apos;,
- *       password: &apos;password&apos;
- *     }
- *   ],
- *   bot: { server }
- * })
- *
- * bot.onWebGroup = (wg) =&gt; {
- *   // TODO...
- * }
- *
- * server.listen(BOT_PORT, BOT_HOST)
- */
-export class WebGroupBotServer {
-    /**
-     * @param {WebGroupBotServerOptions} options
-     * @param {TopologyEnum} [options.topology=TopologyEnum.FULL_MESH]
-     * @param {string} [options.signalingURL=&apos;wss://www.coedit.re:20473&apos;]
-     * @param {RTCIceServer[]} [options.iceServers=[{urls: &apos;stun:stun3.l.google.com:19302&apos;}]]
-     * @param {boolean} [options.autoRejoin=false]
-     * @param {Object} options.bot
-     * @param {NodeJSHttpServer|NodeJSHttpsServer} options.bot.server NodeJS http(s) server.
-     * @param {string} [options.bot.url] Bot server URL.
-     * @param {boolean} [options.bot.perMessageDeflate=false] Enable/disable permessage-deflate.
-     */
-    constructor(options) {
-        botServer = new BotServer(options);
-        /**
-         * NodeJS http server instance (See https://nodejs.org/api/http.html)
-         * @type {NodeJSHttpServer|NodeJSHttpsServer}
-         */
-        this.server = undefined;
-        Reflect.defineProperty(this, &apos;server&apos;, { configurable: false, enumerable: true, get: () =&gt; botServer.server });
-        /**
-         * Set of web groups the bot is member of.
-         * @type {Set&lt;WebGroup&gt;}
-         */
-        this.webGroups = undefined;
-        Reflect.defineProperty(this, &apos;webGroups&apos;, { configurable: false, enumerable: true, get: () =&gt; botServer.webGroups });
-        /**
-         * Bot server url. Used to invite the bot in a web group via {@link WebGroup#invite} method.
-         * @type {string}
-         */
-        this.url = undefined;
-        Reflect.defineProperty(this, &apos;url&apos;, { configurable: false, enumerable: true, get: () =&gt; botServer.url });
-    }
-    /**
-     * This handler is called when the bot has been invited into a web group by one its members.
-     * @type  {function(wg: WebGroup)} handler
-     */
-    set onWebGroup(handler) { botServer.onWebGroup = handler; }
-}
-</code></pre>
+<div class="content" data-ice="content"><h1 data-ice="title">Variable</h1>
+<div data-ice="summaries"><table class="summary" data-ice="summary">
+  <thead><tr><td data-ice="title" colspan="3">Static Public Summary</td></tr></thead>
+  <tbody>
+  
+  <tr data-ice="target">
+    <td>
+      <span class="access" data-ice="access">public</span>
+      
+      
+      
+      <span class="override" data-ice="override"></span>
+    </td>
+    <td>
+      <div>
+        <p>
+          
+          
+          
+          <span class="code" data-ice="name"><span><a href="variable/index.html#static-variable-StateEnum">StateEnum</a></span></span><span class="code" data-ice="signature">: <span>Object</span></span>
+        </p>
+      </div>
+      <div>
+        
+        
+        <div data-ice="description"><p><span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span> state enum.</p>
+</div>
+      </div>
+    </td>
+    <td>
+      
+      
+    </td>
+  </tr>
+</tbody>
+</table>
+</div>
+<div data-ice="details"><h2 data-ice="title">Static Public </h2>
 
+<div class="detail" data-ice="detail">
+  <h3 data-ice="anchor" id="static-variable-StateEnum">
+    <span class="access" data-ice="access">public</span>
+    
+    
+    
+    
+    
+    <span class="code" data-ice="name">StateEnum</span><span class="code" data-ice="signature">: <span>Object</span></span>
+    <span class="right-info">
+      
+      
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber16">source</a></span></span>
+    </span>
+  </h3>
+
+  <div data-ice="importPath" class="import-path"><pre class="prettyprint"><code data-ice="importPathCode">import {StateEnum} from &apos;<span><a href="file/src/WebChannelFacade.js.html#lineNumber16">netflux/src/WebChannelFacade.js</a></span>&apos;</code></pre></div>
+  
+  
+  <div data-ice="description"><p><span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span> state enum.</p>
+</div>
+
+  
+
+  <div data-ice="properties"><div data-ice="properties">
+  <h4 data-ice="title">Properties:</h4>
+  <table class="params">
+    <thead>
+    <tr><td>Name</td><td>Type</td><td>Attribute</td><td>Description</td></tr>
+    </thead>
+    <tbody>
+    
+    <tr data-ice="property" data-depth="0">
+      <td data-ice="name" class="code" data-depth="0">JOINING</td>
+      <td data-ice="type" class="code"><span>number</span></td>
+      <td data-ice="appendix"><ul><li>optional</li>
+<li>default: 0</li></ul></td>
+      <td data-ice="description"><p>You are joining the web group.</p>
+</td>
+    </tr>
+<tr data-ice="property" data-depth="0">
+      <td data-ice="name" class="code" data-depth="0">JOINED</td>
+      <td data-ice="type" class="code"><span>number</span></td>
+      <td data-ice="appendix"><ul><li>optional</li>
+<li>default: 1</li></ul></td>
+      <td data-ice="description"><p>You have successfully joined the web group
+and ready to broadcast messages via <code>send</code> method.</p>
+</td>
+    </tr>
+<tr data-ice="property" data-depth="0">
+      <td data-ice="name" class="code" data-depth="0">LEFT</td>
+      <td data-ice="type" class="code"><span>number</span></td>
+      <td data-ice="appendix"><ul><li>optional</li>
+<li>default: 2</li></ul></td>
+      <td data-ice="description"><p>You have left the web group. If the connection
+to the web group has lost and <code>autoRejoin=true</code>, then the state would be <code>LEFT</code>,
+(usually during a relatively short period) before the rejoining process start.</p>
+</td>
+    </tr>
+</tbody>
+  </table>
+</div>
+</div>
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+</div>
+</div>
 </div>
 
 <footer class="footer">

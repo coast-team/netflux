@@ -7,6 +7,8 @@ import { BotServer, BotServerOptions as WebGroupBotServerOptions } from './BotSe
 
 let botServer: BotServer
 
+export { WebGroupBotServerOptions }
+
 /**
  * Bot server may be a member of severals groups. Each group is isolated.
  * He can be invited by a group member via {@link WebGroup#invite} method.

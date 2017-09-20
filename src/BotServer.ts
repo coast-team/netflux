@@ -7,9 +7,9 @@ import { WebGroup, wcs } from './WebChannelFacade'
 import { Channel } from './Channel'
 
 export interface BotServerOptions {
-  url: string,
+  url?: string,
   server: any,
-  perMessageDeflate: boolean
+  perMessageDeflate?: boolean
 }
 
 export const bsDefaults = {

@@ -1,5 +1,17 @@
 window.esdocSearchIndex = [
   [
+    "netflux/src/index.js~signalingstate",
+    "class/src/index.js~SignalingState.html",
+    "<span>SignalingState</span> <span class=\"search-result-import-path\">netflux/src/index.js</span>",
+    "class"
+  ],
+  [
+    "netflux/src/index.js~topology",
+    "class/src/index.js~Topology.html",
+    "<span>Topology</span> <span class=\"search-result-import-path\">netflux/src/index.js</span>",
+    "class"
+  ],
+  [
     "netflux/src/webchannelfacade.js~webgroup",
     "class/src/WebChannelFacade.js~WebGroup.html",
     "<span>WebGroup</span> <span class=\"search-result-import-path\">netflux/src/WebChannelFacade.js</span>",
@@ -9,6 +21,12 @@ window.esdocSearchIndex = [
     "netflux/src/botserverfacade.js~webgroupbotserver",
     "class/src/BotServerFacade.js~WebGroupBotServer.html",
     "<span>WebGroupBotServer</span> <span class=\"search-result-import-path\">netflux/src/BotServerFacade.js</span>",
+    "class"
+  ],
+  [
+    "netflux/src/webchannelfacade.js~webgroupstate",
+    "class/src/WebChannelFacade.js~WebGroupState.html",
+    "<span>WebGroupState</span> <span class=\"search-result-import-path\">netflux/src/WebChannelFacade.js</span>",
     "class"
   ],
   [
@@ -186,6 +204,120 @@ window.esdocSearchIndex = [
     "member"
   ],
   [
+    "src/webchannelfacade.js~webgroupstate.joined",
+    "class/src/WebChannelFacade.js~WebGroupState.html#static-get-JOINED",
+    "src/WebChannelFacade.js~WebGroupState.JOINED",
+    "member"
+  ],
+  [
+    "src/webchannelfacade.js~webgroupstate.joining",
+    "class/src/WebChannelFacade.js~WebGroupState.html#static-get-JOINING",
+    "src/WebChannelFacade.js~WebGroupState.JOINING",
+    "member"
+  ],
+  [
+    "src/webchannelfacade.js~webgroupstate.left",
+    "class/src/WebChannelFacade.js~WebGroupState.html#static-get-LEFT",
+    "src/WebChannelFacade.js~WebGroupState.LEFT",
+    "member"
+  ],
+  [
+    "src/webchannelfacade.js~webgroupstate.[webgroupstate.joined]",
+    "class/src/WebChannelFacade.js~WebGroupState.html#static-get-[WebGroupState.JOINED]",
+    "src/WebChannelFacade.js~WebGroupState.[WebGroupState.JOINED]",
+    "member"
+  ],
+  [
+    "src/webchannelfacade.js~webgroupstate.[webgroupstate.joining]",
+    "class/src/WebChannelFacade.js~WebGroupState.html#static-get-[WebGroupState.JOINING]",
+    "src/WebChannelFacade.js~WebGroupState.[WebGroupState.JOINING]",
+    "member"
+  ],
+  [
+    "src/webchannelfacade.js~webgroupstate.[webgroupstate.left]",
+    "class/src/WebChannelFacade.js~WebGroupState.html#static-get-[WebGroupState.LEFT]",
+    "src/WebChannelFacade.js~WebGroupState.[WebGroupState.LEFT]",
+    "member"
+  ],
+  [
+    "src/index.js",
+    "file/src/index.js.html",
+    "src/index.js",
+    "file"
+  ],
+  [
+    "src/index.js~signalingstate.closed",
+    "class/src/index.js~SignalingState.html#static-get-CLOSED",
+    "src/index.js~SignalingState.CLOSED",
+    "member"
+  ],
+  [
+    "src/index.js~signalingstate.connecting",
+    "class/src/index.js~SignalingState.html#static-get-CONNECTING",
+    "src/index.js~SignalingState.CONNECTING",
+    "member"
+  ],
+  [
+    "src/index.js~signalingstate.first_connected",
+    "class/src/index.js~SignalingState.html#static-get-FIRST_CONNECTED",
+    "src/index.js~SignalingState.FIRST_CONNECTED",
+    "member"
+  ],
+  [
+    "src/index.js~signalingstate.open",
+    "class/src/index.js~SignalingState.html#static-get-OPEN",
+    "src/index.js~SignalingState.OPEN",
+    "member"
+  ],
+  [
+    "src/index.js~signalingstate.ready_to_join_others",
+    "class/src/index.js~SignalingState.html#static-get-READY_TO_JOIN_OTHERS",
+    "src/index.js~SignalingState.READY_TO_JOIN_OTHERS",
+    "member"
+  ],
+  [
+    "src/index.js~signalingstate.[signalingstate.closed]",
+    "class/src/index.js~SignalingState.html#static-get-[SignalingState.CLOSED]",
+    "src/index.js~SignalingState.[SignalingState.CLOSED]",
+    "member"
+  ],
+  [
+    "src/index.js~signalingstate.[signalingstate.connecting]",
+    "class/src/index.js~SignalingState.html#static-get-[SignalingState.CONNECTING]",
+    "src/index.js~SignalingState.[SignalingState.CONNECTING]",
+    "member"
+  ],
+  [
+    "src/index.js~signalingstate.[signalingstate.first_connected]",
+    "class/src/index.js~SignalingState.html#static-get-[SignalingState.FIRST_CONNECTED]",
+    "src/index.js~SignalingState.[SignalingState.FIRST_CONNECTED]",
+    "member"
+  ],
+  [
+    "src/index.js~signalingstate.[signalingstate.open]",
+    "class/src/index.js~SignalingState.html#static-get-[SignalingState.OPEN]",
+    "src/index.js~SignalingState.[SignalingState.OPEN]",
+    "member"
+  ],
+  [
+    "src/index.js~signalingstate.[signalingstate.ready_to_join_others]",
+    "class/src/index.js~SignalingState.html#static-get-[SignalingState.READY_TO_JOIN_OTHERS]",
+    "src/index.js~SignalingState.[SignalingState.READY_TO_JOIN_OTHERS]",
+    "member"
+  ],
+  [
+    "src/index.js~topology.full_mesh",
+    "class/src/index.js~Topology.html#static-get-FULL_MESH",
+    "src/index.js~Topology.FULL_MESH",
+    "member"
+  ],
+  [
+    "src/index.js~topology.[topology.full_mesh]",
+    "class/src/index.js~Topology.html#static-get-[Topology.FULL_MESH]",
+    "src/index.js~Topology.[Topology.FULL_MESH]",
+    "member"
+  ],
+  [
     "src/types/esdoc.helper.js",
     "file/src/types/esdoc.helper.js.html",
     "src/types/esdoc.helper.js",
@@ -195,6 +327,18 @@ window.esdocSearchIndex = [
     "src/types/esdoc.helper.js~datatype",
     "typedef/index.html#static-typedef-DataType",
     "src/types/esdoc.helper.js~DataType",
+    "typedef"
+  ],
+  [
+    "src/types/esdoc.helper.js~memberevent",
+    "typedef/index.html#static-typedef-MemberEvent",
+    "src/types/esdoc.helper.js~MemberEvent",
+    "typedef"
+  ],
+  [
+    "src/types/esdoc.helper.js~messageevent",
+    "typedef/index.html#static-typedef-MessageEvent",
+    "src/types/esdoc.helper.js~MessageEvent",
     "typedef"
   ],
   [
@@ -216,21 +360,9 @@ window.esdocSearchIndex = [
     "external"
   ],
   [
-    "src/types/esdoc.helper.js~signalingstateenum",
-    "typedef/index.html#static-typedef-SignalingStateEnum",
-    "src/types/esdoc.helper.js~SignalingStateEnum",
-    "typedef"
-  ],
-  [
-    "src/types/esdoc.helper.js~stateenum",
-    "typedef/index.html#static-typedef-StateEnum",
-    "src/types/esdoc.helper.js~StateEnum",
-    "typedef"
-  ],
-  [
-    "src/types/esdoc.helper.js~topologyenum",
-    "typedef/index.html#static-typedef-TopologyEnum",
-    "src/types/esdoc.helper.js~TopologyEnum",
+    "src/types/esdoc.helper.js~signalingstateevent",
+    "typedef/index.html#static-typedef-SignalingStateEvent",
+    "src/types/esdoc.helper.js~SignalingStateEvent",
     "typedef"
   ],
   [
@@ -249,6 +381,12 @@ window.esdocSearchIndex = [
     "src/types/esdoc.helper.js~webgroupoptions",
     "typedef/index.html#static-typedef-WebGroupOptions",
     "src/types/esdoc.helper.js~WebGroupOptions",
+    "typedef"
+  ],
+  [
+    "src/types/esdoc.helper.js~webgroupstateevent",
+    "typedef/index.html#static-typedef-WebGroupStateEvent",
+    "src/types/esdoc.helper.js~WebGroupStateEvent",
     "typedef"
   ]
 ]

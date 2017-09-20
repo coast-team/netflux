@@ -3,31 +3,27 @@
  * @typedef {string|Uint8Array} DataType
  */
 /**
- * Topology enum.
- * @typedef {Object} TopologyEnum
- * @property {number} [FULL_MESH=0] Full mesh topology.
+ * Signaling state event is fired when the {@link WebGroup} signaling state has changed.
+ * @typedef {Object} SignalingStateEvent
+ * @property {SignalingState} state One of the enum value.
  */
 /**
- * The state fo the signaling server for WebRTC.
- * @typedef {Object} SignalingStateEnum
- * @property {number} [CONNECTING=0] The connection is not yet open.
- * @property {number} [OPEN=1] The connection is open and ready to communicate.
- * @property {number} [FIRST_CONNECTED=2] `RTCDataChannel` has been established
- * with one of the web group member. From now the signaling is no longer needed,
- * because the next of the joining process will pass through this member.
- * @property {number} [READY_TO_JOIN_OTHERS=3] You are successfully joined a
- * web group and ready to join others.
- * @property {number} [CLOSED=4] The connection is closed.
+ * {@link WebGroup} state event is fired when the {@link WebGroup} state has changed.
+ * @typedef {Object} WebGroupStateEvent
+ * @property {WebChannelState} state One of the enum value.
  */
 /**
- * {@link WebGroup} state enum.
- * @typedef {Object} StateEnum
- * @property {number} [JOINING=0] You are joining the web group.
- * @property {number} [JOINED=1] You have successfully joined the web group
- * and ready to broadcast messages via `send` method.
- * @property {number} [LEFT=2] You have left the web group. If the connection
- * to the web group has lost and `autoRejoin=true`, then the state would be `LEFT`,
- * (usually during a relatively short period) before the rejoining process start.
+ * {@link WebGroup} message event is fired when a message has been received from a group.
+ * @typedef {Object} MessageEvent
+ * @property {number} id The identifier of the member who sent this message.
+ * @property {DataType} data The data.
+ * @property {boolean} isBroadcast Equals to true if the data is sent
+ * via {@link WebGroup#send} and false if sent via {@link WebGroup#sendTo}.
+ */
+/**
+ * {@link WebGroup} member event is fired when a group member has joined or left.
+ * @typedef {Object} MemberEvent
+ * @property {number} id The identifier of the member.
  */
 /**
  * The options to be passed into {@link WebGroup} constructor.
