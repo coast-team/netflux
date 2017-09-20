@@ -19,7 +19,7 @@ global.TextDecoder = textEncoding.TextDecoder;
 global.WebSocket = require('uws');
 var WebCrypto = require('node-webcrypto-ossl');
 global.crypto = new WebCrypto();
-global.Event = /** @class */ (function () {
+global.Event = (function () {
     function Event(name) {
         this.name = name;
     }
@@ -1328,7 +1328,7 @@ var MAX_KEY_LENGTH = 512;
 /**
  * Wrapper class for `RTCDataChannel` and `WebSocket`.
  */
-var Channel = /** @class */ (function () {
+var Channel = (function () {
     /**
      * Creates a channel from existing `RTCDataChannel` or `WebSocket`.
      */
@@ -6153,7 +6153,7 @@ var signaling = $root.signaling = function () {
  * Each service has `.proto` file containing the desciption of its
  * communication protocol.
  */
-var Service$1 = /** @class */ (function () {
+var Service$1 = (function () {
     function Service(id, protoMessage, serviceMessageSubject) {
         this.serviceId = id;
         this.protoMessage = protoMessage;
@@ -6213,7 +6213,7 @@ var MAX_JOIN_ATTEMPTS = 100;
  *
  * @extends module:webChannelManager~WebChannelTopologyInterface
  */
-var FullMesh = /** @class */ (function (_super) {
+var FullMesh = (function (_super) {
     __extends(FullMesh, _super);
     function FullMesh(wc) {
         var _this = _super.call(this, FULL_MESH, fullMesh.Message, wc.serviceMessageSubject) || this;
@@ -6458,7 +6458,7 @@ var SignalingState;
  * is open, then clients can join the `WebChannel` through this peer. There are as
  * many doors as peers in the `WebChannel` and each of them can be closed or opened.
  */
-var Signaling = /** @class */ (function () {
+var Signaling = (function () {
     function Signaling(wc, url) {
         // public
         this.url = url.endsWith('/') ? url : url + '/';
@@ -6512,14 +6512,12 @@ var Signaling = /** @class */ (function () {
             _this.rxWs.onMessage.subscribe(function (msg) {
                 switch (msg.type) {
                     case 'ping':
-                        console.log('Ping received from Signaling');
                         _this.rxWs.pong();
                         break;
                     case 'pong':
                         _this.pongReceived = true;
                         break;
                     case 'isFirst':
-                        console.log('Message from signaling: isFirst: ', msg.isFirst);
                         if (msg.isFirst) {
                             _this.setState(SignalingState.READY_TO_JOIN_OTHERS);
                         }
@@ -6795,7 +6793,7 @@ var listenSubject = new BehaviorSubject_2('');
  * Service class responsible to establish connections between peers via
  * `WebSocket`.
  */
-var WebSocketBuilder = /** @class */ (function () {
+var WebSocketBuilder = (function () {
     function WebSocketBuilder(wc) {
         this.wc = wc;
         this.channelsSubject = new Subject_2();
@@ -7692,7 +7690,7 @@ var ID = 0;
  * signaling server or `WebChannel`.
  *
  */
-var WebRTCBuilder = /** @class */ (function (_super) {
+var WebRTCBuilder = (function (_super) {
     __extends(WebRTCBuilder, _super);
     function WebRTCBuilder(wc, iceServers) {
         var _this = _super.call(this, ID, webRTCBuilder.Message, wc.serviceMessageSubject) || this;
@@ -7992,7 +7990,7 @@ var response;
  * Its algorithm determine which channel (socket or dataChannel) should be created
  * based on the services availability and peers' preferences.
  */
-var ChannelBuilder = /** @class */ (function (_super) {
+var ChannelBuilder = (function (_super) {
     __extends(ChannelBuilder, _super);
     function ChannelBuilder(wc) {
         var _this = _super.call(this, 20, channelBuilder.Message, wc.serviceMessageSubject) || this;
@@ -8161,7 +8159,7 @@ var textDecoder = new TextDecoder();
  * big messages (more then 16ko) sent by users. Internal messages are always less
  * 16ko.
  */
-var UserMessage = /** @class */ (function () {
+var UserMessage = (function () {
     function UserMessage() {
         this.buffers = new Map();
     }
@@ -8269,7 +8267,7 @@ var UserMessage = /** @class */ (function () {
  * peer id of the sender and message id (in case if the peer sent more then
  * 1 big message at a time).
  */
-var Buffer$1 = /** @class */ (function () {
+var Buffer$1 = (function () {
     function Buffer(totalLength, data, chunkNb) {
         this.fullData = new Uint8Array(totalLength);
         this.currentLength = 0;
@@ -8333,7 +8331,7 @@ var PING_TIMEOUT = 5000;
  * preserving the current `WebChannel` structure (network topology).
  * [[include:installation.md]]
  */
-var WebChannel = /** @class */ (function (_super) {
+var WebChannel = (function (_super) {
     __extends(WebChannel, _super);
     /**
      * @param options Web channel settings
@@ -8625,7 +8623,6 @@ var WebChannel = /** @class */ (function (_super) {
         var channel = _a.channel, senderId = _a.senderId, recipientId = _a.recipientId, msg = _a.msg;
         switch (msg.type) {
             case 'init': {
-                console.log(this.myId + ' received init ', msg.init);
                 // Check whether the intermidiary peer is already a member of your
                 // network (possible when merging two networks (works with FullMesh)).
                 // If it is a case then you are already a member of the network.
@@ -8645,9 +8642,7 @@ var WebChannel = /** @class */ (function (_super) {
                     }
                     this.setTopology(topology);
                     if (generatedIds.includes(this.myId)) {
-                        var oldId = this.myId;
                         this.myId = this.generateId(generatedIds);
-                        console.log(oldId + ' changing id to ' + this.myId);
                     }
                     this.id = wcId;
                     channel.peerId = senderId;
@@ -8656,12 +8651,10 @@ var WebChannel = /** @class */ (function (_super) {
                         recipientId: channel.peerId,
                         content: _super.prototype.encode.call(this, { initOk: { members: this.members } })
                     }));
-                    console.log(this.myId + ' sending initOk ', this.members);
                 }
                 break;
             }
             case 'initOk': {
-                console.log(this.myId + ' send initOk ', msg.initOk);
                 channel.peerId = senderId;
                 this.topologyService.addJoining(channel, msg.initOk.members);
                 break;
@@ -8706,11 +8699,6 @@ var WebChannel = /** @class */ (function (_super) {
                 } })
         });
         ch.send(msg);
-        console.log(this.myId + ' send init ', {
-            topology: this.topology,
-            wcId: this.id,
-            generatedIds: this.members
-        });
     };
     WebChannel.prototype.setTopology = function (topology) {
         if (this.topologyService !== undefined) {
@@ -8786,7 +8774,7 @@ var wcs = new WeakMap();
  *   // TODO...
  * }
  */
-var WebGroup = /** @class */ (function () {
+var WebGroup = (function () {
     /**
      * @param {WebGroupOptions} [options]
      * @param {Topology} [options.topology=Topology.FULL_MESH]
@@ -8796,96 +8784,69 @@ var WebGroup = /** @class */ (function () {
      */
     function WebGroup(options) {
         if (options === void 0) { options = {}; }
-        wcs.set(this, new WebChannel(options));
-    }
-    Object.defineProperty(WebGroup.prototype, "id", {
+        var wc = new WebChannel(options);
+        wcs.set(this, wc);
         /**
          * {@link WebGroup} identifier. The same value for all members.
          * @type {number}
          */
-        get: function () { return wcs.get(this).id; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(WebGroup.prototype, "myId", {
+        this.id = undefined;
+        Reflect.defineProperty(this, 'id', { enumerable: true, get: function () { return wc.id; } });
         /**
          * Your unique member identifier in the group.
          * @type {number}
          */
-        get: function () { return wcs.get(this).myId; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(WebGroup.prototype, "key", {
+        this.myId = undefined;
+        Reflect.defineProperty(this, 'myId', { enumerable: true, get: function () { return wc.myId; } });
         /**
          * Group session identifier. Equals to an empty string before calling {@link WebGroup#join}.
          * Different to {@link WebGroup#id}. This key is known and used by Signaling server
          * in order to join new members, on the other hand Signaling does not know {@link WebGroup#id}.
          * @type {string}
          */
-        get: function () { return wcs.get(this).key; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(WebGroup.prototype, "members", {
+        this.key = undefined;
+        Reflect.defineProperty(this, 'key', { enumerable: true, get: function () { return wc.key; } });
         /**
          * An array of member identifiers (except yours).
          * @type {number[]}
          */
-        get: function () { return wcs.get(this).members; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(WebGroup.prototype, "topology", {
+        this.members = undefined;
+        Reflect.defineProperty(this, 'members', { enumerable: true, get: function () { return wc.members; } });
         /**
          * Topology identifier.
          * @type {Topology}
          */
-        get: function () { return wcs.get(this).topology; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(WebGroup.prototype, "state", {
+        this.topology = undefined;
+        Reflect.defineProperty(this, 'topology', { enumerable: true, get: function () { return wc.topology; } });
         /**
          * The state of the {@link WebGroup} connection.
          * @type {WebGroupState}
          */
-        get: function () { return wcs.get(this).state; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(WebGroup.prototype, "signalingState", {
+        this.state = undefined;
+        Reflect.defineProperty(this, 'state', { enumerable: true, get: function () { return wc.state; } });
         /**
          * The state of the signaling server.
          * @type {SignalingState}
          */
-        get: function () { return wcs.get(this).signaling.state; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(WebGroup.prototype, "signalingURL", {
+        this.signalingState = undefined;
+        Reflect.defineProperty(this, 'signalingState', { enumerable: true, get: function () { return wc.signaling.state; } });
         /**
          * The signaling server URL.
          * @type {string}
          */
-        get: function () { return wcs.get(this).signaling.url; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(WebGroup.prototype, "autoRejoin", {
-        /**
-         * If equals to true, auto rejoin feature is enabled.
-         * @type {boolean}
-         */
-        get: function () { return wcs.get(this).autoRejoin; },
+        this.signalingURL = undefined;
+        Reflect.defineProperty(this, 'signalingURL', { enumerable: true, get: function () { return wc.signaling.url; } });
         /**
          * Enable/Desable the auto rejoin feature.
          * @type {boolean}
          */
-        set: function (value) { wcs.get(this).autoRejoin = value; },
-        enumerable: true,
-        configurable: true
-    });
+        this.autoRejoin = undefined;
+        Reflect.defineProperty(this, 'autoRejoin', {
+            enumerable: true,
+            get: function () { return wc.signaling.url; },
+            set: function (value) { return wc.autoRejoin = true; }
+        });
+    }
     Object.defineProperty(WebGroup.prototype, "onMessage", {
         /**
          * This handler is called when a message has been received from the group.
@@ -8974,7 +8935,7 @@ var url = require('url');
  * BotServer can listen on web socket. A peer can invite bot to join his `WebChannel`.
  * He can also join one of the bot's `WebChannel`.
  */
-var BotServer = /** @class */ (function () {
+var BotServer = (function () {
     /**
      * Bot server settings are the same as for `WebChannel` (see {@link WebChannelSettings}),
      * plus `host` and `port` parameters.
@@ -9152,7 +9113,7 @@ var botServer;
  *
  * server.listen(BOT_PORT, BOT_HOST)
  */
-var WebGroupBotServer = /** @class */ (function () {
+var WebGroupBotServer = (function () {
     /**
      * @param {WebGroupBotServerOptions} options
      * @param {Topology} [options.topology=Topology.FULL_MESH]

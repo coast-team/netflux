@@ -49,6 +49,16 @@ export type DataTypeView = string|Uint8Array
  */
 export class WebGroup {
 
+  public id: number
+  public myId: number
+  public key: string
+  public members: number[]
+  public topology: Topology
+  public state: WebGroupState
+  public signalingState: SignalingState
+  public signalingURL: string
+  public autoRejoin: boolean
+
   /**
    * @param {WebGroupOptions} [options]
    * @param {Topology} [options.topology=Topology.FULL_MESH]
@@ -57,70 +67,70 @@ export class WebGroup {
    * @param {boolean} [options.autoRejoin=true]
    */
   constructor (options: any = {}) {
-    wcs.set(this, new WebChannel(options))
+    const wc = new WebChannel(options)
+    wcs.set(this, wc)
+
+    /**
+     * {@link WebGroup} identifier. The same value for all members.
+     * @type {number}
+     */
+    this.id = undefined
+    Reflect.defineProperty(this, 'id', { enumerable: true, get: () => wc.id })
+    /**
+     * Your unique member identifier in the group.
+     * @type {number}
+     */
+    this.myId = undefined
+    Reflect.defineProperty(this, 'myId', { enumerable: true, get: () => wc.myId })
+    /**
+     * Group session identifier. Equals to an empty string before calling {@link WebGroup#join}.
+     * Different to {@link WebGroup#id}. This key is known and used by Signaling server
+     * in order to join new members, on the other hand Signaling does not know {@link WebGroup#id}.
+     * @type {string}
+     */
+    this.key = undefined
+    Reflect.defineProperty(this, 'key', { enumerable: true, get: () => wc.key })
+    /**
+     * An array of member identifiers (except yours).
+     * @type {number[]}
+     */
+    this.members = undefined
+    Reflect.defineProperty(this, 'members', { enumerable: true, get: () => wc.members })
+    /**
+     * Topology identifier.
+     * @type {Topology}
+     */
+    this.topology = undefined
+    Reflect.defineProperty(this, 'topology', { enumerable: true, get: () => wc.topology })
+    /**
+     * The state of the {@link WebGroup} connection.
+     * @type {WebGroupState}
+     */
+    this.state = undefined
+    Reflect.defineProperty(this, 'state', { enumerable: true, get: () => wc.state })
+    /**
+     * The state of the signaling server.
+     * @type {SignalingState}
+     */
+    this.signalingState = undefined
+    Reflect.defineProperty(this, 'signalingState', { enumerable: true, get: () => wc.signaling.state })
+    /**
+     * The signaling server URL.
+     * @type {string}
+     */
+    this.signalingURL = undefined
+    Reflect.defineProperty(this, 'signalingURL', { enumerable: true, get: () => wc.signaling.url })
+    /**
+     * Enable/Desable the auto rejoin feature.
+     * @type {boolean}
+     */
+    this.autoRejoin = undefined
+    Reflect.defineProperty(this, 'autoRejoin', {
+      enumerable: true,
+      get: () => wc.signaling.url,
+      set: (value: boolean) => wc.autoRejoin = true
+    })
   }
-
-  /**
-   * {@link WebGroup} identifier. The same value for all members.
-   * @type {number}
-   */
-  get id (): number { return wcs.get(this).id }
-
-  /**
-   * Your unique member identifier in the group.
-   * @type {number}
-   */
-  get myId (): number { return wcs.get(this).myId }
-
-  /**
-   * Group session identifier. Equals to an empty string before calling {@link WebGroup#join}.
-   * Different to {@link WebGroup#id}. This key is known and used by Signaling server
-   * in order to join new members, on the other hand Signaling does not know {@link WebGroup#id}.
-   * @type {string}
-   */
-  get key (): string { return wcs.get(this).key }
-
-  /**
-   * An array of member identifiers (except yours).
-   * @type {number[]}
-   */
-  get members (): number[] { return wcs.get(this).members }
-
-  /**
-   * Topology identifier.
-   * @type {Topology}
-   */
-  get topology (): Topology { return wcs.get(this).topology }
-
-  /**
-   * The state of the {@link WebGroup} connection.
-   * @type {WebGroupState}
-   */
-  get state (): WebGroupState { return wcs.get(this).state }
-
-  /**
-   * The state of the signaling server.
-   * @type {SignalingState}
-   */
-  get signalingState (): SignalingState { return wcs.get(this).signaling.state }
-
-  /**
-   * The signaling server URL.
-   * @type {string}
-   */
-  get signalingURL (): string { return wcs.get(this).signaling.url }
-
-  /**
-   * If equals to true, auto rejoin feature is enabled.
-   * @type {boolean}
-   */
-  get autoRejoin (): boolean { return wcs.get(this).autoRejoin }
-
-  /**
-   * Enable/Desable the auto rejoin feature.
-   * @type {boolean}
-   */
-  set autoRejoin (value: boolean) { wcs.get(this).autoRejoin = value }
 
   /**
    * This handler is called when a message has been received from the group.

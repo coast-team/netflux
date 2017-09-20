@@ -55,13 +55,7 @@ window.esdocSearchIndex = [
   ],
   [
     "src/webchannelfacade.js~webgroup#autorejoin",
-    "class/src/WebChannelFacade.js~WebGroup.html#instance-get-autoRejoin",
-    "src/WebChannelFacade.js~WebGroup#autoRejoin",
-    "member"
-  ],
-  [
-    "src/webchannelfacade.js~webgroup#autorejoin",
-    "class/src/WebChannelFacade.js~WebGroup.html#instance-set-autoRejoin",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-member-autoRejoin",
     "src/WebChannelFacade.js~WebGroup#autoRejoin",
     "member"
   ],
@@ -79,7 +73,7 @@ window.esdocSearchIndex = [
   ],
   [
     "src/webchannelfacade.js~webgroup#id",
-    "class/src/WebChannelFacade.js~WebGroup.html#instance-get-id",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-member-id",
     "src/WebChannelFacade.js~WebGroup#id",
     "member"
   ],
@@ -97,7 +91,7 @@ window.esdocSearchIndex = [
   ],
   [
     "src/webchannelfacade.js~webgroup#key",
-    "class/src/WebChannelFacade.js~WebGroup.html#instance-get-key",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-member-key",
     "src/WebChannelFacade.js~WebGroup#key",
     "member"
   ],
@@ -109,13 +103,13 @@ window.esdocSearchIndex = [
   ],
   [
     "src/webchannelfacade.js~webgroup#members",
-    "class/src/WebChannelFacade.js~WebGroup.html#instance-get-members",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-member-members",
     "src/WebChannelFacade.js~WebGroup#members",
     "member"
   ],
   [
     "src/webchannelfacade.js~webgroup#myid",
-    "class/src/WebChannelFacade.js~WebGroup.html#instance-get-myId",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-member-myId",
     "src/WebChannelFacade.js~WebGroup#myId",
     "member"
   ],
@@ -169,25 +163,25 @@ window.esdocSearchIndex = [
   ],
   [
     "src/webchannelfacade.js~webgroup#signalingstate",
-    "class/src/WebChannelFacade.js~WebGroup.html#instance-get-signalingState",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-member-signalingState",
     "src/WebChannelFacade.js~WebGroup#signalingState",
     "member"
   ],
   [
     "src/webchannelfacade.js~webgroup#signalingurl",
-    "class/src/WebChannelFacade.js~WebGroup.html#instance-get-signalingURL",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-member-signalingURL",
     "src/WebChannelFacade.js~WebGroup#signalingURL",
     "member"
   ],
   [
     "src/webchannelfacade.js~webgroup#state",
-    "class/src/WebChannelFacade.js~WebGroup.html#instance-get-state",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-member-state",
     "src/WebChannelFacade.js~WebGroup#state",
     "member"
   ],
   [
     "src/webchannelfacade.js~webgroup#topology",
-    "class/src/WebChannelFacade.js~WebGroup.html#instance-get-topology",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-member-topology",
     "src/WebChannelFacade.js~WebGroup#topology",
     "member"
   ],

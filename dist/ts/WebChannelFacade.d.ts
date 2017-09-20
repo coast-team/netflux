@@ -45,6 +45,15 @@ export declare type DataTypeView = string | Uint8Array;
  * }
  */
 export declare class WebGroup {
+    id: number;
+    myId: number;
+    key: string;
+    members: number[];
+    topology: Topology;
+    state: WebGroupState;
+    signalingState: SignalingState;
+    signalingURL: string;
+    autoRejoin: boolean;
     /**
      * @param {WebGroupOptions} [options]
      * @param {Topology} [options.topology=Topology.FULL_MESH]
@@ -53,57 +62,6 @@ export declare class WebGroup {
      * @param {boolean} [options.autoRejoin=true]
      */
     constructor(options?: any);
-    /**
-     * {@link WebGroup} identifier. The same value for all members.
-     * @type {number}
-     */
-    readonly id: number;
-    /**
-     * Your unique member identifier in the group.
-     * @type {number}
-     */
-    readonly myId: number;
-    /**
-     * Group session identifier. Equals to an empty string before calling {@link WebGroup#join}.
-     * Different to {@link WebGroup#id}. This key is known and used by Signaling server
-     * in order to join new members, on the other hand Signaling does not know {@link WebGroup#id}.
-     * @type {string}
-     */
-    readonly key: string;
-    /**
-     * An array of member identifiers (except yours).
-     * @type {number[]}
-     */
-    readonly members: number[];
-    /**
-     * Topology identifier.
-     * @type {Topology}
-     */
-    readonly topology: Topology;
-    /**
-     * The state of the {@link WebGroup} connection.
-     * @type {WebGroupState}
-     */
-    readonly state: WebGroupState;
-    /**
-     * The state of the signaling server.
-     * @type {SignalingState}
-     */
-    readonly signalingState: SignalingState;
-    /**
-     * The signaling server URL.
-     * @type {string}
-     */
-    readonly signalingURL: string;
-    /**
-     * If equals to true, auto rejoin feature is enabled.
-     * @type {boolean}
-     */
-    /**
-     * Enable/Desable the auto rejoin feature.
-     * @type {boolean}
-     */
-    autoRejoin: boolean;
     /**
      * This handler is called when a message has been received from the group.
      * @type {function(id: number, msg: DataTypeView, isBroadcast: boolean)}
