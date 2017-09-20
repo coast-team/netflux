@@ -82,10 +82,10 @@ export const wcs = new WeakMap();
  * wg.onMessage = (id, msg, isBroadcast) =&gt; {
  *   // TODO...
  * }
- * wg.onStateChanged = (state) =&gt; {
+ * wg.onStateChange = (state) =&gt; {
  *   // TODO...
  * }
- * wg.onSignalingStateChanged = (state) =&gt; {
+ * wg.onSignalingStateChange = (state) =&gt; {
  *   // TODO...
  * }
  */
@@ -180,12 +180,12 @@ export class WebGroup {
      * This handler is called when the group state has changed.
      * @type {function(state: WebGroupState)}
      */
-    set onStateChanged(handler) { wcs.get(this).onStateChanged = handler; }
+    set onStateChange(handler) { wcs.get(this).onStateChange = handler; }
     /**
      * This handler is called when the signaling state has changed.
      * @type {function(state: SignalingState)}
      */
-    set onSignalingStateChanged(handler) { wcs.get(this).onSignalingStateChanged = handler; }
+    set onSignalingStateChange(handler) { wcs.get(this).onSignalingStateChange = handler; }
     /**
      * Join the group identified by a key provided by one of the group member.
      * @param {string} key

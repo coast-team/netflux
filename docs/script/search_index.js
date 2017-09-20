@@ -132,15 +132,15 @@ window.esdocSearchIndex = [
     "member"
   ],
   [
-    "src/webchannelfacade.js~webgroup#onsignalingstatechanged",
-    "class/src/WebChannelFacade.js~WebGroup.html#instance-set-onSignalingStateChanged",
-    "src/WebChannelFacade.js~WebGroup#onSignalingStateChanged",
+    "src/webchannelfacade.js~webgroup#onsignalingstatechange",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-set-onSignalingStateChange",
+    "src/WebChannelFacade.js~WebGroup#onSignalingStateChange",
     "member"
   ],
   [
-    "src/webchannelfacade.js~webgroup#onstatechanged",
-    "class/src/WebChannelFacade.js~WebGroup.html#instance-set-onStateChanged",
-    "src/WebChannelFacade.js~WebGroup#onStateChanged",
+    "src/webchannelfacade.js~webgroup#onstatechange",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-set-onStateChange",
+    "src/WebChannelFacade.js~WebGroup#onStateChange",
     "member"
   ],
   [

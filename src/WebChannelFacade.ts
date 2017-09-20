@@ -40,10 +40,10 @@ export type DataTypeView = string|Uint8Array
  * wg.onMessage = (id, msg, isBroadcast) => {
  *   // TODO...
  * }
- * wg.onStateChanged = (state) => {
+ * wg.onStateChange = (state) => {
  *   // TODO...
  * }
- * wg.onSignalingStateChanged = (state) => {
+ * wg.onSignalingStateChange = (state) => {
  *   // TODO...
  * }
  */
@@ -154,13 +154,13 @@ export class WebGroup {
    * This handler is called when the group state has changed.
    * @type {function(state: WebGroupState)}
    */
-  set onStateChanged (handler: (state: WebGroupState) => void) { wcs.get(this).onStateChanged = handler }
+  set onStateChange (handler: (state: WebGroupState) => void) { wcs.get(this).onStateChange = handler }
 
   /**
    * This handler is called when the signaling state has changed.
    * @type {function(state: SignalingState)}
    */
-  set onSignalingStateChanged (handler: (state: SignalingState) => void) { wcs.get(this).onSignalingStateChanged = handler }
+  set onSignalingStateChange (handler: (state: SignalingState) => void) { wcs.get(this).onSignalingStateChange = handler }
 
   /**
    * Join the group identified by a key provided by one of the group member.

@@ -43,7 +43,7 @@ try {
               if (wc.state === WebGroupState.JOINED) {
                 resolve()
               } else {
-                wc.onStateChanged = state => {
+                wc.onStateChange = state => {
                   if (state === WebGroupState.JOINED) {
                     resolve()
                   }

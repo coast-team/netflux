@@ -8350,8 +8350,8 @@ var WebChannel = (function (_super) {
         _this.onMemberJoin = function () { };
         _this.onMemberLeave = function () { };
         _this.onMessage = function () { };
-        _this.onStateChanged = function () { };
-        _this.onSignalingStateChanged = function () { };
+        _this.onStateChange = function () { };
+        _this.onSignalingStateChange = function () { };
         // PRIVATE
         _this.state = WebChannelState.LEFT;
         _this.userMsg = new UserMessage();
@@ -8359,7 +8359,7 @@ var WebChannel = (function (_super) {
         _this.signaling = new Signaling(_this, signalingURL);
         _this.signaling.onChannel.subscribe(function (ch) { return _this.initChannel(ch); });
         _this.signaling.onState.subscribe(function (state) {
-            _this.onSignalingStateChanged(state);
+            _this.onSignalingStateChange(state);
             switch (state) {
                 case SignalingState.OPEN:
                     _this.setState(WebChannelState.JOINING);
@@ -8683,7 +8683,7 @@ var WebChannel = (function (_super) {
     WebChannel.prototype.setState = function (state) {
         if (this.state !== state) {
             this.state = state;
-            this.onStateChanged(state);
+            this.onStateChange(state);
         }
     };
     /**
@@ -8767,10 +8767,10 @@ var wcs = new WeakMap();
  * wg.onMessage = (id, msg, isBroadcast) => {
  *   // TODO...
  * }
- * wg.onStateChanged = (state) => {
+ * wg.onStateChange = (state) => {
  *   // TODO...
  * }
- * wg.onSignalingStateChanged = (state) => {
+ * wg.onSignalingStateChange = (state) => {
  *   // TODO...
  * }
  */
@@ -8874,21 +8874,21 @@ var WebGroup = (function () {
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(WebGroup.prototype, "onStateChanged", {
+    Object.defineProperty(WebGroup.prototype, "onStateChange", {
         /**
          * This handler is called when the group state has changed.
          * @type {function(state: WebGroupState)}
          */
-        set: function (handler) { wcs.get(this).onStateChanged = handler; },
+        set: function (handler) { wcs.get(this).onStateChange = handler; },
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(WebGroup.prototype, "onSignalingStateChanged", {
+    Object.defineProperty(WebGroup.prototype, "onSignalingStateChange", {
         /**
          * This handler is called when the signaling state has changed.
          * @type {function(state: SignalingState)}
          */
-        set: function (handler) { wcs.get(this).onSignalingStateChanged = handler; },
+        set: function (handler) { wcs.get(this).onSignalingStateChange = handler; },
         enumerable: true,
         configurable: true
     });

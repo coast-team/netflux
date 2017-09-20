@@ -40,7 +40,7 @@ export function createAndConnectWebGroups (numberOfPeers) {
   // Create web channels
   for (let i = 0; i < numberOfPeers; i++) {
     wgs[i] = new WebGroup({signalingURL: SIGNALING_URL})
-    wgs[i].onStateChanged = state => {
+    wgs[i].onStateChange = state => {
       if (state === WebGroupState.JOINED) {
         network.next(++i)
       }

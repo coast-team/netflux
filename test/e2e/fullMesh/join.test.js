@@ -46,9 +46,9 @@ describe('Fully connected', () => {
             // Its id should be included only ONCE
             expect(wg.members.indexOf(id)).toEqual(wg.members.lastIndexOf(id))
           }
-          wg.onStateChangedCalledTimes = 0
-          wg.onStateChanged = state => {
-            wg.onStateChangedCalledTimes++
+          wg.onStateChangeCalledTimes = 0
+          wg.onStateChange = state => {
+            wg.onStateChangeCalledTimes++
             if (state === WebGroupState.JOINED) {
               network.next({wg, isBot: false})
             }
@@ -82,7 +82,7 @@ describe('Fully connected', () => {
               wgs.forEach(wg => {
                 expect(wg.state).toBe(WebGroupState.JOINED)
                 expect(wg.onMemberJoinCalledTimes).toBe(scenario.nbPeers - 1)
-                expect(wg.onStateChangedCalledTimes).toBe(2)
+                expect(wg.onStateChangeCalledTimes).toBe(2)
               })
               done()
             })
@@ -175,10 +175,10 @@ describe('Fully connected', () => {
                 wg.onMemberLeaveCalledTimes++
                 expect(wg.members.includes(id)).toBeFalsy()
               }
-              wg.onStateChangedCalledTimes = 0
+              wg.onStateChangeCalledTimes = 0
               res.push(new Promise(resolve => {
-                wg.onStateChanged = state => {
-                  wg.onStateChangedCalledTimes++
+                wg.onStateChange = state => {
+                  wg.onStateChangeCalledTimes++
                   if (state === WebGroupState.LEFT) {
                     resolve()
                   }
@@ -195,7 +195,7 @@ describe('Fully connected', () => {
               expect(wg.state).toBe(WebGroupState.LEFT)
               expect(wg.members.length).toBe(0)
               expect(wg.onMemberLeaveCalledTimes).toBe(numberOfPeers - 1)
-              expect(wg.onStateChangedCalledTimes).toBe(1)
+              expect(wg.onStateChangeCalledTimes).toBe(1)
             })
           })
           .then(done)

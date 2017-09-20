@@ -55,8 +55,8 @@ export class WebChannel extends Service {
         this.onMemberJoin = () => { };
         this.onMemberLeave = () => { };
         this.onMessage = () => { };
-        this.onStateChanged = () => { };
-        this.onSignalingStateChanged = () => { };
+        this.onStateChange = () => { };
+        this.onSignalingStateChange = () => { };
         // PRIVATE
         this.state = WebChannelState.LEFT;
         this.userMsg = new UserMessage();
@@ -64,7 +64,7 @@ export class WebChannel extends Service {
         this.signaling = new Signaling(this, signalingURL);
         this.signaling.onChannel.subscribe(ch => this.initChannel(ch));
         this.signaling.onState.subscribe((state) => {
-            this.onSignalingStateChanged(state);
+            this.onSignalingStateChange(state);
             switch (state) {
                 case SignalingState.OPEN:
                     this.setState(WebChannelState.JOINING);
@@ -358,7 +358,7 @@ export class WebChannel extends Service {
     setState(state) {
         if (this.state !== state) {
             this.state = state;
-            this.onStateChanged(state);
+            this.onStateChange(state);
         }
     }
     /**

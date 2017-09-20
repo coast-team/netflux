@@ -56,11 +56,11 @@ export declare class WebChannel extends Service {
     /**
      * Thi handler is called each time the state of Signaling server changes.
      */
-    onSignalingStateChanged: (state: SignalingState) => void;
+    onSignalingStateChange: (state: SignalingState) => void;
     /**
      * Thi handler is called each time the state of the network changes.
      */
-    onStateChanged: (state: WebChannelState) => void;
+    onStateChange: (state: WebChannelState) => void;
     /**
      * This handler is called when a new peer has joined the network.
      */

@@ -37,10 +37,10 @@ export declare type DataTypeView = string | Uint8Array;
  * wg.onMessage = (id, msg, isBroadcast) => {
  *   // TODO...
  * }
- * wg.onStateChanged = (state) => {
+ * wg.onStateChange = (state) => {
  *   // TODO...
  * }
- * wg.onSignalingStateChanged = (state) => {
+ * wg.onSignalingStateChange = (state) => {
  *   // TODO...
  * }
  */
@@ -81,12 +81,12 @@ export declare class WebGroup {
      * This handler is called when the group state has changed.
      * @type {function(state: WebGroupState)}
      */
-    onStateChanged: (state: WebGroupState) => void;
+    onStateChange: (state: WebGroupState) => void;
     /**
      * This handler is called when the signaling state has changed.
      * @type {function(state: SignalingState)}
      */
-    onSignalingStateChanged: (state: SignalingState) => void;
+    onSignalingStateChange: (state: SignalingState) => void;
     /**
      * Join the group identified by a key provided by one of the group member.
      * @param {string} key

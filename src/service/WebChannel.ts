@@ -86,12 +86,12 @@ export class WebChannel extends Service {
   /**
    * Thi handler is called each time the state of Signaling server changes.
    */
-  public onSignalingStateChanged: (state: SignalingState) => void
+  public onSignalingStateChange: (state: SignalingState) => void
 
   /**
    * Thi handler is called each time the state of the network changes.
    */
-  public onStateChanged: (state: WebChannelState) => void
+  public onStateChange: (state: WebChannelState) => void
 
   /**
    * This handler is called when a new peer has joined the network.
@@ -148,8 +148,8 @@ export class WebChannel extends Service {
     this.onMemberJoin = () => {}
     this.onMemberLeave = () => {}
     this.onMessage = () => {}
-    this.onStateChanged = () => {}
-    this.onSignalingStateChanged = () => {}
+    this.onStateChange = () => {}
+    this.onSignalingStateChange = () => {}
 
     // PRIVATE
     this.state = WebChannelState.LEFT
@@ -160,7 +160,7 @@ export class WebChannel extends Service {
     this.signaling.onChannel.subscribe(ch => this.initChannel(ch))
     this.signaling.onState.subscribe(
       (state: SignalingState) => {
-        this.onSignalingStateChanged(state)
+        this.onSignalingStateChange(state)
         switch (state) {
         case SignalingState.OPEN:
           this.setState(WebChannelState.JOINING)
@@ -490,7 +490,7 @@ export class WebChannel extends Service {
   private setState (state: WebChannelState): void {
     if (this.state !== state) {
       this.state = state
-      this.onStateChanged(state)
+      this.onStateChange(state)
     }
   }
 
