@@ -38,8 +38,9 @@ export function isURL (str: string): boolean {
  */
 export function generateKey (): string {
   const mask = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-  const length = 20 // Should be less then MAX_KEY_LENGTH value
+  const length = 42 // Should be less then MAX_KEY_LENGTH value
   const values = new Uint32Array(length)
+  global.crypto.getRandomValues(values)
   let result = ''
   for (let i = 0; i < length; i++) {
     result += mask[values[i] % mask.length]

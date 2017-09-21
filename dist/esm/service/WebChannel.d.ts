@@ -14,16 +14,6 @@ export interface Options {
     autoRejoin?: boolean;
 }
 export declare const defaultOptions: Options;
-/**
- * OLLEEEEEEEEEEEEEEEEE
- * @type {Object} WebChannelState
- * @property {number} [JOINING=0] You are joining the web group.
- * @property {number} [JOINED=1] You have successfully joined the web group
- * and ready to broadcast messages via `send` method.
- * @property {number} [LEFT=2] You have left the web group. If the connection
- * to the web group has lost and `autoRejoin=true`, then the state would be `LEFT`,
- * (usually during a relatively short period) before the rejoining process start.
- */
 export declare enum WebChannelState {
     JOINING = 0,
     JOINED = 1,
@@ -171,6 +161,7 @@ export declare class WebChannel extends Service {
     private treatMessage(channel, msg);
     private treatServiceMessage({channel, senderId, recipientId, msg});
     private setState(state);
+    private initPing();
     /**
      * Delegate adding a new peer in the network to topology.
      */

@@ -10,6 +10,12 @@ import { Message, webChannel, service } from '../proto';
 import { UserMessage } from '../UserMessage';
 import { isURL, generateKey, MAX_KEY_LENGTH } from '../misc/Util';
 import { TopologyEnum } from './topology/Topology';
+const REJOIN_TIMEOUT = 3000;
+/**
+ * Timout for ping `WebChannel` in milliseconds.
+ * @type {number}
+ */
+const PING_TIMEOUT = 5000;
 export const defaultOptions = {
     topology: TopologyEnum.FULL_MESH,
     signalingURL: 'wss://www.coedit.re:10473',
@@ -18,28 +24,12 @@ export const defaultOptions = {
     ],
     autoRejoin: true
 };
-/**
- * OLLEEEEEEEEEEEEEEEEE
- * @type {Object} WebChannelState
- * @property {number} [JOINING=0] You are joining the web group.
- * @property {number} [JOINED=1] You have successfully joined the web group
- * and ready to broadcast messages via `send` method.
- * @property {number} [LEFT=2] You have left the web group. If the connection
- * to the web group has lost and `autoRejoin=true`, then the state would be `LEFT`,
- * (usually during a relatively short period) before the rejoining process start.
- */
 export var WebChannelState;
 (function (WebChannelState) {
     WebChannelState[WebChannelState["JOINING"] = 0] = "JOINING";
     WebChannelState[WebChannelState["JOINED"] = 1] = "JOINED";
     WebChannelState[WebChannelState["LEFT"] = 2] = "LEFT";
 })(WebChannelState || (WebChannelState = {}));
-const REJOIN_TIMEOUT = 3000;
-/**
- * Timout for ping `WebChannel` in milliseconds.
- * @type {number}
- */
-const PING_TIMEOUT = 5000;
 /**
  * This class is an API starting point. It represents a group of collaborators
  * also called peers. Each peer can send/receive broadcast as well as personal
@@ -62,11 +52,11 @@ export class WebChannel extends Service {
         this.key = '';
         this.autoRejoin = autoRejoin;
         // PUBLIC EVENT HANDLERS
-        this.onMemberJoin = () => { };
-        this.onMemberLeave = () => { };
-        this.onMessage = () => { };
-        this.onStateChange = () => { };
-        this.onSignalingStateChange = () => { };
+        this.onMemberJoin = function none() { };
+        this.onMemberLeave = function none() { };
+        this.onMessage = function none() { };
+        this.onStateChange = function none() { };
+        this.onSignalingStateChange = function none() { };
         // PRIVATE
         this.state = WebChannelState.LEFT;
         this.userMsg = new UserMessage();
@@ -84,6 +74,7 @@ export class WebChannel extends Service {
                     break;
                 case SignalingState.CLOSED:
                     if (this.members.length === 0) {
+                        this.key = '';
                         this.setState(WebChannelState.LEFT);
                     }
                     if (!this.isRejoinDisabled) {
@@ -123,18 +114,22 @@ export class WebChannel extends Service {
      */
     join(key = generateKey()) {
         if (this.state === WebChannelState.LEFT && this.signaling.state === SignalingState.CLOSED) {
+            if (typeof key !== 'string') {
+                throw new Error(`Failed to join: the key type "${typeof key}" is not a "string"`);
+            }
+            else if (key === '') {
+                throw new Error('Failed to join: the key is an empty string');
+            }
+            else if (key.length > MAX_KEY_LENGTH) {
+                throw new Error(`Failed to join : the key length of ${key.length} exceeds the maximum of ${MAX_KEY_LENGTH} charecters`);
+            }
+            this.key = key;
             this.isRejoinDisabled = !this.autoRejoin;
             this.setState(WebChannelState.JOINING);
-            if (typeof key === 'string' && key.length < MAX_KEY_LENGTH) {
-                this.key = key;
-            }
-            else {
-                throw new Error('Parameter of the join function should be either a Channel or a string');
-            }
             this.signaling.join(this.key);
         }
         else {
-            console.warn('Failed to join: already joining or joined');
+            console.warn('Trying to join a group while already joined or joining. Maybe forgot to call leave().');
         }
     }
     /**
@@ -162,11 +157,9 @@ export class WebChannel extends Service {
      * with Signaling server.
      */
     leave() {
+        this.key = '';
         this.isRejoinDisabled = true;
-        this.pingTime = 0;
-        this.maxTime = 0;
-        this.pingFinish = () => { };
-        this.pongNb = 0;
+        this.initPing();
         this.topologyService.leave();
         this.signaling.close();
     }
@@ -232,9 +225,7 @@ export class WebChannel extends Service {
     onMemberLeaveProxy(id) {
         this.members.splice(this.members.indexOf(id), 1);
         this.onMemberLeave(id);
-        if (this.members.length === 0
-            && (this.signaling.state === SignalingState.CONNECTING
-                || this.signaling.state === SignalingState.CLOSED)) {
+        if (this.members.length === 0 && this.signaling.state !== SignalingState.READY_TO_JOIN_OTHERS) {
             this.setState(WebChannelState.LEFT);
         }
     }
@@ -369,7 +360,16 @@ export class WebChannel extends Service {
         if (this.state !== state) {
             this.state = state;
             this.onStateChange(state);
+            if (state === WebChannelState.LEFT) {
+                this.initPing();
+            }
         }
+    }
+    initPing() {
+        this.pingTime = 0;
+        this.maxTime = 0;
+        this.pingFinish = () => { };
+        this.pongNb = 0;
     }
     /**
      * Delegate adding a new peer in the network to topology.
@@ -405,7 +405,7 @@ export class WebChannel extends Service {
      * Generate random id for a `WebChannel` or a new peer.
      */
     generateId(excludeIds = []) {
-        const id = crypto.getRandomValues(new Uint32Array(1))[0];
+        const id = global.crypto.getRandomValues(new Uint32Array(1))[0];
         if (id === this.myId || this.members.includes(id)
             || (excludeIds.length !== 0 && excludeIds.includes(id))) {
             return this.generateId();

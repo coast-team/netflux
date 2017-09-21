@@ -1,7 +1,7 @@
 import { Subject } from 'rxjs/Subject'
 import { Observable } from 'rxjs/Observable'
 
-import { service } from '../proto/index'
+import { service } from '../proto'
 import { Channel } from '../Channel'
 
 export interface ServiceMessageEncoded {

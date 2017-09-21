@@ -38,4 +38,5 @@ export declare class Signaling {
     private setState(state);
     private startPingInterval();
     private createRxWs(ws);
+    private getFullURL(params);
 }

@@ -1,4 +1,4 @@
-import { user } from './proto/index'
+import { user } from './proto'
 
 /**
  * Maximum size of the user message sent over `Channel` (without metadata).
@@ -9,9 +9,8 @@ const MAX_USER_MSG_SIZE = 15000
  * Maximum message id number.
  */
 const MAX_MSG_ID_SIZE = 65535
-
-const textEncoder = new TextEncoder()
-const textDecoder = new TextDecoder()
+const textEncoder = new global.TextEncoder()
+const textDecoder = new global.TextDecoder()
 
 export type UserDataType = Uint8Array | string
 

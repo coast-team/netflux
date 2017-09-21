@@ -116,6 +116,11 @@ export class WebGroup {
   public signalingState: SignalingState
   public signalingURL: string
   public autoRejoin: boolean
+  public onMessage: (id: number, data: DataType, isBroadcast: boolean) => void
+  public onMemberJoin: (id: number) => void
+  public onMemberLeave: (id: number) => void
+  public onStateChange: (state: WebGroupState) => void
+  public onSignalingStateChange: (state: SignalingState) => void
 
   /**
    * @param {WebGroupOptions} [options]
@@ -187,49 +192,104 @@ export class WebGroup {
     Reflect.defineProperty(this, 'autoRejoin', {
       configurable: false,
       enumerable: true,
-      get: () => wc.signaling.url,
-      set: (value: boolean) => wc.autoRejoin = true
+      get: () => wc.autoRejoin,
+      set: (value: boolean) => wc.autoRejoin = value
+    })
+    /**
+     * This handler is called when a message has been received from the group.
+     * `id` is an identifier of the member who sent this message.
+     * `isBroadcast` aquals to true if the data is sent via {@link WebGroup#send}
+     * and false if sent via {@link WebGroup#sendTo}.
+     * @type {function(id: number, data: DataType, isBroadcast: boolean)}
+     */
+    this.onMessage = undefined
+    Reflect.defineProperty(this, 'onMessage', {
+      configurable: true,
+      enumerable: true,
+      get: () => (wc.onMessage.name === 'none') ? undefined : wc.onMessage,
+      set: (handler: (id: number, data: DataType, isBroadcast: boolean) => void) => {
+        if (typeof handler !== 'function') {
+          wc.onMessage = function none () {}
+        } else {
+          wc.onMessage = handler
+        }
+      }
+    })
+    /**
+     * This handler is called when a new member with `id` as identifier has joined the group.
+     * @type {function(id: number)}
+     */
+    this.onMemberJoin = undefined
+    Reflect.defineProperty(this, 'onMemberJoin', {
+      configurable: true,
+      enumerable: true,
+      get: () => (wc.onMemberJoin.name === 'none') ? undefined : wc.onMemberJoin,
+      set: (handler: (id: number) => void) => {
+        if (typeof handler !== 'function') {
+          wc.onMemberJoin = function none () {}
+        } else {
+          wc.onMemberJoin = handler
+        }
+      }
+    })
+    /**
+     * This handler is called when a member with `id` as identifier hes left the group.
+     * @type {function(id: number)}
+     */
+    this.onMemberLeave = undefined
+    Reflect.defineProperty(this, 'onMemberLeave', {
+      configurable: true,
+      enumerable: true,
+      get: () => (wc.onMemberLeave.name === 'none') ? undefined : wc.onMemberLeave,
+      set: (handler: (id: number) => void) => {
+        if (typeof handler !== 'function') {
+          wc.onMemberLeave = function none () {}
+        } else {
+          wc.onMemberLeave = handler
+        }
+      }
+    })
+    /**
+     * This handler is called when the group state has changed.
+     * @type {function(state: WebGroupState)}
+     */
+    this.onStateChange = undefined
+    Reflect.defineProperty(this, 'onStateChange', {
+      configurable: true,
+      enumerable: true,
+      get: () => (wc.onStateChange.name === 'none') ? undefined : wc.onStateChange,
+      set: (handler: (state: WebChannelState) => void) => {
+        if (typeof handler !== 'function') {
+          wc.onStateChange = function none () {}
+        } else {
+          wc.onStateChange = handler
+        }
+      }
+    })
+    /**
+     * This handler is called when the signaling state has changed.
+     * @type {function(state: SignalingState)}
+     */
+    this.onSignalingStateChange = undefined
+    Reflect.defineProperty(this, 'onSignalingStateChange', {
+      configurable: true,
+      enumerable: true,
+      get: () => (wc.onSignalingStateChange.name === 'none') ? undefined : wc.onSignalingStateChange,
+      set: (handler: (state: SignalingState) => void) => {
+        if (typeof handler !== 'function') {
+          wc.onSignalingStateChange = function none () {}
+        } else {
+          wc.onSignalingStateChange = handler
+        }
+      }
     })
   }
-
-  /**
-   * This handler is called when a message has been received from the group.
-   * `id` is an identifier of the member who sent this message.
-   * `isBroadcast` aquals to true if the data is sent via {@link WebGroup#send}
-   * and false if sent via {@link WebGroup#sendTo}.
-   * @type {function(id: number, data: DataType, isBroadcast: boolean)}
-   */
-  set onMessage (handler: (id: number, data: DataType, isBroadcast: boolean) => void) { wcs.get(this).onMessage = handler }
-
-  /**
-   * This handler is called when a new member with `id` as identifier has joined the group.
-   * @type {function(id: number)}
-   */
-  set onMemberJoin (handler: (id: number) => void) { wcs.get(this).onMemberJoin = handler }
-
-  /**
-   * This handler is called when a member with `id` as identifier hes left the group.
-   * @type {function(id: number)}
-   */
-  set onMemberLeave (handler: (id: number) => void) { wcs.get(this).onMemberLeave = handler }
-
-  /**
-   * This handler is called when the group state has changed.
-   * @type {function(state: WebGroupState)}
-   */
-  set onStateChange (handler: (state: WebChannelState) => void) { wcs.get(this).onStateChange = handler }
-
-  /**
-   * This handler is called when the signaling state has changed.
-   * @type {function(state: SignalingState)}
-   */
-  set onSignalingStateChange (handler: (state: SignalingState) => void) { wcs.get(this).onSignalingStateChange = handler }
 
   /**
    * Join the group identified by a key provided by one of the group member.
    * If the current {@link WebGroup#state} value is not {@link WebGroupState#LEFT} or
    * {@link WebGroup#signalingState} value is not {@link SignalingState.CLOSED},
-   * then first calls {@link WebGroup#leave} and then joins normally.
+   * then do nothing.
    * @param {string} [key] Will be generated if not provided
    */
   join (key?: string): void { return wcs.get(this).join(key) }

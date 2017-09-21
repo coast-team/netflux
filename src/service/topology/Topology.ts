@@ -1,6 +1,6 @@
 import { Service } from '../Service'
 import { Channel } from '../../Channel'
-import { IMessage } from '../../proto/index'
+import { IMessage } from '../../proto'
 
 export enum TopologyEnum {
   FULL_MESH

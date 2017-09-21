@@ -2,6 +2,15 @@ import { WebSocketBuilder } from './WebSocketBuilder';
 import { defaultOptions } from './service/WebChannel';
 import { WebGroup, wcs } from './WebChannelFacade';
 import { Channel } from './Channel';
+let uws;
+let url;
+try {
+    url = require('url');
+    uws = require('uws');
+}
+catch (err) {
+    console.error(err.message);
+}
 export const bsDefaults = {
     bot: {
         url: '',
@@ -9,7 +18,6 @@ export const bsDefaults = {
         perMessageDeflate: false
     }
 };
-const url = require('url');
 /**
  * BotServer can listen on web socket. A peer can invite bot to join his `WebChannel`.
  * He can also join one of the bot's `WebChannel`.
@@ -84,7 +92,7 @@ export class BotServer {
         return undefined;
     }
     init() {
-        this.server = new (require('uws').Server)(this.serverSettings);
+        this.server = new uws.Server(this.serverSettings);
         const serverListening = this.serverSettings.server || this.server;
         serverListening.on('listening', () => WebSocketBuilder.listen().next(this.url));
         this.server.on('error', err => {

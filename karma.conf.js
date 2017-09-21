@@ -20,7 +20,10 @@ module.exports = (config) => {
     files: [
       // 'test/unit/**/*.test.js',
       // 'test/functional/join.test.js'
-      { pattern: 'src/**/*.+(js|ts)', included: false, served: false },
+      // { pattern: 'src/**/*.ts)', included: false, served: true },
+      // { pattern: 'src/proto/index.js)', included: false, served: true },
+      'src/**/*.ts',
+      'src/proto/index.js',
       'test/functional/1peer.test.ts',
       'test/util/helper.ts'
     ],
@@ -31,23 +34,25 @@ module.exports = (config) => {
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
     preprocessors: {
-      'test/**/*.+(js|ts)': ['karma-typescript']
+      'test/**/*.+(js|ts)': ['karma-typescript'],
+      'src/**/*.+(js|ts)': ['karma-typescript']
     },
 
     karmaTypescriptConfig: {
       compilerOptions: {
         module: 'CommonJS',
         target: 'ES5',
-        lib: [ 'es2017', 'dom' ],
+        lib: [ 'ES2017', 'DOM' ],
         moduleResolution: 'node',
+        removeComments: true,
         downlevelIteration: true,
         sourceMap: true,
         types: ['node', 'text-encoding'],
         allowJs: true
       },
       bundlerOptions: {
-        addNodeGlobals: false,
-        exclude: ['wrtc', 'text-encoding', 'uws', 'node-webcrypto-ossl']
+        exclude: ['wrtc', 'text-encoding', 'uws', 'node-webcrypto-ossl', 'url'],
+        noParse: ['wrtc', 'url']
       }
     },
 

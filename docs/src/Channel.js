@@ -54,7 +54,7 @@ export class Channel {
             });
             this.connection.close();
             if (isFirefox && this.rtcPeerConnection && this.rtcPeerConnection.signalingState !== 'closed') {
-                this.onClose(new Event('close'));
+                this.onClose(new global.Event('close'));
             }
         }
     }

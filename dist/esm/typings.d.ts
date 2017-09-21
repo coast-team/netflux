@@ -1,19 +1,19 @@
 /// <reference types="text-encoding" />
 
 /**
- * Polyfills globals for NodeJS
+ * Extends "global" variable
  */
-declare module NodeJS  {
-    interface Global {
-      RTCPeerConnection: RTCPeerConnection,
-      RTCDataChannel: RTCDataChannel,
-      RTCIceCandidate: RTCIceCandidate,
-      TextEncoder: TextEncoding.TextEncoder
-      TextDecoder: TextEncoding.TextDecoder,
-      WebSocket: WebSocket,
-      crypto: Crypto,
-      Event: { name: string }
-    }
+declare module NodeJS {
+  interface Global {
+    RTCPeerConnection: typeof RTCPeerConnection
+    RTCDataChannel: RTCDataChannel
+    RTCIceCandidate: typeof RTCIceCandidate
+    TextEncoder: typeof TextEncoding.TextEncoder
+    TextDecoder: typeof TextEncoding.TextDecoder
+    WebSocket: typeof WebSocket
+    crypto: Crypto
+    Event: typeof Event
+  }
 }
 
 /**

@@ -1,7 +1,7 @@
 import { Subject } from 'rxjs/Subject'
 import { Observable } from 'rxjs/Observable'
 
-import { signaling } from './proto/index'
+import { signaling } from './proto'
 import { WebChannel } from './service/WebChannel'
 import { Channel } from './Channel'
 
@@ -53,7 +53,7 @@ export class Signaling {
 
   constructor (wc: WebChannel, url: string) {
     // public
-    this.url = url.endsWith('/') ? url : url + '/'
+    this.url = url
     this.state = SignalingState.CLOSED
 
     // private
@@ -92,7 +92,7 @@ export class Signaling {
       this.close()
     }
     this.setState(SignalingState.CONNECTING)
-    this.wc.webSocketBuilder.connect(this.url + key)
+    this.wc.webSocketBuilder.connect(this.getFullURL(key))
       .then(ws => {
         this.setState(SignalingState.OPEN)
         this.rxWs = this.createRxWs(ws)
@@ -210,6 +210,14 @@ export class Signaling {
         clearInterval(this.pingInterval)
         subject.complete()
       }
+    }
+  }
+
+  private getFullURL (params) {
+    if (this.url.endsWith('/')) {
+      return this.url + params
+    } else {
+      return this.url + '/' + params
     }
   }
 }

@@ -139,31 +139,31 @@ window.esdocSearchIndex = [
   ],
   [
     "src/webchannelfacade.js~webgroup#onmemberjoin",
-    "class/src/WebChannelFacade.js~WebGroup.html#instance-set-onMemberJoin",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-member-onMemberJoin",
     "src/WebChannelFacade.js~WebGroup#onMemberJoin",
     "member"
   ],
   [
     "src/webchannelfacade.js~webgroup#onmemberleave",
-    "class/src/WebChannelFacade.js~WebGroup.html#instance-set-onMemberLeave",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-member-onMemberLeave",
     "src/WebChannelFacade.js~WebGroup#onMemberLeave",
     "member"
   ],
   [
     "src/webchannelfacade.js~webgroup#onmessage",
-    "class/src/WebChannelFacade.js~WebGroup.html#instance-set-onMessage",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-member-onMessage",
     "src/WebChannelFacade.js~WebGroup#onMessage",
     "member"
   ],
   [
     "src/webchannelfacade.js~webgroup#onsignalingstatechange",
-    "class/src/WebChannelFacade.js~WebGroup.html#instance-set-onSignalingStateChange",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-member-onSignalingStateChange",
     "src/WebChannelFacade.js~WebGroup#onSignalingStateChange",
     "member"
   ],
   [
     "src/webchannelfacade.js~webgroup#onstatechange",
-    "class/src/WebChannelFacade.js~WebGroup.html#instance-set-onStateChange",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-member-onStateChange",
     "src/WebChannelFacade.js~WebGroup#onStateChange",
     "member"
   ],

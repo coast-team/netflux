@@ -7,8 +7,8 @@ const MAX_USER_MSG_SIZE = 15000;
  * Maximum message id number.
  */
 const MAX_MSG_ID_SIZE = 65535;
-const textEncoder = new TextEncoder();
-const textDecoder = new TextDecoder();
+const textEncoder = new global.TextEncoder();
+const textDecoder = new global.TextDecoder();
 /**
  * Message builder service is responsible to build messages to send them over the
  * `WebChannel` and treat messages received by the `WebChannel`. It also manage

@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "target": "es5",
-    "module": "es6",
-    "lib": [ "es2017", "dom" ],
+    "target": "ES5",
+    "module": "ES2015",
+    "lib": [ "ES2017", "DOM" ],
     "moduleResolution": "node",
     "downlevelIteration": true,
     "types": ["node", "text-encoding"]

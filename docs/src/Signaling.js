@@ -24,7 +24,7 @@ export var SignalingState;
 export class Signaling {
     constructor(wc, url) {
         // public
-        this.url = url.endsWith('/') ? url : url + '/';
+        this.url = url;
         this.state = SignalingState.CLOSED;
         // private
         this.wc = wc;
@@ -58,7 +58,7 @@ export class Signaling {
             this.close();
         }
         this.setState(SignalingState.CONNECTING);
-        this.wc.webSocketBuilder.connect(this.url + key)
+        this.wc.webSocketBuilder.connect(this.getFullURL(key))
             .then(ws => {
             this.setState(SignalingState.OPEN);
             this.rxWs = this.createRxWs(ws);
@@ -175,5 +175,13 @@ export class Signaling {
                 subject.complete();
             }
         };
+    }
+    getFullURL(params) {
+        if (this.url.endsWith('/')) {
+            return this.url + params;
+        }
+        else {
+            return this.url + '/' + params;
+        }
     }
 }

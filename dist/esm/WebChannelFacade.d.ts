@@ -89,6 +89,11 @@ export declare class WebGroup {
     signalingState: SignalingState;
     signalingURL: string;
     autoRejoin: boolean;
+    onMessage: (id: number, data: DataType, isBroadcast: boolean) => void;
+    onMemberJoin: (id: number) => void;
+    onMemberLeave: (id: number) => void;
+    onStateChange: (state: WebGroupState) => void;
+    onSignalingStateChange: (state: SignalingState) => void;
     /**
      * @param {WebGroupOptions} [options]
      * @param {Topology} [options.topology=Topology.FULL_MESH]
@@ -98,38 +103,10 @@ export declare class WebGroup {
      */
     constructor(options?: WebGroupOptions);
     /**
-     * This handler is called when a message has been received from the group.
-     * `id` is an identifier of the member who sent this message.
-     * `isBroadcast` aquals to true if the data is sent via {@link WebGroup#send}
-     * and false if sent via {@link WebGroup#sendTo}.
-     * @type {function(id: number, data: DataType, isBroadcast: boolean)}
-     */
-    onMessage: (id: number, data: DataType, isBroadcast: boolean) => void;
-    /**
-     * This handler is called when a new member with `id` as identifier has joined the group.
-     * @type {function(id: number)}
-     */
-    onMemberJoin: (id: number) => void;
-    /**
-     * This handler is called when a member with `id` as identifier hes left the group.
-     * @type {function(id: number)}
-     */
-    onMemberLeave: (id: number) => void;
-    /**
-     * This handler is called when the group state has changed.
-     * @type {function(state: WebGroupState)}
-     */
-    onStateChange: (state: WebChannelState) => void;
-    /**
-     * This handler is called when the signaling state has changed.
-     * @type {function(state: SignalingState)}
-     */
-    onSignalingStateChange: (state: SignalingState) => void;
-    /**
      * Join the group identified by a key provided by one of the group member.
      * If the current {@link WebGroup#state} value is not {@link WebGroupState#LEFT} or
      * {@link WebGroup#signalingState} value is not {@link SignalingState.CLOSED},
-     * then first calls {@link WebGroup#leave} and then joins normally.
+     * then do nothing.
      * @param {string} [key] Will be generated if not provided
      */
     join(key?: string): void;

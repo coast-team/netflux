@@ -32,7 +32,7 @@ export class WebSocketBuilder {
         return new Promise((resolve, reject) => {
             try {
                 if (isURL(url) && url.search(/^wss?/) !== -1) {
-                    const ws = new WebSocket(url);
+                    const ws = new global.WebSocket(url);
                     ws.onopen = () => resolve(ws);
                     ws.onclose = closeEvt => reject(new Error(`WebSocket connection to '${url}' failed with code ${closeEvt.code}: ${closeEvt.reason}`));
                     // #if NODE
@@ -64,7 +64,7 @@ export class WebSocketBuilder {
         const fullUrl = `${url}/internalChannel?wcId=${this.wc.id}&senderId=${this.wc.myId}`;
         return new Promise((resolve, reject) => {
             if (isURL(url) && url.search(/^wss?/) !== -1) {
-                const ws = new WebSocket(fullUrl);
+                const ws = new global.WebSocket(fullUrl);
                 const channel = new Channel(this.wc, ws, { id });
                 ws.onopen = () => resolve(channel);
                 ws.onclose = closeEvt => reject(new Error(`WebSocket connection to '${url}' failed with code ${closeEvt.code}: ${closeEvt.reason}`));

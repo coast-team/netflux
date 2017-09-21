@@ -18,7 +18,7 @@ export class WebRTCBuilder extends Service {
      * Indicates whether WebRTC is supported by the environment.
      */
     static get isSupported() {
-        return RTCPeerConnection !== undefined;
+        return global.RTCPeerConnection !== undefined;
     }
     constructor(wc, iceServers) {
         super(ID, webRTCBuilder.Message, wc.serviceMessageSubject);
@@ -100,7 +100,7 @@ export class WebRTCBuilder extends Service {
         throw new Error('WebRTC is not supported');
     }
     establishChannel(onMessage, send, peerId = 1) {
-        const pc = new RTCPeerConnection(this.rtcConfiguration);
+        const pc = new global.RTCPeerConnection(this.rtcConfiguration);
         const remoteCandidateStream = new ReplaySubject();
         this.localCandidates(pc).subscribe(iceCandidate => send({ iceCandidate }), err => console.warn(err), () => send({ iceCandidate: { candidate: '' } }));
         return new Promise((resolve, reject) => {
@@ -109,7 +109,7 @@ export class WebRTCBuilder extends Service {
                     pc.setRemoteDescription({ type: 'answer', sdp: answer })
                         .then(() => {
                         remoteCandidateStream.subscribe(iceCandidate => {
-                            pc.addIceCandidate(new RTCIceCandidate(iceCandidate))
+                            pc.addIceCandidate(new global.RTCIceCandidate(iceCandidate))
                                 .catch(reject);
                         }, err => console.warn(err), () => subs.unsubscribe());
                     })
@@ -149,7 +149,7 @@ export class WebRTCBuilder extends Service {
                     [pc, remoteCandidateStream] = client;
                 }
                 else {
-                    pc = new RTCPeerConnection(this.rtcConfiguration);
+                    pc = new global.RTCPeerConnection(this.rtcConfiguration);
                     remoteCandidateStream = new ReplaySubject();
                     this.localCandidates(pc).subscribe(iceCandidate => send({ iceCandidate }, id), err => console.warn(err), () => send({ iceCandidate: { candidate: '' } }, id));
                     this.clients.set(id, [pc, remoteCandidateStream]);
@@ -163,7 +163,7 @@ export class WebRTCBuilder extends Service {
                     });
                     pc.setRemoteDescription({ type: 'offer', sdp: offer })
                         .then(() => remoteCandidateStream.subscribe(iceCandidate => {
-                        pc.addIceCandidate(new RTCIceCandidate(iceCandidate))
+                        pc.addIceCandidate(new global.RTCIceCandidate(iceCandidate))
                             .catch(err => console.warn(err));
                     }, err => console.warn(err), () => this.clients.delete(id)))
                         .then(() => pc.createAnswer())

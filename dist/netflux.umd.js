@@ -8,6 +8,26 @@
 // #if WEBRTC_ADAPTER
 // import 'webrtc-adapter/out/adapter_no_edge_no_global'
 // #endif
+/**
+ * ECMAScript Proposal, specs, and reference implementation for `global`
+ * http://tc39.github.io/proposal-global/
+ * Code copied from: https://github.com/tc39/proposal-global
+ */
+(function (global) {
+    if (!global.global) {
+        if (Object.defineProperty) {
+            Object.defineProperty(global, 'global', {
+                configurable: true,
+                enumerable: false,
+                value: global,
+                writable: true
+            });
+        }
+        else {
+            global.global = global;
+        }
+    }
+})(typeof undefined === 'object' ? undefined : Function('return this')()); // tslint:disable-line
 
 var commonjsGlobal = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
@@ -5727,7 +5747,7 @@ var SignalingState$1;
 var Signaling = (function () {
     function Signaling(wc, url) {
         // public
-        this.url = url.endsWith('/') ? url : url + '/';
+        this.url = url;
         this.state = SignalingState$1.CLOSED;
         // private
         this.wc = wc;
@@ -5770,7 +5790,7 @@ var Signaling = (function () {
             this.close();
         }
         this.setState(SignalingState$1.CONNECTING);
-        this.wc.webSocketBuilder.connect(this.url + key)
+        this.wc.webSocketBuilder.connect(this.getFullURL(key))
             .then(function (ws) {
             _this.setState(SignalingState$1.OPEN);
             _this.rxWs = _this.createRxWs(ws);
@@ -5817,6 +5837,7 @@ var Signaling = (function () {
     };
     Signaling.prototype.setState = function (state) {
         var _this = this;
+        console.log('State SIGNALING: ', SignalingState$1[state]);
         if (this.state !== state) {
             this.state = state;
             this.stateSubject.next(state);
@@ -5898,6 +5919,14 @@ var Signaling = (function () {
                 subject.complete();
             }
         };
+    };
+    Signaling.prototype.getFullURL = function (params) {
+        if (this.url.endsWith('/')) {
+            return this.url + params;
+        }
+        else {
+            return this.url + '/' + params;
+        }
     };
     return Signaling;
 }());
@@ -6008,8 +6037,9 @@ function isURL(str) {
  */
 function generateKey() {
     var mask = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    var length = 20; // Should be less then MAX_KEY_LENGTH value
+    var length = 42; // Should be less then MAX_KEY_LENGTH value
     var values = new Uint32Array(length);
+    global.crypto.getRandomValues(values);
     var result = '';
     for (var i = 0; i < length; i++) {
         result += mask[values[i] % mask.length];
@@ -6078,7 +6108,7 @@ var Channel = (function () {
             });
             this.connection.close();
             if (isFirefox && this.rtcPeerConnection && this.rtcPeerConnection.signalingState !== 'closed') {
-                this.onClose(new Event('close'));
+                this.onClose(new global.Event('close'));
             }
         }
     };
@@ -6684,7 +6714,7 @@ var WebSocketBuilder = (function () {
         return new Promise(function (resolve, reject) {
             try {
                 if (isURL(url) && url.search(/^wss?/) !== -1) {
-                    var ws_1 = new WebSocket(url);
+                    var ws_1 = new global.WebSocket(url);
                     ws_1.onopen = function () { return resolve(ws_1); };
                     ws_1.onclose = function (closeEvt) { return reject(new Error("WebSocket connection to '" + url + "' failed with code " + closeEvt.code + ": " + closeEvt.reason)); };
                     
@@ -6710,7 +6740,7 @@ var WebSocketBuilder = (function () {
         var fullUrl = url + "/internalChannel?wcId=" + this.wc.id + "&senderId=" + this.wc.myId;
         return new Promise(function (resolve, reject) {
             if (isURL(url) && url.search(/^wss?/) !== -1) {
-                var ws_2 = new WebSocket(fullUrl);
+                var ws_2 = new global.WebSocket(fullUrl);
                 var channel_1 = new Channel(_this.wc, ws_2, { id: id });
                 ws_2.onopen = function () { return resolve(channel_1); };
                 ws_2.onclose = function (closeEvt) { return reject(new Error("WebSocket connection to '" + url + "' failed with code " + closeEvt.code + ": " + closeEvt.reason)); };
@@ -7554,7 +7584,7 @@ var WebRTCBuilder = (function (_super) {
          * Indicates whether WebRTC is supported by the environment.
          */
         get: function () {
-            return RTCPeerConnection !== undefined;
+            return global.RTCPeerConnection !== undefined;
         },
         enumerable: true,
         configurable: true
@@ -7655,7 +7685,7 @@ var WebRTCBuilder = (function (_super) {
     WebRTCBuilder.prototype.establishChannel = function (onMessage, send, peerId) {
         var _this = this;
         if (peerId === void 0) { peerId = 1; }
-        var pc = new RTCPeerConnection(this.rtcConfiguration);
+        var pc = new global.RTCPeerConnection(this.rtcConfiguration);
         var remoteCandidateStream = new ReplaySubject_2();
         this.localCandidates(pc).subscribe(function (iceCandidate) { return send({ iceCandidate: iceCandidate }); }, function (err) { return console.warn(err); }, function () { return send({ iceCandidate: { candidate: '' } }); });
         return new Promise(function (resolve, reject) {
@@ -7665,7 +7695,7 @@ var WebRTCBuilder = (function (_super) {
                     pc.setRemoteDescription({ type: 'answer', sdp: answer })
                         .then(function () {
                         remoteCandidateStream.subscribe(function (iceCandidate) {
-                            pc.addIceCandidate(new RTCIceCandidate(iceCandidate))
+                            pc.addIceCandidate(new global.RTCIceCandidate(iceCandidate))
                                 .catch(reject);
                         }, function (err) { return console.warn(err); }, function () { return subs.unsubscribe(); });
                     })
@@ -7707,7 +7737,7 @@ var WebRTCBuilder = (function (_super) {
                     _b = __read(client, 2), pc = _b[0], remoteCandidateStream = _b[1];
                 }
                 else {
-                    pc = new RTCPeerConnection(_this.rtcConfiguration);
+                    pc = new global.RTCPeerConnection(_this.rtcConfiguration);
                     remoteCandidateStream = new ReplaySubject_2();
                     _this.localCandidates(pc).subscribe(function (iceCandidate) { return send({ iceCandidate: iceCandidate }, id); }, function (err) { return console.warn(err); }, function () { return send({ iceCandidate: { candidate: '' } }, id); });
                     _this.clients.set(id, [pc, remoteCandidateStream]);
@@ -7721,7 +7751,7 @@ var WebRTCBuilder = (function (_super) {
                     });
                     pc.setRemoteDescription({ type: 'offer', sdp: offer })
                         .then(function () { return remoteCandidateStream.subscribe(function (iceCandidate) {
-                        pc.addIceCandidate(new RTCIceCandidate(iceCandidate))
+                        pc.addIceCandidate(new global.RTCIceCandidate(iceCandidate))
                             .catch(function (err) { return console.warn(err); });
                     }, function (err) { return console.warn(err); }, function () { return _this.clients.delete(id); }); })
                         .then(function () { return pc.createAnswer(); })
@@ -8001,8 +8031,8 @@ var MAX_USER_MSG_SIZE = 15000;
  * Maximum message id number.
  */
 var MAX_MSG_ID_SIZE = 65535;
-var textEncoder = new TextEncoder();
-var textDecoder = new TextDecoder();
+var textEncoder = new global.TextEncoder();
+var textDecoder = new global.TextDecoder();
 /**
  * Message builder service is responsible to build messages to send them over the
  * `WebChannel` and treat messages received by the `WebChannel`. It also manage
@@ -8148,6 +8178,12 @@ var Buffer$1 = (function () {
     return Buffer;
 }());
 
+var REJOIN_TIMEOUT = 3000;
+/**
+ * Timout for ping `WebChannel` in milliseconds.
+ * @type {number}
+ */
+var PING_TIMEOUT = 5000;
 var defaultOptions = {
     topology: TopologyEnum.FULL_MESH,
     signalingURL: 'wss://www.coedit.re:10473',
@@ -8156,28 +8192,12 @@ var defaultOptions = {
     ],
     autoRejoin: true
 };
-/**
- * OLLEEEEEEEEEEEEEEEEE
- * @type {Object} WebChannelState
- * @property {number} [JOINING=0] You are joining the web group.
- * @property {number} [JOINED=1] You have successfully joined the web group
- * and ready to broadcast messages via `send` method.
- * @property {number} [LEFT=2] You have left the web group. If the connection
- * to the web group has lost and `autoRejoin=true`, then the state would be `LEFT`,
- * (usually during a relatively short period) before the rejoining process start.
- */
 var WebChannelState;
 (function (WebChannelState) {
     WebChannelState[WebChannelState["JOINING"] = 0] = "JOINING";
     WebChannelState[WebChannelState["JOINED"] = 1] = "JOINED";
     WebChannelState[WebChannelState["LEFT"] = 2] = "LEFT";
 })(WebChannelState || (WebChannelState = {}));
-var REJOIN_TIMEOUT = 3000;
-/**
- * Timout for ping `WebChannel` in milliseconds.
- * @type {number}
- */
-var PING_TIMEOUT = 5000;
 /**
  * This class is an API starting point. It represents a group of collaborators
  * also called peers. Each peer can send/receive broadcast as well as personal
@@ -8202,11 +8222,11 @@ var WebChannel = (function (_super) {
         _this.key = '';
         _this.autoRejoin = autoRejoin;
         // PUBLIC EVENT HANDLERS
-        _this.onMemberJoin = function () { };
-        _this.onMemberLeave = function () { };
-        _this.onMessage = function () { };
-        _this.onStateChange = function () { };
-        _this.onSignalingStateChange = function () { };
+        _this.onMemberJoin = function none() { };
+        _this.onMemberLeave = function none() { };
+        _this.onMessage = function none() { };
+        _this.onStateChange = function none() { };
+        _this.onSignalingStateChange = function none() { };
         // PRIVATE
         _this.state = WebChannelState.LEFT;
         _this.userMsg = new UserMessage();
@@ -8223,7 +8243,9 @@ var WebChannel = (function (_super) {
                     _this.setState(WebChannelState.JOINED);
                     break;
                 case SignalingState$1.CLOSED:
+                    console.log('Singaling CLOSED in WebChannel');
                     if (_this.members.length === 0) {
+                        _this.key = '';
                         _this.setState(WebChannelState.LEFT);
                     }
                     if (!_this.isRejoinDisabled) {
@@ -8264,22 +8286,24 @@ var WebChannel = (function (_super) {
      */
     WebChannel.prototype.join = function (key) {
         if (key === void 0) { key = generateKey(); }
-        if (typeof key !== 'string') {
-            throw new Error("Failed to join: the key type " + typeof key + " is not a 'string'");
+        if (this.state === WebChannelState.LEFT && this.signaling.state === SignalingState$1.CLOSED) {
+            if (typeof key !== 'string') {
+                throw new Error("Failed to join: the key type \"" + typeof key + "\" is not a \"string\"");
+            }
+            else if (key === '') {
+                throw new Error('Failed to join: the key is an empty string');
+            }
+            else if (key.length > MAX_KEY_LENGTH) {
+                throw new Error("Failed to join : the key length of " + key.length + " exceeds the maximum of " + MAX_KEY_LENGTH + " charecters");
+            }
+            this.key = key;
+            this.isRejoinDisabled = !this.autoRejoin;
+            this.setState(WebChannelState.JOINING);
+            this.signaling.join(this.key);
         }
-        else if (key === '') {
-            throw new Error("Failed to join: the key is an empty string'");
+        else {
+            console.warn('Trying to join a group while already joined or joining. Maybe forgot to call leave().');
         }
-        else if (key.length > MAX_KEY_LENGTH) {
-            throw new Error("Failed to join : the key length of " + key.length + " exceeds the maximum of " + MAX_KEY_LENGTH + " charecters");
-        }
-        if (this.state !== WebChannelState.LEFT || this.signaling.state !== SignalingState$1.CLOSED) {
-            this.leave();
-        }
-        this.setState(WebChannelState.JOINING);
-        this.key = key;
-        this.isRejoinDisabled = !this.autoRejoin;
-        this.signaling.join(this.key);
     };
     /**
      * Invite a server peer to join the network.
@@ -8307,11 +8331,9 @@ var WebChannel = (function (_super) {
      * with Signaling server.
      */
     WebChannel.prototype.leave = function () {
+        this.key = '';
         this.isRejoinDisabled = true;
-        this.pingTime = 0;
-        this.maxTime = 0;
-        this.pingFinish = function () { };
-        this.pongNb = 0;
+        this.initPing();
         this.topologyService.leave();
         this.signaling.close();
     };
@@ -8400,9 +8422,7 @@ var WebChannel = (function (_super) {
     WebChannel.prototype.onMemberLeaveProxy = function (id) {
         this.members.splice(this.members.indexOf(id), 1);
         this.onMemberLeave(id);
-        if (this.members.length === 0
-            && (this.signaling.state === SignalingState$1.CONNECTING
-                || this.signaling.state === SignalingState$1.CLOSED)) {
+        if (this.members.length === 0 && this.signaling.state !== SignalingState$1.READY_TO_JOIN_OTHERS) {
             this.setState(WebChannelState.LEFT);
         }
     };
@@ -8541,7 +8561,16 @@ var WebChannel = (function (_super) {
         if (this.state !== state) {
             this.state = state;
             this.onStateChange(state);
+            if (state === WebChannelState.LEFT) {
+                this.initPing();
+            }
         }
+    };
+    WebChannel.prototype.initPing = function () {
+        this.pingTime = 0;
+        this.maxTime = 0;
+        this.pingFinish = function () { };
+        this.pongNb = 0;
     };
     /**
      * Delegate adding a new peer in the network to topology.
@@ -8579,7 +8608,7 @@ var WebChannel = (function (_super) {
      */
     WebChannel.prototype.generateId = function (excludeIds) {
         if (excludeIds === void 0) { excludeIds = []; }
-        var id = crypto.getRandomValues(new Uint32Array(1))[0];
+        var id = global.crypto.getRandomValues(new Uint32Array(1))[0];
         if (id === this.myId || this.members.includes(id)
             || (excludeIds.length !== 0 && excludeIds.includes(id))) {
             return this.generateId();
@@ -8778,11 +8807,9 @@ var WebGroup = (function () {
         Reflect.defineProperty(this, 'autoRejoin', {
             configurable: false,
             enumerable: true,
-            get: function () { return wc.signaling.url; },
-            set: function (value) { return wc.autoRejoin = true; }
+            get: function () { return wc.autoRejoin; },
+            set: function (value) { return wc.autoRejoin = value; }
         });
-    }
-    Object.defineProperty(WebGroup.prototype, "onMessage", {
         /**
          * This handler is called when a message has been received from the group.
          * `id` is an identifier of the member who sent this message.
@@ -8790,51 +8817,98 @@ var WebGroup = (function () {
          * and false if sent via {@link WebGroup#sendTo}.
          * @type {function(id: number, data: DataType, isBroadcast: boolean)}
          */
-        set: function (handler) { wcs.get(this).onMessage = handler; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(WebGroup.prototype, "onMemberJoin", {
+        this.onMessage = undefined;
+        Reflect.defineProperty(this, 'onMessage', {
+            configurable: true,
+            enumerable: true,
+            get: function () { return (wc.onMessage.name === 'none') ? undefined : wc.onMessage; },
+            set: function (handler) {
+                if (typeof handler !== 'function') {
+                    wc.onMessage = function none() { };
+                }
+                else {
+                    wc.onMessage = handler;
+                }
+            }
+        });
         /**
          * This handler is called when a new member with `id` as identifier has joined the group.
          * @type {function(id: number)}
          */
-        set: function (handler) { wcs.get(this).onMemberJoin = handler; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(WebGroup.prototype, "onMemberLeave", {
+        this.onMemberJoin = undefined;
+        Reflect.defineProperty(this, 'onMemberJoin', {
+            configurable: true,
+            enumerable: true,
+            get: function () { return (wc.onMemberJoin.name === 'none') ? undefined : wc.onMemberJoin; },
+            set: function (handler) {
+                if (typeof handler !== 'function') {
+                    wc.onMemberJoin = function none() { };
+                }
+                else {
+                    wc.onMemberJoin = handler;
+                }
+            }
+        });
         /**
          * This handler is called when a member with `id` as identifier hes left the group.
          * @type {function(id: number)}
          */
-        set: function (handler) { wcs.get(this).onMemberLeave = handler; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(WebGroup.prototype, "onStateChange", {
+        this.onMemberLeave = undefined;
+        Reflect.defineProperty(this, 'onMemberLeave', {
+            configurable: true,
+            enumerable: true,
+            get: function () { return (wc.onMemberLeave.name === 'none') ? undefined : wc.onMemberLeave; },
+            set: function (handler) {
+                if (typeof handler !== 'function') {
+                    wc.onMemberLeave = function none() { };
+                }
+                else {
+                    wc.onMemberLeave = handler;
+                }
+            }
+        });
         /**
          * This handler is called when the group state has changed.
          * @type {function(state: WebGroupState)}
          */
-        set: function (handler) { wcs.get(this).onStateChange = handler; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(WebGroup.prototype, "onSignalingStateChange", {
+        this.onStateChange = undefined;
+        Reflect.defineProperty(this, 'onStateChange', {
+            configurable: true,
+            enumerable: true,
+            get: function () { return (wc.onStateChange.name === 'none') ? undefined : wc.onStateChange; },
+            set: function (handler) {
+                if (typeof handler !== 'function') {
+                    wc.onStateChange = function none() { };
+                }
+                else {
+                    wc.onStateChange = handler;
+                }
+            }
+        });
         /**
          * This handler is called when the signaling state has changed.
          * @type {function(state: SignalingState)}
          */
-        set: function (handler) { wcs.get(this).onSignalingStateChange = handler; },
-        enumerable: true,
-        configurable: true
-    });
+        this.onSignalingStateChange = undefined;
+        Reflect.defineProperty(this, 'onSignalingStateChange', {
+            configurable: true,
+            enumerable: true,
+            get: function () { return (wc.onSignalingStateChange.name === 'none') ? undefined : wc.onSignalingStateChange; },
+            set: function (handler) {
+                if (typeof handler !== 'function') {
+                    wc.onSignalingStateChange = function none() { };
+                }
+                else {
+                    wc.onSignalingStateChange = handler;
+                }
+            }
+        });
+    }
     /**
      * Join the group identified by a key provided by one of the group member.
      * If the current {@link WebGroup#state} value is not {@link WebGroupState#LEFT} or
      * {@link WebGroup#signalingState} value is not {@link SignalingState.CLOSED},
-     * then first calls {@link WebGroup#leave} and then joins normally.
+     * then do nothing.
      * @param {string} [key] Will be generated if not provided
      */
     WebGroup.prototype.join = function (key) { return wcs.get(this).join(key); };

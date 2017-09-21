@@ -4,7 +4,7 @@ import { Observable } from 'rxjs/Observable'
 import 'rxjs/add/operator/map'
 
 import { Service } from './Service'
-import { webRTCBuilder, signaling } from '../proto/index'
+import { webRTCBuilder, signaling } from '../proto'
 import { Channel } from '../Channel'
 import { WebChannel } from './WebChannel'
 
@@ -28,7 +28,7 @@ export class WebRTCBuilder extends Service {
    * Indicates whether WebRTC is supported by the environment.
    */
   static get isSupported (): boolean {
-    return RTCPeerConnection !== undefined
+    return global.RTCPeerConnection !== undefined
   }
 
   private wc: WebChannel
@@ -142,7 +142,7 @@ export class WebRTCBuilder extends Service {
     }) => void,
     peerId = 1
   ): Promise<Channel> {
-    const pc = new RTCPeerConnection(this.rtcConfiguration)
+    const pc = new global.RTCPeerConnection(this.rtcConfiguration)
     const remoteCandidateStream = new ReplaySubject()
     this.localCandidates(pc).subscribe(
       iceCandidate => send({ iceCandidate }),
@@ -158,7 +158,7 @@ export class WebRTCBuilder extends Service {
               .then(() => {
                 remoteCandidateStream.subscribe(
                   iceCandidate => {
-                    pc.addIceCandidate(new RTCIceCandidate(iceCandidate))
+                    pc.addIceCandidate(new global.RTCIceCandidate(iceCandidate))
                       .catch(reject)
                   },
                   err => console.warn(err),
@@ -214,7 +214,7 @@ export class WebRTCBuilder extends Service {
           if (client) {
             [pc, remoteCandidateStream] = client
           } else {
-            pc = new RTCPeerConnection(this.rtcConfiguration)
+            pc = new global.RTCPeerConnection(this.rtcConfiguration)
             remoteCandidateStream = new ReplaySubject()
             this.localCandidates(pc).subscribe(
               iceCandidate => send({ iceCandidate }, id),
@@ -233,7 +233,7 @@ export class WebRTCBuilder extends Service {
             pc.setRemoteDescription({ type: 'offer', sdp: offer })
               .then(() => remoteCandidateStream.subscribe(
                 iceCandidate => {
-                  pc.addIceCandidate(new RTCIceCandidate(iceCandidate))
+                  pc.addIceCandidate(new global.RTCIceCandidate(iceCandidate))
                     .catch(err => console.warn(err))
                 },
                 err => console.warn(err),
