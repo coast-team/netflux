@@ -82,7 +82,7 @@ export class WebGroupBotServer {
   }
 
   /**
-   * This handler is called when the bot has been invited into a web group by one its members.
+   * This handler is called when the bot has been invited into a group by one of its members.
    * @type  {function(wg: WebGroup)} handler
    */
   set onWebGroup (handler: (wg: WebGroup) => void) { botServer.onWebGroup = handler }

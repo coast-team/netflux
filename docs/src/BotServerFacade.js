@@ -35,7 +35,7 @@ let botServer;
 export class WebGroupBotServer {
     /**
      * @param {WebGroupBotServerOptions} options
-     * @param {TopologyEnum} [options.topology=TopologyEnum.FULL_MESH]
+     * @param {Topology} [options.topology=Topology.FULL_MESH]
      * @param {string} [options.signalingURL='wss://www.coedit.re:20473']
      * @param {RTCIceServer[]} [options.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]
      * @param {boolean} [options.autoRejoin=false]
@@ -66,7 +66,7 @@ export class WebGroupBotServer {
         Reflect.defineProperty(this, 'url', { configurable: false, enumerable: true, get: () => botServer.url });
     }
     /**
-     * This handler is called when the bot has been invited into a web group by one its members.
+     * This handler is called when the bot has been invited into a group by one of its members.
      * @type  {function(wg: WebGroup)} handler
      */
     set onWebGroup(handler) { botServer.onWebGroup = handler; }

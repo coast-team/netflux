@@ -72,6 +72,12 @@ window.esdocSearchIndex = [
     "file"
   ],
   [
+    "src/webchannelfacade.js~datatype",
+    "typedef/index.html#static-typedef-DataType",
+    "src/WebChannelFacade.js~DataType",
+    "typedef"
+  ],
+  [
     "src/webchannelfacade.js~webgroup#autorejoin",
     "class/src/WebChannelFacade.js~WebGroup.html#instance-member-autoRejoin",
     "src/WebChannelFacade.js~WebGroup#autoRejoin",
@@ -246,6 +252,24 @@ window.esdocSearchIndex = [
     "file"
   ],
   [
+    "src/index.js~nodejshttpserver",
+    "https://nodejs.org/api/http.html#http_class_http_server",
+    "src/index.js~NodeJSHttpServer",
+    "external"
+  ],
+  [
+    "src/index.js~nodejshttpsserver",
+    "https://nodejs.org/api/https.html#https_class_https_server",
+    "src/index.js~NodeJSHttpsServer",
+    "external"
+  ],
+  [
+    "src/index.js~rtciceserver",
+    "https://developer.mozilla.org/en/docs/Web/API/RTCIceServer",
+    "src/index.js~RTCIceServer",
+    "external"
+  ],
+  [
     "src/index.js~signalingstate.closed",
     "class/src/index.js~SignalingState.html#static-get-CLOSED",
     "src/index.js~SignalingState.CLOSED",
@@ -318,75 +342,21 @@ window.esdocSearchIndex = [
     "member"
   ],
   [
-    "src/types/esdoc.helper.js",
-    "file/src/types/esdoc.helper.js.html",
-    "src/types/esdoc.helper.js",
-    "file"
-  ],
-  [
-    "src/types/esdoc.helper.js~datatype",
-    "typedef/index.html#static-typedef-DataType",
-    "src/types/esdoc.helper.js~DataType",
-    "typedef"
-  ],
-  [
-    "src/types/esdoc.helper.js~memberevent",
-    "typedef/index.html#static-typedef-MemberEvent",
-    "src/types/esdoc.helper.js~MemberEvent",
-    "typedef"
-  ],
-  [
-    "src/types/esdoc.helper.js~messageevent",
-    "typedef/index.html#static-typedef-MessageEvent",
-    "src/types/esdoc.helper.js~MessageEvent",
-    "typedef"
-  ],
-  [
-    "src/types/esdoc.helper.js~nodejshttpserver",
-    "https://nodejs.org/api/http.html#http_class_http_server",
-    "src/types/esdoc.helper.js~NodeJSHttpServer",
-    "external"
-  ],
-  [
-    "src/types/esdoc.helper.js~nodejshttpsserver",
-    "https://nodejs.org/api/https.html#https_class_https_server",
-    "src/types/esdoc.helper.js~NodeJSHttpsServer",
-    "external"
-  ],
-  [
-    "src/types/esdoc.helper.js~rtciceserver",
-    "https://developer.mozilla.org/en/docs/Web/API/RTCIceServer",
-    "src/types/esdoc.helper.js~RTCIceServer",
-    "external"
-  ],
-  [
-    "src/types/esdoc.helper.js~signalingstateevent",
-    "typedef/index.html#static-typedef-SignalingStateEvent",
-    "src/types/esdoc.helper.js~SignalingStateEvent",
-    "typedef"
-  ],
-  [
-    "src/types/esdoc.helper.js~uint8array",
+    "src/index.js~uint8array",
     "https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array",
-    "src/types/esdoc.helper.js~Uint8Array",
+    "src/index.js~Uint8Array",
     "external"
   ],
   [
-    "src/types/esdoc.helper.js~webgroupbotserveroptions",
+    "src/index.js~webgroupbotserveroptions",
     "typedef/index.html#static-typedef-WebGroupBotServerOptions",
-    "src/types/esdoc.helper.js~WebGroupBotServerOptions",
+    "src/index.js~WebGroupBotServerOptions",
     "typedef"
   ],
   [
-    "src/types/esdoc.helper.js~webgroupoptions",
+    "src/index.js~webgroupoptions",
     "typedef/index.html#static-typedef-WebGroupOptions",
-    "src/types/esdoc.helper.js~WebGroupOptions",
-    "typedef"
-  ],
-  [
-    "src/types/esdoc.helper.js~webgroupstateevent",
-    "typedef/index.html#static-typedef-WebGroupStateEvent",
-    "src/types/esdoc.helper.js~WebGroupStateEvent",
+    "src/index.js~WebGroupOptions",
     "typedef"
   ]
 ]

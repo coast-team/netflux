@@ -3,6 +3,11 @@ import { TopologyEnum } from './service/topology/Topology'
 import { SignalingState } from './Signaling'
 
 /**
+ * Is a helper type representing types that can be sent/received over a web group.
+ * @typedef {string|Uint8Array} DataType
+ */
+
+/**
  * @ignore
  */
 export const wcs: WeakMap<WebGroup, WebChannel> = new WeakMap()
@@ -124,19 +129,19 @@ export class WebGroup {
     wcs.set(this, wc)
 
     /**
-     * {@link WebGroup} identifier. The same value for all members.
+     * The read-only {@link WebGroup} identifier. The same value for all members.
      * @type {number}
      */
     this.id = undefined
     Reflect.defineProperty(this, 'id', { configurable: false, enumerable: true, get: () => wc.id })
     /**
-     * Your unique member identifier in the group.
+     * The read-only your unique member identifier in the group.
      * @type {number}
      */
     this.myId = undefined
     Reflect.defineProperty(this, 'myId', { configurable: false, enumerable: true, get: () => wc.myId })
     /**
-     * Group session identifier. Equals to an empty string before calling {@link WebGroup#join}.
+     * The read-only group session identifier. Equals to an empty string before calling {@link WebGroup#join}.
      * Different to {@link WebGroup#id}. This key is known and used by Signaling server
      * in order to join new members, on the other hand Signaling does not know {@link WebGroup#id}.
      * @type {string}
@@ -144,7 +149,7 @@ export class WebGroup {
     this.key = undefined
     Reflect.defineProperty(this, 'key', { configurable: false, enumerable: true, get: () => wc.key })
     /**
-     * An array of member identifiers (except yours).
+     * The read-only array of member identifiers (except yours).
      * @type {number[]}
      */
     this.members = undefined
@@ -157,19 +162,19 @@ export class WebGroup {
     this.topology = undefined
     Reflect.defineProperty(this, 'topology', { configurable: false, enumerable: true, get: () => wc.topology })
     /**
-     * The state of the {@link WebGroup} connection.
+     * The read-only state of the {@link WebGroup} connection.
      * @type {WebGroupState}
      */
     this.state = undefined
     Reflect.defineProperty(this, 'state', { configurable: false, enumerable: true, get: () => wc.state })
     /**
-     * The state of the signaling server.
+     * The read-only state of the signaling server.
      * @type {SignalingState}
      */
     this.signalingState = undefined
     Reflect.defineProperty(this, 'signalingState', { configurable: false, enumerable: true, get: () => wc.signaling.state })
     /**
-     * The signaling server URL.
+     * The read-only signaling server URL.
      * @type {string}
      */
     this.signalingURL = undefined
@@ -189,18 +194,21 @@ export class WebGroup {
 
   /**
    * This handler is called when a message has been received from the group.
+   * `id` is an identifier of the member who sent this message.
+   * `isBroadcast` aquals to true if the data is sent via {@link WebGroup#send}
+   * and false if sent via {@link WebGroup#sendTo}.
    * @type {function(id: number, data: DataType, isBroadcast: boolean)}
    */
   set onMessage (handler: (id: number, data: DataType, isBroadcast: boolean) => void) { wcs.get(this).onMessage = handler }
 
   /**
-   * This handler is called when a new member has joined the group.
+   * This handler is called when a new member with `id` as identifier has joined the group.
    * @type {function(id: number)}
    */
   set onMemberJoin (handler: (id: number) => void) { wcs.get(this).onMemberJoin = handler }
 
   /**
-   * This handler is called when a member hes left the group.
+   * This handler is called when a member with `id` as identifier hes left the group.
    * @type {function(id: number)}
    */
   set onMemberLeave (handler: (id: number) => void) { wcs.get(this).onMemberLeave = handler }
@@ -221,12 +229,10 @@ export class WebGroup {
    * Join the group identified by a key provided by one of the group member.
    * If the current {@link WebGroup#state} value is not {@link WebGroupState#LEFT} or
    * {@link WebGroup#signalingState} value is not {@link SignalingState.CLOSED},
-   * then first calls {@link WebGroup#leave} and then join normally.
-   * @param {string} key
-   * @emits {StateEvent}
-   * @emits {SignalingStateEvent}
+   * then first calls {@link WebGroup#leave} and then joins normally.
+   * @param {string} [key] Will be generated if not provided
    */
-  join (key: string): void { return wcs.get(this).join(key) }
+  join (key?: string): void { return wcs.get(this).join(key) }
 
   /**
    * Invite a bot server to join this group.
@@ -235,9 +241,10 @@ export class WebGroup {
   invite (url: string): void { return wcs.get(this).invite(url) }
 
   /**
-   * Close the connection with Signaling server.
-   * @emits {StateEvent} This event is only fired if there is no one left in the group.
-   * @emits {SignalingStateEvent} This event is fired if {@link WebGroup#signalingState}
+   * Close the connection with Signaling server. It fires Signaling state event
+   * if {@link WebGroup#signalingState} value does not equal to
+   * {@link SignalingState.CLOSED} already.It may also fire state event only
+   * if there is no one left in the group.
    * value does not equal to {@link SignalingState.CLOSED} already.
    */
   closeSignaling (): void { return wcs.get(this).closeSignaling() }
@@ -245,8 +252,6 @@ export class WebGroup {
   /**
    * Leave the group which means close channels with all members and connection
    * with the Signaling server.
-   * @emits {StateEvent}
-   * @emits {SignalingStateEvent}
    */
   leave () { return wcs.get(this).leave() }
 

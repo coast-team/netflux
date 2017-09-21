@@ -92,3 +92,44 @@ export class Topology {
    */
   static get [Topology.FULL_MESH] (): string { return TopologyEnum[TopologyEnum.FULL_MESH] }
 }
+
+/**
+ * The options to be passed into {@link WebGroup} constructor.
+ * @typedef {Object} WebGroupOptions
+ * @property {Topology} [topology] Topology identifier
+ * (Full mesh is the only one supported by Netflux for now).
+ * @property {string} [signalingURL] Signaling URL for WebRTC.
+ * @property {RTCIceServer[]} [iceServers] Array of Ice servers for WebRTC.
+ * @property {boolean} [autoRejoin] Whether to automatically rejoin the web group
+ * on disconnect or not. Its value may be modified after {@link WebGroup}
+ * instantiation at any time.
+ */
+
+/**
+ * The options to be passed into {@link WebGroupBotServer} constructor.
+ * @typedef {Object} WebGroupBotServerOptions
+ * @property {Topology} [topology] See WebGroupOptions.topology
+ * @property {string} [signalingURL] See WebGroupOptions.signalingURL
+ * @property {RTCIceServer[]} [iceServers] See WebGroupOptions.iceServers
+ * @property {boolean} [autoRejoin] See WebGroupOptions.autoRejoin
+ * @property {Object} bot Server related options of the bot.
+ * @property {NodeJSHttpServer|NodeJSHttpsServer} bot.server NodeJS http(s) server.
+ * @property {string} [bot.url] Bot server URL.
+ * @property {boolean} [bot.perMessageDeflate] Enable/disable permessage-deflate.
+ */
+
+ /**
+  * @external {RTCIceServer} https://developer.mozilla.org/en/docs/Web/API/RTCIceServer
+  */
+
+ /**
+  * @external {Uint8Array} https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array
+  */
+
+ /**
+  * @external {NodeJSHttpServer} https://nodejs.org/api/http.html#http_class_http_server
+  */
+
+ /**
+  * @external {NodeJSHttpsServer} https://nodejs.org/api/https.html#https_class_https_server
+  */

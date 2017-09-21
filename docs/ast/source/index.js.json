@@ -1,28 +1,28 @@
 {
   "type": "File",
   "start": 0,
-  "end": 2448,
+  "end": 4087,
   "loc": {
     "start": {
       "line": 1,
       "column": 0
     },
     "end": {
-      "line": 80,
+      "line": 115,
       "column": 0
     }
   },
   "program": {
     "type": "Program",
     "start": 0,
-    "end": 2448,
+    "end": 4087,
     "loc": {
       "start": {
         "line": 1,
         "column": 0
       },
       "end": {
-        "line": 80,
+        "line": 115,
         "column": 0
       }
     },
@@ -3046,7 +3046,8 @@
                   }
                 ]
               }
-            ]
+            ],
+            "trailingComments": null
           },
           "leadingComments": [
             {
@@ -3066,7 +3067,104 @@
               }
             }
           ],
-          "trailingComments": []
+          "trailingComments": [
+            {
+              "type": "CommentBlock",
+              "value": "*\n * The options to be passed into {@link WebGroup} constructor.\n * @typedef {Object} WebGroupOptions\n * @property {Topology} [topology] Topology identifier\n * (Full mesh is the only one supported by Netflux for now).\n * @property {string} [signalingURL] Signaling URL for WebRTC.\n * @property {RTCIceServer[]} [iceServers] Array of Ice servers for WebRTC.\n * @property {boolean} [autoRejoin] Whether to automatically rejoin the web group\n * on disconnect or not. Its value may be modified after {@link WebGroup}\n * instantiation at any time.\n ",
+              "start": 2448,
+              "end": 2996,
+              "loc": {
+                "start": {
+                  "line": 80,
+                  "column": 0
+                },
+                "end": {
+                  "line": 90,
+                  "column": 3
+                }
+              }
+            },
+            {
+              "type": "CommentBlock",
+              "value": "*\n * The options to be passed into {@link WebGroupBotServer} constructor.\n * @typedef {Object} WebGroupBotServerOptions\n * @property {Topology} [topology] See WebGroupOptions.topology\n * @property {string} [signalingURL] See WebGroupOptions.signalingURL\n * @property {RTCIceServer[]} [iceServers] See WebGroupOptions.iceServers\n * @property {boolean} [autoRejoin] See WebGroupOptions.autoRejoin\n * @property {Object} bot Server related options of the bot.\n * @property {NodeJSHttpServer|NodeJSHttpsServer} bot.server NodeJS http(s) server.\n * @property {string} [bot.url] Bot server URL.\n * @property {boolean} [bot.perMessageDeflate] Enable/disable permessage-deflate.\n ",
+              "start": 2997,
+              "end": 3672,
+              "loc": {
+                "start": {
+                  "line": 91,
+                  "column": 0
+                },
+                "end": {
+                  "line": 102,
+                  "column": 3
+                }
+              }
+            },
+            {
+              "type": "CommentBlock",
+              "value": "*\n * @external {RTCIceServer} https://developer.mozilla.org/en/docs/Web/API/RTCIceServer\n ",
+              "start": 3673,
+              "end": 3767,
+              "loc": {
+                "start": {
+                  "line": 103,
+                  "column": 0
+                },
+                "end": {
+                  "line": 105,
+                  "column": 3
+                }
+              }
+            },
+            {
+              "type": "CommentBlock",
+              "value": "*\n * @external {Uint8Array} https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array\n ",
+              "start": 3768,
+              "end": 3890,
+              "loc": {
+                "start": {
+                  "line": 106,
+                  "column": 0
+                },
+                "end": {
+                  "line": 108,
+                  "column": 3
+                }
+              }
+            },
+            {
+              "type": "CommentBlock",
+              "value": "*\n * @external {NodeJSHttpServer} https://nodejs.org/api/http.html#http_class_http_server\n ",
+              "start": 3891,
+              "end": 3986,
+              "loc": {
+                "start": {
+                  "line": 109,
+                  "column": 0
+                },
+                "end": {
+                  "line": 111,
+                  "column": 3
+                }
+              }
+            },
+            {
+              "type": "CommentBlock",
+              "value": "*\n * @external {NodeJSHttpsServer} https://nodejs.org/api/https.html#https_class_https_server\n ",
+              "start": 3987,
+              "end": 4086,
+              "loc": {
+                "start": {
+                  "line": 112,
+                  "column": 0
+                },
+                "end": {
+                  "line": 114,
+                  "column": 3
+                }
+              }
+            }
+          ]
         },
         "leadingComments": [
           {
@@ -3081,6 +3179,104 @@
               },
               "end": {
                 "line": 67,
+                "column": 3
+              }
+            }
+          }
+        ],
+        "trailingComments": [
+          {
+            "type": "CommentBlock",
+            "value": "*\n * The options to be passed into {@link WebGroup} constructor.\n * @typedef {Object} WebGroupOptions\n * @property {Topology} [topology] Topology identifier\n * (Full mesh is the only one supported by Netflux for now).\n * @property {string} [signalingURL] Signaling URL for WebRTC.\n * @property {RTCIceServer[]} [iceServers] Array of Ice servers for WebRTC.\n * @property {boolean} [autoRejoin] Whether to automatically rejoin the web group\n * on disconnect or not. Its value may be modified after {@link WebGroup}\n * instantiation at any time.\n ",
+            "start": 2448,
+            "end": 2996,
+            "loc": {
+              "start": {
+                "line": 80,
+                "column": 0
+              },
+              "end": {
+                "line": 90,
+                "column": 3
+              }
+            }
+          },
+          {
+            "type": "CommentBlock",
+            "value": "*\n * The options to be passed into {@link WebGroupBotServer} constructor.\n * @typedef {Object} WebGroupBotServerOptions\n * @property {Topology} [topology] See WebGroupOptions.topology\n * @property {string} [signalingURL] See WebGroupOptions.signalingURL\n * @property {RTCIceServer[]} [iceServers] See WebGroupOptions.iceServers\n * @property {boolean} [autoRejoin] See WebGroupOptions.autoRejoin\n * @property {Object} bot Server related options of the bot.\n * @property {NodeJSHttpServer|NodeJSHttpsServer} bot.server NodeJS http(s) server.\n * @property {string} [bot.url] Bot server URL.\n * @property {boolean} [bot.perMessageDeflate] Enable/disable permessage-deflate.\n ",
+            "start": 2997,
+            "end": 3672,
+            "loc": {
+              "start": {
+                "line": 91,
+                "column": 0
+              },
+              "end": {
+                "line": 102,
+                "column": 3
+              }
+            }
+          },
+          {
+            "type": "CommentBlock",
+            "value": "*\n * @external {RTCIceServer} https://developer.mozilla.org/en/docs/Web/API/RTCIceServer\n ",
+            "start": 3673,
+            "end": 3767,
+            "loc": {
+              "start": {
+                "line": 103,
+                "column": 0
+              },
+              "end": {
+                "line": 105,
+                "column": 3
+              }
+            }
+          },
+          {
+            "type": "CommentBlock",
+            "value": "*\n * @external {Uint8Array} https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array\n ",
+            "start": 3768,
+            "end": 3890,
+            "loc": {
+              "start": {
+                "line": 106,
+                "column": 0
+              },
+              "end": {
+                "line": 108,
+                "column": 3
+              }
+            }
+          },
+          {
+            "type": "CommentBlock",
+            "value": "*\n * @external {NodeJSHttpServer} https://nodejs.org/api/http.html#http_class_http_server\n ",
+            "start": 3891,
+            "end": 3986,
+            "loc": {
+              "start": {
+                "line": 109,
+                "column": 0
+              },
+              "end": {
+                "line": 111,
+                "column": 3
+              }
+            }
+          },
+          {
+            "type": "CommentBlock",
+            "value": "*\n * @external {NodeJSHttpsServer} https://nodejs.org/api/https.html#https_class_https_server\n ",
+            "start": 3987,
+            "end": 4086,
+            "loc": {
+              "start": {
+                "line": 112,
+                "column": 0
+              },
+              "end": {
+                "line": 114,
                 "column": 3
               }
             }
@@ -3344,6 +3540,102 @@
         "end": {
           "line": 77,
           "column": 7
+        }
+      }
+    },
+    {
+      "type": "CommentBlock",
+      "value": "*\n * The options to be passed into {@link WebGroup} constructor.\n * @typedef {Object} WebGroupOptions\n * @property {Topology} [topology] Topology identifier\n * (Full mesh is the only one supported by Netflux for now).\n * @property {string} [signalingURL] Signaling URL for WebRTC.\n * @property {RTCIceServer[]} [iceServers] Array of Ice servers for WebRTC.\n * @property {boolean} [autoRejoin] Whether to automatically rejoin the web group\n * on disconnect or not. Its value may be modified after {@link WebGroup}\n * instantiation at any time.\n ",
+      "start": 2448,
+      "end": 2996,
+      "loc": {
+        "start": {
+          "line": 80,
+          "column": 0
+        },
+        "end": {
+          "line": 90,
+          "column": 3
+        }
+      }
+    },
+    {
+      "type": "CommentBlock",
+      "value": "*\n * The options to be passed into {@link WebGroupBotServer} constructor.\n * @typedef {Object} WebGroupBotServerOptions\n * @property {Topology} [topology] See WebGroupOptions.topology\n * @property {string} [signalingURL] See WebGroupOptions.signalingURL\n * @property {RTCIceServer[]} [iceServers] See WebGroupOptions.iceServers\n * @property {boolean} [autoRejoin] See WebGroupOptions.autoRejoin\n * @property {Object} bot Server related options of the bot.\n * @property {NodeJSHttpServer|NodeJSHttpsServer} bot.server NodeJS http(s) server.\n * @property {string} [bot.url] Bot server URL.\n * @property {boolean} [bot.perMessageDeflate] Enable/disable permessage-deflate.\n ",
+      "start": 2997,
+      "end": 3672,
+      "loc": {
+        "start": {
+          "line": 91,
+          "column": 0
+        },
+        "end": {
+          "line": 102,
+          "column": 3
+        }
+      }
+    },
+    {
+      "type": "CommentBlock",
+      "value": "*\n * @external {RTCIceServer} https://developer.mozilla.org/en/docs/Web/API/RTCIceServer\n ",
+      "start": 3673,
+      "end": 3767,
+      "loc": {
+        "start": {
+          "line": 103,
+          "column": 0
+        },
+        "end": {
+          "line": 105,
+          "column": 3
+        }
+      }
+    },
+    {
+      "type": "CommentBlock",
+      "value": "*\n * @external {Uint8Array} https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array\n ",
+      "start": 3768,
+      "end": 3890,
+      "loc": {
+        "start": {
+          "line": 106,
+          "column": 0
+        },
+        "end": {
+          "line": 108,
+          "column": 3
+        }
+      }
+    },
+    {
+      "type": "CommentBlock",
+      "value": "*\n * @external {NodeJSHttpServer} https://nodejs.org/api/http.html#http_class_http_server\n ",
+      "start": 3891,
+      "end": 3986,
+      "loc": {
+        "start": {
+          "line": 109,
+          "column": 0
+        },
+        "end": {
+          "line": 111,
+          "column": 3
+        }
+      }
+    },
+    {
+      "type": "CommentBlock",
+      "value": "*\n * @external {NodeJSHttpsServer} https://nodejs.org/api/https.html#https_class_https_server\n ",
+      "start": 3987,
+      "end": 4086,
+      "loc": {
+        "start": {
+          "line": 112,
+          "column": 0
+        },
+        "end": {
+          "line": 114,
+          "column": 3
         }
       }
     }
@@ -9599,6 +9891,102 @@
       }
     },
     {
+      "type": "CommentBlock",
+      "value": "*\n * The options to be passed into {@link WebGroup} constructor.\n * @typedef {Object} WebGroupOptions\n * @property {Topology} [topology] Topology identifier\n * (Full mesh is the only one supported by Netflux for now).\n * @property {string} [signalingURL] Signaling URL for WebRTC.\n * @property {RTCIceServer[]} [iceServers] Array of Ice servers for WebRTC.\n * @property {boolean} [autoRejoin] Whether to automatically rejoin the web group\n * on disconnect or not. Its value may be modified after {@link WebGroup}\n * instantiation at any time.\n ",
+      "start": 2448,
+      "end": 2996,
+      "loc": {
+        "start": {
+          "line": 80,
+          "column": 0
+        },
+        "end": {
+          "line": 90,
+          "column": 3
+        }
+      }
+    },
+    {
+      "type": "CommentBlock",
+      "value": "*\n * The options to be passed into {@link WebGroupBotServer} constructor.\n * @typedef {Object} WebGroupBotServerOptions\n * @property {Topology} [topology] See WebGroupOptions.topology\n * @property {string} [signalingURL] See WebGroupOptions.signalingURL\n * @property {RTCIceServer[]} [iceServers] See WebGroupOptions.iceServers\n * @property {boolean} [autoRejoin] See WebGroupOptions.autoRejoin\n * @property {Object} bot Server related options of the bot.\n * @property {NodeJSHttpServer|NodeJSHttpsServer} bot.server NodeJS http(s) server.\n * @property {string} [bot.url] Bot server URL.\n * @property {boolean} [bot.perMessageDeflate] Enable/disable permessage-deflate.\n ",
+      "start": 2997,
+      "end": 3672,
+      "loc": {
+        "start": {
+          "line": 91,
+          "column": 0
+        },
+        "end": {
+          "line": 102,
+          "column": 3
+        }
+      }
+    },
+    {
+      "type": "CommentBlock",
+      "value": "*\n * @external {RTCIceServer} https://developer.mozilla.org/en/docs/Web/API/RTCIceServer\n ",
+      "start": 3673,
+      "end": 3767,
+      "loc": {
+        "start": {
+          "line": 103,
+          "column": 0
+        },
+        "end": {
+          "line": 105,
+          "column": 3
+        }
+      }
+    },
+    {
+      "type": "CommentBlock",
+      "value": "*\n * @external {Uint8Array} https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array\n ",
+      "start": 3768,
+      "end": 3890,
+      "loc": {
+        "start": {
+          "line": 106,
+          "column": 0
+        },
+        "end": {
+          "line": 108,
+          "column": 3
+        }
+      }
+    },
+    {
+      "type": "CommentBlock",
+      "value": "*\n * @external {NodeJSHttpServer} https://nodejs.org/api/http.html#http_class_http_server\n ",
+      "start": 3891,
+      "end": 3986,
+      "loc": {
+        "start": {
+          "line": 109,
+          "column": 0
+        },
+        "end": {
+          "line": 111,
+          "column": 3
+        }
+      }
+    },
+    {
+      "type": "CommentBlock",
+      "value": "*\n * @external {NodeJSHttpsServer} https://nodejs.org/api/https.html#https_class_https_server\n ",
+      "start": 3987,
+      "end": 4086,
+      "loc": {
+        "start": {
+          "line": 112,
+          "column": 0
+        },
+        "end": {
+          "line": 114,
+          "column": 3
+        }
+      }
+    },
+    {
       "type": {
         "label": "eof",
         "beforeExpr": false,
@@ -9611,15 +9999,15 @@
         "binop": null,
         "updateContext": null
       },
-      "start": 2448,
-      "end": 2448,
+      "start": 4087,
+      "end": 4087,
       "loc": {
         "start": {
-          "line": 80,
+          "line": 115,
           "column": 0
         },
         "end": {
-          "line": 80,
+          "line": 115,
           "column": 0
         }
       }
