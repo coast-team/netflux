@@ -29,7 +29,7 @@ module.exports = (config) => {
     ],
 
     // list of files to exclude
-    exclude: [],
+    exclude: ['**/*.node.ts', '**/*BotServer*'],
 
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
@@ -51,34 +51,10 @@ module.exports = (config) => {
         allowJs: true
       },
       bundlerOptions: {
-        exclude: ['wrtc', 'text-encoding', 'uws', 'node-webcrypto-ossl', 'url'],
-        noParse: ['wrtc', 'url']
-      }
-    },
-
-    rollupPreprocessor: {
-      plugins: [
-        require('rollup-plugin-re')({
-          defines: {
-            BROWSER: true,
-            NODE: false
-          },
-          patterns: [
-            {
-              test: /eval.*\(moduleName\);/g,
-              replace: 'undefined;',
-            }
-          ]
-        }),
-        require('rollup-plugin-typescript2')(),
-        require('rollup-plugin-node-resolve')(),
-        require('rollup-plugin-commonjs')({
-          namedExports: { 'node_modules/protobufjs/minimal.js': [ 'Reader', 'Writer', 'util', 'roots' ] }
-        })
-      ],
-      format: 'iife',
-      name: 'netflux',
-      sourcemap: 'inline'
+        exclude: ['wrtc', 'text-encoding', 'uws', 'node-webcrypto-ossl', 'url']
+      },
+      compilerDelay: 1000,
+      include: ["src/**/*", "test/**/*"]
     },
 
     // test results reporter to use

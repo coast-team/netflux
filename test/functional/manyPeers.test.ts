@@ -2,7 +2,7 @@
 import { Subject } from 'rxjs/Subject'
 
 import * as helper from '../util/helper'
-import { WebGroup, WebGroupState } from '../../src/index'
+import { WebGroup, WebGroupState } from '../../src/index.browser'
 
 const USE_CASES = [2, 3, 7]
 const scenarios = [

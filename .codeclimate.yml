@@ -1,8 +1,8 @@
 engines:
-  # tslint:
-  #   enabled: true
-  #   channel: beta
-  #   config: tslint.json
+  tslint:
+    enabled: true
+    channel: beta
+    config: tslint.json
   fixme:
     enabled: true
 ratings:

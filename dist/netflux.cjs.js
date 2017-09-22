@@ -2,7 +2,37 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-/* tslint:disable:variable-name */
+try {
+    var wrtc = require('wrtc');
+    global.RTCPeerConnection = wrtc.RTCPeerConnection;
+    global.RTCDataChannel = wrtc.RTCDataChannel;
+    global.RTCIceCandidate = wrtc.RTCIceCandidate;
+}
+catch (err) {
+    console.warn(err.message);
+}
+try {
+    global.WebSocket = require('uws');
+}
+catch (err) {
+    console.warn(err.message);
+}
+try {
+    var textEncoding = require('text-encoding');
+    global.TextEncoder = textEncoding.TextEncoder;
+    global.TextDecoder = textEncoding.TextDecoder;
+    var WebCrypto = require('node-webcrypto-ossl'); // tslint:disable-line
+    global.crypto = new WebCrypto();
+    global.Event = (function () {
+        function Event(name) {
+            this.name = name;
+        }
+        return Event;
+    }());
+}
+catch (err) {
+    console.error(err);
+}
 
 /**
  * ECMAScript Proposal, specs, and reference implementation for `global`
@@ -23,40 +53,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
             global.global = global;
         }
     }
-})(typeof undefined === 'object' ? undefined : Function('return this')()); // tslint:disable-line
-// #if NODE
-try {
-    var wrtc = require('wrtc');
-    global.RTCPeerConnection = wrtc.RTCPeerConnection;
-    global.RTCDataChannel = wrtc.RTCDataChannel;
-    global.RTCIceCandidate = wrtc.RTCIceCandidate;
-}
-catch (err) {
-    console.warn(err.message);
-}
-try {
-    global.WebSocket = require('uws');
-}
-catch (err) {
-    console.warn(err.message);
-}
-try {
-    var textEncoding = require('text-encoding');
-    global.TextEncoder = textEncoding.TextEncoder;
-    global.TextDecoder = textEncoding.TextDecoder;
-    var WebCrypto = require('node-webcrypto-ossl');
-    global.crypto = new WebCrypto();
-    global.Event = (function () {
-        function Event(name) {
-            this.name = name;
-        }
-        return Event;
-    }());
-}
-catch (err) {
-    console.error(err);
-}
-// #endif
+})(Function('return this')()); // tslint:disable-line
 
 var commonjsGlobal = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
@@ -5866,7 +5863,6 @@ var Signaling = (function () {
     };
     Signaling.prototype.setState = function (state) {
         var _this = this;
-        console.log('State SIGNALING: ', SignalingState$1[state]);
         if (this.state !== state) {
             this.state = state;
             this.stateSubject.next(state);
@@ -6038,7 +6034,7 @@ function __read(o, n) {
 /**
  * Equals to true in any browser.
  */
-var isBrowser = (typeof window === 'undefined') ? false : true;
+var isBrowser = (typeof global.window === 'undefined') ? false : true;
 /**
  * Equals to true in Firefox and false elsewhere.
  * Thanks to https://github.com/lancedikson/bowser
@@ -6747,14 +6743,14 @@ var WebSocketBuilder = (function () {
                     var ws_1 = new global.WebSocket(url);
                     ws_1.onopen = function () { return resolve(ws_1); };
                     ws_1.onclose = function (closeEvt) { return reject(new Error("WebSocket connection to '" + url + "' failed with code " + closeEvt.code + ": " + closeEvt.reason)); };
-                    // #if NODE
-                    // Timeout for node (otherwise it will loop forever if incorrect address)
-                    setTimeout(function () {
-                        if (ws_1.readyState !== ws_1.OPEN) {
-                            reject(new Error("WebSocket " + CONNECT_TIMEOUT_FOR_NODE + "ms connection timeout with " + url));
-                        }
-                    }, CONNECT_TIMEOUT_FOR_NODE);
-                    // #endif
+                    if (!isBrowser) {
+                        // Timeout for node (otherwise it will loop forever if incorrect address)
+                        setTimeout(function () {
+                            if (ws_1.readyState !== ws_1.OPEN) {
+                                reject(new Error("WebSocket " + CONNECT_TIMEOUT_FOR_NODE + "ms connection timeout with " + url));
+                            }
+                        }, CONNECT_TIMEOUT_FOR_NODE);
+                    }
                 }
                 else {
                     throw new Error(url + " is not a valid URL");
@@ -6781,14 +6777,14 @@ var WebSocketBuilder = (function () {
                 var channel_1 = new Channel(_this.wc, ws_2, { id: id });
                 ws_2.onopen = function () { return resolve(channel_1); };
                 ws_2.onclose = function (closeEvt) { return reject(new Error("WebSocket connection to '" + url + "' failed with code " + closeEvt.code + ": " + closeEvt.reason)); };
-                // #if NODE
-                // Timeout for node (otherwise it will loop forever if incorrect address)
-                setTimeout(function () {
-                    if (ws_2.readyState !== ws_2.OPEN) {
-                        reject(new Error("WebSocket " + CONNECT_TIMEOUT_FOR_NODE + "ms connection timeout with " + url));
-                    }
-                }, CONNECT_TIMEOUT_FOR_NODE);
-                // #endif
+                if (!isBrowser) {
+                    // Timeout for node (otherwise it will loop forever if incorrect address)
+                    setTimeout(function () {
+                        if (ws_2.readyState !== ws_2.OPEN) {
+                            reject(new Error("WebSocket " + CONNECT_TIMEOUT_FOR_NODE + "ms connection timeout with " + url));
+                        }
+                    }, CONNECT_TIMEOUT_FOR_NODE);
+                }
             }
             else {
                 throw new Error(url + " is not a valid URL");
@@ -8287,7 +8283,6 @@ var WebChannel = (function (_super) {
                     _this.setState(WebChannelState.JOINED);
                     break;
                 case SignalingState$1.CLOSED:
-                    console.log('Singaling CLOSED in WebChannel');
                     if (_this.members.length === 0) {
                         _this.key = '';
                         _this.setState(WebChannelState.LEFT);
@@ -8993,6 +8988,169 @@ var WebGroup = (function () {
     return WebGroup;
 }());
 
+/**
+ * The state enum of the signaling server for WebRTC.
+ */
+var SignalingState$$1 = (function () {
+    function SignalingState$$1() {
+    }
+    Object.defineProperty(SignalingState$$1, "CONNECTING", {
+        /**
+         * The connection is not yet open.
+         * @type {number}
+         */
+        get: function () { return SignalingState$1.CONNECTING; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(SignalingState$$1, SignalingState$$1.CONNECTING, {
+        /**
+         * Equals to `'CONNECTING'`.
+         * @type {string}
+         */
+        get: function () { return SignalingState$1[SignalingState$1.CONNECTING]; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(SignalingState$$1, "OPEN", {
+        /**
+         * The connection is open and ready to communicate.
+         * @type {number}
+         */
+        get: function () { return SignalingState$1.OPEN; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(SignalingState$$1, SignalingState$$1.OPEN, {
+        /**
+         * Equals to `'OPEN'`.
+         * @type {string}
+         */
+        get: function () { return SignalingState$1[SignalingState$1.OPEN]; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(SignalingState$$1, "FIRST_CONNECTED", {
+        /**
+         * `RTCDataChannel` has been established with one of the group member.
+         * From now the signaling is no longer needed, because the joining process
+         * will continue with a help of this member.
+         * @type {number}
+         */
+        get: function () { return SignalingState$1.FIRST_CONNECTED; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(SignalingState$$1, SignalingState$$1.FIRST_CONNECTED, {
+        /**
+         * Equals to `'FIRST_CONNECTED'`.
+         * @type {string}
+         */
+        get: function () { return SignalingState$1[SignalingState$1.FIRST_CONNECTED]; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(SignalingState$$1, "READY_TO_JOIN_OTHERS", {
+        /**
+         * You has successfully been joined a web group and ready to help join others.
+         * @type {number}
+         */
+        get: function () { return SignalingState$1.READY_TO_JOIN_OTHERS; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(SignalingState$$1, SignalingState$$1.READY_TO_JOIN_OTHERS, {
+        /**
+         * Equals to `'READY_TO_JOIN_OTHERS'`.
+         * @type {string}
+         */
+        get: function () { return SignalingState$1[SignalingState$1.READY_TO_JOIN_OTHERS]; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(SignalingState$$1, "CLOSED", {
+        /**
+         * The connection is closed.
+         * @type {number}
+         */
+        get: function () { return SignalingState$1.CLOSED; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(SignalingState$$1, SignalingState$$1.CLOSED, {
+        /**
+         * Equals to `'CLOSED'`.
+         * @type {string}
+         */
+        get: function () { return SignalingState$1[SignalingState$1.CLOSED]; },
+        enumerable: true,
+        configurable: true
+    });
+    return SignalingState$$1;
+}());
+/**
+ * The topology enum.
+ */
+var Topology = (function () {
+    function Topology() {
+    }
+    Object.defineProperty(Topology, "FULL_MESH", {
+        /**
+         * Full mesh topology identifier.
+         * @type {number}
+         */
+        get: function () { return TopologyEnum.FULL_MESH; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Topology, Topology.FULL_MESH, {
+        /**
+         * Equals to `'FULL_MESH'`.
+         * @type {string}
+         */
+        get: function () { return TopologyEnum[TopologyEnum.FULL_MESH]; },
+        enumerable: true,
+        configurable: true
+    });
+    return Topology;
+}());
+
+/**
+ * The options to be passed into {@link WebGroup} constructor.
+ * @typedef {Object} WebGroupOptions
+ * @property {Topology} [topology] Topology identifier
+ * (Full mesh is the only one supported by Netflux for now).
+ * @property {string} [signalingURL] Signaling URL for WebRTC.
+ * @property {RTCIceServer[]} [iceServers] Array of Ice servers for WebRTC.
+ * @property {boolean} [autoRejoin] Whether to automatically rejoin the web group
+ * on disconnect or not. Its value may be modified after {@link WebGroup}
+ * instantiation at any time.
+ */
+/**
+ * The options to be passed into {@link WebGroupBotServer} constructor.
+ * @typedef {Object} WebGroupBotServerOptions
+ * @property {Topology} [topology] See WebGroupOptions.topology
+ * @property {string} [signalingURL] See WebGroupOptions.signalingURL
+ * @property {RTCIceServer[]} [iceServers] See WebGroupOptions.iceServers
+ * @property {boolean} [autoRejoin] See WebGroupOptions.autoRejoin
+ * @property {Object} bot Server related options of the bot.
+ * @property {NodeJSHttpServer|NodeJSHttpsServer} bot.server NodeJS http(s) server.
+ * @property {string} [bot.url] Bot server URL.
+ * @property {boolean} [bot.perMessageDeflate] Enable/disable permessage-deflate.
+ */
+/**
+ * @external {RTCIceServer} https://developer.mozilla.org/en/docs/Web/API/RTCIceServer
+ */
+/**
+ * @external {Uint8Array} https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array
+ */
+/**
+ * @external {NodeJSHttpServer} https://nodejs.org/api/http.html#http_class_http_server
+ */
+/**
+ * @external {NodeJSHttpsServer} https://nodejs.org/api/https.html#https_class_https_server
+ */
+
 var uws;
 var url;
 try {
@@ -9230,173 +9388,9 @@ var WebGroupBotServer = (function () {
     return WebGroupBotServer;
 }());
 
-// #endif
-/**
- * The state enum of the signaling server for WebRTC.
- */
-var SignalingState$$1 = (function () {
-    function SignalingState$$1() {
-    }
-    Object.defineProperty(SignalingState$$1, "CONNECTING", {
-        /**
-         * The connection is not yet open.
-         * @type {number}
-         */
-        get: function () { return SignalingState$1.CONNECTING; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(SignalingState$$1, SignalingState$$1.CONNECTING, {
-        /**
-         * Equals to `'CONNECTING'`.
-         * @type {string}
-         */
-        get: function () { return SignalingState$1[SignalingState$1.CONNECTING]; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(SignalingState$$1, "OPEN", {
-        /**
-         * The connection is open and ready to communicate.
-         * @type {number}
-         */
-        get: function () { return SignalingState$1.OPEN; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(SignalingState$$1, SignalingState$$1.OPEN, {
-        /**
-         * Equals to `'OPEN'`.
-         * @type {string}
-         */
-        get: function () { return SignalingState$1[SignalingState$1.OPEN]; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(SignalingState$$1, "FIRST_CONNECTED", {
-        /**
-         * `RTCDataChannel` has been established with one of the group member.
-         * From now the signaling is no longer needed, because the joining process
-         * will continue with a help of this member.
-         * @type {number}
-         */
-        get: function () { return SignalingState$1.FIRST_CONNECTED; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(SignalingState$$1, SignalingState$$1.FIRST_CONNECTED, {
-        /**
-         * Equals to `'FIRST_CONNECTED'`.
-         * @type {string}
-         */
-        get: function () { return SignalingState$1[SignalingState$1.FIRST_CONNECTED]; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(SignalingState$$1, "READY_TO_JOIN_OTHERS", {
-        /**
-         * You has successfully been joined a web group and ready to help join others.
-         * @type {number}
-         */
-        get: function () { return SignalingState$1.READY_TO_JOIN_OTHERS; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(SignalingState$$1, SignalingState$$1.READY_TO_JOIN_OTHERS, {
-        /**
-         * Equals to `'READY_TO_JOIN_OTHERS'`.
-         * @type {string}
-         */
-        get: function () { return SignalingState$1[SignalingState$1.READY_TO_JOIN_OTHERS]; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(SignalingState$$1, "CLOSED", {
-        /**
-         * The connection is closed.
-         * @type {number}
-         */
-        get: function () { return SignalingState$1.CLOSED; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(SignalingState$$1, SignalingState$$1.CLOSED, {
-        /**
-         * Equals to `'CLOSED'`.
-         * @type {string}
-         */
-        get: function () { return SignalingState$1[SignalingState$1.CLOSED]; },
-        enumerable: true,
-        configurable: true
-    });
-    return SignalingState$$1;
-}());
-/**
- * The topology enum.
- */
-var Topology = (function () {
-    function Topology() {
-    }
-    Object.defineProperty(Topology, "FULL_MESH", {
-        /**
-         * Full mesh topology identifier.
-         * @type {number}
-         */
-        get: function () { return TopologyEnum.FULL_MESH; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Topology, Topology.FULL_MESH, {
-        /**
-         * Equals to `'FULL_MESH'`.
-         * @type {string}
-         */
-        get: function () { return TopologyEnum[TopologyEnum.FULL_MESH]; },
-        enumerable: true,
-        configurable: true
-    });
-    return Topology;
-}());
-
-/**
- * The options to be passed into {@link WebGroup} constructor.
- * @typedef {Object} WebGroupOptions
- * @property {Topology} [topology] Topology identifier
- * (Full mesh is the only one supported by Netflux for now).
- * @property {string} [signalingURL] Signaling URL for WebRTC.
- * @property {RTCIceServer[]} [iceServers] Array of Ice servers for WebRTC.
- * @property {boolean} [autoRejoin] Whether to automatically rejoin the web group
- * on disconnect or not. Its value may be modified after {@link WebGroup}
- * instantiation at any time.
- */
-/**
- * The options to be passed into {@link WebGroupBotServer} constructor.
- * @typedef {Object} WebGroupBotServerOptions
- * @property {Topology} [topology] See WebGroupOptions.topology
- * @property {string} [signalingURL] See WebGroupOptions.signalingURL
- * @property {RTCIceServer[]} [iceServers] See WebGroupOptions.iceServers
- * @property {boolean} [autoRejoin] See WebGroupOptions.autoRejoin
- * @property {Object} bot Server related options of the bot.
- * @property {NodeJSHttpServer|NodeJSHttpsServer} bot.server NodeJS http(s) server.
- * @property {string} [bot.url] Bot server URL.
- * @property {boolean} [bot.perMessageDeflate] Enable/disable permessage-deflate.
- */
-/**
- * @external {RTCIceServer} https://developer.mozilla.org/en/docs/Web/API/RTCIceServer
- */
-/**
- * @external {Uint8Array} https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array
- */
-/**
- * @external {NodeJSHttpServer} https://nodejs.org/api/http.html#http_class_http_server
- */
-/**
- * @external {NodeJSHttpsServer} https://nodejs.org/api/https.html#https_class_https_server
- */
-
+exports.WebGroupBotServer = WebGroupBotServer;
 exports.SignalingState = SignalingState$$1;
 exports.Topology = Topology;
 exports.WebGroup = WebGroup;
 exports.WebGroupState = WebGroupState;
-exports.WebGroupBotServer = WebGroupBotServer;
 //# sourceMappingURL=netflux.cjs.js.map

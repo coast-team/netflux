@@ -1,5 +1,5 @@
 /// <reference types='jasmine' />
-import { WebGroup, WebGroupState, SignalingState, Topology } from '../../src'
+import { WebGroup, WebGroupState, SignalingState, Topology } from '../../src/index.browser'
 import { MAX_KEY_LENGTH } from '../../src/misc/Util'
 import { SIGNALING_URL } from '../util/helper'
 

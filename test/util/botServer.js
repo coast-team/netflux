@@ -1,6 +1,6 @@
 import { ReplaySubject } from 'rxjs/ReplaySubject'
 
-import { WebGroup, WebGroupState, WebGroupBotServer } from '../../src/index'
+import { WebGroup, WebGroupState, WebGroupBotServer } from '../../src/index.node'
 import { onMessageForBot, SIGNALING_URL, BOT_HOST, BOT_PORT } from './helper'
 
 // Require dependencies

@@ -1,5 +1,4 @@
 import commonjs from 'rollup-plugin-commonjs'
-import string from 'rollup-plugin-string'
 import resolve from 'rollup-plugin-node-resolve'
 import replace from 'rollup-plugin-re'
 import typescript from 'rollup-plugin-typescript2'
@@ -12,14 +11,7 @@ export default {
   },
   plugins: [
     typescript(),
-    string({
-      include: 'test/**/*.txt'
-    }),
     replace({
-      defines: {
-        BROWSER: false,
-        NODE: true
-      },
       patterns: [
         {
           test: /eval.*\(moduleName\);/g,

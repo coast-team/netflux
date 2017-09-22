@@ -1,6 +1,6 @@
 import { Subject } from 'rxjs/Subject'
 
-import { WebGroup, WebGroupState } from '../../src'
+import { WebGroup, WebGroupState } from '../../src/index.browser'
 
 const isBrowser = (typeof window === 'undefined') ? false : true
 

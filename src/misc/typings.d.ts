@@ -13,6 +13,7 @@ declare module NodeJS {
     WebSocket: typeof WebSocket
     crypto: Crypto
     Event: typeof Event
+    window?: Window
   }
 }
 

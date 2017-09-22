@@ -1,7 +1,5 @@
-/// <reference path="./typings.d.ts"/>
-import './misc/polyfills';
+import './misc/polyfills.browser';
 export { WebGroup, WebGroupOptions, WebGroupState, DataType } from './WebChannelFacade';
-export { WebGroupBotServer, WebGroupBotServerOptions } from './BotServerFacade';
 /**
  * The state enum of the signaling server for WebRTC.
  */

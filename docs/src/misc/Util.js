@@ -1,7 +1,7 @@
 /**
  * Equals to true in any browser.
  */
-export const isBrowser = (typeof window === 'undefined') ? false : true;
+export const isBrowser = (typeof global.window === 'undefined') ? false : true;
 /**
  * Equals to true in Firefox and false elsewhere.
  * Thanks to https://github.com/lancedikson/bowser

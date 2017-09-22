@@ -4,10 +4,6 @@
 	(factory((global.netflux = {})));
 }(this, (function (exports) { 'use strict';
 
-/* tslint:disable:variable-name */
-// #if WEBRTC_ADAPTER
-// import 'webrtc-adapter/out/adapter_no_edge_no_global'
-// #endif
 /**
  * ECMAScript Proposal, specs, and reference implementation for `global`
  * http://tc39.github.io/proposal-global/
@@ -27,7 +23,7 @@
             global.global = global;
         }
     }
-})(typeof undefined === 'object' ? undefined : Function('return this')()); // tslint:disable-line
+})(Function('return this')()); // tslint:disable-line
 
 var commonjsGlobal = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
@@ -5837,7 +5833,6 @@ var Signaling = (function () {
     };
     Signaling.prototype.setState = function (state) {
         var _this = this;
-        console.log('State SIGNALING: ', SignalingState$1[state]);
         if (this.state !== state) {
             this.state = state;
             this.stateSubject.next(state);
@@ -6009,7 +6004,7 @@ function __read(o, n) {
 /**
  * Equals to true in any browser.
  */
-var isBrowser = (typeof window === 'undefined') ? false : true;
+var isBrowser = (typeof global.window === 'undefined') ? false : true;
 /**
  * Equals to true in Firefox and false elsewhere.
  * Thanks to https://github.com/lancedikson/bowser
@@ -6682,6 +6677,7 @@ var filter_1 = {
 
 Observable_1.Observable.prototype.filter = filter_1.filter;
 
+var CONNECT_TIMEOUT_FOR_NODE = 3000;
 var listenSubject = new BehaviorSubject_2('');
 /**
  * Service class responsible to establish connections between peers via
@@ -6717,7 +6713,14 @@ var WebSocketBuilder = (function () {
                     var ws_1 = new global.WebSocket(url);
                     ws_1.onopen = function () { return resolve(ws_1); };
                     ws_1.onclose = function (closeEvt) { return reject(new Error("WebSocket connection to '" + url + "' failed with code " + closeEvt.code + ": " + closeEvt.reason)); };
-                    
+                    if (!isBrowser) {
+                        // Timeout for node (otherwise it will loop forever if incorrect address)
+                        setTimeout(function () {
+                            if (ws_1.readyState !== ws_1.OPEN) {
+                                reject(new Error("WebSocket " + CONNECT_TIMEOUT_FOR_NODE + "ms connection timeout with " + url));
+                            }
+                        }, CONNECT_TIMEOUT_FOR_NODE);
+                    }
                 }
                 else {
                     throw new Error(url + " is not a valid URL");
@@ -6744,7 +6747,14 @@ var WebSocketBuilder = (function () {
                 var channel_1 = new Channel(_this.wc, ws_2, { id: id });
                 ws_2.onopen = function () { return resolve(channel_1); };
                 ws_2.onclose = function (closeEvt) { return reject(new Error("WebSocket connection to '" + url + "' failed with code " + closeEvt.code + ": " + closeEvt.reason)); };
-                
+                if (!isBrowser) {
+                    // Timeout for node (otherwise it will loop forever if incorrect address)
+                    setTimeout(function () {
+                        if (ws_2.readyState !== ws_2.OPEN) {
+                            reject(new Error("WebSocket " + CONNECT_TIMEOUT_FOR_NODE + "ms connection timeout with " + url));
+                        }
+                    }, CONNECT_TIMEOUT_FOR_NODE);
+                }
             }
             else {
                 throw new Error(url + " is not a valid URL");
@@ -8243,7 +8253,6 @@ var WebChannel = (function (_super) {
                     _this.setState(WebChannelState.JOINED);
                     break;
                 case SignalingState$1.CLOSED:
-                    console.log('Singaling CLOSED in WebChannel');
                     if (_this.members.length === 0) {
                         _this.key = '';
                         _this.setState(WebChannelState.LEFT);

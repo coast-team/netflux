@@ -1,5 +1,4 @@
 import fs from 'fs'
-import string from 'rollup-plugin-string'
 import commonjs from 'rollup-plugin-commonjs'
 import typescript from 'rollup-plugin-typescript2'
 
@@ -17,6 +16,7 @@ function read (path) {
 read('test')
 
 const configs = []
+  console.log('inputs: ', inputs)
 for (let input of inputs) {
   configs.push({
     input,
@@ -26,9 +26,6 @@ for (let input of inputs) {
     },
     plugins: [
       typescript(),
-      string({
-        include: 'test/**/*.txt'
-      }),
       commonjs({
         namedExports: { 'node_modules/protobufjs/minimal.js': [ 'Reader', 'Writer', 'util', 'roots' ] }
       })

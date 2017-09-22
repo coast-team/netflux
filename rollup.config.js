@@ -6,86 +6,60 @@ import pkg from './package.json'
 import typescript from 'rollup-plugin-typescript2'
 import uglify from 'rollup-plugin-uglify'
 
-const tsConfig =  {
-  include: ['src/**/*.ts']
-}
-
+const tsConfig =  { include: ['src/**/*.ts'] }
 const commonjsConfig = {
   namedExports: {
     'node_modules/protobufjs/minimal.js': [ 'Reader', 'Writer', 'util', 'roots' ]
   }
 }
-
 const filesizeConfig = { format: { round: 0 } }
-
-const protobufjsEvalFixPattern = {
-  test: /eval.*\(moduleName\);/g,
-  replace: 'undefined;'
-}
-
-const replaceConfigForBrowser = {
-  defines: {
-    WEBRTC_ADAPTER: true,
-    NODE: false
-  },
-  patterns: [protobufjsEvalFixPattern]
+const replaceConfig = {
+  patterns: [{ test: /eval.*\(moduleName\);/g, replace: 'undefined;' }]
 }
 
 export default [
   {
-    input: 'src/index.ts',
+    input: 'src/index.node.ts',
     output: [{ file: pkg.main, format: 'cjs', sourcemap: true }],
     plugins: [
       typescript(tsConfig),
-      replace({
-        defines: {
-          WEBRTC_ADAPTER: false,
-          NODE: true
-        },
-        patterns: [protobufjsEvalFixPattern]
-      }),
+      replace(replaceConfig),
       resolve(),
       commonjs(commonjsConfig),
       filesize(filesizeConfig)
     ]
   },
   {
-    input: 'src/index.ts',
+    input: 'src/index.node.ts',
     output: [{ file: pkg.module, format: 'es', sourcemap: true }],
     plugins: [
       typescript({
         tsconfig: 'tsconfig.dist.esm.json',
         useTsconfigDeclarationDir: true
       }),
-      replace({
-        defines: {
-          WEBRTC_ADAPTER: true,
-          NODE: true
-        },
-        patterns: [protobufjsEvalFixPattern]
-      }),
+      replace(replaceConfig),
       resolve(),
       commonjs(commonjsConfig),
       filesize(filesizeConfig)
     ]
   },
   {
-    input: 'src/index.ts',
+    input: 'src/index.browser.ts',
     output: { file: pkg.browser, format: 'umd', name: 'netflux', sourcemap: true },
     plugins: [
       typescript(tsConfig),
-      replace(replaceConfigForBrowser),
+      replace(replaceConfig),
       resolve(),
       commonjs(commonjsConfig),
       filesize(filesizeConfig)
     ]
   },
   {
-    input: 'src/index.ts',
+    input: 'src/index.browser.ts',
     output: { file: 'dist/netflux.umd.min.js', format: 'umd', name: 'netflux', sourcemap: true },
     plugins: [
       typescript(tsConfig),
-      replace(replaceConfigForBrowser),
+      replace(replaceConfig),
       resolve(),
       commonjs(commonjsConfig),
       uglify(),

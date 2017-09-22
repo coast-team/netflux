@@ -3,7 +3,7 @@ import { BehaviorSubject } from 'rxjs/BehaviorSubject'
 import { Observable } from 'rxjs/Observable'
 import 'rxjs/add/operator/filter'
 
-import { isURL } from './misc/Util'
+import { isURL, isBrowser } from './misc/Util'
 import { Channel } from './Channel'
 import { WebChannel } from './service/WebChannel'
 
@@ -50,14 +50,15 @@ export class WebSocketBuilder {
           ws.onclose = closeEvt => reject(new Error(
             `WebSocket connection to '${url}' failed with code ${closeEvt.code}: ${closeEvt.reason}`
           ))
-          // #if NODE
-          // Timeout for node (otherwise it will loop forever if incorrect address)
-          setTimeout(() => {
-            if (ws.readyState !== ws.OPEN) {
-              reject(new Error(`WebSocket ${CONNECT_TIMEOUT_FOR_NODE}ms connection timeout with ${url}`))
-            }
-          }, CONNECT_TIMEOUT_FOR_NODE)
-          // #endif
+
+          if (!isBrowser) {
+            // Timeout for node (otherwise it will loop forever if incorrect address)
+            setTimeout(() => {
+              if (ws.readyState !== ws.OPEN) {
+                reject(new Error(`WebSocket ${CONNECT_TIMEOUT_FOR_NODE}ms connection timeout with ${url}`))
+              }
+            }, CONNECT_TIMEOUT_FOR_NODE)
+          }
         } else {
           throw new Error(`${url} is not a valid URL`)
         }
@@ -85,14 +86,14 @@ export class WebSocketBuilder {
           `WebSocket connection to '${url}' failed with code ${closeEvt.code}: ${closeEvt.reason}`
         ))
 
-        // #if NODE
-        // Timeout for node (otherwise it will loop forever if incorrect address)
-        setTimeout(() => {
-          if (ws.readyState !== ws.OPEN) {
-            reject(new Error(`WebSocket ${CONNECT_TIMEOUT_FOR_NODE}ms connection timeout with ${url}`))
-          }
-        }, CONNECT_TIMEOUT_FOR_NODE)
-        // #endif
+        if (!isBrowser) {
+          // Timeout for node (otherwise it will loop forever if incorrect address)
+          setTimeout(() => {
+            if (ws.readyState !== ws.OPEN) {
+              reject(new Error(`WebSocket ${CONNECT_TIMEOUT_FOR_NODE}ms connection timeout with ${url}`))
+            }
+          }, CONNECT_TIMEOUT_FOR_NODE)
+        }
       } else {
         throw new Error(`${url} is not a valid URL`)
       }

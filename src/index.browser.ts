@@ -1,12 +1,8 @@
-import './misc/polyfills'
+import './misc/polyfills.browser'
 import { SignalingState as SigState } from './Signaling'
 import { TopologyEnum } from './service/topology/Topology'
 
 export { WebGroup, WebGroupOptions, WebGroupState, DataType } from './WebChannelFacade'
-
-// #if NODE
-export { WebGroupBotServer, WebGroupBotServerOptions } from './BotServerFacade'
-// #endif
 
 /**
  * The state enum of the signaling server for WebRTC.
