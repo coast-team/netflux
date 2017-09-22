@@ -1,6 +1,6 @@
 import './misc/polyfills.browser'
-import { SignalingState as SigState } from './Signaling'
 import { TopologyEnum } from './service/topology/Topology'
+import { SignalingState as SigState } from './Signaling'
 
 export { WebGroup, WebGroupOptions, WebGroupState, DataType } from './WebChannelFacade'
 
@@ -70,7 +70,6 @@ export class SignalingState {
    */
   static get [SignalingState.CLOSED] (): string { return SigState[SigState.CLOSED] }
 }
-
 
 /**
  * The topology enum.

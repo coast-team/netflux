@@ -22,7 +22,7 @@ export class Service {
     encode(msg) {
         return service.Message.encode(service.Message.create({
             id: this.serviceId,
-            content: this.protoMessage.encode(this.protoMessage.create(msg)).finish()
+            content: this.protoMessage.encode(this.protoMessage.create(msg)).finish(),
         })).finish();
     }
     /**
@@ -40,7 +40,7 @@ export class Service {
             channel,
             senderId,
             recipientId,
-            msg: this.protoMessage.decode(content)
+            msg: this.protoMessage.decode(content),
         }));
     }
 }

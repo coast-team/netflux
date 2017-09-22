@@ -1,5 +1,5 @@
-import { WebChannel, WebChannelState, Options as WebGroupOptions } from './service/WebChannel';
 import { TopologyEnum } from './service/topology/Topology';
+import { IWebChannelOptions as WebGroupOptions, WebChannel, WebChannelState } from './service/WebChannel';
 import { SignalingState } from './Signaling';
 /**
  * Is a helper type representing types that can be sent/received over a web group.

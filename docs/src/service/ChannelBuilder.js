@@ -1,11 +1,11 @@
 import { Subject } from 'rxjs/Subject';
-import { Service } from './Service';
 import { channelBuilder } from '../proto';
 import { WebSocketBuilder } from '../WebSocketBuilder';
+import { Service } from './Service';
 import { WebRTCBuilder } from './WebRTCBuilder';
 const ME = {
     wsUrl: '',
-    isWrtcSupport: false
+    isWrtcSupport: false,
 };
 let request;
 let response;
@@ -24,13 +24,13 @@ export class ChannelBuilder extends Service {
         ME.isWrtcSupport = WebRTCBuilder.isSupported;
         if (ME.isWrtcSupport) {
             wc.webRTCBuilder.onChannelFromWebChannel()
-                .subscribe(ch => this.handleChannel(ch));
+                .subscribe((ch) => this.handleChannel(ch));
         }
         // Listen on Channels as WebSockets if the peer is listening on WebSockets
-        WebSocketBuilder.listen().subscribe(url => {
+        WebSocketBuilder.listen().subscribe((url) => {
             ME.wsUrl = url;
             if (url) {
-                wc.webSocketBuilder.onChannel.subscribe(ch => this.handleChannel(ch));
+                wc.webSocketBuilder.onChannel.subscribe((ch) => this.handleChannel(ch));
             }
             // Update preconstructed messages (for performance only)
             const content = { wsUrl: url, isWrtcSupport: ME.isWrtcSupport };
@@ -38,7 +38,7 @@ export class ChannelBuilder extends Service {
             response = super.encode({ response: content });
         });
         // Subscribe to WebChannel internal messages
-        this.onServiceMessage.subscribe(msg => this.treatServiceMessage(msg));
+        this.onServiceMessage.subscribe((msg) => this.treatServiceMessage(msg));
     }
     get onChannel() {
         return this.channelsSubject.asObservable();
@@ -55,7 +55,7 @@ export class ChannelBuilder extends Service {
                 }, reject: (err) => {
                     this.pendingRequests.delete(id);
                     reject(err);
-                }
+                },
             });
             this.wc.sendToProxy({ recipientId: id, content: request });
         });
@@ -84,8 +84,8 @@ export class ChannelBuilder extends Service {
                 // If remote peer is listening on WebSocket, connect to him
                 if (wsUrl) {
                     this.wc.webSocketBuilder.connectTo(wsUrl, senderId)
-                        .then(ch => this.handleChannel(ch))
-                        .catch(reason => {
+                        .then((ch) => this.handleChannel(ch))
+                        .catch((reason) => {
                         if (ME.wsUrl) {
                             // Ask him to connect to me via WebSocket
                             this.wc.sendToProxy({ recipientId: senderId, content: response });
@@ -94,7 +94,7 @@ export class ChannelBuilder extends Service {
                             // Send failed reason
                             this.wc.sendToProxy({
                                 recipientId: senderId,
-                                content: super.encode({ failed: `Failed to establish a socket: ${reason}` })
+                                content: super.encode({ failed: `Failed to establish a socket: ${reason}` }),
                             });
                         }
                     });
@@ -108,12 +108,12 @@ export class ChannelBuilder extends Service {
                     else if (ME.isWrtcSupport) {
                         console.log(this.wc.myId + ' calling connectOverWebChannel with ', senderId);
                         this.wc.webRTCBuilder.connectOverWebChannel(senderId)
-                            .then(ch => this.handleChannel(ch))
-                            .catch(reason => {
+                            .then((ch) => this.handleChannel(ch))
+                            .catch((reason) => {
                             // Send failed reason
                             this.wc.sendToProxy({
                                 recipientId: senderId,
-                                content: super.encode({ failed: `Failed establish a data channel: ${reason}` })
+                                content: super.encode({ failed: `Failed establish a data channel: ${reason}` }),
                             });
                         });
                     }
@@ -121,7 +121,7 @@ export class ChannelBuilder extends Service {
                         // Send failed reason
                         this.wc.sendToProxy({
                             recipientId: senderId,
-                            content: super.encode({ failed: 'No common connectors' })
+                            content: super.encode({ failed: 'No common connectors' }),
                         });
                     }
                     // If peer is not listening on WebSocket and is not able to connect over RTCDataChannel
@@ -135,7 +135,7 @@ export class ChannelBuilder extends Service {
                         // Send failed reason
                         this.wc.sendToProxy({
                             recipientId: senderId,
-                            content: super.encode({ failed: 'No common connectors' })
+                            content: super.encode({ failed: 'No common connectors' }),
                         });
                     }
                 }
@@ -145,8 +145,8 @@ export class ChannelBuilder extends Service {
                 const { wsUrl } = msg.response;
                 if (wsUrl) {
                     this.wc.webSocketBuilder.connectTo(wsUrl, senderId)
-                        .then(ch => this.handleChannel(ch))
-                        .catch(reason => {
+                        .then((ch) => this.handleChannel(ch))
+                        .catch((reason) => {
                         this.pendingRequests.get(senderId)
                             .reject(new Error(`Failed to establish a socket: ${reason}`));
                     });

@@ -1,9 +1,9 @@
 import { Server as NodeJSHttpServer } from 'http'
 import { Server as NodeJSHttpsServer } from 'https'
 
-import { WebSocketBuilder } from './WebSocketBuilder'
+import { BotServer, IBotServerOptions as WebGroupBotServerOptions } from './BotServer'
 import { WebGroup } from './WebChannelFacade'
-import { BotServer, BotServerOptions as WebGroupBotServerOptions } from './BotServer'
+import { WebSocketBuilder } from './WebSocketBuilder'
 
 let botServer: BotServer
 

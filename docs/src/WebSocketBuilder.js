@@ -1,8 +1,8 @@
-import { Subject } from 'rxjs/Subject';
-import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import 'rxjs/add/operator/filter';
-import { isURL, isBrowser } from './misc/Util';
+import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+import { Subject } from 'rxjs/Subject';
 import { Channel } from './Channel';
+import { isBrowser, isURL } from './misc/Util';
 const CONNECT_TIMEOUT_FOR_NODE = 3000;
 const listenSubject = new BehaviorSubject('');
 /**
@@ -34,7 +34,7 @@ export class WebSocketBuilder {
                 if (isURL(url) && url.search(/^wss?/) !== -1) {
                     const ws = new global.WebSocket(url);
                     ws.onopen = () => resolve(ws);
-                    ws.onclose = closeEvt => reject(new Error(`WebSocket connection to '${url}' failed with code ${closeEvt.code}: ${closeEvt.reason}`));
+                    ws.onclose = (closeEvt) => reject(new Error(`WebSocket connection to '${url}' failed with code ${closeEvt.code}: ${closeEvt.reason}`));
                     if (!isBrowser) {
                         // Timeout for node (otherwise it will loop forever if incorrect address)
                         setTimeout(() => {
@@ -67,7 +67,7 @@ export class WebSocketBuilder {
                 const ws = new global.WebSocket(fullUrl);
                 const channel = new Channel(this.wc, ws, { id });
                 ws.onopen = () => resolve(channel);
-                ws.onclose = closeEvt => reject(new Error(`WebSocket connection to '${url}' failed with code ${closeEvt.code}: ${closeEvt.reason}`));
+                ws.onclose = (closeEvt) => reject(new Error(`WebSocket connection to '${url}' failed with code ${closeEvt.code}: ${closeEvt.reason}`));
                 if (!isBrowser) {
                     // Timeout for node (otherwise it will loop forever if incorrect address)
                     setTimeout(() => {

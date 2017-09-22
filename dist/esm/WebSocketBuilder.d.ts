@@ -1,6 +1,6 @@
+import 'rxjs/add/operator/filter';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import { Observable } from 'rxjs/Observable';
-import 'rxjs/add/operator/filter';
 import { Channel } from './Channel';
 import { WebChannel } from './service/WebChannel';
 /**

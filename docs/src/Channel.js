@@ -27,7 +27,7 @@ export class Channel {
             console.info(`NETFLUX: ${wc.myId} ONCLOSE CALLBACK ${this.peerId}`, {
                 readyState: this.connection.readyState,
                 iceConnectionState: this.rtcPeerConnection ? this.rtcPeerConnection.iceConnectionState : '',
-                signalingState: this.rtcPeerConnection ? this.rtcPeerConnection.signalingState : ''
+                signalingState: this.rtcPeerConnection ? this.rtcPeerConnection.signalingState : '',
             });
             this.connection.onclose = () => { };
             this.connection.onmessage = () => { };
@@ -39,8 +39,8 @@ export class Channel {
         };
         // Configure handlers
         this.connection.onmessage = ({ data }) => wc.onMessageProxy(this, new Uint8Array(data));
-        this.connection.onclose = evt => this.onClose(evt);
-        this.connection.onerror = evt => wc.topologyService.onChannelError(evt, this);
+        this.connection.onclose = (evt) => this.onClose(evt);
+        this.connection.onerror = (evt) => wc.topologyService.onChannelError(evt, this);
     }
     close() {
         if (this.connection.readyState !== 'closed' &&
@@ -50,7 +50,7 @@ export class Channel {
             console.info(`NETFLUX: ${this.wc.myId} CLOSE ${this.peerId}`, {
                 readyState: this.connection.readyState,
                 iceConnectionState: this.rtcPeerConnection ? this.rtcPeerConnection.iceConnectionState : '',
-                signalingState: this.rtcPeerConnection ? this.rtcPeerConnection.signalingState : ''
+                signalingState: this.rtcPeerConnection ? this.rtcPeerConnection.signalingState : '',
             });
             this.connection.close();
             if (isFirefox && this.rtcPeerConnection && this.rtcPeerConnection.signalingState !== 'closed') {

@@ -1,8 +1,8 @@
 /// <reference types="node" />
 import { Server as NodeJSHttpServer } from 'http';
 import { Server as NodeJSHttpsServer } from 'https';
+import { IBotServerOptions as WebGroupBotServerOptions } from './BotServer';
 import { WebGroup } from './WebChannelFacade';
-import { BotServerOptions as WebGroupBotServerOptions } from './BotServer';
 export { WebGroupBotServerOptions };
 /**
  * Bot server may be a member of severals groups. Each group is isolated.

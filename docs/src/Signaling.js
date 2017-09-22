@@ -59,11 +59,11 @@ export class Signaling {
         }
         this.setState(SignalingState.CONNECTING);
         this.wc.webSocketBuilder.connect(this.getFullURL(key))
-            .then(ws => {
+            .then((ws) => {
             this.setState(SignalingState.OPEN);
             this.rxWs = this.createRxWs(ws);
             this.startPingInterval();
-            this.rxWs.onMessage.subscribe(msg => {
+            this.rxWs.onMessage.subscribe((msg) => {
                 switch (msg.type) {
                     case 'ping':
                         this.rxWs.pong();
@@ -77,12 +77,12 @@ export class Signaling {
                         }
                         else {
                             this.wc.webRTCBuilder.connectOverSignaling({
-                                onMessage: this.rxWs.onMessage.filter(msg => msg.type === 'content')
+                                onMessage: this.rxWs.onMessage.filter((msg) => msg.type === 'content')
                                     .map(({ content }) => content),
-                                send: (msg) => this.rxWs.send({ content: msg })
+                                send: (msg) => this.rxWs.send({ content: msg }),
                             })
                                 .then(() => this.setState(SignalingState.FIRST_CONNECTED))
-                                .catch(err => {
+                                .catch((err) => {
                                 this.rxWs.close(FIRST_CONNECTION_ERROR_CODE, `Failed to join over Signaling: ${err.message}`);
                             });
                         }
@@ -90,7 +90,7 @@ export class Signaling {
                 }
             });
         })
-            .catch(err => this.setState(SignalingState.CLOSED));
+            .catch((err) => this.setState(SignalingState.CLOSED));
     }
     /**
      * Close the `WebSocket` with Signaling server.
@@ -106,10 +106,10 @@ export class Signaling {
             this.stateSubject.next(state);
             if (state === SignalingState.READY_TO_JOIN_OTHERS) {
                 this.wc.webRTCBuilder.onChannelFromSignaling({
-                    onMessage: this.rxWs.onMessage.filter(msg => msg.type === 'content')
+                    onMessage: this.rxWs.onMessage.filter((msg) => msg.type === 'content')
                         .map(({ content }) => content),
-                    send: msg => this.rxWs.send({ content: msg })
-                }).subscribe(ch => this.channelSubject.next(ch));
+                    send: (msg) => this.rxWs.send({ content: msg }),
+                }).subscribe((ch) => this.channelSubject.next(ch));
             }
         }
     }
@@ -131,7 +131,7 @@ export class Signaling {
     createRxWs(ws) {
         const subject = new Subject();
         ws.binaryType = 'arraybuffer';
-        ws.onmessage = evt => {
+        ws.onmessage = (evt) => {
             try {
                 subject.next(signaling.Message.decode(new Uint8Array(evt.data)));
             }
@@ -139,8 +139,8 @@ export class Signaling {
                 ws.close(MESSAGE_ERROR_CODE, err.message);
             }
         };
-        ws.onerror = err => subject.error(err);
-        ws.onclose = closeEvt => {
+        ws.onerror = (err) => subject.error(err);
+        ws.onclose = (closeEvt) => {
             clearInterval(this.pingInterval);
             this.setState(SignalingState.CLOSED);
             if (closeEvt.code === 1000) {
@@ -152,7 +152,7 @@ export class Signaling {
         };
         return {
             onMessage: subject.asObservable(),
-            send: msg => {
+            send: (msg) => {
                 if (ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CLOSED) {
                     ws.send(signaling.Message.encode(signaling.Message.create(msg)).finish());
                 }
@@ -173,7 +173,7 @@ export class Signaling {
                 this.setState(SignalingState.CLOSED);
                 clearInterval(this.pingInterval);
                 subject.complete();
-            }
+            },
         };
     }
     getFullURL(params) {

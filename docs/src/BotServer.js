@@ -1,22 +1,15 @@
-import { WebSocketBuilder } from './WebSocketBuilder';
-import { defaultOptions } from './service/WebChannel';
-import { WebGroup, wcs } from './WebChannelFacade';
 import { Channel } from './Channel';
-let uws;
-let url;
-try {
-    url = require('url');
-    uws = require('uws');
-}
-catch (err) {
-    console.error(err.message);
-}
+import { defaultOptions } from './service/WebChannel';
+import { wcs, WebGroup } from './WebChannelFacade';
+import { WebSocketBuilder } from './WebSocketBuilder';
+const url = require('url');
+const uws = require('uws');
 export const bsDefaults = {
     bot: {
         url: '',
         server: undefined,
-        perMessageDeflate: false
-    }
+        perMessageDeflate: false,
+    },
 };
 /**
  * BotServer can listen on web socket. A peer can invite bot to join his `WebChannel`.
@@ -40,21 +33,21 @@ export class BotServer {
             bot: {
                 url: '',
                 server: undefined,
-                perMessageDeflate: false
-            }
+                perMessageDeflate: false,
+            },
         };
-        let wcOptions = Object.assign({}, defaultOptions, options);
+        const wcOptions = Object.assign({}, defaultOptions, options);
         this.wcSettings = {
             topology: wcOptions.topology,
             signalingURL: wcOptions.signalingURL,
             iceServers: wcOptions.iceServers,
-            autoRejoin: false
+            autoRejoin: false,
         };
         this.botSettings = Object.assign({}, botDefaults.bot, options.bot);
         this.serverSettings = {
             perMessageDeflate: this.botSettings.perMessageDeflate,
             verifyClient: (info) => this.validateConnection(info),
-            server: this.botSettings.server
+            server: this.botSettings.server,
         };
         /**
          * @type {WebSocketServer}
@@ -84,7 +77,7 @@ export class BotServer {
      * Get `WebChannel` identified by its `id`.
      */
     getWebGroup(id) {
-        for (let wg of this.webGroups) {
+        for (const wg of this.webGroups) {
             if (id === wg.id) {
                 return wg;
             }
@@ -95,11 +88,11 @@ export class BotServer {
         this.server = new uws.Server(this.serverSettings);
         const serverListening = this.serverSettings.server || this.server;
         serverListening.on('listening', () => WebSocketBuilder.listen().next(this.url));
-        this.server.on('error', err => {
+        this.server.on('error', (err) => {
             WebSocketBuilder.listen().next('');
             this.onError(err);
         });
-        this.server.on('connection', ws => {
+        this.server.on('connection', (ws) => {
             const { pathname, query } = url.parse(ws.upgradeReq.url, true);
             const wcId = Number(query.wcId);
             let wg = this.getWebGroup(wcId);

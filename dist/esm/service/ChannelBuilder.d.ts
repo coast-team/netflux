@@ -1,6 +1,6 @@
 import { Observable } from 'rxjs/Observable';
-import { Service } from './Service';
 import { Channel } from '../Channel';
+import { Service } from './Service';
 import { WebChannel } from './WebChannel';
 /**
  * It is responsible to build a channel between two peers with a help of `WebSocketBuilder` and `WebRTCBuilder`.

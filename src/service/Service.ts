@@ -1,10 +1,10 @@
-import { Subject } from 'rxjs/Subject'
 import { Observable } from 'rxjs/Observable'
+import { Subject } from 'rxjs/Subject'
 
-import { service } from '../proto'
 import { Channel } from '../Channel'
+import { service } from '../proto'
 
-export interface ServiceMessageEncoded {
+export interface IServiceMessageEncoded {
   channel: Channel,
   senderId: number,
   recipientId: number,
@@ -12,7 +12,7 @@ export interface ServiceMessageEncoded {
   content: Uint8Array
 }
 
-export interface ServiceMessageDecoded {
+export interface IServiceMessageDecoded {
   channel: Channel,
   senderId: number,
   recipientId: number,
@@ -36,14 +36,14 @@ export abstract class Service {
   /*
    * Service message observable.
    */
-  protected onServiceMessage: Observable<ServiceMessageDecoded>
+  protected onServiceMessage: Observable<IServiceMessageDecoded>
 
   /*
    * Service protobujs object generated from `.proto` file.
    */
   private protoMessage: any
 
-  constructor (id: number, protoMessage: any, serviceMessageSubject?: Subject<ServiceMessageEncoded>) {
+  constructor (id: number, protoMessage: any, serviceMessageSubject?: Subject<IServiceMessageEncoded>) {
     this.serviceId = id
     this.protoMessage = protoMessage
     if (serviceMessageSubject !== undefined) {
@@ -60,8 +60,8 @@ export abstract class Service {
     return service.Message.encode(
       service.Message.create({
         id: this.serviceId,
-        content: this.protoMessage.encode(this.protoMessage.create(msg)).finish()
-      })
+        content: this.protoMessage.encode(this.protoMessage.create(msg)).finish(),
+      }),
     ).finish()
   }
 
@@ -74,14 +74,14 @@ export abstract class Service {
     return this.protoMessage.decode(bytes)
   }
 
-  protected setupServiceMessage (serviceMessageSubject: Subject<ServiceMessageEncoded>): void {
+  protected setupServiceMessage (serviceMessageSubject: Subject<IServiceMessageEncoded>): void {
     this.onServiceMessage = serviceMessageSubject
       .filter(({ id }) => id === this.serviceId)
       .map(({ channel, senderId, recipientId, content }) => ({
         channel,
         senderId,
         recipientId,
-        msg: this.protoMessage.decode(content)
+        msg: this.protoMessage.decode(content),
       }))
   }
 }

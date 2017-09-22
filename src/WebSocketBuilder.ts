@@ -1,10 +1,10 @@
-import { Subject } from 'rxjs/Subject'
+import 'rxjs/add/operator/filter'
 import { BehaviorSubject } from 'rxjs/BehaviorSubject'
 import { Observable } from 'rxjs/Observable'
-import 'rxjs/add/operator/filter'
+import { Subject } from 'rxjs/Subject'
 
-import { isURL, isBrowser } from './misc/Util'
 import { Channel } from './Channel'
+import { isBrowser, isURL } from './misc/Util'
 import { WebChannel } from './service/WebChannel'
 
 const CONNECT_TIMEOUT_FOR_NODE = 3000
@@ -47,8 +47,8 @@ export class WebSocketBuilder {
         if (isURL(url) && url.search(/^wss?/) !== -1) {
           const ws = new global.WebSocket(url)
           ws.onopen = () => resolve(ws)
-          ws.onclose = closeEvt => reject(new Error(
-            `WebSocket connection to '${url}' failed with code ${closeEvt.code}: ${closeEvt.reason}`
+          ws.onclose = (closeEvt) => reject(new Error(
+            `WebSocket connection to '${url}' failed with code ${closeEvt.code}: ${closeEvt.reason}`,
           ))
 
           if (!isBrowser) {
@@ -82,8 +82,8 @@ export class WebSocketBuilder {
         const ws = new global.WebSocket(fullUrl)
         const channel = new Channel(this.wc, ws, {id})
         ws.onopen = () => resolve(channel)
-        ws.onclose = closeEvt => reject(new Error(
-          `WebSocket connection to '${url}' failed with code ${closeEvt.code}: ${closeEvt.reason}`
+        ws.onclose = (closeEvt) => reject(new Error(
+          `WebSocket connection to '${url}' failed with code ${closeEvt.code}: ${closeEvt.reason}`,
         ))
 
         if (!isBrowser) {

@@ -1,19 +1,19 @@
 import { Subject } from 'rxjs/Subject';
 import { Channel } from '../Channel';
-import { Service, ServiceMessageEncoded } from './Service';
 import { Signaling, SignalingState } from '../Signaling';
-import { ChannelBuilder } from './ChannelBuilder';
-import { WebSocketBuilder } from '../WebSocketBuilder';
-import { WebRTCBuilder } from './WebRTCBuilder';
 import { UserDataType } from '../UserMessage';
-import { TopologyInterface, TopologyEnum } from './topology/Topology';
-export interface Options {
+import { WebSocketBuilder } from '../WebSocketBuilder';
+import { ChannelBuilder } from './ChannelBuilder';
+import { IServiceMessageEncoded, Service } from './Service';
+import { ITopology, TopologyEnum } from './topology/Topology';
+import { WebRTCBuilder } from './WebRTCBuilder';
+export interface IWebChannelOptions {
     topology?: TopologyEnum;
     signalingURL?: string;
     iceServers?: RTCIceServer[];
     autoRejoin?: boolean;
 }
-export declare const defaultOptions: Options;
+export declare const defaultOptions: IWebChannelOptions;
 export declare enum WebChannelState {
     JOINING = 0,
     JOINED = 1,
@@ -74,11 +74,11 @@ export declare class WebChannel extends Service {
      */
     onMessage: (id: number, msg: UserDataType, isBroadcast: boolean) => void;
     joinSubject: Subject<Error | void>;
-    serviceMessageSubject: Subject<ServiceMessageEncoded>;
+    serviceMessageSubject: Subject<IServiceMessageEncoded>;
     webRTCBuilder: WebRTCBuilder;
     webSocketBuilder: WebSocketBuilder;
     channelBuilder: ChannelBuilder;
-    topologyService: TopologyInterface;
+    topologyService: ITopology;
     state: WebChannelState;
     signaling: Signaling;
     private userMsg;
@@ -136,7 +136,7 @@ export declare class WebChannel extends Service {
         senderId?: number;
         recipientId?: number;
         isService?: boolean;
-        content?: any;
+        content?: Uint8Array;
     }): void;
     /**
      * Broadcast service message to the network.
@@ -145,14 +145,14 @@ export declare class WebChannel extends Service {
         senderId?: number;
         recipientId?: number;
         isService?: boolean;
-        content?: any;
+        content?: Uint8Array;
         isMeIncluded?: boolean;
     }): void;
     encode({senderId, recipientId, isService, content}?: {
         senderId?: number;
         recipientId?: number;
         isService?: boolean;
-        content?: any;
+        content?: Uint8Array;
     }): Uint8Array;
     /**
      * Message handler. All messages arrive here first.

@@ -1,14 +1,14 @@
-import { Subject } from 'rxjs/Subject';
 import { Observable } from 'rxjs/Observable';
+import { Subject } from 'rxjs/Subject';
 import { Channel } from '../Channel';
-export interface ServiceMessageEncoded {
+export interface IServiceMessageEncoded {
     channel: Channel;
     senderId: number;
     recipientId: number;
     id: number;
     content: Uint8Array;
 }
-export interface ServiceMessageDecoded {
+export interface IServiceMessageDecoded {
     channel: Channel;
     senderId: number;
     recipientId: number;
@@ -23,9 +23,9 @@ export interface ServiceMessageDecoded {
  */
 export declare abstract class Service {
     serviceId: number;
-    protected onServiceMessage: Observable<ServiceMessageDecoded>;
+    protected onServiceMessage: Observable<IServiceMessageDecoded>;
     private protoMessage;
-    constructor(id: number, protoMessage: any, serviceMessageSubject?: Subject<ServiceMessageEncoded>);
+    constructor(id: number, protoMessage: any, serviceMessageSubject?: Subject<IServiceMessageEncoded>);
     /**
      * Encode service message for sending over the network.
      *
@@ -38,5 +38,5 @@ export declare abstract class Service {
      * @return  Service specific message object
      */
     decode(bytes: Uint8Array): any;
-    protected setupServiceMessage(serviceMessageSubject: Subject<ServiceMessageEncoded>): void;
+    protected setupServiceMessage(serviceMessageSubject: Subject<IServiceMessageEncoded>): void;
 }

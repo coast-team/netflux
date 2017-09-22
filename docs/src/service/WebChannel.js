@@ -1,15 +1,15 @@
 import { Subject } from 'rxjs/Subject';
 import { Channel } from '../Channel';
-import { FullMesh } from './topology/FullMesh';
-import { Service } from './Service';
+import { generateKey, isURL, MAX_KEY_LENGTH } from '../misc/Util';
+import { Message, service, webChannel } from '../proto';
 import { Signaling, SignalingState } from '../Signaling';
-import { ChannelBuilder } from './ChannelBuilder';
-import { WebSocketBuilder } from '../WebSocketBuilder';
-import { WebRTCBuilder } from './WebRTCBuilder';
-import { Message, webChannel, service } from '../proto';
 import { UserMessage } from '../UserMessage';
-import { isURL, generateKey, MAX_KEY_LENGTH } from '../misc/Util';
+import { WebSocketBuilder } from '../WebSocketBuilder';
+import { ChannelBuilder } from './ChannelBuilder';
+import { Service } from './Service';
+import { FullMesh } from './topology/FullMesh';
 import { TopologyEnum } from './topology/Topology';
+import { WebRTCBuilder } from './WebRTCBuilder';
 const REJOIN_TIMEOUT = 3000;
 /**
  * Timout for ping `WebChannel` in milliseconds.
@@ -20,9 +20,9 @@ export const defaultOptions = {
     topology: TopologyEnum.FULL_MESH,
     signalingURL: 'wss://www.coedit.re:10473',
     iceServers: [
-        { urls: 'stun:stun3.l.google.com:19302' }
+        { urls: 'stun:stun3.l.google.com:19302' },
     ],
-    autoRejoin: true
+    autoRejoin: true,
 };
 export var WebChannelState;
 (function (WebChannelState) {
@@ -42,7 +42,7 @@ export class WebChannel extends Service {
     /**
      * @param options Web channel settings
      */
-    constructor({ topology = defaultOptions.topology, signalingURL = defaultOptions.signalingURL, iceServers = defaultOptions.iceServers, autoRejoin = defaultOptions.autoRejoin } = {}) {
+    constructor({ topology = defaultOptions.topology, signalingURL = defaultOptions.signalingURL, iceServers = defaultOptions.iceServers, autoRejoin = defaultOptions.autoRejoin, } = {}) {
         super(10, webChannel.Message);
         // PUBLIC MEMBERS
         this.members = [];
@@ -62,7 +62,7 @@ export class WebChannel extends Service {
         this.userMsg = new UserMessage();
         // Signaling init
         this.signaling = new Signaling(this, signalingURL);
-        this.signaling.onChannel.subscribe(ch => this.initChannel(ch));
+        this.signaling.onChannel.subscribe((ch) => this.initChannel(ch));
         this.signaling.onState.subscribe((state) => {
             this.onSignalingStateChange(state);
             switch (state) {
@@ -89,7 +89,7 @@ export class WebChannel extends Service {
         this.webRTCBuilder = new WebRTCBuilder(this, iceServers);
         this.webSocketBuilder = new WebSocketBuilder(this);
         this.channelBuilder = new ChannelBuilder(this);
-        this.onServiceMessage.subscribe(msg => this.treatServiceMessage(msg), err => console.error('service/WebChannel inner message error', err));
+        this.onServiceMessage.subscribe((msg) => this.treatServiceMessage(msg), (err) => console.error('service/WebChannel inner message error', err));
         // Topology init
         this.setTopology(topology);
         this.joinSubject = new Subject();
@@ -121,7 +121,7 @@ export class WebChannel extends Service {
                 throw new Error('Failed to join: the key is an empty string');
             }
             else if (key.length > MAX_KEY_LENGTH) {
-                throw new Error(`Failed to join : the key length of ${key.length} exceeds the maximum of ${MAX_KEY_LENGTH} charecters`);
+                throw new Error(`Failed to join : the key length of ${key.length} exceeds the maximum of ${MAX_KEY_LENGTH} characters`);
             }
             this.key = key;
             this.isRejoinDisabled = !this.autoRejoin;
@@ -138,7 +138,7 @@ export class WebChannel extends Service {
     invite(url) {
         if (isURL(url)) {
             this.webSocketBuilder.connect(`${url}/invite?wcId=${this.id}&senderId=${this.myId}`)
-                .then(connection => this.initChannel(new Channel(this, connection)))
+                .then((connection) => this.initChannel(new Channel(this, connection)))
                 .catch((err) => console.error(`Failed to invite the bot ${url}: ${err.message}`));
         }
         else {
@@ -171,10 +171,10 @@ export class WebChannel extends Service {
             const msg = {
                 senderId: this.myId,
                 recipientId: 0,
-                isService: false
+                isService: false,
             };
             const chunkedData = this.userMsg.encode(data);
-            for (let chunk of chunkedData) {
+            for (const chunk of chunkedData) {
                 msg.content = chunk;
                 this.topologyService.send(msg);
             }
@@ -188,10 +188,10 @@ export class WebChannel extends Service {
             const msg = {
                 senderId: this.myId,
                 recipientId: id,
-                isService: false
+                isService: false,
             };
             const chunkedData = this.userMsg.encode(data);
-            for (let chunk of chunkedData) {
+            for (const chunk of chunkedData) {
                 msg.content = chunk;
                 this.topologyService.sendTo(msg);
             }
@@ -208,7 +208,7 @@ export class WebChannel extends Service {
                     this.pingTime = Date.now();
                     this.maxTime = 0;
                     this.pongNb = 0;
-                    this.pingFinish = delay => resolve(delay);
+                    this.pingFinish = (delay) => resolve(delay);
                     this.sendProxy({ content: super.encode({ ping: true }) });
                     setTimeout(() => resolve(PING_TIMEOUT), PING_TIMEOUT);
                 }
@@ -232,7 +232,7 @@ export class WebChannel extends Service {
     /**
      * Send service message to a particular peer in the network.
      */
-    sendToProxy({ senderId = this.myId, recipientId = this.myId, isService = true, content = undefined } = {}) {
+    sendToProxy({ senderId = this.myId, recipientId = this.myId, isService = true, content } = {}) {
         const msg = { senderId, recipientId, isService, content };
         if (msg.recipientId === this.myId) {
             this.treatMessage(undefined, msg);
@@ -244,14 +244,14 @@ export class WebChannel extends Service {
     /**
      * Broadcast service message to the network.
      */
-    sendProxy({ senderId = this.myId, recipientId = 0, isService = true, content = undefined, isMeIncluded = false } = {}) {
+    sendProxy({ senderId = this.myId, recipientId = 0, isService = true, content, isMeIncluded = false } = {}) {
         const msg = { senderId, recipientId, isService, content };
         if (isMeIncluded) {
             this.treatMessage(undefined, msg);
         }
         this.topologyService.send(msg);
     }
-    encode({ senderId = this.myId, recipientId = 0, isService = true, content = undefined } = {}) {
+    encode({ senderId = this.myId, recipientId = 0, isService = true, content } = {}) {
         const msg = { senderId, recipientId, isService, content };
         return Message.encode(Message.create(msg)).finish();
     }
@@ -292,7 +292,7 @@ export class WebChannel extends Service {
             this.serviceMessageSubject.next(Object.assign({
                 channel,
                 senderId: msg.senderId,
-                recipientId: msg.recipientId
+                recipientId: msg.recipientId,
             }, service.Message.decode(msg.content)));
         }
     }
@@ -325,7 +325,7 @@ export class WebChannel extends Service {
                     this.topologyService.initJoining(channel);
                     channel.send(this.encode({
                         recipientId: channel.peerId,
-                        content: super.encode({ initOk: { members: this.members } })
+                        content: super.encode({ initOk: { members: this.members } }),
                     }));
                 }
                 break;
@@ -338,7 +338,7 @@ export class WebChannel extends Service {
             case 'ping': {
                 this.sendToProxy({
                     recipientId: channel.peerId,
-                    content: super.encode({ pong: true })
+                    content: super.encode({ pong: true }),
                 });
                 break;
             }
@@ -380,8 +380,8 @@ export class WebChannel extends Service {
             content: super.encode({ init: {
                     topology: this.topology,
                     wcId: this.id,
-                    generatedIds: this.members
-                } })
+                    generatedIds: this.members,
+                } }),
         });
         ch.send(msg);
     }

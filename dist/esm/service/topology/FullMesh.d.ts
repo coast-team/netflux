@@ -1,8 +1,8 @@
 import 'rxjs/add/operator/map';
-import { TopologyInterface } from './Topology';
-import { IMessage } from '../../proto';
 import { Channel } from '../../Channel';
+import { IMessage } from '../../proto';
 import { Service } from '../Service';
+import { ITopology } from './Topology';
 /**
  * {@link FullMesh} identifier.
  * @ignore
@@ -13,9 +13,8 @@ export declare const FULL_MESH = 3;
  * Fully connected web channel manager. Implements fully connected topology
  * network, when each peer is connected to each other.
  *
- * @extends module:webChannelManager~WebChannelTopologyInterface
  */
-export declare class FullMesh extends Service implements TopologyInterface {
+export declare class FullMesh extends Service implements ITopology {
     private wc;
     /**
      * Neighbours peers.

@@ -44,7 +44,7 @@ export class UserMessage {
       for (let i = 0; i < numberOfChunks; i++) {
         const length = Math.min(
           MAX_USER_MSG_SIZE,
-          bytes.length - MAX_USER_MSG_SIZE * i
+          bytes.length - MAX_USER_MSG_SIZE * i,
         )
         const begin = MAX_USER_MSG_SIZE * i
         const end = begin + length
@@ -151,7 +151,7 @@ class Buffer {
   append (data: Uint8Array, chunkNb: number): Uint8Array | undefined {
     let i = chunkNb * MAX_USER_MSG_SIZE
     this.currentLength += data.length
-    for (let d of data) {
+    for (const d of data) {
       this.fullData[i++] = d
     }
     return this.currentLength === this.fullData.length ? this.fullData : undefined

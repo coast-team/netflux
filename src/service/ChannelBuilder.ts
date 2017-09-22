@@ -1,16 +1,16 @@
-import { Subject } from 'rxjs/Subject'
 import { Observable } from 'rxjs/Observable'
+import { Subject } from 'rxjs/Subject'
 
-import { Service, ServiceMessageDecoded } from './Service'
+import { Channel } from '../Channel'
 import { channelBuilder } from '../proto'
 import { WebSocketBuilder } from '../WebSocketBuilder'
-import { Channel } from '../Channel'
-import { WebRTCBuilder } from './WebRTCBuilder'
+import { IServiceMessageDecoded, Service } from './Service'
 import { WebChannel } from './WebChannel'
+import { WebRTCBuilder } from './WebRTCBuilder'
 
 const ME = {
   wsUrl: '',
-  isWrtcSupport: false
+  isWrtcSupport: false,
 }
 
 let request
@@ -37,14 +37,14 @@ export class ChannelBuilder extends Service {
     ME.isWrtcSupport = WebRTCBuilder.isSupported
     if (ME.isWrtcSupport) {
       wc.webRTCBuilder.onChannelFromWebChannel()
-        .subscribe(ch => this.handleChannel(ch))
+        .subscribe((ch) => this.handleChannel(ch))
     }
 
     // Listen on Channels as WebSockets if the peer is listening on WebSockets
-    WebSocketBuilder.listen().subscribe(url => {
+    WebSocketBuilder.listen().subscribe((url) => {
       ME.wsUrl = url
       if (url) {
-        wc.webSocketBuilder.onChannel.subscribe(ch => this.handleChannel(ch))
+        wc.webSocketBuilder.onChannel.subscribe((ch) => this.handleChannel(ch))
       }
 
       // Update preconstructed messages (for performance only)
@@ -54,7 +54,7 @@ export class ChannelBuilder extends Service {
     })
 
     // Subscribe to WebChannel internal messages
-    this.onServiceMessage.subscribe(msg => this.treatServiceMessage(msg))
+    this.onServiceMessage.subscribe((msg) => this.treatServiceMessage(msg))
   }
 
   get onChannel (): Observable<Channel> {
@@ -73,7 +73,7 @@ export class ChannelBuilder extends Service {
         }, reject: (err: Error) => {
           this.pendingRequests.delete(id)
           reject(err)
-        }
+        },
       })
       this.wc.sendToProxy({ recipientId: id, content: request })
     })
@@ -88,7 +88,7 @@ export class ChannelBuilder extends Service {
     }
   }
 
-  private treatServiceMessage ({ channel, senderId, recipientId, msg }: ServiceMessageDecoded): void {
+  private treatServiceMessage ({ channel, senderId, recipientId, msg }: IServiceMessageDecoded): void {
     switch (msg.type) {
     case 'failed': {
       console.error('treatServiceMessage ERROR: ', msg.failed)
@@ -103,8 +103,8 @@ export class ChannelBuilder extends Service {
       // If remote peer is listening on WebSocket, connect to him
       if (wsUrl) {
         this.wc.webSocketBuilder.connectTo(wsUrl, senderId)
-          .then(ch => this.handleChannel(ch))
-          .catch(reason => {
+          .then((ch) => this.handleChannel(ch))
+          .catch((reason) => {
             if (ME.wsUrl) {
               // Ask him to connect to me via WebSocket
               this.wc.sendToProxy({ recipientId: senderId, content: response })
@@ -112,7 +112,7 @@ export class ChannelBuilder extends Service {
               // Send failed reason
               this.wc.sendToProxy({
                 recipientId: senderId,
-                content: super.encode({ failed: `Failed to establish a socket: ${reason}` })
+                content: super.encode({ failed: `Failed to establish a socket: ${reason}` }),
               })
             }
           })
@@ -125,19 +125,19 @@ export class ChannelBuilder extends Service {
         } else if (ME.isWrtcSupport) {
           console.log(this.wc.myId + ' calling connectOverWebChannel with ', senderId)
           this.wc.webRTCBuilder.connectOverWebChannel(senderId)
-            .then(ch => this.handleChannel(ch))
-            .catch(reason => {
+            .then((ch) => this.handleChannel(ch))
+            .catch((reason) => {
               // Send failed reason
               this.wc.sendToProxy({
                 recipientId: senderId,
-                content: super.encode({ failed: `Failed establish a data channel: ${reason}` })
+                content: super.encode({ failed: `Failed establish a data channel: ${reason}` }),
               })
             })
         } else {
           // Send failed reason
           this.wc.sendToProxy({
             recipientId: senderId,
-            content: super.encode({ failed: 'No common connectors' })
+            content: super.encode({ failed: 'No common connectors' }),
           })
         }
       // If peer is not listening on WebSocket and is not able to connect over RTCDataChannel
@@ -149,7 +149,7 @@ export class ChannelBuilder extends Service {
           // Send failed reason
           this.wc.sendToProxy({
             recipientId: senderId,
-            content: super.encode({ failed: 'No common connectors' })
+            content: super.encode({ failed: 'No common connectors' }),
           })
         }
       }
@@ -159,8 +159,8 @@ export class ChannelBuilder extends Service {
       const { wsUrl } = msg.response
       if (wsUrl) {
         this.wc.webSocketBuilder.connectTo(wsUrl, senderId)
-          .then(ch => this.handleChannel(ch))
-          .catch(reason => {
+          .then((ch) => this.handleChannel(ch))
+          .catch((reason) => {
             this.pendingRequests.get(senderId)
               .reject(new Error(`Failed to establish a socket: ${reason}`))
           })

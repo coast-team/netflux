@@ -1,3 +1,4 @@
+/* tslint:disable */
 /// <reference types="text-encoding" />
 
 /**
@@ -42,7 +43,5 @@ interface RTCDataChannel extends EventTarget {
   onclose: (event: Event) => void
   onmessage: (event: Event) => void
   close (): void
-  send (data: string)
-  send (data: ArrayBuffer)
-  send (data: Blob)
+  send (data: string|ArrayBuffer|Blob)
 }

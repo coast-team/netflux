@@ -2,7 +2,7 @@
 import { Server as NodeJSHttpServer } from 'http';
 import { Server as NodeJSHttpsServer } from 'https';
 import { WebGroup } from './WebChannelFacade';
-export interface BotServerOptions {
+export interface IBotServerOptions {
     url?: string;
     server: any;
     perMessageDeflate?: boolean;

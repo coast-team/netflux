@@ -134,7 +134,7 @@ class Buffer {
     append(data, chunkNb) {
         let i = chunkNb * MAX_USER_MSG_SIZE;
         this.currentLength += data.length;
-        for (let d of data) {
+        for (const d of data) {
             this.fullData[i++] = d;
         }
         return this.currentLength === this.fullData.length ? this.fullData : undefined;

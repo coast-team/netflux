@@ -1,5 +1,5 @@
-import { WebChannel, WebChannelState, Options as WebGroupOptions, defaultOptions } from './service/WebChannel'
 import { TopologyEnum } from './service/topology/Topology'
+import { defaultOptions, IWebChannelOptions as WebGroupOptions, WebChannel, WebChannelState } from './service/WebChannel'
 import { SignalingState } from './Signaling'
 
 /**
@@ -193,7 +193,7 @@ export class WebGroup {
       configurable: false,
       enumerable: true,
       get: () => wc.autoRejoin,
-      set: (value: boolean) => wc.autoRejoin = value
+      set: (value: boolean) => wc.autoRejoin = value,
     })
     /**
      * This handler is called when a message has been received from the group.
@@ -213,7 +213,7 @@ export class WebGroup {
         } else {
           wc.onMessage = handler
         }
-      }
+      },
     })
     /**
      * This handler is called when a new member with `id` as identifier has joined the group.
@@ -230,7 +230,7 @@ export class WebGroup {
         } else {
           wc.onMemberJoin = handler
         }
-      }
+      },
     })
     /**
      * This handler is called when a member with `id` as identifier hes left the group.
@@ -247,7 +247,7 @@ export class WebGroup {
         } else {
           wc.onMemberLeave = handler
         }
-      }
+      },
     })
     /**
      * This handler is called when the group state has changed.
@@ -264,7 +264,7 @@ export class WebGroup {
         } else {
           wc.onStateChange = handler
         }
-      }
+      },
     })
     /**
      * This handler is called when the signaling state has changed.
@@ -281,7 +281,7 @@ export class WebGroup {
         } else {
           wc.onSignalingStateChange = handler
         }
-      }
+      },
     })
   }
 

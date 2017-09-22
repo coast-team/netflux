@@ -1,10 +1,10 @@
-import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/map';
-import { Service } from './Service';
-import { signaling } from '../proto';
+import { Observable } from 'rxjs/Observable';
 import { Channel } from '../Channel';
+import { signaling } from '../proto';
+import { Service } from './Service';
 import { WebChannel } from './WebChannel';
-export interface SignalingConnection {
+export interface ISignalingConnection {
     onMessage: Observable<any>;
     send: (msg: signaling.IContent) => void;
 }
@@ -34,12 +34,12 @@ export declare class WebRTCBuilder extends Service {
      * Listen on `RTCDataChannel` from Signaling server.
      * Starts to listen on **SDP answer**.
      */
-    onChannelFromSignaling(signaling: SignalingConnection): Observable<Channel>;
+    onChannelFromSignaling(signaling: ISignalingConnection): Observable<Channel>;
     /**
      * Establish an `RTCDataChannel` with a peer identified by `id` trough Signaling server.
      * Starts by sending an **SDP offer**.
      */
-    connectOverSignaling(signaling: SignalingConnection): Promise<Channel>;
+    connectOverSignaling(signaling: ISignalingConnection): Promise<Channel>;
     private establishChannel(onMessage, send, peerId?);
     private onChannel(onMessage, send);
     private localCandidates(pc);

@@ -1,6 +1,6 @@
-import { Service } from '../Service';
 import { Channel } from '../../Channel';
 import { IMessage } from '../../proto';
+import { Service } from '../Service';
 export declare enum TopologyEnum {
     FULL_MESH = 0,
 }
@@ -16,7 +16,7 @@ export declare enum TopologyEnum {
  *
  * @see FullMesh
  */
-export interface TopologyInterface extends Service {
+export interface ITopology extends Service {
     /**
      * As a network member, add a new peer into the network.
      *

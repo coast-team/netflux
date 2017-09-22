@@ -46,14 +46,19 @@ catch (err) {
                 configurable: true,
                 enumerable: false,
                 value: global,
-                writable: true
+                writable: true,
             });
         }
         else {
             global.global = global;
         }
     }
-})(Function('return this')()); // tslint:disable-line
+})(typeof undefined === 'object' ? undefined : Function('return this')()); // tslint:disable-line
+
+var TopologyEnum;
+(function (TopologyEnum) {
+    TopologyEnum[TopologyEnum["FULL_MESH"] = 0] = "FULL_MESH";
+})(TopologyEnum || (TopologyEnum = {}));
 
 var commonjsGlobal = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
@@ -5840,7 +5845,7 @@ var Signaling = (function () {
                                     var content = _a.content;
                                     return content;
                                 }),
-                                send: function (msg) { return _this.rxWs.send({ content: msg }); }
+                                send: function (msg) { return _this.rxWs.send({ content: msg }); },
                             })
                                 .then(function () { return _this.setState(SignalingState$1.FIRST_CONNECTED); })
                                 .catch(function (err) {
@@ -5873,7 +5878,7 @@ var Signaling = (function () {
                         var content = _a.content;
                         return content;
                     }),
-                    send: function (msg) { return _this.rxWs.send({ content: msg }); }
+                    send: function (msg) { return _this.rxWs.send({ content: msg }); },
                 }).subscribe(function (ch) { return _this.channelSubject.next(ch); });
             }
         }
@@ -5942,7 +5947,7 @@ var Signaling = (function () {
                 _this.setState(SignalingState$1.CLOSED);
                 clearInterval(_this.pingInterval);
                 subject.complete();
-            }
+            },
         };
     };
     Signaling.prototype.getFullURL = function (params) {
@@ -5955,11 +5960,6 @@ var Signaling = (function () {
     };
     return Signaling;
 }());
-
-var TopologyEnum;
-(function (TopologyEnum) {
-    TopologyEnum[TopologyEnum["FULL_MESH"] = 0] = "FULL_MESH";
-})(TopologyEnum || (TopologyEnum = {}));
 
 /*! *****************************************************************************
 Copyright (c) Microsoft Corporation. All rights reserved.
@@ -6103,7 +6103,7 @@ var Channel = (function () {
             console.info("NETFLUX: " + wc.myId + " ONCLOSE CALLBACK " + _this.peerId, {
                 readyState: _this.connection.readyState,
                 iceConnectionState: _this.rtcPeerConnection ? _this.rtcPeerConnection.iceConnectionState : '',
-                signalingState: _this.rtcPeerConnection ? _this.rtcPeerConnection.signalingState : ''
+                signalingState: _this.rtcPeerConnection ? _this.rtcPeerConnection.signalingState : '',
             });
             _this.connection.onclose = function () { };
             _this.connection.onmessage = function () { };
@@ -6129,7 +6129,7 @@ var Channel = (function () {
             console.info("NETFLUX: " + this.wc.myId + " CLOSE " + this.peerId, {
                 readyState: this.connection.readyState,
                 iceConnectionState: this.rtcPeerConnection ? this.rtcPeerConnection.iceConnectionState : '',
-                signalingState: this.rtcPeerConnection ? this.rtcPeerConnection.signalingState : ''
+                signalingState: this.rtcPeerConnection ? this.rtcPeerConnection.signalingState : '',
             });
             this.connection.close();
             if (isFirefox && this.rtcPeerConnection && this.rtcPeerConnection.signalingState !== 'closed') {
@@ -6167,446 +6167,163 @@ var Channel = (function () {
     return Channel;
 }());
 
-"use strict";
-var __extends$6 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
-
 /**
- * Applies a given `project` function to each value emitted by the source
- * Observable, and emits the resulting values as an Observable.
- *
- * <span class="informal">Like [Array.prototype.map()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map),
- * it passes each source value through a transformation function to get
- * corresponding output values.</span>
- *
- * <img src="./img/map.png" width="100%">
- *
- * Similar to the well known `Array.prototype.map` function, this operator
- * applies a projection to each value and emits that projection in the output
- * Observable.
- *
- * @example <caption>Map every click to the clientX position of that click</caption>
- * var clicks = Rx.Observable.fromEvent(document, 'click');
- * var positions = clicks.map(ev => ev.clientX);
- * positions.subscribe(x => console.log(x));
- *
- * @see {@link mapTo}
- * @see {@link pluck}
- *
- * @param {function(value: T, index: number): R} project The function to apply
- * to each `value` emitted by the source Observable. The `index` parameter is
- * the number `i` for the i-th emission that has happened since the
- * subscription, starting from the number `0`.
- * @param {any} [thisArg] An optional argument to define what `this` is in the
- * `project` function.
- * @return {Observable<R>} An Observable that emits the values from the source
- * Observable transformed by the given `project` function.
- * @method map
- * @owner Observable
+ * Maximum size of the user message sent over `Channel` (without metadata).
  */
-function map$2(project, thisArg) {
-    if (typeof project !== 'function') {
-        throw new TypeError('argument is not a function. Are you looking for `mapTo()`?');
-    }
-    return this.lift(new MapOperator(project, thisArg));
-}
-var map_2 = map$2;
-var MapOperator = (function () {
-    function MapOperator(project, thisArg) {
-        this.project = project;
-        this.thisArg = thisArg;
-    }
-    MapOperator.prototype.call = function (subscriber, source) {
-        return source.subscribe(new MapSubscriber(subscriber, this.project, this.thisArg));
-    };
-    return MapOperator;
-}());
-var MapOperator_1 = MapOperator;
+var MAX_USER_MSG_SIZE = 15000;
 /**
- * We need this JSDoc comment for affecting ESDoc.
- * @ignore
- * @extends {Ignored}
+ * Maximum message id number.
  */
-var MapSubscriber = (function (_super) {
-    __extends$6(MapSubscriber, _super);
-    function MapSubscriber(destination, project, thisArg) {
-        _super.call(this, destination);
-        this.project = project;
-        this.count = 0;
-        this.thisArg = thisArg || this;
-    }
-    // NOTE: This looks unoptimized, but it's actually purposefully NOT
-    // using try/catch optimizations.
-    MapSubscriber.prototype._next = function (value) {
-        var result;
-        try {
-            result = this.project.call(this.thisArg, value, this.count++);
-        }
-        catch (err) {
-            this.destination.error(err);
-            return;
-        }
-        this.destination.next(result);
-    };
-    return MapSubscriber;
-}(Subscriber_1.Subscriber));
-
-
-var map_1 = {
-	map: map_2,
-	MapOperator: MapOperator_1
-};
-
-"use strict";
-
-
-Observable_1.Observable.prototype.map = map_1.map;
-
+var MAX_MSG_ID_SIZE = 65535;
+var textEncoder = new global.TextEncoder();
+var textDecoder = new global.TextDecoder();
 /**
- * Services are specific classes. Instance of such class communicates via
- * network with another instance of the same class. Indeed each peer in the
- * network instantiates its own service.
- * Each service has `.proto` file containing the desciption of its
- * communication protocol.
+ * Message builder service is responsible to build messages to send them over the
+ * `WebChannel` and treat messages received by the `WebChannel`. It also manage
+ * big messages (more then 16ko) sent by users. Internal messages are always less
+ * 16ko.
  */
-var Service$1 = (function () {
-    function Service(id, protoMessage, serviceMessageSubject) {
-        this.serviceId = id;
-        this.protoMessage = protoMessage;
-        if (serviceMessageSubject !== undefined) {
-            this.setupServiceMessage(serviceMessageSubject);
-        }
+var UserMessage = (function () {
+    function UserMessage() {
+        this.buffers = new Map();
     }
     /**
-     * Encode service message for sending over the network.
-     *
-     * @param msg Service specific message object
+     * Encode user message for sending over the network.
      */
-    Service.prototype.encode = function (msg) {
-        return service.Message.encode(service.Message.create({
-            id: this.serviceId,
-            content: this.protoMessage.encode(this.protoMessage.create(msg)).finish()
-        })).finish();
+    UserMessage.prototype.encode = function (data) {
+        var _a = this.userDataToType(data), type = _a.type, bytes = _a.bytes;
+        var msg = { length: bytes.length, type: type };
+        if (bytes.length <= MAX_USER_MSG_SIZE) {
+            msg.full = bytes;
+            return [user.Message.encode(user.Message.create(msg)).finish()];
+        }
+        else {
+            msg.chunk = { id: Math.ceil(Math.random() * MAX_MSG_ID_SIZE) };
+            var numberOfChunks = Math.ceil(bytes.length / MAX_USER_MSG_SIZE);
+            var res = new Array(numberOfChunks);
+            for (var i = 0; i < numberOfChunks; i++) {
+                var length_1 = Math.min(MAX_USER_MSG_SIZE, bytes.length - MAX_USER_MSG_SIZE * i);
+                var begin = MAX_USER_MSG_SIZE * i;
+                var end = begin + length_1;
+                msg.chunk.number = i;
+                msg.chunk.content = new Uint8Array(bytes.slice(begin, end));
+                res[i] = user.Message.encode(user.Message.create(msg)).finish();
+            }
+            return res;
+        }
     };
     /**
-     * Decode service message received from the network.
-     *
-     * @return  Service specific message object
+     * Decode user message received from the network.
      */
-    Service.prototype.decode = function (bytes) {
-        return this.protoMessage.decode(bytes);
+    UserMessage.prototype.decode = function (bytes, senderId) {
+        var msg = user.Message.decode(bytes);
+        var content;
+        switch (msg.content) {
+            case 'full': {
+                content = msg.full;
+                break;
+            }
+            case 'chunk': {
+                var buffer = this.getBuffer(senderId, msg.chunk.id);
+                if (buffer === undefined) {
+                    buffer = new Buffer$1(msg.length, msg.chunk.content, msg.chunk.number);
+                    this.setBuffer(senderId, msg.chunk.id, buffer);
+                    content = undefined;
+                }
+                else {
+                    content = buffer.append(msg.chunk.content, msg.chunk.number);
+                }
+                break;
+            }
+            default: {
+                throw new Error('Unknown message integrity');
+            }
+        }
+        if (content !== undefined) {
+            switch (msg.type) {
+                case user.Message.Type.U_INT_8_ARRAY:
+                    return content;
+                case user.Message.Type.STRING:
+                    return textDecoder.decode(content);
+                default:
+                    throw new Error('Unknown message type');
+            }
+        }
+        return content;
     };
-    Service.prototype.setupServiceMessage = function (serviceMessageSubject) {
-        var _this = this;
-        this.onServiceMessage = serviceMessageSubject
-            .filter(function (_a) {
-            var id = _a.id;
-            return id === _this.serviceId;
-        })
-            .map(function (_a) {
-            var channel = _a.channel, senderId = _a.senderId, recipientId = _a.recipientId, content = _a.content;
-            return ({
-                channel: channel,
-                senderId: senderId,
-                recipientId: recipientId,
-                msg: _this.protoMessage.decode(content)
-            });
-        });
+    /**
+     * Identify the user data type.
+     */
+    UserMessage.prototype.userDataToType = function (data) {
+        if (data instanceof Uint8Array) {
+            return { type: user.Message.Type.U_INT_8_ARRAY, bytes: data };
+        }
+        else if (typeof data === 'string') {
+            return { type: user.Message.Type.STRING, bytes: textEncoder.encode(data) };
+        }
+        else if (data instanceof String) {
+            return { type: user.Message.Type.STRING, bytes: textEncoder.encode('' + data) };
+        }
+        else {
+            throw new Error('Message neigther a string type or a Uint8Array type');
+        }
     };
-    return Service;
+    UserMessage.prototype.getBuffer = function (peerId, msgId) {
+        var buffers = this.buffers.get(peerId);
+        if (buffers !== undefined) {
+            return buffers.get(msgId);
+        }
+        return undefined;
+    };
+    UserMessage.prototype.setBuffer = function (peerId, msgId, buffer) {
+        var buffers = this.buffers.get(peerId);
+        if (buffers === undefined) {
+            buffers = new Map();
+        }
+        buffers.set(msgId, buffer);
+        this.buffers.set(peerId, buffers);
+    };
+    return UserMessage;
 }());
-
 /**
- * {@link FullMesh} identifier.
- * @ignore
- * @type {number}
+ * Buffer class used when the user message exceeds the message size limit which
+ * may be sent over a `Channel`. Each buffer is identified by `WebChannel` id,
+ * peer id of the sender and message id (in case if the peer sent more then
+ * 1 big message at a time).
  */
-var FULL_MESH = 3;
-var MAX_JOIN_ATTEMPTS = 100;
-/**
- * Fully connected web channel manager. Implements fully connected topology
- * network, when each peer is connected to each other.
- *
- * @extends module:webChannelManager~WebChannelTopologyInterface
- */
-var FullMesh = (function (_super) {
-    __extends$5(FullMesh, _super);
-    function FullMesh(wc) {
-        var _this = _super.call(this, FULL_MESH, fullMesh.Message, wc.serviceMessageSubject) || this;
-        _this.wc = wc;
-        _this.channels = new Set();
-        _this.jps = new Map();
-        _this.joinAttempts = 0;
-        _this.intermediaryChannel = undefined;
-        _this.joinSucceedContent = _super.prototype.encode.call(_this, { joinSucceed: true });
-        _this.onServiceMessage.subscribe(function (msg) { return _this.handleSvcMsg(msg); });
-        _this.wc.channelBuilder.onChannel.subscribe(function (ch) { return _this.peerJoined(ch); });
-        return _this;
+var Buffer$1 = (function () {
+    function Buffer(totalLength, data, chunkNb) {
+        this.fullData = new Uint8Array(totalLength);
+        this.currentLength = 0;
+        this.append(data, chunkNb);
     }
-    FullMesh.prototype.clean = function () { };
-    FullMesh.prototype.addJoining = function (ch, members) {
-        console.info(this.wc.myId + ' addJoining ' + ch.peerId);
-        this.peerJoined(ch);
-        this.checkMembers(ch, members);
-    };
-    FullMesh.prototype.initJoining = function (ch) {
-        console.info(this.wc.myId + ' initJoining ' + ch.peerId);
-        this.peerJoined(ch);
-        this.joinAttempts = 0;
-        this.intermediaryChannel = ch;
-    };
-    FullMesh.prototype.send = function (msg) {
-        var bytes = this.wc.encode(msg);
+    /**
+     * Add a chunk of message to the buffer.
+     */
+    Buffer.prototype.append = function (data, chunkNb) {
+        var i = chunkNb * MAX_USER_MSG_SIZE;
+        this.currentLength += data.length;
         try {
-            for (var _a = __values(this.channels), _b = _a.next(); !_b.done; _b = _a.next()) {
-                var ch = _b.value;
-                ch.send(bytes);
+            for (var data_1 = __values(data), data_1_1 = data_1.next(); !data_1_1.done; data_1_1 = data_1.next()) {
+                var d = data_1_1.value;
+                this.fullData[i++] = d;
             }
         }
         catch (e_1_1) { e_1 = { error: e_1_1 }; }
         finally {
             try {
-                if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+                if (data_1_1 && !data_1_1.done && (_a = data_1.return)) _a.call(data_1);
             }
             finally { if (e_1) throw e_1.error; }
         }
-        var e_1, _c;
+        return this.currentLength === this.fullData.length ? this.fullData : undefined;
+        var e_1, _a;
     };
-    FullMesh.prototype.forward = function (msg) { };
-    FullMesh.prototype.sendTo = function (msg) {
-        var bytes = this.wc.encode(msg);
-        try {
-            for (var _a = __values(this.channels), _b = _a.next(); !_b.done; _b = _a.next()) {
-                var ch = _b.value;
-                if (ch.peerId === msg.recipientId) {
-                    ch.send(bytes);
-                    return;
-                }
-            }
-        }
-        catch (e_2_1) { e_2 = { error: e_2_1 }; }
-        finally {
-            try {
-                if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
-            }
-            finally { if (e_2) throw e_2.error; }
-        }
-        if (this.intermediaryChannel) {
-            this.intermediaryChannel.send((bytes));
-            return;
-        }
-        else {
-            try {
-                for (var _d = __values(this.jps), _e = _d.next(); !_e.done; _e = _d.next()) {
-                    var _f = __read(_e.value, 2), id = _f[0], ch = _f[1];
-                    if (id === msg.recipientId) {
-                        ch.send((bytes));
-                        return;
-                    }
-                }
-            }
-            catch (e_3_1) { e_3 = { error: e_3_1 }; }
-            finally {
-                try {
-                    if (_e && !_e.done && (_g = _d.return)) _g.call(_d);
-                }
-                finally { if (e_3) throw e_3.error; }
-            }
-        }
-        console.error(this.wc.myId + ' The recipient could not be found', msg.recipientId);
-        var e_2, _c, e_3, _g;
-    };
-    FullMesh.prototype.forwardTo = function (msg) {
-        this.sendTo(msg);
-    };
-    FullMesh.prototype.leave = function () {
-        try {
-            for (var _a = __values(this.channels), _b = _a.next(); !_b.done; _b = _a.next()) {
-                var ch = _b.value;
-                ch.close();
-            }
-        }
-        catch (e_4_1) { e_4 = { error: e_4_1 }; }
-        finally {
-            try {
-                if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
-            }
-            finally { if (e_4) throw e_4.error; }
-        }
-        this.jps = new Map();
-        this.joinAttempts = 0;
-        this.intermediaryChannel = undefined;
-        var e_4, _c;
-    };
-    FullMesh.prototype.onChannelClose = function (event, channel) {
-        if (this.intermediaryChannel && this.intermediaryChannel === channel) {
-            this.leave();
-            this.wc.joinSubject.next(new Error("Intermediary channel closed: " + event.type));
-        }
-        if (this.channels.delete(channel)) {
-            this.wc.onMemberLeaveProxy(channel.peerId);
-            console.info(this.wc.myId + ' onMemberLeaveProxy ' + channel.peerId);
-        }
-    };
-    FullMesh.prototype.onChannelError = function (evt, channel) {
-        console.error("Channel error: " + evt.type);
-    };
-    FullMesh.prototype.handleSvcMsg = function (_a) {
-        var _this = this;
-        var channel = _a.channel, senderId = _a.senderId, recipientId = _a.recipientId, msg = _a.msg;
-        switch (msg.type) {
-            case 'connectTo': {
-                // Filter only missing peers
-                var missingPeers = msg.connectTo.members.filter(function (id) { return id !== _this.wc.myId && !_this.wc.members.includes(id); });
-                // Establish connection to the missing peers
-                var misssingConnections = [];
-                var _loop_1 = function (id) {
-                    misssingConnections[misssingConnections.length] = new Promise(function (resolve) {
-                        _this.wc.channelBuilder.connectTo(id)
-                            .then(function (ch) {
-                            _this.peerJoined(ch);
-                            resolve();
-                        })
-                            .catch(function (err) {
-                            console.warn(_this.wc.myId + ' failed to connect to ' + id, err.message);
-                            resolve();
-                        });
-                    });
-                };
-                try {
-                    for (var missingPeers_1 = __values(missingPeers), missingPeers_1_1 = missingPeers_1.next(); !missingPeers_1_1.done; missingPeers_1_1 = missingPeers_1.next()) {
-                        var id = missingPeers_1_1.value;
-                        _loop_1(id);
-                    }
-                }
-                catch (e_5_1) { e_5 = { error: e_5_1 }; }
-                finally {
-                    try {
-                        if (missingPeers_1_1 && !missingPeers_1_1.done && (_b = missingPeers_1.return)) _b.call(missingPeers_1);
-                    }
-                    finally { if (e_5) throw e_5.error; }
-                }
-                // Notify the intermediary peer about your members
-                Promise.all(misssingConnections).then(function () {
-                    var send = function () { return channel.send(_this.wc.encode({
-                        recipientId: channel.peerId,
-                        content: _super.prototype.encode.call(_this, { connectedTo: { members: _this.wc.members } })
-                    })); };
-                    if (_this.joinAttempts === MAX_JOIN_ATTEMPTS) {
-                        _this.leave();
-                        _this.wc.joinSubject.next(new Error('Failed to join: maximum join attempts has reached'));
-                    }
-                    else if (_this.joinAttempts > 0) {
-                        setTimeout(function () { return send(); }, 200 + 100 * Math.random());
-                    }
-                    else {
-                        send();
-                    }
-                    _this.joinAttempts++;
-                });
-                break;
-            }
-            case 'connectedTo': {
-                this.checkMembers(channel, msg.connectedTo.members);
-                break;
-            }
-            case 'joiningPeerId': {
-                if (msg.joiningPeerId !== this.wc.myId && !this.wc.members.includes(msg.joiningPeerId)) {
-                    this.jps.set(msg.joiningPeerId, channel);
-                }
-                break;
-            }
-            case 'joinSucceed': {
-                this.intermediaryChannel = undefined;
-                this.wc.joinSubject.next();
-                console.info(this.wc.myId + ' _joinSucceed ');
-                break;
-            }
-        }
-        var e_5, _b;
-    };
-    FullMesh.prototype.checkMembers = function (ch, members) {
-        var _this = this;
-        // Joining succeed if the joining peer and his intermediary peer
-        // have same members (excludings themselves)
-        if (this.wc.members.length === members.length && members.every(function (id) { return id === _this.wc.myId || _this.wc.members.includes(id); })) {
-            console.log(this.wc.myId + ' checkMembers JOIN SUCCEED');
-            ch.send(this.wc.encode({
-                recipientId: ch.peerId,
-                content: this.joinSucceedContent
-            }));
-            return;
-        }
-        // Joining did not finish, resend my members to the joining peer
-        this.wc.sendProxy({ content: _super.prototype.encode.call(this, { joiningPeerId: ch.peerId }) });
-        ch.send(this.wc.encode({
-            recipientId: ch.peerId,
-            content: _super.prototype.encode.call(this, { connectTo: { members: this.wc.members } })
-        }));
-    };
-    FullMesh.prototype.peerJoined = function (ch) {
-        this.channels.add(ch);
-        this.wc.onMemberJoinProxy(ch.peerId);
-        this.jps.delete(ch.peerId);
-        console.info(this.wc.myId + ' peerJoined ' + ch.peerId);
-    };
-    return FullMesh;
-}(Service$1));
+    return Buffer;
+}());
 
 "use strict";
-var __extends$7 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
-
-
-/**
- * @class BehaviorSubject<T>
- */
-var BehaviorSubject = (function (_super) {
-    __extends$7(BehaviorSubject, _super);
-    function BehaviorSubject(_value) {
-        _super.call(this);
-        this._value = _value;
-    }
-    Object.defineProperty(BehaviorSubject.prototype, "value", {
-        get: function () {
-            return this.getValue();
-        },
-        enumerable: true,
-        configurable: true
-    });
-    BehaviorSubject.prototype._subscribe = function (subscriber) {
-        var subscription = _super.prototype._subscribe.call(this, subscriber);
-        if (subscription && !subscription.closed) {
-            subscriber.next(this._value);
-        }
-        return subscription;
-    };
-    BehaviorSubject.prototype.getValue = function () {
-        if (this.hasError) {
-            throw this.thrownError;
-        }
-        else if (this.closed) {
-            throw new ObjectUnsubscribedError_1.ObjectUnsubscribedError();
-        }
-        else {
-            return this._value;
-        }
-    };
-    BehaviorSubject.prototype.next = function (value) {
-        _super.prototype.next.call(this, this._value = value);
-    };
-    return BehaviorSubject;
-}(Subject_1.Subject));
-var BehaviorSubject_2 = BehaviorSubject;
-
-"use strict";
-var __extends$8 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+var __extends$6 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -6672,7 +6389,7 @@ var FilterOperator = (function () {
  * @extends {Ignored}
  */
 var FilterSubscriber = (function (_super) {
-    __extends$8(FilterSubscriber, _super);
+    __extends$6(FilterSubscriber, _super);
     function FilterSubscriber(destination, predicate, thisArg) {
         _super.call(this, destination);
         this.predicate = predicate;
@@ -6706,6 +6423,55 @@ var filter_1 = {
 
 
 Observable_1.Observable.prototype.filter = filter_1.filter;
+
+"use strict";
+var __extends$7 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+
+
+/**
+ * @class BehaviorSubject<T>
+ */
+var BehaviorSubject = (function (_super) {
+    __extends$7(BehaviorSubject, _super);
+    function BehaviorSubject(_value) {
+        _super.call(this);
+        this._value = _value;
+    }
+    Object.defineProperty(BehaviorSubject.prototype, "value", {
+        get: function () {
+            return this.getValue();
+        },
+        enumerable: true,
+        configurable: true
+    });
+    BehaviorSubject.prototype._subscribe = function (subscriber) {
+        var subscription = _super.prototype._subscribe.call(this, subscriber);
+        if (subscription && !subscription.closed) {
+            subscriber.next(this._value);
+        }
+        return subscription;
+    };
+    BehaviorSubject.prototype.getValue = function () {
+        if (this.hasError) {
+            throw this.thrownError;
+        }
+        else if (this.closed) {
+            throw new ObjectUnsubscribedError_1.ObjectUnsubscribedError();
+        }
+        else {
+            return this._value;
+        }
+    };
+    BehaviorSubject.prototype.next = function (value) {
+        _super.prototype.next.call(this, this._value = value);
+    };
+    return BehaviorSubject;
+}(Subject_1.Subject));
+var BehaviorSubject_2 = BehaviorSubject;
 
 var CONNECT_TIMEOUT_FOR_NODE = 3000;
 var listenSubject = new BehaviorSubject_2('');
@@ -6793,6 +6559,158 @@ var WebSocketBuilder = (function () {
     };
     return WebSocketBuilder;
 }());
+
+/**
+ * Services are specific classes. Instance of such class communicates via
+ * network with another instance of the same class. Indeed each peer in the
+ * network instantiates its own service.
+ * Each service has `.proto` file containing the desciption of its
+ * communication protocol.
+ */
+var Service$1 = (function () {
+    function Service(id, protoMessage, serviceMessageSubject) {
+        this.serviceId = id;
+        this.protoMessage = protoMessage;
+        if (serviceMessageSubject !== undefined) {
+            this.setupServiceMessage(serviceMessageSubject);
+        }
+    }
+    /**
+     * Encode service message for sending over the network.
+     *
+     * @param msg Service specific message object
+     */
+    Service.prototype.encode = function (msg) {
+        return service.Message.encode(service.Message.create({
+            id: this.serviceId,
+            content: this.protoMessage.encode(this.protoMessage.create(msg)).finish(),
+        })).finish();
+    };
+    /**
+     * Decode service message received from the network.
+     *
+     * @return  Service specific message object
+     */
+    Service.prototype.decode = function (bytes) {
+        return this.protoMessage.decode(bytes);
+    };
+    Service.prototype.setupServiceMessage = function (serviceMessageSubject) {
+        var _this = this;
+        this.onServiceMessage = serviceMessageSubject
+            .filter(function (_a) {
+            var id = _a.id;
+            return id === _this.serviceId;
+        })
+            .map(function (_a) {
+            var channel = _a.channel, senderId = _a.senderId, recipientId = _a.recipientId, content = _a.content;
+            return ({
+                channel: channel,
+                senderId: senderId,
+                recipientId: recipientId,
+                msg: _this.protoMessage.decode(content),
+            });
+        });
+    };
+    return Service;
+}());
+
+"use strict";
+var __extends$8 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+
+/**
+ * Applies a given `project` function to each value emitted by the source
+ * Observable, and emits the resulting values as an Observable.
+ *
+ * <span class="informal">Like [Array.prototype.map()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map),
+ * it passes each source value through a transformation function to get
+ * corresponding output values.</span>
+ *
+ * <img src="./img/map.png" width="100%">
+ *
+ * Similar to the well known `Array.prototype.map` function, this operator
+ * applies a projection to each value and emits that projection in the output
+ * Observable.
+ *
+ * @example <caption>Map every click to the clientX position of that click</caption>
+ * var clicks = Rx.Observable.fromEvent(document, 'click');
+ * var positions = clicks.map(ev => ev.clientX);
+ * positions.subscribe(x => console.log(x));
+ *
+ * @see {@link mapTo}
+ * @see {@link pluck}
+ *
+ * @param {function(value: T, index: number): R} project The function to apply
+ * to each `value` emitted by the source Observable. The `index` parameter is
+ * the number `i` for the i-th emission that has happened since the
+ * subscription, starting from the number `0`.
+ * @param {any} [thisArg] An optional argument to define what `this` is in the
+ * `project` function.
+ * @return {Observable<R>} An Observable that emits the values from the source
+ * Observable transformed by the given `project` function.
+ * @method map
+ * @owner Observable
+ */
+function map$2(project, thisArg) {
+    if (typeof project !== 'function') {
+        throw new TypeError('argument is not a function. Are you looking for `mapTo()`?');
+    }
+    return this.lift(new MapOperator(project, thisArg));
+}
+var map_2 = map$2;
+var MapOperator = (function () {
+    function MapOperator(project, thisArg) {
+        this.project = project;
+        this.thisArg = thisArg;
+    }
+    MapOperator.prototype.call = function (subscriber, source) {
+        return source.subscribe(new MapSubscriber(subscriber, this.project, this.thisArg));
+    };
+    return MapOperator;
+}());
+var MapOperator_1 = MapOperator;
+/**
+ * We need this JSDoc comment for affecting ESDoc.
+ * @ignore
+ * @extends {Ignored}
+ */
+var MapSubscriber = (function (_super) {
+    __extends$8(MapSubscriber, _super);
+    function MapSubscriber(destination, project, thisArg) {
+        _super.call(this, destination);
+        this.project = project;
+        this.count = 0;
+        this.thisArg = thisArg || this;
+    }
+    // NOTE: This looks unoptimized, but it's actually purposefully NOT
+    // using try/catch optimizations.
+    MapSubscriber.prototype._next = function (value) {
+        var result;
+        try {
+            result = this.project.call(this.thisArg, value, this.count++);
+        }
+        catch (err) {
+            this.destination.error(err);
+            return;
+        }
+        this.destination.next(result);
+    };
+    return MapSubscriber;
+}(Subscriber_1.Subscriber));
+
+
+var map_1 = {
+	map: map_2,
+	MapOperator: MapOperator_1
+};
+
+"use strict";
+
+
+Observable_1.Observable.prototype.map = map_1.map;
 
 "use strict";
 var __extends$12 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
@@ -7827,7 +7745,7 @@ var WebRTCBuilder = (function (_super) {
                     observer.next({
                         candidate: evt.candidate.candidate,
                         sdpMid: evt.candidate.sdpMid,
-                        sdpMLineIndex: evt.candidate.sdpMLineIndex
+                        sdpMLineIndex: evt.candidate.sdpMLineIndex,
                     });
                 }
                 else {
@@ -7851,10 +7769,10 @@ var WebRTCBuilder = (function (_super) {
                     };
                     dc_1.onopen = function () {
                         pc.oniceconnectionstatechange = function () {
-                            console.info("'NETFLUX: " + _this.wc.myId + " iceConnectionState=" + pc.iceConnectionState.toUpperCase() + " " + channel_1.peerId, {
+                            console.info("NETFLUX: " + _this.wc.myId + " iceConnectionState=" + pc.iceConnectionState.toUpperCase() + " " + channel_1.peerId, {
                                 readyState: dc_1.readyState,
                                 iceConnectionState: pc.iceConnectionState,
-                                signalingState: pc.signalingState
+                                signalingState: pc.signalingState,
                             });
                             if (pc.iceConnectionState === 'failed') {
                                 channel_1.close();
@@ -7881,10 +7799,10 @@ var WebRTCBuilder = (function (_super) {
                     var channel = new Channel(_this.wc, dc, { rtcPeerConnection: pc, id: peerId });
                     dc.onopen = function (evt) {
                         pc.oniceconnectionstatechange = function () {
-                            console.info("'NETFLUX: " + _this.wc.myId + " iceConnectionState=" + pc.iceConnectionState.toUpperCase() + " " + channel.peerId, {
+                            console.info("NETFLUX: " + _this.wc.myId + " iceConnectionState=" + pc.iceConnectionState.toUpperCase() + " " + channel.peerId, {
                                 readyState: dc.readyState,
                                 iceConnectionState: pc.iceConnectionState,
-                                signalingState: pc.signalingState
+                                signalingState: pc.signalingState,
                             });
                             if (pc.iceConnectionState === 'failed') {
                                 channel.close();
@@ -7901,7 +7819,7 @@ var WebRTCBuilder = (function (_super) {
 
 var ME = {
     wsUrl: '',
-    isWrtcSupport: false
+    isWrtcSupport: false,
 };
 var request;
 var response;
@@ -7958,7 +7876,7 @@ var ChannelBuilder = (function (_super) {
                 }, reject: function (err) {
                     _this.pendingRequests.delete(id);
                     reject(err);
-                }
+                },
             });
             _this.wc.sendToProxy({ recipientId: id, content: request });
         });
@@ -7999,7 +7917,7 @@ var ChannelBuilder = (function (_super) {
                             // Send failed reason
                             _this.wc.sendToProxy({
                                 recipientId: senderId,
-                                content: _super.prototype.encode.call(_this, { failed: "Failed to establish a socket: " + reason })
+                                content: _super.prototype.encode.call(_this, { failed: "Failed to establish a socket: " + reason }),
                             });
                         }
                     });
@@ -8018,7 +7936,7 @@ var ChannelBuilder = (function (_super) {
                             // Send failed reason
                             _this.wc.sendToProxy({
                                 recipientId: senderId,
-                                content: _super.prototype.encode.call(_this, { failed: "Failed establish a data channel: " + reason })
+                                content: _super.prototype.encode.call(_this, { failed: "Failed establish a data channel: " + reason }),
                             });
                         });
                     }
@@ -8026,7 +7944,7 @@ var ChannelBuilder = (function (_super) {
                         // Send failed reason
                         this.wc.sendToProxy({
                             recipientId: senderId,
-                            content: _super.prototype.encode.call(this, { failed: 'No common connectors' })
+                            content: _super.prototype.encode.call(this, { failed: 'No common connectors' }),
                         });
                     }
                     // If peer is not listening on WebSocket and is not able to connect over RTCDataChannel
@@ -8040,7 +7958,7 @@ var ChannelBuilder = (function (_super) {
                         // Send failed reason
                         this.wc.sendToProxy({
                             recipientId: senderId,
-                            content: _super.prototype.encode.call(this, { failed: 'No common connectors' })
+                            content: _super.prototype.encode.call(this, { failed: 'No common connectors' }),
                         });
                     }
                 }
@@ -8064,159 +7982,240 @@ var ChannelBuilder = (function (_super) {
 }(Service$1));
 
 /**
- * Maximum size of the user message sent over `Channel` (without metadata).
+ * {@link FullMesh} identifier.
+ * @ignore
+ * @type {number}
  */
-var MAX_USER_MSG_SIZE = 15000;
+var FULL_MESH = 3;
+var MAX_JOIN_ATTEMPTS = 100;
 /**
- * Maximum message id number.
+ * Fully connected web channel manager. Implements fully connected topology
+ * network, when each peer is connected to each other.
+ *
  */
-var MAX_MSG_ID_SIZE = 65535;
-var textEncoder = new global.TextEncoder();
-var textDecoder = new global.TextDecoder();
-/**
- * Message builder service is responsible to build messages to send them over the
- * `WebChannel` and treat messages received by the `WebChannel`. It also manage
- * big messages (more then 16ko) sent by users. Internal messages are always less
- * 16ko.
- */
-var UserMessage = (function () {
-    function UserMessage() {
-        this.buffers = new Map();
+var FullMesh = (function (_super) {
+    __extends$5(FullMesh, _super);
+    function FullMesh(wc) {
+        var _this = _super.call(this, FULL_MESH, fullMesh.Message, wc.serviceMessageSubject) || this;
+        _this.wc = wc;
+        _this.channels = new Set();
+        _this.jps = new Map();
+        _this.joinAttempts = 0;
+        _this.intermediaryChannel = undefined;
+        _this.joinSucceedContent = _super.prototype.encode.call(_this, { joinSucceed: true });
+        _this.onServiceMessage.subscribe(function (msg) { return _this.handleSvcMsg(msg); });
+        _this.wc.channelBuilder.onChannel.subscribe(function (ch) { return _this.peerJoined(ch); });
+        return _this;
     }
-    /**
-     * Encode user message for sending over the network.
-     */
-    UserMessage.prototype.encode = function (data) {
-        var _a = this.userDataToType(data), type = _a.type, bytes = _a.bytes;
-        var msg = { length: bytes.length, type: type };
-        if (bytes.length <= MAX_USER_MSG_SIZE) {
-            msg.full = bytes;
-            return [user.Message.encode(user.Message.create(msg)).finish()];
-        }
-        else {
-            msg.chunk = { id: Math.ceil(Math.random() * MAX_MSG_ID_SIZE) };
-            var numberOfChunks = Math.ceil(bytes.length / MAX_USER_MSG_SIZE);
-            var res = new Array(numberOfChunks);
-            for (var i = 0; i < numberOfChunks; i++) {
-                var length_1 = Math.min(MAX_USER_MSG_SIZE, bytes.length - MAX_USER_MSG_SIZE * i);
-                var begin = MAX_USER_MSG_SIZE * i;
-                var end = begin + length_1;
-                msg.chunk.number = i;
-                msg.chunk.content = new Uint8Array(bytes.slice(begin, end));
-                res[i] = user.Message.encode(user.Message.create(msg)).finish();
-            }
-            return res;
-        }
+    FullMesh.prototype.clean = function () { };
+    FullMesh.prototype.addJoining = function (ch, members) {
+        console.info(this.wc.myId + ' addJoining ' + ch.peerId);
+        this.peerJoined(ch);
+        this.checkMembers(ch, members);
     };
-    /**
-     * Decode user message received from the network.
-     */
-    UserMessage.prototype.decode = function (bytes, senderId) {
-        var msg = user.Message.decode(bytes);
-        var content;
-        switch (msg.content) {
-            case 'full': {
-                content = msg.full;
-                break;
-            }
-            case 'chunk': {
-                var buffer = this.getBuffer(senderId, msg.chunk.id);
-                if (buffer === undefined) {
-                    buffer = new Buffer$1(msg.length, msg.chunk.content, msg.chunk.number);
-                    this.setBuffer(senderId, msg.chunk.id, buffer);
-                    content = undefined;
-                }
-                else {
-                    content = buffer.append(msg.chunk.content, msg.chunk.number);
-                }
-                break;
-            }
-            default: {
-                throw new Error('Unknown message integrity');
-            }
-        }
-        if (content !== undefined) {
-            switch (msg.type) {
-                case user.Message.Type.U_INT_8_ARRAY:
-                    return content;
-                case user.Message.Type.STRING:
-                    return textDecoder.decode(content);
-                default:
-                    throw new Error('Unknown message type');
-            }
-        }
-        return content;
+    FullMesh.prototype.initJoining = function (ch) {
+        console.info(this.wc.myId + ' initJoining ' + ch.peerId);
+        this.peerJoined(ch);
+        this.joinAttempts = 0;
+        this.intermediaryChannel = ch;
     };
-    /**
-     * Identify the user data type.
-     */
-    UserMessage.prototype.userDataToType = function (data) {
-        if (data instanceof Uint8Array) {
-            return { type: user.Message.Type.U_INT_8_ARRAY, bytes: data };
-        }
-        else if (typeof data === 'string') {
-            return { type: user.Message.Type.STRING, bytes: textEncoder.encode(data) };
-        }
-        else if (data instanceof String) {
-            return { type: user.Message.Type.STRING, bytes: textEncoder.encode('' + data) };
-        }
-        else {
-            throw new Error('Message neigther a string type or a Uint8Array type');
-        }
-    };
-    UserMessage.prototype.getBuffer = function (peerId, msgId) {
-        var buffers = this.buffers.get(peerId);
-        if (buffers !== undefined) {
-            return buffers.get(msgId);
-        }
-        return undefined;
-    };
-    UserMessage.prototype.setBuffer = function (peerId, msgId, buffer) {
-        var buffers = this.buffers.get(peerId);
-        if (buffers === undefined) {
-            buffers = new Map();
-        }
-        buffers.set(msgId, buffer);
-        this.buffers.set(peerId, buffers);
-    };
-    return UserMessage;
-}());
-/**
- * Buffer class used when the user message exceeds the message size limit which
- * may be sent over a `Channel`. Each buffer is identified by `WebChannel` id,
- * peer id of the sender and message id (in case if the peer sent more then
- * 1 big message at a time).
- */
-var Buffer$1 = (function () {
-    function Buffer(totalLength, data, chunkNb) {
-        this.fullData = new Uint8Array(totalLength);
-        this.currentLength = 0;
-        this.append(data, chunkNb);
-    }
-    /**
-     * Add a chunk of message to the buffer.
-     */
-    Buffer.prototype.append = function (data, chunkNb) {
-        var i = chunkNb * MAX_USER_MSG_SIZE;
-        this.currentLength += data.length;
+    FullMesh.prototype.send = function (msg) {
+        var bytes = this.wc.encode(msg);
         try {
-            for (var data_1 = __values(data), data_1_1 = data_1.next(); !data_1_1.done; data_1_1 = data_1.next()) {
-                var d = data_1_1.value;
-                this.fullData[i++] = d;
+            for (var _a = __values(this.channels), _b = _a.next(); !_b.done; _b = _a.next()) {
+                var ch = _b.value;
+                ch.send(bytes);
             }
         }
         catch (e_1_1) { e_1 = { error: e_1_1 }; }
         finally {
             try {
-                if (data_1_1 && !data_1_1.done && (_a = data_1.return)) _a.call(data_1);
+                if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
             }
             finally { if (e_1) throw e_1.error; }
         }
-        return this.currentLength === this.fullData.length ? this.fullData : undefined;
-        var e_1, _a;
+        var e_1, _c;
     };
-    return Buffer;
-}());
+    FullMesh.prototype.forward = function (msg) { };
+    FullMesh.prototype.sendTo = function (msg) {
+        var bytes = this.wc.encode(msg);
+        try {
+            for (var _a = __values(this.channels), _b = _a.next(); !_b.done; _b = _a.next()) {
+                var ch = _b.value;
+                if (ch.peerId === msg.recipientId) {
+                    ch.send(bytes);
+                    return;
+                }
+            }
+        }
+        catch (e_2_1) { e_2 = { error: e_2_1 }; }
+        finally {
+            try {
+                if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+            }
+            finally { if (e_2) throw e_2.error; }
+        }
+        if (this.intermediaryChannel) {
+            this.intermediaryChannel.send((bytes));
+            return;
+        }
+        else {
+            try {
+                for (var _d = __values(this.jps), _e = _d.next(); !_e.done; _e = _d.next()) {
+                    var _f = __read(_e.value, 2), id = _f[0], ch = _f[1];
+                    if (id === msg.recipientId) {
+                        ch.send((bytes));
+                        return;
+                    }
+                }
+            }
+            catch (e_3_1) { e_3 = { error: e_3_1 }; }
+            finally {
+                try {
+                    if (_e && !_e.done && (_g = _d.return)) _g.call(_d);
+                }
+                finally { if (e_3) throw e_3.error; }
+            }
+        }
+        console.error(this.wc.myId + ' The recipient could not be found', msg.recipientId);
+        var e_2, _c, e_3, _g;
+    };
+    FullMesh.prototype.forwardTo = function (msg) {
+        this.sendTo(msg);
+    };
+    FullMesh.prototype.leave = function () {
+        try {
+            for (var _a = __values(this.channels), _b = _a.next(); !_b.done; _b = _a.next()) {
+                var ch = _b.value;
+                ch.close();
+            }
+        }
+        catch (e_4_1) { e_4 = { error: e_4_1 }; }
+        finally {
+            try {
+                if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+            }
+            finally { if (e_4) throw e_4.error; }
+        }
+        this.jps = new Map();
+        this.joinAttempts = 0;
+        this.intermediaryChannel = undefined;
+        var e_4, _c;
+    };
+    FullMesh.prototype.onChannelClose = function (event, channel) {
+        if (this.intermediaryChannel && this.intermediaryChannel === channel) {
+            this.leave();
+            this.wc.joinSubject.next(new Error("Intermediary channel closed: " + event.type));
+        }
+        if (this.channels.delete(channel)) {
+            this.wc.onMemberLeaveProxy(channel.peerId);
+            console.info(this.wc.myId + ' onMemberLeaveProxy ' + channel.peerId);
+        }
+    };
+    FullMesh.prototype.onChannelError = function (evt, channel) {
+        console.error("Channel error: " + evt.type);
+    };
+    FullMesh.prototype.handleSvcMsg = function (_a) {
+        var _this = this;
+        var channel = _a.channel, senderId = _a.senderId, recipientId = _a.recipientId, msg = _a.msg;
+        switch (msg.type) {
+            case 'connectTo': {
+                // Filter only missing peers
+                var missingPeers = msg.connectTo.members.filter(function (id) { return id !== _this.wc.myId && !_this.wc.members.includes(id); });
+                // Establish connection to the missing peers
+                var misssingConnections = [];
+                var _loop_1 = function (id) {
+                    misssingConnections[misssingConnections.length] = new Promise(function (resolve) {
+                        _this.wc.channelBuilder.connectTo(id)
+                            .then(function (ch) {
+                            _this.peerJoined(ch);
+                            resolve();
+                        })
+                            .catch(function (err) {
+                            console.warn(_this.wc.myId + ' failed to connect to ' + id, err.message);
+                            resolve();
+                        });
+                    });
+                };
+                try {
+                    for (var missingPeers_1 = __values(missingPeers), missingPeers_1_1 = missingPeers_1.next(); !missingPeers_1_1.done; missingPeers_1_1 = missingPeers_1.next()) {
+                        var id = missingPeers_1_1.value;
+                        _loop_1(id);
+                    }
+                }
+                catch (e_5_1) { e_5 = { error: e_5_1 }; }
+                finally {
+                    try {
+                        if (missingPeers_1_1 && !missingPeers_1_1.done && (_b = missingPeers_1.return)) _b.call(missingPeers_1);
+                    }
+                    finally { if (e_5) throw e_5.error; }
+                }
+                // Notify the intermediary peer about your members
+                Promise.all(misssingConnections).then(function () {
+                    var send = function () { return channel.send(_this.wc.encode({
+                        recipientId: channel.peerId,
+                        content: _super.prototype.encode.call(_this, { connectedTo: { members: _this.wc.members } }),
+                    })); };
+                    if (_this.joinAttempts === MAX_JOIN_ATTEMPTS) {
+                        _this.leave();
+                        _this.wc.joinSubject.next(new Error('Failed to join: maximum join attempts has reached'));
+                    }
+                    else if (_this.joinAttempts > 0) {
+                        setTimeout(function () { return send(); }, 200 + 100 * Math.random());
+                    }
+                    else {
+                        send();
+                    }
+                    _this.joinAttempts++;
+                });
+                break;
+            }
+            case 'connectedTo': {
+                this.checkMembers(channel, msg.connectedTo.members);
+                break;
+            }
+            case 'joiningPeerId': {
+                if (msg.joiningPeerId !== this.wc.myId && !this.wc.members.includes(msg.joiningPeerId)) {
+                    this.jps.set(msg.joiningPeerId, channel);
+                }
+                break;
+            }
+            case 'joinSucceed': {
+                this.intermediaryChannel = undefined;
+                this.wc.joinSubject.next();
+                console.info(this.wc.myId + ' _joinSucceed ');
+                break;
+            }
+        }
+        var e_5, _b;
+    };
+    FullMesh.prototype.checkMembers = function (ch, members) {
+        var _this = this;
+        // Joining succeed if the joining peer and his intermediary peer
+        // have same members (excludings themselves)
+        if (this.wc.members.length === members.length && members.every(function (id) { return id === _this.wc.myId || _this.wc.members.includes(id); })) {
+            console.log(this.wc.myId + ' checkMembers JOIN SUCCEED');
+            ch.send(this.wc.encode({
+                recipientId: ch.peerId,
+                content: this.joinSucceedContent,
+            }));
+            return;
+        }
+        // Joining did not finish, resend my members to the joining peer
+        this.wc.sendProxy({ content: _super.prototype.encode.call(this, { joiningPeerId: ch.peerId }) });
+        ch.send(this.wc.encode({
+            recipientId: ch.peerId,
+            content: _super.prototype.encode.call(this, { connectTo: { members: this.wc.members } }),
+        }));
+    };
+    FullMesh.prototype.peerJoined = function (ch) {
+        this.channels.add(ch);
+        this.wc.onMemberJoinProxy(ch.peerId);
+        this.jps.delete(ch.peerId);
+        console.info(this.wc.myId + ' peerJoined ' + ch.peerId);
+    };
+    return FullMesh;
+}(Service$1));
 
 var REJOIN_TIMEOUT = 3000;
 /**
@@ -8228,9 +8227,9 @@ var defaultOptions = {
     topology: TopologyEnum.FULL_MESH,
     signalingURL: 'wss://www.coedit.re:10473',
     iceServers: [
-        { urls: 'stun:stun3.l.google.com:19302' }
+        { urls: 'stun:stun3.l.google.com:19302' },
     ],
-    autoRejoin: true
+    autoRejoin: true,
 };
 var WebChannelState;
 (function (WebChannelState) {
@@ -8333,7 +8332,7 @@ var WebChannel = (function (_super) {
                 throw new Error('Failed to join: the key is an empty string');
             }
             else if (key.length > MAX_KEY_LENGTH) {
-                throw new Error("Failed to join : the key length of " + key.length + " exceeds the maximum of " + MAX_KEY_LENGTH + " charecters");
+                throw new Error("Failed to join : the key length of " + key.length + " exceeds the maximum of " + MAX_KEY_LENGTH + " characters");
             }
             this.key = key;
             this.isRejoinDisabled = !this.autoRejoin;
@@ -8384,7 +8383,7 @@ var WebChannel = (function (_super) {
             var msg = {
                 senderId: this.myId,
                 recipientId: 0,
-                isService: false
+                isService: false,
             };
             var chunkedData = this.userMsg.encode(data);
             try {
@@ -8412,7 +8411,7 @@ var WebChannel = (function (_super) {
             var msg = {
                 senderId: this.myId,
                 recipientId: id,
-                isService: false
+                isService: false,
             };
             var chunkedData = this.userMsg.encode(data);
             try {
@@ -8469,7 +8468,7 @@ var WebChannel = (function (_super) {
      * Send service message to a particular peer in the network.
      */
     WebChannel.prototype.sendToProxy = function (_a) {
-        var _b = _a === void 0 ? {} : _a, _c = _b.senderId, senderId = _c === void 0 ? this.myId : _c, _d = _b.recipientId, recipientId = _d === void 0 ? this.myId : _d, _e = _b.isService, isService = _e === void 0 ? true : _e, _f = _b.content, content = _f === void 0 ? undefined : _f;
+        var _b = _a === void 0 ? {} : _a, _c = _b.senderId, senderId = _c === void 0 ? this.myId : _c, _d = _b.recipientId, recipientId = _d === void 0 ? this.myId : _d, _e = _b.isService, isService = _e === void 0 ? true : _e, content = _b.content;
         var msg = { senderId: senderId, recipientId: recipientId, isService: isService, content: content };
         if (msg.recipientId === this.myId) {
             this.treatMessage(undefined, msg);
@@ -8482,7 +8481,7 @@ var WebChannel = (function (_super) {
      * Broadcast service message to the network.
      */
     WebChannel.prototype.sendProxy = function (_a) {
-        var _b = _a === void 0 ? {} : _a, _c = _b.senderId, senderId = _c === void 0 ? this.myId : _c, _d = _b.recipientId, recipientId = _d === void 0 ? 0 : _d, _e = _b.isService, isService = _e === void 0 ? true : _e, _f = _b.content, content = _f === void 0 ? undefined : _f, _g = _b.isMeIncluded, isMeIncluded = _g === void 0 ? false : _g;
+        var _b = _a === void 0 ? {} : _a, _c = _b.senderId, senderId = _c === void 0 ? this.myId : _c, _d = _b.recipientId, recipientId = _d === void 0 ? 0 : _d, _e = _b.isService, isService = _e === void 0 ? true : _e, content = _b.content, _f = _b.isMeIncluded, isMeIncluded = _f === void 0 ? false : _f;
         var msg = { senderId: senderId, recipientId: recipientId, isService: isService, content: content };
         if (isMeIncluded) {
             this.treatMessage(undefined, msg);
@@ -8490,7 +8489,7 @@ var WebChannel = (function (_super) {
         this.topologyService.send(msg);
     };
     WebChannel.prototype.encode = function (_a) {
-        var _b = _a === void 0 ? {} : _a, _c = _b.senderId, senderId = _c === void 0 ? this.myId : _c, _d = _b.recipientId, recipientId = _d === void 0 ? 0 : _d, _e = _b.isService, isService = _e === void 0 ? true : _e, _f = _b.content, content = _f === void 0 ? undefined : _f;
+        var _b = _a === void 0 ? {} : _a, _c = _b.senderId, senderId = _c === void 0 ? this.myId : _c, _d = _b.recipientId, recipientId = _d === void 0 ? 0 : _d, _e = _b.isService, isService = _e === void 0 ? true : _e, content = _b.content;
         var msg = { senderId: senderId, recipientId: recipientId, isService: isService, content: content };
         return Message.encode(Message.create(msg)).finish();
     };
@@ -8531,7 +8530,7 @@ var WebChannel = (function (_super) {
             this.serviceMessageSubject.next(Object.assign({
                 channel: channel,
                 senderId: msg.senderId,
-                recipientId: msg.recipientId
+                recipientId: msg.recipientId,
             }, service.Message.decode(msg.content)));
         }
     };
@@ -8565,7 +8564,7 @@ var WebChannel = (function (_super) {
                     this.topologyService.initJoining(channel);
                     channel.send(this.encode({
                         recipientId: channel.peerId,
-                        content: _super.prototype.encode.call(this, { initOk: { members: this.members } })
+                        content: _super.prototype.encode.call(this, { initOk: { members: this.members } }),
                     }));
                 }
                 break;
@@ -8578,7 +8577,7 @@ var WebChannel = (function (_super) {
             case 'ping': {
                 this.sendToProxy({
                     recipientId: channel.peerId,
-                    content: _super.prototype.encode.call(this, { pong: true })
+                    content: _super.prototype.encode.call(this, { pong: true }),
                 });
                 break;
             }
@@ -8620,8 +8619,8 @@ var WebChannel = (function (_super) {
             content: _super.prototype.encode.call(this, { init: {
                     topology: this.topology,
                     wcId: this.id,
-                    generatedIds: this.members
-                } })
+                    generatedIds: this.members,
+                } }),
         });
         ch.send(msg);
     };
@@ -8847,7 +8846,7 @@ var WebGroup = (function () {
             configurable: false,
             enumerable: true,
             get: function () { return wc.autoRejoin; },
-            set: function (value) { return wc.autoRejoin = value; }
+            set: function (value) { return wc.autoRejoin = value; },
         });
         /**
          * This handler is called when a message has been received from the group.
@@ -8868,7 +8867,7 @@ var WebGroup = (function () {
                 else {
                     wc.onMessage = handler;
                 }
-            }
+            },
         });
         /**
          * This handler is called when a new member with `id` as identifier has joined the group.
@@ -8886,7 +8885,7 @@ var WebGroup = (function () {
                 else {
                     wc.onMemberJoin = handler;
                 }
-            }
+            },
         });
         /**
          * This handler is called when a member with `id` as identifier hes left the group.
@@ -8904,7 +8903,7 @@ var WebGroup = (function () {
                 else {
                     wc.onMemberLeave = handler;
                 }
-            }
+            },
         });
         /**
          * This handler is called when the group state has changed.
@@ -8922,7 +8921,7 @@ var WebGroup = (function () {
                 else {
                     wc.onStateChange = handler;
                 }
-            }
+            },
         });
         /**
          * This handler is called when the signaling state has changed.
@@ -8940,7 +8939,7 @@ var WebGroup = (function () {
                 else {
                     wc.onSignalingStateChange = handler;
                 }
-            }
+            },
         });
     }
     /**
@@ -9151,15 +9150,8 @@ var Topology = (function () {
  * @external {NodeJSHttpsServer} https://nodejs.org/api/https.html#https_class_https_server
  */
 
-var uws;
-var url;
-try {
-    url = require('url');
-    uws = require('uws');
-}
-catch (err) {
-    console.error(err.message);
-}
+var url = require('url');
+var uws = require('uws');
 
 /**
  * BotServer can listen on web socket. A peer can invite bot to join his `WebChannel`.
@@ -9185,21 +9177,21 @@ var BotServer = (function () {
             bot: {
                 url: '',
                 server: undefined,
-                perMessageDeflate: false
-            }
+                perMessageDeflate: false,
+            },
         };
         var wcOptions = Object.assign({}, defaultOptions, options);
         this.wcSettings = {
             topology: wcOptions.topology,
             signalingURL: wcOptions.signalingURL,
             iceServers: wcOptions.iceServers,
-            autoRejoin: false
+            autoRejoin: false,
         };
         this.botSettings = Object.assign({}, botDefaults.bot, options.bot);
         this.serverSettings = {
             perMessageDeflate: this.botSettings.perMessageDeflate,
             verifyClient: function (info) { return _this.validateConnection(info); },
-            server: this.botSettings.server
+            server: this.botSettings.server,
         };
         /**
          * @type {WebSocketServer}

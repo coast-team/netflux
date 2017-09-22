@@ -1,21 +1,15 @@
 import { Server as NodeJSHttpServer } from 'http'
 import { Server as NodeJSHttpsServer } from 'https'
 
-import { WebSocketBuilder } from './WebSocketBuilder'
-import { WebChannel, Options, defaultOptions } from './service/WebChannel'
-import { WebGroup, wcs } from './WebChannelFacade'
 import { Channel } from './Channel'
+import { defaultOptions, IWebChannelOptions, WebChannel } from './service/WebChannel'
+import { wcs, WebGroup } from './WebChannelFacade'
+import { WebSocketBuilder } from './WebSocketBuilder'
 
-let uws
-let url
-try {
-  url = require('url')
-  uws = require('uws')
-} catch (err) {
-  console.error(err.message)
-}
+const url = require('url')
+const uws = require('uws')
 
-export interface BotServerOptions {
+export interface IBotServerOptions {
   url?: string,
   server: any,
   perMessageDeflate?: boolean
@@ -25,8 +19,8 @@ export const bsDefaults = {
   bot: {
     url: '',
     server: undefined,
-    perMessageDeflate: false
-  }
+    perMessageDeflate: false,
+  },
 }
 
 /**
@@ -40,12 +34,12 @@ export class BotServer {
   public onWebGroup: (wg: WebGroup) => void
   public onError: (err) => void
 
-  private wcSettings: Options
-  private botSettings: BotServerOptions
+  private wcSettings: IWebChannelOptions
+  private botSettings: IBotServerOptions
   private serverSettings: {
     perMessageDeflate: boolean,
     verifyClient: (info: any) => boolean,
-    server: any
+    server: any,
   }
 
   /**
@@ -65,22 +59,22 @@ export class BotServer {
       bot: {
         url: '',
         server: undefined,
-        perMessageDeflate: false
-      }
+        perMessageDeflate: false,
+      },
     }
 
-    let wcOptions = Object.assign({}, defaultOptions, options)
+    const wcOptions = Object.assign({}, defaultOptions, options)
     this.wcSettings = {
       topology: wcOptions.topology,
       signalingURL: wcOptions.signalingURL,
       iceServers: wcOptions.iceServers,
-      autoRejoin: false
+      autoRejoin: false,
     }
     this.botSettings = Object.assign({}, botDefaults.bot, options.bot)
     this.serverSettings = {
       perMessageDeflate: this.botSettings.perMessageDeflate,
       verifyClient: (info) => this.validateConnection(info),
-      server: this.botSettings.server
+      server: this.botSettings.server,
     }
 
     /**
@@ -116,7 +110,7 @@ export class BotServer {
    * Get `WebChannel` identified by its `id`.
    */
   private getWebGroup (id: number): WebGroup {
-    for (let wg of this.webGroups) {
+    for (const wg of this.webGroups) {
       if (id === wg.id) {
         return wg
       }
@@ -129,12 +123,12 @@ export class BotServer {
     const serverListening = this.serverSettings.server || this.server
     serverListening.on('listening', () => WebSocketBuilder.listen().next(this.url))
 
-    this.server.on('error', err => {
+    this.server.on('error', (err) => {
       WebSocketBuilder.listen().next('')
       this.onError(err)
     })
 
-    this.server.on('connection', ws => {
+    this.server.on('connection', (ws) => {
       const {pathname, query} = url.parse(ws.upgradeReq.url, true)
       const wcId = Number(query.wcId)
       let wg = this.getWebGroup(wcId)
