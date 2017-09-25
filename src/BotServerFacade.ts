@@ -38,11 +38,11 @@ export { WebGroupBotServerOptions }
  * })
  *
  * bot.onWebGroup = (wg) => {
- *   // TODO...
+ *   // YOUR CODE
  * }
  *
  * bot.onError = (err) => {
- *   // TODO...
+ *   // YOUR CODE
  * }
  *
  * server.listen(BOT_PORT, BOT_HOST)
