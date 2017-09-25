@@ -16,9 +16,6 @@ const listenSubject = new BehaviorSubject('')
  */
 export class WebSocketBuilder {
 
-  private wc: WebChannel
-  private channelsSubject: Subject<Channel>
-
   static listen (): BehaviorSubject<string> {
     return listenSubject
   }
@@ -26,6 +23,9 @@ export class WebSocketBuilder {
   static newIncomingSocket (wc, ws, senderId) {
     wc.webSocketBuilder.channelsSubject.next(new Channel(wc, ws, {id: senderId}))
   }
+
+  private wc: WebChannel
+  private channelsSubject: Subject<Channel>
 
   constructor (wc: WebChannel) {
     this.wc = wc

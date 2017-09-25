@@ -111,9 +111,9 @@ export class Signaling {
                 this.setState(SignalingState.READY_TO_JOIN_OTHERS)
               } else {
                 this.wc.webRTCBuilder.connectOverSignaling({
-                  onMessage: this.rxWs.onMessage.filter((msg) => msg.type === 'content')
+                  onMessage: this.rxWs.onMessage.filter((m) => m.type === 'content')
                     .map(({ content }) => content),
-                  send: (msg) => this.rxWs.send({ content: msg }),
+                  send: (m) => this.rxWs.send({ content: m }),
                 })
                   .then(() => this.setState(SignalingState.FIRST_CONNECTED))
                   .catch((err) => {

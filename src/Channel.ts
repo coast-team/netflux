@@ -7,14 +7,14 @@ import { WebChannel } from './service/WebChannel'
 export class Channel {
 
   public connection: WebSocket | RTCDataChannel
-  private rtcPeerConnection: RTCPeerConnection
-  private onClose: (evt: Event) => void
-  private wc: WebChannel
   /**
    * Id of the peer who is at the other end of this channel.
    */
   public peerId: number
   public send: (data: Uint8Array) => void
+  private rtcPeerConnection: RTCPeerConnection
+  private onClose: (evt: Event) => void
+  private wc: WebChannel
 
   /**
    * Creates a channel from existing `RTCDataChannel` or `WebSocket`.

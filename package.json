@@ -46,7 +46,7 @@
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
     "predoc": "tsc -p tsconfig.docs.json",
     "doc": "esdoc -c esdoc.json",
-    "lint": "tslint src/**/*.ts -e 'src/**/*.proto' -e 'src/**/*.d.ts'",
+    "lint": "tslint src/*.ts src/**/*.ts -e 'src/**/*.proto' -e 'src/**/*.d.ts'",
     "precommit": "npm run test:coverage",
     "commitmsg": "validate-commit-msg",
     "cz": "git-cz"
