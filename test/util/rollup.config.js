@@ -4,7 +4,7 @@ import replace from 'rollup-plugin-re'
 import typescript from 'rollup-plugin-typescript2'
 
 export default {
-  input: 'test/util/botServer.js',
+  input: 'test/util/botServer.ts',
   output: {
     file: 'test/util/.botServer.js',
     format: 'cjs'

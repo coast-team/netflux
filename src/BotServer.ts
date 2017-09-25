@@ -6,109 +6,64 @@ import { defaultOptions, IWebChannelOptions, WebChannel } from './service/WebCha
 import { wcs, WebGroup } from './WebChannelFacade'
 import { WebSocketBuilder } from './WebSocketBuilder'
 
-const url = require('url')
+const urlLib = require('url')
 const uws = require('uws')
 
 export interface IBotServerOptions {
   url?: string,
-  server: any,
+  server: NodeJSHttpServer | NodeJSHttpsServer,
   perMessageDeflate?: boolean
+  webGroupOptions?: IWebChannelOptions
 }
 
-export const bsDefaults = {
-  bot: {
-    url: '',
-    server: undefined,
-    perMessageDeflate: false,
-  },
-}
-
-/**
- * BotServer can listen on web socket. A peer can invite bot to join his `WebChannel`.
- * He can also join one of the bot's `WebChannel`.
- */
 export class BotServer {
 
   public server: NodeJSHttpServer | NodeJSHttpsServer
+  public perMessageDeflate: boolean
   public webGroups: Set<WebGroup>
   public onWebGroup: (wg: WebGroup) => void
-  public onError: (err) => void
+  public onError: (err: Error) => void
 
-  private wcSettings: IWebChannelOptions
+  private listenUrl: string
+  private webSocketServer: any
+  private wcOptions: IWebChannelOptions
   private botSettings: IBotServerOptions
-  private serverSettings: {
-    perMessageDeflate: boolean,
-    verifyClient: (info: any) => boolean,
-    server: any,
-  }
 
-  /**
-   * Bot server settings are the same as for `WebChannel` (see {@link WebChannelSettings}),
-   * plus `host` and `port` parameters.
-   *
-   * @param {Object} options
-   * @param {FULL_MESH} [options.topology=FULL_MESH] Fully connected topology is the only one available for now
-   * @param {string} [options.signalingURL='wss://www.coedit.re:10443'] Signaling server url
-   * @param {RTCIceServer} [options.iceServers=[{urls:'stun3.l.google.com:19302'}]] Set of ice servers for WebRTC
-   * @param {Object} [options.bot] Options for bot server
-   * @param {string} [options.bot.url=''] Bot public URL to be shared on the p2p network
-   * @param {Object} [options.bot.server=null] A pre-created Node.js HTTP server
-   */
-  constructor (options: any = {}) {
-    const botDefaults = {
-      bot: {
-        url: '',
-        server: undefined,
-        perMessageDeflate: false,
-      },
-    }
-
-    const wcOptions = Object.assign({}, defaultOptions, options)
-    this.wcSettings = {
-      topology: wcOptions.topology,
-      signalingURL: wcOptions.signalingURL,
-      iceServers: wcOptions.iceServers,
+  constructor ({
+    url = '',
+    perMessageDeflate = false,
+    server,
+    webGroupOptions = {
+      topology: defaultOptions.topology,
+      signalingURL: defaultOptions.signalingURL,
+      iceServers: defaultOptions.iceServers,
       autoRejoin: false,
-    }
-    this.botSettings = Object.assign({}, botDefaults.bot, options.bot)
-    this.serverSettings = {
-      perMessageDeflate: this.botSettings.perMessageDeflate,
-      verifyClient: (info) => this.validateConnection(info),
-      server: this.botSettings.server,
-    }
+    },
+  }: IBotServerOptions = {server: undefined}) {
+    // public
+    this.wcOptions = Object.assign({}, defaultOptions, { autoRejoin: false }, webGroupOptions)
+    this.server = server
+    this.listenUrl = url
+    this.perMessageDeflate = perMessageDeflate
 
-    /**
-     * @type {WebSocketServer}
-     */
-    this.server = null
-
-    /**
-     * @type {WebChannel[]}
-     */
+    // private
     this.webGroups = new Set()
+    this.onWebGroup = function none () {}
+    this.onError = function none () {}
 
-    /**
-     * @type {function(wc: WebChannel)}
-     */
-    this.onWebGroup = () => {}
-
-    this.onError = () => {}
-
+    // initialize server
     this.init()
   }
 
   get url (): string {
-    if (this.botSettings.url !== '') {
-      return this.botSettings.url
+    if (this.listenUrl !== '') {
+      return this.listenUrl
     } else {
-      const address = this.serverSettings.server.address()
-      return `ws://${address.address}:${address.port}`
+      const info = this.server.address()
+      return `ws://${info.address}:${info.port}`
     }
   }
 
-  /**
-   * Get `WebChannel` identified by its `id`.
-   */
   private getWebGroup (id: number): WebGroup {
     for (const wg of this.webGroups) {
       if (id === wg.id) {
@@ -119,17 +74,21 @@ export class BotServer {
   }
 
   private init (): void {
-    this.server = new uws.Server(this.serverSettings)
-    const serverListening = this.serverSettings.server || this.server
+    this.webSocketServer = new uws.Server({
+      perMessageDeflate: this.perMessageDeflate,
+      verifyClient: (info) => this.validateConnection(info),
+      server: this.server,
+    })
+    const serverListening = this.server || this.webSocketServer
     serverListening.on('listening', () => WebSocketBuilder.listen().next(this.url))
 
-    this.server.on('error', (err) => {
+    this.webSocketServer.on('error', (err) => {
       WebSocketBuilder.listen().next('')
       this.onError(err)
     })
 
-    this.server.on('connection', (ws) => {
-      const {pathname, query} = url.parse(ws.upgradeReq.url, true)
+    this.webSocketServer.on('connection', (ws) => {
+      const {pathname, query} = urlLib.parse(ws.upgradeReq.url, true)
       const wcId = Number(query.wcId)
       let wg = this.getWebGroup(wcId)
       const senderId = Number(query.senderId)
@@ -139,7 +98,7 @@ export class BotServer {
           this.webGroups.delete(wg)
         }
         // FIXME: it is possible to create multiple WebChannels with the same ID
-        wg = new WebGroup(this.wcSettings)
+        wg = new WebGroup(this.wcOptions)
         const wc = wcs.get(wg)
         wc.id = wcId
         this.webGroups.add(wg)
@@ -160,7 +119,7 @@ export class BotServer {
   }
 
   private validateConnection (info: any): boolean {
-    const {pathname, query} = url.parse(info.req.url, true)
+    const { pathname, query } = urlLib.parse(info.req.url, true)
     const wcId = query.wcId ? Number(query.wcId) : undefined
     switch (pathname) {
     case '/invite':

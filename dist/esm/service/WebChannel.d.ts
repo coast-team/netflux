@@ -88,15 +88,7 @@ export declare class WebChannel extends Service {
     private pongNb;
     private rejoinTimer;
     private isRejoinDisabled;
-    /**
-     * @param options Web channel settings
-     */
-    constructor({topology, signalingURL, iceServers, autoRejoin}?: {
-        topology?: TopologyEnum;
-        signalingURL?: string;
-        iceServers?: RTCIceServer[];
-        autoRejoin?: boolean;
-    });
+    constructor({topology, signalingURL, iceServers, autoRejoin}?: IWebChannelOptions);
     /**
      * Join the network via a key provided by one of the network member or a `Channel`.
      */

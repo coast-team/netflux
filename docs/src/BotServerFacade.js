@@ -12,21 +12,27 @@ let botServer;
  * const http = require('http')
  * const server = http.createServer(app.callback())
  * const bot = new WebGroupBotServer({
- *   signalingURL: 'wss://mysignaling.com'
- *   iceServers: [
- *     {
- *       urls: 'stun.l.google.com:19302'
- *     },
- *     {
- *       urls: ['turn:myturn.com?transport=udp', 'turn:myturn?transport=tcp'],
- *       username: 'user',
- *       password: 'password'
- *     }
- *   ],
- *   bot: { server }
+ *   server,
+ *   webGroupOptions: {
+ *     signalingURL: 'wss://mysignaling.com'
+ *     iceServers: [
+ *       {
+ *         urls: 'stun.l.google.com:19302'
+ *       },
+ *       {
+ *         urls: ['turn:myturn.com?transport=udp', 'turn:myturn?transport=tcp'],
+ *         username: 'user',
+ *         password: 'password'
+ *       }
+ *     ]
+ *   }
  * })
  *
  * bot.onWebGroup = (wg) => {
+ *   // TODO...
+ * }
+ *
+ * bot.onError = (err) => {
  *   // TODO...
  * }
  *
@@ -35,25 +41,35 @@ let botServer;
 export class WebGroupBotServer {
     /**
      * @param {WebGroupBotServerOptions} options
-     * @param {Topology} [options.topology=Topology.FULL_MESH]
-     * @param {string} [options.signalingURL='wss://www.coedit.re:20473']
-     * @param {RTCIceServer[]} [options.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]
-     * @param {boolean} [options.autoRejoin=false]
-     * @param {Object} options.bot
-     * @param {NodeJSHttpServer|NodeJSHttpsServer} options.bot.server NodeJS http(s) server.
-     * @param {string} [options.bot.url] Bot server URL.
-     * @param {boolean} [options.bot.perMessageDeflate=false] Enable/disable permessage-deflate.
+     * @param {NodeJSHttpServer|NodeJSHttpsServer} options.server NodeJS http(s) server.
+     * @param {string} [options.url] Bot server URL.
+     * @param {boolean} [options.perMessageDeflate=false] Enable/disable permessage-deflate.
+     * @param {WebGroupOptions} options.webGroupOptions Options for each {@link WebGroup} the bot is member of.
+     * @param {Topology} [options.webGroupOptions.topology=Topology.FULL_MESH]
+     * @param {string} [options.webGroupOptions.signalingURL='wss://www.coedit.re:20473']
+     * @param {RTCIceServer[]} [options.webGroupOptions.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]
+     * @param {boolean} [options.webGroupOptions.autoRejoin=false]
      */
     constructor(options) {
         botServer = new BotServer(options);
         /**
-         * NodeJS http server instance (See https://nodejs.org/api/http.html)
+         * Read-only NodeJS http server instance.
          * @type {NodeJSHttpServer|NodeJSHttpsServer}
          */
         this.server = undefined;
         Reflect.defineProperty(this, 'server', { configurable: false, enumerable: true, get: () => botServer.server });
         /**
-         * Set of web groups the bot is member of.
+         * Read-only property of WebSocket server: permessage-deflate.
+         * @type {NodeJSHttpServer|NodeJSHttpsServer}
+         */
+        this.perMessageDeflate = undefined;
+        Reflect.defineProperty(this, 'perMessageDeflate', {
+            configurable: false,
+            enumerable: true,
+            get: () => botServer.perMessageDeflate,
+        });
+        /**
+         * Read-only set of web groups the bot is member of.
          * @type {Set<WebGroup>}
          */
         this.webGroups = undefined;
@@ -64,10 +80,41 @@ export class WebGroupBotServer {
          */
         this.url = undefined;
         Reflect.defineProperty(this, 'url', { configurable: false, enumerable: true, get: () => botServer.url });
+        /**
+         * This handler is called when the bot has been invited into a group by one of its members.
+         * @type  {function(wg: WebGroup)} handler
+         */
+        this.onWebGroup = undefined;
+        Reflect.defineProperty(this, 'onWebGroup', {
+            configurable: true,
+            enumerable: true,
+            get: () => (botServer.onWebGroup.name === 'none') ? undefined : botServer.onWebGroup,
+            set: (handler) => {
+                if (typeof handler !== 'function') {
+                    botServer.onWebGroup = function none() { };
+                }
+                else {
+                    botServer.onWebGroup = handler;
+                }
+            },
+        });
+        /**
+         * This handler is called when an error occurs on WebSocket server.
+         * @type  {function(err: Error)}
+         */
+        this.onError = undefined;
+        Reflect.defineProperty(this, 'onError', {
+            configurable: true,
+            enumerable: true,
+            get: () => (botServer.onError.name === 'none') ? undefined : botServer.onError,
+            set: (handler) => {
+                if (typeof handler !== 'function') {
+                    botServer.onError = function none() { };
+                }
+                else {
+                    botServer.onError = handler;
+                }
+            },
+        });
     }
-    /**
-     * This handler is called when the bot has been invited into a group by one of its members.
-     * @type  {function(wg: WebGroup)} handler
-     */
-    set onWebGroup(handler) { botServer.onWebGroup = handler; }
 }

@@ -1,7 +1,7 @@
 import { ReplaySubject } from 'rxjs/ReplaySubject'
 
-import { WebGroup, WebGroupState, WebGroupBotServer } from '../../src/index.node'
-import { onMessageForBot, SIGNALING_URL, BOT_HOST, BOT_PORT } from './helper'
+import { WebGroup, WebGroupBotServer, WebGroupState } from '../../src/index.node'
+import { BOT_HOST, BOT_PORT, onMessageForBot, SIGNALING_URL } from './helper'
 
 // Require dependencies
 const http = require('http')
@@ -14,8 +14,8 @@ try {
   const app = new Koa()
   const router = new Router()
   const server = http.createServer(app.callback())
-  const bot = new WebGroupBotServer({ bot: { server } })
-  const webChannels = new ReplaySubject()
+  const bot = new WebGroupBotServer({ server })
+  const webGroups: ReplaySubject<WebGroup> = new ReplaySubject()
 
   // Configure router
   router
@@ -24,10 +24,10 @@ try {
       const wcId = Number(ctx.params.wcId)
       let members = []
       let id
-      for (let wc of bot.webGroups) {
-        if (wc.id === wcId) {
-          members = wc.members
-          id = wc.myId
+      for (const wg of bot.webGroups) {
+        if (wg.id === wcId) {
+          members = wg.members
+          id = wg.myId
           break
         }
       }
@@ -37,27 +37,27 @@ try {
       const wcId = Number(ctx.params.wcId)
       let id = -1
       await new Promise ((resolve, reject) => {
-        webChannels.filter(wc => wc.id === wcId)
+        webGroups.filter((wg) => wg.id === wcId)
           .subscribe(
-            wc => {
-              if (wc.state === WebGroupState.JOINED) {
+            (wg) => {
+              if (wg.state === WebGroupState.JOINED) {
                 resolve()
               } else {
-                wc.onStateChange = state => {
+                wg.onStateChange = (state) => {
                   if (state === WebGroupState.JOINED) {
                     resolve()
                   }
                 }
               }
-              id = wc.myId
-            }
+              id = wg.myId
+            },
           )
       })
       ctx.body = {id}
     })
     .get('/send/:wcId', (ctx, next) => {
       const wcId = Number(ctx.params.wcId)
-      for (let wc of bot.webGroups) {
+      for (const wc of bot.webGroups) {
         if (wc.id === wcId) {
           // Create a message
           const msg = JSON.stringify({ id: wc.myId })
@@ -66,7 +66,7 @@ try {
           wc.send(msg)
 
           // Send the message privately to each peer
-          wc.members.forEach(id => wc.sendTo(id, msg))
+          wc.members.forEach((id) => wc.sendTo(id, msg))
           ctx.status = 200
           break
         }
@@ -80,13 +80,13 @@ try {
     .use(router.allowedMethods())
 
   // Configure bot
-  bot.onWebGroup = wc => {
+  bot.onWebGroup = (wc) => {
     wc.onMessage = (id, msg, isBroadcast) => {
       onMessageForBot(wc, id, msg, isBroadcast)
     }
-    webChannels.next(wc)
+    webGroups.next(wc)
   }
-  bot.onError = err => console.error('Bot ERROR: ', err)
+  bot.onError = (err) => console.error('Bot ERROR: ', err)
 
   // Add specific web channel to the bot for tests in Chrome
   // bot.addWebChannel(createWebChannel('CHROME'))
@@ -105,7 +105,7 @@ try {
   })
 
   // Leave all web channels before process death
-  process.on('SIGINT', () => bot.webGroups.forEach(wg => wg.leave()))
+  process.on('SIGINT', () => bot.webGroups.forEach((wg) => wg.leave()))
 } catch (err) {
   console.error('WebGroupBotServer script error: ', err)
 }
@@ -117,7 +117,5 @@ function createWebChannel (env) {
     onMessageForBot(wc, id, msg, isBroadcast)
   }
   wc.join('FIREFOX')
-    .then(() => console.info(`${env} bot is ready`))
-    .catch(reason => console.error(`${env} bot WebGroup open error: ${reason}`))
   return wc
 }

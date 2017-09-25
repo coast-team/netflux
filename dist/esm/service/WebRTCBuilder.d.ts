@@ -34,12 +34,12 @@ export declare class WebRTCBuilder extends Service {
      * Listen on `RTCDataChannel` from Signaling server.
      * Starts to listen on **SDP answer**.
      */
-    onChannelFromSignaling(signaling: ISignalingConnection): Observable<Channel>;
+    onChannelFromSignaling(signalingConnection: ISignalingConnection): Observable<Channel>;
     /**
      * Establish an `RTCDataChannel` with a peer identified by `id` trough Signaling server.
      * Starts by sending an **SDP offer**.
      */
-    connectOverSignaling(signaling: ISignalingConnection): Promise<Channel>;
+    connectOverSignaling(signalingConnection: ISignalingConnection): Promise<Channel>;
     private establishChannel(onMessage, send, peerId?);
     private onChannel(onMessage, send);
     private localCandidates(pc);

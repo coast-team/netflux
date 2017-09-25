@@ -1,5 +1,9 @@
 import { TopologyEnum } from './service/topology/Topology'
-import { defaultOptions, IWebChannelOptions as WebGroupOptions, WebChannel, WebChannelState } from './service/WebChannel'
+import {
+  defaultOptions,
+  IWebChannelOptions as WebGroupOptions,
+  WebChannel,
+  WebChannelState } from './service/WebChannel'
 import { SignalingState } from './Signaling'
 
 /**
@@ -177,7 +181,11 @@ export class WebGroup {
      * @type {SignalingState}
      */
     this.signalingState = undefined
-    Reflect.defineProperty(this, 'signalingState', { configurable: false, enumerable: true, get: () => wc.signaling.state })
+    Reflect.defineProperty(this, 'signalingState', {
+      configurable: false,
+      enumerable: true,
+      get: () => wc.signaling.state,
+    })
     /**
      * The read-only signaling server URL.
      * @type {string}

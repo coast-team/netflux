@@ -23,7 +23,7 @@
             global.global = global;
         }
     }
-})(typeof undefined === 'object' ? undefined : Function('return this')()); // tslint:disable-line
+})(Function('return this')()); // tslint:disable-line
 
 var TopologyEnum;
 (function (TopologyEnum) {
@@ -7561,10 +7561,10 @@ var WebRTCBuilder = (function (_super) {
      * Listen on `RTCDataChannel` from Signaling server.
      * Starts to listen on **SDP answer**.
      */
-    WebRTCBuilder.prototype.onChannelFromSignaling = function (signaling$$1) {
+    WebRTCBuilder.prototype.onChannelFromSignaling = function (signalingConnection) {
         var _this = this;
         if (WebRTCBuilder.isSupported) {
-            return this.onChannel(signaling$$1.onMessage.filter(function (_a) {
+            return this.onChannel(signalingConnection.onMessage.filter(function (_a) {
                 var id = _a.id;
                 return id !== 0;
             })
@@ -7582,7 +7582,7 @@ var WebRTCBuilder = (function (_super) {
                     .encode(webRTCBuilder.Message.create(msg))
                     .finish();
                 var isEnd = msg.iceCandidate !== undefined && msg.iceCandidate.candidate === '';
-                signaling$$1.send({ id: id, isEnd: isEnd, data: bytes });
+                signalingConnection.send({ id: id, isEnd: isEnd, data: bytes });
             });
         }
         throw new Error('WebRTC is not supported');
@@ -7591,10 +7591,10 @@ var WebRTCBuilder = (function (_super) {
      * Establish an `RTCDataChannel` with a peer identified by `id` trough Signaling server.
      * Starts by sending an **SDP offer**.
      */
-    WebRTCBuilder.prototype.connectOverSignaling = function (signaling$$1) {
+    WebRTCBuilder.prototype.connectOverSignaling = function (signalingConnection) {
         var _this = this;
         if (WebRTCBuilder.isSupported) {
-            return this.establishChannel(signaling$$1.onMessage.filter(function (_a) {
+            return this.establishChannel(signalingConnection.onMessage.filter(function (_a) {
                 var id = _a.id;
                 return id === 0;
             })
@@ -7605,7 +7605,7 @@ var WebRTCBuilder = (function (_super) {
                     .encode(webRTCBuilder.Message.create(msg))
                     .finish();
                 var isEnd = msg.iceCandidate !== undefined && msg.iceCandidate.candidate === '';
-                signaling$$1.send({ isEnd: isEnd, data: bytes });
+                signalingConnection.send({ isEnd: isEnd, data: bytes });
             });
         }
         throw new Error('WebRTC is not supported');
@@ -7622,8 +7622,8 @@ var WebRTCBuilder = (function (_super) {
                 if (answer) {
                     pc.setRemoteDescription({ type: 'answer', sdp: answer })
                         .then(function () {
-                        remoteCandidateStream.subscribe(function (iceCandidate) {
-                            pc.addIceCandidate(new global.RTCIceCandidate(iceCandidate))
+                        remoteCandidateStream.subscribe(function (ic) {
+                            pc.addIceCandidate(new global.RTCIceCandidate(ic))
                                 .catch(reject);
                         }, function (err) { return console.warn(err); }, function () { return subs.unsubscribe(); });
                     })
@@ -7667,7 +7667,7 @@ var WebRTCBuilder = (function (_super) {
                 else {
                     pc = new global.RTCPeerConnection(_this.rtcConfiguration);
                     remoteCandidateStream = new ReplaySubject_2();
-                    _this.localCandidates(pc).subscribe(function (iceCandidate) { return send({ iceCandidate: iceCandidate }, id); }, function (err) { return console.warn(err); }, function () { return send({ iceCandidate: { candidate: '' } }, id); });
+                    _this.localCandidates(pc).subscribe(function (ic) { return send({ iceCandidate: ic }, id); }, function (err) { return console.warn(err); }, function () { return send({ iceCandidate: { candidate: '' } }, id); });
                     _this.clients.set(id, [pc, remoteCandidateStream]);
                 }
                 if (offer) {
@@ -7678,8 +7678,8 @@ var WebRTCBuilder = (function (_super) {
                         console.error("Client \"" + id + "\" failed to establish RTCDataChannel with you: " + err.message);
                     });
                     pc.setRemoteDescription({ type: 'offer', sdp: offer })
-                        .then(function () { return remoteCandidateStream.subscribe(function (iceCandidate) {
-                        pc.addIceCandidate(new global.RTCIceCandidate(iceCandidate))
+                        .then(function () { return remoteCandidateStream.subscribe(function (ic) {
+                        pc.addIceCandidate(new global.RTCIceCandidate(ic))
                             .catch(function (err) { return console.warn(err); });
                     }, function (err) { return console.warn(err); }, function () { return _this.clients.delete(id); }); })
                         .then(function () { return pc.createAnswer(); })
@@ -7765,8 +7765,8 @@ var WebRTCBuilder = (function (_super) {
                 };
                 pc.ondatachannel = function (dcEvt) {
                     var dc = dcEvt.channel;
-                    var peerId = Number.parseInt(dc.label, 10);
-                    var channel = new Channel(_this.wc, dc, { rtcPeerConnection: pc, id: peerId });
+                    var id = Number.parseInt(dc.label, 10);
+                    var channel = new Channel(_this.wc, dc, { rtcPeerConnection: pc, id: id });
                     dc.onopen = function (evt) {
                         pc.oniceconnectionstatechange = function () {
                             console.info("NETFLUX: " + _this.wc.myId + " iceConnectionState=" + pc.iceConnectionState.toUpperCase() + " " + channel.peerId, {
@@ -8217,9 +8217,6 @@ var WebChannelState;
  */
 var WebChannel = (function (_super) {
     __extends$5(WebChannel, _super);
-    /**
-     * @param options Web channel settings
-     */
     function WebChannel(_a) {
         var _b = _a === void 0 ? {} : _a, _c = _b.topology, topology = _c === void 0 ? defaultOptions.topology : _c, _d = _b.signalingURL, signalingURL = _d === void 0 ? defaultOptions.signalingURL : _d, _e = _b.iceServers, iceServers = _e === void 0 ? defaultOptions.iceServers : _e, _f = _b.autoRejoin, autoRejoin = _f === void 0 ? defaultOptions.autoRejoin : _f;
         var _this = _super.call(this, 10, webChannel.Message) || this;
@@ -8800,7 +8797,11 @@ var WebGroup = (function () {
          * @type {SignalingState}
          */
         this.signalingState = undefined;
-        Reflect.defineProperty(this, 'signalingState', { configurable: false, enumerable: true, get: function () { return wc.signaling.state; } });
+        Reflect.defineProperty(this, 'signalingState', {
+            configurable: false,
+            enumerable: true,
+            get: function () { return wc.signaling.state; },
+        });
         /**
          * The read-only signaling server URL.
          * @type {string}

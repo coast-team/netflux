@@ -42,9 +42,21 @@ window.esdocSearchIndex = [
     "method"
   ],
   [
+    "src/botserverfacade.js~webgroupbotserver#onerror",
+    "class/src/BotServerFacade.js~WebGroupBotServer.html#instance-member-onError",
+    "src/BotServerFacade.js~WebGroupBotServer#onError",
+    "member"
+  ],
+  [
     "src/botserverfacade.js~webgroupbotserver#onwebgroup",
-    "class/src/BotServerFacade.js~WebGroupBotServer.html#instance-set-onWebGroup",
+    "class/src/BotServerFacade.js~WebGroupBotServer.html#instance-member-onWebGroup",
     "src/BotServerFacade.js~WebGroupBotServer#onWebGroup",
+    "member"
+  ],
+  [
+    "src/botserverfacade.js~webgroupbotserver#permessagedeflate",
+    "class/src/BotServerFacade.js~WebGroupBotServer.html#instance-member-perMessageDeflate",
+    "src/BotServerFacade.js~WebGroupBotServer#perMessageDeflate",
     "member"
   ],
   [

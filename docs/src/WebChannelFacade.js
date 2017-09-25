@@ -145,7 +145,11 @@ export class WebGroup {
          * @type {SignalingState}
          */
         this.signalingState = undefined;
-        Reflect.defineProperty(this, 'signalingState', { configurable: false, enumerable: true, get: () => wc.signaling.state });
+        Reflect.defineProperty(this, 'signalingState', {
+            configurable: false,
+            enumerable: true,
+            get: () => wc.signaling.state,
+        });
         /**
          * The read-only signaling server URL.
          * @type {string}

@@ -30,12 +30,12 @@ export function createAndConnectWebGroups (numberOfPeers) {
   const wgs = []
   const network = new Subject()
   const key = randKey()
-  let nextJoiningIndex = 0
+  const nextJoiningIndex = 0
 
   // Create web channels
   for (let i = 0; i < numberOfPeers; i++) {
     wgs[i] = new WebGroup({signalingURL: SIGNALING_URL})
-    wgs[i].onStateChange = state => {
+    wgs[i].onStateChange = (state) => {
       if (state === WebGroupState.JOINED) {
         network.next(++i)
       }
@@ -50,7 +50,7 @@ export function createAndConnectWebGroups (numberOfPeers) {
         } else {
           wgs[index].join(key)
         }
-      }
+      },
     )
     wgs[0].join(key)
   })
@@ -78,13 +78,13 @@ export function sendAndExpectOnMessage (wgs, isBroadcast, withBot = false) {
 
   promises.push(new Promise((resolve, reject) => {
     // Run through each agent
-    wgs.forEach(wg => {
+    wgs.forEach((wg) => {
       // Prepare message flags for check
       const flags = new Map()
-      wg.members.forEach(id => flags.set(id, {
+      wg.members.forEach((id) => flags.set(id, {
         string: false,
         arraybuffer: false,
-        chunk: false
+        chunk: false,
       }))
 
       // Handle message event
@@ -94,7 +94,7 @@ export function sendAndExpectOnMessage (wgs, isBroadcast, withBot = false) {
         const flag = flags.get(id)
         expect(flag).toBeDefined()
         if (typeof msg === 'string') {
-          let msgObj = JSON.parse(msg)
+          const msgObj = JSON.parse(msg)
           msgId = msgObj.id
 
           // Receive Chunk
@@ -139,7 +139,7 @@ export function sendAndExpectOnMessage (wgs, isBroadcast, withBot = false) {
     promises.push(new Promise((resolve, reject) => {
       // Tell bot to send messages
       tellBotToSend(wgs[0].id)
-        .then(res => {
+        .then((res) => {
           if (!res.ok) {
             reject(res.statusText)
           } else {
@@ -172,7 +172,7 @@ function sendMessages (wg, isBroadcast) {
 
   // Send the messages privately to each peer
   } else {
-    wg.members.forEach(id => {
+    wg.members.forEach((id) => {
       wg.sendTo(id, msgString)
       wg.sendTo(id, msgChunk)
       wg.sendTo(id, new Uint8Array(msgArrayBuffer.buffer))
@@ -194,10 +194,10 @@ export function env () {
 
 export function expectBotMembers (wgId, wgs, totalNumberOfPeers) {
   return fetch(`${BOT_FETCH_URL}/members/${wgId}`)
-    .then(res => res.json())
+    .then((res) => res.json())
     .then(({ id, members }) => {
       expect(members.length).toEqual(totalNumberOfPeers - 1)
-      wgs.forEach(wg => {
+      wgs.forEach((wg) => {
         expect(wg.members.includes(id)).toBeTruthy()
         expect(members.includes(wg.myId)).toBeTruthy()
       })
@@ -212,9 +212,9 @@ export function onMessageForBot (wg, id, msg, isBroadcast) {
   try {
     const data = JSON.parse(msg)
     switch (data.code) {
-      case LEAVE_CODE:
-        wg.leave()
-        break
+    case LEAVE_CODE:
+      wg.leave()
+      break
     }
   } catch (err) {
     if (isBroadcast) {
@@ -238,8 +238,8 @@ export class Scenario {
 
   get nbBrowsers () {
     let count = 0
-    for (let i = 0; i < this.template.length; i++) {
-      if (this.template[i] === 'c') {
+    for (const ch of this.template) {
+      if (ch === 'c') {
         count++
       }
     }
@@ -264,8 +264,8 @@ export class Scenario {
   }
 
   hasBot () {
-    for (let i = 0; i < this.template.length; i++) {
-      if (this.template[i] === 'b') {
+    for (const ch of this.template) {
+      if (ch === 'b') {
         return true
       }
     }

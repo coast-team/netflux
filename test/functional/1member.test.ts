@@ -1,5 +1,5 @@
 /// <reference types='jasmine' />
-import { WebGroup, WebGroupState, SignalingState, Topology } from '../../src/index.browser'
+import { SignalingState, Topology, WebGroup, WebGroupState } from '../../src/index.browser'
 import { MAX_KEY_LENGTH } from '../../src/misc/Util'
 import { SIGNALING_URL } from '../util/helper'
 
@@ -116,7 +116,7 @@ describe('🙂', () => {
       })
     }
 
-    it('should join without a provided key', done => {
+    it('should join without a provided key', (done) => {
       expectToJoin().then(() => {
         expect(wg.key).not.toBe('')
         done()
@@ -124,8 +124,9 @@ describe('🙂', () => {
       .catch((err: Error) => fail(err))
     })
 
-    it('should join with a provided key', done => {
-      const key = 'Free from desire, you realize the mystery. Caught in desire, you see only the manifestations. (Tao Te Ching)'
+    it('should join with a provided key', (done) => {
+      const key = `Free from desire, you realize the mystery.
+        Caught in desire, you see only the manifestations. (Tao Te Ching)`
       expectToJoin(key).then(() => {
         expect(wg.key).not.toBe(key)
         done()
@@ -133,22 +134,22 @@ describe('🙂', () => {
       .catch((err: Error) => fail(err))
     })
 
-    function expectToThrowErrorWhenJoin (wg: WebGroup, key: any, errMessage: string) {
-      wg.onStateChange = () => fail('onStateChange called')
-      wg.onSignalingStateChange = () => fail('onSignalingStateChange called')
-      wg.onMessage = () => fail('onMessage called')
-      wg.onMemberJoin = () => fail('onMemberJoin called')
-      wg.onMemberLeave = () => fail('onMemberLeave called')
-      expect(() => wg.join(key)).toThrowError(errMessage)
-      expect(wg.key).toBe('')
-      expect(wg.members).toEqual([])
-      expect(wg.topology).toBe(Topology.FULL_MESH)
-      expect(wg.state).toBe(WebGroupState.LEFT)
-      expect(wg.signalingState).toBe(SignalingState.CLOSED)
-      expect(wg.signalingURL).toBe(SIGNALING_URL)
-      expect(wg.autoRejoin).toBeTruthy()
-      expect(wg.state).toBe(WebGroupState.LEFT)
-      expect(wg.key).toBe('')
+    function expectToThrowErrorWhenJoin (webGroup: WebGroup, key: any, errMessage: string) {
+      webGroup.onStateChange = () => fail('onStateChange called')
+      webGroup.onSignalingStateChange = () => fail('onSignalingStateChange called')
+      webGroup.onMessage = () => fail('onMessage called')
+      webGroup.onMemberJoin = () => fail('onMemberJoin called')
+      webGroup.onMemberLeave = () => fail('onMemberLeave called')
+      expect(() => webGroup.join(key)).toThrowError(errMessage)
+      expect(webGroup.key).toBe('')
+      expect(webGroup.members).toEqual([])
+      expect(webGroup.topology).toBe(Topology.FULL_MESH)
+      expect(webGroup.state).toBe(WebGroupState.LEFT)
+      expect(webGroup.signalingState).toBe(SignalingState.CLOSED)
+      expect(webGroup.signalingURL).toBe(SIGNALING_URL)
+      expect(webGroup.autoRejoin).toBeTruthy()
+      expect(webGroup.state).toBe(WebGroupState.LEFT)
+      expect(webGroup.key).toBe('')
     }
 
     it('should throw an error, because the key is not a "string"', () => {
@@ -190,7 +191,7 @@ describe('🙂', () => {
         buy them." (Paulo Coelho)
       `
       expectToThrowErrorWhenJoin(wg, key,
-        `Failed to join : the key length of ${key.length} exceeds the maximum of ${MAX_KEY_LENGTH} charecters`
+        `Failed to join : the key length of ${key.length} exceeds the maximum of ${MAX_KEY_LENGTH} characters`,
       )
       expect(wg.myId).toBe(oldMyId)
       expect(wg.id).toBe(oldId)
@@ -204,7 +205,7 @@ describe('🙂', () => {
 
     // afterEach (() => wg.leave())
 
-    it('should do nothing', done => {
+    it('should do nothing', (done) => {
       const oldId = wg.id
       const oldMyId = wg.myId
       wg.onStateChange = () => fail('onStateChange called')
@@ -227,14 +228,14 @@ describe('🙂', () => {
       }, 100)
     })
 
-    it('should close the connection with Signaling server and leave the group after calling join', done => {
+    it('should close the connection with Signaling server and leave the group after calling join', (done) => {
       const oldId = wg.id
       const oldMyId = wg.myId
       wg.onStateChange = (state: WebGroupState) => {
         if (state === WebGroupState.JOINED) {
           setTimeout(() => {
-            wg.onStateChange = (state: WebGroupState) => expect(state).toBe(WebGroupState.LEFT)
-            wg.onSignalingStateChange = (state: SignalingState) => expect(state).toBe(SignalingState.CLOSED)
+            wg.onStateChange = (s: WebGroupState) => expect(s).toBe(WebGroupState.LEFT)
+            wg.onSignalingStateChange = (s: SignalingState) => expect(s).toBe(SignalingState.CLOSED)
             wg.onMessage = () => fail('onMessage called')
             wg.onMemberJoin = () => fail('onMemberJoin called')
             wg.onMemberLeave = () => fail('onMemberLeave called')
@@ -250,15 +251,13 @@ describe('🙂', () => {
               expect(wg.signalingURL).toBe(SIGNALING_URL)
               expect(wg.autoRejoin).toBeTruthy()
               done()
-            }, 1000)
+            }, 100)
           }, 100)
         }
       }
       wg.join()
     })
   })
-
-
 
   // it('Ping should reject', done => {
   //   wg.ping()

@@ -46,13 +46,13 @@
 </nav>
 
 <div class="content" data-ice="content"><div class="header-notice">
-  <div data-ice="importPath" class="import-path"><pre class="prettyprint"><code data-ice="importPathCode">import {WebGroupBotServer} from &apos;<span><a href="file/src/BotServerFacade.js.html#lineNumber35">netflux/src/BotServerFacade.js</a></span>&apos;</code></pre></div>
+  <div data-ice="importPath" class="import-path"><pre class="prettyprint"><code data-ice="importPathCode">import {WebGroupBotServer} from &apos;<span><a href="file/src/BotServerFacade.js.html#lineNumber41">netflux/src/BotServerFacade.js</a></span>&apos;</code></pre></div>
   <span data-ice="access">public</span>
   <span data-ice="kind">class</span>
   
   
   
-  <span data-ice="source">| <span><a href="file/src/BotServerFacade.js.html#lineNumber35">source</a></span></span>
+  <span data-ice="source">| <span><a href="file/src/BotServerFacade.js.html#lineNumber41">source</a></span></span>
 </div>
 
 <div class="self-detail detail">
@@ -92,21 +92,27 @@ He can be invited by a group member via <span><a href="class/src/WebChannelFacad
 const http = require(&apos;http&apos;)
 const server = http.createServer(app.callback())
 const bot = new WebGroupBotServer({
-  signalingURL: &apos;wss://mysignaling.com&apos;
-  iceServers: [
-    {
-      urls: &apos;stun.l.google.com:19302&apos;
-    },
-    {
-      urls: [&apos;turn:myturn.com?transport=udp&apos;, &apos;turn:myturn?transport=tcp&apos;],
-      username: &apos;user&apos;,
-      password: &apos;password&apos;
-    }
-  ],
-  bot: { server }
+  server,
+  webGroupOptions: {
+    signalingURL: &apos;wss://mysignaling.com&apos;
+    iceServers: [
+      {
+        urls: &apos;stun.l.google.com:19302&apos;
+      },
+      {
+        urls: [&apos;turn:myturn.com?transport=udp&apos;, &apos;turn:myturn?transport=tcp&apos;],
+        username: &apos;user&apos;,
+        password: &apos;password&apos;
+      }
+    ]
+  }
 })
 
 bot.onWebGroup = (wg) =&gt; {
+  // TODO...
+}
+
+bot.onError = (err) =&gt; {
   // TODO...
 }
 
@@ -164,7 +170,7 @@ server.listen(BOT_PORT, BOT_HOST)</code></pre>
     <td>
       <span class="access" data-ice="access">public</span>
       
-      <span class="kind" data-ice="kind">set</span>
+      
       
       <span class="override" data-ice="override"></span>
     </td>
@@ -174,7 +180,36 @@ server.listen(BOT_PORT, BOT_HOST)</code></pre>
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/BotServerFacade.js~WebGroupBotServer.html#instance-set-onWebGroup">onWebGroup</a></span></span><span class="code" data-ice="signature">: <span><span>function</span><span>(wg: <span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span>)</span></span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/BotServerFacade.js~WebGroupBotServer.html#instance-member-onError">onError</a></span></span><span class="code" data-ice="signature">: <span><span>function</span><span>(err: <span>Error</span>)</span></span></span>
+        </p>
+      </div>
+      <div>
+        
+        
+        <div data-ice="description"><p>This handler is called when an error occurs on WebSocket server.</p>
+</div>
+      </div>
+    </td>
+    <td>
+      
+      
+    </td>
+  </tr>
+<tr data-ice="target">
+    <td>
+      <span class="access" data-ice="access">public</span>
+      
+      
+      
+      <span class="override" data-ice="override"></span>
+    </td>
+    <td>
+      <div>
+        <p>
+          
+          
+          
+          <span class="code" data-ice="name"><span><a href="class/src/BotServerFacade.js~WebGroupBotServer.html#instance-member-onWebGroup">onWebGroup</a></span></span><span class="code" data-ice="signature">: <span><span>function</span><span>(wg: <span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span>)</span></span></span>
         </p>
       </div>
       <div>
@@ -203,13 +238,42 @@ server.listen(BOT_PORT, BOT_HOST)</code></pre>
           
           
           
+          <span class="code" data-ice="name"><span><a href="class/src/BotServerFacade.js~WebGroupBotServer.html#instance-member-perMessageDeflate">perMessageDeflate</a></span></span><span class="code" data-ice="signature">: <span><a href="https://nodejs.org/api/http.html#http_class_http_server">NodeJSHttpServer</a></span> | <span><a href="https://nodejs.org/api/https.html#https_class_https_server">NodeJSHttpsServer</a></span></span>
+        </p>
+      </div>
+      <div>
+        
+        
+        <div data-ice="description"><p>Read-only property of WebSocket server: permessage-deflate.</p>
+</div>
+      </div>
+    </td>
+    <td>
+      
+      
+    </td>
+  </tr>
+<tr data-ice="target">
+    <td>
+      <span class="access" data-ice="access">public</span>
+      
+      
+      
+      <span class="override" data-ice="override"></span>
+    </td>
+    <td>
+      <div>
+        <p>
+          
+          
+          
           <span class="code" data-ice="name"><span><a href="class/src/BotServerFacade.js~WebGroupBotServer.html#instance-member-server">server</a></span></span><span class="code" data-ice="signature">: <span><a href="https://nodejs.org/api/http.html#http_class_http_server">NodeJSHttpServer</a></span> | <span><a href="https://nodejs.org/api/https.html#https_class_https_server">NodeJSHttpsServer</a></span></span>
         </p>
       </div>
       <div>
         
         
-        <div data-ice="description"><p>NodeJS http server instance (See <a href="https://nodejs.org/api/http.html">https://nodejs.org/api/http.html</a>)</p>
+        <div data-ice="description"><p>Read-only NodeJS http server instance.</p>
 </div>
       </div>
     </td>
@@ -267,7 +331,7 @@ server.listen(BOT_PORT, BOT_HOST)</code></pre>
       <div>
         
         
-        <div data-ice="description"><p>Set of web groups the bot is member of.</p>
+        <div data-ice="description"><p>Read-only set of web groups the bot is member of.</p>
 </div>
       </div>
     </td>
@@ -299,7 +363,7 @@ server.listen(BOT_PORT, BOT_HOST)</code></pre>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/BotServerFacade.js.html#lineNumber47">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/BotServerFacade.js.html#lineNumber53">source</a></span></span>
     </span>
   </h3>
 
@@ -325,60 +389,61 @@ server.listen(BOT_PORT, BOT_HOST)</code></pre>
       <td data-ice="description"></td>
     </tr>
 <tr data-ice="property" data-depth="1">
-      <td data-ice="name" class="code" data-depth="1">options.topology</td>
-      <td data-ice="type" class="code"><span><a href="class/src/index.js~Topology.html">Topology</a></span></td>
-      <td data-ice="appendix"><ul><li>optional</li>
-<li>default: Topology.FULL_MESH</li></ul></td>
-      <td data-ice="description"></td>
-    </tr>
-<tr data-ice="property" data-depth="1">
-      <td data-ice="name" class="code" data-depth="1">options.signalingURL</td>
-      <td data-ice="type" class="code"><span>string</span></td>
-      <td data-ice="appendix"><ul><li>optional</li>
-<li>default: &apos;wss://www.coedit.re:20473&apos;</li></ul></td>
-      <td data-ice="description"></td>
-    </tr>
-<tr data-ice="property" data-depth="1">
-      <td data-ice="name" class="code" data-depth="1">options.iceServers</td>
-      <td data-ice="type" class="code"><span><span><a href="https://developer.mozilla.org/en/docs/Web/API/RTCIceServer">RTCIceServer</a></span><span>[]</span></span></td>
-      <td data-ice="appendix"><ul><li>optional</li>
-<li>default: [{urls: &apos;stun:stun3.l.google.com:19302&apos;}]</li></ul></td>
-      <td data-ice="description"></td>
-    </tr>
-<tr data-ice="property" data-depth="1">
-      <td data-ice="name" class="code" data-depth="1">options.autoRejoin</td>
-      <td data-ice="type" class="code"><span>boolean</span></td>
-      <td data-ice="appendix"><ul><li>optional</li>
-<li>default: false</li></ul></td>
-      <td data-ice="description"></td>
-    </tr>
-<tr data-ice="property" data-depth="1">
-      <td data-ice="name" class="code" data-depth="1">options.bot</td>
-      <td data-ice="type" class="code"><span>Object</span></td>
-      <td data-ice="appendix"></td>
-      <td data-ice="description"></td>
-    </tr>
-<tr data-ice="property" data-depth="2">
-      <td data-ice="name" class="code" data-depth="2">options.bot.server</td>
+      <td data-ice="name" class="code" data-depth="1">options.server</td>
       <td data-ice="type" class="code"><span><a href="https://nodejs.org/api/http.html#http_class_http_server">NodeJSHttpServer</a></span> | <span><a href="https://nodejs.org/api/https.html#https_class_https_server">NodeJSHttpsServer</a></span></td>
       <td data-ice="appendix"></td>
       <td data-ice="description"><p>NodeJS http(s) server.</p>
 </td>
     </tr>
-<tr data-ice="property" data-depth="2">
-      <td data-ice="name" class="code" data-depth="2">options.bot.url</td>
+<tr data-ice="property" data-depth="1">
+      <td data-ice="name" class="code" data-depth="1">options.url</td>
       <td data-ice="type" class="code"><span>string</span></td>
       <td data-ice="appendix"><ul><li>optional</li></ul></td>
       <td data-ice="description"><p>Bot server URL.</p>
 </td>
     </tr>
-<tr data-ice="property" data-depth="2">
-      <td data-ice="name" class="code" data-depth="2">options.bot.perMessageDeflate</td>
+<tr data-ice="property" data-depth="1">
+      <td data-ice="name" class="code" data-depth="1">options.perMessageDeflate</td>
       <td data-ice="type" class="code"><span>boolean</span></td>
       <td data-ice="appendix"><ul><li>optional</li>
 <li>default: false</li></ul></td>
       <td data-ice="description"><p>Enable/disable permessage-deflate.</p>
 </td>
+    </tr>
+<tr data-ice="property" data-depth="1">
+      <td data-ice="name" class="code" data-depth="1">options.webGroupOptions</td>
+      <td data-ice="type" class="code"><span><a href="typedef/index.html#static-typedef-WebGroupOptions">WebGroupOptions</a></span></td>
+      <td data-ice="appendix"></td>
+      <td data-ice="description"><p>Options for each <span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span> the bot is member of.</p>
+</td>
+    </tr>
+<tr data-ice="property" data-depth="2">
+      <td data-ice="name" class="code" data-depth="2">options.webGroupOptions.topology</td>
+      <td data-ice="type" class="code"><span><a href="class/src/index.js~Topology.html">Topology</a></span></td>
+      <td data-ice="appendix"><ul><li>optional</li>
+<li>default: Topology.FULL_MESH</li></ul></td>
+      <td data-ice="description"></td>
+    </tr>
+<tr data-ice="property" data-depth="2">
+      <td data-ice="name" class="code" data-depth="2">options.webGroupOptions.signalingURL</td>
+      <td data-ice="type" class="code"><span>string</span></td>
+      <td data-ice="appendix"><ul><li>optional</li>
+<li>default: &apos;wss://www.coedit.re:20473&apos;</li></ul></td>
+      <td data-ice="description"></td>
+    </tr>
+<tr data-ice="property" data-depth="2">
+      <td data-ice="name" class="code" data-depth="2">options.webGroupOptions.iceServers</td>
+      <td data-ice="type" class="code"><span><span><a href="https://developer.mozilla.org/en/docs/Web/API/RTCIceServer">RTCIceServer</a></span><span>[]</span></span></td>
+      <td data-ice="appendix"><ul><li>optional</li>
+<li>default: [{urls: &apos;stun:stun3.l.google.com:19302&apos;}]</li></ul></td>
+      <td data-ice="description"></td>
+    </tr>
+<tr data-ice="property" data-depth="2">
+      <td data-ice="name" class="code" data-depth="2">options.webGroupOptions.autoRejoin</td>
+      <td data-ice="type" class="code"><span>boolean</span></td>
+      <td data-ice="appendix"><ul><li>optional</li>
+<li>default: false</li></ul></td>
+      <td data-ice="description"></td>
     </tr>
 </tbody>
   </table>
@@ -406,10 +471,54 @@ server.listen(BOT_PORT, BOT_HOST)</code></pre>
 <div data-ice="memberDetails"><h2 data-ice="title">Public Members</h2>
 
 <div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="instance-set-onWebGroup">
+  <h3 data-ice="anchor" id="instance-member-onError">
     <span class="access" data-ice="access">public</span>
     
-    <span class="kind" data-ice="kind">set</span>
+    
+    
+    
+    
+    <span class="code" data-ice="name">onError</span><span class="code" data-ice="signature">: <span><span>function</span><span>(err: <span>Error</span>)</span></span></span>
+    <span class="right-info">
+      
+      
+      <span data-ice="source"><span><a href="file/src/BotServerFacade.js.html#lineNumber105">source</a></span></span>
+    </span>
+  </h3>
+
+  
+  
+  
+  <div data-ice="description"><p>This handler is called when an error occurs on WebSocket server.</p>
+</div>
+
+  
+
+  <div data-ice="properties">
+</div>
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+</div>
+<div class="detail" data-ice="detail">
+  <h3 data-ice="anchor" id="instance-member-onWebGroup">
+    <span class="access" data-ice="access">public</span>
+    
+    
     
     
     
@@ -417,7 +526,7 @@ server.listen(BOT_PORT, BOT_HOST)</code></pre>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/BotServerFacade.js.html#lineNumber72">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/BotServerFacade.js.html#lineNumber87">source</a></span></span>
     </span>
   </h3>
 
@@ -425,6 +534,50 @@ server.listen(BOT_PORT, BOT_HOST)</code></pre>
   
   
   <div data-ice="description"><p>This handler is called when the bot has been invited into a group by one of its members.</p>
+</div>
+
+  
+
+  <div data-ice="properties">
+</div>
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+</div>
+<div class="detail" data-ice="detail">
+  <h3 data-ice="anchor" id="instance-member-perMessageDeflate">
+    <span class="access" data-ice="access">public</span>
+    
+    
+    
+    
+    
+    <span class="code" data-ice="name">perMessageDeflate</span><span class="code" data-ice="signature">: <span><a href="https://nodejs.org/api/http.html#http_class_http_server">NodeJSHttpServer</a></span> | <span><a href="https://nodejs.org/api/https.html#https_class_https_server">NodeJSHttpsServer</a></span></span>
+    <span class="right-info">
+      
+      
+      <span data-ice="source"><span><a href="file/src/BotServerFacade.js.html#lineNumber65">source</a></span></span>
+    </span>
+  </h3>
+
+  
+  
+  
+  <div data-ice="description"><p>Read-only property of WebSocket server: permessage-deflate.</p>
 </div>
 
   
@@ -461,14 +614,14 @@ server.listen(BOT_PORT, BOT_HOST)</code></pre>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/BotServerFacade.js.html#lineNumber53">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/BotServerFacade.js.html#lineNumber59">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  <div data-ice="description"><p>NodeJS http server instance (See <a href="https://nodejs.org/api/http.html">https://nodejs.org/api/http.html</a>)</p>
+  <div data-ice="description"><p>Read-only NodeJS http server instance.</p>
 </div>
 
   
@@ -505,7 +658,7 @@ server.listen(BOT_PORT, BOT_HOST)</code></pre>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/BotServerFacade.js.html#lineNumber65">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/BotServerFacade.js.html#lineNumber81">source</a></span></span>
     </span>
   </h3>
 
@@ -549,14 +702,14 @@ server.listen(BOT_PORT, BOT_HOST)</code></pre>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/BotServerFacade.js.html#lineNumber59">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/BotServerFacade.js.html#lineNumber75">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  <div data-ice="description"><p>Set of web groups the bot is member of.</p>
+  <div data-ice="description"><p>Read-only set of web groups the bot is member of.</p>
 </div>
 
   
@@ -586,7 +739,7 @@ server.listen(BOT_PORT, BOT_HOST)</code></pre>
 </div>
 
 <footer class="footer">
-  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(1.0.2)</span><img src="./image/esdoc-logo-mini-black.png"></a>
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(1.0.3)</span><img src="./image/esdoc-logo-mini-black.png"></a>
 </footer>
 
 <script src="script/search_index.js"></script>

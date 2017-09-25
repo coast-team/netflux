@@ -16,21 +16,27 @@ export { WebGroupBotServerOptions };
  * const http = require('http')
  * const server = http.createServer(app.callback())
  * const bot = new WebGroupBotServer({
- *   signalingURL: 'wss://mysignaling.com'
- *   iceServers: [
- *     {
- *       urls: 'stun.l.google.com:19302'
- *     },
- *     {
- *       urls: ['turn:myturn.com?transport=udp', 'turn:myturn?transport=tcp'],
- *       username: 'user',
- *       password: 'password'
- *     }
- *   ],
- *   bot: { server }
+ *   server,
+ *   webGroupOptions: {
+ *     signalingURL: 'wss://mysignaling.com'
+ *     iceServers: [
+ *       {
+ *         urls: 'stun.l.google.com:19302'
+ *       },
+ *       {
+ *         urls: ['turn:myturn.com?transport=udp', 'turn:myturn?transport=tcp'],
+ *         username: 'user',
+ *         password: 'password'
+ *       }
+ *     ]
+ *   }
  * })
  *
  * bot.onWebGroup = (wg) => {
+ *   // TODO...
+ * }
+ *
+ * bot.onError = (err) => {
  *   // TODO...
  * }
  *
@@ -38,23 +44,21 @@ export { WebGroupBotServerOptions };
  */
 export declare class WebGroupBotServer {
     server: NodeJSHttpServer | NodeJSHttpsServer;
+    perMessageDeflate: boolean;
     webGroups: Set<WebGroup>;
     url: string;
+    onWebGroup: (wg: WebGroup) => void;
+    onError: (err: Error) => void;
     /**
      * @param {WebGroupBotServerOptions} options
-     * @param {Topology} [options.topology=Topology.FULL_MESH]
-     * @param {string} [options.signalingURL='wss://www.coedit.re:20473']
-     * @param {RTCIceServer[]} [options.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]
-     * @param {boolean} [options.autoRejoin=false]
-     * @param {Object} options.bot
-     * @param {NodeJSHttpServer|NodeJSHttpsServer} options.bot.server NodeJS http(s) server.
-     * @param {string} [options.bot.url] Bot server URL.
-     * @param {boolean} [options.bot.perMessageDeflate=false] Enable/disable permessage-deflate.
+     * @param {NodeJSHttpServer|NodeJSHttpsServer} options.server NodeJS http(s) server.
+     * @param {string} [options.url] Bot server URL.
+     * @param {boolean} [options.perMessageDeflate=false] Enable/disable permessage-deflate.
+     * @param {Object} options.webGroupOptions
+     * @param {Topology} [options.webGroupOptions.topology=Topology.FULL_MESH]
+     * @param {string} [options.webGroupOptions.signalingURL='wss://www.coedit.re:20473']
+     * @param {RTCIceServer[]} [options.webGroupOptions.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]
+     * @param {boolean} [options.webGroupOptions.autoRejoin=false]
      */
     constructor(options: WebGroupBotServerOptions);
-    /**
-     * This handler is called when the bot has been invited into a group by one of its members.
-     * @type  {function(wg: WebGroup)} handler
-     */
-    onWebGroup: (wg: WebGroup) => void;
 }

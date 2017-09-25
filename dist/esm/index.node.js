@@ -49,7 +49,7 @@ catch (err) {
             global.global = global;
         }
     }
-})(typeof undefined === 'object' ? undefined : Function('return this')()); // tslint:disable-line
+})(Function('return this')()); // tslint:disable-line
 
 var TopologyEnum;
 (function (TopologyEnum) {
@@ -7587,10 +7587,10 @@ var WebRTCBuilder = (function (_super) {
      * Listen on `RTCDataChannel` from Signaling server.
      * Starts to listen on **SDP answer**.
      */
-    WebRTCBuilder.prototype.onChannelFromSignaling = function (signaling$$1) {
+    WebRTCBuilder.prototype.onChannelFromSignaling = function (signalingConnection) {
         var _this = this;
         if (WebRTCBuilder.isSupported) {
-            return this.onChannel(signaling$$1.onMessage.filter(function (_a) {
+            return this.onChannel(signalingConnection.onMessage.filter(function (_a) {
                 var id = _a.id;
                 return id !== 0;
             })
@@ -7608,7 +7608,7 @@ var WebRTCBuilder = (function (_super) {
                     .encode(webRTCBuilder.Message.create(msg))
                     .finish();
                 var isEnd = msg.iceCandidate !== undefined && msg.iceCandidate.candidate === '';
-                signaling$$1.send({ id: id, isEnd: isEnd, data: bytes });
+                signalingConnection.send({ id: id, isEnd: isEnd, data: bytes });
             });
         }
         throw new Error('WebRTC is not supported');
@@ -7617,10 +7617,10 @@ var WebRTCBuilder = (function (_super) {
      * Establish an `RTCDataChannel` with a peer identified by `id` trough Signaling server.
      * Starts by sending an **SDP offer**.
      */
-    WebRTCBuilder.prototype.connectOverSignaling = function (signaling$$1) {
+    WebRTCBuilder.prototype.connectOverSignaling = function (signalingConnection) {
         var _this = this;
         if (WebRTCBuilder.isSupported) {
-            return this.establishChannel(signaling$$1.onMessage.filter(function (_a) {
+            return this.establishChannel(signalingConnection.onMessage.filter(function (_a) {
                 var id = _a.id;
                 return id === 0;
             })
@@ -7631,7 +7631,7 @@ var WebRTCBuilder = (function (_super) {
                     .encode(webRTCBuilder.Message.create(msg))
                     .finish();
                 var isEnd = msg.iceCandidate !== undefined && msg.iceCandidate.candidate === '';
-                signaling$$1.send({ isEnd: isEnd, data: bytes });
+                signalingConnection.send({ isEnd: isEnd, data: bytes });
             });
         }
         throw new Error('WebRTC is not supported');
@@ -7648,8 +7648,8 @@ var WebRTCBuilder = (function (_super) {
                 if (answer) {
                     pc.setRemoteDescription({ type: 'answer', sdp: answer })
                         .then(function () {
-                        remoteCandidateStream.subscribe(function (iceCandidate) {
-                            pc.addIceCandidate(new global.RTCIceCandidate(iceCandidate))
+                        remoteCandidateStream.subscribe(function (ic) {
+                            pc.addIceCandidate(new global.RTCIceCandidate(ic))
                                 .catch(reject);
                         }, function (err) { return console.warn(err); }, function () { return subs.unsubscribe(); });
                     })
@@ -7693,7 +7693,7 @@ var WebRTCBuilder = (function (_super) {
                 else {
                     pc = new global.RTCPeerConnection(_this.rtcConfiguration);
                     remoteCandidateStream = new ReplaySubject_2();
-                    _this.localCandidates(pc).subscribe(function (iceCandidate) { return send({ iceCandidate: iceCandidate }, id); }, function (err) { return console.warn(err); }, function () { return send({ iceCandidate: { candidate: '' } }, id); });
+                    _this.localCandidates(pc).subscribe(function (ic) { return send({ iceCandidate: ic }, id); }, function (err) { return console.warn(err); }, function () { return send({ iceCandidate: { candidate: '' } }, id); });
                     _this.clients.set(id, [pc, remoteCandidateStream]);
                 }
                 if (offer) {
@@ -7704,8 +7704,8 @@ var WebRTCBuilder = (function (_super) {
                         console.error("Client \"" + id + "\" failed to establish RTCDataChannel with you: " + err.message);
                     });
                     pc.setRemoteDescription({ type: 'offer', sdp: offer })
-                        .then(function () { return remoteCandidateStream.subscribe(function (iceCandidate) {
-                        pc.addIceCandidate(new global.RTCIceCandidate(iceCandidate))
+                        .then(function () { return remoteCandidateStream.subscribe(function (ic) {
+                        pc.addIceCandidate(new global.RTCIceCandidate(ic))
                             .catch(function (err) { return console.warn(err); });
                     }, function (err) { return console.warn(err); }, function () { return _this.clients.delete(id); }); })
                         .then(function () { return pc.createAnswer(); })
@@ -7791,8 +7791,8 @@ var WebRTCBuilder = (function (_super) {
                 };
                 pc.ondatachannel = function (dcEvt) {
                     var dc = dcEvt.channel;
-                    var peerId = Number.parseInt(dc.label, 10);
-                    var channel = new Channel(_this.wc, dc, { rtcPeerConnection: pc, id: peerId });
+                    var id = Number.parseInt(dc.label, 10);
+                    var channel = new Channel(_this.wc, dc, { rtcPeerConnection: pc, id: id });
                     dc.onopen = function (evt) {
                         pc.oniceconnectionstatechange = function () {
                             console.info("NETFLUX: " + _this.wc.myId + " iceConnectionState=" + pc.iceConnectionState.toUpperCase() + " " + channel.peerId, {
@@ -8243,9 +8243,6 @@ var WebChannelState;
  */
 var WebChannel = (function (_super) {
     __extends$5(WebChannel, _super);
-    /**
-     * @param options Web channel settings
-     */
     function WebChannel(_a) {
         var _b = _a === void 0 ? {} : _a, _c = _b.topology, topology = _c === void 0 ? defaultOptions.topology : _c, _d = _b.signalingURL, signalingURL = _d === void 0 ? defaultOptions.signalingURL : _d, _e = _b.iceServers, iceServers = _e === void 0 ? defaultOptions.iceServers : _e, _f = _b.autoRejoin, autoRejoin = _f === void 0 ? defaultOptions.autoRejoin : _f;
         var _this = _super.call(this, 10, webChannel.Message) || this;
@@ -8826,7 +8823,11 @@ var WebGroup = (function () {
          * @type {SignalingState}
          */
         this.signalingState = undefined;
-        Reflect.defineProperty(this, 'signalingState', { configurable: false, enumerable: true, get: function () { return wc.signaling.state; } });
+        Reflect.defineProperty(this, 'signalingState', {
+            configurable: false,
+            enumerable: true,
+            get: function () { return wc.signaling.state; },
+        });
         /**
          * The read-only signaling server URL.
          * @type {string}
@@ -9146,80 +9147,41 @@ var Topology = (function () {
  * @external {NodeJSHttpsServer} https://nodejs.org/api/https.html#https_class_https_server
  */
 
-var url = require('url');
+var urlLib = require('url');
 var uws = require('uws');
-
-/**
- * BotServer can listen on web socket. A peer can invite bot to join his `WebChannel`.
- * He can also join one of the bot's `WebChannel`.
- */
 var BotServer = (function () {
-    /**
-     * Bot server settings are the same as for `WebChannel` (see {@link WebChannelSettings}),
-     * plus `host` and `port` parameters.
-     *
-     * @param {Object} options
-     * @param {FULL_MESH} [options.topology=FULL_MESH] Fully connected topology is the only one available for now
-     * @param {string} [options.signalingURL='wss://www.coedit.re:10443'] Signaling server url
-     * @param {RTCIceServer} [options.iceServers=[{urls:'stun3.l.google.com:19302'}]] Set of ice servers for WebRTC
-     * @param {Object} [options.bot] Options for bot server
-     * @param {string} [options.bot.url=''] Bot public URL to be shared on the p2p network
-     * @param {Object} [options.bot.server=null] A pre-created Node.js HTTP server
-     */
-    function BotServer(options) {
-        if (options === void 0) { options = {}; }
-        var _this = this;
-        var botDefaults = {
-            bot: {
-                url: '',
-                server: undefined,
-                perMessageDeflate: false,
-            },
-        };
-        var wcOptions = Object.assign({}, defaultOptions, options);
-        this.wcSettings = {
-            topology: wcOptions.topology,
-            signalingURL: wcOptions.signalingURL,
-            iceServers: wcOptions.iceServers,
+    function BotServer(_a) {
+        var _b = _a === void 0 ? { server: undefined } : _a, _c = _b.url, url = _c === void 0 ? '' : _c, _d = _b.perMessageDeflate, perMessageDeflate = _d === void 0 ? false : _d, server = _b.server, _e = _b.webGroupOptions, webGroupOptions = _e === void 0 ? {
+            topology: defaultOptions.topology,
+            signalingURL: defaultOptions.signalingURL,
+            iceServers: defaultOptions.iceServers,
             autoRejoin: false,
-        };
-        this.botSettings = Object.assign({}, botDefaults.bot, options.bot);
-        this.serverSettings = {
-            perMessageDeflate: this.botSettings.perMessageDeflate,
-            verifyClient: function (info) { return _this.validateConnection(info); },
-            server: this.botSettings.server,
-        };
-        /**
-         * @type {WebSocketServer}
-         */
-        this.server = null;
-        /**
-         * @type {WebChannel[]}
-         */
+        } : _e;
+        // public
+        this.wcOptions = Object.assign({}, defaultOptions, { autoRejoin: false }, webGroupOptions);
+        this.server = server;
+        this.listenUrl = url;
+        this.perMessageDeflate = perMessageDeflate;
+        // private
         this.webGroups = new Set();
-        /**
-         * @type {function(wc: WebChannel)}
-         */
-        this.onWebGroup = function () { };
-        this.onError = function () { };
+        this.onWebGroup = function none() { };
+        this.onError = function none() { };
+        // initialize server
         this.init();
     }
     Object.defineProperty(BotServer.prototype, "url", {
         get: function () {
-            if (this.botSettings.url !== '') {
-                return this.botSettings.url;
+            if (this.listenUrl !== '') {
+                return this.listenUrl;
             }
             else {
-                var address = this.serverSettings.server.address();
-                return "ws://" + address.address + ":" + address.port;
+                var info = this.server.address();
+                return "ws://" + info.address + ":" + info.port;
             }
         },
         enumerable: true,
         configurable: true
     });
-    /**
-     * Get `WebChannel` identified by its `id`.
-     */
     BotServer.prototype.getWebGroup = function (id) {
         try {
             for (var _a = __values(this.webGroups), _b = _a.next(); !_b.done; _b = _a.next()) {
@@ -9241,15 +9203,19 @@ var BotServer = (function () {
     };
     BotServer.prototype.init = function () {
         var _this = this;
-        this.server = new uws.Server(this.serverSettings);
-        var serverListening = this.serverSettings.server || this.server;
+        this.webSocketServer = new uws.Server({
+            perMessageDeflate: this.perMessageDeflate,
+            verifyClient: function (info) { return _this.validateConnection(info); },
+            server: this.server,
+        });
+        var serverListening = this.server || this.webSocketServer;
         serverListening.on('listening', function () { return WebSocketBuilder.listen().next(_this.url); });
-        this.server.on('error', function (err) {
+        this.webSocketServer.on('error', function (err) {
             WebSocketBuilder.listen().next('');
             _this.onError(err);
         });
-        this.server.on('connection', function (ws) {
-            var _a = url.parse(ws.upgradeReq.url, true), pathname = _a.pathname, query = _a.query;
+        this.webSocketServer.on('connection', function (ws) {
+            var _a = urlLib.parse(ws.upgradeReq.url, true), pathname = _a.pathname, query = _a.query;
             var wcId = Number(query.wcId);
             var wg = _this.getWebGroup(wcId);
             var senderId = Number(query.senderId);
@@ -9259,7 +9225,7 @@ var BotServer = (function () {
                         _this.webGroups.delete(wg);
                     }
                     // FIXME: it is possible to create multiple WebChannels with the same ID
-                    wg = new WebGroup(_this.wcSettings);
+                    wg = new WebGroup(_this.wcOptions);
                     var wc = wcs.get(wg);
                     wc.id = wcId;
                     _this.webGroups.add(wg);
@@ -9280,7 +9246,7 @@ var BotServer = (function () {
         });
     };
     BotServer.prototype.validateConnection = function (info) {
-        var _a = url.parse(info.req.url, true), pathname = _a.pathname, query = _a.query;
+        var _a = urlLib.parse(info.req.url, true), pathname = _a.pathname, query = _a.query;
         var wcId = query.wcId ? Number(query.wcId) : undefined;
         switch (pathname) {
             case '/invite':
@@ -9311,21 +9277,27 @@ var botServer;
  * const http = require('http')
  * const server = http.createServer(app.callback())
  * const bot = new WebGroupBotServer({
- *   signalingURL: 'wss://mysignaling.com'
- *   iceServers: [
- *     {
- *       urls: 'stun.l.google.com:19302'
- *     },
- *     {
- *       urls: ['turn:myturn.com?transport=udp', 'turn:myturn?transport=tcp'],
- *       username: 'user',
- *       password: 'password'
- *     }
- *   ],
- *   bot: { server }
+ *   server,
+ *   webGroupOptions: {
+ *     signalingURL: 'wss://mysignaling.com'
+ *     iceServers: [
+ *       {
+ *         urls: 'stun.l.google.com:19302'
+ *       },
+ *       {
+ *         urls: ['turn:myturn.com?transport=udp', 'turn:myturn?transport=tcp'],
+ *         username: 'user',
+ *         password: 'password'
+ *       }
+ *     ]
+ *   }
  * })
  *
  * bot.onWebGroup = (wg) => {
+ *   // TODO...
+ * }
+ *
+ * bot.onError = (err) => {
  *   // TODO...
  * }
  *
@@ -9334,25 +9306,35 @@ var botServer;
 var WebGroupBotServer = (function () {
     /**
      * @param {WebGroupBotServerOptions} options
-     * @param {Topology} [options.topology=Topology.FULL_MESH]
-     * @param {string} [options.signalingURL='wss://www.coedit.re:20473']
-     * @param {RTCIceServer[]} [options.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]
-     * @param {boolean} [options.autoRejoin=false]
-     * @param {Object} options.bot
-     * @param {NodeJSHttpServer|NodeJSHttpsServer} options.bot.server NodeJS http(s) server.
-     * @param {string} [options.bot.url] Bot server URL.
-     * @param {boolean} [options.bot.perMessageDeflate=false] Enable/disable permessage-deflate.
+     * @param {NodeJSHttpServer|NodeJSHttpsServer} options.server NodeJS http(s) server.
+     * @param {string} [options.url] Bot server URL.
+     * @param {boolean} [options.perMessageDeflate=false] Enable/disable permessage-deflate.
+     * @param {Object} options.webGroupOptions
+     * @param {Topology} [options.webGroupOptions.topology=Topology.FULL_MESH]
+     * @param {string} [options.webGroupOptions.signalingURL='wss://www.coedit.re:20473']
+     * @param {RTCIceServer[]} [options.webGroupOptions.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]
+     * @param {boolean} [options.webGroupOptions.autoRejoin=false]
      */
     function WebGroupBotServer(options) {
         botServer = new BotServer(options);
         /**
-         * NodeJS http server instance (See https://nodejs.org/api/http.html)
+         * Read-only NodeJS http server instance.
          * @type {NodeJSHttpServer|NodeJSHttpsServer}
          */
         this.server = undefined;
         Reflect.defineProperty(this, 'server', { configurable: false, enumerable: true, get: function () { return botServer.server; } });
         /**
-         * Set of web groups the bot is member of.
+         * Read-only property of WebSocket server: permessage-deflate.
+         * @type {NodeJSHttpServer|NodeJSHttpsServer}
+         */
+        this.perMessageDeflate = undefined;
+        Reflect.defineProperty(this, 'perMessageDeflate', {
+            configurable: false,
+            enumerable: true,
+            get: function () { return botServer.perMessageDeflate; },
+        });
+        /**
+         * Read-only set of web groups the bot is member of.
          * @type {Set<WebGroup>}
          */
         this.webGroups = undefined;
@@ -9363,16 +9345,43 @@ var WebGroupBotServer = (function () {
          */
         this.url = undefined;
         Reflect.defineProperty(this, 'url', { configurable: false, enumerable: true, get: function () { return botServer.url; } });
-    }
-    Object.defineProperty(WebGroupBotServer.prototype, "onWebGroup", {
         /**
          * This handler is called when the bot has been invited into a group by one of its members.
          * @type  {function(wg: WebGroup)} handler
          */
-        set: function (handler) { botServer.onWebGroup = handler; },
-        enumerable: true,
-        configurable: true
-    });
+        this.onWebGroup = undefined;
+        Reflect.defineProperty(this, 'onWebGroup', {
+            configurable: true,
+            enumerable: true,
+            get: function () { return (botServer.onWebGroup.name === 'none') ? undefined : botServer.onWebGroup; },
+            set: function (handler) {
+                if (typeof handler !== 'function') {
+                    botServer.onWebGroup = function none() { };
+                }
+                else {
+                    botServer.onWebGroup = handler;
+                }
+            },
+        });
+        /**
+         * This handler is called when an error occurs on WebSocket server.
+         * @type  {function(err: Error)}
+         */
+        this.onError = undefined;
+        Reflect.defineProperty(this, 'onError', {
+            configurable: true,
+            enumerable: true,
+            get: function () { return (botServer.onError.name === 'none') ? undefined : botServer.onError; },
+            set: function (handler) {
+                if (typeof handler !== 'function') {
+                    botServer.onError = function none() { };
+                }
+                else {
+                    botServer.onError = handler;
+                }
+            },
+        });
+    }
     return WebGroupBotServer;
 }());
 

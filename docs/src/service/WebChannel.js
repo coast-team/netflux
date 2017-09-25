@@ -39,9 +39,6 @@ export var WebChannelState;
  * [[include:installation.md]]
  */
 export class WebChannel extends Service {
-    /**
-     * @param options Web channel settings
-     */
     constructor({ topology = defaultOptions.topology, signalingURL = defaultOptions.signalingURL, iceServers = defaultOptions.iceServers, autoRejoin = defaultOptions.autoRejoin, } = {}) {
         super(10, webChannel.Message);
         // PUBLIC MEMBERS

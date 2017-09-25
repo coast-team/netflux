@@ -18,14 +18,11 @@ module.exports = (config) => {
 
     // list of files / patterns to load in the browser
     files: [
-      // 'test/unit/**/*.test.js',
-      // 'test/functional/join.test.js'
-      // { pattern: 'src/**/*.ts)', included: false, served: true },
-      // { pattern: 'src/proto/index.js)', included: false, served: true },
       'src/**/*.ts',
       'src/proto/index.js',
-      'test/functional/1peer.test.ts',
-      'test/util/helper.ts'
+      'test/util/helper.ts',
+      'test/functional/1member.test.ts',
+      'test/functional/manyMembers.test.ts'
     ],
 
     // list of files to exclude
@@ -34,7 +31,7 @@ module.exports = (config) => {
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
     preprocessors: {
-      'test/**/*.+(js|ts)': ['karma-typescript'],
+      'test/**/*.ts': ['karma-typescript'],
       'src/**/*.+(js|ts)': ['karma-typescript']
     },
 
@@ -110,52 +107,5 @@ module.exports = (config) => {
       singleRun: true,
       browserNoActivityTimeout: 120000
     })
-  } else if (TYPE === 'coverage') {
-    Object.assign(config, {
-      rollupPreprocessor: {
-        plugins: [
-          require('rollup-plugin-typescript2')(),
-          require('rollup-plugin-string')({
-            include: 'test/**/*.txt'
-          }),
-          require('rollup-plugin-re')({
-            defines: {
-              BROWSER: true,
-              NODE: false
-            }
-          }),
-          require('rollup-plugin-node-resolve')({}),
-          require('rollup-plugin-commonjs')({
-            namedExports: { 'node_modules/protobufjs/minimal.js': [ 'Reader', 'Writer', 'util', 'roots' ] }
-          }),
-          require('rollup-plugin-istanbul')({
-            include: [
-              'src/**/*.js'
-            ],
-            exclude: [
-              'src/BotServer.js',
-              'src/service/EventSourceService.js'
-            ]
-          })
-        ],
-        format: 'iife',
-        name: 'netflux'
-      },
-
-      reporters: ['spec', 'coverage'],
-
-      coverageReporter: {
-        dir: 'coverage',
-        reporters: [
-          {type: 'html'},
-          {type: 'text'},
-          {type: 'lcovonly', subdir: '.'}
-        ]
-      },
-
-      autoWatch: false,
-
-      singleRun: true
-    })
-  }
+  } else if (TYPE === 'coverage') { }
 }

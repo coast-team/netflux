@@ -121,15 +121,12 @@ export class WebChannel extends Service {
   private rejoinTimer: any
   private isRejoinDisabled: boolean
 
-  /**
-   * @param options Web channel settings
-   */
   constructor ({
     topology = defaultOptions.topology,
     signalingURL = defaultOptions.signalingURL,
     iceServers = defaultOptions.iceServers,
     autoRejoin = defaultOptions.autoRejoin,
-  } = {}) {
+  }: IWebChannelOptions = {}) {
     super(10, webChannel.Message)
 
     // PUBLIC MEMBERS
