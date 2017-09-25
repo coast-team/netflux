@@ -61,7 +61,7 @@ export class ChannelBuilder extends Service {
         });
     }
     handleChannel(ch) {
-        const pendReq = this.pendingRequests.get(ch.peerId);
+        const pendReq = this.pendingRequests.get(ch.id);
         if (pendReq) {
             pendReq.resolve(ch);
         }

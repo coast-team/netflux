@@ -27,12 +27,12 @@ export class FullMesh extends Service {
     }
     clean() { }
     addJoining(ch, members) {
-        console.info(this.wc.myId + ' addJoining ' + ch.peerId);
+        console.info(this.wc.myId + ' addJoining ' + ch.id);
         this.peerJoined(ch);
         this.checkMembers(ch, members);
     }
     initJoining(ch) {
-        console.info(this.wc.myId + ' initJoining ' + ch.peerId);
+        console.info(this.wc.myId + ' initJoining ' + ch.id);
         this.peerJoined(ch);
         this.joinAttempts = 0;
         this.intermediaryChannel = ch;
@@ -47,7 +47,7 @@ export class FullMesh extends Service {
     sendTo(msg) {
         const bytes = this.wc.encode(msg);
         for (const ch of this.channels) {
-            if (ch.peerId === msg.recipientId) {
+            if (ch.id === msg.recipientId) {
                 ch.send(bytes);
                 return;
             }
@@ -83,8 +83,8 @@ export class FullMesh extends Service {
             this.wc.joinSubject.next(new Error(`Intermediary channel closed: ${event.type}`));
         }
         if (this.channels.delete(channel)) {
-            this.wc.onMemberLeaveProxy(channel.peerId);
-            console.info(this.wc.myId + ' onMemberLeaveProxy ' + channel.peerId);
+            this.wc.onMemberLeaveProxy(channel.id);
+            console.info(this.wc.myId + ' onMemberLeaveProxy ' + channel.id);
         }
     }
     onChannelError(evt, channel) {
@@ -113,7 +113,7 @@ export class FullMesh extends Service {
                 // Notify the intermediary peer about your members
                 Promise.all(misssingConnections).then(() => {
                     const send = () => channel.send(this.wc.encode({
-                        recipientId: channel.peerId,
+                        recipientId: channel.id,
                         content: super.encode({ connectedTo: { members: this.wc.members } }),
                     }));
                     if (this.joinAttempts === MAX_JOIN_ATTEMPTS) {
@@ -154,22 +154,22 @@ export class FullMesh extends Service {
         if (this.wc.members.length === members.length && members.every((id) => id === this.wc.myId || this.wc.members.includes(id))) {
             console.log(this.wc.myId + ' checkMembers JOIN SUCCEED');
             ch.send(this.wc.encode({
-                recipientId: ch.peerId,
+                recipientId: ch.id,
                 content: this.joinSucceedContent,
             }));
             return;
         }
         // Joining did not finish, resend my members to the joining peer
-        this.wc.sendProxy({ content: super.encode({ joiningPeerId: ch.peerId }) });
+        this.wc.sendProxy({ content: super.encode({ joiningPeerId: ch.id }) });
         ch.send(this.wc.encode({
-            recipientId: ch.peerId,
+            recipientId: ch.id,
             content: super.encode({ connectTo: { members: this.wc.members } }),
         }));
     }
     peerJoined(ch) {
         this.channels.add(ch);
-        this.wc.onMemberJoinProxy(ch.peerId);
-        this.jps.delete(ch.peerId);
-        console.info(this.wc.myId + ' peerJoined ' + ch.peerId);
+        this.wc.onMemberJoinProxy(ch.id);
+        this.jps.delete(ch.id);
+        console.info(this.wc.myId + ' peerJoined ' + ch.id);
     }
 }

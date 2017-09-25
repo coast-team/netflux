@@ -80,7 +80,7 @@ export class ChannelBuilder extends Service {
   }
 
   private handleChannel (ch: Channel): void {
-    const pendReq = this.pendingRequests.get(ch.peerId)
+    const pendReq = this.pendingRequests.get(ch.id)
     if (pendReq) {
       pendReq.resolve(ch)
     } else {

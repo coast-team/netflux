@@ -99,7 +99,7 @@ export class WebRTCBuilder extends Service {
         }
         throw new Error('WebRTC is not supported');
     }
-    establishChannel(onMessage, send, peerId = 1) {
+    establishChannel(onMessage, send, id = 1) {
         const pc = new global.RTCPeerConnection(this.rtcConfiguration);
         const remoteCandidateStream = new ReplaySubject();
         this.localCandidates(pc).subscribe((iceCandidate) => send({ iceCandidate }), (err) => console.warn(err), () => send({ iceCandidate: { candidate: '' } }));
@@ -130,7 +130,7 @@ export class WebRTCBuilder extends Service {
                     reject(new Error('Unknown message from a remote peer'));
                 }
             }, (err) => reject(err), () => reject(new Error('Failed to establish RTCDataChannel: the connection with Signaling server was closed')));
-            this.openChannel(pc, peerId)
+            this.openChannel(pc, id)
                 .then(resolve)
                 .catch(reject);
             pc.createOffer()
@@ -207,11 +207,11 @@ export class WebRTCBuilder extends Service {
             };
         });
     }
-    openChannel(pc, peerId) {
-        if (peerId !== undefined) {
+    openChannel(pc, id) {
+        if (id !== undefined) {
             try {
                 const dc = pc.createDataChannel((this.wc.myId).toString());
-                const channel = new Channel(this.wc, dc, { rtcPeerConnection: pc, id: peerId });
+                const channel = new Channel(this.wc, dc, { rtcPeerConnection: pc, id });
                 return new Promise((resolve, reject) => {
                     pc.oniceconnectionstatechange = () => {
                         if (pc.iceConnectionState === 'failed') {
@@ -221,7 +221,7 @@ export class WebRTCBuilder extends Service {
                     };
                     dc.onopen = () => {
                         pc.oniceconnectionstatechange = () => {
-                            console.info(`NETFLUX: ${this.wc.myId} iceConnectionState=${pc.iceConnectionState.toUpperCase()} ${channel.peerId}`, {
+                            console.info(`NETFLUX: ${this.wc.myId} iceConnectionState=${pc.iceConnectionState.toUpperCase()} ${channel.id}`, {
                                 readyState: dc.readyState,
                                 iceConnectionState: pc.iceConnectionState,
                                 signalingState: pc.signalingState,
@@ -247,11 +247,11 @@ export class WebRTCBuilder extends Service {
                 };
                 pc.ondatachannel = (dcEvt) => {
                     const dc = dcEvt.channel;
-                    const id = Number.parseInt(dc.label, 10);
-                    const channel = new Channel(this.wc, dc, { rtcPeerConnection: pc, id });
+                    const peerId = Number.parseInt(dc.label, 10);
+                    const channel = new Channel(this.wc, dc, { rtcPeerConnection: pc, id: peerId });
                     dc.onopen = (evt) => {
                         pc.oniceconnectionstatechange = () => {
-                            console.info(`NETFLUX: ${this.wc.myId} iceConnectionState=${pc.iceConnectionState.toUpperCase()} ${channel.peerId}`, {
+                            console.info(`NETFLUX: ${this.wc.myId} iceConnectionState=${pc.iceConnectionState.toUpperCase()} ${channel.id}`, {
                                 readyState: dc.readyState,
                                 iceConnectionState: pc.iceConnectionState,
                                 signalingState: pc.signalingState,

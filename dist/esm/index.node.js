@@ -5957,12 +5957,12 @@ var Signaling = (function () {
                         }
                         else {
                             _this.wc.webRTCBuilder.connectOverSignaling({
-                                onMessage: _this.rxWs.onMessage.filter(function (msg) { return msg.type === 'content'; })
+                                onMessage: _this.rxWs.onMessage.filter(function (m) { return m.type === 'content'; })
                                     .map(function (_a) {
                                     var content = _a.content;
                                     return content;
                                 }),
-                                send: function (msg) { return _this.rxWs.send({ content: msg }); },
+                                send: function (m) { return _this.rxWs.send({ content: m }); },
                             })
                                 .then(function () { return _this.setState(SignalingState$1.FIRST_CONNECTED); })
                                 .catch(function (err) {
@@ -6202,7 +6202,7 @@ var Channel = (function () {
         var _this = this;
         this.wc = wc;
         this.connection = connection;
-        this.peerId = options.id;
+        this.id = options.id;
         this.rtcPeerConnection = options.rtcPeerConnection;
         // Configure `send` function
         if (isBrowser) {
@@ -6217,7 +6217,7 @@ var Channel = (function () {
             this.send = this.sendInNodeViaDataChannel;
         }
         this.onClose = function (evt) {
-            console.info("NETFLUX: " + wc.myId + " ONCLOSE CALLBACK " + _this.peerId, {
+            console.info("NETFLUX: " + wc.myId + " ONCLOSE CALLBACK " + _this.id, {
                 readyState: _this.connection.readyState,
                 iceConnectionState: _this.rtcPeerConnection ? _this.rtcPeerConnection.iceConnectionState : '',
                 signalingState: _this.rtcPeerConnection ? _this.rtcPeerConnection.signalingState : '',
@@ -6243,7 +6243,7 @@ var Channel = (function () {
             this.connection.readyState !== 'closing' &&
             this.connection.readyState !== WebSocket.CLOSED &&
             this.connection.readyState !== WebSocket.CLOSING) {
-            console.info("NETFLUX: " + this.wc.myId + " CLOSE " + this.peerId, {
+            console.info("NETFLUX: " + this.wc.myId + " CLOSE " + this.id, {
                 readyState: this.connection.readyState,
                 iceConnectionState: this.rtcPeerConnection ? this.rtcPeerConnection.iceConnectionState : '',
                 signalingState: this.rtcPeerConnection ? this.rtcPeerConnection.signalingState : '',
@@ -7757,9 +7757,9 @@ var WebRTCBuilder = (function (_super) {
         }
         throw new Error('WebRTC is not supported');
     };
-    WebRTCBuilder.prototype.establishChannel = function (onMessage, send, peerId) {
+    WebRTCBuilder.prototype.establishChannel = function (onMessage, send, id) {
         var _this = this;
-        if (peerId === void 0) { peerId = 1; }
+        if (id === void 0) { id = 1; }
         var pc = new global.RTCPeerConnection(this.rtcConfiguration);
         var remoteCandidateStream = new ReplaySubject_2();
         this.localCandidates(pc).subscribe(function (iceCandidate) { return send({ iceCandidate: iceCandidate }); }, function (err) { return console.warn(err); }, function () { return send({ iceCandidate: { candidate: '' } }); });
@@ -7791,7 +7791,7 @@ var WebRTCBuilder = (function (_super) {
                     reject(new Error('Unknown message from a remote peer'));
                 }
             }, function (err) { return reject(err); }, function () { return reject(new Error('Failed to establish RTCDataChannel: the connection with Signaling server was closed')); });
-            _this.openChannel(pc, peerId)
+            _this.openChannel(pc, id)
                 .then(resolve)
                 .catch(reject);
             pc.createOffer()
@@ -7871,12 +7871,12 @@ var WebRTCBuilder = (function (_super) {
             };
         });
     };
-    WebRTCBuilder.prototype.openChannel = function (pc, peerId) {
+    WebRTCBuilder.prototype.openChannel = function (pc, id) {
         var _this = this;
-        if (peerId !== undefined) {
+        if (id !== undefined) {
             try {
                 var dc_1 = pc.createDataChannel((this.wc.myId).toString());
-                var channel_1 = new Channel(this.wc, dc_1, { rtcPeerConnection: pc, id: peerId });
+                var channel_1 = new Channel(this.wc, dc_1, { rtcPeerConnection: pc, id: id });
                 return new Promise(function (resolve, reject) {
                     pc.oniceconnectionstatechange = function () {
                         if (pc.iceConnectionState === 'failed') {
@@ -7886,7 +7886,7 @@ var WebRTCBuilder = (function (_super) {
                     };
                     dc_1.onopen = function () {
                         pc.oniceconnectionstatechange = function () {
-                            console.info("NETFLUX: " + _this.wc.myId + " iceConnectionState=" + pc.iceConnectionState.toUpperCase() + " " + channel_1.peerId, {
+                            console.info("NETFLUX: " + _this.wc.myId + " iceConnectionState=" + pc.iceConnectionState.toUpperCase() + " " + channel_1.id, {
                                 readyState: dc_1.readyState,
                                 iceConnectionState: pc.iceConnectionState,
                                 signalingState: pc.signalingState,
@@ -7912,11 +7912,11 @@ var WebRTCBuilder = (function (_super) {
                 };
                 pc.ondatachannel = function (dcEvt) {
                     var dc = dcEvt.channel;
-                    var id = Number.parseInt(dc.label, 10);
-                    var channel = new Channel(_this.wc, dc, { rtcPeerConnection: pc, id: id });
+                    var peerId = Number.parseInt(dc.label, 10);
+                    var channel = new Channel(_this.wc, dc, { rtcPeerConnection: pc, id: peerId });
                     dc.onopen = function (evt) {
                         pc.oniceconnectionstatechange = function () {
-                            console.info("NETFLUX: " + _this.wc.myId + " iceConnectionState=" + pc.iceConnectionState.toUpperCase() + " " + channel.peerId, {
+                            console.info("NETFLUX: " + _this.wc.myId + " iceConnectionState=" + pc.iceConnectionState.toUpperCase() + " " + channel.id, {
                                 readyState: dc.readyState,
                                 iceConnectionState: pc.iceConnectionState,
                                 signalingState: pc.signalingState,
@@ -7999,7 +7999,7 @@ var ChannelBuilder = (function (_super) {
         });
     };
     ChannelBuilder.prototype.handleChannel = function (ch) {
-        var pendReq = this.pendingRequests.get(ch.peerId);
+        var pendReq = this.pendingRequests.get(ch.id);
         if (pendReq) {
             pendReq.resolve(ch);
         }
@@ -8126,12 +8126,12 @@ var FullMesh = (function (_super) {
     }
     FullMesh.prototype.clean = function () { };
     FullMesh.prototype.addJoining = function (ch, members) {
-        console.info(this.wc.myId + ' addJoining ' + ch.peerId);
+        console.info(this.wc.myId + ' addJoining ' + ch.id);
         this.peerJoined(ch);
         this.checkMembers(ch, members);
     };
     FullMesh.prototype.initJoining = function (ch) {
-        console.info(this.wc.myId + ' initJoining ' + ch.peerId);
+        console.info(this.wc.myId + ' initJoining ' + ch.id);
         this.peerJoined(ch);
         this.joinAttempts = 0;
         this.intermediaryChannel = ch;
@@ -8159,7 +8159,7 @@ var FullMesh = (function (_super) {
         try {
             for (var _a = __values(this.channels), _b = _a.next(); !_b.done; _b = _a.next()) {
                 var ch = _b.value;
-                if (ch.peerId === msg.recipientId) {
+                if (ch.id === msg.recipientId) {
                     ch.send(bytes);
                     return;
                 }
@@ -8225,8 +8225,8 @@ var FullMesh = (function (_super) {
             this.wc.joinSubject.next(new Error("Intermediary channel closed: " + event.type));
         }
         if (this.channels.delete(channel)) {
-            this.wc.onMemberLeaveProxy(channel.peerId);
-            console.info(this.wc.myId + ' onMemberLeaveProxy ' + channel.peerId);
+            this.wc.onMemberLeaveProxy(channel.id);
+            console.info(this.wc.myId + ' onMemberLeaveProxy ' + channel.id);
         }
     };
     FullMesh.prototype.onChannelError = function (evt, channel) {
@@ -8270,7 +8270,7 @@ var FullMesh = (function (_super) {
                 // Notify the intermediary peer about your members
                 Promise.all(misssingConnections).then(function () {
                     var send = function () { return channel.send(_this.wc.encode({
-                        recipientId: channel.peerId,
+                        recipientId: channel.id,
                         content: _super.prototype.encode.call(_this, { connectedTo: { members: _this.wc.members } }),
                     })); };
                     if (_this.joinAttempts === MAX_JOIN_ATTEMPTS) {
@@ -8313,23 +8313,23 @@ var FullMesh = (function (_super) {
         if (this.wc.members.length === members.length && members.every(function (id) { return id === _this.wc.myId || _this.wc.members.includes(id); })) {
             console.log(this.wc.myId + ' checkMembers JOIN SUCCEED');
             ch.send(this.wc.encode({
-                recipientId: ch.peerId,
+                recipientId: ch.id,
                 content: this.joinSucceedContent,
             }));
             return;
         }
         // Joining did not finish, resend my members to the joining peer
-        this.wc.sendProxy({ content: _super.prototype.encode.call(this, { joiningPeerId: ch.peerId }) });
+        this.wc.sendProxy({ content: _super.prototype.encode.call(this, { joiningPeerId: ch.id }) });
         ch.send(this.wc.encode({
-            recipientId: ch.peerId,
+            recipientId: ch.id,
             content: _super.prototype.encode.call(this, { connectTo: { members: this.wc.members } }),
         }));
     };
     FullMesh.prototype.peerJoined = function (ch) {
         this.channels.add(ch);
-        this.wc.onMemberJoinProxy(ch.peerId);
-        this.jps.delete(ch.peerId);
-        console.info(this.wc.myId + ' peerJoined ' + ch.peerId);
+        this.wc.onMemberJoinProxy(ch.id);
+        this.jps.delete(ch.id);
+        console.info(this.wc.myId + ' peerJoined ' + ch.id);
     };
     return FullMesh;
 }(Service$1));
@@ -8674,23 +8674,23 @@ var WebChannel = (function (_super) {
                         this.myId = this.generateId(generatedIds);
                     }
                     this.id = wcId;
-                    channel.peerId = senderId;
+                    channel.id = senderId;
                     this.topologyService.initJoining(channel);
                     channel.send(this.encode({
-                        recipientId: channel.peerId,
+                        recipientId: channel.id,
                         content: _super.prototype.encode.call(this, { initOk: { members: this.members } }),
                     }));
                 }
                 break;
             }
             case 'initOk': {
-                channel.peerId = senderId;
+                channel.id = senderId;
                 this.topologyService.addJoining(channel, msg.initOk.members);
                 break;
             }
             case 'ping': {
                 this.sendToProxy({
-                    recipientId: channel.peerId,
+                    recipientId: channel.id,
                     content: _super.prototype.encode.call(this, { pong: true }),
                 });
                 break;
@@ -8892,7 +8892,7 @@ var WebGroup = (function () {
     /**
      * @param {WebGroupOptions} [options]
      * @param {Topology} [options.topology=Topology.FULL_MESH]
-     * @param {string} [options.signalingURL='wss://www.coedit.re:20473']
+     * @param {string} [options.signalingURL='wss://www.coedit.re:30443']
      * @param {RTCIceServer[]} [options.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]
      * @param {boolean} [options.autoRejoin=true]
      */
@@ -9432,7 +9432,7 @@ var WebGroupBotServer = (function () {
      * @param {boolean} [options.perMessageDeflate=false] Enable/disable permessage-deflate.
      * @param {WebGroupOptions} options.webGroupOptions Options for each {@link WebGroup} the bot is member of.
      * @param {Topology} [options.webGroupOptions.topology=Topology.FULL_MESH]
-     * @param {string} [options.webGroupOptions.signalingURL='wss://www.coedit.re:20473']
+     * @param {string} [options.webGroupOptions.signalingURL='wss://www.coedit.re:30443']
      * @param {RTCIceServer[]} [options.webGroupOptions.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]
      * @param {boolean} [options.webGroupOptions.autoRejoin=false]
      */

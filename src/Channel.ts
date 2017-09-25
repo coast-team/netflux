@@ -10,7 +10,7 @@ export class Channel {
   /**
    * Id of the peer who is at the other end of this channel.
    */
-  public peerId: number
+  public id: number
   public send: (data: Uint8Array) => void
   private rtcPeerConnection: RTCPeerConnection
   private onClose: (evt: Event) => void
@@ -26,7 +26,7 @@ export class Channel {
   ) {
     this.wc = wc
     this.connection = connection
-    this.peerId = options.id
+    this.id = options.id
     this.rtcPeerConnection = options.rtcPeerConnection
 
     // Configure `send` function
@@ -41,7 +41,7 @@ export class Channel {
     }
 
     this.onClose = (evt: Event) => {
-      console.info(`NETFLUX: ${wc.myId} ONCLOSE CALLBACK ${this.peerId}`, {
+      console.info(`NETFLUX: ${wc.myId} ONCLOSE CALLBACK ${this.id}`, {
         readyState: this.connection.readyState,
         iceConnectionState: this.rtcPeerConnection ? this.rtcPeerConnection.iceConnectionState : '',
         signalingState: this.rtcPeerConnection ? this.rtcPeerConnection.signalingState : '',
@@ -68,7 +68,7 @@ export class Channel {
       this.connection.readyState !== WebSocket.CLOSED &&
       this.connection.readyState !== WebSocket.CLOSING
     ) {
-      console.info(`NETFLUX: ${this.wc.myId} CLOSE ${this.peerId}`, {
+      console.info(`NETFLUX: ${this.wc.myId} CLOSE ${this.id}`, {
         readyState: this.connection.readyState,
         iceConnectionState: this.rtcPeerConnection ? this.rtcPeerConnection.iceConnectionState : '',
         signalingState: this.rtcPeerConnection ? this.rtcPeerConnection.signalingState : '',

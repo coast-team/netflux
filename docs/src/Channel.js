@@ -9,7 +9,7 @@ export class Channel {
     constructor(wc, connection, options = { id: -1 }) {
         this.wc = wc;
         this.connection = connection;
-        this.peerId = options.id;
+        this.id = options.id;
         this.rtcPeerConnection = options.rtcPeerConnection;
         // Configure `send` function
         if (isBrowser) {
@@ -24,7 +24,7 @@ export class Channel {
             this.send = this.sendInNodeViaDataChannel;
         }
         this.onClose = (evt) => {
-            console.info(`NETFLUX: ${wc.myId} ONCLOSE CALLBACK ${this.peerId}`, {
+            console.info(`NETFLUX: ${wc.myId} ONCLOSE CALLBACK ${this.id}`, {
                 readyState: this.connection.readyState,
                 iceConnectionState: this.rtcPeerConnection ? this.rtcPeerConnection.iceConnectionState : '',
                 signalingState: this.rtcPeerConnection ? this.rtcPeerConnection.signalingState : '',
@@ -47,7 +47,7 @@ export class Channel {
             this.connection.readyState !== 'closing' &&
             this.connection.readyState !== WebSocket.CLOSED &&
             this.connection.readyState !== WebSocket.CLOSING) {
-            console.info(`NETFLUX: ${this.wc.myId} CLOSE ${this.peerId}`, {
+            console.info(`NETFLUX: ${this.wc.myId} CLOSE ${this.id}`, {
                 readyState: this.connection.readyState,
                 iceConnectionState: this.rtcPeerConnection ? this.rtcPeerConnection.iceConnectionState : '',
                 signalingState: this.rtcPeerConnection ? this.rtcPeerConnection.signalingState : '',

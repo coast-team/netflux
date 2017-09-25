@@ -8,10 +8,10 @@ import { WebChannel } from './service/WebChannel';
  * `WebSocket`.
  */
 export declare class WebSocketBuilder {
-    private wc;
-    private channelsSubject;
     static listen(): BehaviorSubject<string>;
     static newIncomingSocket(wc: any, ws: any, senderId: any): void;
+    private wc;
+    private channelsSubject;
     constructor(wc: WebChannel);
     readonly onChannel: Observable<Channel>;
     /**

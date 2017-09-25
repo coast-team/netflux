@@ -4485,7 +4485,7 @@
                 "leadingComments": [
                   {
                     "type": "CommentBlock",
-                    "value": "*\n     * @param {WebGroupBotServerOptions} options\n     * @param {NodeJSHttpServer|NodeJSHttpsServer} options.server NodeJS http(s) server.\n     * @param {string} [options.url] Bot server URL.\n     * @param {boolean} [options.perMessageDeflate=false] Enable/disable permessage-deflate.\n     * @param {WebGroupOptions} options.webGroupOptions Options for each {@link WebGroup} the bot is member of.\n     * @param {Topology} [options.webGroupOptions.topology=Topology.FULL_MESH]\n     * @param {string} [options.webGroupOptions.signalingURL='wss://www.coedit.re:20473']\n     * @param {RTCIceServer[]} [options.webGroupOptions.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]\n     * @param {boolean} [options.webGroupOptions.autoRejoin=false]\n     ",
+                    "value": "*\n     * @param {WebGroupBotServerOptions} options\n     * @param {NodeJSHttpServer|NodeJSHttpsServer} options.server NodeJS http(s) server.\n     * @param {string} [options.url] Bot server URL.\n     * @param {boolean} [options.perMessageDeflate=false] Enable/disable permessage-deflate.\n     * @param {WebGroupOptions} options.webGroupOptions Options for each {@link WebGroup} the bot is member of.\n     * @param {Topology} [options.webGroupOptions.topology=Topology.FULL_MESH]\n     * @param {string} [options.webGroupOptions.signalingURL='wss://www.coedit.re:30443']\n     * @param {RTCIceServer[]} [options.webGroupOptions.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]\n     * @param {boolean} [options.webGroupOptions.autoRejoin=false]\n     ",
                     "start": 1106,
                     "end": 1859,
                     "loc": {
@@ -4564,7 +4564,7 @@
     },
     {
       "type": "CommentBlock",
-      "value": "*\n     * @param {WebGroupBotServerOptions} options\n     * @param {NodeJSHttpServer|NodeJSHttpsServer} options.server NodeJS http(s) server.\n     * @param {string} [options.url] Bot server URL.\n     * @param {boolean} [options.perMessageDeflate=false] Enable/disable permessage-deflate.\n     * @param {WebGroupOptions} options.webGroupOptions Options for each {@link WebGroup} the bot is member of.\n     * @param {Topology} [options.webGroupOptions.topology=Topology.FULL_MESH]\n     * @param {string} [options.webGroupOptions.signalingURL='wss://www.coedit.re:20473']\n     * @param {RTCIceServer[]} [options.webGroupOptions.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]\n     * @param {boolean} [options.webGroupOptions.autoRejoin=false]\n     ",
+      "value": "*\n     * @param {WebGroupBotServerOptions} options\n     * @param {NodeJSHttpServer|NodeJSHttpsServer} options.server NodeJS http(s) server.\n     * @param {string} [options.url] Bot server URL.\n     * @param {boolean} [options.perMessageDeflate=false] Enable/disable permessage-deflate.\n     * @param {WebGroupOptions} options.webGroupOptions Options for each {@link WebGroup} the bot is member of.\n     * @param {Topology} [options.webGroupOptions.topology=Topology.FULL_MESH]\n     * @param {string} [options.webGroupOptions.signalingURL='wss://www.coedit.re:30443']\n     * @param {RTCIceServer[]} [options.webGroupOptions.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]\n     * @param {boolean} [options.webGroupOptions.autoRejoin=false]\n     ",
       "start": 1106,
       "end": 1859,
       "loc": {
@@ -5064,7 +5064,7 @@
     },
     {
       "type": "CommentBlock",
-      "value": "*\n     * @param {WebGroupBotServerOptions} options\n     * @param {NodeJSHttpServer|NodeJSHttpsServer} options.server NodeJS http(s) server.\n     * @param {string} [options.url] Bot server URL.\n     * @param {boolean} [options.perMessageDeflate=false] Enable/disable permessage-deflate.\n     * @param {WebGroupOptions} options.webGroupOptions Options for each {@link WebGroup} the bot is member of.\n     * @param {Topology} [options.webGroupOptions.topology=Topology.FULL_MESH]\n     * @param {string} [options.webGroupOptions.signalingURL='wss://www.coedit.re:20473']\n     * @param {RTCIceServer[]} [options.webGroupOptions.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]\n     * @param {boolean} [options.webGroupOptions.autoRejoin=false]\n     ",
+      "value": "*\n     * @param {WebGroupBotServerOptions} options\n     * @param {NodeJSHttpServer|NodeJSHttpsServer} options.server NodeJS http(s) server.\n     * @param {string} [options.url] Bot server URL.\n     * @param {boolean} [options.perMessageDeflate=false] Enable/disable permessage-deflate.\n     * @param {WebGroupOptions} options.webGroupOptions Options for each {@link WebGroup} the bot is member of.\n     * @param {Topology} [options.webGroupOptions.topology=Topology.FULL_MESH]\n     * @param {string} [options.webGroupOptions.signalingURL='wss://www.coedit.re:30443']\n     * @param {RTCIceServer[]} [options.webGroupOptions.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]\n     * @param {boolean} [options.webGroupOptions.autoRejoin=false]\n     ",
       "start": 1106,
       "end": 1859,
       "loc": {

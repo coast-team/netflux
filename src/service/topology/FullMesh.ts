@@ -60,13 +60,13 @@ export class FullMesh extends Service implements ITopology {
   clean () {}
 
   addJoining (ch: Channel, members: [number]): void {
-    console.info(this.wc.myId + ' addJoining ' + ch.peerId)
+    console.info(this.wc.myId + ' addJoining ' + ch.id)
     this.peerJoined(ch)
     this.checkMembers(ch, members)
   }
 
   initJoining (ch: Channel): void {
-    console.info(this.wc.myId + ' initJoining ' + ch.peerId)
+    console.info(this.wc.myId + ' initJoining ' + ch.id)
     this.peerJoined(ch)
     this.joinAttempts = 0
     this.intermediaryChannel = ch
@@ -84,7 +84,7 @@ export class FullMesh extends Service implements ITopology {
   sendTo (msg: IMessage): void {
     const bytes = this.wc.encode(msg)
     for (const ch of this.channels) {
-      if (ch.peerId === msg.recipientId) {
+      if (ch.id === msg.recipientId) {
         ch.send(bytes)
         return
       }
@@ -122,8 +122,8 @@ export class FullMesh extends Service implements ITopology {
       this.wc.joinSubject.next(new Error(`Intermediary channel closed: ${event.type}`))
     }
     if (this.channels.delete(channel)) {
-      this.wc.onMemberLeaveProxy(channel.peerId)
-      console.info(this.wc.myId + ' onMemberLeaveProxy ' + channel.peerId)
+      this.wc.onMemberLeaveProxy(channel.id)
+      console.info(this.wc.myId + ' onMemberLeaveProxy ' + channel.id)
     }
   }
 
@@ -158,7 +158,7 @@ export class FullMesh extends Service implements ITopology {
       // Notify the intermediary peer about your members
       Promise.all(misssingConnections).then(() => {
         const send = () => channel.send(this.wc.encode({
-          recipientId: channel.peerId,
+          recipientId: channel.id,
           content: super.encode({ connectedTo: { members: this.wc.members } }),
         }))
         if (this.joinAttempts === MAX_JOIN_ATTEMPTS) {
@@ -200,24 +200,24 @@ export class FullMesh extends Service implements ITopology {
       ) {
       console.log(this.wc.myId + ' checkMembers JOIN SUCCEED')
       ch.send(this.wc.encode({
-        recipientId: ch.peerId,
+        recipientId: ch.id,
         content: this.joinSucceedContent,
       }))
       return
     }
 
     // Joining did not finish, resend my members to the joining peer
-    this.wc.sendProxy({ content: super.encode({ joiningPeerId: ch.peerId }) })
+    this.wc.sendProxy({ content: super.encode({ joiningPeerId: ch.id }) })
     ch.send(this.wc.encode({
-      recipientId: ch.peerId,
+      recipientId: ch.id,
       content: super.encode({ connectTo: { members: this.wc.members } }),
     }))
   }
 
   private peerJoined (ch: Channel): void {
     this.channels.add(ch)
-    this.wc.onMemberJoinProxy(ch.peerId)
-    this.jps.delete(ch.peerId)
-    console.info(this.wc.myId + ' peerJoined ' + ch.peerId)
+    this.wc.onMemberJoinProxy(ch.id)
+    this.jps.delete(ch.id)
+    console.info(this.wc.myId + ' peerJoined ' + ch.id)
   }
 }

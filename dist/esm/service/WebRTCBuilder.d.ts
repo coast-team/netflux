@@ -40,8 +40,8 @@ export declare class WebRTCBuilder extends Service {
      * Starts by sending an **SDP offer**.
      */
     connectOverSignaling(signalingConnection: ISignalingConnection): Promise<Channel>;
-    private establishChannel(onMessage, send, peerId?);
+    private establishChannel(onMessage, send, id?);
     private onChannel(onMessage, send);
     private localCandidates(pc);
-    private openChannel(pc, peerId?);
+    private openChannel(pc, id?);
 }

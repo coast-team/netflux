@@ -5,7 +5,7 @@ import { WebGroup, WebGroupState } from '../../src/index.browser'
 const isBrowser = (typeof window === 'undefined') ? false : true
 
 // Main signaling server for all tests
-export const SIGNALING_URL = 'ws://localhost:8000'
+export const SIGNALING_URL = 'wss://www.coedit.re:30443'// 'ws://localhost:8000'
 
 // Configuration for bot server
 export const BOT_HOST = 'localhost'

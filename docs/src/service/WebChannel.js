@@ -318,23 +318,23 @@ export class WebChannel extends Service {
                         this.myId = this.generateId(generatedIds);
                     }
                     this.id = wcId;
-                    channel.peerId = senderId;
+                    channel.id = senderId;
                     this.topologyService.initJoining(channel);
                     channel.send(this.encode({
-                        recipientId: channel.peerId,
+                        recipientId: channel.id,
                         content: super.encode({ initOk: { members: this.members } }),
                     }));
                 }
                 break;
             }
             case 'initOk': {
-                channel.peerId = senderId;
+                channel.id = senderId;
                 this.topologyService.addJoining(channel, msg.initOk.members);
                 break;
             }
             case 'ping': {
                 this.sendToProxy({
-                    recipientId: channel.peerId,
+                    recipientId: channel.id,
                     content: super.encode({ pong: true }),
                 });
                 break;
