@@ -5968,7 +5968,10 @@ var Signaling = (function () {
                                 }),
                                 send: function (m) { return _this.rxWs.send({ content: m }); },
                             })
-                                .then(function () { return _this.setState(SignalingState$1.FIRST_CONNECTED); })
+                                .then(function (ch) {
+                                _this.setState(SignalingState$1.FIRST_CONNECTED);
+                                ch.markAsIntermediry();
+                            })
                                 .catch(function (err) {
                                 _this.rxWs.close(FIRST_CONNECTION_ERROR_CODE, "Failed to join over Signaling: " + err.message);
                             });
@@ -6208,6 +6211,7 @@ var Channel = (function () {
         this.connection = connection;
         this.id = options.id;
         this.rtcPeerConnection = options.rtcPeerConnection;
+        this.isIntermediary = false;
         // Configure `send` function
         if (isBrowser) {
             connection.binaryType = 'arraybuffer';
@@ -6242,6 +6246,9 @@ var Channel = (function () {
         this.connection.onclose = function (evt) { return _this.onClose(evt); };
         this.connection.onerror = function (evt) { return wc.topologyService.onChannelError(evt, _this); };
     }
+    Channel.prototype.markAsIntermediry = function () {
+        this.wc.topologyService.initIntermediary(this);
+    };
     Channel.prototype.close = function () {
         if (this.connection.readyState !== 'closed' &&
             this.connection.readyState !== 'closing' &&
@@ -8134,6 +8141,9 @@ var FullMesh = (function (_super) {
         this.peerJoined(ch);
         this.checkMembers(ch, members);
     };
+    FullMesh.prototype.initIntermediary = function (ch) {
+        this.intermediaryChannel = ch;
+    };
     FullMesh.prototype.initJoining = function (ch) {
         console.info(this.wc.myId + ' initJoining ' + ch.id);
         this.peerJoined(ch);
@@ -8224,7 +8234,7 @@ var FullMesh = (function (_super) {
         var e_4, _c;
     };
     FullMesh.prototype.onChannelClose = function (event, channel) {
-        if (this.intermediaryChannel && this.intermediaryChannel === channel) {
+        if (channel === this.intermediaryChannel) {
             this.leave();
             this.wc.joinSubject.next(new Error("Intermediary channel closed: " + event.type));
         }
@@ -8877,19 +8887,19 @@ var WebGroupState = (function () {
  * })
  *
  * wg.onMemberJoin = (id) => {
- *   // TODO...
+ *   // YOUR CODE...
  * }
  * wg.onMemberLeave = (id) => {
- *   // TODO...
+ *   // YOUR CODE...
  * }
  * wg.onMessage = (id, data, isBroadcast) => {
- *   // TODO...
+ *   // YOUR CODE...
  * }
  * wg.onStateChange = (state) => {
- *   // TODO...
+ *   // YOUR CODE...
  * }
  * wg.onSignalingStateChange = (state) => {
- *   // TODO...
+ *   // YOUR CODE...
  * }
  */
 var WebGroup = (function () {
@@ -9419,11 +9429,11 @@ var botServer;
  * })
  *
  * bot.onWebGroup = (wg) => {
- *   // TODO...
+ *   // YOUR CODE
  * }
  *
  * bot.onError = (err) => {
- *   // TODO...
+ *   // YOUR CODE
  * }
  *
  * server.listen(BOT_PORT, BOT_HOST)

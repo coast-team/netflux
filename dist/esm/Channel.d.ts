@@ -9,6 +9,7 @@ export declare class Channel {
      */
     id: number;
     send: (data: Uint8Array) => void;
+    isIntermediary: boolean;
     private rtcPeerConnection;
     private onClose;
     private wc;
@@ -19,6 +20,7 @@ export declare class Channel {
         rtcPeerConnection?: RTCPeerConnection;
         id: number;
     });
+    markAsIntermediry(): void;
     close(): void;
     private sendInBrowser(data);
     private sendInNodeViaWebSocket(data);

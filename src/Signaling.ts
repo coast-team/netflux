@@ -115,7 +115,10 @@ export class Signaling {
                     .map(({ content }) => content),
                   send: (m) => this.rxWs.send({ content: m }),
                 })
-                  .then(() => this.setState(SignalingState.FIRST_CONNECTED))
+                  .then((ch: Channel) => {
+                    this.setState(SignalingState.FIRST_CONNECTED)
+                    ch.markAsIntermediry()
+                  })
                   .catch((err) => {
                     this.rxWs.close(FIRST_CONNECTION_ERROR_CODE, `Failed to join over Signaling: ${err.message}`)
                   })

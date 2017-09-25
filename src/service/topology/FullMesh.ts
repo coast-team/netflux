@@ -65,6 +65,10 @@ export class FullMesh extends Service implements ITopology {
     this.checkMembers(ch, members)
   }
 
+  initIntermediary (ch: Channel) {
+    this.intermediaryChannel = ch
+  }
+
   initJoining (ch: Channel): void {
     console.info(this.wc.myId + ' initJoining ' + ch.id)
     this.peerJoined(ch)
@@ -117,7 +121,7 @@ export class FullMesh extends Service implements ITopology {
   }
 
   onChannelClose (event: Event, channel: Channel): void {
-    if (this.intermediaryChannel && this.intermediaryChannel === channel) {
+    if (channel === this.intermediaryChannel) {
       this.leave()
       this.wc.joinSubject.next(new Error(`Intermediary channel closed: ${event.type}`))
     }

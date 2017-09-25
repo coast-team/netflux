@@ -39,6 +39,7 @@ export declare class FullMesh extends Service implements ITopology {
     constructor(wc: any);
     clean(): void;
     addJoining(ch: Channel, members: [number]): void;
+    initIntermediary(ch: Channel): void;
     initJoining(ch: Channel): void;
     send(msg: IMessage): void;
     forward(msg: IMessage): void;

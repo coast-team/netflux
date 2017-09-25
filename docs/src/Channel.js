@@ -11,6 +11,7 @@ export class Channel {
         this.connection = connection;
         this.id = options.id;
         this.rtcPeerConnection = options.rtcPeerConnection;
+        this.isIntermediary = false;
         // Configure `send` function
         if (isBrowser) {
             connection.binaryType = 'arraybuffer';
@@ -41,6 +42,9 @@ export class Channel {
         this.connection.onmessage = ({ data }) => wc.onMessageProxy(this, new Uint8Array(data));
         this.connection.onclose = (evt) => this.onClose(evt);
         this.connection.onerror = (evt) => wc.topologyService.onChannelError(evt, this);
+    }
+    markAsIntermediry() {
+        this.wc.topologyService.initIntermediary(this);
     }
     close() {
         if (this.connection.readyState !== 'closed' &&

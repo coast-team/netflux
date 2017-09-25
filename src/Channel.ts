@@ -12,6 +12,7 @@ export class Channel {
    */
   public id: number
   public send: (data: Uint8Array) => void
+  public isIntermediary: boolean
   private rtcPeerConnection: RTCPeerConnection
   private onClose: (evt: Event) => void
   private wc: WebChannel
@@ -28,6 +29,7 @@ export class Channel {
     this.connection = connection
     this.id = options.id
     this.rtcPeerConnection = options.rtcPeerConnection
+    this.isIntermediary = false
 
     // Configure `send` function
     if (isBrowser) {
@@ -59,6 +61,10 @@ export class Channel {
     this.connection.onmessage = ({ data }) => wc.onMessageProxy(this, new Uint8Array(data))
     this.connection.onclose = (evt) => this.onClose(evt)
     this.connection.onerror = (evt) => wc.topologyService.onChannelError(evt, this)
+  }
+
+  markAsIntermediry (): void {
+    this.wc.topologyService.initIntermediary(this)
   }
 
   close (): void {
