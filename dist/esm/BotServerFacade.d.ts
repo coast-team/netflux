@@ -54,7 +54,7 @@ export declare class WebGroupBotServer {
      * @param {NodeJSHttpServer|NodeJSHttpsServer} options.server NodeJS http(s) server.
      * @param {string} [options.url] Bot server URL.
      * @param {boolean} [options.perMessageDeflate=false] Enable/disable permessage-deflate.
-     * @param {Object} options.webGroupOptions
+     * @param {WebGroupOptions} options.webGroupOptions Options for each {@link WebGroup} the bot is member of.
      * @param {Topology} [options.webGroupOptions.topology=Topology.FULL_MESH]
      * @param {string} [options.webGroupOptions.signalingURL='wss://www.coedit.re:20473']
      * @param {RTCIceServer[]} [options.webGroupOptions.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]

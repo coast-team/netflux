@@ -2167,7 +2167,128 @@ LongBits$1.prototype.length = function length() {
     return part2 === 0 ? part1 === 0 ? part0 < 16384 ? part0 < 128 ? 1 : 2 : part0 < 2097152 ? 3 : 4 : part1 < 16384 ? part1 < 128 ? 5 : 6 : part1 < 2097152 ? 7 : 8 : part2 < 128 ? 9 : 10;
 };
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+  return typeof obj;
+} : function (obj) {
+  return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+};
+
+
+
+
+
+var asyncGenerator = function () {
+  function AwaitValue(value) {
+    this.value = value;
+  }
+
+  function AsyncGenerator(gen) {
+    var front, back;
+
+    function send(key, arg) {
+      return new Promise(function (resolve, reject) {
+        var request = {
+          key: key,
+          arg: arg,
+          resolve: resolve,
+          reject: reject,
+          next: null
+        };
+
+        if (back) {
+          back = back.next = request;
+        } else {
+          front = back = request;
+          resume(key, arg);
+        }
+      });
+    }
+
+    function resume(key, arg) {
+      try {
+        var result = gen[key](arg);
+        var value = result.value;
+
+        if (value instanceof AwaitValue) {
+          Promise.resolve(value.value).then(function (arg) {
+            resume("next", arg);
+          }, function (arg) {
+            resume("throw", arg);
+          });
+        } else {
+          settle(result.done ? "return" : "normal", result.value);
+        }
+      } catch (err) {
+        settle("throw", err);
+      }
+    }
+
+    function settle(type, value) {
+      switch (type) {
+        case "return":
+          front.resolve({
+            value: value,
+            done: true
+          });
+          break;
+
+        case "throw":
+          front.reject(value);
+          break;
+
+        default:
+          front.resolve({
+            value: value,
+            done: false
+          });
+          break;
+      }
+
+      front = front.next;
+
+      if (front) {
+        resume(front.key, front.arg);
+      } else {
+        back = null;
+      }
+    }
+
+    this._invoke = send;
+
+    if (typeof gen.return !== "function") {
+      this.return = undefined;
+    }
+  }
+
+  if (typeof Symbol === "function" && Symbol.asyncIterator) {
+    AsyncGenerator.prototype[Symbol.asyncIterator] = function () {
+      return this;
+    };
+  }
+
+  AsyncGenerator.prototype.next = function (arg) {
+    return this._invoke("next", arg);
+  };
+
+  AsyncGenerator.prototype.throw = function (arg) {
+    return this._invoke("throw", arg);
+  };
+
+  AsyncGenerator.prototype.return = function (arg) {
+    return this._invoke("return", arg);
+  };
+
+  return {
+    wrap: function (fn) {
+      return function () {
+        return new AsyncGenerator(fn.apply(this, arguments));
+      };
+    },
+    await: function (value) {
+      return new AwaitValue(value);
+    }
+  };
+}();
 
 var minimal$2 = createCommonjsModule$1(function (module, exports) {
     "use strict";
@@ -2414,7 +2535,7 @@ var minimal$2 = createCommonjsModule$1(function (module, exports) {
             // Error.call(this, message);
             // ^ just returns a new error instance because the ctor can be called as a function
 
-            Object.defineProperty(this, "message", { get: function get() {
+            Object.defineProperty(this, "message", { get: function get$$1() {
                     return message;
                 } });
 
@@ -2427,7 +2548,7 @@ var minimal$2 = createCommonjsModule$1(function (module, exports) {
 
         (CustomError.prototype = Object.create(Error.prototype)).constructor = CustomError;
 
-        Object.defineProperty(CustomError.prototype, "name", { get: function get() {
+        Object.defineProperty(CustomError.prototype, "name", { get: function get$$1() {
                 return name;
             } });
 
@@ -9313,7 +9434,7 @@ var WebGroupBotServer = (function () {
      * @param {NodeJSHttpServer|NodeJSHttpsServer} options.server NodeJS http(s) server.
      * @param {string} [options.url] Bot server URL.
      * @param {boolean} [options.perMessageDeflate=false] Enable/disable permessage-deflate.
-     * @param {Object} options.webGroupOptions
+     * @param {WebGroupOptions} options.webGroupOptions Options for each {@link WebGroup} the bot is member of.
      * @param {Topology} [options.webGroupOptions.topology=Topology.FULL_MESH]
      * @param {string} [options.webGroupOptions.signalingURL='wss://www.coedit.re:20473']
      * @param {RTCIceServer[]} [options.webGroupOptions.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]
