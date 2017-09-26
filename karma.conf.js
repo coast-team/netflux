@@ -39,7 +39,7 @@ module.exports = (config) => {
       compilerOptions: {
         module: 'CommonJS',
         target: 'ES5',
-        lib: [ 'ES2017', 'DOM' ],
+        lib: [ "ES2015", "ES2016", "ES2017", "DOM" ],
         moduleResolution: 'node',
         removeComments: true,
         downlevelIteration: true,
