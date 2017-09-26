@@ -1,15 +1,6 @@
 /* tslint:disable */
 /// <reference types="text-encoding" />
 
-declare namespace Netflux {
-    interface Log {
-      // debug(message?: any, ...optionalParams: any[]): void
-      info(message?: any, ...optionalParams: any[]): void
-    }
-}
-
-declare var log: Netflux.Log
-
 /**
  * Extends "global" variable
  */
