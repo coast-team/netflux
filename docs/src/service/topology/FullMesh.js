@@ -29,13 +29,6 @@ export class FullMesh extends Service {
     clean() { }
     addJoining(ch, members) {
         log.info('I am helping to join ' + ch.id);
-        for (const c of this.channels) {
-            if (c.id === ch.id) {
-                c.close();
-                this.wc.sendProxy({ content: super.encode({ closePeerId: ch.id }) });
-                break;
-            }
-        }
         this.peerJoined(ch);
         this.checkMembers(ch, members);
     }
@@ -176,6 +169,15 @@ export class FullMesh extends Service {
         }));
     }
     peerJoined(ch) {
+        for (const c of this.channels) {
+            if (c.id === ch.id) {
+                c.closeQuietly();
+                this.channels.delete(c);
+                this.channels.add(ch);
+                this.jps.delete(ch.id);
+                return;
+            }
+        }
         this.channels.add(ch);
         this.wc.onMemberJoinProxy(ch.id);
         this.jps.delete(ch.id);

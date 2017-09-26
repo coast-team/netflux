@@ -122,7 +122,7 @@ export class WebGroup {
         this.key = undefined;
         Reflect.defineProperty(this, 'key', { configurable: false, enumerable: true, get: () => wc.key });
         /**
-         * The read-only array of member identifiers (except yours).
+         * The read-only array of all members including yourself (i.e. {@link WebGroup#myId})
          * @type {number[]}
          */
         this.members = undefined;

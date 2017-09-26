@@ -84,6 +84,23 @@ export class Channel {
     }
   }
 
+  closeQuietly (): void {
+    this.connection.onmessage = undefined
+    this.connection.onclose = undefined
+    this.connection.onerror = undefined
+    if (this.rtcPeerConnection) {
+      this.rtcPeerConnection.oniceconnectionstatechange = undefined
+    }
+    log.info(`I am QUIETLY closing channel with ${this.id}`)
+    this.connection.close()
+    if (this.rtcPeerConnection && this.rtcPeerConnection.signalingState !== 'closed') {
+      log.info(`I am QUIETLY closing peer connection with ${this.id}`, {
+        iceConnectionState: this.rtcPeerConnection ? this.rtcPeerConnection.iceConnectionState : '',
+      })
+      this.rtcPeerConnection.close()
+    }
+  }
+
   private sendInBrowser (data: Uint8Array): void {
     // if (this.connection.readyState !== 'closed' && new Int8Array(data).length !== 0) {
     if (this.isOpen()) {

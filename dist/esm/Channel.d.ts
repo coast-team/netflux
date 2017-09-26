@@ -22,6 +22,7 @@ export declare class Channel {
     });
     markAsIntermediry(): void;
     close(): void;
+    closeQuietly(): void;
     private sendInBrowser(data);
     private sendInNodeViaWebSocket(data);
     private sendInNodeViaDataChannel(data);

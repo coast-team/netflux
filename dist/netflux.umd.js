@@ -6210,8 +6210,7 @@ var Channel = (function () {
             this.send = this.sendInNodeViaDataChannel;
         }
         this.onClose = function (evt) {
-            log.info("Connection with " + _this.id + " has closed", {
-                readyState: _this.connection.readyState,
+            log.info("Channel with " + _this.id + " has closed", {
                 iceConnectionState: _this.rtcPeerConnection ? _this.rtcPeerConnection.iceConnectionState : '',
             });
             _this.connection.onclose = function () { };
@@ -6219,6 +6218,9 @@ var Channel = (function () {
             _this.connection.onerror = function () { };
             wc.topologyService.onChannelClose(evt, _this);
             if (_this.rtcPeerConnection && _this.rtcPeerConnection.signalingState !== 'closed') {
+                log.info("I am closing peer connection with " + _this.id, {
+                    iceConnectionState: _this.rtcPeerConnection ? _this.rtcPeerConnection.iceConnectionState : '',
+                });
                 _this.rtcPeerConnection.close();
             }
         };
@@ -6238,11 +6240,27 @@ var Channel = (function () {
             this.connection.readyState !== 'closing' &&
             this.connection.readyState !== WebSocket.CLOSED &&
             this.connection.readyState !== WebSocket.CLOSING) {
-            log.info("I am closing connection with " + this.id);
+            log.info("I am closing channel with " + this.id);
             this.connection.close();
             if (isFirefox && this.rtcPeerConnection && this.rtcPeerConnection.signalingState !== 'closed') {
                 this.onClose(new global.Event('close'));
             }
+        }
+    };
+    Channel.prototype.closeQuietly = function () {
+        this.connection.onmessage = undefined;
+        this.connection.onclose = undefined;
+        this.connection.onerror = undefined;
+        if (this.rtcPeerConnection) {
+            this.rtcPeerConnection.oniceconnectionstatechange = undefined;
+        }
+        log.info("I am QUIETLY closing channel with " + this.id);
+        this.connection.close();
+        if (this.rtcPeerConnection && this.rtcPeerConnection.signalingState !== 'closed') {
+            log.info("I am QUIETLY closing peer connection with " + this.id, {
+                iceConnectionState: this.rtcPeerConnection ? this.rtcPeerConnection.iceConnectionState : '',
+            });
+            this.rtcPeerConnection.close();
         }
     };
     Channel.prototype.sendInBrowser = function (data) {
@@ -7877,10 +7895,7 @@ var WebRTCBuilder = (function (_super) {
                     };
                     dc_1.onopen = function () {
                         pc.oniceconnectionstatechange = function () {
-                            log.info("Connection status with " + channel_1.id + " has changed to {pc.iceConnectionState.toUpperCase()}", {
-                                iceConnectionState: pc.iceConnectionState,
-                                signalingState: pc.signalingState,
-                            });
+                            log.info("ICE connection state with " + channel_1.id + " changed to " + pc.iceConnectionState.toUpperCase());
                             if (pc.iceConnectionState === 'failed') {
                                 channel_1.close();
                             }
@@ -7906,11 +7921,7 @@ var WebRTCBuilder = (function (_super) {
                     var channel = new Channel(_this.wc, dc, { rtcPeerConnection: pc, id: peerId });
                     dc.onopen = function (evt) {
                         pc.oniceconnectionstatechange = function () {
-                            log.info("NETFLUX: " + _this.wc.myId + " iceConnectionState=" + pc.iceConnectionState.toUpperCase() + " " + channel.id, {
-                                readyState: dc.readyState,
-                                iceConnectionState: pc.iceConnectionState,
-                                signalingState: pc.signalingState,
-                            });
+                            log.info("ICE connection state with " + channel.id + " changed to " + pc.iceConnectionState.toUpperCase());
                             if (pc.iceConnectionState === 'failed') {
                                 channel.close();
                             }
@@ -8116,26 +8127,8 @@ var FullMesh = (function (_super) {
     FullMesh.prototype.clean = function () { };
     FullMesh.prototype.addJoining = function (ch, members) {
         log.info('I am helping to join ' + ch.id);
-        try {
-            for (var _a = __values(this.channels), _b = _a.next(); !_b.done; _b = _a.next()) {
-                var c = _b.value;
-                if (c.id === ch.id) {
-                    c.close();
-                    this.wc.sendProxy({ content: _super.prototype.encode.call(this, { closePeerId: ch.id }) });
-                    break;
-                }
-            }
-        }
-        catch (e_1_1) { e_1 = { error: e_1_1 }; }
-        finally {
-            try {
-                if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
-            }
-            finally { if (e_1) throw e_1.error; }
-        }
         this.peerJoined(ch);
         this.checkMembers(ch, members);
-        var e_1, _c;
     };
     FullMesh.prototype.initIntermediary = function (ch) {
         this.intermediaryChannel = ch;
@@ -8154,14 +8147,14 @@ var FullMesh = (function (_super) {
                 ch.send(bytes);
             }
         }
-        catch (e_2_1) { e_2 = { error: e_2_1 }; }
+        catch (e_1_1) { e_1 = { error: e_1_1 }; }
         finally {
             try {
                 if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
             }
-            finally { if (e_2) throw e_2.error; }
+            finally { if (e_1) throw e_1.error; }
         }
-        var e_2, _c;
+        var e_1, _c;
     };
     FullMesh.prototype.forward = function (msg) { };
     FullMesh.prototype.sendTo = function (msg) {
@@ -8175,12 +8168,12 @@ var FullMesh = (function (_super) {
                 }
             }
         }
-        catch (e_3_1) { e_3 = { error: e_3_1 }; }
+        catch (e_2_1) { e_2 = { error: e_2_1 }; }
         finally {
             try {
                 if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
             }
-            finally { if (e_3) throw e_3.error; }
+            finally { if (e_2) throw e_2.error; }
         }
         if (this.intermediaryChannel) {
             this.intermediaryChannel.send((bytes));
@@ -8196,16 +8189,16 @@ var FullMesh = (function (_super) {
                     }
                 }
             }
-            catch (e_4_1) { e_4 = { error: e_4_1 }; }
+            catch (e_3_1) { e_3 = { error: e_3_1 }; }
             finally {
                 try {
                     if (_e && !_e.done && (_g = _d.return)) _g.call(_d);
                 }
-                finally { if (e_4) throw e_4.error; }
+                finally { if (e_3) throw e_3.error; }
             }
         }
         console.warn(this.wc.myId + ' The recipient could not be found', msg.recipientId);
-        var e_3, _c, e_4, _g;
+        var e_2, _c, e_3, _g;
     };
     FullMesh.prototype.forwardTo = function (msg) {
         this.sendTo(msg);
@@ -8217,17 +8210,17 @@ var FullMesh = (function (_super) {
                 ch.close();
             }
         }
-        catch (e_5_1) { e_5 = { error: e_5_1 }; }
+        catch (e_4_1) { e_4 = { error: e_4_1 }; }
         finally {
             try {
                 if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
             }
-            finally { if (e_5) throw e_5.error; }
+            finally { if (e_4) throw e_4.error; }
         }
         this.jps = new Map();
         this.joinAttempts = 0;
         this.intermediaryChannel = undefined;
-        var e_5, _c;
+        var e_4, _c;
     };
     FullMesh.prototype.onChannelClose = function (event, channel) {
         if (channel === this.intermediaryChannel) {
@@ -8236,7 +8229,6 @@ var FullMesh = (function (_super) {
         }
         if (this.channels.delete(channel)) {
             this.wc.onMemberLeaveProxy(channel.id);
-            log.info('I am closing connection with ' + channel.id);
         }
     };
     FullMesh.prototype.onChannelError = function (evt, channel) {
@@ -8270,12 +8262,12 @@ var FullMesh = (function (_super) {
                         _loop_1(id);
                     }
                 }
-                catch (e_6_1) { e_6 = { error: e_6_1 }; }
+                catch (e_5_1) { e_5 = { error: e_5_1 }; }
                 finally {
                     try {
                         if (missingPeers_1_1 && !missingPeers_1_1.done && (_b = missingPeers_1.return)) _b.call(missingPeers_1);
                     }
-                    finally { if (e_6) throw e_6.error; }
+                    finally { if (e_5) throw e_5.error; }
                 }
                 // Notify the intermediary peer about your members
                 Promise.all(misssingConnections).then(function () {
@@ -8314,7 +8306,7 @@ var FullMesh = (function (_super) {
                 break;
             }
         }
-        var e_6, _b;
+        var e_5, _b;
     };
     FullMesh.prototype.checkMembers = function (ch, members) {
         var _this = this;
@@ -8335,9 +8327,29 @@ var FullMesh = (function (_super) {
         }));
     };
     FullMesh.prototype.peerJoined = function (ch) {
+        try {
+            for (var _a = __values(this.channels), _b = _a.next(); !_b.done; _b = _a.next()) {
+                var c = _b.value;
+                if (c.id === ch.id) {
+                    c.closeQuietly();
+                    this.channels.delete(c);
+                    this.channels.add(ch);
+                    this.jps.delete(ch.id);
+                    return;
+                }
+            }
+        }
+        catch (e_6_1) { e_6 = { error: e_6_1 }; }
+        finally {
+            try {
+                if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+            }
+            finally { if (e_6) throw e_6.error; }
+        }
         this.channels.add(ch);
         this.wc.onMemberJoinProxy(ch.id);
         this.jps.delete(ch.id);
+        var e_6, _c;
     };
     return FullMesh;
 }(Service$1));
@@ -8405,8 +8417,10 @@ var WebChannel = (function (_super) {
                     break;
                 case SignalingState$1.CLOSED:
                     if (_this.members.length === 1) {
-                        _this.key = '';
                         _this.setState(WebChannelState.LEFT);
+                        if (_this.isRejoinDisabled) {
+                            _this.key = '';
+                        }
                     }
                     if (!_this.isRejoinDisabled) {
                         _this.rejoin();
@@ -8929,7 +8943,7 @@ var WebGroup = (function () {
         this.key = undefined;
         Reflect.defineProperty(this, 'key', { configurable: false, enumerable: true, get: function () { return wc.key; } });
         /**
-         * The read-only array of member identifiers (except yours).
+         * The read-only array of all members including yourself (i.e. {@link WebGroup#myId})
          * @type {number[]}
          */
         this.members = undefined;
