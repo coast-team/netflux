@@ -163,8 +163,10 @@ export class WebChannel extends Service {
           break
         case SignalingState.CLOSED:
           if (this.members.length === 1) {
-            this.key = ''
             this.setState(WebChannelState.LEFT)
+            if (this.isRejoinDisabled) {
+              this.key = ''
+            }
           }
           if (!this.isRejoinDisabled) {
             this.rejoin()
