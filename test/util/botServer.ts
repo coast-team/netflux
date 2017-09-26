@@ -66,7 +66,11 @@ try {
           wc.send(msg)
 
           // Send the message privately to each peer
-          wc.members.forEach((id) => wc.sendTo(id, msg))
+          wc.members.forEach((id) => {
+            if (id !== wc.myId) {
+              wc.sendTo(id, msg)
+            }
+          })
           ctx.status = 200
           break
         }

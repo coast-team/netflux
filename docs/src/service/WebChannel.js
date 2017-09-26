@@ -42,10 +42,10 @@ export class WebChannel extends Service {
     constructor({ topology = defaultOptions.topology, signalingURL = defaultOptions.signalingURL, iceServers = defaultOptions.iceServers, autoRejoin = defaultOptions.autoRejoin, } = {}) {
         super(10, webChannel.Message);
         // PUBLIC MEMBERS
-        this.members = [];
         this.topology = topology;
         this.id = this.generateId();
         this.myId = this.generateId();
+        this.members = [this.myId];
         this.key = '';
         this.autoRejoin = autoRejoin;
         // PUBLIC EVENT HANDLERS
@@ -70,7 +70,7 @@ export class WebChannel extends Service {
                     this.setState(WebChannelState.JOINED);
                     break;
                 case SignalingState.CLOSED:
-                    if (this.members.length === 0) {
+                    if (this.members.length === 1) {
                         this.key = '';
                         this.setState(WebChannelState.LEFT);
                     }
@@ -164,7 +164,7 @@ export class WebChannel extends Service {
      * Broadcast a message to the network.
      */
     send(data) {
-        if (this.members.length !== 0) {
+        if (this.members.length !== 1) {
             const msg = {
                 senderId: this.myId,
                 recipientId: 0,
@@ -181,7 +181,7 @@ export class WebChannel extends Service {
      * Send a message to a particular peer in the network.
      */
     sendTo(id, data) {
-        if (this.members.length !== 0) {
+        if (this.members.length !== 1) {
             const msg = {
                 senderId: this.myId,
                 recipientId: id,
@@ -199,7 +199,7 @@ export class WebChannel extends Service {
      * corresponds to the longest ping to each network member.
      */
     ping() {
-        if (this.members.length !== 0 && this.pingTime === 0) {
+        if (this.members.length !== 1 && this.pingTime === 0) {
             return new Promise((resolve, reject) => {
                 if (this.pingTime === 0) {
                     this.pingTime = Date.now();
@@ -222,7 +222,7 @@ export class WebChannel extends Service {
     onMemberLeaveProxy(id) {
         this.members.splice(this.members.indexOf(id), 1);
         this.onMemberLeave(id);
-        if (this.members.length === 0 && this.signaling.state !== SignalingState.READY_TO_JOIN_OTHERS) {
+        if (this.members.length === 1 && this.signaling.state !== SignalingState.READY_TO_JOIN_OTHERS) {
             this.setState(WebChannelState.LEFT);
         }
     }
@@ -296,27 +296,29 @@ export class WebChannel extends Service {
     treatServiceMessage({ channel, senderId, recipientId, msg }) {
         switch (msg.type) {
             case 'init': {
+                const { topology, wcId, generatedIds } = msg.init;
                 // Check whether the intermidiary peer is already a member of your
                 // network (possible when merging two networks (works with FullMesh)).
                 // If it is a case then you are already a member of the network.
                 if (this.members.includes(senderId)) {
+                    if (!generatedIds.includes(this.myId)) {
+                        console.warn(`Failed merge networks: my members contain intermediary peer id,
+            but my id is not included into the intermediary peer members`);
+                        channel.close();
+                        return;
+                    }
+                    if (this.topology !== topology) {
+                        console.warn('Failed merge networks: different topologies');
+                        channel.close();
+                        return;
+                    }
+                    console.info('NETFLUX: closes connection with intermediary member, because already connected');
                     this.setState(WebChannelState.JOINED);
                     this.signaling.open();
                     channel.close();
                 }
                 else {
-                    const { topology, wcId, generatedIds } = msg.init;
-                    if (this.members.length !== 0) {
-                        if (generatedIds.includes(this.myId) || this.topology !== topology) {
-                            this.joinSubject.next(new Error('Failed merge with another network'));
-                            channel.close();
-                            return;
-                        }
-                    }
                     this.setTopology(topology);
-                    if (generatedIds.includes(this.myId)) {
-                        this.myId = this.generateId(generatedIds);
-                    }
                     this.id = wcId;
                     channel.id = senderId;
                     this.topologyService.initJoining(channel);
@@ -343,7 +345,7 @@ export class WebChannel extends Service {
                 const now = Date.now();
                 this.pongNb++;
                 this.maxTime = Math.max(this.maxTime, now - this.pingTime);
-                if (this.pongNb === this.members.length) {
+                if (this.pongNb === this.members.length - 1) {
                     this.pingFinish(this.maxTime);
                     this.pingTime = 0;
                 }
@@ -403,8 +405,7 @@ export class WebChannel extends Service {
      */
     generateId(excludeIds = []) {
         const id = global.crypto.getRandomValues(new Uint32Array(1))[0];
-        if (id === this.myId || this.members.includes(id)
-            || (excludeIds.length !== 0 && excludeIds.includes(id))) {
+        if (excludeIds.includes(id)) {
             return this.generateId();
         }
         return id;

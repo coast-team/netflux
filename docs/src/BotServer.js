@@ -59,7 +59,7 @@ export class BotServer {
             const senderId = Number(query.senderId);
             switch (pathname) {
                 case '/invite': {
-                    if (wg && wg.members.length === 0) {
+                    if (wg && wg.members.length === 1) {
                         this.webGroups.delete(wg);
                     }
                     // FIXME: it is possible to create multiple WebChannels with the same ID
@@ -90,7 +90,7 @@ export class BotServer {
             case '/invite':
                 if (wcId) {
                     const wg = this.getWebGroup(wcId);
-                    return (wg === undefined || wg.members.length === 0) && query.senderId;
+                    return (wg === undefined || wg.members.length === 1) && query.senderId;
                 }
                 return false;
             case '/internalChannel':

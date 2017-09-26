@@ -58,7 +58,7 @@ export function createAndConnectWebGroups (numberOfPeers) {
 
 export function expectMembers (wgs, totalNumberOfPeers) {
   for (let i = 0; i < wgs.length; i++) {
-    expect(wgs[i].members.length).toEqual(totalNumberOfPeers - 1)
+    expect(wgs[i].members.length).toEqual(totalNumberOfPeers)
     for (let j = i + 1; j < wgs.length; j++) {
       // Each peer should detect each other and only ONCE
       let firstIndex = wgs[j].members.indexOf(wgs[i].myId)
@@ -81,11 +81,15 @@ export function sendAndExpectOnMessage (wgs, isBroadcast, withBot = false) {
     wgs.forEach((wg) => {
       // Prepare message flags for check
       const flags = new Map()
-      wg.members.forEach((id) => flags.set(id, {
-        string: false,
-        arraybuffer: false,
-        chunk: false,
-      }))
+      wg.members.forEach((id) => {
+        if (id !== wg.myId) {
+          flags.set(id, {
+            string: false,
+            arraybuffer: false,
+            chunk: false,
+          })
+        }
+      })
 
       // Handle message event
       wg.onMessage = (id, msg, broadcasted) => {
@@ -173,9 +177,11 @@ function sendMessages (wg, isBroadcast) {
   // Send the messages privately to each peer
   } else {
     wg.members.forEach((id) => {
-      wg.sendTo(id, msgString)
-      wg.sendTo(id, msgChunk)
-      wg.sendTo(id, new Uint8Array(msgArrayBuffer.buffer))
+      if (id !== wg.myId) {
+        wg.sendTo(id, msgString)
+        wg.sendTo(id, msgChunk)
+        wg.sendTo(id, new Uint8Array(msgArrayBuffer.buffer))
+      }
     })
   }
 }
@@ -196,11 +202,8 @@ export function expectBotMembers (wgId, wgs, totalNumberOfPeers) {
   return fetch(`${BOT_FETCH_URL}/members/${wgId}`)
     .then((res) => res.json())
     .then(({ id, members }) => {
-      expect(members.length).toEqual(totalNumberOfPeers - 1)
-      wgs.forEach((wg) => {
-        expect(wg.members.includes(id)).toBeTruthy()
-        expect(members.includes(wg.myId)).toBeTruthy()
-      })
+      expect(members.length).toEqual(totalNumberOfPeers)
+      wgs.forEach((wg: WebGroup) => expect(members.includes(wg.myId)).toBeTruthy())
     })
 }
 

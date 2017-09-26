@@ -61,6 +61,13 @@ export class FullMesh extends Service implements ITopology {
 
   addJoining (ch: Channel, members: [number]): void {
     console.info(this.wc.myId + ' addJoining ' + ch.id)
+    for (const c of this.channels) {
+      if (c.id === ch.id) {
+        c.close()
+        this.wc.sendProxy({ content: super.encode({ closePeerId: ch.id }) })
+        break
+      }
+    }
     this.peerJoined(ch)
     this.checkMembers(ch, members)
   }
@@ -200,9 +207,8 @@ export class FullMesh extends Service implements ITopology {
     // Joining succeed if the joining peer and his intermediary peer
     // have same members (excludings themselves)
     if (this.wc.members.length === members.length && members.every(
-        (id) => id === this.wc.myId || this.wc.members.includes(id))
-      ) {
-      console.log(this.wc.myId + ' checkMembers JOIN SUCCEED')
+        (id) => this.wc.members.includes(id))
+    ) {
       ch.send(this.wc.encode({
         recipientId: ch.id,
         content: this.joinSucceedContent,

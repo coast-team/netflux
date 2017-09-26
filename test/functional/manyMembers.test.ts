@@ -195,7 +195,7 @@ describe('Fully connected', () => {
           .then(() => {
             wgs.forEach((wg, index) => {
               expect(wg.state).toBe(WebGroupState.LEFT)
-              expect(wg.members.length).toBe(0)
+              expect(wg.members.length).toBe(1)
               expect(wg.onMemberLeaveCalledTimes).toBe(numberOfPeers - 1)
               expect(wg.onStateChangeCalledTimes).toBe(1)
             })

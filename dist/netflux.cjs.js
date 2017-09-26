@@ -8138,8 +8138,26 @@ var FullMesh = (function (_super) {
     FullMesh.prototype.clean = function () { };
     FullMesh.prototype.addJoining = function (ch, members) {
         console.info(this.wc.myId + ' addJoining ' + ch.id);
+        try {
+            for (var _a = __values(this.channels), _b = _a.next(); !_b.done; _b = _a.next()) {
+                var c = _b.value;
+                if (c.id === ch.id) {
+                    c.close();
+                    this.wc.sendProxy({ content: _super.prototype.encode.call(this, { closePeerId: ch.id }) });
+                    break;
+                }
+            }
+        }
+        catch (e_1_1) { e_1 = { error: e_1_1 }; }
+        finally {
+            try {
+                if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+            }
+            finally { if (e_1) throw e_1.error; }
+        }
         this.peerJoined(ch);
         this.checkMembers(ch, members);
+        var e_1, _c;
     };
     FullMesh.prototype.initIntermediary = function (ch) {
         this.intermediaryChannel = ch;
@@ -8158,14 +8176,14 @@ var FullMesh = (function (_super) {
                 ch.send(bytes);
             }
         }
-        catch (e_1_1) { e_1 = { error: e_1_1 }; }
+        catch (e_2_1) { e_2 = { error: e_2_1 }; }
         finally {
             try {
                 if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
             }
-            finally { if (e_1) throw e_1.error; }
+            finally { if (e_2) throw e_2.error; }
         }
-        var e_1, _c;
+        var e_2, _c;
     };
     FullMesh.prototype.forward = function (msg) { };
     FullMesh.prototype.sendTo = function (msg) {
@@ -8179,12 +8197,12 @@ var FullMesh = (function (_super) {
                 }
             }
         }
-        catch (e_2_1) { e_2 = { error: e_2_1 }; }
+        catch (e_3_1) { e_3 = { error: e_3_1 }; }
         finally {
             try {
                 if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
             }
-            finally { if (e_2) throw e_2.error; }
+            finally { if (e_3) throw e_3.error; }
         }
         if (this.intermediaryChannel) {
             this.intermediaryChannel.send((bytes));
@@ -8200,16 +8218,16 @@ var FullMesh = (function (_super) {
                     }
                 }
             }
-            catch (e_3_1) { e_3 = { error: e_3_1 }; }
+            catch (e_4_1) { e_4 = { error: e_4_1 }; }
             finally {
                 try {
                     if (_e && !_e.done && (_g = _d.return)) _g.call(_d);
                 }
-                finally { if (e_3) throw e_3.error; }
+                finally { if (e_4) throw e_4.error; }
             }
         }
         console.error(this.wc.myId + ' The recipient could not be found', msg.recipientId);
-        var e_2, _c, e_3, _g;
+        var e_3, _c, e_4, _g;
     };
     FullMesh.prototype.forwardTo = function (msg) {
         this.sendTo(msg);
@@ -8221,17 +8239,17 @@ var FullMesh = (function (_super) {
                 ch.close();
             }
         }
-        catch (e_4_1) { e_4 = { error: e_4_1 }; }
+        catch (e_5_1) { e_5 = { error: e_5_1 }; }
         finally {
             try {
                 if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
             }
-            finally { if (e_4) throw e_4.error; }
+            finally { if (e_5) throw e_5.error; }
         }
         this.jps = new Map();
         this.joinAttempts = 0;
         this.intermediaryChannel = undefined;
-        var e_4, _c;
+        var e_5, _c;
     };
     FullMesh.prototype.onChannelClose = function (event, channel) {
         if (channel === this.intermediaryChannel) {
@@ -8274,12 +8292,12 @@ var FullMesh = (function (_super) {
                         _loop_1(id);
                     }
                 }
-                catch (e_5_1) { e_5 = { error: e_5_1 }; }
+                catch (e_6_1) { e_6 = { error: e_6_1 }; }
                 finally {
                     try {
                         if (missingPeers_1_1 && !missingPeers_1_1.done && (_b = missingPeers_1.return)) _b.call(missingPeers_1);
                     }
-                    finally { if (e_5) throw e_5.error; }
+                    finally { if (e_6) throw e_6.error; }
                 }
                 // Notify the intermediary peer about your members
                 Promise.all(misssingConnections).then(function () {
@@ -8318,14 +8336,13 @@ var FullMesh = (function (_super) {
                 break;
             }
         }
-        var e_5, _b;
+        var e_6, _b;
     };
     FullMesh.prototype.checkMembers = function (ch, members) {
         var _this = this;
         // Joining succeed if the joining peer and his intermediary peer
         // have same members (excludings themselves)
-        if (this.wc.members.length === members.length && members.every(function (id) { return id === _this.wc.myId || _this.wc.members.includes(id); })) {
-            console.log(this.wc.myId + ' checkMembers JOIN SUCCEED');
+        if (this.wc.members.length === members.length && members.every(function (id) { return _this.wc.members.includes(id); })) {
             ch.send(this.wc.encode({
                 recipientId: ch.id,
                 content: this.joinSucceedContent,
@@ -8382,10 +8399,10 @@ var WebChannel = (function (_super) {
         var _b = _a === void 0 ? {} : _a, _c = _b.topology, topology = _c === void 0 ? defaultOptions.topology : _c, _d = _b.signalingURL, signalingURL = _d === void 0 ? defaultOptions.signalingURL : _d, _e = _b.iceServers, iceServers = _e === void 0 ? defaultOptions.iceServers : _e, _f = _b.autoRejoin, autoRejoin = _f === void 0 ? defaultOptions.autoRejoin : _f;
         var _this = _super.call(this, 10, webChannel.Message) || this;
         // PUBLIC MEMBERS
-        _this.members = [];
         _this.topology = topology;
         _this.id = _this.generateId();
         _this.myId = _this.generateId();
+        _this.members = [_this.myId];
         _this.key = '';
         _this.autoRejoin = autoRejoin;
         // PUBLIC EVENT HANDLERS
@@ -8410,7 +8427,7 @@ var WebChannel = (function (_super) {
                     _this.setState(WebChannelState.JOINED);
                     break;
                 case SignalingState$1.CLOSED:
-                    if (_this.members.length === 0) {
+                    if (_this.members.length === 1) {
                         _this.key = '';
                         _this.setState(WebChannelState.LEFT);
                     }
@@ -8507,7 +8524,7 @@ var WebChannel = (function (_super) {
      * Broadcast a message to the network.
      */
     WebChannel.prototype.send = function (data) {
-        if (this.members.length !== 0) {
+        if (this.members.length !== 1) {
             var msg = {
                 senderId: this.myId,
                 recipientId: 0,
@@ -8535,7 +8552,7 @@ var WebChannel = (function (_super) {
      * Send a message to a particular peer in the network.
      */
     WebChannel.prototype.sendTo = function (id, data) {
-        if (this.members.length !== 0) {
+        if (this.members.length !== 1) {
             var msg = {
                 senderId: this.myId,
                 recipientId: id,
@@ -8565,7 +8582,7 @@ var WebChannel = (function (_super) {
      */
     WebChannel.prototype.ping = function () {
         var _this = this;
-        if (this.members.length !== 0 && this.pingTime === 0) {
+        if (this.members.length !== 1 && this.pingTime === 0) {
             return new Promise(function (resolve, reject) {
                 if (_this.pingTime === 0) {
                     _this.pingTime = Date.now();
@@ -8588,7 +8605,7 @@ var WebChannel = (function (_super) {
     WebChannel.prototype.onMemberLeaveProxy = function (id) {
         this.members.splice(this.members.indexOf(id), 1);
         this.onMemberLeave(id);
-        if (this.members.length === 0 && this.signaling.state !== SignalingState$1.READY_TO_JOIN_OTHERS) {
+        if (this.members.length === 1 && this.signaling.state !== SignalingState$1.READY_TO_JOIN_OTHERS) {
             this.setState(WebChannelState.LEFT);
         }
     };
@@ -8666,27 +8683,28 @@ var WebChannel = (function (_super) {
         var channel = _a.channel, senderId = _a.senderId, recipientId = _a.recipientId, msg = _a.msg;
         switch (msg.type) {
             case 'init': {
+                var _b = msg.init, topology = _b.topology, wcId = _b.wcId, generatedIds = _b.generatedIds;
                 // Check whether the intermidiary peer is already a member of your
                 // network (possible when merging two networks (works with FullMesh)).
                 // If it is a case then you are already a member of the network.
                 if (this.members.includes(senderId)) {
+                    if (!generatedIds.includes(this.myId)) {
+                        console.warn("Failed merge networks: my members contain intermediary peer id,\n            but my id is not included into the intermediary peer members");
+                        channel.close();
+                        return;
+                    }
+                    if (this.topology !== topology) {
+                        console.warn('Failed merge networks: different topologies');
+                        channel.close();
+                        return;
+                    }
+                    console.info('NETFLUX: closes connection with intermediary member, because already connected');
                     this.setState(WebChannelState.JOINED);
                     this.signaling.open();
                     channel.close();
                 }
                 else {
-                    var _b = msg.init, topology = _b.topology, wcId = _b.wcId, generatedIds = _b.generatedIds;
-                    if (this.members.length !== 0) {
-                        if (generatedIds.includes(this.myId) || this.topology !== topology) {
-                            this.joinSubject.next(new Error('Failed merge with another network'));
-                            channel.close();
-                            return;
-                        }
-                    }
                     this.setTopology(topology);
-                    if (generatedIds.includes(this.myId)) {
-                        this.myId = this.generateId(generatedIds);
-                    }
                     this.id = wcId;
                     channel.id = senderId;
                     this.topologyService.initJoining(channel);
@@ -8713,7 +8731,7 @@ var WebChannel = (function (_super) {
                 var now = Date.now();
                 this.pongNb++;
                 this.maxTime = Math.max(this.maxTime, now - this.pingTime);
-                if (this.pongNb === this.members.length) {
+                if (this.pongNb === this.members.length - 1) {
                     this.pingFinish(this.maxTime);
                     this.pingTime = 0;
                 }
@@ -8775,8 +8793,7 @@ var WebChannel = (function (_super) {
     WebChannel.prototype.generateId = function (excludeIds) {
         if (excludeIds === void 0) { excludeIds = []; }
         var id = global.crypto.getRandomValues(new Uint32Array(1))[0];
-        if (id === this.myId || this.members.includes(id)
-            || (excludeIds.length !== 0 && excludeIds.includes(id))) {
+        if (excludeIds.includes(id)) {
             return this.generateId();
         }
         return id;
@@ -9356,7 +9373,7 @@ var BotServer = (function () {
             var senderId = Number(query.senderId);
             switch (pathname) {
                 case '/invite': {
-                    if (wg && wg.members.length === 0) {
+                    if (wg && wg.members.length === 1) {
                         _this.webGroups.delete(wg);
                     }
                     // FIXME: it is possible to create multiple WebChannels with the same ID
@@ -9387,7 +9404,7 @@ var BotServer = (function () {
             case '/invite':
                 if (wcId) {
                     var wg = this.getWebGroup(wcId);
-                    return (wg === undefined || wg.members.length === 0) && query.senderId;
+                    return (wg === undefined || wg.members.length === 1) && query.senderId;
                 }
                 return false;
             case '/internalChannel':
