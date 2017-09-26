@@ -1,4 +1,5 @@
 import 'rxjs/add/operator/map';
+import { log } from '../../misc/Util';
 import { fullMesh } from '../../proto';
 import { Service } from '../Service';
 /**
@@ -27,7 +28,7 @@ export class FullMesh extends Service {
     }
     clean() { }
     addJoining(ch, members) {
-        console.info(this.wc.myId + ' addJoining ' + ch.id);
+        log.info('I am helping to join ' + ch.id);
         for (const c of this.channels) {
             if (c.id === ch.id) {
                 c.close();
@@ -42,7 +43,7 @@ export class FullMesh extends Service {
         this.intermediaryChannel = ch;
     }
     initJoining(ch) {
-        console.info(this.wc.myId + ' initJoining ' + ch.id);
+        log.info('I joining with help of ' + ch.id);
         this.peerJoined(ch);
         this.joinAttempts = 0;
         this.intermediaryChannel = ch;
@@ -74,7 +75,7 @@ export class FullMesh extends Service {
                 }
             }
         }
-        console.error(this.wc.myId + ' The recipient could not be found', msg.recipientId);
+        console.warn(this.wc.myId + ' The recipient could not be found', msg.recipientId);
     }
     forwardTo(msg) {
         this.sendTo(msg);
@@ -94,11 +95,10 @@ export class FullMesh extends Service {
         }
         if (this.channels.delete(channel)) {
             this.wc.onMemberLeaveProxy(channel.id);
-            console.info(this.wc.myId + ' onMemberLeaveProxy ' + channel.id);
         }
     }
     onChannelError(evt, channel) {
-        console.error(`Channel error: ${evt.type}`);
+        console.warn(`Channel error: ${evt.type}`);
     }
     handleSvcMsg({ channel, senderId, recipientId, msg }) {
         switch (msg.type) {
@@ -153,7 +153,7 @@ export class FullMesh extends Service {
             case 'joinSucceed': {
                 this.intermediaryChannel = undefined;
                 this.wc.joinSubject.next();
-                console.info(this.wc.myId + ' _joinSucceed ');
+                log.info('I am successfully joined');
                 break;
             }
         }
@@ -179,6 +179,5 @@ export class FullMesh extends Service {
         this.channels.add(ch);
         this.wc.onMemberJoinProxy(ch.id);
         this.jps.delete(ch.id);
-        console.info(this.wc.myId + ' peerJoined ' + ch.id);
     }
 }

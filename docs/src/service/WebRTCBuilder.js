@@ -2,6 +2,7 @@ import 'rxjs/add/operator/map';
 import { Observable } from 'rxjs/Observable';
 import { ReplaySubject } from 'rxjs/ReplaySubject';
 import { Channel } from '../Channel';
+import { log } from '../misc/Util';
 import { webRTCBuilder } from '../proto';
 import { Service } from './Service';
 /**
@@ -221,11 +222,7 @@ export class WebRTCBuilder extends Service {
                     };
                     dc.onopen = () => {
                         pc.oniceconnectionstatechange = () => {
-                            console.info(`NETFLUX: ${this.wc.myId} iceConnectionState=${pc.iceConnectionState.toUpperCase()} ${channel.id}`, {
-                                readyState: dc.readyState,
-                                iceConnectionState: pc.iceConnectionState,
-                                signalingState: pc.signalingState,
-                            });
+                            log.info(`ICE connection state with ${channel.id} changed to ${pc.iceConnectionState.toUpperCase()}`);
                             if (pc.iceConnectionState === 'failed') {
                                 channel.close();
                             }
@@ -251,11 +248,7 @@ export class WebRTCBuilder extends Service {
                     const channel = new Channel(this.wc, dc, { rtcPeerConnection: pc, id: peerId });
                     dc.onopen = (evt) => {
                         pc.oniceconnectionstatechange = () => {
-                            console.info(`NETFLUX: ${this.wc.myId} iceConnectionState=${pc.iceConnectionState.toUpperCase()} ${channel.id}`, {
-                                readyState: dc.readyState,
-                                iceConnectionState: pc.iceConnectionState,
-                                signalingState: pc.signalingState,
-                            });
+                            log.info(`ICE connection state with ${channel.id} changed to ${pc.iceConnectionState.toUpperCase()}`);
                             if (pc.iceConnectionState === 'failed') {
                                 channel.close();
                             }

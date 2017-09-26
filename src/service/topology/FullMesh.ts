@@ -2,6 +2,7 @@ import 'rxjs/add/operator/map'
 import { Subscription } from 'rxjs/Subscription'
 
 import { Channel } from '../../Channel'
+import { log } from '../../misc/Util'
 import { fullMesh, IMessage } from '../../proto'
 import { IServiceMessageDecoded, Service } from '../Service'
 import { WebChannel } from '../WebChannel'
@@ -60,7 +61,7 @@ export class FullMesh extends Service implements ITopology {
   clean () {}
 
   addJoining (ch: Channel, members: [number]): void {
-    console.info(this.wc.myId + ' addJoining ' + ch.id)
+    log.info('I am helping to join ' + ch.id)
     for (const c of this.channels) {
       if (c.id === ch.id) {
         c.close()
@@ -77,7 +78,7 @@ export class FullMesh extends Service implements ITopology {
   }
 
   initJoining (ch: Channel): void {
-    console.info(this.wc.myId + ' initJoining ' + ch.id)
+    log.info('I joining with help of ' + ch.id)
     this.peerJoined(ch)
     this.joinAttempts = 0
     this.intermediaryChannel = ch
@@ -111,7 +112,7 @@ export class FullMesh extends Service implements ITopology {
         }
       }
     }
-    console.error(this.wc.myId + ' The recipient could not be found', msg.recipientId)
+    console.warn(this.wc.myId + ' The recipient could not be found', msg.recipientId)
   }
 
   forwardTo (msg: IMessage): void {
@@ -134,12 +135,11 @@ export class FullMesh extends Service implements ITopology {
     }
     if (this.channels.delete(channel)) {
       this.wc.onMemberLeaveProxy(channel.id)
-      console.info(this.wc.myId + ' onMemberLeaveProxy ' + channel.id)
     }
   }
 
   onChannelError (evt: Event, channel: Channel): void {
-    console.error(`Channel error: ${evt.type}`)
+    console.warn(`Channel error: ${evt.type}`)
   }
 
   private handleSvcMsg ({channel, senderId, recipientId, msg}: IServiceMessageDecoded): void {
@@ -197,7 +197,7 @@ export class FullMesh extends Service implements ITopology {
     case 'joinSucceed': {
       this.intermediaryChannel = undefined
       this.wc.joinSubject.next()
-      console.info(this.wc.myId + ' _joinSucceed ')
+      log.info('I am successfully joined')
       break
     }
     }
@@ -228,6 +228,5 @@ export class FullMesh extends Service implements ITopology {
     this.channels.add(ch)
     this.wc.onMemberJoinProxy(ch.id)
     this.jps.delete(ch.id)
-    console.info(this.wc.myId + ' peerJoined ' + ch.id)
   }
 }

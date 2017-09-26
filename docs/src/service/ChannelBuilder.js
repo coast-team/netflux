@@ -106,7 +106,6 @@ export class ChannelBuilder extends Service {
                         this.wc.sendToProxy({ recipientId: senderId, content: response });
                     }
                     else if (ME.isWrtcSupport) {
-                        console.log(this.wc.myId + ' calling connectOverWebChannel with ', senderId);
                         this.wc.webRTCBuilder.connectOverWebChannel(senderId)
                             .then((ch) => this.handleChannel(ch))
                             .catch((reason) => {

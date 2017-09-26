@@ -6192,6 +6192,20 @@ function generateKey() {
     return result;
 }
 var MAX_KEY_LENGTH = 512;
+var log = {
+    info: function (msg) {
+        var rest = [];
+        for (var _i = 1; _i < arguments.length; _i++) {
+            rest[_i - 1] = arguments[_i];
+        }
+        if (rest.length === 0) {
+            console.info("NETFLUX: " + msg);
+        }
+        else {
+            console.info("NETFLUX: " + msg, rest);
+        }
+    },
+};
 
 /**
  * Wrapper class for `RTCDataChannel` and `WebSocket`.
@@ -6203,6 +6217,7 @@ var Channel = (function () {
     function Channel(wc, connection, options) {
         if (options === void 0) { options = { id: -1 }; }
         var _this = this;
+        log.info('I have just connected with ' + options.id);
         this.wc = wc;
         this.connection = connection;
         this.id = options.id;
@@ -6221,10 +6236,9 @@ var Channel = (function () {
             this.send = this.sendInNodeViaDataChannel;
         }
         this.onClose = function (evt) {
-            console.info("NETFLUX: " + wc.myId + " ONCLOSE CALLBACK " + _this.id, {
+            log.info("Connection with " + _this.id + " has closed", {
                 readyState: _this.connection.readyState,
                 iceConnectionState: _this.rtcPeerConnection ? _this.rtcPeerConnection.iceConnectionState : '',
-                signalingState: _this.rtcPeerConnection ? _this.rtcPeerConnection.signalingState : '',
             });
             _this.connection.onclose = function () { };
             _this.connection.onmessage = function () { };
@@ -6250,11 +6264,7 @@ var Channel = (function () {
             this.connection.readyState !== 'closing' &&
             this.connection.readyState !== WebSocket.CLOSED &&
             this.connection.readyState !== WebSocket.CLOSING) {
-            console.info("NETFLUX: " + this.wc.myId + " CLOSE " + this.id, {
-                readyState: this.connection.readyState,
-                iceConnectionState: this.rtcPeerConnection ? this.rtcPeerConnection.iceConnectionState : '',
-                signalingState: this.rtcPeerConnection ? this.rtcPeerConnection.signalingState : '',
-            });
+            log.info("I am closing connection with " + this.id);
             this.connection.close();
             if (isFirefox && this.rtcPeerConnection && this.rtcPeerConnection.signalingState !== 'closed') {
                 this.onClose(new global.Event('close'));
@@ -7893,8 +7903,7 @@ var WebRTCBuilder = (function (_super) {
                     };
                     dc_1.onopen = function () {
                         pc.oniceconnectionstatechange = function () {
-                            console.info("NETFLUX: " + _this.wc.myId + " iceConnectionState=" + pc.iceConnectionState.toUpperCase() + " " + channel_1.id, {
-                                readyState: dc_1.readyState,
+                            log.info("Connection status with " + channel_1.id + " has changed to {pc.iceConnectionState.toUpperCase()}", {
                                 iceConnectionState: pc.iceConnectionState,
                                 signalingState: pc.signalingState,
                             });
@@ -7923,7 +7932,7 @@ var WebRTCBuilder = (function (_super) {
                     var channel = new Channel(_this.wc, dc, { rtcPeerConnection: pc, id: peerId });
                     dc.onopen = function (evt) {
                         pc.oniceconnectionstatechange = function () {
-                            console.info("NETFLUX: " + _this.wc.myId + " iceConnectionState=" + pc.iceConnectionState.toUpperCase() + " " + channel.id, {
+                            log.info("NETFLUX: " + _this.wc.myId + " iceConnectionState=" + pc.iceConnectionState.toUpperCase() + " " + channel.id, {
                                 readyState: dc.readyState,
                                 iceConnectionState: pc.iceConnectionState,
                                 signalingState: pc.signalingState,
@@ -8053,7 +8062,6 @@ var ChannelBuilder = (function (_super) {
                         this.wc.sendToProxy({ recipientId: senderId, content: response });
                     }
                     else if (ME.isWrtcSupport) {
-                        console.log(this.wc.myId + ' calling connectOverWebChannel with ', senderId);
                         this.wc.webRTCBuilder.connectOverWebChannel(senderId)
                             .then(function (ch) { return _this.handleChannel(ch); })
                             .catch(function (reason) {
@@ -8133,7 +8141,7 @@ var FullMesh = (function (_super) {
     }
     FullMesh.prototype.clean = function () { };
     FullMesh.prototype.addJoining = function (ch, members) {
-        console.info(this.wc.myId + ' addJoining ' + ch.id);
+        log.info('I am helping to join ' + ch.id);
         try {
             for (var _a = __values(this.channels), _b = _a.next(); !_b.done; _b = _a.next()) {
                 var c = _b.value;
@@ -8159,7 +8167,7 @@ var FullMesh = (function (_super) {
         this.intermediaryChannel = ch;
     };
     FullMesh.prototype.initJoining = function (ch) {
-        console.info(this.wc.myId + ' initJoining ' + ch.id);
+        log.info('I joining with help of ' + ch.id);
         this.peerJoined(ch);
         this.joinAttempts = 0;
         this.intermediaryChannel = ch;
@@ -8222,7 +8230,7 @@ var FullMesh = (function (_super) {
                 finally { if (e_4) throw e_4.error; }
             }
         }
-        console.error(this.wc.myId + ' The recipient could not be found', msg.recipientId);
+        console.warn(this.wc.myId + ' The recipient could not be found', msg.recipientId);
         var e_3, _c, e_4, _g;
     };
     FullMesh.prototype.forwardTo = function (msg) {
@@ -8254,11 +8262,11 @@ var FullMesh = (function (_super) {
         }
         if (this.channels.delete(channel)) {
             this.wc.onMemberLeaveProxy(channel.id);
-            console.info(this.wc.myId + ' onMemberLeaveProxy ' + channel.id);
+            log.info('I am closing connection with ' + channel.id);
         }
     };
     FullMesh.prototype.onChannelError = function (evt, channel) {
-        console.error("Channel error: " + evt.type);
+        console.warn("Channel error: " + evt.type);
     };
     FullMesh.prototype.handleSvcMsg = function (_a) {
         var _this = this;
@@ -8328,7 +8336,7 @@ var FullMesh = (function (_super) {
             case 'joinSucceed': {
                 this.intermediaryChannel = undefined;
                 this.wc.joinSubject.next();
-                console.info(this.wc.myId + ' _joinSucceed ');
+                log.info('I am successfully joined');
                 break;
             }
         }
@@ -8356,7 +8364,6 @@ var FullMesh = (function (_super) {
         this.channels.add(ch);
         this.wc.onMemberJoinProxy(ch.id);
         this.jps.delete(ch.id);
-        console.info(this.wc.myId + ' peerJoined ' + ch.id);
     };
     return FullMesh;
 }(Service$1));
@@ -8694,7 +8701,7 @@ var WebChannel = (function (_super) {
                         channel.close();
                         return;
                     }
-                    console.info('NETFLUX: closes connection with intermediary member, because already connected');
+                    log.info('I close connection with intermediary member, because already connected with him');
                     this.setState(WebChannelState.JOINED);
                     this.signaling.open();
                     channel.close();

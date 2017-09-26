@@ -1,6 +1,6 @@
 import { Subject } from 'rxjs/Subject';
 import { Channel } from '../Channel';
-import { generateKey, isURL, MAX_KEY_LENGTH } from '../misc/Util';
+import { generateKey, isURL, log, MAX_KEY_LENGTH } from '../misc/Util';
 import { Message, service, webChannel } from '../proto';
 import { Signaling, SignalingState } from '../Signaling';
 import { UserMessage } from '../UserMessage';
@@ -312,7 +312,7 @@ export class WebChannel extends Service {
                         channel.close();
                         return;
                     }
-                    console.info('NETFLUX: closes connection with intermediary member, because already connected');
+                    log.info('I close connection with intermediary member, because already connected with him');
                     this.setState(WebChannelState.JOINED);
                     this.signaling.open();
                     channel.close();

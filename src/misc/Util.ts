@@ -49,3 +49,13 @@ export function generateKey (): string {
 }
 
 export const MAX_KEY_LENGTH = 512
+
+export const log = {
+  info: (msg: string, ...rest: any[]): void => {
+    if (rest.length === 0) {
+      console.info(`NETFLUX: ${msg}`)
+    } else {
+      console.info(`NETFLUX: ${msg}`, rest)
+    }
+  },
+}

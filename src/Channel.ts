@@ -1,4 +1,4 @@
-import { isBrowser, isFirefox } from './misc/Util'
+import { isBrowser, isFirefox, log } from './misc/Util'
 import { WebChannel } from './service/WebChannel'
 
 /**
@@ -25,6 +25,7 @@ export class Channel {
     connection: WebSocket | RTCDataChannel,
     options: {rtcPeerConnection?: RTCPeerConnection, id: number} = {id: -1},
   ) {
+    log.info('I have just connected with ' + options.id)
     this.wc = wc
     this.connection = connection
     this.id = options.id
@@ -43,16 +44,17 @@ export class Channel {
     }
 
     this.onClose = (evt: Event) => {
-      console.info(`NETFLUX: ${wc.myId} ONCLOSE CALLBACK ${this.id}`, {
-        readyState: this.connection.readyState,
+      log.info(`Channel with ${this.id} has closed`, {
         iceConnectionState: this.rtcPeerConnection ? this.rtcPeerConnection.iceConnectionState : '',
-        signalingState: this.rtcPeerConnection ? this.rtcPeerConnection.signalingState : '',
       })
       this.connection.onclose = () => {}
       this.connection.onmessage = () => {}
       this.connection.onerror = () => {}
       wc.topologyService.onChannelClose(evt, this)
       if (this.rtcPeerConnection && this.rtcPeerConnection.signalingState !== 'closed') {
+        log.info(`I am closing peer connection with ${this.id}`, {
+          iceConnectionState: this.rtcPeerConnection ? this.rtcPeerConnection.iceConnectionState : '',
+        })
         this.rtcPeerConnection.close()
       }
     }
@@ -74,11 +76,7 @@ export class Channel {
       this.connection.readyState !== WebSocket.CLOSED &&
       this.connection.readyState !== WebSocket.CLOSING
     ) {
-      console.info(`NETFLUX: ${this.wc.myId} CLOSE ${this.id}`, {
-        readyState: this.connection.readyState,
-        iceConnectionState: this.rtcPeerConnection ? this.rtcPeerConnection.iceConnectionState : '',
-        signalingState: this.rtcPeerConnection ? this.rtcPeerConnection.signalingState : '',
-      })
+      log.info(`I am closing channel with ${this.id}`)
       this.connection.close()
       if (isFirefox && this.rtcPeerConnection && this.rtcPeerConnection.signalingState !== 'closed') {
         this.onClose(new global.Event('close'))
