@@ -9094,7 +9094,9 @@ var SignalingState$$1 = (function () {
          * Equals to `'CONNECTED_WITH_FIRST_MEMBER'`.
          * @type {string}
          */
-        get: function () { return SignalingState$1[SignalingState$1.CONNECTED_WITH_FIRST_MEMBER]; },
+        get: function () {
+            return SignalingState$1[SignalingState$1.CONNECTED_WITH_FIRST_MEMBER];
+        },
         enumerable: true,
         configurable: true
     });
