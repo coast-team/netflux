@@ -53,7 +53,9 @@ export class SignalingState {
    * Equals to `'CONNECTED_WITH_FIRST_MEMBER'`.
    * @type {string}
    */
-  static get [SignalingState.CONNECTED_WITH_FIRST_MEMBER] (): string { return SigState[SigState.CONNECTED_WITH_FIRST_MEMBER] }
+  static get [SignalingState.CONNECTED_WITH_FIRST_MEMBER] (): string {
+    return SigState[SigState.CONNECTED_WITH_FIRST_MEMBER]
+  }
 
   /**
    * You has successfully been joined a web group and ready to help join others.
