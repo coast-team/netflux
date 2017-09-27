@@ -1258,9 +1258,9 @@ function generateKey() {
     return result;
 }
 var MAX_KEY_LENGTH = 512;
-var netfluxCSS = 'background-color: #FFCA28; padding: 0 2px';
-var signalingStateCSS = 'background-color: #9FA8DA';
-var webGroupStateCSS = 'background-color: #EF9A9A';
+var netfluxCSS = 'background-color: #FFCA28; padding: 0 3px';
+var signalingStateCSS = 'background-color: #9FA8DA; padding: 0 2px';
+var webGroupStateCSS = 'background-color: #EF9A9A; padding: 0 2px';
 var log;
 function enableLog$1(isDebug) {
     if (isDebug) {
@@ -1278,16 +1278,18 @@ function enableLog$1(isDebug) {
                 }
             },
             signalingState: function (msg) {
-                console.info("%cNETFLUX%c: Signaling STATE: %c" + msg + "%c", netfluxCSS, '', signalingStateCSS, '');
+                console.info("%cNETFLUX%c: Signaling: %c" + msg + "%c", netfluxCSS, '', signalingStateCSS, '');
             },
             webGroupState: function (msg) {
-                console.info("%cNETFLUX%c: WebGroup STATE: %c" + msg + "%c", netfluxCSS, '', webGroupStateCSS, '');
+                console.info("%cNETFLUX%c: WebGroup: %c" + msg + "%c", netfluxCSS, '', webGroupStateCSS, '');
             },
         };
     }
     else {
         log = {
             info: function () { },
+            signalingState: function () { },
+            webGroupState: function () { },
         };
     }
 }
@@ -7720,7 +7722,7 @@ var WebRTCBuilder = (function (_super) {
                         .then(function (ch) { return observer.next(ch); })
                         .catch(function (err) {
                         _this.clients.delete(id);
-                        console.error("Client \"" + id + "\" failed to establish RTCDataChannel with you: " + err.message);
+                        console.warn("Client \"" + id + "\" failed to establish RTCDataChannel with you: " + err.message);
                     });
                     pc.setRemoteDescription({ type: 'offer', sdp: offer })
                         .then(function () { return remoteCandidateStream.subscribe(function (ic) {
@@ -7902,7 +7904,7 @@ var ChannelBuilder = (function (_super) {
         var channel = _a.channel, senderId = _a.senderId, recipientId = _a.recipientId, msg = _a.msg;
         switch (msg.type) {
             case 'failed': {
-                console.error('treatServiceMessage ERROR: ', msg.failed);
+                console.warn('treatServiceMessage ERROR: ', msg.failed);
                 var pr = this.pendingRequests.get(senderId);
                 if (pr !== undefined) {
                     pr.reject(new Error(msg.failed));
@@ -8334,7 +8336,7 @@ var WebChannel = (function (_super) {
         _this.joinSubject = new Subject_2();
         _this.joinSubject.subscribe(function (err) {
             if (err !== undefined) {
-                console.error('Failed to join: ' + err.message, err);
+                console.warn('Failed to join: ' + err.message, err);
                 _this.signaling.close();
             }
             else {
