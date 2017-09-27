@@ -4,7 +4,7 @@ import { WebChannel } from './service/WebChannel';
 export declare enum SignalingState {
     CONNECTING = 0,
     OPEN = 1,
-    FIRST_CONNECTED = 2,
+    CONNECTED_WITH_FIRST_MEMBER = 2,
     READY_TO_JOIN_OTHERS = 3,
     CLOSED = 4,
 }

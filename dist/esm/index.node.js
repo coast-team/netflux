@@ -5883,7 +5883,7 @@ var SignalingState$1;
 (function (SignalingState) {
     SignalingState[SignalingState["CONNECTING"] = 0] = "CONNECTING";
     SignalingState[SignalingState["OPEN"] = 1] = "OPEN";
-    SignalingState[SignalingState["FIRST_CONNECTED"] = 2] = "FIRST_CONNECTED";
+    SignalingState[SignalingState["CONNECTED_WITH_FIRST_MEMBER"] = 2] = "CONNECTED_WITH_FIRST_MEMBER";
     SignalingState[SignalingState["READY_TO_JOIN_OTHERS"] = 3] = "READY_TO_JOIN_OTHERS";
     SignalingState[SignalingState["CLOSED"] = 4] = "CLOSED";
 })(SignalingState$1 || (SignalingState$1 = {}));
@@ -5924,7 +5924,7 @@ var Signaling = (function () {
      * to join new peers to the network.
      */
     Signaling.prototype.open = function () {
-        if (this.state === SignalingState$1.FIRST_CONNECTED) {
+        if (this.state === SignalingState$1.CONNECTED_WITH_FIRST_MEMBER) {
             this.rxWs.send({ joined: true });
             this.setState(SignalingState$1.READY_TO_JOIN_OTHERS);
         }
@@ -5965,7 +5965,7 @@ var Signaling = (function () {
                                 send: function (m) { return _this.rxWs.send({ content: m }); },
                             })
                                 .then(function (ch) {
-                                _this.setState(SignalingState$1.FIRST_CONNECTED);
+                                _this.setState(SignalingState$1.CONNECTED_WITH_FIRST_MEMBER);
                                 ch.markAsIntermediry();
                             })
                                 .catch(function (err) {
@@ -9215,23 +9215,23 @@ var SignalingState$$1 = (function () {
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(SignalingState$$1, "FIRST_CONNECTED", {
+    Object.defineProperty(SignalingState$$1, "CONNECTED_WITH_FIRST_MEMBER", {
         /**
          * `RTCDataChannel` has been established with one of the group member.
          * From now the signaling is no longer needed, because the joining process
          * will continue with a help of this member.
          * @type {number}
          */
-        get: function () { return SignalingState$1.FIRST_CONNECTED; },
+        get: function () { return SignalingState$1.CONNECTED_WITH_FIRST_MEMBER; },
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(SignalingState$$1, SignalingState$$1.FIRST_CONNECTED, {
+    Object.defineProperty(SignalingState$$1, SignalingState$$1.CONNECTED_WITH_FIRST_MEMBER, {
         /**
-         * Equals to `'FIRST_CONNECTED'`.
+         * Equals to `'CONNECTED_WITH_FIRST_MEMBER'`.
          * @type {string}
          */
-        get: function () { return SignalingState$1[SignalingState$1.FIRST_CONNECTED]; },
+        get: function () { return SignalingState$1[SignalingState$1.CONNECTED_WITH_FIRST_MEMBER]; },
         enumerable: true,
         configurable: true
     });

@@ -133,13 +133,13 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/index.browser.js~SignalingState.html#static-get-CONNECTING">CONNECTING</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/index.browser.js~SignalingState.html#static-get-CONNECTED_WITH_FIRST_MEMBER">CONNECTED_WITH_FIRST_MEMBER</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
         </p>
       </div>
       <div>
         
         
-        <div data-ice="description"><p>The connection is not yet open.</p>
+        <div data-ice="description"><p><code>RTCDataChannel</code> has been established with one of the group member.</p>
 </div>
       </div>
     </td>
@@ -162,13 +162,13 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/index.browser.js~SignalingState.html#static-get-FIRST_CONNECTED">FIRST_CONNECTED</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/index.browser.js~SignalingState.html#static-get-CONNECTING">CONNECTING</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
         </p>
       </div>
       <div>
         
         
-        <div data-ice="description"><p><code>RTCDataChannel</code> has been established with one of the group member.</p>
+        <div data-ice="description"><p>The connection is not yet open.</p>
 </div>
       </div>
     </td>
@@ -278,13 +278,13 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/index.browser.js~SignalingState.html#static-get-[SignalingState.CONNECTING]">[SignalingState.CONNECTING]</a></span></span><span class="code" data-ice="signature">: <span>string</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/index.browser.js~SignalingState.html#static-get-[SignalingState.CONNECTED_WITH_FIRST_MEMBER]">[SignalingState.CONNECTED_WITH_FIRST_MEMBER]</a></span></span><span class="code" data-ice="signature">: <span>string</span></span>
         </p>
       </div>
       <div>
         
         
-        <div data-ice="description"><p>Equals to <code>&apos;CONNECTING&apos;</code>.</p>
+        <div data-ice="description"><p>Equals to <code>&apos;CONNECTED_WITH_FIRST_MEMBER&apos;</code>.</p>
 </div>
       </div>
     </td>
@@ -307,13 +307,13 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/index.browser.js~SignalingState.html#static-get-[SignalingState.FIRST_CONNECTED]">[SignalingState.FIRST_CONNECTED]</a></span></span><span class="code" data-ice="signature">: <span>string</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/index.browser.js~SignalingState.html#static-get-[SignalingState.CONNECTING]">[SignalingState.CONNECTING]</a></span></span><span class="code" data-ice="signature">: <span>string</span></span>
         </p>
       </div>
       <div>
         
         
-        <div data-ice="description"><p>Equals to <code>&apos;FIRST_CONNECTED&apos;</code>.</p>
+        <div data-ice="description"><p>Equals to <code>&apos;CONNECTING&apos;</code>.</p>
 </div>
       </div>
     </td>
@@ -437,25 +437,27 @@
   
 </div>
 <div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="static-get-CONNECTING">
+  <h3 data-ice="anchor" id="static-get-CONNECTED_WITH_FIRST_MEMBER">
     <span class="access" data-ice="access">public</span>
     <span data-ice="static">static</span>
     <span class="kind" data-ice="kind">get</span>
     
     
     
-    <span class="code" data-ice="name">CONNECTING</span><span class="code" data-ice="signature">: <span>number</span></span>
+    <span class="code" data-ice="name">CONNECTED_WITH_FIRST_MEMBER</span><span class="code" data-ice="signature">: <span>number</span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/index.browser.js.html#lineNumber21">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/index.browser.js.html#lineNumber43">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  <div data-ice="description"><p>The connection is not yet open.</p>
+  <div data-ice="description"><p><code>RTCDataChannel</code> has been established with one of the group member.
+From now the signaling is no longer needed, because the joining process
+will continue with a help of this member.</p>
 </div>
 
   
@@ -481,27 +483,25 @@
   
 </div>
 <div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="static-get-FIRST_CONNECTED">
+  <h3 data-ice="anchor" id="static-get-CONNECTING">
     <span class="access" data-ice="access">public</span>
     <span data-ice="static">static</span>
     <span class="kind" data-ice="kind">get</span>
     
     
     
-    <span class="code" data-ice="name">FIRST_CONNECTED</span><span class="code" data-ice="signature">: <span>number</span></span>
+    <span class="code" data-ice="name">CONNECTING</span><span class="code" data-ice="signature">: <span>number</span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/index.browser.js.html#lineNumber43">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/index.browser.js.html#lineNumber21">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  <div data-ice="description"><p><code>RTCDataChannel</code> has been established with one of the group member.
-From now the signaling is no longer needed, because the joining process
-will continue with a help of this member.</p>
+  <div data-ice="description"><p>The connection is not yet open.</p>
 </div>
 
   
@@ -659,25 +659,25 @@ will continue with a help of this member.</p>
   
 </div>
 <div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="static-get-[SignalingState.CONNECTING]">
+  <h3 data-ice="anchor" id="static-get-[SignalingState.CONNECTED_WITH_FIRST_MEMBER]">
     <span class="access" data-ice="access">public</span>
     <span data-ice="static">static</span>
     <span class="kind" data-ice="kind">get</span>
     
     
     
-    <span class="code" data-ice="name">[SignalingState.CONNECTING]</span><span class="code" data-ice="signature">: <span>string</span></span>
+    <span class="code" data-ice="name">[SignalingState.CONNECTED_WITH_FIRST_MEMBER]</span><span class="code" data-ice="signature">: <span>string</span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/index.browser.js.html#lineNumber26">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/index.browser.js.html#lineNumber48">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  <div data-ice="description"><p>Equals to <code>&apos;CONNECTING&apos;</code>.</p>
+  <div data-ice="description"><p>Equals to <code>&apos;CONNECTED_WITH_FIRST_MEMBER&apos;</code>.</p>
 </div>
 
   
@@ -703,25 +703,25 @@ will continue with a help of this member.</p>
   
 </div>
 <div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="static-get-[SignalingState.FIRST_CONNECTED]">
+  <h3 data-ice="anchor" id="static-get-[SignalingState.CONNECTING]">
     <span class="access" data-ice="access">public</span>
     <span data-ice="static">static</span>
     <span class="kind" data-ice="kind">get</span>
     
     
     
-    <span class="code" data-ice="name">[SignalingState.FIRST_CONNECTED]</span><span class="code" data-ice="signature">: <span>string</span></span>
+    <span class="code" data-ice="name">[SignalingState.CONNECTING]</span><span class="code" data-ice="signature">: <span>string</span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/index.browser.js.html#lineNumber48">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/index.browser.js.html#lineNumber26">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  <div data-ice="description"><p>Equals to <code>&apos;FIRST_CONNECTED&apos;</code>.</p>
+  <div data-ice="description"><p>Equals to <code>&apos;CONNECTING&apos;</code>.</p>
 </div>
 
   

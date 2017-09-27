@@ -27,7 +27,7 @@ export declare class SignalingState {
      * will continue with a help of this member.
      * @type {number}
      */
-    static readonly FIRST_CONNECTED: number;
+    static readonly CONNECTED_WITH_FIRST_MEMBER: number;
     /**
      * You has successfully been joined a web group and ready to help join others.
      * @type {number}

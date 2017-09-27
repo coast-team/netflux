@@ -40,12 +40,12 @@ export class SignalingState {
      * will continue with a help of this member.
      * @type {number}
      */
-    static get FIRST_CONNECTED() { return SigState.FIRST_CONNECTED; }
+    static get CONNECTED_WITH_FIRST_MEMBER() { return SigState.CONNECTED_WITH_FIRST_MEMBER; }
     /**
-     * Equals to `'FIRST_CONNECTED'`.
+     * Equals to `'CONNECTED_WITH_FIRST_MEMBER'`.
      * @type {string}
      */
-    static get [SignalingState.FIRST_CONNECTED]() { return SigState[SigState.FIRST_CONNECTED]; }
+    static get [SignalingState.CONNECTED_WITH_FIRST_MEMBER]() { return SigState[SigState.CONNECTED_WITH_FIRST_MEMBER]; }
     /**
      * You has successfully been joined a web group and ready to help join others.
      * @type {number}

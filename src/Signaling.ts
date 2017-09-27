@@ -29,7 +29,7 @@ const pongMsg = signaling.Message.encode(signaling.Message.create({ pong: true }
 export enum SignalingState {
   CONNECTING,
   OPEN,
-  FIRST_CONNECTED,
+  CONNECTED_WITH_FIRST_MEMBER,
   READY_TO_JOIN_OTHERS,
   CLOSED,
 }
@@ -78,7 +78,7 @@ export class Signaling {
    * to join new peers to the network.
    */
   open (): void {
-    if (this.state === SignalingState.FIRST_CONNECTED) {
+    if (this.state === SignalingState.CONNECTED_WITH_FIRST_MEMBER) {
       this.rxWs.send({ joined: true })
       this.setState(SignalingState.READY_TO_JOIN_OTHERS)
     }
@@ -116,7 +116,7 @@ export class Signaling {
                   send: (m) => this.rxWs.send({ content: m }),
                 })
                   .then((ch: Channel) => {
-                    this.setState(SignalingState.FIRST_CONNECTED)
+                    this.setState(SignalingState.CONNECTED_WITH_FIRST_MEMBER)
                     ch.markAsIntermediry()
                   })
                   .catch((err) => {

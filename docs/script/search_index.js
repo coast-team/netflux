@@ -294,15 +294,15 @@ window.esdocSearchIndex = [
     "member"
   ],
   [
-    "src/index.browser.js~signalingstate.connecting",
-    "class/src/index.browser.js~SignalingState.html#static-get-CONNECTING",
-    "src/index.browser.js~SignalingState.CONNECTING",
+    "src/index.browser.js~signalingstate.connected_with_first_member",
+    "class/src/index.browser.js~SignalingState.html#static-get-CONNECTED_WITH_FIRST_MEMBER",
+    "src/index.browser.js~SignalingState.CONNECTED_WITH_FIRST_MEMBER",
     "member"
   ],
   [
-    "src/index.browser.js~signalingstate.first_connected",
-    "class/src/index.browser.js~SignalingState.html#static-get-FIRST_CONNECTED",
-    "src/index.browser.js~SignalingState.FIRST_CONNECTED",
+    "src/index.browser.js~signalingstate.connecting",
+    "class/src/index.browser.js~SignalingState.html#static-get-CONNECTING",
+    "src/index.browser.js~SignalingState.CONNECTING",
     "member"
   ],
   [
@@ -324,15 +324,15 @@ window.esdocSearchIndex = [
     "member"
   ],
   [
-    "src/index.browser.js~signalingstate.[signalingstate.connecting]",
-    "class/src/index.browser.js~SignalingState.html#static-get-[SignalingState.CONNECTING]",
-    "src/index.browser.js~SignalingState.[SignalingState.CONNECTING]",
+    "src/index.browser.js~signalingstate.[signalingstate.connected_with_first_member]",
+    "class/src/index.browser.js~SignalingState.html#static-get-[SignalingState.CONNECTED_WITH_FIRST_MEMBER]",
+    "src/index.browser.js~SignalingState.[SignalingState.CONNECTED_WITH_FIRST_MEMBER]",
     "member"
   ],
   [
-    "src/index.browser.js~signalingstate.[signalingstate.first_connected]",
-    "class/src/index.browser.js~SignalingState.html#static-get-[SignalingState.FIRST_CONNECTED]",
-    "src/index.browser.js~SignalingState.[SignalingState.FIRST_CONNECTED]",
+    "src/index.browser.js~signalingstate.[signalingstate.connecting]",
+    "class/src/index.browser.js~SignalingState.html#static-get-[SignalingState.CONNECTING]",
+    "src/index.browser.js~SignalingState.[SignalingState.CONNECTING]",
     "member"
   ],
   [

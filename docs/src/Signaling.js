@@ -12,7 +12,7 @@ export var SignalingState;
 (function (SignalingState) {
     SignalingState[SignalingState["CONNECTING"] = 0] = "CONNECTING";
     SignalingState[SignalingState["OPEN"] = 1] = "OPEN";
-    SignalingState[SignalingState["FIRST_CONNECTED"] = 2] = "FIRST_CONNECTED";
+    SignalingState[SignalingState["CONNECTED_WITH_FIRST_MEMBER"] = 2] = "CONNECTED_WITH_FIRST_MEMBER";
     SignalingState[SignalingState["READY_TO_JOIN_OTHERS"] = 3] = "READY_TO_JOIN_OTHERS";
     SignalingState[SignalingState["CLOSED"] = 4] = "CLOSED";
 })(SignalingState || (SignalingState = {}));
@@ -45,7 +45,7 @@ export class Signaling {
      * to join new peers to the network.
      */
     open() {
-        if (this.state === SignalingState.FIRST_CONNECTED) {
+        if (this.state === SignalingState.CONNECTED_WITH_FIRST_MEMBER) {
             this.rxWs.send({ joined: true });
             this.setState(SignalingState.READY_TO_JOIN_OTHERS);
         }
@@ -82,7 +82,7 @@ export class Signaling {
                                 send: (m) => this.rxWs.send({ content: m }),
                             })
                                 .then((ch) => {
-                                this.setState(SignalingState.FIRST_CONNECTED);
+                                this.setState(SignalingState.CONNECTED_WITH_FIRST_MEMBER);
                                 ch.markAsIntermediry();
                             })
                                 .catch((err) => {
