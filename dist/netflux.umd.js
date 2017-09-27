@@ -6166,20 +6166,33 @@ function generateKey() {
     return result;
 }
 var MAX_KEY_LENGTH = 512;
-var log = {
-    info: function (msg) {
-        var rest = [];
-        for (var _i = 1; _i < arguments.length; _i++) {
-            rest[_i - 1] = arguments[_i];
-        }
-        if (rest.length === 0) {
-            console.info("NETFLUX: " + msg);
-        }
-        else {
-            console.info("NETFLUX: " + msg, rest);
-        }
-    },
-};
+var log;
+function enableLog$1(isDebug) {
+    if (isDebug) {
+        log = {
+            debug: function () { },
+            info: function (msg) {
+                var rest = [];
+                for (var _i = 1; _i < arguments.length; _i++) {
+                    rest[_i - 1] = arguments[_i];
+                }
+                if (rest.length === 0) {
+                    console.info("NETFLUX: " + msg);
+                }
+                else {
+                    console.info("NETFLUX: " + msg, rest);
+                }
+            },
+        };
+    }
+    else {
+        log = {
+            debug: function () { },
+            info: function () { },
+        };
+    }
+}
+enableLog$1(false);
 
 /**
  * Wrapper class for `RTCDataChannel` and `WebSocket`.
@@ -9128,6 +9141,13 @@ var WebGroup = (function () {
 }());
 
 /**
+ * Enable/Disable console logs. By default the logs are disabled. Consol logs
+ * group and signaling states, connection establishment, disconnection and
+ * other useful information for debugging.
+ * @param {boolean} value
+ */
+function enableLog$$1(value) { enableLog$1(value); }
+/**
  * The state enum of the signaling server for WebRTC.
  */
 var SignalingState$$1 = (function () {
@@ -9290,6 +9310,7 @@ var Topology = (function () {
  * @external {NodeJSHttpsServer} https://nodejs.org/api/https.html#https_class_https_server
  */
 
+exports.enableLog = enableLog$$1;
 exports.SignalingState = SignalingState$$1;
 exports.Topology = Topology;
 exports.WebGroup = WebGroup;

@@ -16,6 +16,6 @@ export declare function isURL(str: string): boolean;
  */
 export declare function generateKey(): string;
 export declare const MAX_KEY_LENGTH = 512;
-export declare const log: {
-    info: (msg: string, ...rest: any[]) => void;
-};
+declare let log: any;
+export declare function enableLog(isDebug: boolean): void;
+export { log };

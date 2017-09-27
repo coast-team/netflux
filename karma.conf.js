@@ -31,8 +31,8 @@ module.exports = (config) => {
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
     preprocessors: {
-      'test/**/*.ts': ['karma-typescript'],
-      'src/**/*.+(js|ts)': ['karma-typescript']
+      'test/**/*.ts': ['karma-typescript', 'regex'],
+      'src/**/*.+(js|ts)': ['karma-typescript', 'regex']
     },
 
     karmaTypescriptConfig: {
@@ -50,8 +50,15 @@ module.exports = (config) => {
       bundlerOptions: {
         exclude: ['wrtc', 'text-encoding', 'uws', 'node-webcrypto-ossl', 'url']
       },
-      compilerDelay: 1000,
-      include: ["src/**/*", "test/**/*"]
+      compilerDelay: 2000,
+      include: ['src/**/*', 'test/**/*'],
+      coverageOptions: {
+        exclude: [/src\/proto\/index\.js/i, /test\/.*/i, /.*polyfills*/i]
+      },
+      reports: {
+        html: {},
+        'text-summary': ''
+      }
     },
 
     // test results reporter to use
@@ -94,18 +101,31 @@ module.exports = (config) => {
   })
 
   if (process.env.TRAVIS || TYPE === 'travis') {
-    Object.assign(config, {
-      browsers: ['ChromeHeadless'],
-
-      coverageReporter: {
-        reporters: [
-          {type: 'text'},
-          {type: 'lcovonly', subdir: '.'}
-        ]
+    config.browsers = ['ChromeHeadless', 'Firefox'],
+    config.autoWatch = false,
+    config.singleRun = true,
+    config.browserNoActivityTimeout = 120000
+    config.karmaTypescriptConfig.reports = {
+      lcovonly: {
+        subdirectory: 'lcov',
+        filename: 'lcov'
       },
-      autoWatch: false,
-      singleRun: true,
-      browserNoActivityTimeout: 120000
-    })
-  } else if (TYPE === 'coverage') { }
+      'text-summary': ''
+    }
+  } else if (TYPE === 'debug') {
+    config.regexPreprocessor = {
+      rules: [
+        {
+          fileName: 'Util.ts', replacement: [
+            { replace: /enableLog\(false\)/g, with: 'enableLog(true)' }
+          ]
+        }
+      ]
+    }
+  } else if (TYPE === 'precommit') {
+    config.browsers = ['ChromeHeadless', 'Firefox'],
+    config.autoWatch = false,
+    config.singleRun = true,
+    config.karmaTypescriptConfig.reports = { 'text-summary': '' }
+  }
 }

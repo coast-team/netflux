@@ -1,6 +1,13 @@
 import './misc/polyfills.browser';
 export { WebGroup, WebGroupOptions, WebGroupState, DataType } from './WebChannelFacade';
 /**
+ * Enable/Disable console logs. By default the logs are disabled. Consol logs
+ * group and signaling states, connection establishment, disconnection and
+ * other useful information for debugging.
+ * @param {boolean} value
+ */
+export declare function enableLog(value: any): void;
+/**
  * The state enum of the signaling server for WebRTC.
  */
 export declare class SignalingState {

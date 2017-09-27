@@ -1,7 +1,7 @@
 {
   "source": "./docs/src",
   "destination": "./docs",
-  "includes": [".*Facade\\.js", ".*index\\.js"],
+  "includes": [".*Facade\\.js", ".*index\\.browser\\.js"],
   "plugins": [
     {
       "name": "esdoc-standard-plugin",

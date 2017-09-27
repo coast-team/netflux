@@ -7,6 +7,7 @@ branches:
     - master
     - /^greenkeeper-.*$/
 addons:
+  firefox: latest
   apt:
     packages:
       - google-chrome-stable
@@ -20,12 +21,17 @@ before_script:
   - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start
   - sleep 3
+  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+  - chmod +x ./cc-test-reporter
+  - ./cc-test-reporter before-build
 script:
   - npm run test:travis
+  - bundle exec rspec
 after_success:
   - codeclimate-test-reporter < ./coverage/lcov.info
 after_script:
   - kill -9 $(ps aux | grep 'pm2')
+  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
 branches:
   except:
     - "/^v\\d+\\.\\d+\\.\\d+$/"
