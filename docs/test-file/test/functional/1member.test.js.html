@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl" href="../../../">
+  <title data-ice="title">test/functional/1member.test.js | Netflux</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  <script src="script/manual.js"></script>
+<link rel="stylesheet" href="./inject/css/0-style.css"><meta name="description" content="Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done."><meta property="twitter:card" content="summary"><meta property="twitter:title" content="Netflux"><meta property="twitter:description" content="Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done."></head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./" style="display: flex; align-items: center;"><img src="./image/brand_logo.png" style="width:34px;"></a>
+  
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  <a href="test.html" data-ice="testLink">Test</a>
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+<a style="position:relative; top:3px;" href="https://github.com/coast-team/netflux"><img width="20px" src="./image/github.png"></a></header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/BotServerFacade.js~WebGroupBotServer.html">WebGroupBotServer</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroupState.html">WebGroupState</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.browser.js~SignalingState.html">SignalingState</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.browser.js~Topology.html">Topology</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-enableLog">enableLog</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-DataType">DataType</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupBotServerOptions">WebGroupBotServerOptions</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupOptions">WebGroupOptions</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/http.html#http_class_http_server">NodeJSHttpServer</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/https.html#https_class_https_server">NodeJSHttpsServer</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://developer.mozilla.org/en/docs/Web/API/RTCIceServer">RTCIceServer</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array">Uint8Array</a></span></span></li>
+</ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><h1 data-ice="title">test/functional/1member.test.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">/// &lt;reference types=&apos;jasmine&apos; /&gt;
+import { SignalingState, Topology, WebGroup, WebGroupState } from &apos;../../src/index.browser&apos;;
+import { MAX_KEY_LENGTH } from &apos;../../src/misc/Util&apos;;
+import { SIGNALING_URL } from &apos;../util/helper&apos;;
+/** @test {WebGroup} */
+describe(&apos;Alone&apos;, () =&gt; {
+    /** @test {WebGroup#constructor} */
+    it(&apos;constructor&apos;, () =&gt; {
+        const wg = new WebGroup({ signalingURL: SIGNALING_URL });
+        // Check members
+        expect(typeof wg.id).toBe(&apos;number&apos;);
+        expect(Reflect.getOwnPropertyDescriptor(wg, &apos;id&apos;).set).toBeUndefined();
+        expect(typeof wg.myId).toBe(&apos;number&apos;);
+        expect(Reflect.getOwnPropertyDescriptor(wg, &apos;myId&apos;).set).toBeUndefined();
+        expect(wg.key).toBe(&apos;&apos;);
+        expect(Reflect.getOwnPropertyDescriptor(wg, &apos;key&apos;).set).toBeUndefined();
+        expect(wg.members).toEqual([wg.myId]);
+        expect(Reflect.getOwnPropertyDescriptor(wg, &apos;members&apos;).set).toBeUndefined();
+        expect(wg.topology).toBe(Topology.FULL_MESH);
+        expect(Reflect.getOwnPropertyDescriptor(wg, &apos;topology&apos;).set).toBeUndefined();
+        expect(wg.state).toBe(WebGroupState.LEFT);
+        expect(Reflect.getOwnPropertyDescriptor(wg, &apos;state&apos;).set).toBeUndefined();
+        expect(wg.signalingState).toBe(SignalingState.CLOSED);
+        expect(Reflect.getOwnPropertyDescriptor(wg, &apos;signalingState&apos;).set).toBeUndefined();
+        expect(wg.signalingURL).toBe(SIGNALING_URL);
+        expect(Reflect.getOwnPropertyDescriptor(wg, &apos;signalingURL&apos;).set).toBeUndefined();
+        expect(wg.autoRejoin).toBeTruthy();
+        wg.autoRejoin = false;
+        expect(wg.autoRejoin).toBeFalsy();
+        // Check event handlers
+        expect(wg.onMemberJoin).toBeUndefined();
+        expect(wg.onMemberLeave).toBeUndefined();
+        expect(wg.onMessage).toBeUndefined();
+        expect(wg.onStateChange).toBeUndefined();
+        expect(wg.onSignalingStateChange).toBeUndefined();
+        // Check methods
+        expect(typeof wg.join).toBe(&apos;function&apos;);
+        expect(typeof wg.invite).toBe(&apos;function&apos;);
+        expect(typeof wg.closeSignaling).toBe(&apos;function&apos;);
+        expect(typeof wg.leave).toBe(&apos;function&apos;);
+        expect(typeof wg.send).toBe(&apos;function&apos;);
+        expect(typeof wg.sendTo).toBe(&apos;function&apos;);
+        expect(typeof wg.ping).toBe(&apos;function&apos;);
+    });
+    /** @test {WebGroup#join} */
+    describe(&apos;join&apos;, () =&gt; {
+        let wg;
+        beforeEach(() =&gt; wg = new WebGroup({ signalingURL: SIGNALING_URL }));
+        // afterEach (() =&gt; wg.leave())
+        function expectToJoin(key) {
+            return new Promise((resolve, reject) =&gt; {
+                const oldMyId = wg.myId;
+                const oldId = wg.id;
+                wg.onMessage = () =&gt; fail(&apos;onMessage called&apos;);
+                wg.onMemberJoin = () =&gt; fail(&apos;onMemberJoin called&apos;);
+                wg.onMemberLeave = () =&gt; fail(&apos;onMemberLeave called&apos;);
+                let firstStateDone = false;
+                function resolveCheck() {
+                    if (firstStateDone) {
+                        expect(wg.myId).toBe(oldMyId);
+                        expect(wg.id).toBe(oldId);
+                        expect(typeof wg.key).toBe(&apos;string&apos;);
+                        expect(wg.members).toEqual([wg.myId]);
+                        expect(wg.topology).toBe(Topology.FULL_MESH);
+                        expect(wg.state).toBe(WebGroupState.JOINED);
+                        expect(wg.signalingState).toBe(SignalingState.READY_TO_JOIN_OTHERS);
+                        expect(wg.signalingURL).toBe(SIGNALING_URL);
+                        expect(wg.autoRejoin).toBeTruthy();
+                        setTimeout(() =&gt; {
+                            expect(wg.state).toBe(WebGroupState.JOINED);
+                            expect(wg.signalingState).toBe(SignalingState.READY_TO_JOIN_OTHERS);
+                            resolve();
+                        }, 100);
+                    }
+                    else {
+                        firstStateDone = true;
+                    }
+                }
+                const onStateChangeGen = (function* () {
+                    let state = yield;
+                    expect(state).toEqual(WebGroupState.JOINING);
+                    expect(wg.state).toBe(state);
+                    state = yield;
+                    expect(state).toEqual(WebGroupState.JOINED);
+                    expect(wg.state).toBe(state);
+                    resolveCheck();
+                })();
+                onStateChangeGen.next();
+                const onSignalingStateChangeGen = (function* () {
+                    let state = yield;
+                    expect(state).toEqual(SignalingState.CONNECTING);
+                    expect(wg.signalingState).toBe(state);
+                    state = yield;
+                    expect(state).toEqual(SignalingState.OPEN);
+                    expect(wg.signalingState).toBe(state);
+                    state = yield;
+                    expect(state).toEqual(SignalingState.READY_TO_JOIN_OTHERS);
+                    expect(wg.signalingState).toBe(state);
+                    resolveCheck();
+                })();
+                onSignalingStateChangeGen.next();
+                wg.onStateChange = (state) =&gt; onStateChangeGen.next(state);
+                wg.onSignalingStateChange = (state) =&gt; onSignalingStateChangeGen.next(state);
+                try {
+                    wg.join();
+                }
+                catch (err) {
+                    reject(err);
+                }
+            });
+        }
+        /** @test {WebGroup#join} */
+        it(&apos;should join without a provided key&apos;, (done) =&gt; {
+            expectToJoin().then(() =&gt; {
+                expect(wg.key).not.toBe(&apos;&apos;);
+                done();
+            })
+                .catch((err) =&gt; fail(err));
+        });
+        /** @test {WebGroup#join} */
+        it(&apos;should join with a provided key&apos;, (done) =&gt; {
+            const key = `Free from desire, you realize the mystery.
+        Caught in desire, you see only the manifestations. (Tao Te Ching)`;
+            expectToJoin(key).then(() =&gt; {
+                expect(wg.key).not.toBe(key);
+                done();
+            })
+                .catch((err) =&gt; fail(err));
+        });
+        function expectToThrowErrorWhenJoin(webGroup, key, errMessage) {
+            webGroup.onStateChange = () =&gt; fail(&apos;onStateChange called&apos;);
+            webGroup.onSignalingStateChange = () =&gt; fail(&apos;onSignalingStateChange called&apos;);
+            webGroup.onMessage = () =&gt; fail(&apos;onMessage called&apos;);
+            webGroup.onMemberJoin = () =&gt; fail(&apos;onMemberJoin called&apos;);
+            webGroup.onMemberLeave = () =&gt; fail(&apos;onMemberLeave called&apos;);
+            expect(() =&gt; webGroup.join(key)).toThrowError(errMessage);
+            expect(webGroup.key).toBe(&apos;&apos;);
+            expect(webGroup.members).toEqual([webGroup.myId]);
+            expect(webGroup.topology).toBe(Topology.FULL_MESH);
+            expect(webGroup.state).toBe(WebGroupState.LEFT);
+            expect(webGroup.signalingState).toBe(SignalingState.CLOSED);
+            expect(webGroup.signalingURL).toBe(SIGNALING_URL);
+            expect(webGroup.autoRejoin).toBeTruthy();
+            expect(webGroup.state).toBe(WebGroupState.LEFT);
+            expect(webGroup.key).toBe(&apos;&apos;);
+        }
+        /** @test {WebGroup#join} */
+        it(&apos;should throw an error, because the key is not a &quot;string&quot;&apos;, () =&gt; {
+            const oldMyId = wg.myId;
+            const oldId = wg.id;
+            const key = 42;
+            expectToThrowErrorWhenJoin(wg, key, &apos;Failed to join: the key type &quot;number&quot; is not a &quot;string&quot;&apos;);
+            expect(wg.myId).toBe(oldMyId);
+            expect(wg.id).toBe(oldId);
+        });
+        /** @test {WebGroup#join} */
+        it(&apos;should throw an error, because the key is an empty string&apos;, () =&gt; {
+            const oldMyId = wg.myId;
+            const oldId = wg.id;
+            const key = &apos;&apos;;
+            expectToThrowErrorWhenJoin(wg, key, &apos;Failed to join: the key is an empty string&apos;);
+            expect(wg.myId).toBe(oldMyId);
+            expect(wg.id).toBe(oldId);
+        });
+        /** @test {WebGroup#join} */
+        it(&apos;should throw an error, because the key length is too long&apos;, () =&gt; {
+            const oldMyId = wg.myId;
+            const oldId = wg.id;
+            const key = `
+        PAYING DOUBLE FOR CAMELS
+        A camel dealer reached a village to sell fine animals at a very good price.
+        Everyone bought one, except Mr. Hoosep.
+
+        Some time later, the village received a visit from another dealer, with
+        excellent camels, but they were much more expensive. This time, Hoosep
+        bought some animals.
+
+        &quot;You did not buy the camels when they were almost for free, and now you
+        pay almost double,&quot; criticized his friends.
+
+        &quot;Those cheap ones were very expensive for me, because at that time I had
+        very little money,&quot; answered Hoosep, &quot;these animals might seem more
+        expensive, but for me they are cheap, because I have more than enough to
+        buy them.&quot; (Paulo Coelho)
+      `;
+            expectToThrowErrorWhenJoin(wg, key, `Failed to join : the key length of ${key.length} exceeds the maximum of ${MAX_KEY_LENGTH} characters`);
+            expect(wg.myId).toBe(oldMyId);
+            expect(wg.id).toBe(oldId);
+        });
+    });
+    /** @test {WebGroup#closeSignaling} */
+    describe(&apos;closeSignaling&apos;, () =&gt; {
+        let wg;
+        beforeEach(() =&gt; wg = new WebGroup({ signalingURL: SIGNALING_URL }));
+        // afterEach (() =&gt; wg.leave())
+        /** @test {WebGroup#closeSignaling} */
+        it(&apos;should do nothing&apos;, (done) =&gt; {
+            const oldId = wg.id;
+            const oldMyId = wg.myId;
+            wg.onStateChange = () =&gt; fail(&apos;onStateChange called&apos;);
+            wg.onSignalingStateChange = () =&gt; fail(&apos;onSignalingStateChange called&apos;);
+            wg.onMessage = () =&gt; fail(&apos;onMessage called&apos;);
+            wg.onMemberJoin = () =&gt; fail(&apos;onMemberJoin called&apos;);
+            wg.onMemberLeave = () =&gt; fail(&apos;onMemberLeave called&apos;);
+            wg.closeSignaling();
+            setTimeout(() =&gt; {
+                expect(wg.myId).toBe(oldMyId);
+                expect(wg.id).toBe(oldId);
+                expect(wg.key).toBe(&apos;&apos;);
+                expect(wg.members).toEqual([wg.myId]);
+                expect(wg.topology).toBe(Topology.FULL_MESH);
+                expect(wg.state).toBe(WebGroupState.LEFT);
+                expect(wg.signalingState).toBe(SignalingState.CLOSED);
+                expect(wg.signalingURL).toBe(SIGNALING_URL);
+                expect(wg.autoRejoin).toBeTruthy();
+                done();
+            }, 100);
+        });
+        /** @test {WebGroup#closeSignaling} */
+        it(&apos;should close the connection with Signaling server and leave the group after calling join&apos;, (done) =&gt; {
+            const oldId = wg.id;
+            const oldMyId = wg.myId;
+            wg.onStateChange = (state) =&gt; {
+                if (state === WebGroupState.JOINED) {
+                    setTimeout(() =&gt; {
+                        wg.onStateChange = (s) =&gt; expect(s).toBe(WebGroupState.LEFT);
+                        wg.onSignalingStateChange = (s) =&gt; expect(s).toBe(SignalingState.CLOSED);
+                        wg.onMessage = () =&gt; fail(&apos;onMessage called&apos;);
+                        wg.onMemberJoin = () =&gt; fail(&apos;onMemberJoin called&apos;);
+                        wg.onMemberLeave = () =&gt; fail(&apos;onMemberLeave called&apos;);
+                        wg.closeSignaling();
+                        setTimeout(() =&gt; {
+                            expect(wg.myId).toBe(oldMyId);
+                            expect(wg.id).toBe(oldId);
+                            expect(wg.key).toBe(&apos;&apos;);
+                            expect(wg.members).toEqual([wg.myId]);
+                            expect(wg.topology).toBe(Topology.FULL_MESH);
+                            expect(wg.state).toBe(WebGroupState.LEFT);
+                            expect(wg.signalingState).toBe(SignalingState.CLOSED);
+                            expect(wg.signalingURL).toBe(SIGNALING_URL);
+                            expect(wg.autoRejoin).toBeTruthy();
+                            done();
+                        }, 100);
+                    }, 100);
+                }
+            };
+            wg.join();
+        });
+    });
+});
+</code></pre>
+
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(1.0.3)</span><img src="./image/esdoc-logo-mini-black.png"></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>

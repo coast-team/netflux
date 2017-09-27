@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl" href="../../../">
+  <title data-ice="title">test/functional/manyMembers.test.js | Netflux</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  <script src="script/manual.js"></script>
+<link rel="stylesheet" href="./inject/css/0-style.css"><meta name="description" content="Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done."><meta property="twitter:card" content="summary"><meta property="twitter:title" content="Netflux"><meta property="twitter:description" content="Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done."></head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./" style="display: flex; align-items: center;"><img src="./image/brand_logo.png" style="width:34px;"></a>
+  
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  <a href="test.html" data-ice="testLink">Test</a>
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+<a style="position:relative; top:3px;" href="https://github.com/coast-team/netflux"><img width="20px" src="./image/github.png"></a></header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/BotServerFacade.js~WebGroupBotServer.html">WebGroupBotServer</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroupState.html">WebGroupState</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.browser.js~SignalingState.html">SignalingState</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.browser.js~Topology.html">Topology</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-enableLog">enableLog</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-DataType">DataType</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupBotServerOptions">WebGroupBotServerOptions</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupOptions">WebGroupOptions</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/http.html#http_class_http_server">NodeJSHttpServer</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/https.html#https_class_https_server">NodeJSHttpsServer</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://developer.mozilla.org/en/docs/Web/API/RTCIceServer">RTCIceServer</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array">Uint8Array</a></span></span></li>
+</ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><h1 data-ice="title">test/functional/manyMembers.test.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">/// &lt;reference types=&apos;jasmine&apos; /&gt;
+import { Subject } from &apos;rxjs/Subject&apos;;
+import { WebGroupState } from &apos;../../src/index.browser&apos;;
+import * as helper from &apos;../util/helper&apos;;
+const USE_CASES = [2, 3, 7];
+const scenarios = [
+    new helper.Scenario(&apos;cc&apos;),
+    new helper.Scenario(&apos;cb&apos;),
+    new helper.Scenario(&apos;ccc&apos;),
+    new helper.Scenario(&apos;ccb&apos;),
+    new helper.Scenario(&apos;ccccccc&apos;),
+    new helper.Scenario(&apos;cccbccc&apos;),
+];
+const PEER_FACE = &apos;&#x1F642; &apos;;
+const faces = (length) =&gt; {
+    let res = PEER_FACE;
+    for (let i = 1; i &lt; length; i++) {
+        res += &apos;&#x1F642; &apos;;
+    }
+    return res;
+};
+/** @test {WebGroup} */
+describe(&apos;Many members&apos;, () =&gt; {
+    /** @test {WebGroup#join} */
+    describe(&apos;should join&apos;, () =&gt; {
+        let wgs;
+        afterEach(() =&gt; wgs.forEach((wg) =&gt; wg.leave()));
+        scenarios.forEach((scenario) =&gt; {
+            it(`${scenario.smiles}`, (done) =&gt; {
+                const network = new Subject();
+                let nextJoiningIndex = 0;
+                let botJoined = false;
+                const key = helper.randKey();
+                wgs = helper.createWebGroups(scenario.nbBrowsers);
+                wgs.forEach((wg, index) =&gt; {
+                    expect(wg.state).toBe(WebGroupState.LEFT);
+                    wg.onMemberJoinCalledTimes = 0;
+                    wg.onMemberJoin = (id) =&gt; {
+                        wg.onMemberJoinCalledTimes++;
+                        // Joined peer&apos;s id should be among WebGroup members ids
+                        expect(wg.members.includes(id)).toBeTruthy();
+                        // Its id should be included only ONCE
+                        expect(wg.members.indexOf(id)).toEqual(wg.members.lastIndexOf(id));
+                    };
+                    wg.onStateChangeCalledTimes = 0;
+                    wg.onStateChange = (state) =&gt; {
+                        wg.onStateChangeCalledTimes++;
+                        if (state === WebGroupState.JOINED) {
+                            network.next({ wg, isBot: false });
+                        }
+                    };
+                });
+                network.subscribe(({ wg, isBot }) =&gt; {
+                    nextJoiningIndex = isBot ? nextJoiningIndex : nextJoiningIndex + 1;
+                    if ((nextJoiningIndex === scenario.nbBrowsers &amp;&amp; !scenario.hasBot()) ||
+                        (nextJoiningIndex === scenario.nbBrowsers &amp;&amp; scenario.hasBot() &amp;&amp; botJoined)) {
+                        network.complete();
+                    }
+                    else if (nextJoiningIndex === scenario.botIndex &amp;&amp; !isBot) {
+                        wg.invite(helper.BOT_URL);
+                        helper.botWaitJoin(wgs[0].id)
+                            .then(() =&gt; {
+                            botJoined = true;
+                            network.next({ isBot: true });
+                        });
+                    }
+                    else {
+                        wgs[nextJoiningIndex].join(key);
+                    }
+                }, (err) =&gt; { }, () =&gt; {
+                    let botCheck = Promise.resolve();
+                    if (scenario.hasBot()) {
+                        botCheck = helper.expectBotMembers(wgs[0].id, wgs, scenario.nbMembers);
+                    }
+                    botCheck.then(() =&gt; {
+                        helper.expectMembers(wgs, scenario.nbMembers);
+                        wgs.forEach((wg) =&gt; {
+                            expect(wg.state).toBe(WebGroupState.JOINED);
+                            expect(wg.onMemberJoinCalledTimes).toBe(scenario.nbMembers - 1);
+                            expect(wg.onStateChangeCalledTimes).toBe(2);
+                        });
+                        done();
+                    })
+                        .catch(done.fail);
+                });
+                wgs[0].join(key);
+            }, scenario.nbMembers * 2000);
+        });
+    });
+    /** @test {WebGroup#ping} */
+    describe(&apos;Should ping&apos;, () =&gt; {
+        let wgs;
+        afterEach(() =&gt; wgs.forEach((wg) =&gt; wg.leave()));
+        USE_CASES.forEach((numberOfPeers) =&gt; {
+            it(`${numberOfPeers}`, (done) =&gt; {
+                helper.createAndConnectWebGroups(numberOfPeers)
+                    .then((webChannels) =&gt; (wgs = webChannels))
+                    .then(() =&gt; wgs.map((wg) =&gt; wg.ping().then((p) =&gt; expect(Number.isInteger(p)).toBeTruthy())))
+                    .then((proms) =&gt; Promise.all(proms))
+                    .then(done)
+                    .catch(done.fail);
+            });
+        });
+    });
+    describe(&apos;Should send/receive&apos;, () =&gt; {
+        let wgs;
+        afterEach(() =&gt; wgs.forEach((wg) =&gt; wg.leave()));
+        USE_CASES.forEach((numberOfPeers) =&gt; {
+            /** @test {WebGroup#sendTo} */
+            describe(`${faces(numberOfPeers)}`, () =&gt; {
+                it(`private: ArrayBuffer, String &amp; 50Kb chunk`, (done) =&gt; {
+                    helper.createAndConnectWebGroups(numberOfPeers)
+                        .then((webChannels) =&gt; (wgs = webChannels))
+                        .then(() =&gt; helper.sendAndExpectOnMessage(wgs, false))
+                        .then(done)
+                        .catch(done.fail);
+                });
+                /** @test {WebGroup#send} */
+                it(`broadcast: ArrayBuffer, String &amp; 50Kb chunk`, (done) =&gt; {
+                    helper.createAndConnectWebGroups(numberOfPeers)
+                        .then((webChannels) =&gt; (wgs = webChannels))
+                        .then(() =&gt; helper.sendAndExpectOnMessage(wgs, true))
+                        .then(done)
+                        .catch(done.fail);
+                });
+            });
+        });
+    });
+    describe(`${PEER_FACE}${PEER_FACE}`, () =&gt; {
+        let wgs;
+        afterEach(() =&gt; wgs.forEach((wg) =&gt; wg.leave()));
+        /** @test {WebGroup#sendTo} */
+        helper.itBrowser(true, &apos;should send/receive ~4 MB string&apos;, (done) =&gt; {
+            const str = helper.randStr();
+            helper.createAndConnectWebGroups(2)
+                .then((webChannels) =&gt; (wgs = webChannels))
+                .then(() =&gt; {
+                wgs[0].onMessage = (id, msg) =&gt; {
+                    expect(id).toEqual(wgs[1].myId);
+                    expect(msg === str).toBeTruthy();
+                    done();
+                };
+                wgs[1].sendTo(wgs[0].myId, str);
+            });
+        }, 10000);
+    });
+    /** @test {WebGroup#leave} */
+    describe(&apos;Should leave&apos;, () =&gt; {
+        let wgs;
+        afterEach(() =&gt; wgs.forEach((wg) =&gt; wg.leave()));
+        USE_CASES.forEach((numberOfPeers) =&gt; {
+            it(`${faces(numberOfPeers)}`, (done) =&gt; {
+                helper.createAndConnectWebGroups(numberOfPeers)
+                    .then((webChannels) =&gt; {
+                    const res = [];
+                    wgs = webChannels;
+                    wgs.forEach((wg) =&gt; {
+                        expect(wg.state).toBe(WebGroupState.JOINED);
+                        wg.onMemberLeaveCalledTimes = 0;
+                        wg.onMemberLeave = (id) =&gt; {
+                            wg.onMemberLeaveCalledTimes++;
+                            expect(wg.members.includes(id)).toBeFalsy();
+                        };
+                        wg.onStateChangeCalledTimes = 0;
+                        res.push(new Promise((resolve) =&gt; {
+                            wg.onStateChange = (state) =&gt; {
+                                wg.onStateChangeCalledTimes++;
+                                if (state === WebGroupState.LEFT) {
+                                    resolve();
+                                }
+                            };
+                        }));
+                    });
+                    for (const wg of wgs) {
+                        wg.leave();
+                    }
+                    return Promise.all(res);
+                })
+                    .then(() =&gt; {
+                    wgs.forEach((wg, index) =&gt; {
+                        expect(wg.state).toBe(WebGroupState.LEFT);
+                        expect(wg.members.length).toBe(1);
+                        expect(wg.onMemberLeaveCalledTimes).toBe(numberOfPeers - 1);
+                        expect(wg.onStateChangeCalledTimes).toBe(1);
+                    });
+                })
+                    .then(done)
+                    .catch(done.fail);
+            });
+        });
+    });
+});
+</code></pre>
+
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(1.0.3)</span><img src="./image/esdoc-logo-mini-black.png"></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>

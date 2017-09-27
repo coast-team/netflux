@@ -22,8 +22,10 @@ const faces = (length) => {
   return res
 }
 
-describe('Fully connected', () => {
-  describe('Should establish a p2p network', () => {
+/** @test {WebGroup} */
+describe('Many members', () => {
+  /** @test {WebGroup#join} */
+  describe('should join', () => {
     let wgs
     afterEach(() => wgs.forEach((wg) => wg.leave()))
 
@@ -95,6 +97,7 @@ describe('Fully connected', () => {
     })
   })
 
+  /** @test {WebGroup#ping} */
   describe('Should ping', () => {
     let wgs
 
@@ -120,6 +123,7 @@ describe('Fully connected', () => {
     afterEach(() => wgs.forEach((wg) => wg.leave()))
 
     USE_CASES.forEach((numberOfPeers) => {
+      /** @test {WebGroup#sendTo} */
       describe(`${faces(numberOfPeers)}`, () => {
         it(`private: ArrayBuffer, String & 50Kb chunk`, (done) => {
           helper.createAndConnectWebGroups(numberOfPeers)
@@ -129,6 +133,7 @@ describe('Fully connected', () => {
             .catch(done.fail)
         })
 
+        /** @test {WebGroup#send} */
         it(`broadcast: ArrayBuffer, String & 50Kb chunk`, (done) => {
           helper.createAndConnectWebGroups(numberOfPeers)
             .then((webChannels) => (wgs = webChannels))
@@ -145,6 +150,7 @@ describe('Fully connected', () => {
 
     afterEach(() => wgs.forEach((wg) => wg.leave()))
 
+    /** @test {WebGroup#sendTo} */
     helper.itBrowser(true, 'should send/receive ~4 MB string', (done) => {
       const str = helper.randStr()
       helper.createAndConnectWebGroups(2)
@@ -160,7 +166,8 @@ describe('Fully connected', () => {
     }, 10000)
   })
 
-  describe('Should disconnect', () => {
+  /** @test {WebGroup#leave} */
+  describe('Should leave', () => {
     let wgs
 
     afterEach(() => wgs.forEach((wg) => wg.leave()))

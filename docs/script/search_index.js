@@ -36,6 +36,144 @@ window.esdocSearchIndex = [
     "function"
   ],
   [
+    "webgroup src/webchannelfacade.js~webgroup,webgroup",
+    "test-file/test/functional/1member.test.js.html#lineNumber6",
+    "Alone",
+    "test"
+  ],
+  [
+    "webgroup#closesignaling src/webchannelfacade.js~webgroup#closesignaling,webgroup#closesignaling",
+    "test-file/test/functional/1member.test.js.html#lineNumber192",
+    "Alone closeSignaling",
+    "test"
+  ],
+  [
+    "webgroup#closesignaling src/webchannelfacade.js~webgroup#closesignaling,webgroup#closesignaling",
+    "test-file/test/functional/1member.test.js.html#lineNumber220",
+    "Alone closeSignaling should close the connection with Signaling server and leave the group after calling join",
+    "test"
+  ],
+  [
+    "webgroup#closesignaling src/webchannelfacade.js~webgroup#closesignaling,webgroup#closesignaling",
+    "test-file/test/functional/1member.test.js.html#lineNumber197",
+    "Alone closeSignaling should do nothing",
+    "test"
+  ],
+  [
+    "webgroup#constructor src/webchannelfacade.js~webgroup#constructor,webgroup#constructor",
+    "test-file/test/functional/1member.test.js.html#lineNumber8",
+    "Alone constructor",
+    "test"
+  ],
+  [
+    "webgroup#join src/webchannelfacade.js~webgroup#join,webgroup#join",
+    "test-file/test/functional/1member.test.js.html#lineNumber46",
+    "Alone join",
+    "test"
+  ],
+  [
+    "webgroup#join src/webchannelfacade.js~webgroup#join,webgroup#join",
+    "test-file/test/functional/1member.test.js.html#lineNumber121",
+    "Alone join should join with a provided key",
+    "test"
+  ],
+  [
+    "webgroup#join src/webchannelfacade.js~webgroup#join,webgroup#join",
+    "test-file/test/functional/1member.test.js.html#lineNumber113",
+    "Alone join should join without a provided key",
+    "test"
+  ],
+  [
+    "webgroup#join src/webchannelfacade.js~webgroup#join,webgroup#join",
+    "test-file/test/functional/1member.test.js.html#lineNumber157",
+    "Alone join should throw an error, because the key is an empty string",
+    "test"
+  ],
+  [
+    "webgroup#join src/webchannelfacade.js~webgroup#join,webgroup#join",
+    "test-file/test/functional/1member.test.js.html#lineNumber148",
+    "Alone join should throw an error, because the key is not a \"string\"",
+    "test"
+  ],
+  [
+    "webgroup#join src/webchannelfacade.js~webgroup#join,webgroup#join",
+    "test-file/test/functional/1member.test.js.html#lineNumber166",
+    "Alone join should throw an error, because the key length is too long",
+    "test"
+  ],
+  [
+    "webgroup src/webchannelfacade.js~webgroup,webgroup",
+    "test-file/test/functional/manyMembers.test.js.html#lineNumber23",
+    "Many members",
+    "test"
+  ],
+  [
+    "",
+    "test-file/test/functional/manyMembers.test.js.html#lineNumber129",
+    "Many members ",
+    "test"
+  ],
+  [
+    "webgroup#leave src/webchannelfacade.js~webgroup#leave,webgroup#leave",
+    "test-file/test/functional/manyMembers.test.js.html#lineNumber148",
+    "Many members Should leave",
+    "test"
+  ],
+  [
+    "",
+    "test-file/test/functional/manyMembers.test.js.html#lineNumber152",
+    "Many members Should leave ",
+    "test"
+  ],
+  [
+    "webgroup#ping src/webchannelfacade.js~webgroup#ping,webgroup#ping",
+    "test-file/test/functional/manyMembers.test.js.html#lineNumber91",
+    "Many members Should ping",
+    "test"
+  ],
+  [
+    "",
+    "test-file/test/functional/manyMembers.test.js.html#lineNumber95",
+    "Many members Should ping ",
+    "test"
+  ],
+  [
+    "",
+    "test-file/test/functional/manyMembers.test.js.html#lineNumber105",
+    "Many members Should send/receive",
+    "test"
+  ],
+  [
+    "webgroup#sendto src/webchannelfacade.js~webgroup#sendto,webgroup#sendto",
+    "test-file/test/functional/manyMembers.test.js.html#lineNumber110",
+    "Many members Should send/receive ",
+    "test"
+  ],
+  [
+    "webgroup#send src/webchannelfacade.js~webgroup#send,webgroup#send",
+    "test-file/test/functional/manyMembers.test.js.html#lineNumber119",
+    "Many members Should send/receive  ",
+    "test"
+  ],
+  [
+    "",
+    "test-file/test/functional/manyMembers.test.js.html#lineNumber111",
+    "Many members Should send/receive  ",
+    "test"
+  ],
+  [
+    "webgroup#join src/webchannelfacade.js~webgroup#join,webgroup#join",
+    "test-file/test/functional/manyMembers.test.js.html#lineNumber25",
+    "Many members should join",
+    "test"
+  ],
+  [
+    "",
+    "test-file/test/functional/manyMembers.test.js.html#lineNumber29",
+    "Many members should join ",
+    "test"
+  ],
+  [
     "src/botserverfacade.js",
     "file/src/BotServerFacade.js.html",
     "src/BotServerFacade.js",
@@ -376,5 +514,17 @@ window.esdocSearchIndex = [
     "typedef/index.html#static-typedef-WebGroupOptions",
     "src/index.browser.js~WebGroupOptions",
     "typedef"
+  ],
+  [
+    "test/functional/1member.test.js",
+    "test-file/test/functional/1member.test.js.html",
+    "test/functional/1member.test.js",
+    "testFile"
+  ],
+  [
+    "test/functional/manymembers.test.js",
+    "test-file/test/functional/manyMembers.test.js.html",
+    "test/functional/manyMembers.test.js",
+    "testFile"
   ]
 ]

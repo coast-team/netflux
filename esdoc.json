@@ -1,5 +1,5 @@
 {
-  "source": "./docs/src",
+  "source": "./docs/jsFromTs/src",
   "destination": "./docs",
   "includes": [".*Facade\\.js", ".*index\\.browser\\.js"],
   "plugins": [
@@ -26,7 +26,19 @@
             "./manual/bestpractices.md",
             "./manual/faq.md"
           ]
+        },
+        "test": {
+          "source": "./docs/jsFromTs/test/",
+          "interfaces": ["describe", "it"],
+          "includes": ["(spec|Spec|test|Test)\\.js$"]
         }
+      }
+    },
+    {
+      "name": "esdoc-inject-style-plugin",
+      "option": {
+        "enable": true,
+        "styles": ["./manual/style.css"]
       }
     }
   ]

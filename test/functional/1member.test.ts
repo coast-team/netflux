@@ -3,8 +3,11 @@ import { SignalingState, Topology, WebGroup, WebGroupState } from '../../src/ind
 import { MAX_KEY_LENGTH } from '../../src/misc/Util'
 import { SIGNALING_URL } from '../util/helper'
 
-describe('🙂', () => {
-  it('new WebGroup', () => {
+/** @test {WebGroup} */
+describe('Alone', () => {
+
+  /** @test {WebGroup#constructor} */
+  it('constructor', () => {
     const wg = new WebGroup({signalingURL: SIGNALING_URL})
 
     // Check members
@@ -45,6 +48,7 @@ describe('🙂', () => {
     expect(typeof wg.ping).toBe('function')
   })
 
+  /** @test {WebGroup#join} */
   describe('join', () => {
     let wg: WebGroup
 
@@ -116,6 +120,7 @@ describe('🙂', () => {
       })
     }
 
+    /** @test {WebGroup#join} */
     it('should join without a provided key', (done) => {
       expectToJoin().then(() => {
         expect(wg.key).not.toBe('')
@@ -124,6 +129,7 @@ describe('🙂', () => {
       .catch((err: Error) => fail(err))
     })
 
+    /** @test {WebGroup#join} */
     it('should join with a provided key', (done) => {
       const key = `Free from desire, you realize the mystery.
         Caught in desire, you see only the manifestations. (Tao Te Ching)`
@@ -152,6 +158,7 @@ describe('🙂', () => {
       expect(webGroup.key).toBe('')
     }
 
+    /** @test {WebGroup#join} */
     it('should throw an error, because the key is not a "string"', () => {
       const oldMyId = wg.myId
       const oldId = wg.id
@@ -161,6 +168,7 @@ describe('🙂', () => {
       expect(wg.id).toBe(oldId)
     })
 
+    /** @test {WebGroup#join} */
     it('should throw an error, because the key is an empty string', () => {
       const oldMyId = wg.myId
       const oldId = wg.id
@@ -170,6 +178,7 @@ describe('🙂', () => {
       expect(wg.id).toBe(oldId)
     })
 
+    /** @test {WebGroup#join} */
     it('should throw an error, because the key length is too long', () => {
       const oldMyId = wg.myId
       const oldId = wg.id
@@ -198,6 +207,7 @@ describe('🙂', () => {
     })
   })
 
+  /** @test {WebGroup#closeSignaling} */
   describe('closeSignaling', () => {
     let wg: WebGroup
 
@@ -205,6 +215,7 @@ describe('🙂', () => {
 
     // afterEach (() => wg.leave())
 
+    /** @test {WebGroup#closeSignaling} */
     it('should do nothing', (done) => {
       const oldId = wg.id
       const oldMyId = wg.myId
@@ -228,6 +239,7 @@ describe('🙂', () => {
       }, 100)
     })
 
+    /** @test {WebGroup#closeSignaling} */
     it('should close the connection with Signaling server and leave the group after calling join', (done) => {
       const oldId = wg.id
       const oldMyId = wg.myId
@@ -258,10 +270,4 @@ describe('🙂', () => {
       wg.join()
     })
   })
-
-  // it('Ping should reject', done => {
-  //   wg.ping()
-  //     .then(() => done.fail('Ping resolved'))
-  //     .catch(done)
-  // })
 })

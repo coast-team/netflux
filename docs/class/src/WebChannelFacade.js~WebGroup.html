@@ -8,7 +8,7 @@
   <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
   <script src="script/prettify/prettify.js"></script>
   <script src="script/manual.js"></script>
-<meta name="description" content="Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done."><meta property="twitter:card" content="summary"><meta property="twitter:title" content="Netflux"><meta property="twitter:description" content="Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done."></head>
+<link rel="stylesheet" href="./inject/css/0-style.css"><meta name="description" content="Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done."><meta property="twitter:card" content="summary"><meta property="twitter:title" content="Netflux"><meta property="twitter:description" content="Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done."></head>
 <body class="layout-container" data-ice="rootContainer">
 
 <header>
@@ -16,7 +16,7 @@
   
   <a href="identifiers.html">Reference</a>
   <a href="source.html">Source</a>
-  
+  <a href="test.html" data-ice="testLink">Test</a>
   <div class="search-box">
   <span>
     <img src="./image/search.png">
@@ -121,7 +121,14 @@ wg.onSignalingStateChange = (state) =&gt; {
     </div>
 </div>
 
-  
+  <div data-ice="tests">
+    <h4>Test:</h4>
+    <ul>
+      
+    <li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber6">Alone</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/manyMembers.test.js.html#lineNumber23">Many members</a></span></li>
+</ul>
+  </div>
 
   
 </div>
@@ -877,7 +884,13 @@ with the Signaling server.</p>
 
   
 
-  
+  <div data-ice="tests">
+    <h4>Test:</h4>
+    <ul>
+      
+    <li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber8">Alone constructor</a></span></li>
+</ul>
+  </div>
 
   
   
@@ -1553,7 +1566,15 @@ value does not equal to <span><a href="class/src/index.browser.js~SignalingState
 
   
 
-  
+  <div data-ice="tests">
+    <h4>Test:</h4>
+    <ul>
+      
+    <li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber192">Alone closeSignaling</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber220">Alone closeSignaling should close the connection with Signaling server and leave the group after calling join</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber197">Alone closeSignaling should do nothing</a></span></li>
+</ul>
+  </div>
 
   
   
@@ -1678,7 +1699,19 @@ then do nothing.</p>
 
   
 
-  
+  <div data-ice="tests">
+    <h4>Test:</h4>
+    <ul>
+      
+    <li data-ice="test"><span><a href="test-file/test/functional/manyMembers.test.js.html#lineNumber25">Many members should join</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber46">Alone join</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber113">Alone join should join without a provided key</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber121">Alone join should join with a provided key</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber148">Alone join should throw an error, because the key is not a &quot;string&quot;</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber157">Alone join should throw an error, because the key is an empty string</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber166">Alone join should throw an error, because the key length is too long</a></span></li>
+</ul>
+  </div>
 
   
   
@@ -1723,7 +1756,13 @@ with the Signaling server.</p>
 
   
 
-  
+  <div data-ice="tests">
+    <h4>Test:</h4>
+    <ul>
+      
+    <li data-ice="test"><span><a href="test-file/test/functional/manyMembers.test.js.html#lineNumber148">Many members Should leave</a></span></li>
+</ul>
+  </div>
 
   
   
@@ -1780,7 +1819,13 @@ with the Signaling server.</p>
 
   
 
-  
+  <div data-ice="tests">
+    <h4>Test:</h4>
+    <ul>
+      
+    <li data-ice="test"><span><a href="test-file/test/functional/manyMembers.test.js.html#lineNumber91">Many members Should ping</a></span></li>
+</ul>
+  </div>
 
   
   
@@ -1840,7 +1885,13 @@ with the Signaling server.</p>
 
   
 
-  
+  <div data-ice="tests">
+    <h4>Test:</h4>
+    <ul>
+      
+    <li data-ice="test"><span><a href="test-file/test/functional/manyMembers.test.js.html#lineNumber119">Many members Should send/receive  </a></span></li>
+</ul>
+  </div>
 
   
   
@@ -1908,7 +1959,13 @@ with the Signaling server.</p>
 
   
 
-  
+  <div data-ice="tests">
+    <h4>Test:</h4>
+    <ul>
+      
+    <li data-ice="test"><span><a href="test-file/test/functional/manyMembers.test.js.html#lineNumber110">Many members Should send/receive </a></span></li>
+</ul>
+  </div>
 
   
   

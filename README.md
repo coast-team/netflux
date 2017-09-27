@@ -17,19 +17,10 @@
   </a>&nbsp;
   <a href="https://travis-ci.org/coast-team/netflux">
     <img src="https://travis-ci.org/coast-team/netflux.svg?branch=master" />
-  </a>&nbsp;
-  <a href="https://github.com/semantic-release/semantic-release">
-    <img src="https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg?style=flat-square" />
-  </a>&nbsp;
-  <a href="https://gitter.im/coast-team/netflux?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge">
-    <img src="https://img.shields.io/badge/GITTER-join%20chat-green.svg?style=flat-square" />
   </a>
 
   <br />
 
-  <a href="http://commitizen.github.io/cz-cli">
-    <img src="https://img.shields.io/badge/commitizen-friendly-brightgreen.svg?style=flat-square" />
-  </a>&nbsp;
   <a href="https://www.bithound.io/github/coast-team/netflux">
     <img src="https://www.bithound.io/github/coast-team/netflux/badges/score.svg" />
   </a>&nbsp;
@@ -38,6 +29,19 @@
   </a>&nbsp;
   <a href="https://coast-team.github.io/netflux">
     <img src="https://coast-team.github.io/netflux/badge.svg" />
+  </a>&nbsp;
+  <a href="https://codeclimate.com/github/coast-team/netflux/coverage"><img src="https://codeclimate.com/github/coast-team/netflux/badges/coverage.svg" /></a>
+
+  <br />
+
+  <a href="http://commitizen.github.io/cz-cli">
+    <img src="https://img.shields.io/badge/commitizen-friendly-brightgreen.svg?style=flat-square" />
+  </a>&nbsp;
+  <a href="https://github.com/semantic-release/semantic-release">
+    <img src="https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg?style=flat-square" />
+  </a>&nbsp;
+  <a href="https://gitter.im/coast-team/netflux?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge">
+    <img src="https://img.shields.io/badge/GITTER-join%20chat-green.svg?style=flat-square" />
   </a>
 </p>
 
