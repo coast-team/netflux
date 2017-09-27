@@ -7,7 +7,6 @@ branches:
     - master
     - /^greenkeeper-.*$/
 addons:
-  firefox: latest
   apt:
     packages:
       - google-chrome-stable
