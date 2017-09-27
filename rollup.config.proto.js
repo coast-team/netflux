@@ -20,7 +20,15 @@ export default [
           'node_modules/protobufjs/minimal.js': [ 'Reader', 'Writer', 'util', 'roots' ]
         }
       }),
-      babel()
+      babel({
+        babelrc: false,
+        presets: [[
+          "env",
+          {
+            modules: false
+          }
+        ]]
+      })
     ]
   }
 ]

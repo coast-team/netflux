@@ -40,7 +40,7 @@
     "test:firefox": "npm test -- --browsers Firefox",
     "test:travis": "npm test -- -- travis",
     "test:debug": "npm test -- -- debug",
-    "proto": "pbjs -t static-module -w es6 --no-verify --no-delimited --no-convert src/proto/index.proto -o src/proto/index.es6.js && pbts src/proto/index.es6.js -o src/proto/index.d.ts",
+    "proto": "pbjs -t static-module -w es6 --no-verify --no-delimited --no-convert src/proto/index.proto -o src/proto/index.es6.js",
     "postproto": "rollup -c rollup.config.proto.js && rm src/proto/index.es6.js",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
     "predoc": "rm -rf ./docs; tsc -p tsconfig.docs.json",
@@ -64,8 +64,7 @@
   "devDependencies": {
     "@types/jasmine": "^2.6.0",
     "babel-core": "^6.26.0",
-    "babel-plugin-external-helpers": "^6.22.0",
-    "babel-preset-es2015": "^6.24.1",
+    "babel-preset-env": "^1.6.0",
     "commitizen": "^2.9.6",
     "cz-conventional-changelog": "^2.0.0",
     "esdoc": "^1.0.3",
