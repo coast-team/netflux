@@ -28,6 +28,7 @@ script:
 after_success:
   - ./cc-test-reporter format-coverage -t lcov ./coverage/lcov/lcov
   - ./cc-test-reporter upload-coverage
+  - npm run semantic-release
 after_script:
   - kill -9 $(ps aux | grep 'pm2')
 branches:
