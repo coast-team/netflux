@@ -81,7 +81,7 @@ module.exports = (config) => {
     logLevel: config.LOG_INFO,
 
     // enable / disable watching file and executing tests whenever any file changes
-    autoWatch: true,
+    autoWatch: false,
 
     failOnEmptyTestSuite: false,
 
@@ -91,7 +91,7 @@ module.exports = (config) => {
 
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits
-    singleRun: false,
+    singleRun: true,
 
     // Concurrency level
     // how many browser should be started simultanous
@@ -113,6 +113,8 @@ module.exports = (config) => {
       'text-summary': ''
     }
   } else if (TYPE === 'debug') {
+    config.autoWatch = true,
+    config.singleRun = false,
     config.regexPreprocessor = {
       rules: [
         {
