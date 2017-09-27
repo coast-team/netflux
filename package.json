@@ -93,7 +93,7 @@
     "rollup-plugin-filesize": "^1.0.0",
     "rollup-plugin-node-resolve": "^3.0.0",
     "rollup-plugin-re": "^1.0.6",
-    "rollup-plugin-typescript2": "^0.5.2",
+    "rollup-plugin-typescript2": "^0.6.0",
     "rollup-plugin-uglify": "^2.0.1",
     "semantic-release": "^8.0.3",
     "sigver": "^15.0.4",
