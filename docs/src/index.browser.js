@@ -2,6 +2,14 @@ import './misc/polyfills.browser';
 import { TopologyEnum } from './service/topology/Topology';
 import { SignalingState as SigState } from './Signaling';
 export { WebGroup, WebGroupState } from './WebChannelFacade';
+import { enableLog as debug } from './misc/Util';
+/**
+ * Enable/Disable console logs. By default the logs are disabled. Consol logs
+ * group and signaling states, connection establishment, disconnection and
+ * other useful information for debugging.
+ * @param {boolean} value
+ */
+export function enableLog(value) { debug(value); }
 /**
  * The state enum of the signaling server for WebRTC.
  */

@@ -1008,66 +1008,73 @@
   {
     "__docId__": 42,
     "kind": "file",
-    "name": "src/index.js",
-    "content": "import './misc/polyfills';\nimport { SignalingState as SigState } from './Signaling';\nimport { TopologyEnum } from './service/topology/Topology';\nexport { WebGroup, WebGroupState } from './WebChannelFacade';\n// #if NODE\nexport { WebGroupBotServer } from './BotServerFacade';\n// #endif\n/**\n * The state enum of the signaling server for WebRTC.\n */\nexport class SignalingState {\n    /**\n     * The connection is not yet open.\n     * @type {number}\n     */\n    static get CONNECTING() { return SigState.CONNECTING; }\n    /**\n     * Equals to `'CONNECTING'`.\n     * @type {string}\n     */\n    static get [SignalingState.CONNECTING]() { return SigState[SigState.CONNECTING]; }\n    /**\n     * The connection is open and ready to communicate.\n     * @type {number}\n     */\n    static get OPEN() { return SigState.OPEN; }\n    /**\n     * Equals to `'OPEN'`.\n     * @type {string}\n     */\n    static get [SignalingState.OPEN]() { return SigState[SigState.OPEN]; }\n    /**\n     * `RTCDataChannel` has been established with one of the group member.\n     * From now the signaling is no longer needed, because the joining process\n     * will continue with a help of this member.\n     * @type {number}\n     */\n    static get FIRST_CONNECTED() { return SigState.FIRST_CONNECTED; }\n    /**\n     * Equals to `'FIRST_CONNECTED'`.\n     * @type {string}\n     */\n    static get [SignalingState.FIRST_CONNECTED]() { return SigState[SigState.FIRST_CONNECTED]; }\n    /**\n     * You has successfully been joined a web group and ready to help join others.\n     * @type {number}\n     */\n    static get READY_TO_JOIN_OTHERS() { return SigState.READY_TO_JOIN_OTHERS; }\n    /**\n     * Equals to `'READY_TO_JOIN_OTHERS'`.\n     * @type {string}\n     */\n    static get [SignalingState.READY_TO_JOIN_OTHERS]() { return SigState[SigState.READY_TO_JOIN_OTHERS]; }\n    /**\n     * The connection is closed.\n     * @type {number}\n     */\n    static get CLOSED() { return SigState.CLOSED; }\n    /**\n     * Equals to `'CLOSED'`.\n     * @type {string}\n     */\n    static get [SignalingState.CLOSED]() { return SigState[SigState.CLOSED]; }\n}\n/**\n * The topology enum.\n */\nexport class Topology {\n    /**\n     * Full mesh topology identifier.\n     * @type {number}\n     */\n    static get FULL_MESH() { return TopologyEnum.FULL_MESH; }\n    /**\n     * Equals to `'FULL_MESH'`.\n     * @type {string}\n     */\n    static get [Topology.FULL_MESH]() { return TopologyEnum[TopologyEnum.FULL_MESH]; }\n}\n/**\n * The options to be passed into {@link WebGroup} constructor.\n * @typedef {Object} WebGroupOptions\n * @property {Topology} [topology] Topology identifier\n * (Full mesh is the only one supported by Netflux for now).\n * @property {string} [signalingURL] Signaling URL for WebRTC.\n * @property {RTCIceServer[]} [iceServers] Array of Ice servers for WebRTC.\n * @property {boolean} [autoRejoin] Whether to automatically rejoin the web group\n * on disconnect or not. Its value may be modified after {@link WebGroup}\n * instantiation at any time.\n */\n/**\n * The options to be passed into {@link WebGroupBotServer} constructor.\n * @typedef {Object} WebGroupBotServerOptions\n * @property {Topology} [topology] See WebGroupOptions.topology\n * @property {string} [signalingURL] See WebGroupOptions.signalingURL\n * @property {RTCIceServer[]} [iceServers] See WebGroupOptions.iceServers\n * @property {boolean} [autoRejoin] See WebGroupOptions.autoRejoin\n * @property {Object} bot Server related options of the bot.\n * @property {NodeJSHttpServer|NodeJSHttpsServer} bot.server NodeJS http(s) server.\n * @property {string} [bot.url] Bot server URL.\n * @property {boolean} [bot.perMessageDeflate] Enable/disable permessage-deflate.\n */\n/**\n * @external {RTCIceServer} https://developer.mozilla.org/en/docs/Web/API/RTCIceServer\n */\n/**\n * @external {Uint8Array} https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array\n */\n/**\n * @external {NodeJSHttpServer} https://nodejs.org/api/http.html#http_class_http_server\n */\n/**\n * @external {NodeJSHttpsServer} https://nodejs.org/api/https.html#https_class_https_server\n */\n",
+    "name": "src/index.browser.js",
+    "content": "import './misc/polyfills.browser';\nimport { TopologyEnum } from './service/topology/Topology';\nimport { SignalingState as SigState } from './Signaling';\nexport { WebGroup, WebGroupState } from './WebChannelFacade';\nimport { enableLog as debug } from './misc/Util';\n/**\n * Enable/Disable console logs. By default the logs are disabled. Consol logs\n * group and signaling states, connection establishment, disconnection and\n * other useful information for debugging.\n * @param {boolean} value\n */\nexport function enableLog(value) { debug(value); }\n/**\n * The state enum of the signaling server for WebRTC.\n */\nexport class SignalingState {\n    /**\n     * The connection is not yet open.\n     * @type {number}\n     */\n    static get CONNECTING() { return SigState.CONNECTING; }\n    /**\n     * Equals to `'CONNECTING'`.\n     * @type {string}\n     */\n    static get [SignalingState.CONNECTING]() { return SigState[SigState.CONNECTING]; }\n    /**\n     * The connection is open and ready to communicate.\n     * @type {number}\n     */\n    static get OPEN() { return SigState.OPEN; }\n    /**\n     * Equals to `'OPEN'`.\n     * @type {string}\n     */\n    static get [SignalingState.OPEN]() { return SigState[SigState.OPEN]; }\n    /**\n     * `RTCDataChannel` has been established with one of the group member.\n     * From now the signaling is no longer needed, because the joining process\n     * will continue with a help of this member.\n     * @type {number}\n     */\n    static get FIRST_CONNECTED() { return SigState.FIRST_CONNECTED; }\n    /**\n     * Equals to `'FIRST_CONNECTED'`.\n     * @type {string}\n     */\n    static get [SignalingState.FIRST_CONNECTED]() { return SigState[SigState.FIRST_CONNECTED]; }\n    /**\n     * You has successfully been joined a web group and ready to help join others.\n     * @type {number}\n     */\n    static get READY_TO_JOIN_OTHERS() { return SigState.READY_TO_JOIN_OTHERS; }\n    /**\n     * Equals to `'READY_TO_JOIN_OTHERS'`.\n     * @type {string}\n     */\n    static get [SignalingState.READY_TO_JOIN_OTHERS]() { return SigState[SigState.READY_TO_JOIN_OTHERS]; }\n    /**\n     * The connection is closed.\n     * @type {number}\n     */\n    static get CLOSED() { return SigState.CLOSED; }\n    /**\n     * Equals to `'CLOSED'`.\n     * @type {string}\n     */\n    static get [SignalingState.CLOSED]() { return SigState[SigState.CLOSED]; }\n}\n/**\n * The topology enum.\n */\nexport class Topology {\n    /**\n     * Full mesh topology identifier.\n     * @type {number}\n     */\n    static get FULL_MESH() { return TopologyEnum.FULL_MESH; }\n    /**\n     * Equals to `'FULL_MESH'`.\n     * @type {string}\n     */\n    static get [Topology.FULL_MESH]() { return TopologyEnum[TopologyEnum.FULL_MESH]; }\n}\n/**\n * The options to be passed into {@link WebGroup} constructor.\n * @typedef {Object} WebGroupOptions\n * @property {Topology} [topology] Topology identifier\n * (Full mesh is the only one supported by Netflux for now).\n * @property {string} [signalingURL] Signaling URL for WebRTC.\n * @property {RTCIceServer[]} [iceServers] Array of Ice servers for WebRTC.\n * @property {boolean} [autoRejoin] Whether to automatically rejoin the web group\n * on disconnect or not. Its value may be modified after {@link WebGroup}\n * instantiation at any time.\n */\n/**\n * The options to be passed into {@link WebGroupBotServer} constructor.\n * @typedef {Object} WebGroupBotServerOptions\n * @property {Topology} [topology] See WebGroupOptions.topology\n * @property {string} [signalingURL] See WebGroupOptions.signalingURL\n * @property {RTCIceServer[]} [iceServers] See WebGroupOptions.iceServers\n * @property {boolean} [autoRejoin] See WebGroupOptions.autoRejoin\n * @property {Object} bot Server related options of the bot.\n * @property {NodeJSHttpServer|NodeJSHttpsServer} bot.server NodeJS http(s) server.\n * @property {string} [bot.url] Bot server URL.\n * @property {boolean} [bot.perMessageDeflate] Enable/disable permessage-deflate.\n */\n/**\n * @external {RTCIceServer} https://developer.mozilla.org/en/docs/Web/API/RTCIceServer\n */\n/**\n * @external {Uint8Array} https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array\n */\n/**\n * @external {NodeJSHttpServer} https://nodejs.org/api/http.html#http_class_http_server\n */\n/**\n * @external {NodeJSHttpsServer} https://nodejs.org/api/https.html#https_class_https_server\n */\n",
     "static": true,
-    "longname": "/home/philippe/workspace/netflux/docs/src/index.js",
+    "longname": "/home/philippe/workspace/netflux/docs/src/index.browser.js",
     "access": "public",
     "description": null,
     "lineNumber": 1
   },
   {
     "__docId__": 43,
-    "kind": "class",
-    "name": "SignalingState",
-    "memberof": "src/index.js",
-    "static": true,
-    "longname": "src/index.js~SignalingState",
-    "access": "public",
-    "export": true,
-    "importPath": "netflux/src/index.js",
-    "importStyle": "{SignalingState}",
-    "description": "The state enum of the signaling server for WebRTC.",
-    "lineNumber": 11,
-    "interface": false
-  },
-  {
-    "__docId__": 44,
-    "kind": "get",
-    "name": "CONNECTING",
-    "memberof": "src/index.js~SignalingState",
+    "kind": "function",
+    "name": "enableLog",
+    "memberof": "src/index.browser.js",
     "generator": false,
     "async": false,
     "static": true,
-    "longname": "src/index.js~SignalingState.CONNECTING",
+    "longname": "src/index.browser.js~enableLog",
     "access": "public",
-    "description": "The connection is not yet open.",
+    "export": true,
+    "importPath": "netflux/src/index.browser.js",
+    "importStyle": "{enableLog}",
+    "description": "Enable/Disable console logs. By default the logs are disabled. Consol logs\ngroup and signaling states, connection establishment, disconnection and\nother useful information for debugging.",
+    "lineNumber": 12,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "boolean"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "value",
+        "description": ""
+      }
+    ]
+  },
+  {
+    "__docId__": 44,
+    "kind": "class",
+    "name": "SignalingState",
+    "memberof": "src/index.browser.js",
+    "static": true,
+    "longname": "src/index.browser.js~SignalingState",
+    "access": "public",
+    "export": true,
+    "importPath": "netflux/src/index.browser.js",
+    "importStyle": "{SignalingState}",
+    "description": "The state enum of the signaling server for WebRTC.",
     "lineNumber": 16,
-    "type": {
-      "nullable": null,
-      "types": [
-        "number"
-      ],
-      "spread": false,
-      "description": null
-    }
+    "interface": false
   },
   {
     "__docId__": 45,
     "kind": "get",
-    "name": "[SignalingState.CONNECTING]",
-    "memberof": "src/index.js~SignalingState",
+    "name": "CONNECTING",
+    "memberof": "src/index.browser.js~SignalingState",
     "generator": false,
     "async": false,
     "static": true,
-    "longname": "src/index.js~SignalingState.[SignalingState.CONNECTING]",
+    "longname": "src/index.browser.js~SignalingState.CONNECTING",
     "access": "public",
-    "description": "Equals to `'CONNECTING'`.",
+    "description": "The connection is not yet open.",
     "lineNumber": 21,
     "type": {
       "nullable": null,
       "types": [
-        "string"
+        "number"
       ],
       "spread": false,
       "description": null
@@ -1076,19 +1083,19 @@
   {
     "__docId__": 46,
     "kind": "get",
-    "name": "OPEN",
-    "memberof": "src/index.js~SignalingState",
+    "name": "[SignalingState.CONNECTING]",
+    "memberof": "src/index.browser.js~SignalingState",
     "generator": false,
     "async": false,
     "static": true,
-    "longname": "src/index.js~SignalingState.OPEN",
+    "longname": "src/index.browser.js~SignalingState.[SignalingState.CONNECTING]",
     "access": "public",
-    "description": "The connection is open and ready to communicate.",
+    "description": "Equals to `'CONNECTING'`.",
     "lineNumber": 26,
     "type": {
       "nullable": null,
       "types": [
-        "number"
+        "string"
       ],
       "spread": false,
       "description": null
@@ -1097,19 +1104,19 @@
   {
     "__docId__": 47,
     "kind": "get",
-    "name": "[SignalingState.OPEN]",
-    "memberof": "src/index.js~SignalingState",
+    "name": "OPEN",
+    "memberof": "src/index.browser.js~SignalingState",
     "generator": false,
     "async": false,
     "static": true,
-    "longname": "src/index.js~SignalingState.[SignalingState.OPEN]",
+    "longname": "src/index.browser.js~SignalingState.OPEN",
     "access": "public",
-    "description": "Equals to `'OPEN'`.",
+    "description": "The connection is open and ready to communicate.",
     "lineNumber": 31,
     "type": {
       "nullable": null,
       "types": [
-        "string"
+        "number"
       ],
       "spread": false,
       "description": null
@@ -1118,19 +1125,19 @@
   {
     "__docId__": 48,
     "kind": "get",
-    "name": "FIRST_CONNECTED",
-    "memberof": "src/index.js~SignalingState",
+    "name": "[SignalingState.OPEN]",
+    "memberof": "src/index.browser.js~SignalingState",
     "generator": false,
     "async": false,
     "static": true,
-    "longname": "src/index.js~SignalingState.FIRST_CONNECTED",
+    "longname": "src/index.browser.js~SignalingState.[SignalingState.OPEN]",
     "access": "public",
-    "description": "`RTCDataChannel` has been established with one of the group member.\nFrom now the signaling is no longer needed, because the joining process\nwill continue with a help of this member.",
-    "lineNumber": 38,
+    "description": "Equals to `'OPEN'`.",
+    "lineNumber": 36,
     "type": {
       "nullable": null,
       "types": [
-        "number"
+        "string"
       ],
       "spread": false,
       "description": null
@@ -1139,19 +1146,19 @@
   {
     "__docId__": 49,
     "kind": "get",
-    "name": "[SignalingState.FIRST_CONNECTED]",
-    "memberof": "src/index.js~SignalingState",
+    "name": "FIRST_CONNECTED",
+    "memberof": "src/index.browser.js~SignalingState",
     "generator": false,
     "async": false,
     "static": true,
-    "longname": "src/index.js~SignalingState.[SignalingState.FIRST_CONNECTED]",
+    "longname": "src/index.browser.js~SignalingState.FIRST_CONNECTED",
     "access": "public",
-    "description": "Equals to `'FIRST_CONNECTED'`.",
+    "description": "`RTCDataChannel` has been established with one of the group member.\nFrom now the signaling is no longer needed, because the joining process\nwill continue with a help of this member.",
     "lineNumber": 43,
     "type": {
       "nullable": null,
       "types": [
-        "string"
+        "number"
       ],
       "spread": false,
       "description": null
@@ -1160,19 +1167,19 @@
   {
     "__docId__": 50,
     "kind": "get",
-    "name": "READY_TO_JOIN_OTHERS",
-    "memberof": "src/index.js~SignalingState",
+    "name": "[SignalingState.FIRST_CONNECTED]",
+    "memberof": "src/index.browser.js~SignalingState",
     "generator": false,
     "async": false,
     "static": true,
-    "longname": "src/index.js~SignalingState.READY_TO_JOIN_OTHERS",
+    "longname": "src/index.browser.js~SignalingState.[SignalingState.FIRST_CONNECTED]",
     "access": "public",
-    "description": "You has successfully been joined a web group and ready to help join others.",
+    "description": "Equals to `'FIRST_CONNECTED'`.",
     "lineNumber": 48,
     "type": {
       "nullable": null,
       "types": [
-        "number"
+        "string"
       ],
       "spread": false,
       "description": null
@@ -1181,36 +1188,15 @@
   {
     "__docId__": 51,
     "kind": "get",
-    "name": "[SignalingState.READY_TO_JOIN_OTHERS]",
-    "memberof": "src/index.js~SignalingState",
+    "name": "READY_TO_JOIN_OTHERS",
+    "memberof": "src/index.browser.js~SignalingState",
     "generator": false,
     "async": false,
     "static": true,
-    "longname": "src/index.js~SignalingState.[SignalingState.READY_TO_JOIN_OTHERS]",
+    "longname": "src/index.browser.js~SignalingState.READY_TO_JOIN_OTHERS",
     "access": "public",
-    "description": "Equals to `'READY_TO_JOIN_OTHERS'`.",
+    "description": "You has successfully been joined a web group and ready to help join others.",
     "lineNumber": 53,
-    "type": {
-      "nullable": null,
-      "types": [
-        "string"
-      ],
-      "spread": false,
-      "description": null
-    }
-  },
-  {
-    "__docId__": 52,
-    "kind": "get",
-    "name": "CLOSED",
-    "memberof": "src/index.js~SignalingState",
-    "generator": false,
-    "async": false,
-    "static": true,
-    "longname": "src/index.js~SignalingState.CLOSED",
-    "access": "public",
-    "description": "The connection is closed.",
-    "lineNumber": 58,
     "type": {
       "nullable": null,
       "types": [
@@ -1221,17 +1207,17 @@
     }
   },
   {
-    "__docId__": 53,
+    "__docId__": 52,
     "kind": "get",
-    "name": "[SignalingState.CLOSED]",
-    "memberof": "src/index.js~SignalingState",
+    "name": "[SignalingState.READY_TO_JOIN_OTHERS]",
+    "memberof": "src/index.browser.js~SignalingState",
     "generator": false,
     "async": false,
     "static": true,
-    "longname": "src/index.js~SignalingState.[SignalingState.CLOSED]",
+    "longname": "src/index.browser.js~SignalingState.[SignalingState.READY_TO_JOIN_OTHERS]",
     "access": "public",
-    "description": "Equals to `'CLOSED'`.",
-    "lineNumber": 63,
+    "description": "Equals to `'READY_TO_JOIN_OTHERS'`.",
+    "lineNumber": 58,
     "type": {
       "nullable": null,
       "types": [
@@ -1242,27 +1228,69 @@
     }
   },
   {
-    "__docId__": 54,
-    "kind": "class",
-    "name": "Topology",
-    "memberof": "src/index.js",
+    "__docId__": 53,
+    "kind": "get",
+    "name": "CLOSED",
+    "memberof": "src/index.browser.js~SignalingState",
+    "generator": false,
+    "async": false,
     "static": true,
-    "longname": "src/index.js~Topology",
+    "longname": "src/index.browser.js~SignalingState.CLOSED",
     "access": "public",
-    "export": true,
-    "importPath": "netflux/src/index.js",
-    "importStyle": "{Topology}",
-    "description": "The topology enum.",
+    "description": "The connection is closed.",
+    "lineNumber": 63,
+    "type": {
+      "nullable": null,
+      "types": [
+        "number"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 54,
+    "kind": "get",
+    "name": "[SignalingState.CLOSED]",
+    "memberof": "src/index.browser.js~SignalingState",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "src/index.browser.js~SignalingState.[SignalingState.CLOSED]",
+    "access": "public",
+    "description": "Equals to `'CLOSED'`.",
     "lineNumber": 68,
-    "interface": false
+    "type": {
+      "nullable": null,
+      "types": [
+        "string"
+      ],
+      "spread": false,
+      "description": null
+    }
   },
   {
     "__docId__": 55,
+    "kind": "class",
+    "name": "Topology",
+    "memberof": "src/index.browser.js",
+    "static": true,
+    "longname": "src/index.browser.js~Topology",
+    "access": "public",
+    "export": true,
+    "importPath": "netflux/src/index.browser.js",
+    "importStyle": "{Topology}",
+    "description": "The topology enum.",
+    "lineNumber": 73,
+    "interface": false
+  },
+  {
+    "__docId__": 56,
     "kind": "typedef",
     "name": "WebGroupOptions",
-    "memberof": "src/index.js",
+    "memberof": "src/index.browser.js",
     "static": true,
-    "longname": "src/index.js~WebGroupOptions",
+    "longname": "src/index.browser.js~WebGroupOptions",
     "access": "public",
     "description": "The options to be passed into {@link WebGroup} constructor.",
     "properties": [
@@ -1316,12 +1344,12 @@
     }
   },
   {
-    "__docId__": 56,
+    "__docId__": 57,
     "kind": "typedef",
     "name": "WebGroupBotServerOptions",
-    "memberof": "src/index.js",
+    "memberof": "src/index.browser.js",
     "static": true,
-    "longname": "src/index.js~WebGroupBotServerOptions",
+    "longname": "src/index.browser.js~WebGroupBotServerOptions",
     "access": "public",
     "description": "The options to be passed into {@link WebGroupBotServer} constructor.",
     "properties": [
@@ -1416,61 +1444,61 @@
     }
   },
   {
-    "__docId__": 57,
+    "__docId__": 58,
     "kind": "external",
     "name": "RTCIceServer",
     "externalLink": "https://developer.mozilla.org/en/docs/Web/API/RTCIceServer",
-    "memberof": "src/index.js",
+    "memberof": "src/index.browser.js",
     "static": true,
-    "longname": "src/index.js~RTCIceServer",
-    "access": "public",
-    "description": ""
-  },
-  {
-    "__docId__": 58,
-    "kind": "external",
-    "name": "Uint8Array",
-    "externalLink": "https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array",
-    "memberof": "src/index.js",
-    "static": true,
-    "longname": "src/index.js~Uint8Array",
+    "longname": "src/index.browser.js~RTCIceServer",
     "access": "public",
     "description": ""
   },
   {
     "__docId__": 59,
     "kind": "external",
-    "name": "NodeJSHttpServer",
-    "externalLink": "https://nodejs.org/api/http.html#http_class_http_server",
-    "memberof": "src/index.js",
+    "name": "Uint8Array",
+    "externalLink": "https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array",
+    "memberof": "src/index.browser.js",
     "static": true,
-    "longname": "src/index.js~NodeJSHttpServer",
+    "longname": "src/index.browser.js~Uint8Array",
     "access": "public",
     "description": ""
   },
   {
     "__docId__": 60,
     "kind": "external",
-    "name": "NodeJSHttpsServer",
-    "externalLink": "https://nodejs.org/api/https.html#https_class_https_server",
-    "memberof": "src/index.js",
+    "name": "NodeJSHttpServer",
+    "externalLink": "https://nodejs.org/api/http.html#http_class_http_server",
+    "memberof": "src/index.browser.js",
     "static": true,
-    "longname": "src/index.js~NodeJSHttpsServer",
+    "longname": "src/index.browser.js~NodeJSHttpServer",
     "access": "public",
     "description": ""
   },
   {
     "__docId__": 61,
+    "kind": "external",
+    "name": "NodeJSHttpsServer",
+    "externalLink": "https://nodejs.org/api/https.html#https_class_https_server",
+    "memberof": "src/index.browser.js",
+    "static": true,
+    "longname": "src/index.browser.js~NodeJSHttpsServer",
+    "access": "public",
+    "description": ""
+  },
+  {
+    "__docId__": 62,
     "kind": "get",
     "name": "FULL_MESH",
-    "memberof": "src/index.js~Topology",
+    "memberof": "src/index.browser.js~Topology",
     "generator": false,
     "async": false,
     "static": true,
-    "longname": "src/index.js~Topology.FULL_MESH",
+    "longname": "src/index.browser.js~Topology.FULL_MESH",
     "access": "public",
     "description": "Full mesh topology identifier.",
-    "lineNumber": 73,
+    "lineNumber": 78,
     "type": {
       "nullable": null,
       "types": [
@@ -1481,17 +1509,17 @@
     }
   },
   {
-    "__docId__": 62,
+    "__docId__": 63,
     "kind": "get",
     "name": "[Topology.FULL_MESH]",
-    "memberof": "src/index.js~Topology",
+    "memberof": "src/index.browser.js~Topology",
     "generator": false,
     "async": false,
     "static": true,
-    "longname": "src/index.js~Topology.[Topology.FULL_MESH]",
+    "longname": "src/index.browser.js~Topology.[Topology.FULL_MESH]",
     "access": "public",
     "description": "Equals to `'FULL_MESH'`.",
-    "lineNumber": 78,
+    "lineNumber": 83,
     "type": {
       "nullable": null,
       "types": [

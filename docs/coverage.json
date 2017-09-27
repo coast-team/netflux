@@ -1,7 +1,7 @@
 {
   "coverage": "100%",
-  "expectCount": 53,
-  "actualCount": 53,
+  "expectCount": 54,
+  "actualCount": 54,
   "files": {
     "src/BotServerFacade.js": {
       "expectCount": 8,
@@ -13,9 +13,9 @@
       "actualCount": 31,
       "undocumentLines": []
     },
-    "src/index.js": {
-      "expectCount": 14,
-      "actualCount": 14,
+    "src/index.browser.js": {
+      "expectCount": 15,
+      "actualCount": 15,
       "undocumentLines": []
     }
   }
