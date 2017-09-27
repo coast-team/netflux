@@ -39,25 +39,34 @@ export function generateKey() {
     return result;
 }
 export const MAX_KEY_LENGTH = 512;
+const netfluxCSS = 'background-color: #FFCA28; padding: 0 3px';
+const signalingStateCSS = 'background-color: #9FA8DA; padding: 0 2px';
+const webGroupStateCSS = 'background-color: #EF9A9A; padding: 0 2px';
 let log;
 export function enableLog(isDebug) {
     if (isDebug) {
         log = {
-            debug: () => { },
             info: (msg, ...rest) => {
                 if (rest.length === 0) {
-                    console.info(`NETFLUX: ${msg}`);
+                    console.info(`%cNETFLUX%c: ${msg}`, netfluxCSS, '');
                 }
                 else {
-                    console.info(`NETFLUX: ${msg}`, rest);
+                    console.info(`%cNETFLUX%c: ${msg}`, rest, netfluxCSS, '');
                 }
+            },
+            signalingState: (msg) => {
+                console.info(`%cNETFLUX%c: Signaling: %c${msg}%c`, netfluxCSS, '', signalingStateCSS, '');
+            },
+            webGroupState: (msg) => {
+                console.info(`%cNETFLUX%c: WebGroup: %c${msg}%c`, netfluxCSS, '', webGroupStateCSS, '');
             },
         };
     }
     else {
         log = {
-            debug: () => { },
             info: () => { },
+            signalingState: () => { },
+            webGroupState: () => { },
         };
     }
 }

@@ -28,7 +28,7 @@ export class FullMesh extends Service {
     }
     clean() { }
     addJoining(ch, members) {
-        log.info('I am helping to join ' + ch.id);
+        log.info(`FULL_MESH: I:${this.wc.myId} am helping to join ${ch.id}`);
         this.peerJoined(ch);
         this.checkMembers(ch, members);
     }
@@ -36,7 +36,7 @@ export class FullMesh extends Service {
         this.intermediaryChannel = ch;
     }
     initJoining(ch) {
-        log.info('I joining with help of ' + ch.id);
+        log.info(`FULL_MESH: I:${this.wc.myId} am joining with help of ${ch.id}`);
         this.peerJoined(ch);
         this.joinAttempts = 0;
         this.intermediaryChannel = ch;
@@ -122,12 +122,17 @@ export class FullMesh extends Service {
                     if (this.joinAttempts === MAX_JOIN_ATTEMPTS) {
                         this.leave();
                         this.wc.joinSubject.next(new Error('Failed to join: maximum join attempts has reached'));
+                        return;
                     }
-                    else if (this.joinAttempts > 0) {
-                        setTimeout(() => send(), 200 + 100 * Math.random());
+                    if (this.joinAttempts === 0) {
+                        send();
                     }
                     else {
-                        send();
+                        log.info(`FULL_MESH: I:${this.wc.myId} will resend my members ${this.joinAttempts} time(s)`, {
+                            myMembers: this.wc.members,
+                            intermediaryMembers: msg.connectTo.members,
+                        });
+                        setTimeout(() => send(), 200 + 100 * Math.random());
                     }
                     this.joinAttempts++;
                 });
@@ -146,7 +151,6 @@ export class FullMesh extends Service {
             case 'joinSucceed': {
                 this.intermediaryChannel = undefined;
                 this.wc.joinSubject.next();
-                log.info('I am successfully joined');
                 break;
             }
         }

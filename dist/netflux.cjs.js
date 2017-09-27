@@ -1247,6 +1247,82 @@ var Subject_1 = {
 	AnonymousSubject: AnonymousSubject_1
 };
 
+/**
+ * Equals to true in any browser.
+ */
+var isBrowser = (typeof global.window === 'undefined') ? false : true;
+/**
+ * Equals to true in Firefox and false elsewhere.
+ * Thanks to https://github.com/lancedikson/bowser
+ */
+var isFirefox = (isBrowser &&
+    navigator !== undefined &&
+    navigator.userAgent !== undefined &&
+    /firefox|iceweasel|fxios/i.test(navigator.userAgent)) ? true : false;
+/**
+ * Check whether the string is a valid URL.
+ */
+function isURL(str) {
+    var regex = '^' +
+        // protocol identifier
+        '(?:wss|ws)://' +
+        // Host name/IP
+        '[^\\s]+' +
+        // port number
+        '(?::\\d{2,5})?' +
+        '$';
+    return (new RegExp(regex, 'i')).test(str);
+}
+/**
+ * Generate random key which will be used to join the network.
+ */
+function generateKey() {
+    var mask = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    var length = 42; // Should be less then MAX_KEY_LENGTH value
+    var values = new Uint32Array(length);
+    global.crypto.getRandomValues(values);
+    var result = '';
+    for (var i = 0; i < length; i++) {
+        result += mask[values[i] % mask.length];
+    }
+    return result;
+}
+var MAX_KEY_LENGTH = 512;
+var netfluxCSS = 'background-color: #FFCA28; padding: 0 2px';
+var signalingStateCSS = 'background-color: #9FA8DA';
+var webGroupStateCSS = 'background-color: #EF9A9A';
+var log;
+function enableLog$1(isDebug) {
+    if (isDebug) {
+        log = {
+            info: function (msg) {
+                var rest = [];
+                for (var _i = 1; _i < arguments.length; _i++) {
+                    rest[_i - 1] = arguments[_i];
+                }
+                if (rest.length === 0) {
+                    console.info("%cNETFLUX%c: " + msg, netfluxCSS, '');
+                }
+                else {
+                    console.info("%cNETFLUX%c: " + msg, rest, netfluxCSS, '');
+                }
+            },
+            signalingState: function (msg) {
+                console.info("%cNETFLUX%c: Signaling STATE: %c" + msg + "%c", netfluxCSS, '', signalingStateCSS, '');
+            },
+            webGroupState: function (msg) {
+                console.info("%cNETFLUX%c: WebGroup STATE: %c" + msg + "%c", netfluxCSS, '', webGroupStateCSS, '');
+            },
+        };
+    }
+    else {
+        log = {
+            info: function () { },
+        };
+    }
+}
+enableLog$1(false);
+
 var commonjsGlobal$1 = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
 
@@ -5921,9 +5997,7 @@ var Signaling = (function () {
             if (closeEvt.code === 1000) {
                 subject.complete();
             }
-            else {
-                subject.error(new Error("Connection with Signaling '" + _this.url + "' closed: " + closeEvt.code + ": " + closeEvt.reason));
-            }
+            log.info("Connection with Signaling '" + _this.url + "' closed: " + closeEvt.code + ": " + closeEvt.reason);
         };
         return {
             onMessage: subject.asObservable(),
@@ -6035,75 +6109,6 @@ function __read(o, n) {
 }
 
 /**
- * Equals to true in any browser.
- */
-var isBrowser = (typeof global.window === 'undefined') ? false : true;
-/**
- * Equals to true in Firefox and false elsewhere.
- * Thanks to https://github.com/lancedikson/bowser
- */
-var isFirefox = (isBrowser &&
-    navigator !== undefined &&
-    navigator.userAgent !== undefined &&
-    /firefox|iceweasel|fxios/i.test(navigator.userAgent)) ? true : false;
-/**
- * Check whether the string is a valid URL.
- */
-function isURL(str) {
-    var regex = '^' +
-        // protocol identifier
-        '(?:wss|ws)://' +
-        // Host name/IP
-        '[^\\s]+' +
-        // port number
-        '(?::\\d{2,5})?' +
-        '$';
-    return (new RegExp(regex, 'i')).test(str);
-}
-/**
- * Generate random key which will be used to join the network.
- */
-function generateKey() {
-    var mask = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    var length = 42; // Should be less then MAX_KEY_LENGTH value
-    var values = new Uint32Array(length);
-    global.crypto.getRandomValues(values);
-    var result = '';
-    for (var i = 0; i < length; i++) {
-        result += mask[values[i] % mask.length];
-    }
-    return result;
-}
-var MAX_KEY_LENGTH = 512;
-var log;
-function enableLog$1(isDebug) {
-    if (isDebug) {
-        log = {
-            debug: function () { },
-            info: function (msg) {
-                var rest = [];
-                for (var _i = 1; _i < arguments.length; _i++) {
-                    rest[_i - 1] = arguments[_i];
-                }
-                if (rest.length === 0) {
-                    console.info("NETFLUX: " + msg);
-                }
-                else {
-                    console.info("NETFLUX: " + msg, rest);
-                }
-            },
-        };
-    }
-    else {
-        log = {
-            debug: function () { },
-            info: function () { },
-        };
-    }
-}
-enableLog$1(false);
-
-/**
  * Wrapper class for `RTCDataChannel` and `WebSocket`.
  */
 var Channel = (function () {
@@ -6113,7 +6118,7 @@ var Channel = (function () {
     function Channel(wc, connection, options) {
         if (options === void 0) { options = { id: -1 }; }
         var _this = this;
-        log.info('I have just connected with ' + options.id);
+        log.info("new connection: Me: " + wc.myId + " with " + options.id);
         this.wc = wc;
         this.connection = connection;
         this.id = options.id;
@@ -6132,17 +6137,12 @@ var Channel = (function () {
             this.send = this.sendInNodeViaDataChannel;
         }
         this.onClose = function (evt) {
-            log.info("Channel with " + _this.id + " has closed", {
-                iceConnectionState: _this.rtcPeerConnection ? _this.rtcPeerConnection.iceConnectionState : '',
-            });
+            log.info("Connection with " + _this.id + " has closed");
             _this.connection.onclose = function () { };
             _this.connection.onmessage = function () { };
             _this.connection.onerror = function () { };
             wc.topologyService.onChannelClose(evt, _this);
             if (_this.rtcPeerConnection && _this.rtcPeerConnection.signalingState !== 'closed') {
-                log.info("I am closing peer connection with " + _this.id, {
-                    iceConnectionState: _this.rtcPeerConnection ? _this.rtcPeerConnection.iceConnectionState : '',
-                });
                 _this.rtcPeerConnection.close();
             }
         };
@@ -6162,7 +6162,7 @@ var Channel = (function () {
             this.connection.readyState !== 'closing' &&
             this.connection.readyState !== WebSocket.CLOSED &&
             this.connection.readyState !== WebSocket.CLOSING) {
-            log.info("I am closing channel with " + this.id);
+            log.info("I:" + this.wc.myId + " close connection with " + this.id);
             this.connection.close();
             if (isFirefox && this.rtcPeerConnection && this.rtcPeerConnection.signalingState !== 'closed') {
                 this.onClose(new global.Event('close'));
@@ -6176,12 +6176,9 @@ var Channel = (function () {
         if (this.rtcPeerConnection) {
             this.rtcPeerConnection.oniceconnectionstatechange = undefined;
         }
-        log.info("I am QUIETLY closing channel with " + this.id);
+        log.info("I:" + this.wc.myId + " close QUIETLY connection with " + this.id);
         this.connection.close();
         if (this.rtcPeerConnection && this.rtcPeerConnection.signalingState !== 'closed') {
-            log.info("I am QUIETLY closing peer connection with " + this.id, {
-                iceConnectionState: this.rtcPeerConnection ? this.rtcPeerConnection.iceConnectionState : '',
-            });
             this.rtcPeerConnection.close();
         }
     };
@@ -8048,7 +8045,7 @@ var FullMesh = (function (_super) {
     }
     FullMesh.prototype.clean = function () { };
     FullMesh.prototype.addJoining = function (ch, members) {
-        log.info('I am helping to join ' + ch.id);
+        log.info("FULL_MESH: I:" + this.wc.myId + " am helping to join " + ch.id);
         this.peerJoined(ch);
         this.checkMembers(ch, members);
     };
@@ -8056,7 +8053,7 @@ var FullMesh = (function (_super) {
         this.intermediaryChannel = ch;
     };
     FullMesh.prototype.initJoining = function (ch) {
-        log.info('I joining with help of ' + ch.id);
+        log.info("FULL_MESH: I:" + this.wc.myId + " am joining with help of " + ch.id);
         this.peerJoined(ch);
         this.joinAttempts = 0;
         this.intermediaryChannel = ch;
@@ -8200,12 +8197,17 @@ var FullMesh = (function (_super) {
                     if (_this.joinAttempts === MAX_JOIN_ATTEMPTS) {
                         _this.leave();
                         _this.wc.joinSubject.next(new Error('Failed to join: maximum join attempts has reached'));
+                        return;
                     }
-                    else if (_this.joinAttempts > 0) {
-                        setTimeout(function () { return send(); }, 200 + 100 * Math.random());
+                    if (_this.joinAttempts === 0) {
+                        send();
                     }
                     else {
-                        send();
+                        log.info("FULL_MESH: I:" + _this.wc.myId + " will resend my members " + _this.joinAttempts + " time(s)", {
+                            myMembers: _this.wc.members,
+                            intermediaryMembers: msg.connectTo.members,
+                        });
+                        setTimeout(function () { return send(); }, 200 + 100 * Math.random());
                     }
                     _this.joinAttempts++;
                 });
@@ -8224,7 +8226,6 @@ var FullMesh = (function (_super) {
             case 'joinSucceed': {
                 this.intermediaryChannel = undefined;
                 this.wc.joinSubject.next();
-                log.info('I am successfully joined');
                 break;
             }
         }
@@ -8329,6 +8330,7 @@ var WebChannel = (function (_super) {
         _this.signaling = new Signaling(_this, signalingURL);
         _this.signaling.onChannel.subscribe(function (ch) { return _this.initChannel(ch); });
         _this.signaling.onState.subscribe(function (state) {
+            log.signalingState(SignalingState$1[state]);
             _this.onSignalingStateChange(state);
             switch (state) {
                 case SignalingState$1.OPEN:
@@ -8420,6 +8422,7 @@ var WebChannel = (function (_super) {
      */
     WebChannel.prototype.closeSignaling = function () {
         this.isRejoinDisabled = true;
+        clearTimeout(this.rejoinTimer);
         this.signaling.close();
     };
     /**
@@ -8429,6 +8432,7 @@ var WebChannel = (function (_super) {
     WebChannel.prototype.leave = function () {
         this.key = '';
         this.isRejoinDisabled = true;
+        clearTimeout(this.rejoinTimer);
         this.initPing();
         this.topologyService.leave();
         this.signaling.close();
@@ -8611,10 +8615,10 @@ var WebChannel = (function (_super) {
                         channel.close();
                         return;
                     }
-                    log.info('I close connection with intermediary member, because already connected with him');
+                    log.info("I:" + this.myId + " close connection with intermediary member " + senderId + ",\n          because already connected with him");
                     this.setState(WebChannelState.JOINED);
                     this.signaling.open();
-                    channel.close();
+                    channel.closeQuietly();
                 }
                 else {
                     this.setTopology(topology);
@@ -8656,6 +8660,7 @@ var WebChannel = (function (_super) {
     };
     WebChannel.prototype.setState = function (state) {
         if (this.state !== state) {
+            log.webGroupState(WebChannelState[state]);
             this.state = state;
             this.onStateChange(state);
             if (state === WebChannelState.LEFT) {
@@ -8698,7 +8703,10 @@ var WebChannel = (function (_super) {
     };
     WebChannel.prototype.rejoin = function () {
         var _this = this;
-        this.rejoinTimer = setTimeout(function () { return _this.signaling.join(_this.key); }, REJOIN_TIMEOUT);
+        this.rejoinTimer = setTimeout(function () {
+            log.info("I:" + _this.myId + " rejoin");
+            _this.signaling.join(_this.key);
+        }, REJOIN_TIMEOUT);
     };
     /**
      * Generate random id for a `WebChannel` or a new peer.

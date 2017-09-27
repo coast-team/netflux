@@ -25,7 +25,7 @@ export class Channel {
     connection: WebSocket | RTCDataChannel,
     options: {rtcPeerConnection?: RTCPeerConnection, id: number} = {id: -1},
   ) {
-    log.info('I have just connected with ' + options.id)
+    log.info(`new connection: Me: ${wc.myId} with ${options.id}`)
     this.wc = wc
     this.connection = connection
     this.id = options.id
@@ -44,17 +44,12 @@ export class Channel {
     }
 
     this.onClose = (evt: Event) => {
-      log.info(`Channel with ${this.id} has closed`, {
-        iceConnectionState: this.rtcPeerConnection ? this.rtcPeerConnection.iceConnectionState : '',
-      })
+      log.info(`Connection with ${this.id} has closed`)
       this.connection.onclose = () => {}
       this.connection.onmessage = () => {}
       this.connection.onerror = () => {}
       wc.topologyService.onChannelClose(evt, this)
       if (this.rtcPeerConnection && this.rtcPeerConnection.signalingState !== 'closed') {
-        log.info(`I am closing peer connection with ${this.id}`, {
-          iceConnectionState: this.rtcPeerConnection ? this.rtcPeerConnection.iceConnectionState : '',
-        })
         this.rtcPeerConnection.close()
       }
     }
@@ -76,7 +71,7 @@ export class Channel {
       this.connection.readyState !== WebSocket.CLOSED &&
       this.connection.readyState !== WebSocket.CLOSING
     ) {
-      log.info(`I am closing channel with ${this.id}`)
+      log.info(`I:${this.wc.myId} close connection with ${this.id}`)
       this.connection.close()
       if (isFirefox && this.rtcPeerConnection && this.rtcPeerConnection.signalingState !== 'closed') {
         this.onClose(new global.Event('close'))
@@ -91,12 +86,9 @@ export class Channel {
     if (this.rtcPeerConnection) {
       this.rtcPeerConnection.oniceconnectionstatechange = undefined
     }
-    log.info(`I am QUIETLY closing channel with ${this.id}`)
+    log.info(`I:${this.wc.myId} close QUIETLY connection with ${this.id}`)
     this.connection.close()
     if (this.rtcPeerConnection && this.rtcPeerConnection.signalingState !== 'closed') {
-      log.info(`I am QUIETLY closing peer connection with ${this.id}`, {
-        iceConnectionState: this.rtcPeerConnection ? this.rtcPeerConnection.iceConnectionState : '',
-      })
       this.rtcPeerConnection.close()
     }
   }

@@ -101,7 +101,7 @@ module.exports = (config) => {
   })
 
   if (process.env.TRAVIS || TYPE === 'travis') {
-    config.browsers = ['ChromeHeadless', 'Firefox'],
+    config.browsers = ['ChromeHeadless'],
     config.autoWatch = false,
     config.singleRun = true,
     config.browserNoActivityTimeout = 120000

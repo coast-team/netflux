@@ -153,6 +153,7 @@ export class WebChannel extends Service {
     this.signaling.onChannel.subscribe((ch) => this.initChannel(ch))
     this.signaling.onState.subscribe(
       (state: SignalingState) => {
+        log.signalingState(SignalingState[state])
         this.onSignalingStateChange(state)
         switch (state) {
         case SignalingState.OPEN:
@@ -192,7 +193,7 @@ export class WebChannel extends Service {
     this.joinSubject = new Subject()
     this.joinSubject.subscribe((err?: Error) => {
       if (err !== undefined) {
-        console.error('Failed to join: ' + err.message, err)
+        console.warn('Failed to join: ' + err.message, err)
         this.signaling.close()
       } else {
         this.setState(WebChannelState.JOINED)
@@ -248,6 +249,7 @@ export class WebChannel extends Service {
    */
   closeSignaling (): void {
     this.isRejoinDisabled = true
+    clearTimeout(this.rejoinTimer)
     this.signaling.close()
   }
 
@@ -258,6 +260,7 @@ export class WebChannel extends Service {
   leave () {
     this.key = ''
     this.isRejoinDisabled = true
+    clearTimeout(this.rejoinTimer)
     this.initPing()
     this.topologyService.leave()
     this.signaling.close()
@@ -432,10 +435,11 @@ export class WebChannel extends Service {
           channel.close()
           return
         }
-        log.info('I close connection with intermediary member, because already connected with him')
+        log.info(`I:${this.myId} close connection with intermediary member ${senderId},
+          because already connected with him`)
         this.setState(WebChannelState.JOINED)
         this.signaling.open()
-        channel.close()
+        channel.closeQuietly()
       } else {
         this.setTopology(topology)
         this.id = wcId
@@ -477,6 +481,7 @@ export class WebChannel extends Service {
 
   private setState (state: WebChannelState): void {
     if (this.state !== state) {
+      log.webGroupState(WebChannelState[state])
       this.state = state
       this.onStateChange(state)
       if (state === WebChannelState.LEFT) {
@@ -522,7 +527,10 @@ export class WebChannel extends Service {
 
   private rejoin () {
     this.rejoinTimer = setTimeout(
-      () => this.signaling.join(this.key),
+      () => {
+        log.info(`I:${this.myId} rejoin`)
+        this.signaling.join(this.key)
+      },
       REJOIN_TIMEOUT,
     )
   }

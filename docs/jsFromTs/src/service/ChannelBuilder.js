@@ -72,7 +72,7 @@ export class ChannelBuilder extends Service {
     treatServiceMessage({ channel, senderId, recipientId, msg }) {
         switch (msg.type) {
             case 'failed': {
-                console.error('treatServiceMessage ERROR: ', msg.failed);
+                console.warn('treatServiceMessage ERROR: ', msg.failed);
                 const pr = this.pendingRequests.get(senderId);
                 if (pr !== undefined) {
                     pr.reject(new Error(msg.failed));

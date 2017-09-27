@@ -61,6 +61,7 @@ export class WebChannel extends Service {
         this.signaling = new Signaling(this, signalingURL);
         this.signaling.onChannel.subscribe((ch) => this.initChannel(ch));
         this.signaling.onState.subscribe((state) => {
+            log.signalingState(SignalingState[state]);
             this.onSignalingStateChange(state);
             switch (state) {
                 case SignalingState.OPEN:
@@ -94,7 +95,7 @@ export class WebChannel extends Service {
         this.joinSubject = new Subject();
         this.joinSubject.subscribe((err) => {
             if (err !== undefined) {
-                console.error('Failed to join: ' + err.message, err);
+                console.warn('Failed to join: ' + err.message, err);
                 this.signaling.close();
             }
             else {
@@ -149,6 +150,7 @@ export class WebChannel extends Service {
      */
     closeSignaling() {
         this.isRejoinDisabled = true;
+        clearTimeout(this.rejoinTimer);
         this.signaling.close();
     }
     /**
@@ -158,6 +160,7 @@ export class WebChannel extends Service {
     leave() {
         this.key = '';
         this.isRejoinDisabled = true;
+        clearTimeout(this.rejoinTimer);
         this.initPing();
         this.topologyService.leave();
         this.signaling.close();
@@ -314,10 +317,11 @@ export class WebChannel extends Service {
                         channel.close();
                         return;
                     }
-                    log.info('I close connection with intermediary member, because already connected with him');
+                    log.info(`I:${this.myId} close connection with intermediary member ${senderId},
+          because already connected with him`);
                     this.setState(WebChannelState.JOINED);
                     this.signaling.open();
-                    channel.close();
+                    channel.closeQuietly();
                 }
                 else {
                     this.setTopology(topology);
@@ -359,6 +363,7 @@ export class WebChannel extends Service {
     }
     setState(state) {
         if (this.state !== state) {
+            log.webGroupState(WebChannelState[state]);
             this.state = state;
             this.onStateChange(state);
             if (state === WebChannelState.LEFT) {
@@ -400,7 +405,10 @@ export class WebChannel extends Service {
         }
     }
     rejoin() {
-        this.rejoinTimer = setTimeout(() => this.signaling.join(this.key), REJOIN_TIMEOUT);
+        this.rejoinTimer = setTimeout(() => {
+            log.info(`I:${this.myId} rejoin`);
+            this.signaling.join(this.key);
+        }, REJOIN_TIMEOUT);
     }
     /**
      * Generate random id for a `WebChannel` or a new peer.

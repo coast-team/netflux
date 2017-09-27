@@ -229,7 +229,7 @@ export class WebRTCBuilder extends Service {
               .then((ch) => observer.next(ch))
               .catch((err) => {
                 this.clients.delete(id)
-                console.error(`Client "${id}" failed to establish RTCDataChannel with you: ${err.message}`)
+                console.warn(`Client "${id}" failed to establish RTCDataChannel with you: ${err.message}`)
               })
             pc.setRemoteDescription({ type: 'offer', sdp: offer })
               .then(() => remoteCandidateStream.subscribe(

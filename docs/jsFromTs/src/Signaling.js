@@ -1,4 +1,5 @@
 import { Subject } from 'rxjs/Subject';
+import { log } from './misc/Util';
 import { signaling } from './proto';
 const PING_INTERVAL = 3000;
 /* WebSocket error codes */
@@ -149,9 +150,7 @@ export class Signaling {
             if (closeEvt.code === 1000) {
                 subject.complete();
             }
-            else {
-                subject.error(new Error(`Connection with Signaling '${this.url}' closed: ${closeEvt.code}: ${closeEvt.reason}`));
-            }
+            log.info(`Connection with Signaling '${this.url}' closed: ${closeEvt.code}: ${closeEvt.reason}`);
         };
         return {
             onMessage: subject.asObservable(),

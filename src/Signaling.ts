@@ -2,6 +2,7 @@ import { Observable } from 'rxjs/Observable'
 import { Subject } from 'rxjs/Subject'
 
 import { Channel } from './Channel'
+import { log } from './misc/Util'
 import { signaling } from './proto'
 import { WebChannel } from './service/WebChannel'
 
@@ -185,9 +186,8 @@ export class Signaling {
       this.setState(SignalingState.CLOSED)
       if (closeEvt.code === 1000) {
         subject.complete()
-      } else {
-        subject.error(new Error(`Connection with Signaling '${this.url}' closed: ${closeEvt.code}: ${closeEvt.reason}`))
       }
+      log.info(`Connection with Signaling '${this.url}' closed: ${closeEvt.code}: ${closeEvt.reason}`)
     }
     return {
       onMessage: subject.asObservable() as Observable<signaling.Message>,
