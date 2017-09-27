@@ -46,7 +46,7 @@
     "predoc": "rm -rf ./docs; tsc -p tsconfig.docs.json",
     "doc": "esdoc -c esdoc.json",
     "lint": "tslint src/*.ts src/**/*.ts -e 'src/**/*.proto' -e 'src/**/*.d.ts'",
-    "precommit": "npm test -- -- precommit",
+    "precommit": "npm test -- -- precommit && npm run lint",
     "commitmsg": "validate-commit-msg",
     "cz": "git-cz"
   },
