@@ -39,13 +39,27 @@ export function isURL (str: string): boolean {
 export function generateKey (): string {
   const mask = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
   const length = 42 // Should be less then MAX_KEY_LENGTH value
-  const values = new Uint32Array(length)
-  global.crypto.getRandomValues(values)
+  const values = randNumbers(length)
   let result = ''
   for (let i = 0; i < length; i++) {
     result += mask[values[i] % mask.length]
   }
   return result
+}
+
+export function randNumbers (length: number = 1): number[] {
+  let res
+  if (isBrowser) {
+    res = new Uint32Array(length)
+    global.crypto.getRandomValues(res)
+  } else {
+    res = []
+    const bytes = (crypto as any).randomBytes(4 * length)
+    for (let i = 0; i < bytes.length; i += 4) {
+      res[res.length] = bytes.readUInt32BE(i, true)
+    }
+  }
+  return res
 }
 
 export const MAX_KEY_LENGTH = 512

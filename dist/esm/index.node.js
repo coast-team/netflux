@@ -11,8 +11,7 @@ global.WebSocket = require('uws');
 var textEncoding = require('text-encoding');
 global.TextEncoder = textEncoding.TextEncoder;
 global.TextDecoder = textEncoding.TextDecoder;
-var WebCrypto = require('node-webcrypto-ossl'); // tslint:disable-line
-global.crypto = new WebCrypto();
+global.crypto = require('crypto');
 global.Event = (function () {
     function Event(name) {
         this.name = name;
@@ -1265,13 +1264,28 @@ function isURL(str) {
 function generateKey() {
     var mask = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     var length = 42; // Should be less then MAX_KEY_LENGTH value
-    var values = new Uint32Array(length);
-    global.crypto.getRandomValues(values);
+    var values = randNumbers(length);
     var result = '';
     for (var i = 0; i < length; i++) {
         result += mask[values[i] % mask.length];
     }
     return result;
+}
+function randNumbers(length) {
+    if (length === void 0) { length = 1; }
+    var res;
+    if (isBrowser) {
+        res = new Uint32Array(length);
+        global.crypto.getRandomValues(res);
+    }
+    else {
+        res = [];
+        var bytes = crypto.randomBytes(4 * length);
+        for (var i = 0; i < bytes.length; i += 4) {
+            res[res.length] = bytes.readUInt32BE(i, true);
+        }
+    }
+    return res;
 }
 var MAX_KEY_LENGTH = 512;
 var netfluxCSS = 'background-color: #FFCA28; padding: 0 3px';
@@ -8701,7 +8715,7 @@ var WebChannel = (function (_super) {
      */
     WebChannel.prototype.generateId = function (excludeIds) {
         if (excludeIds === void 0) { excludeIds = []; }
-        var id = global.crypto.getRandomValues(new Uint32Array(1))[0];
+        var id = randNumbers()[0];
         if (excludeIds.includes(id)) {
             return this.generateId();
         }

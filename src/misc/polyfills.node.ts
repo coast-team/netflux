@@ -10,8 +10,7 @@ global.WebSocket = require('uws')
 const textEncoding = require('text-encoding')
 global.TextEncoder = textEncoding.TextEncoder
 global.TextDecoder = textEncoding.TextDecoder
-const WebCrypto = require('node-webcrypto-ossl') // tslint:disable-line
-global.crypto = new WebCrypto()
+global.crypto = require('crypto')
 global.Event = class Event {
   constructor (public name: string) {}
 } as any

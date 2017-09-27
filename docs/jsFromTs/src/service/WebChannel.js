@@ -1,6 +1,6 @@
 import { Subject } from 'rxjs/Subject';
 import { Channel } from '../Channel';
-import { generateKey, isURL, log, MAX_KEY_LENGTH } from '../misc/Util';
+import { generateKey, isURL, log, MAX_KEY_LENGTH, randNumbers } from '../misc/Util';
 import { Message, service, webChannel } from '../proto';
 import { Signaling, SignalingState } from '../Signaling';
 import { UserMessage } from '../UserMessage';
@@ -414,7 +414,7 @@ export class WebChannel extends Service {
      * Generate random id for a `WebChannel` or a new peer.
      */
     generateId(excludeIds = []) {
-        const id = global.crypto.getRandomValues(new Uint32Array(1))[0];
+        const id = randNumbers()[0];
         if (excludeIds.includes(id)) {
             return this.generateId();
         }
