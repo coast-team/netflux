@@ -40,7 +40,7 @@
     "test:firefox": "npm test -- --browsers Firefox",
     "test:travis": "npm test -- -- travis",
     "test:debug": "npm test -- -- debug",
-    "proto": "pbjs -t static-module -w es6 --no-verify --no-delimited --no-convert src/proto/index.proto -o src/proto/index.es6.js",
+    "proto": "pbjs -t static-module -w es6 --no-verify --no-delimited --no-convert src/proto/index.proto -o src/proto/index.es6.js && pbts src/proto/index.es6.js -o src/proto/index.d.ts",
     "postproto": "rollup -c rollup.config.proto.js && rm src/proto/index.es6.js",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
     "predoc": "rm -rf ./docs; tsc -p tsconfig.docs.json",
