@@ -6,6 +6,8 @@ branches:
   only:
     - master
     - /^greenkeeper-.*$/
+  except:
+    - "/^v\\d+\\.\\d+\\.\\d+$/"
 addons:
   apt:
     packages:
@@ -17,6 +19,7 @@ before_install:
   - npm install uws
   - npm install -g codeclimate-test-reporter
 before_script:
+  - npm prune
   - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start
   - sleep 3
@@ -29,8 +32,3 @@ after_success:
   - ./cc-test-reporter format-coverage -t lcov ./coverage/lcov/lcov
   - ./cc-test-reporter upload-coverage
   - npm run semantic-release
-after_script:
-  - kill -9 $(ps aux | grep 'pm2')
-branches:
-  except:
-    - "/^v\\d+\\.\\d+\\.\\d+$/"
