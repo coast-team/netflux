@@ -1,8 +1,8 @@
 import { Observable } from 'rxjs/Observable'
 import { Subject } from 'rxjs/Subject'
 
-import { Channel } from '../Channel'
 import { service } from '../proto'
+import { Channel } from './Channel'
 
 export interface IServiceMessageEncoded {
   channel: Channel,
@@ -27,6 +27,15 @@ export interface IServiceMessageDecoded {
  * communication protocol.
  */
 export abstract class Service {
+
+  static encodeServiceMessage (serviceId, content: Uint8Array): Uint8Array {
+    return service.Message.encode(
+      service.Message.create({
+        id: serviceId,
+        content,
+      }),
+    ).finish()
+  }
 
   /*
    * Unique service identifier.

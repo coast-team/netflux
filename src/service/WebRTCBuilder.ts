@@ -3,16 +3,16 @@ import { Observable } from 'rxjs/Observable'
 import { ReplaySubject } from 'rxjs/ReplaySubject'
 import { Subject } from 'rxjs/Subject'
 
-import { Channel } from '../Channel'
 import { log } from '../misc/Util'
 import { signaling, webRTCBuilder } from '../proto'
+import { Channel } from './Channel'
 import { Service } from './Service'
 import { WebChannel } from './WebChannel'
 
 /**
  * Service id.
  */
-const ID = 0
+const ID = 300
 
 export interface ISignalingConnection {
   onMessage: Observable<any>,

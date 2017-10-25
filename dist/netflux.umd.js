@@ -705,6 +705,48 @@ exports.$$observable = exports.observable;
 });
 
 "use strict";
+/* tslint:disable:no-empty */
+function noop() { }
+var noop_2 = noop;
+
+
+var noop_1 = {
+	noop: noop_2
+};
+
+"use strict";
+
+/* tslint:enable:max-line-length */
+function pipe() {
+    var fns = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        fns[_i - 0] = arguments[_i];
+    }
+    return pipeFromArray(fns);
+}
+var pipe_2 = pipe;
+/* @internal */
+function pipeFromArray(fns) {
+    if (!fns) {
+        return noop_1.noop;
+    }
+    if (fns.length === 1) {
+        return fns[0];
+    }
+    return function piped(input) {
+        return fns.reduce(function (prev, fn) { return fn(prev); }, input);
+    };
+}
+var pipeFromArray_1 = pipeFromArray;
+
+
+var pipe_1 = {
+	pipe: pipe_2,
+	pipeFromArray: pipeFromArray_1
+};
+
+"use strict";
+
 
 
 
@@ -942,6 +984,54 @@ var Observable = (function () {
      */
     Observable.prototype[observable.observable] = function () {
         return this;
+    };
+    /* tslint:enable:max-line-length */
+    /**
+     * Used to stitch together functional operators into a chain.
+     * @method pipe
+     * @return {Observable} the Observable result of all of the operators having
+     * been called in the order they were passed in.
+     *
+     * @example
+     *
+     * import { map, filter, scan } from 'rxjs/operators';
+     *
+     * Rx.Observable.interval(1000)
+     *   .pipe(
+     *     filter(x => x % 2 === 0),
+     *     map(x => x + x),
+     *     scan((acc, x) => acc + x)
+     *   )
+     *   .subscribe(x => console.log(x))
+     */
+    Observable.prototype.pipe = function () {
+        var operations = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            operations[_i - 0] = arguments[_i];
+        }
+        if (operations.length === 0) {
+            return this;
+        }
+        return pipe_1.pipeFromArray(operations)(this);
+    };
+    /* tslint:enable:max-line-length */
+    Observable.prototype.toPromise = function (PromiseCtor) {
+        var _this = this;
+        if (!PromiseCtor) {
+            if (root.root.Rx && root.root.Rx.config && root.root.Rx.config.Promise) {
+                PromiseCtor = root.root.Rx.config.Promise;
+            }
+            else if (root.root.Promise) {
+                PromiseCtor = root.root.Promise;
+            }
+        }
+        if (!PromiseCtor) {
+            throw new Error('no Promise impl found');
+        }
+        return new PromiseCtor(function (resolve, reject) {
+            var value;
+            _this.subscribe(function (x) { return value = x; }, function (err) { return reject(err); }, function () { return resolve(value); });
+        });
     };
     // HACK: Since TypeScript inherits static properties too, we have to
     // fight against TypeScript here so Subject can have a different static create signature
@@ -2676,7 +2766,7 @@ function Op(fn, len, val) {
 }
 
 /* istanbul ignore next */
-function noop() {} // eslint-disable-line no-empty-function
+function noop$1() {} // eslint-disable-line no-empty-function
 
 /**
  * Constructs a new writer state instance.
@@ -2730,7 +2820,7 @@ function Writer() {
      * Operations head.
      * @type {Object}
      */
-    this.head = new Op(noop, 0, 0);
+    this.head = new Op(noop$1, 0, 0);
 
     /**
      * Operations tail
@@ -3015,7 +3105,7 @@ Writer.prototype.string = function write_string(value) {
  */
 Writer.prototype.fork = function fork() {
     this.states = new State(this);
-    this.head = this.tail = new Op(noop, 0, 0);
+    this.head = this.tail = new Op(noop$1, 0, 0);
     this.len = 0;
     return this;
 };
@@ -3031,7 +3121,7 @@ Writer.prototype.reset = function reset() {
         this.len = this.states.len;
         this.states = this.states.next;
     } else {
-        this.head = this.tail = new Op(noop, 0, 0);
+        this.head = this.tail = new Op(noop$1, 0, 0);
         this.len = 0;
     }
     return this;
@@ -4741,6 +4831,120 @@ var webChannel = $root.webChannel = function () {
     return webChannel;
 }();
 
+var channel = $root.channel = function () {
+
+    /**
+     * Namespace channel.
+     * @exports channel
+     * @namespace
+     */
+    var channel = {};
+
+    channel.Message = function () {
+
+        /**
+         * Properties of a Message.
+         * @memberof channel
+         * @interface IMessage
+         * @property {boolean} [ping] Message ping
+         * @property {boolean} [pong] Message pong
+         */
+
+        /**
+         * Constructs a new Message.
+         * @memberof channel
+         * @classdesc Represents a Message.
+         * @constructor
+         * @param {channel.IMessage=} [properties] Properties to set
+         */
+        function Message(properties) {
+            if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
+                if (properties[keys[i]] != null) this[keys[i]] = properties[keys[i]];
+            }
+        }
+
+        /**
+         * Message ping.
+         * @member {boolean}ping
+         * @memberof channel.Message
+         * @instance
+         */
+        Message.prototype.ping = false;
+
+        /**
+         * Message pong.
+         * @member {boolean}pong
+         * @memberof channel.Message
+         * @instance
+         */
+        Message.prototype.pong = false;
+
+        /**
+         * Creates a new Message instance using the specified properties.
+         * @function create
+         * @memberof channel.Message
+         * @static
+         * @param {channel.IMessage=} [properties] Properties to set
+         * @returns {channel.Message} Message instance
+         */
+        Message.create = function create(properties) {
+            return new Message(properties);
+        };
+
+        /**
+         * Encodes the specified Message message. Does not implicitly {@link channel.Message.verify|verify} messages.
+         * @function encode
+         * @memberof channel.Message
+         * @static
+         * @param {channel.IMessage} message Message message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        Message.encode = function encode(message, writer) {
+            if (!writer) writer = $Writer.create();
+            if (message.ping != null && message.hasOwnProperty("ping")) writer.uint32( /* id 1, wireType 0 =*/8).bool(message.ping);
+            if (message.pong != null && message.hasOwnProperty("pong")) writer.uint32( /* id 2, wireType 0 =*/16).bool(message.pong);
+            return writer;
+        };
+
+        /**
+         * Decodes a Message message from the specified reader or buffer.
+         * @function decode
+         * @memberof channel.Message
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {channel.Message} Message
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        Message.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length,
+                message = new $root.channel.Message();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                    case 1:
+                        message.ping = reader.bool();
+                        break;
+                    case 2:
+                        message.pong = reader.bool();
+                        break;
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                }
+            }
+            return message;
+        };
+
+        return Message;
+    }();
+
+    return channel;
+}();
+
 var channelBuilder = $root.channelBuilder = function () {
 
     /**
@@ -6096,110 +6300,6 @@ function __read(o, n) {
 }
 
 /**
- * Wrapper class for `RTCDataChannel` and `WebSocket`.
- */
-var Channel = (function () {
-    /**
-     * Creates a channel from existing `RTCDataChannel` or `WebSocket`.
-     */
-    function Channel(wc, connection, options) {
-        if (options === void 0) { options = { id: -1 }; }
-        var _this = this;
-        log.info("new connection: Me: " + wc.myId + " with " + options.id);
-        this.wc = wc;
-        this.connection = connection;
-        this.id = options.id;
-        this.rtcPeerConnection = options.rtcPeerConnection;
-        this.isIntermediary = false;
-        // Configure `send` function
-        if (isBrowser) {
-            connection.binaryType = 'arraybuffer';
-            this.send = this.sendInBrowser;
-        }
-        else if (!this.rtcPeerConnection) {
-            this.send = this.sendInNodeViaWebSocket;
-        }
-        else {
-            connection.binaryType = 'arraybuffer';
-            this.send = this.sendInNodeViaDataChannel;
-        }
-        this.onClose = function (evt) {
-            log.info("Connection with " + _this.id + " has closed");
-            _this.connection.onclose = function () { };
-            _this.connection.onmessage = function () { };
-            _this.connection.onerror = function () { };
-            wc.topologyService.onChannelClose(evt, _this);
-            if (_this.rtcPeerConnection && _this.rtcPeerConnection.signalingState !== 'closed') {
-                _this.rtcPeerConnection.close();
-            }
-        };
-        // Configure handlers
-        this.connection.onmessage = function (_a) {
-            var data = _a.data;
-            return wc.onMessageProxy(_this, new Uint8Array(data));
-        };
-        this.connection.onclose = function (evt) { return _this.onClose(evt); };
-        this.connection.onerror = function (evt) { return wc.topologyService.onChannelError(evt, _this); };
-    }
-    Channel.prototype.markAsIntermediry = function () {
-        this.wc.topologyService.initIntermediary(this);
-    };
-    Channel.prototype.close = function () {
-        if (this.connection.readyState !== 'closed' &&
-            this.connection.readyState !== 'closing' &&
-            this.connection.readyState !== WebSocket.CLOSED &&
-            this.connection.readyState !== WebSocket.CLOSING) {
-            log.info("I:" + this.wc.myId + " close connection with " + this.id);
-            this.connection.close();
-            if (isFirefox && this.rtcPeerConnection && this.rtcPeerConnection.signalingState !== 'closed') {
-                this.onClose(new global.Event('close'));
-            }
-        }
-    };
-    Channel.prototype.closeQuietly = function () {
-        this.connection.onmessage = undefined;
-        this.connection.onclose = undefined;
-        this.connection.onerror = undefined;
-        if (this.rtcPeerConnection) {
-            this.rtcPeerConnection.oniceconnectionstatechange = undefined;
-        }
-        log.info("I:" + this.wc.myId + " close QUIETLY connection with " + this.id);
-        this.connection.close();
-        if (this.rtcPeerConnection && this.rtcPeerConnection.signalingState !== 'closed') {
-            this.rtcPeerConnection.close();
-        }
-    };
-    Channel.prototype.sendInBrowser = function (data) {
-        // if (this.connection.readyState !== 'closed' && new Int8Array(data).length !== 0) {
-        if (this.isOpen()) {
-            try {
-                this.connection.send(data);
-            }
-            catch (err) {
-                console.error("Channel send: " + err.message);
-            }
-        }
-    };
-    Channel.prototype.sendInNodeViaWebSocket = function (data) {
-        if (this.isOpen()) {
-            try {
-                this.connection.send(data, { binary: true });
-            }
-            catch (err) {
-                console.error("Channel send: " + err.message);
-            }
-        }
-    };
-    Channel.prototype.sendInNodeViaDataChannel = function (data) {
-        this.sendInBrowser(data.slice(0));
-    };
-    Channel.prototype.isOpen = function () {
-        return this.connection.readyState === WebSocket.OPEN || this.connection.readyState === 'open';
-    };
-    return Channel;
-}());
-
-/**
  * Maximum size of the user message sent over `Channel` (without metadata).
  */
 var MAX_USER_MSG_SIZE = 15000;
@@ -6401,10 +6501,12 @@ var __extends$6 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b
  * @method filter
  * @owner Observable
  */
-function filter$2(predicate, thisArg) {
-    return this.lift(new FilterOperator(predicate, thisArg));
+function filter$3(predicate, thisArg) {
+    return function filterOperatorFunction(source) {
+        return source.lift(new FilterOperator(predicate, thisArg));
+    };
 }
-var filter_2 = filter$2;
+var filter_2$2 = filter$3;
 var FilterOperator = (function () {
     function FilterOperator(predicate, thisArg) {
         this.predicate = predicate;
@@ -6448,13 +6550,65 @@ var FilterSubscriber = (function (_super) {
 
 
 var filter_1 = {
-	filter: filter_2
+	filter: filter_2$2
+};
+
+"use strict";
+
+/* tslint:enable:max-line-length */
+/**
+ * Filter items emitted by the source Observable by only emitting those that
+ * satisfy a specified predicate.
+ *
+ * <span class="informal">Like
+ * [Array.prototype.filter()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter),
+ * it only emits a value from the source if it passes a criterion function.</span>
+ *
+ * <img src="./img/filter.png" width="100%">
+ *
+ * Similar to the well-known `Array.prototype.filter` method, this operator
+ * takes values from the source Observable, passes them through a `predicate`
+ * function and only emits those values that yielded `true`.
+ *
+ * @example <caption>Emit only click events whose target was a DIV element</caption>
+ * var clicks = Rx.Observable.fromEvent(document, 'click');
+ * var clicksOnDivs = clicks.filter(ev => ev.target.tagName === 'DIV');
+ * clicksOnDivs.subscribe(x => console.log(x));
+ *
+ * @see {@link distinct}
+ * @see {@link distinctUntilChanged}
+ * @see {@link distinctUntilKeyChanged}
+ * @see {@link ignoreElements}
+ * @see {@link partition}
+ * @see {@link skip}
+ *
+ * @param {function(value: T, index: number): boolean} predicate A function that
+ * evaluates each value emitted by the source Observable. If it returns `true`,
+ * the value is emitted, if `false` the value is not passed to the output
+ * Observable. The `index` parameter is the number `i` for the i-th source
+ * emission that has happened since the subscription, starting from the number
+ * `0`.
+ * @param {any} [thisArg] An optional argument to determine the value of `this`
+ * in the `predicate` function.
+ * @return {Observable} An Observable of values from the source that were
+ * allowed by the `predicate` function.
+ * @method filter
+ * @owner Observable
+ */
+function filter$2(predicate, thisArg) {
+    return filter_1.filter(predicate, thisArg)(this);
+}
+var filter_3 = filter$2;
+
+
+var filter_2 = {
+	filter: filter_3
 };
 
 "use strict";
 
 
-Observable_1.Observable.prototype.filter = filter_1.filter;
+Observable_1.Observable.prototype.filter = filter_2.filter;
 
 "use strict";
 var __extends$7 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
@@ -6504,6 +6658,216 @@ var BehaviorSubject = (function (_super) {
     return BehaviorSubject;
 }(Subject_1.Subject));
 var BehaviorSubject_2 = BehaviorSubject;
+
+/**
+ * Services are specific classes. Instance of such class communicates via
+ * network with another instance of the same class. Indeed each peer in the
+ * network instantiates its own service.
+ * Each service has `.proto` file containing the desciption of its
+ * communication protocol.
+ */
+var Service$1 = (function () {
+    function Service(id, protoMessage, serviceMessageSubject) {
+        this.serviceId = id;
+        this.protoMessage = protoMessage;
+        if (serviceMessageSubject !== undefined) {
+            this.setupServiceMessage(serviceMessageSubject);
+        }
+    }
+    Service.encodeServiceMessage = function (serviceId, content) {
+        return service.Message.encode(service.Message.create({
+            id: serviceId,
+            content: content,
+        })).finish();
+    };
+    /**
+     * Encode service message for sending over the network.
+     *
+     * @param msg Service specific message object
+     */
+    Service.prototype.encode = function (msg) {
+        return service.Message.encode(service.Message.create({
+            id: this.serviceId,
+            content: this.protoMessage.encode(this.protoMessage.create(msg)).finish(),
+        })).finish();
+    };
+    /**
+     * Decode service message received from the network.
+     *
+     * @return  Service specific message object
+     */
+    Service.prototype.decode = function (bytes) {
+        return this.protoMessage.decode(bytes);
+    };
+    Service.prototype.setupServiceMessage = function (serviceMessageSubject) {
+        var _this = this;
+        this.onServiceMessage = serviceMessageSubject
+            .filter(function (_a) {
+            var id = _a.id;
+            return id === _this.serviceId;
+        })
+            .map(function (_a) {
+            var channel$$1 = _a.channel, senderId = _a.senderId, recipientId = _a.recipientId, content = _a.content;
+            return ({
+                channel: channel$$1,
+                senderId: senderId,
+                recipientId: recipientId,
+                msg: _this.protoMessage.decode(content),
+            });
+        });
+    };
+    return Service;
+}());
+
+/**
+ * Service id.
+ */
+var ID$1 = 400;
+var WEBSOCKET_PING_TIMEOUT = 3000;
+var WEBSOCKET_PING_START_DELAY = 2000;
+/* Preconstructed messages */
+var pingMsg$1 = Service$1.encodeServiceMessage(ID$1, channel.Message.encode(channel.Message.create({ ping: true })).finish());
+var pongMsg$1 = Service$1.encodeServiceMessage(ID$1, channel.Message.encode(channel.Message.create({ pong: true })).finish());
+/**
+ * Wrapper class for `RTCDataChannel` and `WebSocket`.
+ */
+var Channel = (function (_super) {
+    __extends$5(Channel, _super);
+    /**
+     * Creates a channel from existing `RTCDataChannel` or `WebSocket`.
+     */
+    function Channel(wc, connection, options) {
+        if (options === void 0) { options = { id: -1 }; }
+        var _this = _super.call(this, ID$1, channel.Message, wc.serviceMessageSubject) || this;
+        log.info("new connection: Me: " + wc.myId + " with " + options.id);
+        _this.wc = wc;
+        _this.connection = connection;
+        _this.id = options.id;
+        _this.rtcPeerConnection = options.rtcPeerConnection;
+        _this.isIntermediary = false;
+        // Configure `send` function
+        if (isBrowser) {
+            connection.binaryType = 'arraybuffer';
+            _this.send = _this.sendInBrowser;
+        }
+        else if (!_this.rtcPeerConnection) {
+            _this.send = _this.sendInNodeViaWebSocket;
+        }
+        else {
+            connection.binaryType = 'arraybuffer';
+            _this.send = _this.sendInNodeViaDataChannel;
+        }
+        _this.onClose = function (evt) {
+            log.info("Connection with " + _this.id + " has closed");
+            _this.connection.onclose = function () { };
+            _this.connection.onmessage = function () { };
+            _this.connection.onerror = function () { };
+            wc.topologyService.onChannelClose(evt, _this);
+            if (_this.rtcPeerConnection && _this.rtcPeerConnection.signalingState !== 'closed') {
+                _this.rtcPeerConnection.close();
+            }
+        };
+        // Configure handlers
+        _this.connection.onmessage = function (_a) {
+            var data = _a.data;
+            return wc.onMessageProxy(_this, new Uint8Array(data));
+        };
+        _this.connection.onclose = function (evt) { return _this.onClose(evt); };
+        _this.connection.onerror = function (evt) { return wc.topologyService.onChannelError(evt, _this); };
+        // Start ping interval for WebSocket
+        if (!_this.rtcPeerConnection) {
+            _this.onServiceMessage.subscribe(function (_a) {
+                var msg = _a.msg;
+                if (msg.ping) {
+                    _this.send(_this.wc.encode({ recipientId: _this.id, content: pongMsg$1 }));
+                }
+                else if (msg.pong) {
+                    _this.pongReceived = true;
+                }
+                else {
+                    log.warn('Unknown message from Channel service', msg);
+                }
+            });
+            global.setTimeout(function () {
+                _this.ping();
+            }, WEBSOCKET_PING_START_DELAY);
+        }
+        return _this;
+    }
+    Channel.prototype.markAsIntermediry = function () {
+        this.wc.topologyService.initIntermediary(this);
+    };
+    Channel.prototype.close = function () {
+        if (this.connection.readyState !== 'closed' &&
+            this.connection.readyState !== 'closing' &&
+            this.connection.readyState !== WebSocket.CLOSED &&
+            this.connection.readyState !== WebSocket.CLOSING) {
+            log.info("I:" + this.wc.myId + " close connection with " + this.id);
+            this.connection.close();
+            if (isFirefox && this.rtcPeerConnection && this.rtcPeerConnection.signalingState !== 'closed') {
+                this.onClose(new global.Event('close'));
+            }
+        }
+    };
+    Channel.prototype.closeQuietly = function () {
+        this.connection.onmessage = undefined;
+        this.connection.onclose = undefined;
+        this.connection.onerror = undefined;
+        if (this.rtcPeerConnection) {
+            this.rtcPeerConnection.oniceconnectionstatechange = undefined;
+        }
+        log.info("I:" + this.wc.myId + " close QUIETLY connection with " + this.id);
+        this.connection.close();
+        if (this.rtcPeerConnection && this.rtcPeerConnection.signalingState !== 'closed') {
+            this.rtcPeerConnection.close();
+        }
+    };
+    Channel.prototype.sendInBrowser = function (data) {
+        // if (this.connection.readyState !== 'closed' && new Int8Array(data).length !== 0) {
+        if (this.isOpen()) {
+            try {
+                this.connection.send(data);
+            }
+            catch (err) {
+                console.error("Channel send: " + err.message);
+            }
+        }
+    };
+    Channel.prototype.sendInNodeViaWebSocket = function (data) {
+        if (this.isOpen()) {
+            try {
+                this.connection.send(data, { binary: true });
+            }
+            catch (err) {
+                console.error("Channel send: " + err.message);
+            }
+        }
+    };
+    Channel.prototype.sendInNodeViaDataChannel = function (data) {
+        this.sendInBrowser(data.slice(0));
+    };
+    Channel.prototype.isOpen = function () {
+        return this.connection.readyState === WebSocket.OPEN || this.connection.readyState === 'open';
+    };
+    Channel.prototype.ping = function () {
+        var _this = this;
+        this.pongReceived = false;
+        if (this.isOpen()) {
+            this.send(this.wc.encode({ recipientId: this.id, content: pingMsg$1 }));
+            global.setTimeout(function () {
+                if (_this.isOpen()) {
+                    if (_this.pongReceived) {
+                        _this.ping();
+                    }
+                    else {
+                        _this.close();
+                    }
+                }
+            }, WEBSOCKET_PING_TIMEOUT);
+        }
+    };
+    return Channel;
+}(Service$1));
 
 var CONNECT_TIMEOUT_FOR_NODE = 3000;
 var listenSubject = new BehaviorSubject_2('');
@@ -6592,60 +6956,6 @@ var WebSocketBuilder = (function () {
     return WebSocketBuilder;
 }());
 
-/**
- * Services are specific classes. Instance of such class communicates via
- * network with another instance of the same class. Indeed each peer in the
- * network instantiates its own service.
- * Each service has `.proto` file containing the desciption of its
- * communication protocol.
- */
-var Service$1 = (function () {
-    function Service(id, protoMessage, serviceMessageSubject) {
-        this.serviceId = id;
-        this.protoMessage = protoMessage;
-        if (serviceMessageSubject !== undefined) {
-            this.setupServiceMessage(serviceMessageSubject);
-        }
-    }
-    /**
-     * Encode service message for sending over the network.
-     *
-     * @param msg Service specific message object
-     */
-    Service.prototype.encode = function (msg) {
-        return service.Message.encode(service.Message.create({
-            id: this.serviceId,
-            content: this.protoMessage.encode(this.protoMessage.create(msg)).finish(),
-        })).finish();
-    };
-    /**
-     * Decode service message received from the network.
-     *
-     * @return  Service specific message object
-     */
-    Service.prototype.decode = function (bytes) {
-        return this.protoMessage.decode(bytes);
-    };
-    Service.prototype.setupServiceMessage = function (serviceMessageSubject) {
-        var _this = this;
-        this.onServiceMessage = serviceMessageSubject
-            .filter(function (_a) {
-            var id = _a.id;
-            return id === _this.serviceId;
-        })
-            .map(function (_a) {
-            var channel = _a.channel, senderId = _a.senderId, recipientId = _a.recipientId, content = _a.content;
-            return ({
-                channel: channel,
-                senderId: senderId,
-                recipientId: recipientId,
-                msg: _this.protoMessage.decode(content),
-            });
-        });
-    };
-    return Service;
-}());
-
 "use strict";
 var __extends$8 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -6686,13 +6996,15 @@ var __extends$8 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b
  * @method map
  * @owner Observable
  */
-function map$2(project, thisArg) {
-    if (typeof project !== 'function') {
-        throw new TypeError('argument is not a function. Are you looking for `mapTo()`?');
-    }
-    return this.lift(new MapOperator(project, thisArg));
+function map$3(project, thisArg) {
+    return function mapOperation(source) {
+        if (typeof project !== 'function') {
+            throw new TypeError('argument is not a function. Are you looking for `mapTo()`?');
+        }
+        return source.lift(new MapOperator(project, thisArg));
+    };
 }
-var map_2 = map$2;
+var map_2$2 = map$3;
 var MapOperator = (function () {
     function MapOperator(project, thisArg) {
         this.project = project;
@@ -6735,14 +7047,59 @@ var MapSubscriber = (function (_super) {
 
 
 var map_1 = {
-	map: map_2,
+	map: map_2$2,
 	MapOperator: MapOperator_1
 };
 
 "use strict";
 
+/**
+ * Applies a given `project` function to each value emitted by the source
+ * Observable, and emits the resulting values as an Observable.
+ *
+ * <span class="informal">Like [Array.prototype.map()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map),
+ * it passes each source value through a transformation function to get
+ * corresponding output values.</span>
+ *
+ * <img src="./img/map.png" width="100%">
+ *
+ * Similar to the well known `Array.prototype.map` function, this operator
+ * applies a projection to each value and emits that projection in the output
+ * Observable.
+ *
+ * @example <caption>Map every click to the clientX position of that click</caption>
+ * var clicks = Rx.Observable.fromEvent(document, 'click');
+ * var positions = clicks.map(ev => ev.clientX);
+ * positions.subscribe(x => console.log(x));
+ *
+ * @see {@link mapTo}
+ * @see {@link pluck}
+ *
+ * @param {function(value: T, index: number): R} project The function to apply
+ * to each `value` emitted by the source Observable. The `index` parameter is
+ * the number `i` for the i-th emission that has happened since the
+ * subscription, starting from the number `0`.
+ * @param {any} [thisArg] An optional argument to define what `this` is in the
+ * `project` function.
+ * @return {Observable<R>} An Observable that emits the values from the source
+ * Observable transformed by the given `project` function.
+ * @method map
+ * @owner Observable
+ */
+function map$2(project, thisArg) {
+    return map_1.map(project, thisArg)(this);
+}
+var map_3 = map$2;
 
-Observable_1.Observable.prototype.map = map_1.map;
+
+var map_2 = {
+	map: map_3
+};
+
+"use strict";
+
+
+Observable_1.Observable.prototype.map = map_2.map;
 
 "use strict";
 var __extends$12 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, b) {
@@ -7384,7 +7741,9 @@ var __extends$15 = (commonjsGlobal && commonjsGlobal.__extends) || function (d, 
  */
 function observeOn(scheduler, delay) {
     if (delay === void 0) { delay = 0; }
-    return this.lift(new ObserveOnOperator(scheduler, delay));
+    return function observeOnOperatorFunction(source) {
+        return source.lift(new ObserveOnOperator(scheduler, delay));
+    };
 }
 var observeOn_2 = observeOn;
 var ObserveOnOperator = (function () {
@@ -7554,7 +7913,7 @@ var ReplayEvent = (function () {
 /**
  * Service id.
  */
-var ID = 0;
+var ID$3 = 300;
 /**
  * Service class responsible to establish `RTCDataChannel` between two clients via
  * signaling server or `WebChannel`.
@@ -7563,7 +7922,7 @@ var ID = 0;
 var WebRTCBuilder = (function (_super) {
     __extends$5(WebRTCBuilder, _super);
     function WebRTCBuilder(wc, iceServers) {
-        var _this = _super.call(this, ID, webRTCBuilder.Message, wc.serviceMessageSubject) || this;
+        var _this = _super.call(this, ID$3, webRTCBuilder.Message, wc.serviceMessageSubject) || this;
         _this.wc = wc;
         _this.rtcConfiguration = { iceServers: iceServers };
         _this.clients = new Map();
@@ -7824,15 +8183,15 @@ var WebRTCBuilder = (function (_super) {
                 pc.ondatachannel = function (dcEvt) {
                     var dc = dcEvt.channel;
                     var peerId = Number.parseInt(dc.label, 10);
-                    var channel = new Channel(_this.wc, dc, { rtcPeerConnection: pc, id: peerId });
+                    var channel$$1 = new Channel(_this.wc, dc, { rtcPeerConnection: pc, id: peerId });
                     dc.onopen = function (evt) {
                         pc.oniceconnectionstatechange = function () {
-                            log.info("ICE connection state with " + channel.id + " changed to " + pc.iceConnectionState.toUpperCase());
+                            log.info("ICE connection state with " + channel$$1.id + " changed to " + pc.iceConnectionState.toUpperCase());
                             if (pc.iceConnectionState === 'failed') {
-                                channel.close();
+                                channel$$1.close();
                             }
                         };
-                        resolve(channel);
+                        resolve(channel$$1);
                     };
                 };
             });
@@ -7841,6 +8200,10 @@ var WebRTCBuilder = (function (_super) {
     return WebRTCBuilder;
 }(Service$1));
 
+/**
+ * Service id.
+ */
+var ID$2 = 100;
 var ME = {
     wsUrl: '',
     isWrtcSupport: false,
@@ -7855,7 +8218,7 @@ var response;
 var ChannelBuilder = (function (_super) {
     __extends$5(ChannelBuilder, _super);
     function ChannelBuilder(wc) {
-        var _this = _super.call(this, 20, channelBuilder.Message, wc.serviceMessageSubject) || this;
+        var _this = _super.call(this, ID$2, channelBuilder.Message, wc.serviceMessageSubject) || this;
         _this.wc = wc;
         _this.pendingRequests = new Map();
         _this.channelsSubject = new Subject_2();
@@ -7916,7 +8279,7 @@ var ChannelBuilder = (function (_super) {
     };
     ChannelBuilder.prototype.treatServiceMessage = function (_a) {
         var _this = this;
-        var channel = _a.channel, senderId = _a.senderId, recipientId = _a.recipientId, msg = _a.msg;
+        var channel$$1 = _a.channel, senderId = _a.senderId, recipientId = _a.recipientId, msg = _a.msg;
         switch (msg.type) {
             case 'failed': {
                 console.warn('treatServiceMessage ERROR: ', msg.failed);
@@ -8128,21 +8491,21 @@ var FullMesh = (function (_super) {
         this.intermediaryChannel = undefined;
         var e_4, _c;
     };
-    FullMesh.prototype.onChannelClose = function (event, channel) {
-        if (channel === this.intermediaryChannel) {
+    FullMesh.prototype.onChannelClose = function (event, channel$$1) {
+        if (channel$$1 === this.intermediaryChannel) {
             this.leave();
             this.wc.joinSubject.next(new Error("Intermediary channel closed: " + event.type));
         }
-        if (this.channels.delete(channel)) {
-            this.wc.onMemberLeaveProxy(channel.id);
+        if (this.channels.delete(channel$$1)) {
+            this.wc.onMemberLeaveProxy(channel$$1.id);
         }
     };
-    FullMesh.prototype.onChannelError = function (evt, channel) {
+    FullMesh.prototype.onChannelError = function (evt, channel$$1) {
         console.warn("Channel error: " + evt.type);
     };
     FullMesh.prototype.handleSvcMsg = function (_a) {
         var _this = this;
-        var channel = _a.channel, senderId = _a.senderId, recipientId = _a.recipientId, msg = _a.msg;
+        var channel$$1 = _a.channel, senderId = _a.senderId, recipientId = _a.recipientId, msg = _a.msg;
         switch (msg.type) {
             case 'connectTo': {
                 // Filter only missing peers
@@ -8177,8 +8540,8 @@ var FullMesh = (function (_super) {
                 }
                 // Notify the intermediary peer about your members
                 Promise.all(misssingConnections).then(function () {
-                    var send = function () { return channel.send(_this.wc.encode({
-                        recipientId: channel.id,
+                    var send = function () { return channel$$1.send(_this.wc.encode({
+                        recipientId: channel$$1.id,
                         content: _super.prototype.encode.call(_this, { connectedTo: { members: _this.wc.members } }),
                     })); };
                     if (_this.joinAttempts === MAX_JOIN_ATTEMPTS) {
@@ -8201,12 +8564,12 @@ var FullMesh = (function (_super) {
                 break;
             }
             case 'connectedTo': {
-                this.checkMembers(channel, msg.connectedTo.members);
+                this.checkMembers(channel$$1, msg.connectedTo.members);
                 break;
             }
             case 'joiningPeerId': {
                 if (msg.joiningPeerId !== this.wc.myId && !this.wc.members.includes(msg.joiningPeerId)) {
-                    this.jps.set(msg.joiningPeerId, channel);
+                    this.jps.set(msg.joiningPeerId, channel$$1);
                 }
                 break;
             }
@@ -8545,28 +8908,28 @@ var WebChannel = (function (_super) {
     /**
      * Message handler. All messages arrive here first.
      */
-    WebChannel.prototype.onMessageProxy = function (channel, bytes) {
+    WebChannel.prototype.onMessageProxy = function (channel$$1, bytes) {
         var msg = Message.decode(new Uint8Array(bytes));
         switch (msg.recipientId) {
             // If the message is broadcasted
             case 0:
-                this.treatMessage(channel, msg);
+                this.treatMessage(channel$$1, msg);
                 this.topologyService.forward(msg);
                 break;
             // If it is a private message to me
             case this.myId:
-                this.treatMessage(channel, msg);
+                this.treatMessage(channel$$1, msg);
                 break;
             // If is is a message to me from a peer who does not know yet my ID
             case 1:
-                this.treatMessage(channel, msg);
+                this.treatMessage(channel$$1, msg);
                 break;
             // Otherwise the message should be forwarded to the intended peer
             default:
                 this.topologyService.forwardTo(msg);
         }
     };
-    WebChannel.prototype.treatMessage = function (channel, msg) {
+    WebChannel.prototype.treatMessage = function (channel$$1, msg) {
         // User Message
         if (!msg.isService) {
             var data = this.userMsg.decode(msg.content, msg.senderId);
@@ -8577,14 +8940,14 @@ var WebChannel = (function (_super) {
         }
         else {
             this.serviceMessageSubject.next(Object.assign({
-                channel: channel,
+                channel: channel$$1,
                 senderId: msg.senderId,
                 recipientId: msg.recipientId,
             }, service.Message.decode(msg.content)));
         }
     };
     WebChannel.prototype.treatServiceMessage = function (_a) {
-        var channel = _a.channel, senderId = _a.senderId, recipientId = _a.recipientId, msg = _a.msg;
+        var channel$$1 = _a.channel, senderId = _a.senderId, recipientId = _a.recipientId, msg = _a.msg;
         switch (msg.type) {
             case 'init': {
                 var _b = msg.init, topology = _b.topology, wcId = _b.wcId, generatedIds = _b.generatedIds;
@@ -8594,39 +8957,39 @@ var WebChannel = (function (_super) {
                 if (this.members.includes(senderId)) {
                     if (!generatedIds.includes(this.myId)) {
                         console.warn("Failed merge networks: my members contain intermediary peer id,\n            but my id is not included into the intermediary peer members");
-                        channel.close();
+                        channel$$1.close();
                         return;
                     }
                     if (this.topology !== topology) {
                         console.warn('Failed merge networks: different topologies');
-                        channel.close();
+                        channel$$1.close();
                         return;
                     }
                     log.info("I:" + this.myId + " close connection with intermediary member " + senderId + ",\n          because already connected with him");
                     this.setState(WebChannelState.JOINED);
                     this.signaling.open();
-                    channel.closeQuietly();
+                    channel$$1.closeQuietly();
                 }
                 else {
                     this.setTopology(topology);
                     this.id = wcId;
-                    channel.id = senderId;
-                    this.topologyService.initJoining(channel);
-                    channel.send(this.encode({
-                        recipientId: channel.id,
+                    channel$$1.id = senderId;
+                    this.topologyService.initJoining(channel$$1);
+                    channel$$1.send(this.encode({
+                        recipientId: channel$$1.id,
                         content: _super.prototype.encode.call(this, { initOk: { members: this.members } }),
                     }));
                 }
                 break;
             }
             case 'initOk': {
-                channel.id = senderId;
-                this.topologyService.addJoining(channel, msg.initOk.members);
+                channel$$1.id = senderId;
+                this.topologyService.addJoining(channel$$1, msg.initOk.members);
                 break;
             }
             case 'ping': {
                 this.sendToProxy({
-                    recipientId: channel.id,
+                    recipientId: channel$$1.id,
                     content: _super.prototype.encode.call(this, { pong: true }),
                 });
                 break;

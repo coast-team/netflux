@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs/Observable';
-import { Channel } from '../Channel';
+import { Channel } from './Channel';
 import { Service } from './Service';
 import { WebChannel } from './WebChannel';
 /**

@@ -1,5 +1,5 @@
-import { Channel } from '../../Channel';
 import { IMessage } from '../../proto';
+import { Channel } from '../Channel';
 import { Service } from '../Service';
 export declare enum TopologyEnum {
     FULL_MESH = 0,

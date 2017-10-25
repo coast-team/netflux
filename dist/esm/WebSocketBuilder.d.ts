@@ -1,7 +1,7 @@
 import 'rxjs/add/operator/filter';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import { Observable } from 'rxjs/Observable';
-import { Channel } from './Channel';
+import { Channel } from './service/Channel';
 import { WebChannel } from './service/WebChannel';
 /**
  * Service class responsible to establish connections between peers via

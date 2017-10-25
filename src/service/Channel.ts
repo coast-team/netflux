@@ -1,10 +1,26 @@
-import { isBrowser, isFirefox, log } from './misc/Util'
-import { WebChannel } from './service/WebChannel'
+import { isBrowser, isFirefox, log } from '../misc/Util'
+import { channel as channelProto } from '../proto'
+import { IServiceMessageDecoded, Service } from './Service'
+import { WebChannel } from './WebChannel'
+
+/**
+ * Service id.
+ */
+const ID = 400
+
+const WEBSOCKET_PING_TIMEOUT = 3000
+const WEBSOCKET_PING_START_DELAY = 2000
+
+/* Preconstructed messages */
+const pingMsg = Service.encodeServiceMessage(ID,
+  channelProto.Message.encode(channelProto.Message.create({ ping: true })).finish())
+const pongMsg = Service.encodeServiceMessage(ID,
+  channelProto.Message.encode(channelProto.Message.create({ pong: true })).finish())
 
 /**
  * Wrapper class for `RTCDataChannel` and `WebSocket`.
  */
-export class Channel {
+export class Channel extends Service {
 
   public connection: WebSocket | RTCDataChannel
   /**
@@ -16,6 +32,9 @@ export class Channel {
   private rtcPeerConnection: RTCPeerConnection
   private onClose: (evt: Event) => void
   private wc: WebChannel
+  private pongReceived: boolean
+  private pingMsg: Uint8Array
+  private pongMsg: Uint8Array
 
   /**
    * Creates a channel from existing `RTCDataChannel` or `WebSocket`.
@@ -25,6 +44,7 @@ export class Channel {
     connection: WebSocket | RTCDataChannel,
     options: {rtcPeerConnection?: RTCPeerConnection, id: number} = {id: -1},
   ) {
+    super(ID, channelProto.Message, wc.serviceMessageSubject)
     log.info(`new connection: Me: ${wc.myId} with ${options.id}`)
     this.wc = wc
     this.connection = connection
@@ -58,6 +78,22 @@ export class Channel {
     this.connection.onmessage = ({ data }) => wc.onMessageProxy(this, new Uint8Array(data))
     this.connection.onclose = (evt) => this.onClose(evt)
     this.connection.onerror = (evt) => wc.topologyService.onChannelError(evt, this)
+
+    // Start ping interval for WebSocket
+    if (!this.rtcPeerConnection) {
+      this.onServiceMessage.subscribe(({ msg }: IServiceMessageDecoded) => {
+        if (msg.ping) {
+          this.send(this.wc.encode({ recipientId: this.id , content: pongMsg }))
+        } else if (msg.pong) {
+          this.pongReceived = true
+        } else {
+          log.warn('Unknown message from Channel service', msg)
+        }
+      })
+      global.setTimeout(() => {
+        this.ping()
+      }, WEBSOCKET_PING_START_DELAY)
+    }
   }
 
   markAsIntermediry (): void {
@@ -120,5 +156,21 @@ export class Channel {
 
   private isOpen (): boolean {
     return this.connection.readyState === WebSocket.OPEN || this.connection.readyState === 'open'
+  }
+
+  private ping () {
+    this.pongReceived = false
+    if (this.isOpen()) {
+      this.send(this.wc.encode({ recipientId: this.id, content: pingMsg }))
+      global.setTimeout(() => {
+        if (this.isOpen()) {
+          if (this.pongReceived) {
+            this.ping()
+          } else {
+            this.close()
+          }
+        }
+      }, WEBSOCKET_PING_TIMEOUT)
+    }
   }
 }

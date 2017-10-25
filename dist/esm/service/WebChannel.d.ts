@@ -1,8 +1,8 @@
 import { Subject } from 'rxjs/Subject';
-import { Channel } from '../Channel';
 import { Signaling, SignalingState } from '../Signaling';
 import { UserDataType } from '../UserMessage';
 import { WebSocketBuilder } from '../WebSocketBuilder';
+import { Channel } from './Channel';
 import { ChannelBuilder } from './ChannelBuilder';
 import { IServiceMessageEncoded, Service } from './Service';
 import { ITopology, TopologyEnum } from './topology/Topology';

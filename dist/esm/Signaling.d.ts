@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs/Observable';
-import { Channel } from './Channel';
+import { Channel } from './service/Channel';
 import { WebChannel } from './service/WebChannel';
 export declare enum SignalingState {
     CONNECTING = 0,

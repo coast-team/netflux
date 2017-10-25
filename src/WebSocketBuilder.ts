@@ -3,8 +3,8 @@ import { BehaviorSubject } from 'rxjs/BehaviorSubject'
 import { Observable } from 'rxjs/Observable'
 import { Subject } from 'rxjs/Subject'
 
-import { Channel } from './Channel'
 import { isBrowser, isURL } from './misc/Util'
+import { Channel } from './service/Channel'
 import { WebChannel } from './service/WebChannel'
 
 const CONNECT_TIMEOUT_FOR_NODE = 3000

@@ -1,12 +1,17 @@
 import { Observable } from 'rxjs/Observable'
 import { Subject } from 'rxjs/Subject'
 
-import { Channel } from '../Channel'
 import { channelBuilder } from '../proto'
 import { WebSocketBuilder } from '../WebSocketBuilder'
+import { Channel } from './Channel'
 import { IServiceMessageDecoded, Service } from './Service'
 import { WebChannel } from './WebChannel'
 import { WebRTCBuilder } from './WebRTCBuilder'
+
+/**
+ * Service id.
+ */
+const ID = 100
 
 const ME = {
   wsUrl: '',
@@ -28,7 +33,7 @@ export class ChannelBuilder extends Service {
   private channelsSubject: Subject<Channel>
 
   constructor (wc: WebChannel) {
-    super(20, channelBuilder.Message, wc.serviceMessageSubject)
+    super(ID, channelBuilder.Message, wc.serviceMessageSubject)
     this.wc = wc
     this.pendingRequests = new Map()
     this.channelsSubject = new Subject()

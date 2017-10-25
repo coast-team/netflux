@@ -1,9 +1,9 @@
 import 'rxjs/add/operator/map'
 import { Subscription } from 'rxjs/Subscription'
 
-import { Channel } from '../../Channel'
 import { log } from '../../misc/Util'
 import { fullMesh, IMessage } from '../../proto'
+import { Channel } from '../Channel'
 import { IServiceMessageDecoded, Service } from '../Service'
 import { WebChannel } from '../WebChannel'
 import { ITopology } from './Topology'

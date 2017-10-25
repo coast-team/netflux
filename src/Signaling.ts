@@ -1,9 +1,9 @@
 import { Observable } from 'rxjs/Observable'
 import { Subject } from 'rxjs/Subject'
 
-import { Channel } from './Channel'
 import { log } from './misc/Util'
 import { signaling } from './proto'
+import { Channel } from './service/Channel'
 import { WebChannel } from './service/WebChannel'
 
 /* tslint:disable:variable-name */

@@ -1,8 +1,9 @@
-import { WebChannel } from './service/WebChannel';
+import { Service } from './Service';
+import { WebChannel } from './WebChannel';
 /**
  * Wrapper class for `RTCDataChannel` and `WebSocket`.
  */
-export declare class Channel {
+export declare class Channel extends Service {
     connection: WebSocket | RTCDataChannel;
     /**
      * Id of the peer who is at the other end of this channel.
@@ -13,6 +14,9 @@ export declare class Channel {
     private rtcPeerConnection;
     private onClose;
     private wc;
+    private pongReceived;
+    private pingMsg;
+    private pongMsg;
     /**
      * Creates a channel from existing `RTCDataChannel` or `WebSocket`.
      */
@@ -27,4 +31,5 @@ export declare class Channel {
     private sendInNodeViaWebSocket(data);
     private sendInNodeViaDataChannel(data);
     private isOpen();
+    private ping();
 }
