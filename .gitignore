@@ -10,3 +10,4 @@ coverage
 
 # Other
 .rpt2_cache
+.vscode
