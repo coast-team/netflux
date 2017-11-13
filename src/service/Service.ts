@@ -1,4 +1,5 @@
 import { Observable } from 'rxjs/Observable'
+import { filter, map } from 'rxjs/operators'
 import { Subject } from 'rxjs/Subject'
 
 import { service } from '../proto'
@@ -84,13 +85,14 @@ export abstract class Service {
   }
 
   protected setupServiceMessage (serviceMessageSubject: Subject<IServiceMessageEncoded>): void {
-    this.onServiceMessage = serviceMessageSubject
-      .filter(({ id }) => id === this.serviceId)
-      .map(({ channel, senderId, recipientId, content }) => ({
+    this.onServiceMessage = serviceMessageSubject.pipe(
+      filter(({ id }) => id === this.serviceId),
+      map(({ channel, senderId, recipientId, content }) => ({
         channel,
         senderId,
         recipientId,
         msg: this.protoMessage.decode(content),
-      }))
+      })),
+    )
   }
 }

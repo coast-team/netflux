@@ -1,3 +1,4 @@
+import { filter } from 'rxjs/operators'
 import { ReplaySubject } from 'rxjs/ReplaySubject'
 
 import { WebGroup, WebGroupBotServer, WebGroupState } from '../../src/index.node'
@@ -37,7 +38,7 @@ try {
       const wcId = Number(ctx.params.wcId)
       let id = -1
       await new Promise ((resolve, reject) => {
-        webGroups.filter((wg) => wg.id === wcId)
+        webGroups.pipe(filter((wg) => wg.id === wcId))
           .subscribe(
             (wg) => {
               if (wg.state === WebGroupState.JOINED) {
