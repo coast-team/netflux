@@ -1,8 +1,9 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "docs/jsFromTs",
-    "target": "ESNext"
+    "outDir": "dist/esm",
+    "declaration": true
   },
+  "include": ["src/**/*"],
   "exclude": []
 }

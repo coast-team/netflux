@@ -10,7 +10,9 @@ export default {
     format: 'cjs'
   },
   plugins: [
-    typescript(),
+    typescript({
+      include: ['src/**/*.ts', 'test/**/*.ts']
+    }),
     replace({
       patterns: [
         {

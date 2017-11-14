@@ -5,7 +5,7 @@
   "license": "AGPL-3.0",
   "main": "dist/netflux.cjs.js",
   "module": "dist/esm/index.node.js",
-  "browser": "dist/netflux.umd.js",
+  "browser": "dist/esm/index.browser.js",
   "types": "dist/esm/index.node.d.ts",
   "homepage": "https://doc.esdoc.org/github.com/coast-team/netflux",
   "repository": {
@@ -30,8 +30,8 @@
     "dist/"
   ],
   "scripts": {
-    "build": "rm -rf dist && rollup --config",
-    "postbuild": "mkdir -p 'dist/esm/proto' && cp -r src/proto/index.d.ts dist/esm/proto/index.d.ts && cp src/misc/typings.d.ts dist/esm/typings.d.ts && sed -i '1s/^/\\/\\/\\/ <reference path=\\\".\\/typings.d.ts\\\"\\/>\\n/' dist/esm/index.node.d.ts",
+    "build": "rm -rf dist && tsc -p tsconfig.dist.json && rollup --config",
+    "postbuild": "cp src/misc/typings.d.ts dist/esm && mkdir dist/esm/proto && cp src/proto/index.js src/proto/index.d.ts dist/esm/proto && sed -i '1s/^/\\/\\/\\/ <reference path=\\\".\\/typings.d.ts\\\"\\/>\\n/' dist/esm/index.node.d.ts && uglifyjs -o dist/netflux.umd.min.js dist/netflux.umd.js",
     "build:testbot": "rollup -c test/util/rollup.config.js",
     "start:testbot": "pm2 gracefulReload test/util/process.yml",
     "pretest": "npm run build:testbot && npm run start:testbot",
@@ -51,7 +51,6 @@
     "cz": "git-cz"
   },
   "dependencies": {
-    "@types/text-encoding": "0.0.32",
     "protobufjs": "^6.8.0",
     "rxjs": "^5.5.2",
     "text-encoding": "^0.6.4",
@@ -61,7 +60,8 @@
     "wrtc": "0.0.x"
   },
   "devDependencies": {
-    "@types/jasmine": "^2.6.3",
+    "@types/jasmine": "^2.8.0",
+    "@types/text-encoding": "0.0.32",
     "babel-core": "^6.26.0",
     "babel-preset-env": "^1.6.1",
     "commitizen": "^2.9.6",
@@ -86,14 +86,13 @@
     "koa": "^2.4.1",
     "koa-router": "^7.3.0",
     "pm2": "^2.7.2",
-    "rollup": "^0.51.0",
+    "rollup": "^0.51.5",
     "rollup-plugin-babel": "^3.0.2",
     "rollup-plugin-commonjs": "^8.2.6",
     "rollup-plugin-filesize": "^1.0.0",
     "rollup-plugin-node-resolve": "^3.0.0",
     "rollup-plugin-re": "^1.0.6",
     "rollup-plugin-typescript2": "^0.8.0",
-    "rollup-plugin-uglify": "^2.0.1",
     "semantic-release": "^8.2.3",
     "sigver": "^15.0.4",
     "tslib": "^1.8.0",

@@ -5,7 +5,6 @@ import babel from 'rollup-plugin-babel'
 
 export default [
   {
-    input: 'src/proto/index.es6.js',
     output: [{ file: 'src/proto/index.js', format: 'es' }],
     plugins: [
       replace({

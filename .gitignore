@@ -13,4 +13,4 @@ coverage
 .vscode
 
 # Dist
-/dist
+dist
