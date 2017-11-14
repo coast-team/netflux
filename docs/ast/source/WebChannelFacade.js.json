@@ -481,6 +481,7 @@
                     "column": 60
                   }
                 },
+                "static": true,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -499,7 +500,6 @@
                   },
                   "name": "JOINING"
                 },
-                "static": true,
                 "kind": "get",
                 "id": null,
                 "generator": false,
@@ -641,6 +641,7 @@
                     "column": 93
                   }
                 },
+                "static": true,
                 "computed": true,
                 "key": {
                   "type": "MemberExpression",
@@ -692,7 +693,6 @@
                   },
                   "computed": false
                 },
-                "static": true,
                 "kind": "get",
                 "id": null,
                 "generator": false,
@@ -867,6 +867,7 @@
                     "column": 58
                   }
                 },
+                "static": true,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -885,7 +886,6 @@
                   },
                   "name": "JOINED"
                 },
-                "static": true,
                 "kind": "get",
                 "id": null,
                 "generator": false,
@@ -1027,6 +1027,7 @@
                     "column": 91
                   }
                 },
+                "static": true,
                 "computed": true,
                 "key": {
                   "type": "MemberExpression",
@@ -1078,7 +1079,6 @@
                   },
                   "computed": false
                 },
-                "static": true,
                 "kind": "get",
                 "id": null,
                 "generator": false,
@@ -1253,6 +1253,7 @@
                     "column": 54
                   }
                 },
+                "static": true,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -1271,7 +1272,6 @@
                   },
                   "name": "LEFT"
                 },
-                "static": true,
                 "kind": "get",
                 "id": null,
                 "generator": false,
@@ -1413,6 +1413,7 @@
                     "column": 87
                   }
                 },
+                "static": true,
                 "computed": true,
                 "key": {
                   "type": "MemberExpression",
@@ -1464,7 +1465,6 @@
                   },
                   "computed": false
                 },
-                "static": true,
                 "kind": "get",
                 "id": null,
                 "generator": false,
@@ -1761,6 +1761,7 @@
                     "column": 5
                   }
                 },
+                "static": false,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -1780,7 +1781,6 @@
                   "name": "constructor",
                   "leadingComments": null
                 },
-                "static": false,
                 "kind": "constructor",
                 "id": null,
                 "generator": false,
@@ -12017,6 +12017,7 @@
                     "column": 49
                   }
                 },
+                "static": false,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -12036,7 +12037,6 @@
                   "name": "join",
                   "leadingComments": null
                 },
-                "static": false,
                 "kind": "method",
                 "id": null,
                 "generator": false,
@@ -12295,6 +12295,7 @@
                     "column": 53
                   }
                 },
+                "static": false,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -12314,7 +12315,6 @@
                   "name": "invite",
                   "leadingComments": null
                 },
-                "static": false,
                 "kind": "method",
                 "id": null,
                 "generator": false,
@@ -12573,6 +12573,7 @@
                     "column": 63
                   }
                 },
+                "static": false,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -12592,7 +12593,6 @@
                   "name": "closeSignaling",
                   "leadingComments": null
                 },
-                "static": false,
                 "kind": "method",
                 "id": null,
                 "generator": false,
@@ -12815,6 +12815,7 @@
                     "column": 45
                   }
                 },
+                "static": false,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -12834,7 +12835,6 @@
                   "name": "leave",
                   "leadingComments": null
                 },
-                "static": false,
                 "kind": "method",
                 "id": null,
                 "generator": false,
@@ -13057,6 +13057,7 @@
                     "column": 51
                   }
                 },
+                "static": false,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -13076,7 +13077,6 @@
                   "name": "send",
                   "leadingComments": null
                 },
-                "static": false,
                 "kind": "method",
                 "id": null,
                 "generator": false,
@@ -13335,6 +13335,7 @@
                     "column": 63
                   }
                 },
+                "static": false,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -13354,7 +13355,6 @@
                   "name": "sendTo",
                   "leadingComments": null
                 },
-                "static": false,
                 "kind": "method",
                 "id": null,
                 "generator": false,
@@ -13647,6 +13647,7 @@
                     "column": 43
                   }
                 },
+                "static": false,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -13666,7 +13667,6 @@
                   "name": "ping",
                   "leadingComments": null
                 },
-                "static": false,
                 "kind": "method",
                 "id": null,
                 "generator": false,
@@ -14420,7 +14420,7 @@
         "label": "import",
         "keyword": "import",
         "beforeExpr": false,
-        "startsExpr": false,
+        "startsExpr": true,
         "rightAssociative": false,
         "isLoop": false,
         "isAssign": false,

@@ -1,8 +1,8 @@
 # Usage
 There are 4 builds (all ES5 code):
 - `dist/netflux.cjs.js` CommonJS format for NodeJS.
-- `dist/netflux.node.esm.js` ECMAScript 6 module format for NodeJS.
-- `dist/netflux.browser.esm.js` ECMAScript 6 module format for browsers.
+- `dist/esm/netflux.node.js` ECMAScript 6 module format for NodeJS.
+- `dist/esm/netflux.browser.js` ECMAScript 6 module format for browsers.
 - `dist/netflux.umd.js` UMD format for browsers.
 
 The `package.json` contains the following fields:
@@ -10,7 +10,7 @@ The `package.json` contains the following fields:
 ...
 "main": "dist/netflux.cjs.js",
 "module": "dist/esm/index.node.js",
-"browser": "dist/netflux.umd.js",
+"browser": "dist/esm/index.browser.js",
 ...
 ```
 
@@ -28,7 +28,7 @@ All builds are either for NodeJS or for Browser environment.
 - `WebGroupBotServer`
 - `WebGroupBotServerOptions` type.
 
-## CommonJS: netflux.cjs.js
+## CommonJS
 `dist/netflux.cjs.js` - CommonJS format, built for NodeJS.
 
 ```Javascript
@@ -37,9 +37,13 @@ const netflux = require('netflux')
 var wg = new netflux.WebGroup()
 ```
 
-## ES module: esm/index.node.js
+## ES module
 
-`esm/index.node.js` is suitable for Webpack, Browserify or any alike, which also undersand `package.json#module` property. It is build for NodeJS: contains all exported API members and all necessary polyfills for NodeJS environment.
+`esm/index.node.js` and `esm/index.browser.js` are suitable for Webpack, Browserify or any alike, which also undersands `package.json#module` and `package.json#module` properties respectively and can parse ES modules.
+
+`esm/index.node.js` is build for NodeJS: contains all exported API members and all necessary polyfills for NodeJS environment.
+
+`esm/index.browser.js`  si build for browsers.
 
 ```javascript
 export {WebGroup, WebGroupState, WebGroupBotServer, WebGroupBotServerOptions} from 'netflux'

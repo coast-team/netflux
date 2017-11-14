@@ -1,3 +1,4 @@
+import { filter, map } from 'rxjs/operators';
 import { service } from '../proto';
 /**
  * Services are specific classes. Instance of such class communicates via
@@ -7,6 +8,12 @@ import { service } from '../proto';
  * communication protocol.
  */
 export class Service {
+    static encodeServiceMessage(serviceId, content) {
+        return service.Message.encode(service.Message.create({
+            id: serviceId,
+            content,
+        })).finish();
+    }
     constructor(id, protoMessage, serviceMessageSubject) {
         this.serviceId = id;
         this.protoMessage = protoMessage;
@@ -34,13 +41,11 @@ export class Service {
         return this.protoMessage.decode(bytes);
     }
     setupServiceMessage(serviceMessageSubject) {
-        this.onServiceMessage = serviceMessageSubject
-            .filter(({ id }) => id === this.serviceId)
-            .map(({ channel, senderId, recipientId, content }) => ({
+        this.onServiceMessage = serviceMessageSubject.pipe(filter(({ id }) => id === this.serviceId), map(({ channel, senderId, recipientId, content }) => ({
             channel,
             senderId,
             recipientId,
             msg: this.protoMessage.decode(content),
-        }));
+        })));
     }
 }

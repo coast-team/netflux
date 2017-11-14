@@ -1,4 +1,3 @@
-import 'rxjs/add/operator/map';
 import { log } from '../../misc/Util';
 import { fullMesh } from '../../proto';
 import { Service } from '../Service';

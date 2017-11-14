@@ -1,3 +1,4 @@
+import { filter, map } from 'rxjs/operators';
 import { Subject } from 'rxjs/Subject';
 import { log } from './misc/Util';
 import { signaling } from './proto';
@@ -78,8 +79,7 @@ export class Signaling {
                         }
                         else {
                             this.wc.webRTCBuilder.connectOverSignaling({
-                                onMessage: this.rxWs.onMessage.filter((m) => m.type === 'content')
-                                    .map(({ content }) => content),
+                                onMessage: this.rxWs.onMessage.pipe(filter((m) => m.type === 'content'), map(({ content }) => content)),
                                 send: (m) => this.rxWs.send({ content: m }),
                             })
                                 .then((ch) => {
@@ -110,8 +110,7 @@ export class Signaling {
             this.stateSubject.next(state);
             if (state === SignalingState.READY_TO_JOIN_OTHERS) {
                 this.wc.webRTCBuilder.onChannelFromSignaling({
-                    onMessage: this.rxWs.onMessage.filter((msg) => msg.type === 'content')
-                        .map(({ content }) => content),
+                    onMessage: this.rxWs.onMessage.pipe(filter((msg) => msg.type === 'content'), map(({ content }) => content)),
                     send: (msg) => this.rxWs.send({ content: msg }),
                 }).subscribe((ch) => this.channelSubject.next(ch));
             }

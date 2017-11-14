@@ -783,6 +783,7 @@
                     "column": 59
                   }
                 },
+                "static": true,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -801,7 +802,6 @@
                   },
                   "name": "CONNECTING"
                 },
-                "static": true,
                 "kind": "get",
                 "id": null,
                 "generator": false,
@@ -943,6 +943,7 @@
                     "column": 86
                   }
                 },
+                "static": true,
                 "computed": true,
                 "key": {
                   "type": "MemberExpression",
@@ -994,7 +995,6 @@
                   },
                   "computed": false
                 },
-                "static": true,
                 "kind": "get",
                 "id": null,
                 "generator": false,
@@ -1169,6 +1169,7 @@
                     "column": 47
                   }
                 },
+                "static": true,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -1187,7 +1188,6 @@
                   },
                   "name": "OPEN"
                 },
-                "static": true,
                 "kind": "get",
                 "id": null,
                 "generator": false,
@@ -1329,6 +1329,7 @@
                     "column": 74
                   }
                 },
+                "static": true,
                 "computed": true,
                 "key": {
                   "type": "MemberExpression",
@@ -1380,7 +1381,6 @@
                   },
                   "computed": false
                 },
-                "static": true,
                 "kind": "get",
                 "id": null,
                 "generator": false,
@@ -1555,6 +1555,7 @@
                     "column": 93
                   }
                 },
+                "static": true,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -1573,7 +1574,6 @@
                   },
                   "name": "CONNECTED_WITH_FIRST_MEMBER"
                 },
-                "static": true,
                 "kind": "get",
                 "id": null,
                 "generator": false,
@@ -1715,6 +1715,7 @@
                     "column": 5
                   }
                 },
+                "static": true,
                 "computed": true,
                 "key": {
                   "type": "MemberExpression",
@@ -1766,7 +1767,6 @@
                   },
                   "computed": false
                 },
-                "static": true,
                 "kind": "get",
                 "id": null,
                 "generator": false,
@@ -1941,6 +1941,7 @@
                     "column": 79
                   }
                 },
+                "static": true,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -1959,7 +1960,6 @@
                   },
                   "name": "READY_TO_JOIN_OTHERS"
                 },
-                "static": true,
                 "kind": "get",
                 "id": null,
                 "generator": false,
@@ -2101,6 +2101,7 @@
                     "column": 106
                   }
                 },
+                "static": true,
                 "computed": true,
                 "key": {
                   "type": "MemberExpression",
@@ -2152,7 +2153,6 @@
                   },
                   "computed": false
                 },
-                "static": true,
                 "kind": "get",
                 "id": null,
                 "generator": false,
@@ -2327,6 +2327,7 @@
                     "column": 51
                   }
                 },
+                "static": true,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -2345,7 +2346,6 @@
                   },
                   "name": "CLOSED"
                 },
-                "static": true,
                 "kind": "get",
                 "id": null,
                 "generator": false,
@@ -2487,6 +2487,7 @@
                     "column": 78
                   }
                 },
+                "static": true,
                 "computed": true,
                 "key": {
                   "type": "MemberExpression",
@@ -2538,7 +2539,6 @@
                   },
                   "computed": false
                 },
-                "static": true,
                 "kind": "get",
                 "id": null,
                 "generator": false,
@@ -2835,6 +2835,7 @@
                     "column": 61
                   }
                 },
+                "static": true,
                 "computed": false,
                 "key": {
                   "type": "Identifier",
@@ -2853,7 +2854,6 @@
                   },
                   "name": "FULL_MESH"
                 },
-                "static": true,
                 "kind": "get",
                 "id": null,
                 "generator": false,
@@ -2995,6 +2995,7 @@
                     "column": 86
                   }
                 },
+                "static": true,
                 "computed": true,
                 "key": {
                   "type": "MemberExpression",
@@ -3046,7 +3047,6 @@
                   },
                   "computed": false
                 },
-                "static": true,
                 "kind": "get",
                 "id": null,
                 "generator": false,
@@ -3772,7 +3772,7 @@
         "label": "import",
         "keyword": "import",
         "beforeExpr": false,
-        "startsExpr": false,
+        "startsExpr": true,
         "rightAssociative": false,
         "isLoop": false,
         "isAssign": false,
@@ -3853,7 +3853,7 @@
         "label": "import",
         "keyword": "import",
         "beforeExpr": false,
-        "startsExpr": false,
+        "startsExpr": true,
         "rightAssociative": false,
         "isLoop": false,
         "isAssign": false,
@@ -4036,7 +4036,7 @@
         "label": "import",
         "keyword": "import",
         "beforeExpr": false,
-        "startsExpr": false,
+        "startsExpr": true,
         "rightAssociative": false,
         "isLoop": false,
         "isAssign": false,
@@ -4506,7 +4506,7 @@
         "label": "import",
         "keyword": "import",
         "beforeExpr": false,
-        "startsExpr": false,
+        "startsExpr": true,
         "rightAssociative": false,
         "isLoop": false,
         "isAssign": false,

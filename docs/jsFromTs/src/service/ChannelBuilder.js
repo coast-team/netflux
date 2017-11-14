@@ -3,6 +3,10 @@ import { channelBuilder } from '../proto';
 import { WebSocketBuilder } from '../WebSocketBuilder';
 import { Service } from './Service';
 import { WebRTCBuilder } from './WebRTCBuilder';
+/**
+ * Service id.
+ */
+const ID = 100;
 const ME = {
     wsUrl: '',
     isWrtcSupport: false,
@@ -16,7 +20,7 @@ let response;
  */
 export class ChannelBuilder extends Service {
     constructor(wc) {
-        super(20, channelBuilder.Message, wc.serviceMessageSubject);
+        super(ID, channelBuilder.Message, wc.serviceMessageSubject);
         this.wc = wc;
         this.pendingRequests = new Map();
         this.channelsSubject = new Subject();

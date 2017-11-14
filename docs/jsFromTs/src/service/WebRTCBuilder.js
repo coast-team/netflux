@@ -1,14 +1,14 @@
-import 'rxjs/add/operator/map';
 import { Observable } from 'rxjs/Observable';
+import { filter, map } from 'rxjs/operators';
 import { ReplaySubject } from 'rxjs/ReplaySubject';
-import { Channel } from '../Channel';
 import { log } from '../misc/Util';
 import { webRTCBuilder } from '../proto';
+import { Channel } from './Channel';
 import { Service } from './Service';
 /**
  * Service id.
  */
-const ID = 0;
+const ID = 300;
 /**
  * Service class responsible to establish `RTCDataChannel` between two clients via
  * signaling server or `WebChannel`.
@@ -29,12 +29,10 @@ export class WebRTCBuilder extends Service {
     }
     onChannelFromWebChannel() {
         if (WebRTCBuilder.isSupported) {
-            return this.onChannel(this.onServiceMessage
-                .filter(({ msg }) => msg.isInitiator)
-                .map(({ msg, senderId }) => {
+            return this.onChannel(this.onServiceMessage.pipe(filter(({ msg }) => msg.isInitiator), map(({ msg, senderId }) => {
                 msg.id = senderId;
                 return msg;
-            }), (msg, id) => this.wc.sendToProxy({ recipientId: id, content: super.encode(msg) }));
+            })), (msg, id) => this.wc.sendToProxy({ recipientId: id, content: super.encode(msg) }));
         }
         throw new Error('WebRTC is not supported');
     }
@@ -46,9 +44,7 @@ export class WebRTCBuilder extends Service {
      */
     connectOverWebChannel(id) {
         if (WebRTCBuilder.isSupported) {
-            return this.establishChannel(this.onServiceMessage
-                .filter(({ msg, senderId }) => senderId === id && !msg.isInitiator)
-                .map(({ msg }) => ({ answer: msg.answer, iceCandidate: msg.iceCandidate })), (msg) => {
+            return this.establishChannel(this.onServiceMessage.pipe(filter(({ msg, senderId }) => senderId === id && !msg.isInitiator), map(({ msg }) => ({ answer: msg.answer, iceCandidate: msg.iceCandidate }))), (msg) => {
                 msg.isInitiator = true;
                 this.wc.sendToProxy({ recipientId: id, content: super.encode(msg) });
             }, id);
@@ -61,8 +57,7 @@ export class WebRTCBuilder extends Service {
      */
     onChannelFromSignaling(signalingConnection) {
         if (WebRTCBuilder.isSupported) {
-            return this.onChannel(signalingConnection.onMessage.filter(({ id }) => id !== 0)
-                .map((msg) => {
+            return this.onChannel(signalingConnection.onMessage.pipe(filter(({ id }) => id !== 0), map((msg) => {
                 if (msg.type === 'data') {
                     const completeData = super.decode(msg.data);
                     completeData.id = msg.id;
@@ -71,7 +66,7 @@ export class WebRTCBuilder extends Service {
                 else {
                     return { isError: true };
                 }
-            }), (msg, id) => {
+            })), (msg, id) => {
                 const bytes = webRTCBuilder.Message
                     .encode(webRTCBuilder.Message.create(msg))
                     .finish();
@@ -87,10 +82,9 @@ export class WebRTCBuilder extends Service {
      */
     connectOverSignaling(signalingConnection) {
         if (WebRTCBuilder.isSupported) {
-            return this.establishChannel(signalingConnection.onMessage.filter(({ id }) => id === 0)
-                .map((msg) => {
+            return this.establishChannel(signalingConnection.onMessage.pipe(filter(({ id }) => id === 0), map((msg) => {
                 return msg.type === 'data' ? super.decode(msg.data) : { isError: true };
-            }), (msg) => {
+            })), (msg) => {
                 const bytes = webRTCBuilder.Message
                     .encode(webRTCBuilder.Message.create(msg))
                     .finish();

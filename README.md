@@ -61,10 +61,11 @@
   - Configure STUN and TURN servers.
 - Small Signaling server payload: server is necessary to establish the first connection with
   one of the group member, then this member acts as a Signaling server to establish connections with the rest of the group members.
-- 3 builds (ES5 code):
+- 4 builds (ES5 code):
   - `dist/netflux.cjs.js` - CommonJS format for NodeJS (see *package.json#main*)
   - `dist/esm/index.node.js` - ES module format for NodeJS (see *package.json#module*).
-  - `dist/netflux.umd.js` - UMD format for browsers (see *package.json#browser*).
+  - `dist/esm/index.browser.js` - ES module format for browsers (see *package.json#browser*).
+  - `dist/netflux.umd.js` - UMD format for browsers.
 
 ## Demo
 Netflux is used by our team for Multi User Text Editor ([MUTE repo](https://github.com/coast-team/mute)) development. The demo version is available on: https://www.coedit.re

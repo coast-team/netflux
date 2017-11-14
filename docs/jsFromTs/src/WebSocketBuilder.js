@@ -1,8 +1,7 @@
-import 'rxjs/add/operator/filter';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import { Subject } from 'rxjs/Subject';
-import { Channel } from './Channel';
 import { isBrowser, isURL } from './misc/Util';
+import { Channel } from './service/Channel';
 const CONNECT_TIMEOUT_FOR_NODE = 3000;
 const listenSubject = new BehaviorSubject('');
 /**

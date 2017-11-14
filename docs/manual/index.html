@@ -44,8 +44,8 @@
     <ul class="manual-toc">
       
     <li data-ice="manualNav" class="indent-h1" data-link="manual/usage.html"><a href="manual/usage.html" data-ice="link">Usage</a></li>
-<li data-ice="manualNav" class="indent-h2" data-link="manual/usage.html"><a href="manual/usage.html#commonjs--netflux-cjs-js" data-ice="link">CommonJS: netflux.cjs.js</a></li>
-<li data-ice="manualNav" class="indent-h2" data-link="manual/usage.html"><a href="manual/usage.html#es-module--esm-index-node-js" data-ice="link">ES module: esm/index.node.js</a></li>
+<li data-ice="manualNav" class="indent-h2" data-link="manual/usage.html"><a href="manual/usage.html#commonjs" data-ice="link">CommonJS</a></li>
+<li data-ice="manualNav" class="indent-h2" data-link="manual/usage.html"><a href="manual/usage.html#es-module" data-ice="link">ES module</a></li>
 <li data-ice="manualNav" class="indent-h2" data-link="manual/usage.html"><a href="manual/usage.html#umd" data-ice="link">UMD</a></li>
 <li data-ice="manualNav" class="indent-h2" data-link="manual/usage.html"><a href="manual/usage.html#configuration" data-ice="link">Configuration</a></li>
 </ul>
@@ -128,10 +128,11 @@
 </li>
 <li>Small Signaling server payload: server is necessary to establish the first connection with
 one of the group member, then this member acts as a Signaling server to establish connections with the rest of the group members.</li>
-<li>3 builds (ES5 code):<ul>
+<li>4 builds (ES5 code):<ul>
 <li><code>dist/netflux.cjs.js</code> - CommonJS format for NodeJS (see <em>package.json#main</em>)</li>
 <li><code>dist/esm/index.node.js</code> - ES module format for NodeJS (see <em>package.json#module</em>).</li>
-<li><code>dist/netflux.umd.js</code> - UMD format for browsers (see <em>package.json#browser</em>).</li>
+<li><code>dist/esm/index.browser.js</code> - ES module format for browsers (see <em>package.json#browser</em>).</li>
+<li><code>dist/netflux.umd.js</code> - UMD format for browsers.</li>
 </ul>
 </li>
 </ul>
@@ -184,13 +185,13 @@ or in daemon:
       <div class="manual-card">
         <div data-ice="card"><h1>Usage</h1><p>There are 4 builds (all ES5 code):</p><ul>
 <li><code>dist/netflux.cjs.js</code> CommonJS format for NodeJS.</li>
-<li><code>dist/netflux.node.esm.js</code> ECMAScript 6 module format for NodeJS.</li>
-<li><code>dist/netflux.browser.esm.js</code> ECMAScript 6 module format for browsers.</li>
+<li><code>dist/esm/netflux.node.js</code> ECMAScript 6 module format for NodeJS.</li>
+<li><code>dist/esm/netflux.browser.js</code> ECMAScript 6 module format for browsers.</li>
 <li><code>dist/netflux.umd.js</code> UMD format for browsers.</li>
 </ul><p>The <code>package.json</code> contains the following fields:</p><pre><code class="lang-json"><code class="source-code prettyprint">...
 &quot;main&quot;: &quot;dist/netflux.cjs.js&quot;,
 &quot;module&quot;: &quot;dist/esm/index.node.js&quot;,
-&quot;browser&quot;: &quot;dist/netflux.umd.js&quot;,
+&quot;browser&quot;: &quot;dist/esm/index.browser.js&quot;,
 ...</code>
 </code></pre><p>All builds are either for NodeJS or for Browser environment.</p><p><strong>For browser environment</strong> exported members are:</p><ul>
 <li><code>WebGroup</code></li>
@@ -202,10 +203,10 @@ or in daemon:
 </ul><p><strong>For NodeJS environment</strong> exported members are the same as for browser plus:</p><ul>
 <li><code>WebGroupBotServer</code></li>
 <li><code>WebGroupBotServerOptions</code> type.</li>
-</ul><h2>CommonJS: netflux.cjs.js</h2><p><code>dist/netflux.cjs.js</code> - CommonJS format, built for NodeJS.</p><pre><code class="lang-Javascript"><code class="source-code prettyprint">// NodeJS
+</ul><h2>CommonJS</h2><p><code>dist/netflux.cjs.js</code> - CommonJS format, built for NodeJS.</p><pre><code class="lang-Javascript"><code class="source-code prettyprint">// NodeJS
 const netflux = require(&apos;netflux&apos;)
 var wg = new netflux.WebGroup()</code>
-</code></pre><h2>ES module: esm/index.node.js</h2><p><code>esm/index.node.js</code> is suitable for Webpack, Browserify or any alike, which also undersand <code>package.json#module</code> property. It is build for NodeJS: contains all exported API members and all necessary polyfills for NodeJS environment.</p><pre><code class="lang-javascript"><code class="source-code prettyprint">export {WebGroup, WebGroupState, WebGroupBotServer, WebGroupBotServerOptions} from &apos;netflux&apos;
+</code></pre><h2>ES module</h2><p><code>esm/index.node.js</code> and <code>esm/index.browser.js</code> are suitable for Webpack, Browserify or any alike, which also undersands <code>package.json#module</code> and <code>package.json#module</code> properties respectively and can parse ES modules.</p><p><code>esm/index.node.js</code> is build for NodeJS: contains all exported API members and all necessary polyfills for NodeJS environment.</p><p><code>esm/index.browser.js</code>  si build for browsers.</p><pre><code class="lang-javascript"><code class="source-code prettyprint">export {WebGroup, WebGroupState, WebGroupBotServer, WebGroupBotServerOptions} from &apos;netflux&apos;
 const wg = new WebGroup()</code>
 </code></pre><h2>UMD</h2><p><code>dist/netflux.umd.js</code> - Universal Module Definition format is compatible with AMD, CommonJS and &quot;global&quot; modules. Built for browser and suitable for Webpack, Browserify and any other who
 also understands <code>package.json#browser</code> property.</p><pre><code class="lang-html"><code class="source-code prettyprint">&lt;!-- Browser global usage example --&gt;
@@ -318,7 +319,7 @@ window.addEventListener(&apos;visibilitychange&apos;, () =&gt; {
 </div>
 
 <footer class="footer">
-  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(1.0.3)</span><img src="./image/esdoc-logo-mini-black.png"></a>
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(1.0.4)</span><img src="./image/esdoc-logo-mini-black.png"></a>
 </footer>
 
 <script src="script/search_index.js"></script>
