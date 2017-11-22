@@ -38,7 +38,7 @@
     "test": "karma start",
     "test:chrome": "npm test -- --browsers Chrome",
     "test:firefox": "npm test -- --browsers Firefox",
-    "test:travis": "npm test -- -- travis",
+    "test:travis": "npm run build && npm test -- -- travis",
     "test:debug": "npm test -- -- debug",
     "proto": "pbjs -t static-module -w es6 --no-verify --no-delimited --no-convert src/proto/index.proto -o src/proto/index.es6.js && pbts src/proto/index.es6.js -o src/proto/index.d.ts",
     "postproto": "rollup -c rollup.config.proto.js && rm src/proto/index.es6.js",
