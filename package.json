@@ -54,7 +54,7 @@
     "protobufjs": "^6.8.0",
     "rxjs": "^5.5.2",
     "text-encoding": "^0.6.4",
-    "uws": "^8.14.0"
+    "uws": "^9.14.0"
   },
   "peerDependencies": {
     "wrtc": "0.0.x"
