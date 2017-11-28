@@ -8,8 +8,6 @@ function createCommonjsModule(fn, module) {
 	return module = { exports: {} }, fn(module, module.exports), module.exports;
 }
 
-"use strict";
-
 var aspromise = asPromise;
 
 /**
@@ -61,14 +59,6 @@ function asPromise(fn, ctx /*, varargs */) {
 }
 
 var base64_1 = createCommonjsModule(function (module, exports) {
-    "use strict";
-
-    /**
-     * A minimal base64 implementation for number arrays.
-     * @memberof util
-     * @namespace
-     */
-
     var base64 = exports;
 
     /**
@@ -200,8 +190,6 @@ var base64_1 = createCommonjsModule(function (module, exports) {
     };
 });
 
-"use strict";
-
 var eventemitter = EventEmitter;
 
 /**
@@ -272,8 +260,6 @@ EventEmitter.prototype.emit = function emit(evt) {
     }
     return this;
 };
-
-"use strict";
 
 var float_1 = factory(factory);
 
@@ -584,8 +570,6 @@ function readUintBE(buf, pos) {
     return (buf[pos] << 24 | buf[pos + 1] << 16 | buf[pos + 2] << 8 | buf[pos + 3]) >>> 0;
 }
 
-"use strict";
-
 var inquire_1 = inquire;
 
 /**
@@ -603,14 +587,6 @@ function inquire(moduleName) {
 }
 
 var utf8_1 = createCommonjsModule(function (module, exports) {
-    "use strict";
-
-    /**
-     * A minimal UTF8 implementation for number arrays.
-     * @memberof util
-     * @namespace
-     */
-
     var utf8 = exports;
 
     /**
@@ -701,8 +677,6 @@ var utf8_1 = createCommonjsModule(function (module, exports) {
     };
 });
 
-"use strict";
-
 var pool_1 = pool;
 
 /**
@@ -750,7 +724,6 @@ function pool(alloc, slice, size) {
     };
 }
 
-"use strict";
 var longbits = LongBits$1;
 
 /**
@@ -921,8 +894,6 @@ LongBits$1.prototype.length = function length() {
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 var minimal$2 = createCommonjsModule(function (module, exports) {
-    "use strict";
-
     var util = exports;
 
     // used to return a Promise where callback is omitted
@@ -1318,7 +1289,6 @@ var minimal$2 = createCommonjsModule(function (module, exports) {
     };
 });
 
-"use strict";
 var writer = Writer;
 
 var BufferWriter; // cyclic
@@ -1764,7 +1734,6 @@ Writer._configure = function (BufferWriter_) {
     BufferWriter = BufferWriter_;
 };
 
-"use strict";
 var writer_buffer = BufferWriter$1;
 
 // extends Writer
@@ -1838,7 +1807,6 @@ BufferWriter$1.prototype.string = function write_string_buffer(value) {
  * @returns {Buffer} Finished buffer
  */
 
-"use strict";
 var reader = Reader;
 
 var BufferReader; // cyclic
@@ -2223,7 +2191,6 @@ Reader._configure = function (BufferReader_) {
     });
 };
 
-"use strict";
 var reader_buffer = BufferReader$1;
 
 // extends Reader
@@ -2265,7 +2232,6 @@ BufferReader$1.prototype.string = function read_string_buffer() {
  * @returns {Buffer} Value read
  */
 
-"use strict";
 var service$1 = Service;
 
 // Extends EventEmitter
@@ -2404,13 +2370,6 @@ Service.prototype.end = function end(endedByRPC) {
 };
 
 var rpc_1 = createCommonjsModule(function (module, exports) {
-  "use strict";
-
-  /**
-   * Streaming RPC helpers.
-   * @namespace
-   */
-
   var rpc = exports;
 
   /**
@@ -2443,8 +2402,6 @@ var rpc_1 = createCommonjsModule(function (module, exports) {
   rpc.Service = service$1;
 });
 
-"use strict";
-
 var roots = {};
 
 /**
@@ -2464,8 +2421,6 @@ var roots = {};
  */
 
 var indexMinimal = createCommonjsModule(function (module, exports) {
-  "use strict";
-
   var protobuf = exports;
 
   /**
@@ -2503,9 +2458,6 @@ var indexMinimal = createCommonjsModule(function (module, exports) {
   configure();
 });
 
-// minimal library entry point.
-
-"use strict";
 var minimal = indexMinimal;
 
 var minimal_1 = minimal.Reader;
@@ -2528,16 +2480,17 @@ var Message = $root.Message = function () {
      * Properties of a Message.
      * @exports IMessage
      * @interface IMessage
-     * @property {number} [senderId] Message senderId
-     * @property {number} [recipientId] Message recipientId
-     * @property {boolean} [isService] Message isService
-     * @property {Uint8Array} [content] Message content
+     * @property {number|null} [senderId] Message senderId
+     * @property {number|null} [recipientId] Message recipientId
+     * @property {boolean|null} [isService] Message isService
+     * @property {Uint8Array|null} [content] Message content
      */
 
     /**
      * Constructs a new Message.
      * @exports Message
      * @classdesc Represents a Message.
+     * @implements IMessage
      * @constructor
      * @param {IMessage=} [properties] Properties to set
      */
@@ -2549,7 +2502,7 @@ var Message = $root.Message = function () {
 
     /**
      * Message senderId.
-     * @member {number}senderId
+     * @member {number} senderId
      * @memberof Message
      * @instance
      */
@@ -2557,7 +2510,7 @@ var Message = $root.Message = function () {
 
     /**
      * Message recipientId.
-     * @member {number}recipientId
+     * @member {number} recipientId
      * @memberof Message
      * @instance
      */
@@ -2565,7 +2518,7 @@ var Message = $root.Message = function () {
 
     /**
      * Message isService.
-     * @member {boolean}isService
+     * @member {boolean} isService
      * @memberof Message
      * @instance
      */
@@ -2573,7 +2526,7 @@ var Message = $root.Message = function () {
 
     /**
      * Message content.
-     * @member {Uint8Array}content
+     * @member {Uint8Array} content
      * @memberof Message
      * @instance
      */
@@ -2665,16 +2618,17 @@ var user = $root.user = function () {
          * Properties of a Message.
          * @memberof user
          * @interface IMessage
-         * @property {number} [length] Message length
-         * @property {user.Message.Type} [type] Message type
-         * @property {Uint8Array} [full] Message full
-         * @property {user.Message.IChunk} [chunk] Message chunk
+         * @property {number|null} [length] Message length
+         * @property {user.Message.Type|null} [type] Message type
+         * @property {Uint8Array|null} [full] Message full
+         * @property {user.Message.IChunk|null} [chunk] Message chunk
          */
 
         /**
          * Constructs a new Message.
          * @memberof user
          * @classdesc Represents a Message.
+         * @implements IMessage
          * @constructor
          * @param {user.IMessage=} [properties] Properties to set
          */
@@ -2686,7 +2640,7 @@ var user = $root.user = function () {
 
         /**
          * Message length.
-         * @member {number}length
+         * @member {number} length
          * @memberof user.Message
          * @instance
          */
@@ -2694,7 +2648,7 @@ var user = $root.user = function () {
 
         /**
          * Message type.
-         * @member {user.Message.Type}type
+         * @member {user.Message.Type} type
          * @memberof user.Message
          * @instance
          */
@@ -2702,7 +2656,7 @@ var user = $root.user = function () {
 
         /**
          * Message full.
-         * @member {Uint8Array}full
+         * @member {Uint8Array} full
          * @memberof user.Message
          * @instance
          */
@@ -2710,7 +2664,7 @@ var user = $root.user = function () {
 
         /**
          * Message chunk.
-         * @member {(user.Message.IChunk|null|undefined)}chunk
+         * @member {user.Message.IChunk|null|undefined} chunk
          * @memberof user.Message
          * @instance
          */
@@ -2721,7 +2675,7 @@ var user = $root.user = function () {
 
         /**
          * Message content.
-         * @member {string|undefined} content
+         * @member {"full"|"chunk"|undefined} content
          * @memberof user.Message
          * @instance
          */
@@ -2804,15 +2758,16 @@ var user = $root.user = function () {
              * Properties of a Chunk.
              * @memberof user.Message
              * @interface IChunk
-             * @property {number} [id] Chunk id
-             * @property {number} [number] Chunk number
-             * @property {Uint8Array} [content] Chunk content
+             * @property {number|null} [id] Chunk id
+             * @property {number|null} [number] Chunk number
+             * @property {Uint8Array|null} [content] Chunk content
              */
 
             /**
              * Constructs a new Chunk.
              * @memberof user.Message
              * @classdesc Represents a Chunk.
+             * @implements IChunk
              * @constructor
              * @param {user.Message.IChunk=} [properties] Properties to set
              */
@@ -2824,7 +2779,7 @@ var user = $root.user = function () {
 
             /**
              * Chunk id.
-             * @member {number}id
+             * @member {number} id
              * @memberof user.Message.Chunk
              * @instance
              */
@@ -2832,7 +2787,7 @@ var user = $root.user = function () {
 
             /**
              * Chunk number.
-             * @member {number}number
+             * @member {number} number
              * @memberof user.Message.Chunk
              * @instance
              */
@@ -2840,7 +2795,7 @@ var user = $root.user = function () {
 
             /**
              * Chunk content.
-             * @member {Uint8Array}content
+             * @member {Uint8Array} content
              * @memberof user.Message.Chunk
              * @instance
              */
@@ -2915,6 +2870,7 @@ var user = $root.user = function () {
 
         /**
          * Type enum.
+         * @name user.Message.Type
          * @enum {string}
          * @property {number} STRING=0 STRING value
          * @property {number} U_INT_8_ARRAY=1 U_INT_8_ARRAY value
@@ -2948,14 +2904,15 @@ var service = $root.service = function () {
          * Properties of a Message.
          * @memberof service
          * @interface IMessage
-         * @property {number} [id] Message id
-         * @property {Uint8Array} [content] Message content
+         * @property {number|null} [id] Message id
+         * @property {Uint8Array|null} [content] Message content
          */
 
         /**
          * Constructs a new Message.
          * @memberof service
          * @classdesc Represents a Message.
+         * @implements IMessage
          * @constructor
          * @param {service.IMessage=} [properties] Properties to set
          */
@@ -2967,7 +2924,7 @@ var service = $root.service = function () {
 
         /**
          * Message id.
-         * @member {number}id
+         * @member {number} id
          * @memberof service.Message
          * @instance
          */
@@ -2975,7 +2932,7 @@ var service = $root.service = function () {
 
         /**
          * Message content.
-         * @member {Uint8Array}content
+         * @member {Uint8Array} content
          * @memberof service.Message
          * @instance
          */
@@ -3062,16 +3019,17 @@ var webChannel = $root.webChannel = function () {
          * Properties of a Message.
          * @memberof webChannel
          * @interface IMessage
-         * @property {webChannel.IInitData} [init] Message init
-         * @property {webChannel.IPeers} [initOk] Message initOk
-         * @property {boolean} [ping] Message ping
-         * @property {boolean} [pong] Message pong
+         * @property {webChannel.IInitData|null} [init] Message init
+         * @property {webChannel.IPeers|null} [initOk] Message initOk
+         * @property {boolean|null} [ping] Message ping
+         * @property {boolean|null} [pong] Message pong
          */
 
         /**
          * Constructs a new Message.
          * @memberof webChannel
          * @classdesc Represents a Message.
+         * @implements IMessage
          * @constructor
          * @param {webChannel.IMessage=} [properties] Properties to set
          */
@@ -3083,7 +3041,7 @@ var webChannel = $root.webChannel = function () {
 
         /**
          * Message init.
-         * @member {(webChannel.IInitData|null|undefined)}init
+         * @member {webChannel.IInitData|null|undefined} init
          * @memberof webChannel.Message
          * @instance
          */
@@ -3091,7 +3049,7 @@ var webChannel = $root.webChannel = function () {
 
         /**
          * Message initOk.
-         * @member {(webChannel.IPeers|null|undefined)}initOk
+         * @member {webChannel.IPeers|null|undefined} initOk
          * @memberof webChannel.Message
          * @instance
          */
@@ -3099,7 +3057,7 @@ var webChannel = $root.webChannel = function () {
 
         /**
          * Message ping.
-         * @member {boolean}ping
+         * @member {boolean} ping
          * @memberof webChannel.Message
          * @instance
          */
@@ -3107,7 +3065,7 @@ var webChannel = $root.webChannel = function () {
 
         /**
          * Message pong.
-         * @member {boolean}pong
+         * @member {boolean} pong
          * @memberof webChannel.Message
          * @instance
          */
@@ -3118,7 +3076,7 @@ var webChannel = $root.webChannel = function () {
 
         /**
          * Message type.
-         * @member {string|undefined} type
+         * @member {"init"|"initOk"|"ping"|"pong"|undefined} type
          * @memberof webChannel.Message
          * @instance
          */
@@ -3204,15 +3162,16 @@ var webChannel = $root.webChannel = function () {
          * Properties of an InitData.
          * @memberof webChannel
          * @interface IInitData
-         * @property {number} [topology] InitData topology
-         * @property {number} [wcId] InitData wcId
-         * @property {Array.<number>} [generatedIds] InitData generatedIds
+         * @property {number|null} [topology] InitData topology
+         * @property {number|null} [wcId] InitData wcId
+         * @property {Array.<number>|null} [generatedIds] InitData generatedIds
          */
 
         /**
          * Constructs a new InitData.
          * @memberof webChannel
          * @classdesc Represents an InitData.
+         * @implements IInitData
          * @constructor
          * @param {webChannel.IInitData=} [properties] Properties to set
          */
@@ -3225,7 +3184,7 @@ var webChannel = $root.webChannel = function () {
 
         /**
          * InitData topology.
-         * @member {number}topology
+         * @member {number} topology
          * @memberof webChannel.InitData
          * @instance
          */
@@ -3233,7 +3192,7 @@ var webChannel = $root.webChannel = function () {
 
         /**
          * InitData wcId.
-         * @member {number}wcId
+         * @member {number} wcId
          * @memberof webChannel.InitData
          * @instance
          */
@@ -3241,7 +3200,7 @@ var webChannel = $root.webChannel = function () {
 
         /**
          * InitData generatedIds.
-         * @member {Array.<number>}generatedIds
+         * @member {Array.<number>} generatedIds
          * @memberof webChannel.InitData
          * @instance
          */
@@ -3331,13 +3290,14 @@ var webChannel = $root.webChannel = function () {
          * Properties of a Peers.
          * @memberof webChannel
          * @interface IPeers
-         * @property {Array.<number>} [members] Peers members
+         * @property {Array.<number>|null} [members] Peers members
          */
 
         /**
          * Constructs a new Peers.
          * @memberof webChannel
          * @classdesc Represents a Peers.
+         * @implements IPeers
          * @constructor
          * @param {webChannel.IPeers=} [properties] Properties to set
          */
@@ -3350,7 +3310,7 @@ var webChannel = $root.webChannel = function () {
 
         /**
          * Peers members.
-         * @member {Array.<number>}members
+         * @member {Array.<number>} members
          * @memberof webChannel.Peers
          * @instance
          */
@@ -3444,14 +3404,15 @@ var channel = $root.channel = function () {
          * Properties of a Message.
          * @memberof channel
          * @interface IMessage
-         * @property {boolean} [ping] Message ping
-         * @property {boolean} [pong] Message pong
+         * @property {boolean|null} [ping] Message ping
+         * @property {boolean|null} [pong] Message pong
          */
 
         /**
          * Constructs a new Message.
          * @memberof channel
          * @classdesc Represents a Message.
+         * @implements IMessage
          * @constructor
          * @param {channel.IMessage=} [properties] Properties to set
          */
@@ -3463,7 +3424,7 @@ var channel = $root.channel = function () {
 
         /**
          * Message ping.
-         * @member {boolean}ping
+         * @member {boolean} ping
          * @memberof channel.Message
          * @instance
          */
@@ -3471,7 +3432,7 @@ var channel = $root.channel = function () {
 
         /**
          * Message pong.
-         * @member {boolean}pong
+         * @member {boolean} pong
          * @memberof channel.Message
          * @instance
          */
@@ -3558,15 +3519,16 @@ var channelBuilder = $root.channelBuilder = function () {
          * Properties of a Message.
          * @memberof channelBuilder
          * @interface IMessage
-         * @property {channelBuilder.IConnection} [request] Message request
-         * @property {channelBuilder.IConnection} [response] Message response
-         * @property {string} [failed] Message failed
+         * @property {channelBuilder.IConnection|null} [request] Message request
+         * @property {channelBuilder.IConnection|null} [response] Message response
+         * @property {string|null} [failed] Message failed
          */
 
         /**
          * Constructs a new Message.
          * @memberof channelBuilder
          * @classdesc Represents a Message.
+         * @implements IMessage
          * @constructor
          * @param {channelBuilder.IMessage=} [properties] Properties to set
          */
@@ -3578,7 +3540,7 @@ var channelBuilder = $root.channelBuilder = function () {
 
         /**
          * Message request.
-         * @member {(channelBuilder.IConnection|null|undefined)}request
+         * @member {channelBuilder.IConnection|null|undefined} request
          * @memberof channelBuilder.Message
          * @instance
          */
@@ -3586,7 +3548,7 @@ var channelBuilder = $root.channelBuilder = function () {
 
         /**
          * Message response.
-         * @member {(channelBuilder.IConnection|null|undefined)}response
+         * @member {channelBuilder.IConnection|null|undefined} response
          * @memberof channelBuilder.Message
          * @instance
          */
@@ -3594,7 +3556,7 @@ var channelBuilder = $root.channelBuilder = function () {
 
         /**
          * Message failed.
-         * @member {string}failed
+         * @member {string} failed
          * @memberof channelBuilder.Message
          * @instance
          */
@@ -3605,7 +3567,7 @@ var channelBuilder = $root.channelBuilder = function () {
 
         /**
          * Message type.
-         * @member {string|undefined} type
+         * @member {"request"|"response"|"failed"|undefined} type
          * @memberof channelBuilder.Message
          * @instance
          */
@@ -3687,14 +3649,15 @@ var channelBuilder = $root.channelBuilder = function () {
          * Properties of a Connection.
          * @memberof channelBuilder
          * @interface IConnection
-         * @property {string} [wsUrl] Connection wsUrl
-         * @property {boolean} [isWrtcSupport] Connection isWrtcSupport
+         * @property {string|null} [wsUrl] Connection wsUrl
+         * @property {boolean|null} [isWrtcSupport] Connection isWrtcSupport
          */
 
         /**
          * Constructs a new Connection.
          * @memberof channelBuilder
          * @classdesc Represents a Connection.
+         * @implements IConnection
          * @constructor
          * @param {channelBuilder.IConnection=} [properties] Properties to set
          */
@@ -3706,7 +3669,7 @@ var channelBuilder = $root.channelBuilder = function () {
 
         /**
          * Connection wsUrl.
-         * @member {string}wsUrl
+         * @member {string} wsUrl
          * @memberof channelBuilder.Connection
          * @instance
          */
@@ -3714,7 +3677,7 @@ var channelBuilder = $root.channelBuilder = function () {
 
         /**
          * Connection isWrtcSupport.
-         * @member {boolean}isWrtcSupport
+         * @member {boolean} isWrtcSupport
          * @memberof channelBuilder.Connection
          * @instance
          */
@@ -3801,16 +3764,17 @@ var fullMesh = $root.fullMesh = function () {
          * Properties of a Message.
          * @memberof fullMesh
          * @interface IMessage
-         * @property {fullMesh.IPeers} [connectTo] Message connectTo
-         * @property {fullMesh.IPeers} [connectedTo] Message connectedTo
-         * @property {number} [joiningPeerId] Message joiningPeerId
-         * @property {boolean} [joinSucceed] Message joinSucceed
+         * @property {fullMesh.IPeers|null} [connectTo] Message connectTo
+         * @property {fullMesh.IPeers|null} [connectedTo] Message connectedTo
+         * @property {number|null} [joiningPeerId] Message joiningPeerId
+         * @property {boolean|null} [joinSucceed] Message joinSucceed
          */
 
         /**
          * Constructs a new Message.
          * @memberof fullMesh
          * @classdesc Represents a Message.
+         * @implements IMessage
          * @constructor
          * @param {fullMesh.IMessage=} [properties] Properties to set
          */
@@ -3822,7 +3786,7 @@ var fullMesh = $root.fullMesh = function () {
 
         /**
          * Message connectTo.
-         * @member {(fullMesh.IPeers|null|undefined)}connectTo
+         * @member {fullMesh.IPeers|null|undefined} connectTo
          * @memberof fullMesh.Message
          * @instance
          */
@@ -3830,7 +3794,7 @@ var fullMesh = $root.fullMesh = function () {
 
         /**
          * Message connectedTo.
-         * @member {(fullMesh.IPeers|null|undefined)}connectedTo
+         * @member {fullMesh.IPeers|null|undefined} connectedTo
          * @memberof fullMesh.Message
          * @instance
          */
@@ -3838,7 +3802,7 @@ var fullMesh = $root.fullMesh = function () {
 
         /**
          * Message joiningPeerId.
-         * @member {number}joiningPeerId
+         * @member {number} joiningPeerId
          * @memberof fullMesh.Message
          * @instance
          */
@@ -3846,7 +3810,7 @@ var fullMesh = $root.fullMesh = function () {
 
         /**
          * Message joinSucceed.
-         * @member {boolean}joinSucceed
+         * @member {boolean} joinSucceed
          * @memberof fullMesh.Message
          * @instance
          */
@@ -3857,7 +3821,7 @@ var fullMesh = $root.fullMesh = function () {
 
         /**
          * Message type.
-         * @member {string|undefined} type
+         * @member {"connectTo"|"connectedTo"|"joiningPeerId"|"joinSucceed"|undefined} type
          * @memberof fullMesh.Message
          * @instance
          */
@@ -3943,13 +3907,14 @@ var fullMesh = $root.fullMesh = function () {
          * Properties of a Peers.
          * @memberof fullMesh
          * @interface IPeers
-         * @property {Array.<number>} [members] Peers members
+         * @property {Array.<number>|null} [members] Peers members
          */
 
         /**
          * Constructs a new Peers.
          * @memberof fullMesh
          * @classdesc Represents a Peers.
+         * @implements IPeers
          * @constructor
          * @param {fullMesh.IPeers=} [properties] Properties to set
          */
@@ -3962,7 +3927,7 @@ var fullMesh = $root.fullMesh = function () {
 
         /**
          * Peers members.
-         * @member {Array.<number>}members
+         * @member {Array.<number>} members
          * @memberof fullMesh.Peers
          * @instance
          */
@@ -4056,16 +4021,17 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
          * Properties of a Message.
          * @memberof webRTCBuilder
          * @interface IMessage
-         * @property {boolean} [isInitiator] Message isInitiator
-         * @property {string} [offer] Message offer
-         * @property {string} [answer] Message answer
-         * @property {webRTCBuilder.IIceCandidate} [iceCandidate] Message iceCandidate
+         * @property {boolean|null} [isInitiator] Message isInitiator
+         * @property {string|null} [offer] Message offer
+         * @property {string|null} [answer] Message answer
+         * @property {webRTCBuilder.IIceCandidate|null} [iceCandidate] Message iceCandidate
          */
 
         /**
          * Constructs a new Message.
          * @memberof webRTCBuilder
          * @classdesc Represents a Message.
+         * @implements IMessage
          * @constructor
          * @param {webRTCBuilder.IMessage=} [properties] Properties to set
          */
@@ -4077,7 +4043,7 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
 
         /**
          * Message isInitiator.
-         * @member {boolean}isInitiator
+         * @member {boolean} isInitiator
          * @memberof webRTCBuilder.Message
          * @instance
          */
@@ -4085,7 +4051,7 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
 
         /**
          * Message offer.
-         * @member {string}offer
+         * @member {string} offer
          * @memberof webRTCBuilder.Message
          * @instance
          */
@@ -4093,7 +4059,7 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
 
         /**
          * Message answer.
-         * @member {string}answer
+         * @member {string} answer
          * @memberof webRTCBuilder.Message
          * @instance
          */
@@ -4101,7 +4067,7 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
 
         /**
          * Message iceCandidate.
-         * @member {(webRTCBuilder.IIceCandidate|null|undefined)}iceCandidate
+         * @member {webRTCBuilder.IIceCandidate|null|undefined} iceCandidate
          * @memberof webRTCBuilder.Message
          * @instance
          */
@@ -4112,7 +4078,7 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
 
         /**
          * Message type.
-         * @member {string|undefined} type
+         * @member {"offer"|"answer"|"iceCandidate"|undefined} type
          * @memberof webRTCBuilder.Message
          * @instance
          */
@@ -4198,15 +4164,16 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
          * Properties of an IceCandidate.
          * @memberof webRTCBuilder
          * @interface IIceCandidate
-         * @property {string} [candidate] IceCandidate candidate
-         * @property {string} [sdpMid] IceCandidate sdpMid
-         * @property {number} [sdpMLineIndex] IceCandidate sdpMLineIndex
+         * @property {string|null} [candidate] IceCandidate candidate
+         * @property {string|null} [sdpMid] IceCandidate sdpMid
+         * @property {number|null} [sdpMLineIndex] IceCandidate sdpMLineIndex
          */
 
         /**
          * Constructs a new IceCandidate.
          * @memberof webRTCBuilder
          * @classdesc Represents an IceCandidate.
+         * @implements IIceCandidate
          * @constructor
          * @param {webRTCBuilder.IIceCandidate=} [properties] Properties to set
          */
@@ -4218,7 +4185,7 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
 
         /**
          * IceCandidate candidate.
-         * @member {string}candidate
+         * @member {string} candidate
          * @memberof webRTCBuilder.IceCandidate
          * @instance
          */
@@ -4226,7 +4193,7 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
 
         /**
          * IceCandidate sdpMid.
-         * @member {string}sdpMid
+         * @member {string} sdpMid
          * @memberof webRTCBuilder.IceCandidate
          * @instance
          */
@@ -4234,7 +4201,7 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
 
         /**
          * IceCandidate sdpMLineIndex.
-         * @member {number}sdpMLineIndex
+         * @member {number} sdpMLineIndex
          * @memberof webRTCBuilder.IceCandidate
          * @instance
          */
@@ -4325,17 +4292,18 @@ var signaling = $root.signaling = function () {
          * Properties of a Message.
          * @memberof signaling
          * @interface IMessage
-         * @property {signaling.IContent} [content] Message content
-         * @property {boolean} [isFirst] Message isFirst
-         * @property {boolean} [joined] Message joined
-         * @property {boolean} [ping] Message ping
-         * @property {boolean} [pong] Message pong
+         * @property {signaling.IContent|null} [content] Message content
+         * @property {boolean|null} [isFirst] Message isFirst
+         * @property {boolean|null} [joined] Message joined
+         * @property {boolean|null} [ping] Message ping
+         * @property {boolean|null} [pong] Message pong
          */
 
         /**
          * Constructs a new Message.
          * @memberof signaling
          * @classdesc Represents a Message.
+         * @implements IMessage
          * @constructor
          * @param {signaling.IMessage=} [properties] Properties to set
          */
@@ -4347,7 +4315,7 @@ var signaling = $root.signaling = function () {
 
         /**
          * Message content.
-         * @member {(signaling.IContent|null|undefined)}content
+         * @member {signaling.IContent|null|undefined} content
          * @memberof signaling.Message
          * @instance
          */
@@ -4355,7 +4323,7 @@ var signaling = $root.signaling = function () {
 
         /**
          * Message isFirst.
-         * @member {boolean}isFirst
+         * @member {boolean} isFirst
          * @memberof signaling.Message
          * @instance
          */
@@ -4363,7 +4331,7 @@ var signaling = $root.signaling = function () {
 
         /**
          * Message joined.
-         * @member {boolean}joined
+         * @member {boolean} joined
          * @memberof signaling.Message
          * @instance
          */
@@ -4371,7 +4339,7 @@ var signaling = $root.signaling = function () {
 
         /**
          * Message ping.
-         * @member {boolean}ping
+         * @member {boolean} ping
          * @memberof signaling.Message
          * @instance
          */
@@ -4379,7 +4347,7 @@ var signaling = $root.signaling = function () {
 
         /**
          * Message pong.
-         * @member {boolean}pong
+         * @member {boolean} pong
          * @memberof signaling.Message
          * @instance
          */
@@ -4390,7 +4358,7 @@ var signaling = $root.signaling = function () {
 
         /**
          * Message type.
-         * @member {string|undefined} type
+         * @member {"content"|"isFirst"|"joined"|"ping"|"pong"|undefined} type
          * @memberof signaling.Message
          * @instance
          */
@@ -4480,16 +4448,17 @@ var signaling = $root.signaling = function () {
          * Properties of a Content.
          * @memberof signaling
          * @interface IContent
-         * @property {number} [id] Content id
-         * @property {boolean} [isEnd] Content isEnd
-         * @property {Uint8Array} [data] Content data
-         * @property {boolean} [isError] Content isError
+         * @property {number|null} [id] Content id
+         * @property {boolean|null} [isEnd] Content isEnd
+         * @property {Uint8Array|null} [data] Content data
+         * @property {boolean|null} [isError] Content isError
          */
 
         /**
          * Constructs a new Content.
          * @memberof signaling
          * @classdesc Represents a Content.
+         * @implements IContent
          * @constructor
          * @param {signaling.IContent=} [properties] Properties to set
          */
@@ -4501,7 +4470,7 @@ var signaling = $root.signaling = function () {
 
         /**
          * Content id.
-         * @member {number}id
+         * @member {number} id
          * @memberof signaling.Content
          * @instance
          */
@@ -4509,7 +4478,7 @@ var signaling = $root.signaling = function () {
 
         /**
          * Content isEnd.
-         * @member {boolean}isEnd
+         * @member {boolean} isEnd
          * @memberof signaling.Content
          * @instance
          */
@@ -4517,7 +4486,7 @@ var signaling = $root.signaling = function () {
 
         /**
          * Content data.
-         * @member {Uint8Array}data
+         * @member {Uint8Array} data
          * @memberof signaling.Content
          * @instance
          */
@@ -4525,7 +4494,7 @@ var signaling = $root.signaling = function () {
 
         /**
          * Content isError.
-         * @member {boolean}isError
+         * @member {boolean} isError
          * @memberof signaling.Content
          * @instance
          */
@@ -4536,7 +4505,7 @@ var signaling = $root.signaling = function () {
 
         /**
          * Content type.
-         * @member {string|undefined} type
+         * @member {"data"|"isError"|undefined} type
          * @memberof signaling.Content
          * @instance
          */

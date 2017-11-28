@@ -20,15 +20,3 @@ message Message {
     U_INT_8_ARRAY = 1;
   }
 }
-// AFTER `npm run proto` command. Copy this:
-
-// /** Type enum. */
-// enum Type {
-//     STRING = 0,
-//     U_INT_8_ARRAY = 1
-// }
-
-// INTO src/proto/index.d.ts just after
-
-// public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): user.Message.Chunk;
-// }
