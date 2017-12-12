@@ -1,18 +1,13 @@
-engines:
+version: "2"
+plugins:
   tslint:
     enabled: true
-    channel: beta
     config: tslint.json
   fixme:
     enabled: true
-ratings:
-  paths:
-    "src/**/*.ts"
-exclude_paths:
+exclude_patterns:
 - "**.d.ts"
-- "**.txt"
 - "**.js"
-- "**.md"
-- "dist/**"
+- "test/**"
 - "docs/**"
 - "manual/**"
