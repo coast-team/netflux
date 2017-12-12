@@ -37,18 +37,15 @@ module.exports = (config) => {
 
     karmaTypescriptConfig: {
       compilerOptions: {
-        module: 'CommonJS',
-        target: 'ES5',
-        lib: [ "ES2015", "ES2016", "ES2017", "DOM" ],
+        lib: [ "es2017", "dom" ],
         moduleResolution: 'node',
-        removeComments: true,
         downlevelIteration: true,
-        sourceMap: true,
         types: ['node', 'text-encoding'],
         allowJs: true
       },
       bundlerOptions: {
-        exclude: ['wrtc', 'text-encoding', 'uws', 'node-webcrypto-ossl', 'url']
+        exclude: ['wrtc', 'text-encoding', 'uws', 'url'],
+        addNodeGlobals: false,
       },
       compilerDelay: 2000,
       include: ['src/**/*', 'test/**/*'],
