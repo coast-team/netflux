@@ -64,18 +64,22 @@ export function randNumbers (length: number = 1): number[] {
 
 export const MAX_KEY_LENGTH = 512
 const netfluxCSS = 'background-color: #FFCA28; padding: 0 3px'
+const debugCSS = 'background-color: #b3ba2e; padding: 0 3px'
 const signalingStateCSS = 'background-color: #9FA8DA; padding: 0 2px'
 const webGroupStateCSS = 'background-color: #EF9A9A; padding: 0 2px'
 let log
 
-export function enableLog (isDebug: boolean) {
+export function enableLog (isDebug: boolean, level = 'info') {
   if (isDebug) {
+    if (!['info', 'debug'].includes(level)) {
+      throw new Error(`Unsupported value for log level: ${level}. Possible values are: "debug" or "info"`)
+    }
     log = {
       info: (msg: string, ...rest: any[]): void => {
         if (rest.length === 0) {
           console.info(`%cNETFLUX%c: ${msg}`, netfluxCSS, '')
         } else {
-          console.info(`%cNETFLUX%c: ${msg}`, rest, netfluxCSS, '')
+          console.info(`%cNETFLUX%c: ${msg}`, netfluxCSS, '', ...rest)
         }
       },
       signalingState: (msg: string): void => {
@@ -85,9 +89,21 @@ export function enableLog (isDebug: boolean) {
         console.info(`%cNETFLUX%c: WebGroup: %c${msg}%c`, netfluxCSS, '', webGroupStateCSS, '')
       },
     }
+    if (level === 'debug') {
+      log.debug = (msg: string, ...rest: any[]) => {
+        if (rest.length === 0) {
+          console.info(`%cNETFLUX DEBUG%c: ${msg}`, debugCSS, '')
+        } else {
+          console.info(`%cNETFLUX DEBUG%c: "%o" ${msg}`, debugCSS, '', ...rest)
+        }
+      }
+    } else {
+      log.debug = () => {}
+    }
   } else {
     log = {
       info: () => {},
+      debug: () => {},
       signalingState: () => {},
       webGroupState: () => {},
     }
