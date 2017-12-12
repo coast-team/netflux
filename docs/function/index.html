@@ -65,7 +65,7 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="function/index.html#static-function-enableLog">enableLog</a></span></span><span class="code" data-ice="signature">(value: <span>boolean</span>)</span>
+          <span class="code" data-ice="name"><span><a href="function/index.html#static-function-enableLog">enableLog</a></span></span><span class="code" data-ice="signature">(value: <span>boolean</span>, level: <span>string</span>)</span>
         </p>
       </div>
       <div>
@@ -93,20 +93,20 @@
     
     
     
-    <span class="code" data-ice="name">enableLog</span><span class="code" data-ice="signature">(value: <span>boolean</span>)</span>
+    <span class="code" data-ice="name">enableLog</span><span class="code" data-ice="signature">(value: <span>boolean</span>, level: <span>string</span>)</span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/index.browser.js.html#lineNumber12">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/index.browser.js.html#lineNumber13">source</a></span></span>
     </span>
   </h3>
 
-  <div data-ice="importPath" class="import-path"><pre class="prettyprint"><code data-ice="importPathCode">import {enableLog} from &apos;<span><a href="file/src/index.browser.js.html#lineNumber12">netflux/src/index.browser.js</a></span>&apos;</code></pre></div>
+  <div data-ice="importPath" class="import-path"><pre class="prettyprint"><code data-ice="importPathCode">import {enableLog} from &apos;<span><a href="file/src/index.browser.js.html#lineNumber13">netflux/src/index.browser.js</a></span>&apos;</code></pre></div>
   
   
-  <div data-ice="description"><p>Enable/Disable console logs. By default the logs are disabled. Consol logs
-group and signaling states, connection establishment, disconnection and
-other useful information for debugging.</p>
+  <div data-ice="description"><p>Enable/Disable console logs. By default the logs are disabled. If enabled
+&apos;info&apos; level shows WebGroup and signaling states, connection establishment, disconnection etc.
+&apos;debug&apos; level shows all that &apos;info&apos; level shows plus much more other information for debugging.</p>
 </div>
 
   
@@ -124,6 +124,14 @@ other useful information for debugging.</p>
       <td data-ice="type" class="code"><span>boolean</span></td>
       <td data-ice="appendix"></td>
       <td data-ice="description"></td>
+    </tr>
+<tr data-ice="property" data-depth="0">
+      <td data-ice="name" class="code" data-depth="0">level</td>
+      <td data-ice="type" class="code"><span>string</span></td>
+      <td data-ice="appendix"><ul><li>optional</li>
+<li>default: &apos;info&apos;</li></ul></td>
+      <td data-ice="description"><p>Console log level: &apos;debug&apos; or &apos;info&apos;</p>
+</td>
     </tr>
 </tbody>
   </table>

@@ -63,7 +63,7 @@ export class WebGroupBotServer {
    * @param {boolean} [options.perMessageDeflate=false] Enable/disable permessage-deflate.
    * @param {WebGroupOptions} options.webGroupOptions Options for each {@link WebGroup} the bot is member of.
    * @param {Topology} [options.webGroupOptions.topology=Topology.FULL_MESH]
-   * @param {string} [options.webGroupOptions.signalingURL='wss://www.coedit.re:30443']
+   * @param {string} [options.webGroupOptions.signalingURL='wss://signaling.netflux.coedit.re']
    * @param {RTCIceServer[]} [options.webGroupOptions.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]
    * @param {boolean} [options.webGroupOptions.autoRejoin=false]
    */

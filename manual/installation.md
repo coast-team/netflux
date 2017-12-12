@@ -14,7 +14,7 @@ Netflux comes with Signaling and STUN servers by default for easier quickstart. 
 
 
 ### Signaling server
-**Default**: `wss://www.coedit.re:20443`
+**Default**: `wss://signaling.netflux.coedit.re`
 
 We developed a Signaling server: [Sigver](https://github.com/coast-team/sigver). It is the only signaling server (signaling mechanism) which is supported by Netflux for now.
 

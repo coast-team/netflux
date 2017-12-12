@@ -34,7 +34,7 @@ export interface IWebChannelOptions {
 
 export const defaultOptions: IWebChannelOptions = {
   topology: TopologyEnum.FULL_MESH,
-  signalingURL: 'wss://www.coedit.re:10473',
+  signalingURL: 'wss://signaling.netflux.coedit.re',
   iceServers: [
     {urls: 'stun:stun3.l.google.com:19302'},
   ],

@@ -129,7 +129,7 @@ export class WebGroup {
   /**
    * @param {WebGroupOptions} [options]
    * @param {Topology} [options.topology=Topology.FULL_MESH]
-   * @param {string} [options.signalingURL='wss://www.coedit.re:30443']
+   * @param {string} [options.signalingURL='wss://signaling.netflux.coedit.re']
    * @param {RTCIceServer[]} [options.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]
    * @param {boolean} [options.autoRejoin=true]
    */

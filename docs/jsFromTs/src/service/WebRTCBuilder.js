@@ -27,7 +27,14 @@ export class WebRTCBuilder extends Service {
         this.rtcConfiguration = { iceServers };
         this.clients = new Map();
     }
+    /**
+     * Listen on `RTCDataChannel` from WebChannel (another peer is playing a signaling role).
+     * Starts to listen on **SDP answer**.
+     */
     onChannelFromWebChannel() {
+        log.debug('Hello world! without parameters');
+        log.debug('Hello world! ', this.wc);
+        log.debug('Hello world! ', this.wc, this.rtcConfiguration, this.clients);
         if (WebRTCBuilder.isSupported) {
             return this.onChannel(this.onServiceMessage.pipe(filter(({ msg }) => msg.isInitiator), map(({ msg, senderId }) => {
                 msg.id = senderId;
@@ -101,9 +108,11 @@ export class WebRTCBuilder extends Service {
         return new Promise((resolve, reject) => {
             const subs = onMessage.subscribe(({ answer, iceCandidate, isError }) => {
                 if (answer) {
+                    console.log(`ANSWER received: `, answer);
                     pc.setRemoteDescription({ type: 'answer', sdp: answer })
                         .then(() => {
                         remoteCandidateStream.subscribe((ic) => {
+                            console.log(`REMOTE candidate: `, ic);
                             pc.addIceCandidate(new global.RTCIceCandidate(ic))
                                 .catch(reject);
                         }, (err) => console.warn(err), () => subs.unsubscribe());
@@ -115,6 +124,7 @@ export class WebRTCBuilder extends Service {
                         remoteCandidateStream.next(iceCandidate);
                     }
                     else {
+                        console.log(`REMOTE candidates COMPLETED`);
                         remoteCandidateStream.complete();
                     }
                 }
@@ -130,7 +140,10 @@ export class WebRTCBuilder extends Service {
                 .catch(reject);
             pc.createOffer()
                 .then((offer) => pc.setLocalDescription(offer))
-                .then(() => send({ offer: pc.localDescription.sdp }))
+                .then(() => {
+                console.log(`SENDING offer `, pc.localDescription.sdp);
+                send({ offer: pc.localDescription.sdp });
+            })
                 .catch(reject);
         });
     }
@@ -156,14 +169,19 @@ export class WebRTCBuilder extends Service {
                         this.clients.delete(id);
                         console.warn(`Client "${id}" failed to establish RTCDataChannel with you: ${err.message}`);
                     });
+                    console.log(`OFFER received: `, offer);
                     pc.setRemoteDescription({ type: 'offer', sdp: offer })
                         .then(() => remoteCandidateStream.subscribe((ic) => {
+                        console.log(`REMOTE candidate: `, ic);
                         pc.addIceCandidate(new global.RTCIceCandidate(ic))
                             .catch((err) => console.warn(err));
                     }, (err) => console.warn(err), () => this.clients.delete(id)))
                         .then(() => pc.createAnswer())
                         .then((answer) => pc.setLocalDescription(answer))
-                        .then(() => send({ answer: pc.localDescription.sdp }, id))
+                        .then(() => {
+                        console.log(`SENDING answer `, pc.localDescription.sdp);
+                        send({ answer: pc.localDescription.sdp }, id);
+                    })
                         .catch((err) => {
                         this.clients.delete(id);
                         console.error(err);
@@ -174,6 +192,7 @@ export class WebRTCBuilder extends Service {
                         remoteCandidateStream.next(iceCandidate);
                     }
                     else {
+                        console.log(`REMOTE candidates COMPLETED`);
                         remoteCandidateStream.complete();
                     }
                 }
@@ -189,6 +208,7 @@ export class WebRTCBuilder extends Service {
     localCandidates(pc) {
         return Observable.create((observer) => {
             pc.onicecandidate = (evt) => {
+                console.log(`LOCAL candidate: `, evt.candidate !== null ? evt.candidate.candidate : 'NULL');
                 if (evt.candidate !== null) {
                     observer.next({
                         candidate: evt.candidate.candidate,
@@ -209,6 +229,7 @@ export class WebRTCBuilder extends Service {
                 const channel = new Channel(this.wc, dc, { rtcPeerConnection: pc, id });
                 return new Promise((resolve, reject) => {
                     pc.oniceconnectionstatechange = () => {
+                        console.log(`Connection STATE: `, pc.iceConnectionState);
                         if (pc.iceConnectionState === 'failed') {
                             reject('Failed to establish PeerConnection: ' +
                                 'The ICE candidate did not find compatible matches for all components of the connection');
@@ -232,6 +253,7 @@ export class WebRTCBuilder extends Service {
         else {
             return new Promise((resolve, reject) => {
                 pc.oniceconnectionstatechange = () => {
+                    console.log(`Connection STATE: `, pc.iceConnectionState);
                     if (pc.iceConnectionState === 'failed') {
                         reject('The ICE candidate did not find compatible matches for all components of the connection');
                     }

@@ -22,7 +22,7 @@ const REJOIN_TIMEOUT = 3000;
 const PING_TIMEOUT = 5000;
 export const defaultOptions = {
     topology: TopologyEnum.FULL_MESH,
-    signalingURL: 'wss://www.coedit.re:10473',
+    signalingURL: 'wss://signaling.netflux.coedit.re',
     iceServers: [
         { urls: 'stun:stun3.l.google.com:19302' },
     ],

@@ -68,7 +68,7 @@
   - `dist/netflux.umd.js` - UMD format for browsers.
 
 ## Demo
-Netflux is used by our team for Multi User Text Editor ([MUTE repo](https://github.com/coast-team/mute)) development. The demo version is available on: https://www.coedit.re
+Netflux is used by our team for Multi User Text Editor ([MUTE repo](https://github.com/coast-team/mute)) development. The demo version is available on: https://coedit.re
 
 [WebSocket]: https://developer.mozilla.org/en/docs/Web/API/WebSocket
 [RTCDataChannel]: https://developer.mozilla.org/en/docs/Web/API/RTCDataChannel

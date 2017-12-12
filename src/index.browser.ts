@@ -6,12 +6,13 @@ export { WebGroup, WebGroupOptions, WebGroupState, DataType } from './WebChannel
 import { enableLog as debug } from './misc/Util'
 
 /**
- * Enable/Disable console logs. By default the logs are disabled. Consol logs
- * group and signaling states, connection establishment, disconnection and
- * other useful information for debugging.
+ * Enable/Disable console logs. By default the logs are disabled. If enabled
+ * 'info' level shows WebGroup and signaling states, connection establishment, disconnection etc.
+ * 'debug' level shows all that 'info' level shows plus much more other information for debugging.
  * @param {boolean} value
+ * @param {string} [level='info'] Console log level: 'debug' or 'info'
  */
-export function enableLog (value) { debug(value) }
+export function enableLog (value: boolean, level: string) { debug(value) }
 
 /**
  * The state enum of the signaling server for WebRTC.
