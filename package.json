@@ -80,7 +80,7 @@
     "karma-firefox-launcher": "^1.0.0",
     "karma-jasmine": "^1.0.2",
     "karma-regex-preprocessor": "^1.0.1",
-    "karma-spec-reporter": "0.0.31",
+    "karma-spec-reporter": "0.0.32",
     "karma-typescript": "^3.0.8",
     "kcors": "^2.2.1",
     "koa": "^2.4.1",
