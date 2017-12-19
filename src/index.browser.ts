@@ -12,7 +12,7 @@ import { enableLog as debug } from './misc/Util'
  * @param {boolean} value
  * @param {string} [level='info'] Console log level: 'debug' or 'info'
  */
-export function enableLog (value: boolean, level: string) { debug(value) }
+export function enableLog (value: boolean, level?: string) { debug(value, level) }
 
 /**
  * The state enum of the signaling server for WebRTC.
