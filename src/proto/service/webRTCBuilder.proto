@@ -7,6 +7,8 @@ message Message {
     string offer = 2;
     string answer = 3;
     IceCandidate iceCandidate = 4;
+    bool isError = 5;
+    bool isEnd = 6;
   }
 }
 

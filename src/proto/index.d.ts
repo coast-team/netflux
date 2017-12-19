@@ -432,11 +432,8 @@ export namespace channel {
     /** Properties of a Message. */
     interface IMessage {
 
-        /** Message ping */
-        ping?: (boolean|null);
-
-        /** Message pong */
-        pong?: (boolean|null);
+        /** Message heartbeat */
+        heartbeat?: (boolean|null);
     }
 
     /** Represents a Message. */
@@ -448,11 +445,8 @@ export namespace channel {
          */
         constructor(properties?: channel.IMessage);
 
-        /** Message ping. */
-        public ping: boolean;
-
-        /** Message pong. */
-        public pong: boolean;
+        /** Message heartbeat. */
+        public heartbeat: boolean;
 
         /**
          * Creates a new Message instance using the specified properties.
@@ -728,6 +722,12 @@ export namespace webRTCBuilder {
 
         /** Message iceCandidate */
         iceCandidate?: (webRTCBuilder.IIceCandidate|null);
+
+        /** Message isError */
+        isError?: (boolean|null);
+
+        /** Message isEnd */
+        isEnd?: (boolean|null);
     }
 
     /** Represents a Message. */
@@ -751,8 +751,14 @@ export namespace webRTCBuilder {
         /** Message iceCandidate. */
         public iceCandidate?: (webRTCBuilder.IIceCandidate|null);
 
+        /** Message isError. */
+        public isError: boolean;
+
+        /** Message isEnd. */
+        public isEnd: boolean;
+
         /** Message type. */
-        public type?: ("offer"|"answer"|"iceCandidate");
+        public type?: ("offer"|"answer"|"iceCandidate"|"isError"|"isEnd");
 
         /**
          * Creates a new Message instance using the specified properties.
@@ -919,14 +925,14 @@ export namespace signaling {
         /** Content id */
         id?: (number|null);
 
-        /** Content isEnd */
-        isEnd?: (boolean|null);
-
         /** Content data */
         data?: (Uint8Array|null);
 
         /** Content isError */
         isError?: (boolean|null);
+
+        /** Content isEnd */
+        isEnd?: (boolean|null);
     }
 
     /** Represents a Content. */
@@ -941,17 +947,17 @@ export namespace signaling {
         /** Content id. */
         public id: number;
 
-        /** Content isEnd. */
-        public isEnd: boolean;
-
         /** Content data. */
         public data: Uint8Array;
 
         /** Content isError. */
         public isError: boolean;
 
+        /** Content isEnd. */
+        public isEnd: boolean;
+
         /** Content type. */
-        public type?: ("data"|"isError");
+        public type?: ("data"|"isError"|"isEnd");
 
         /**
          * Creates a new Content instance using the specified properties.

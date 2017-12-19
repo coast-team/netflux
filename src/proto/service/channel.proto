@@ -2,6 +2,5 @@ syntax = "proto3";
 package channel;
 
 message Message {
-  bool ping = 1;
-  bool pong = 2;
+  bool heartbeat = 1;
 }

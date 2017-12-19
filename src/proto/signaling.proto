@@ -13,9 +13,9 @@ message Message {
 
 message Content {
   uint32 id = 1;
-  bool isEnd = 2; // Only outcoming
   oneof type {
-    bytes data = 3;
-    bool isError = 4; // Only incoming
+    bytes data = 2;
+    bool isError = 3;
+    bool isEnd = 4;
   }
 }
