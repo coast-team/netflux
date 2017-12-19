@@ -94,7 +94,7 @@
     "rollup-plugin-re": "^1.0.6",
     "rollup-plugin-typescript2": "^0.9.0",
     "semantic-release": "^8.2.3",
-    "sigver": "^15.1.0",
+    "sigver": "^16.0.0",
     "tslib": "^1.8.1",
     "tslint": "^5.8.0",
     "tslint-eslint-rules": "^4.1.1",

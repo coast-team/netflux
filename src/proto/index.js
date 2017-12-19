@@ -1800,13 +1800,6 @@ BufferWriter$1.prototype.string = function write_string_buffer(value) {
     return this;
 };
 
-/**
- * Finishes the write operation.
- * @name BufferWriter#finish
- * @function
- * @returns {Buffer} Finished buffer
- */
-
 var reader = Reader;
 
 var BufferReader; // cyclic
@@ -2225,13 +2218,6 @@ BufferReader$1.prototype.string = function read_string_buffer() {
   return this.buf.utf8Slice(this.pos, this.pos = Math.min(this.pos + len, this.len));
 };
 
-/**
- * Reads a sequence of bytes preceeded by its length as a varint.
- * @name BufferReader#bytes
- * @function
- * @returns {Buffer} Value read
- */
-
 var service$1 = Service;
 
 // Extends EventEmitter
@@ -2403,22 +2389,6 @@ var rpc_1 = createCommonjsModule(function (module, exports) {
 });
 
 var roots = {};
-
-/**
- * Named roots.
- * This is where pbjs stores generated structures (the option `-r, --root` specifies a name).
- * Can also be used manually to make roots available accross modules.
- * @name roots
- * @type {Object.<string,Root>}
- * @example
- * // pbjs -r myroot -o compiled.js ...
- *
- * // in another module:
- * require("./compiled.js");
- *
- * // in any subsequent module:
- * var root = protobuf.roots["myroot"];
- */
 
 var indexMinimal = createCommonjsModule(function (module, exports) {
   var protobuf = exports;
@@ -4308,8 +4278,7 @@ var signaling = $root.signaling = function () {
          * @property {signaling.IContent|null} [content] Message content
          * @property {boolean|null} [isFirst] Message isFirst
          * @property {boolean|null} [joined] Message joined
-         * @property {boolean|null} [ping] Message ping
-         * @property {boolean|null} [pong] Message pong
+         * @property {boolean|null} [heartbeat] Message heartbeat
          */
 
         /**
@@ -4351,32 +4320,24 @@ var signaling = $root.signaling = function () {
         Message.prototype.joined = false;
 
         /**
-         * Message ping.
-         * @member {boolean} ping
+         * Message heartbeat.
+         * @member {boolean} heartbeat
          * @memberof signaling.Message
          * @instance
          */
-        Message.prototype.ping = false;
-
-        /**
-         * Message pong.
-         * @member {boolean} pong
-         * @memberof signaling.Message
-         * @instance
-         */
-        Message.prototype.pong = false;
+        Message.prototype.heartbeat = false;
 
         // OneOf field names bound to virtual getters and setters
         var $oneOfFields = void 0;
 
         /**
          * Message type.
-         * @member {"content"|"isFirst"|"joined"|"ping"|"pong"|undefined} type
+         * @member {"content"|"isFirst"|"joined"|"heartbeat"|undefined} type
          * @memberof signaling.Message
          * @instance
          */
         Object.defineProperty(Message.prototype, "type", {
-            get: $util.oneOfGetter($oneOfFields = ["content", "isFirst", "joined", "ping", "pong"]),
+            get: $util.oneOfGetter($oneOfFields = ["content", "isFirst", "joined", "heartbeat"]),
             set: $util.oneOfSetter($oneOfFields)
         });
 
@@ -4406,8 +4367,7 @@ var signaling = $root.signaling = function () {
             if (message.content != null && message.hasOwnProperty("content")) $root.signaling.Content.encode(message.content, writer.uint32( /* id 1, wireType 2 =*/10).fork()).ldelim();
             if (message.isFirst != null && message.hasOwnProperty("isFirst")) writer.uint32( /* id 2, wireType 0 =*/16).bool(message.isFirst);
             if (message.joined != null && message.hasOwnProperty("joined")) writer.uint32( /* id 3, wireType 0 =*/24).bool(message.joined);
-            if (message.ping != null && message.hasOwnProperty("ping")) writer.uint32( /* id 4, wireType 0 =*/32).bool(message.ping);
-            if (message.pong != null && message.hasOwnProperty("pong")) writer.uint32( /* id 5, wireType 0 =*/40).bool(message.pong);
+            if (message.heartbeat != null && message.hasOwnProperty("heartbeat")) writer.uint32( /* id 4, wireType 0 =*/32).bool(message.heartbeat);
             return writer;
         };
 
@@ -4439,10 +4399,7 @@ var signaling = $root.signaling = function () {
                         message.joined = reader.bool();
                         break;
                     case 4:
-                        message.ping = reader.bool();
-                        break;
-                    case 5:
-                        message.pong = reader.bool();
+                        message.heartbeat = reader.bool();
                         break;
                     default:
                         reader.skipType(tag & 7);

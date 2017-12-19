@@ -6,8 +6,7 @@ message Message {
     Content content = 1;
     bool isFirst = 2; // Only incoming
     bool joined = 3; // Only outcoming
-    bool ping = 4;
-    bool pong = 5;
+    bool heartbeat = 4; // Ping/Pong message
   }
 }
 

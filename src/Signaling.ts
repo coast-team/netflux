@@ -12,21 +12,20 @@ import { WebChannel } from './service/WebChannel'
 interface ISignalingConnection {
   onMessage: Observable<signaling.Message>,
   send: (msg: signaling.IMessage) => void,
-  ping: () => void,
-  pong: () => void,
+  heartbeat: () => void,
   close: (code?: number, reason?: string) => void
 }
 
-const PING_INTERVAL = 3000
+const MAXIMUM_MISSED_HEARTBEAT = 3
+const HEARTBEAT_INTERVAL = 5000
 
 /* WebSocket error codes */
-const MESSAGE_ERROR_CODE = 4000
-const PING_ERROR_CODE = 4001
-const FIRST_CONNECTION_ERROR_CODE = 4002
+const HEARTBEAT_ERROR_CODE = 4002
+const MESSAGE_ERROR_CODE = 4010
+const FIRST_CONNECTION_ERROR_CODE = 4011
 
 /* Preconstructed messages */
-const pingMsg = signaling.Message.encode(signaling.Message.create({ ping: true })).finish()
-const pongMsg = signaling.Message.encode(signaling.Message.create({ pong: true })).finish()
+const heartbeatMsg = signaling.Message.encode(signaling.Message.create({ heartbeat: true })).finish()
 
 export enum SignalingState {
   CONNECTING,
@@ -50,8 +49,8 @@ export class Signaling {
   private stateSubject: Subject<SignalingState>
   private channelSubject: Subject<Channel>
   private rxWs: ISignalingConnection
-  private pingInterval: any
-  private pongReceived: boolean
+  private heartbeatInterval: any
+  private missedHeartbeat: number
 
   constructor (wc: WebChannel, url: string) {
     // public
@@ -63,8 +62,6 @@ export class Signaling {
     this.stateSubject = new Subject<SignalingState>()
     this.channelSubject = new Subject<Channel>()
     this.rxWs = undefined
-    this.pingInterval = undefined
-    this.pongReceived = false
   }
 
   get onState (): Observable<SignalingState> {
@@ -98,15 +95,11 @@ export class Signaling {
       .then((ws) => {
         this.setState(SignalingState.OPEN)
         this.rxWs = this.createRxWs(ws)
-        this.startPingInterval()
         this.rxWs.onMessage.subscribe(
           (msg) => {
             switch (msg.type) {
-            case 'ping':
-              this.rxWs.pong()
-              break
-            case 'pong':
-              this.pongReceived = true
+            case 'heartbeat':
+              this.missedHeartbeat = 0
               break
             case 'isFirst':
               if (msg.isFirst) {
@@ -131,6 +124,7 @@ export class Signaling {
             }
           },
         )
+        this.startHeartbeat()
       })
       .catch((err) => this.setState(SignalingState.CLOSED))
   }
@@ -160,19 +154,21 @@ export class Signaling {
     }
   }
 
-  private startPingInterval () {
-    this.rxWs.ping()
-    this.pingInterval = setInterval(() => {
-      if (this.state !== SignalingState.CLOSED) {
-        if (!this.pongReceived) {
-          clearInterval(this.pingInterval)
-          this.rxWs.close(PING_ERROR_CODE, 'Signaling is not responding')
-        } else {
-          this.pongReceived = false
-          this.rxWs.ping()
+  private startHeartbeat () {
+    this.missedHeartbeat = 0
+    this.heartbeatInterval = global.setInterval(() => {
+      try {
+        this.missedHeartbeat++
+        if (this.missedHeartbeat >= MAXIMUM_MISSED_HEARTBEAT) {
+          throw new Error('Too many missed heartbeats')
         }
+        this.rxWs.heartbeat()
+      } catch (err) {
+        global.clearInterval(this.heartbeatInterval)
+        log.info('Closing connection with Signaling. Reason: ' + err.message)
+        this.rxWs.close(HEARTBEAT_ERROR_CODE, 'Signaling is not responding')
       }
-    }, PING_INTERVAL)
+    }, HEARTBEAT_INTERVAL)
   }
 
   private createRxWs (ws: WebSocket): ISignalingConnection {
@@ -190,7 +186,7 @@ export class Signaling {
       subject.error(err)
     }
     ws.onclose = (closeEvt) => {
-      clearInterval(this.pingInterval)
+      clearInterval(this.heartbeatInterval)
       this.setState(SignalingState.CLOSED)
       subject.complete()
       log.info(`Connection with Signaling '${this.url}' closed: ${closeEvt.code}: ${closeEvt.reason}`)
@@ -202,14 +198,9 @@ export class Signaling {
           ws.send(signaling.Message.encode(signaling.Message.create(msg)).finish())
         }
       },
-      ping: () => {
+      heartbeat: () => {
         if (ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CLOSED) {
-          ws.send(pingMsg)
-        }
-      },
-      pong: () => {
-        if (ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CLOSED) {
-          ws.send(pongMsg)
+          ws.send(heartbeatMsg)
         }
       },
       close: (code = 1000, reason = '') => ws.close(code, reason),

@@ -859,11 +859,8 @@ export namespace signaling {
         /** Message joined */
         joined?: (boolean|null);
 
-        /** Message ping */
-        ping?: (boolean|null);
-
-        /** Message pong */
-        pong?: (boolean|null);
+        /** Message heartbeat */
+        heartbeat?: (boolean|null);
     }
 
     /** Represents a Message. */
@@ -884,14 +881,11 @@ export namespace signaling {
         /** Message joined. */
         public joined: boolean;
 
-        /** Message ping. */
-        public ping: boolean;
-
-        /** Message pong. */
-        public pong: boolean;
+        /** Message heartbeat. */
+        public heartbeat: boolean;
 
         /** Message type. */
-        public type?: ("content"|"isFirst"|"joined"|"ping"|"pong");
+        public type?: ("content"|"isFirst"|"joined"|"heartbeat");
 
         /**
          * Creates a new Message instance using the specified properties.
