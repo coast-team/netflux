@@ -21,6 +21,15 @@
       "never"
     ],
     "space-before-function-paren": true,
-    "ter-indent": [true, 2]
+    "ter-indent": [true, 2],
+    "no-string-literal": false,
+    "variable-name": {
+      "options": [
+          "ban-keywords",
+          "check-format",
+          "allow-pascal-case",
+          "allow-leading-underscore"
+      ]
+    }
   }
 }
