@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs/Observable'
-import { filter, map } from 'rxjs/operators'
+import { filter, map, pluck } from 'rxjs/operators'
 import { Subject } from 'rxjs/Subject'
 
 import { log } from './misc/Util'
@@ -114,8 +114,8 @@ export class Signaling {
               } else {
                 this.wc.webRTCBuilder.connectOverSignaling({
                   onMessage: this.rxWs.onMessage.pipe(
-                    filter((m) => m.type === 'content'),
-                    map(({ content }) => content),
+                    filter(({ type }) => type === 'content'),
+                    pluck('content'),
                   ),
                   send: (m) => this.rxWs.send({ content: m }),
                 })
@@ -151,8 +151,8 @@ export class Signaling {
       if (state === SignalingState.READY_TO_JOIN_OTHERS) {
         this.wc.webRTCBuilder.onChannelFromSignaling({
           onMessage: this.rxWs.onMessage.pipe(
-            filter((msg) => msg.type === 'content'),
-            map(({ content }) => content),
+            filter(({ type }) => type === 'content'),
+            pluck('content'),
           ),
           send: (msg) => this.rxWs.send({ content: msg }),
         }).subscribe((ch) => this.channelSubject.next(ch))
@@ -185,13 +185,14 @@ export class Signaling {
         ws.close(MESSAGE_ERROR_CODE, err.message)
       }
     }
-    ws.onerror = (err) => subject.error(err)
+    ws.onerror = (err) => {
+      log.debug('Signaling ERROR', err)
+      subject.error(err)
+    }
     ws.onclose = (closeEvt) => {
       clearInterval(this.pingInterval)
       this.setState(SignalingState.CLOSED)
-      if (closeEvt.code === 1000) {
-        subject.complete()
-      }
+      subject.complete()
       log.info(`Connection with Signaling '${this.url}' closed: ${closeEvt.code}: ${closeEvt.reason}`)
     }
     return {
@@ -211,13 +212,7 @@ export class Signaling {
           ws.send(pongMsg)
         }
       },
-      close: (code = 1000, reason = '') => {
-        ws.onclose = undefined
-        ws.close(code, reason)
-        this.setState(SignalingState.CLOSED)
-        clearInterval(this.pingInterval)
-        subject.complete()
-      },
+      close: (code = 1000, reason = '') => ws.close(code, reason),
     }
   }
 

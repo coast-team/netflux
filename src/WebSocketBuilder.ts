@@ -79,8 +79,7 @@ export class WebSocketBuilder {
     return new Promise((resolve, reject) => {
       if (isURL(url) && url.search(/^wss?/) !== -1) {
         const ws = new global.WebSocket(fullUrl)
-        const channel = new Channel(this.wc, ws, {id})
-        ws.onopen = () => resolve(channel)
+        ws.onopen = () => resolve(new Channel(this.wc, ws, {id}))
         ws.onclose = (closeEvt) => reject(new Error(
           `WebSocket connection to '${url}' failed with code ${closeEvt.code}: ${closeEvt.reason}`,
         ))
