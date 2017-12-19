@@ -4,14 +4,14 @@ import { Subject } from 'rxjs/Subject'
 import { WebGroup, WebGroupState } from '../../src/index.browser'
 import * as helper from '../util/helper'
 
-const USE_CASES = [2, 3, 7]
+const USE_CASES = [2, 3, 5]
 const scenarios = [
   new helper.Scenario('cc'),
   new helper.Scenario('cb'),
   new helper.Scenario('ccc'),
   new helper.Scenario('ccb'),
-  new helper.Scenario('ccccccc'),
-  new helper.Scenario('cccbccc'),
+  new helper.Scenario('ccccc'),
+  new helper.Scenario('ccbcc'),
 ]
 const PEER_FACE = '🙂 '
 const faces = (length) => {
@@ -140,7 +140,7 @@ describe('Many members', () => {
             .then(() => helper.sendAndExpectOnMessage(wgs, true))
             .then(done)
             .catch(done.fail)
-        })
+        }, 10000)
       })
     })
   })
@@ -209,7 +209,7 @@ describe('Many members', () => {
           })
           .then(done)
           .catch(done.fail)
-      })
+      }, 10000)
     })
   })
 })
