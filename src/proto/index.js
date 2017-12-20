@@ -3725,6 +3725,7 @@ var fullMesh = $root.fullMesh = function () {
          * @property {fullMesh.IPeers|null} [connectedTo] Message connectedTo
          * @property {number|null} [joiningPeerId] Message joiningPeerId
          * @property {boolean|null} [joinSucceed] Message joinSucceed
+         * @property {boolean|null} [heartbeat] Message heartbeat
          */
 
         /**
@@ -3773,17 +3774,25 @@ var fullMesh = $root.fullMesh = function () {
          */
         Message.prototype.joinSucceed = false;
 
+        /**
+         * Message heartbeat.
+         * @member {boolean} heartbeat
+         * @memberof fullMesh.Message
+         * @instance
+         */
+        Message.prototype.heartbeat = false;
+
         // OneOf field names bound to virtual getters and setters
         var $oneOfFields = void 0;
 
         /**
          * Message type.
-         * @member {"connectTo"|"connectedTo"|"joiningPeerId"|"joinSucceed"|undefined} type
+         * @member {"connectTo"|"connectedTo"|"joiningPeerId"|"joinSucceed"|"heartbeat"|undefined} type
          * @memberof fullMesh.Message
          * @instance
          */
         Object.defineProperty(Message.prototype, "type", {
-            get: $util.oneOfGetter($oneOfFields = ["connectTo", "connectedTo", "joiningPeerId", "joinSucceed"]),
+            get: $util.oneOfGetter($oneOfFields = ["connectTo", "connectedTo", "joiningPeerId", "joinSucceed", "heartbeat"]),
             set: $util.oneOfSetter($oneOfFields)
         });
 
@@ -3814,6 +3823,7 @@ var fullMesh = $root.fullMesh = function () {
             if (message.connectedTo != null && message.hasOwnProperty("connectedTo")) $root.fullMesh.Peers.encode(message.connectedTo, writer.uint32( /* id 2, wireType 2 =*/18).fork()).ldelim();
             if (message.joiningPeerId != null && message.hasOwnProperty("joiningPeerId")) writer.uint32( /* id 3, wireType 0 =*/24).uint32(message.joiningPeerId);
             if (message.joinSucceed != null && message.hasOwnProperty("joinSucceed")) writer.uint32( /* id 4, wireType 0 =*/32).bool(message.joinSucceed);
+            if (message.heartbeat != null && message.hasOwnProperty("heartbeat")) writer.uint32( /* id 5, wireType 0 =*/40).bool(message.heartbeat);
             return writer;
         };
 
@@ -3846,6 +3856,9 @@ var fullMesh = $root.fullMesh = function () {
                         break;
                     case 4:
                         message.joinSucceed = reader.bool();
+                        break;
+                    case 5:
+                        message.heartbeat = reader.bool();
                         break;
                     default:
                         reader.skipType(tag & 7);

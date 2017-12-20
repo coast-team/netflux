@@ -1,6 +1,0 @@
-syntax = "proto3";
-package channel;
-
-message Message {
-  bool heartbeat = 1;
-}

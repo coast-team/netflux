@@ -1,4 +1,4 @@
-import { Channel } from '../service/Channel'
+import { Channel } from '../Channel'
 
 /**
  * Equals to true in any browser.

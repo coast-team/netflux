@@ -4,9 +4,9 @@ import { filter, map, pluck } from 'rxjs/operators'
 import { ReplaySubject } from 'rxjs/ReplaySubject'
 import { Subject } from 'rxjs/Subject'
 
+import { Channel } from '../Channel'
 import { log } from '../misc/Util'
 import { signaling, webRTCBuilder } from '../proto'
-import { Channel } from './Channel'
 import { Service } from './Service'
 import { WebChannel } from './WebChannel'
 
@@ -69,7 +69,6 @@ export class WebRTCBuilder extends Service {
    * Starts to listen on **SDP answer**.
    */
   onChannelFromWebChannel (): Observable<Channel> {
-    log.debug('onChannelFromWebChannel')
     if (WebRTCBuilder.isSupported) {
       return this.onChannel(
         this.onServiceMessage.pipe(
@@ -79,10 +78,7 @@ export class WebRTCBuilder extends Service {
             return msg
           }),
         ),
-        (msg, id) => {
-          log.debug('Sending to remote', id, msg)
-          this.wc.sendToProxy({ recipientId: id, content: super.encode(msg) })
-        },
+        (msg, id) => this.wc.sendToProxy({ recipientId: id, content: super.encode(msg) }),
       )
     }
     log.debug('WebRTC is not supported')
@@ -96,7 +92,6 @@ export class WebRTCBuilder extends Service {
    * @param id  Peer id
    */
   connectOverWebChannel (id: number): Promise<Channel> {
-    log.debug('connectOverWebChannel')
     if (WebRTCBuilder.isSupported) {
       return this.establishChannel(
         this.onServiceMessage.pipe(
@@ -105,7 +100,6 @@ export class WebRTCBuilder extends Service {
         ),
         (msg: IOfferSend) => {
           msg['isInitiator'] = true
-          log.debug('Sending to remote', id, msg)
           this.wc.sendToProxy({ recipientId: id, content: super.encode(msg) })
         },
         id,
@@ -119,7 +113,6 @@ export class WebRTCBuilder extends Service {
    * Starts to listen on **SDP answer**.
    */
   onChannelFromSignaling (signalingConnection: ISignalingConnection): Observable<Channel> {
-    log.debug('onChannelFromSignaling')
     if (WebRTCBuilder.isSupported) {
       return this.onChannel(
         signalingConnection.onMessage.pipe(
@@ -150,7 +143,6 @@ export class WebRTCBuilder extends Service {
    * Starts by sending an **SDP offer**.
    */
   connectOverSignaling (signalingConnection: ISignalingConnection): Promise<Channel> {
-    log.debug('connectOverSignaling')
     if (WebRTCBuilder.isSupported) {
       return this.establishChannel(
         signalingConnection.onMessage.pipe(

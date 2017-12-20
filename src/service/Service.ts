@@ -2,8 +2,8 @@ import { Observable } from 'rxjs/Observable'
 import { filter, map } from 'rxjs/operators'
 import { Subject } from 'rxjs/Subject'
 
+import { Channel } from '../Channel'
 import { service } from '../proto'
-import { Channel } from './Channel'
 
 export interface IServiceMessageEncoded {
   channel: Channel,

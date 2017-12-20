@@ -1,9 +1,9 @@
 import { Observable } from 'rxjs/Observable'
 import { Subject } from 'rxjs/Subject'
 
+import { Channel } from '../Channel'
 import { channelBuilder } from '../proto'
 import { WebSocketBuilder } from '../WebSocketBuilder'
-import { Channel } from './Channel'
 import { IServiceMessageDecoded, Service } from './Service'
 import { WebChannel } from './WebChannel'
 import { WebRTCBuilder } from './WebRTCBuilder'

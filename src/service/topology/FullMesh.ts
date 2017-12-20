@@ -1,8 +1,8 @@
 import { Subscription } from 'rxjs/Subscription'
 
+import { Channel } from '../../Channel'
 import { log } from '../../misc/Util'
 import { fullMesh, IMessage } from '../../proto'
-import { Channel } from '../Channel'
 import { IServiceMessageDecoded, Service } from '../Service'
 import { WebChannel } from '../WebChannel'
 import { ITopology } from './Topology'
@@ -14,7 +14,13 @@ import { ITopology } from './Topology'
  */
 export const FULL_MESH = 3
 
-const MAX_JOIN_ATTEMPTS = 100
+const MAX_JOIN_ATTEMPTS = 12
+const JOIN_CHECK_TIMEOUT_BASE = 1000
+
+const MAXIMUM_MISSED_HEARTBEAT = 3
+const HEARTBEAT_INTERVAL = 3000
+const heartbeatMsg = Service.encodeServiceMessage(FULL_MESH,
+  fullMesh.Message.encode(fullMesh.Message.create({ heartbeat: true })).finish())
 
 /**
  * Fully connected web channel manager. Implements fully connected topology
@@ -24,26 +30,32 @@ const MAX_JOIN_ATTEMPTS = 100
 export class FullMesh extends Service implements ITopology {
 
   private wc: WebChannel
+
   /**
    * Neighbours peers.
    */
   private channels: Set<Channel>
+
   /**
    * Associate joining peer id to his intermediary peer accordingly.
    * When the connection with a joining peer is established, his id is removed
    * from this map and his associated channel is added to the `channels` property.
    */
   private jps: Map<number, Channel>
+
   /**
    * The peer through whom you are joining. Equals to undefined if you are no
    * longer joining the network.
    */
   private intermediaryChannel: Channel
+
   /**
    * Prebuild message for better performance.
    */
   private joinSucceedContent: Uint8Array
   private joinAttempts: number
+  private heartbeatInterval: any
+  private joinCheckTimeout: number
 
   constructor (wc) {
     super(FULL_MESH, fullMesh.Message, wc.serviceMessageSubject)
@@ -55,6 +67,8 @@ export class FullMesh extends Service implements ITopology {
     this.joinSucceedContent = super.encode({ joinSucceed: true })
     this.onServiceMessage.subscribe((msg) => this.handleSvcMsg(msg))
     this.wc.channelBuilder.onChannel.subscribe((ch) => this.peerJoined(ch))
+    this.joinCheckTimeout = JOIN_CHECK_TIMEOUT_BASE + 1000 * Math.random()
+    this.startHeartbeat()
   }
 
   clean () {}
@@ -176,7 +190,7 @@ export class FullMesh extends Service implements ITopology {
             myMembers: this.wc.members,
             intermediaryMembers: msg.connectTo.members,
           })
-          setTimeout(() => send(), 200 + 100 * Math.random())
+          setTimeout(() => send(), this.joinCheckTimeout)
         }
         this.joinAttempts++
       })
@@ -195,6 +209,10 @@ export class FullMesh extends Service implements ITopology {
     case 'joinSucceed': {
       this.intermediaryChannel = undefined
       this.wc.joinSubject.next()
+      break
+    }
+    case 'heartbeat': {
+      channel.missedHeartbeat = 0
       break
     }
     }
@@ -224,6 +242,7 @@ export class FullMesh extends Service implements ITopology {
   private peerJoined (ch: Channel): void {
     for (const c of this.channels) {
       if (c.id === ch.id) {
+        ch.updateHeartbeatMsg(heartbeatMsg)
         c.closeQuietly()
         this.channels.delete(c)
         this.channels.add(ch)
@@ -231,8 +250,26 @@ export class FullMesh extends Service implements ITopology {
         return
       }
     }
+    ch.updateHeartbeatMsg(heartbeatMsg)
     this.channels.add(ch)
     this.wc.onMemberJoinProxy(ch.id)
     this.jps.delete(ch.id)
+  }
+
+  private startHeartbeat () {
+    global.setInterval(() => {
+      for (const ch of this.channels) {
+        try {
+          ch.missedHeartbeat++
+          if (ch.missedHeartbeat >= MAXIMUM_MISSED_HEARTBEAT) {
+            throw new Error('Too many missed heartbeats')
+          }
+          ch.sendHeartbeat()
+        } catch (err) {
+          log.info(`Closing connection with ${ch.id}. Reason: ${err.message}`)
+          ch.close()
+        }
+      }
+    }, HEARTBEAT_INTERVAL)
   }
 }

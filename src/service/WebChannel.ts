@@ -1,11 +1,11 @@
 import { Subject } from 'rxjs/Subject'
 
+import { Channel } from '../Channel'
 import { generateKey, isURL, log, MAX_KEY_LENGTH, randNumbers } from '../misc/Util'
 import { IMessage, Message, service, webChannel } from '../proto'
 import { Signaling, SignalingState } from '../Signaling'
 import { UserDataType, UserMessage } from '../UserMessage'
 import { WebSocketBuilder } from '../WebSocketBuilder'
-import { Channel } from './Channel'
 import { ChannelBuilder } from './ChannelBuilder'
 import { IServiceMessageDecoded, IServiceMessageEncoded, Service } from './Service'
 import { FullMesh } from './topology/FullMesh'

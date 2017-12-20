@@ -607,6 +607,9 @@ export namespace fullMesh {
 
         /** Message joinSucceed */
         joinSucceed?: (boolean|null);
+
+        /** Message heartbeat */
+        heartbeat?: (boolean|null);
     }
 
     /** Represents a Message. */
@@ -630,8 +633,11 @@ export namespace fullMesh {
         /** Message joinSucceed. */
         public joinSucceed: boolean;
 
+        /** Message heartbeat. */
+        public heartbeat: boolean;
+
         /** Message type. */
-        public type?: ("connectTo"|"connectedTo"|"joiningPeerId"|"joinSucceed");
+        public type?: ("connectTo"|"connectedTo"|"joiningPeerId"|"joinSucceed"|"heartbeat");
 
         /**
          * Creates a new Message instance using the specified properties.
