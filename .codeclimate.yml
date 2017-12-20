@@ -6,8 +6,9 @@ plugins:
   fixme:
     enabled: true
 exclude_patterns:
-- "**.d.ts"
-- "**.js"
+- "**/*.d.ts"
+- "**/*.js"
 - "test/**"
 - "docs/**"
 - "manual/**"
+- "src/proto/"
