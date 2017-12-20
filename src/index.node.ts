@@ -1,4 +1,4 @@
 import './misc/polyfills.node'
 
-export * from './index.browser'
+export * from './index.common'
 export { WebGroupBotServer, WebGroupBotServerOptions } from './BotServerFacade'
