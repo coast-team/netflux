@@ -1,15 +1,15 @@
-import { filter, map } from 'rxjs/operators';
+import { filter, pluck } from 'rxjs/operators';
 import { Subject } from 'rxjs/Subject';
 import { log } from './misc/Util';
 import { signaling } from './proto';
-const PING_INTERVAL = 3000;
+const MAXIMUM_MISSED_HEARTBEAT = 3;
+const HEARTBEAT_INTERVAL = 5000;
 /* WebSocket error codes */
-const MESSAGE_ERROR_CODE = 4000;
-const PING_ERROR_CODE = 4001;
-const FIRST_CONNECTION_ERROR_CODE = 4002;
+const HEARTBEAT_ERROR_CODE = 4002;
+const MESSAGE_ERROR_CODE = 4010;
+const FIRST_CONNECTION_ERROR_CODE = 4011;
 /* Preconstructed messages */
-const pingMsg = signaling.Message.encode(signaling.Message.create({ ping: true })).finish();
-const pongMsg = signaling.Message.encode(signaling.Message.create({ pong: true })).finish();
+const heartbeatMsg = signaling.Message.encode(signaling.Message.create({ heartbeat: true })).finish();
 export var SignalingState;
 (function (SignalingState) {
     SignalingState[SignalingState["CONNECTING"] = 0] = "CONNECTING";
@@ -33,8 +33,6 @@ export class Signaling {
         this.stateSubject = new Subject();
         this.channelSubject = new Subject();
         this.rxWs = undefined;
-        this.pingInterval = undefined;
-        this.pongReceived = false;
     }
     get onState() {
         return this.stateSubject.asObservable();
@@ -64,14 +62,10 @@ export class Signaling {
             .then((ws) => {
             this.setState(SignalingState.OPEN);
             this.rxWs = this.createRxWs(ws);
-            this.startPingInterval();
             this.rxWs.onMessage.subscribe((msg) => {
                 switch (msg.type) {
-                    case 'ping':
-                        this.rxWs.pong();
-                        break;
-                    case 'pong':
-                        this.pongReceived = true;
+                    case 'heartbeat':
+                        this.missedHeartbeat = 0;
                         break;
                     case 'isFirst':
                         if (msg.isFirst) {
@@ -79,7 +73,7 @@ export class Signaling {
                         }
                         else {
                             this.wc.webRTCBuilder.connectOverSignaling({
-                                onMessage: this.rxWs.onMessage.pipe(filter((m) => m.type === 'content'), map(({ content }) => content)),
+                                onMessage: this.rxWs.onMessage.pipe(filter(({ type }) => type === 'content'), pluck('content')),
                                 send: (m) => this.rxWs.send({ content: m }),
                             })
                                 .then((ch) => {
@@ -93,6 +87,7 @@ export class Signaling {
                         break;
                 }
             });
+            this.startHeartbeat();
         })
             .catch((err) => this.setState(SignalingState.CLOSED));
     }
@@ -110,26 +105,28 @@ export class Signaling {
             this.stateSubject.next(state);
             if (state === SignalingState.READY_TO_JOIN_OTHERS) {
                 this.wc.webRTCBuilder.onChannelFromSignaling({
-                    onMessage: this.rxWs.onMessage.pipe(filter((msg) => msg.type === 'content'), map(({ content }) => content)),
+                    onMessage: this.rxWs.onMessage.pipe(filter(({ type }) => type === 'content'), pluck('content')),
                     send: (msg) => this.rxWs.send({ content: msg }),
                 }).subscribe((ch) => this.channelSubject.next(ch));
             }
         }
     }
-    startPingInterval() {
-        this.rxWs.ping();
-        this.pingInterval = setInterval(() => {
-            if (this.state !== SignalingState.CLOSED) {
-                if (!this.pongReceived) {
-                    clearInterval(this.pingInterval);
-                    this.rxWs.close(PING_ERROR_CODE, 'Signaling is not responding');
+    startHeartbeat() {
+        this.missedHeartbeat = 0;
+        this.heartbeatInterval = global.setInterval(() => {
+            try {
+                this.missedHeartbeat++;
+                if (this.missedHeartbeat >= MAXIMUM_MISSED_HEARTBEAT) {
+                    throw new Error('Too many missed heartbeats');
                 }
-                else {
-                    this.pongReceived = false;
-                    this.rxWs.ping();
-                }
+                this.rxWs.heartbeat();
             }
-        }, PING_INTERVAL);
+            catch (err) {
+                global.clearInterval(this.heartbeatInterval);
+                log.info('Closing connection with Signaling. Reason: ' + err.message);
+                this.rxWs.close(HEARTBEAT_ERROR_CODE, 'Signaling is not responding');
+            }
+        }, HEARTBEAT_INTERVAL);
     }
     createRxWs(ws) {
         const subject = new Subject();
@@ -142,13 +139,14 @@ export class Signaling {
                 ws.close(MESSAGE_ERROR_CODE, err.message);
             }
         };
-        ws.onerror = (err) => subject.error(err);
+        ws.onerror = (err) => {
+            log.debug('Signaling ERROR', err);
+            subject.error(err);
+        };
         ws.onclose = (closeEvt) => {
-            clearInterval(this.pingInterval);
+            clearInterval(this.heartbeatInterval);
             this.setState(SignalingState.CLOSED);
-            if (closeEvt.code === 1000) {
-                subject.complete();
-            }
+            subject.complete();
             log.info(`Connection with Signaling '${this.url}' closed: ${closeEvt.code}: ${closeEvt.reason}`);
         };
         return {
@@ -158,23 +156,12 @@ export class Signaling {
                     ws.send(signaling.Message.encode(signaling.Message.create(msg)).finish());
                 }
             },
-            ping: () => {
+            heartbeat: () => {
                 if (ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CLOSED) {
-                    ws.send(pingMsg);
+                    ws.send(heartbeatMsg);
                 }
             },
-            pong: () => {
-                if (ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CLOSED) {
-                    ws.send(pongMsg);
-                }
-            },
-            close: (code = 1000, reason = '') => {
-                ws.onclose = undefined;
-                ws.close(code, reason);
-                this.setState(SignalingState.CLOSED);
-                clearInterval(this.pingInterval);
-                subject.complete();
-            },
+            close: (code = 1000, reason = '') => ws.close(code, reason),
         };
     }
     getFullURL(params) {

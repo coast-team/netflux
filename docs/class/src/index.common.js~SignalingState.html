@@ -32,8 +32,8 @@
   <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/BotServerFacade.js~WebGroupBotServer.html">WebGroupBotServer</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroupState.html">WebGroupState</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.browser.js~SignalingState.html">SignalingState</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.browser.js~Topology.html">Topology</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.js~SignalingState.html">SignalingState</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.js~Topology.html">Topology</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-enableLog">enableLog</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-DataType">DataType</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupBotServerOptions">WebGroupBotServerOptions</a></span></span></li>
@@ -47,13 +47,13 @@
 </nav>
 
 <div class="content" data-ice="content"><div class="header-notice">
-  <div data-ice="importPath" class="import-path"><pre class="prettyprint"><code data-ice="importPathCode">import {SignalingState} from &apos;<span><a href="file/src/index.browser.js.html#lineNumber17">netflux/src/index.browser.js</a></span>&apos;</code></pre></div>
+  <div data-ice="importPath" class="import-path"><pre class="prettyprint"><code data-ice="importPathCode">import {SignalingState} from &apos;<span><a href="file/src/index.common.js.html#lineNumber16">netflux/src/index.common.js</a></span>&apos;</code></pre></div>
   <span data-ice="access">public</span>
   <span data-ice="kind">class</span>
   
   
   
-  <span data-ice="source">| <span><a href="file/src/index.browser.js.html#lineNumber17">source</a></span></span>
+  <span data-ice="source">| <span><a href="file/src/index.common.js.html#lineNumber16">source</a></span></span>
 </div>
 
 <div class="self-detail detail">
@@ -104,13 +104,13 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/index.browser.js~SignalingState.html#static-get-CLOSED">CLOSED</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/index.common.js~SignalingState.html#static-get-CLOSED">CLOSED</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
         </p>
       </div>
       <div>
         
         
-        <div data-ice="description"><p>The connection is closed.</p>
+        <div data-ice="description"><p>Equals to <code>4</code>, the connection is closed.</p>
 </div>
       </div>
     </td>
@@ -133,13 +133,13 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/index.browser.js~SignalingState.html#static-get-CONNECTED_WITH_FIRST_MEMBER">CONNECTED_WITH_FIRST_MEMBER</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/index.common.js~SignalingState.html#static-get-CONNECTED_WITH_FIRST_MEMBER">CONNECTED_WITH_FIRST_MEMBER</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
         </p>
       </div>
       <div>
         
         
-        <div data-ice="description"><p><code>RTCDataChannel</code> has been established with one of the group member.</p>
+        <div data-ice="description"><p>Equals to <code>2</code>, <code>RTCDataChannel</code> has been established with one of the group member.</p>
 </div>
       </div>
     </td>
@@ -162,13 +162,13 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/index.browser.js~SignalingState.html#static-get-CONNECTING">CONNECTING</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/index.common.js~SignalingState.html#static-get-CONNECTING">CONNECTING</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
         </p>
       </div>
       <div>
         
         
-        <div data-ice="description"><p>The connection is not yet open.</p>
+        <div data-ice="description"><p>Equals to <code>0</code>, the connection is not yet open.</p>
 </div>
       </div>
     </td>
@@ -191,13 +191,13 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/index.browser.js~SignalingState.html#static-get-OPEN">OPEN</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/index.common.js~SignalingState.html#static-get-OPEN">OPEN</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
         </p>
       </div>
       <div>
         
         
-        <div data-ice="description"><p>The connection is open and ready to communicate.</p>
+        <div data-ice="description"><p>Equals to <code>1</code>, the connection is open and ready to communicate.</p>
 </div>
       </div>
     </td>
@@ -220,13 +220,13 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/index.browser.js~SignalingState.html#static-get-READY_TO_JOIN_OTHERS">READY_TO_JOIN_OTHERS</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/index.common.js~SignalingState.html#static-get-READY_TO_JOIN_OTHERS">READY_TO_JOIN_OTHERS</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
         </p>
       </div>
       <div>
         
         
-        <div data-ice="description"><p>You has successfully been joined a web group and ready to help join others.</p>
+        <div data-ice="description"><p>Equals to <code>3</code>, you has successfully joined a web group and ready to help join others.</p>
 </div>
       </div>
     </td>
@@ -249,7 +249,7 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/index.browser.js~SignalingState.html#static-get-[SignalingState.CLOSED]">[SignalingState.CLOSED]</a></span></span><span class="code" data-ice="signature">: <span>string</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/index.common.js~SignalingState.html#static-get-[SignalingState.CLOSED]">[SignalingState.CLOSED]</a></span></span><span class="code" data-ice="signature">: <span>string</span></span>
         </p>
       </div>
       <div>
@@ -278,7 +278,7 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/index.browser.js~SignalingState.html#static-get-[SignalingState.CONNECTED_WITH_FIRST_MEMBER]">[SignalingState.CONNECTED_WITH_FIRST_MEMBER]</a></span></span><span class="code" data-ice="signature">: <span>string</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/index.common.js~SignalingState.html#static-get-[SignalingState.CONNECTED_WITH_FIRST_MEMBER]">[SignalingState.CONNECTED_WITH_FIRST_MEMBER]</a></span></span><span class="code" data-ice="signature">: <span>string</span></span>
         </p>
       </div>
       <div>
@@ -307,7 +307,7 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/index.browser.js~SignalingState.html#static-get-[SignalingState.CONNECTING]">[SignalingState.CONNECTING]</a></span></span><span class="code" data-ice="signature">: <span>string</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/index.common.js~SignalingState.html#static-get-[SignalingState.CONNECTING]">[SignalingState.CONNECTING]</a></span></span><span class="code" data-ice="signature">: <span>string</span></span>
         </p>
       </div>
       <div>
@@ -336,7 +336,7 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/index.browser.js~SignalingState.html#static-get-[SignalingState.OPEN]">[SignalingState.OPEN]</a></span></span><span class="code" data-ice="signature">: <span>string</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/index.common.js~SignalingState.html#static-get-[SignalingState.OPEN]">[SignalingState.OPEN]</a></span></span><span class="code" data-ice="signature">: <span>string</span></span>
         </p>
       </div>
       <div>
@@ -365,7 +365,7 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/index.browser.js~SignalingState.html#static-get-[SignalingState.READY_TO_JOIN_OTHERS]">[SignalingState.READY_TO_JOIN_OTHERS]</a></span></span><span class="code" data-ice="signature">: <span>string</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/index.common.js~SignalingState.html#static-get-[SignalingState.READY_TO_JOIN_OTHERS]">[SignalingState.READY_TO_JOIN_OTHERS]</a></span></span><span class="code" data-ice="signature">: <span>string</span></span>
         </p>
       </div>
       <div>
@@ -404,14 +404,14 @@
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/index.browser.js.html#lineNumber66">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/index.common.js.html#lineNumber65">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  <div data-ice="description"><p>The connection is closed.</p>
+  <div data-ice="description"><p>Equals to <code>4</code>, the connection is closed.</p>
 </div>
 
   
@@ -448,14 +448,14 @@
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/index.browser.js.html#lineNumber44">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/index.common.js.html#lineNumber43">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  <div data-ice="description"><p><code>RTCDataChannel</code> has been established with one of the group member.
+  <div data-ice="description"><p>Equals to <code>2</code>, <code>RTCDataChannel</code> has been established with one of the group member.
 From now the signaling is no longer needed, because the joining process
 will continue with a help of this member.</p>
 </div>
@@ -494,14 +494,14 @@ will continue with a help of this member.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/index.browser.js.html#lineNumber22">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/index.common.js.html#lineNumber21">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  <div data-ice="description"><p>The connection is not yet open.</p>
+  <div data-ice="description"><p>Equals to <code>0</code>, the connection is not yet open. Value</p>
 </div>
 
   
@@ -538,14 +538,14 @@ will continue with a help of this member.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/index.browser.js.html#lineNumber32">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/index.common.js.html#lineNumber31">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  <div data-ice="description"><p>The connection is open and ready to communicate.</p>
+  <div data-ice="description"><p>Equals to <code>1</code>, the connection is open and ready to communicate.</p>
 </div>
 
   
@@ -582,14 +582,14 @@ will continue with a help of this member.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/index.browser.js.html#lineNumber56">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/index.common.js.html#lineNumber55">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  <div data-ice="description"><p>You has successfully been joined a web group and ready to help join others.</p>
+  <div data-ice="description"><p>Equals to <code>3</code>, you has successfully joined a web group and ready to help join others.</p>
 </div>
 
   
@@ -626,7 +626,7 @@ will continue with a help of this member.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/index.browser.js.html#lineNumber71">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/index.common.js.html#lineNumber70">source</a></span></span>
     </span>
   </h3>
 
@@ -670,7 +670,7 @@ will continue with a help of this member.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/index.browser.js.html#lineNumber49">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/index.common.js.html#lineNumber48">source</a></span></span>
     </span>
   </h3>
 
@@ -714,7 +714,7 @@ will continue with a help of this member.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/index.browser.js.html#lineNumber27">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/index.common.js.html#lineNumber26">source</a></span></span>
     </span>
   </h3>
 
@@ -758,7 +758,7 @@ will continue with a help of this member.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/index.browser.js.html#lineNumber37">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/index.common.js.html#lineNumber36">source</a></span></span>
     </span>
   </h3>
 
@@ -802,7 +802,7 @@ will continue with a help of this member.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/index.browser.js.html#lineNumber61">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/index.common.js.html#lineNumber60">source</a></span></span>
     </span>
   </h3>
 

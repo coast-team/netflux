@@ -1,4 +1,4 @@
-import { Channel } from './service/Channel';
+import { Channel } from './Channel';
 import { defaultOptions } from './service/WebChannel';
 import { wcs, WebGroup } from './WebChannelFacade';
 import { WebSocketBuilder } from './WebSocketBuilder';

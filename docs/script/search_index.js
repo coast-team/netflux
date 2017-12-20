@@ -1,14 +1,14 @@
 window.esdocSearchIndex = [
   [
-    "netflux/src/index.browser.js~signalingstate",
-    "class/src/index.browser.js~SignalingState.html",
-    "<span>SignalingState</span> <span class=\"search-result-import-path\">netflux/src/index.browser.js</span>",
+    "netflux/src/index.common.js~signalingstate",
+    "class/src/index.common.js~SignalingState.html",
+    "<span>SignalingState</span> <span class=\"search-result-import-path\">netflux/src/index.common.js</span>",
     "class"
   ],
   [
-    "netflux/src/index.browser.js~topology",
-    "class/src/index.browser.js~Topology.html",
-    "<span>Topology</span> <span class=\"search-result-import-path\">netflux/src/index.browser.js</span>",
+    "netflux/src/index.common.js~topology",
+    "class/src/index.common.js~Topology.html",
+    "<span>Topology</span> <span class=\"search-result-import-path\">netflux/src/index.common.js</span>",
     "class"
   ],
   [
@@ -30,9 +30,9 @@ window.esdocSearchIndex = [
     "class"
   ],
   [
-    "netflux/src/index.browser.js~enablelog",
+    "netflux/src/index.common.js~enablelog",
     "function/index.html#static-function-enableLog",
-    "<span>enableLog</span> <span class=\"search-result-import-path\">netflux/src/index.browser.js</span>",
+    "<span>enableLog</span> <span class=\"search-result-import-path\">netflux/src/index.common.js</span>",
     "function"
   ],
   [
@@ -402,117 +402,117 @@ window.esdocSearchIndex = [
     "member"
   ],
   [
-    "src/index.browser.js",
-    "file/src/index.browser.js.html",
-    "src/index.browser.js",
+    "src/index.common.js",
+    "file/src/index.common.js.html",
+    "src/index.common.js",
     "file"
   ],
   [
-    "src/index.browser.js~nodejshttpserver",
+    "src/index.common.js~nodejshttpserver",
     "https://nodejs.org/api/http.html#http_class_http_server",
-    "src/index.browser.js~NodeJSHttpServer",
+    "src/index.common.js~NodeJSHttpServer",
     "external"
   ],
   [
-    "src/index.browser.js~nodejshttpsserver",
+    "src/index.common.js~nodejshttpsserver",
     "https://nodejs.org/api/https.html#https_class_https_server",
-    "src/index.browser.js~NodeJSHttpsServer",
+    "src/index.common.js~NodeJSHttpsServer",
     "external"
   ],
   [
-    "src/index.browser.js~rtciceserver",
+    "src/index.common.js~rtciceserver",
     "https://developer.mozilla.org/en/docs/Web/API/RTCIceServer",
-    "src/index.browser.js~RTCIceServer",
+    "src/index.common.js~RTCIceServer",
     "external"
   ],
   [
-    "src/index.browser.js~signalingstate.closed",
-    "class/src/index.browser.js~SignalingState.html#static-get-CLOSED",
-    "src/index.browser.js~SignalingState.CLOSED",
+    "src/index.common.js~signalingstate.closed",
+    "class/src/index.common.js~SignalingState.html#static-get-CLOSED",
+    "src/index.common.js~SignalingState.CLOSED",
     "member"
   ],
   [
-    "src/index.browser.js~signalingstate.connected_with_first_member",
-    "class/src/index.browser.js~SignalingState.html#static-get-CONNECTED_WITH_FIRST_MEMBER",
-    "src/index.browser.js~SignalingState.CONNECTED_WITH_FIRST_MEMBER",
+    "src/index.common.js~signalingstate.connected_with_first_member",
+    "class/src/index.common.js~SignalingState.html#static-get-CONNECTED_WITH_FIRST_MEMBER",
+    "src/index.common.js~SignalingState.CONNECTED_WITH_FIRST_MEMBER",
     "member"
   ],
   [
-    "src/index.browser.js~signalingstate.connecting",
-    "class/src/index.browser.js~SignalingState.html#static-get-CONNECTING",
-    "src/index.browser.js~SignalingState.CONNECTING",
+    "src/index.common.js~signalingstate.connecting",
+    "class/src/index.common.js~SignalingState.html#static-get-CONNECTING",
+    "src/index.common.js~SignalingState.CONNECTING",
     "member"
   ],
   [
-    "src/index.browser.js~signalingstate.open",
-    "class/src/index.browser.js~SignalingState.html#static-get-OPEN",
-    "src/index.browser.js~SignalingState.OPEN",
+    "src/index.common.js~signalingstate.open",
+    "class/src/index.common.js~SignalingState.html#static-get-OPEN",
+    "src/index.common.js~SignalingState.OPEN",
     "member"
   ],
   [
-    "src/index.browser.js~signalingstate.ready_to_join_others",
-    "class/src/index.browser.js~SignalingState.html#static-get-READY_TO_JOIN_OTHERS",
-    "src/index.browser.js~SignalingState.READY_TO_JOIN_OTHERS",
+    "src/index.common.js~signalingstate.ready_to_join_others",
+    "class/src/index.common.js~SignalingState.html#static-get-READY_TO_JOIN_OTHERS",
+    "src/index.common.js~SignalingState.READY_TO_JOIN_OTHERS",
     "member"
   ],
   [
-    "src/index.browser.js~signalingstate.[signalingstate.closed]",
-    "class/src/index.browser.js~SignalingState.html#static-get-[SignalingState.CLOSED]",
-    "src/index.browser.js~SignalingState.[SignalingState.CLOSED]",
+    "src/index.common.js~signalingstate.[signalingstate.closed]",
+    "class/src/index.common.js~SignalingState.html#static-get-[SignalingState.CLOSED]",
+    "src/index.common.js~SignalingState.[SignalingState.CLOSED]",
     "member"
   ],
   [
-    "src/index.browser.js~signalingstate.[signalingstate.connected_with_first_member]",
-    "class/src/index.browser.js~SignalingState.html#static-get-[SignalingState.CONNECTED_WITH_FIRST_MEMBER]",
-    "src/index.browser.js~SignalingState.[SignalingState.CONNECTED_WITH_FIRST_MEMBER]",
+    "src/index.common.js~signalingstate.[signalingstate.connected_with_first_member]",
+    "class/src/index.common.js~SignalingState.html#static-get-[SignalingState.CONNECTED_WITH_FIRST_MEMBER]",
+    "src/index.common.js~SignalingState.[SignalingState.CONNECTED_WITH_FIRST_MEMBER]",
     "member"
   ],
   [
-    "src/index.browser.js~signalingstate.[signalingstate.connecting]",
-    "class/src/index.browser.js~SignalingState.html#static-get-[SignalingState.CONNECTING]",
-    "src/index.browser.js~SignalingState.[SignalingState.CONNECTING]",
+    "src/index.common.js~signalingstate.[signalingstate.connecting]",
+    "class/src/index.common.js~SignalingState.html#static-get-[SignalingState.CONNECTING]",
+    "src/index.common.js~SignalingState.[SignalingState.CONNECTING]",
     "member"
   ],
   [
-    "src/index.browser.js~signalingstate.[signalingstate.open]",
-    "class/src/index.browser.js~SignalingState.html#static-get-[SignalingState.OPEN]",
-    "src/index.browser.js~SignalingState.[SignalingState.OPEN]",
+    "src/index.common.js~signalingstate.[signalingstate.open]",
+    "class/src/index.common.js~SignalingState.html#static-get-[SignalingState.OPEN]",
+    "src/index.common.js~SignalingState.[SignalingState.OPEN]",
     "member"
   ],
   [
-    "src/index.browser.js~signalingstate.[signalingstate.ready_to_join_others]",
-    "class/src/index.browser.js~SignalingState.html#static-get-[SignalingState.READY_TO_JOIN_OTHERS]",
-    "src/index.browser.js~SignalingState.[SignalingState.READY_TO_JOIN_OTHERS]",
+    "src/index.common.js~signalingstate.[signalingstate.ready_to_join_others]",
+    "class/src/index.common.js~SignalingState.html#static-get-[SignalingState.READY_TO_JOIN_OTHERS]",
+    "src/index.common.js~SignalingState.[SignalingState.READY_TO_JOIN_OTHERS]",
     "member"
   ],
   [
-    "src/index.browser.js~topology.full_mesh",
-    "class/src/index.browser.js~Topology.html#static-get-FULL_MESH",
-    "src/index.browser.js~Topology.FULL_MESH",
+    "src/index.common.js~topology.full_mesh",
+    "class/src/index.common.js~Topology.html#static-get-FULL_MESH",
+    "src/index.common.js~Topology.FULL_MESH",
     "member"
   ],
   [
-    "src/index.browser.js~topology.[topology.full_mesh]",
-    "class/src/index.browser.js~Topology.html#static-get-[Topology.FULL_MESH]",
-    "src/index.browser.js~Topology.[Topology.FULL_MESH]",
+    "src/index.common.js~topology.[topology.full_mesh]",
+    "class/src/index.common.js~Topology.html#static-get-[Topology.FULL_MESH]",
+    "src/index.common.js~Topology.[Topology.FULL_MESH]",
     "member"
   ],
   [
-    "src/index.browser.js~uint8array",
+    "src/index.common.js~uint8array",
     "https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array",
-    "src/index.browser.js~Uint8Array",
+    "src/index.common.js~Uint8Array",
     "external"
   ],
   [
-    "src/index.browser.js~webgroupbotserveroptions",
+    "src/index.common.js~webgroupbotserveroptions",
     "typedef/index.html#static-typedef-WebGroupBotServerOptions",
-    "src/index.browser.js~WebGroupBotServerOptions",
+    "src/index.common.js~WebGroupBotServerOptions",
     "typedef"
   ],
   [
-    "src/index.browser.js~webgroupoptions",
+    "src/index.common.js~webgroupoptions",
     "typedef/index.html#static-typedef-WebGroupOptions",
-    "src/index.browser.js~WebGroupOptions",
+    "src/index.common.js~WebGroupOptions",
     "typedef"
   ],
   [

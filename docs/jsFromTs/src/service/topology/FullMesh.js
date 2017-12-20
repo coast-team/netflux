@@ -7,7 +7,11 @@ import { Service } from '../Service';
  * @type {number}
  */
 export const FULL_MESH = 3;
-const MAX_JOIN_ATTEMPTS = 100;
+const MAX_JOIN_ATTEMPTS = 12;
+const JOIN_CHECK_TIMEOUT_BASE = 1000;
+const MAXIMUM_MISSED_HEARTBEAT = 3;
+const HEARTBEAT_INTERVAL = 3000;
+const heartbeatMsg = Service.encodeServiceMessage(FULL_MESH, fullMesh.Message.encode(fullMesh.Message.create({ heartbeat: true })).finish());
 /**
  * Fully connected web channel manager. Implements fully connected topology
  * network, when each peer is connected to each other.
@@ -24,6 +28,8 @@ export class FullMesh extends Service {
         this.joinSucceedContent = super.encode({ joinSucceed: true });
         this.onServiceMessage.subscribe((msg) => this.handleSvcMsg(msg));
         this.wc.channelBuilder.onChannel.subscribe((ch) => this.peerJoined(ch));
+        this.joinCheckTimeout = JOIN_CHECK_TIMEOUT_BASE + 1000 * Math.random();
+        this.startHeartbeat();
     }
     clean() { }
     addJoining(ch, members) {
@@ -131,7 +137,7 @@ export class FullMesh extends Service {
                             myMembers: this.wc.members,
                             intermediaryMembers: msg.connectTo.members,
                         });
-                        setTimeout(() => send(), 200 + 100 * Math.random());
+                        setTimeout(() => send(), this.joinCheckTimeout);
                     }
                     this.joinAttempts++;
                 });
@@ -150,6 +156,10 @@ export class FullMesh extends Service {
             case 'joinSucceed': {
                 this.intermediaryChannel = undefined;
                 this.wc.joinSubject.next();
+                break;
+            }
+            case 'heartbeat': {
+                channel.missedHeartbeat = 0;
                 break;
             }
         }
@@ -174,6 +184,7 @@ export class FullMesh extends Service {
     peerJoined(ch) {
         for (const c of this.channels) {
             if (c.id === ch.id) {
+                ch.updateHeartbeatMsg(heartbeatMsg);
                 c.closeQuietly();
                 this.channels.delete(c);
                 this.channels.add(ch);
@@ -181,8 +192,26 @@ export class FullMesh extends Service {
                 return;
             }
         }
+        ch.updateHeartbeatMsg(heartbeatMsg);
         this.channels.add(ch);
         this.wc.onMemberJoinProxy(ch.id);
         this.jps.delete(ch.id);
+    }
+    startHeartbeat() {
+        global.setInterval(() => {
+            for (const ch of this.channels) {
+                try {
+                    ch.missedHeartbeat++;
+                    if (ch.missedHeartbeat >= MAXIMUM_MISSED_HEARTBEAT) {
+                        throw new Error('Too many missed heartbeats');
+                    }
+                    ch.sendHeartbeat();
+                }
+                catch (err) {
+                    log.info(`Closing connection with ${ch.id}. Reason: ${err.message}`);
+                    ch.close();
+                }
+            }
+        }, HEARTBEAT_INTERVAL);
     }
 }

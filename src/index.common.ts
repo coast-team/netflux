@@ -18,7 +18,7 @@ export function enableLog (value: boolean, level?: string) { debug(value, level)
  */
 export class SignalingState {
   /**
-   * The connection is not yet open.
+   * Equals to `0`, the connection is not yet open. Value
    * @type {number}
    */
   static get CONNECTING (): number { return SigState.CONNECTING }
@@ -30,7 +30,7 @@ export class SignalingState {
   static get [SignalingState.CONNECTING] (): string { return SigState[SigState.CONNECTING] }
 
   /**
-   * The connection is open and ready to communicate.
+   * Equals to `1`, the connection is open and ready to communicate.
    * @type {number}
    */
   static get OPEN (): number { return SigState.OPEN }
@@ -42,7 +42,7 @@ export class SignalingState {
   static get [SignalingState.OPEN] (): string { return SigState[SigState.OPEN] }
 
   /**
-   * `RTCDataChannel` has been established with one of the group member.
+   * Equals to `2`, `RTCDataChannel` has been established with one of the group member.
    * From now the signaling is no longer needed, because the joining process
    * will continue with a help of this member.
    * @type {number}
@@ -58,7 +58,7 @@ export class SignalingState {
   }
 
   /**
-   * You has successfully been joined a web group and ready to help join others.
+   * Equals to `3`, you has successfully joined a web group and ready to help join others.
    * @type {number}
    */
   static get READY_TO_JOIN_OTHERS (): number { return SigState.READY_TO_JOIN_OTHERS }
@@ -70,7 +70,7 @@ export class SignalingState {
   static get [SignalingState.READY_TO_JOIN_OTHERS] (): string { return SigState[SigState.READY_TO_JOIN_OTHERS] }
 
   /**
-   * The connection is closed.
+   * Equals to `4`, the connection is closed.
    * @type {number}
    */
   static get CLOSED (): number { return SigState.CLOSED }

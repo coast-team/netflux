@@ -3,14 +3,6 @@
  */
 export const isBrowser = (typeof global.window === 'undefined') ? false : true;
 /**
- * Equals to true in Firefox and false elsewhere.
- * Thanks to https://github.com/lancedikson/bowser
- */
-export const isFirefox = (isBrowser &&
-    navigator !== undefined &&
-    navigator.userAgent !== undefined &&
-    /firefox|iceweasel|fxios/i.test(navigator.userAgent)) ? true : false;
-/**
  * Check whether the string is a valid URL.
  */
 export function isURL(str) {
@@ -85,7 +77,7 @@ export function enableLog(isDebug, level = 'info') {
                     console.info(`%cNETFLUX DEBUG%c: ${msg}`, debugCSS, '');
                 }
                 else {
-                    console.info(`%cNETFLUX DEBUG%c: "%o" ${msg}`, debugCSS, '', ...rest);
+                    console.info(`%cNETFLUX DEBUG%c: ${msg}`, debugCSS, '', ...rest);
                 }
             };
         }

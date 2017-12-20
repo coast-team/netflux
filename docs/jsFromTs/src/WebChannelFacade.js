@@ -9,17 +9,10 @@ import { WebChannel, WebChannelState } from './service/WebChannel';
 export const wcs = new WeakMap();
 /**
  * {@link WebGroup} state enum.
- * @type {Object}
- * @property {number} [JOINING=0] You are joining the web group.
- * @property {number} [JOINED=1] You have successfully joined the web group
- * and ready to broadcast messages via `send` method.
- * @property {number} [LEFT=2] You have left the web group. If the connection
- * to the web group has lost and `autoRejoin=true`, then the state would be `LEFT`,
- * (usually during a relatively short period) before the rejoining process start.
  */
 export class WebGroupState {
     /**
-     * Joining the group...
+     * Equals to `0`: joining the group...
      * @type {number}
      */
     static get JOINING() { return WebChannelState.JOINING; }
@@ -29,7 +22,7 @@ export class WebGroupState {
      */
     static get [WebGroupState.JOINING]() { return WebChannelState[WebChannelState.JOINING]; }
     /**
-     * Joined the group successfully.
+     * Equals to `1`: joined the group successfully.
      * @type {number}
      */
     static get JOINED() { return WebChannelState.JOINED; }
@@ -39,10 +32,10 @@ export class WebGroupState {
      */
     static get [WebGroupState.JOINED]() { return WebChannelState[WebChannelState.JOINED]; }
     /**
-     * Left the group. If the connection to the web group has lost other then
+     * Equals to `2`: left the group. If the connection to the web group has lost other then
      * by calling {@link WebGroup#leave} or {@link WebGroup#closeSignaling} methods
      * and {@link WebGroup#autoRejoin} is true, then the state would be `LEFT`,
-     * (usually during a relatively short period) before the rejoining process start.
+     * (usually during a relatively short period) before the rejoining process starts.
      * @type {number}
      */
     static get LEFT() { return WebChannelState.LEFT; }

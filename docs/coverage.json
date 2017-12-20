@@ -13,7 +13,7 @@
       "actualCount": 31,
       "undocumentLines": []
     },
-    "src/index.browser.js": {
+    "src/index.common.js": {
       "expectCount": 15,
       "actualCount": 15,
       "undocumentLines": []

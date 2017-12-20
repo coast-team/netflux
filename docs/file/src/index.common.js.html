@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <base data-ice="baseUrl" href="../../">
-  <title data-ice="title">src/index.browser.js | Netflux</title>
+  <title data-ice="title">src/index.common.js | Netflux</title>
   <link type="text/css" rel="stylesheet" href="css/style.css">
   <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
   <script src="script/prettify/prettify.js"></script>
@@ -32,8 +32,8 @@
   <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/BotServerFacade.js~WebGroupBotServer.html">WebGroupBotServer</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroupState.html">WebGroupState</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.browser.js~SignalingState.html">SignalingState</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.browser.js~Topology.html">Topology</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.js~SignalingState.html">SignalingState</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.js~Topology.html">Topology</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-enableLog">enableLog</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-DataType">DataType</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupBotServerOptions">WebGroupBotServerOptions</a></span></span></li>
@@ -46,9 +46,8 @@
 </div>
 </nav>
 
-<div class="content" data-ice="content"><h1 data-ice="title">src/index.browser.js</h1>
-<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">import &apos;./misc/polyfills.browser&apos;;
-import { TopologyEnum } from &apos;./service/topology/Topology&apos;;
+<div class="content" data-ice="content"><h1 data-ice="title">src/index.common.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">import { TopologyEnum } from &apos;./service/topology/Topology&apos;;
 import { SignalingState as SigState } from &apos;./Signaling&apos;;
 export { WebGroup, WebGroupState } from &apos;./WebChannelFacade&apos;;
 import { enableLog as debug } from &apos;./misc/Util&apos;;
@@ -59,13 +58,13 @@ import { enableLog as debug } from &apos;./misc/Util&apos;;
  * @param {boolean} value
  * @param {string} [level=&apos;info&apos;] Console log level: &apos;debug&apos; or &apos;info&apos;
  */
-export function enableLog(value, level) { debug(value); }
+export function enableLog(value, level) { debug(value, level); }
 /**
  * The state enum of the signaling server for WebRTC.
  */
 export class SignalingState {
     /**
-     * The connection is not yet open.
+     * Equals to `0`, the connection is not yet open. Value
      * @type {number}
      */
     static get CONNECTING() { return SigState.CONNECTING; }
@@ -75,7 +74,7 @@ export class SignalingState {
      */
     static get [SignalingState.CONNECTING]() { return SigState[SigState.CONNECTING]; }
     /**
-     * The connection is open and ready to communicate.
+     * Equals to `1`, the connection is open and ready to communicate.
      * @type {number}
      */
     static get OPEN() { return SigState.OPEN; }
@@ -85,7 +84,7 @@ export class SignalingState {
      */
     static get [SignalingState.OPEN]() { return SigState[SigState.OPEN]; }
     /**
-     * `RTCDataChannel` has been established with one of the group member.
+     * Equals to `2`, `RTCDataChannel` has been established with one of the group member.
      * From now the signaling is no longer needed, because the joining process
      * will continue with a help of this member.
      * @type {number}
@@ -99,7 +98,7 @@ export class SignalingState {
         return SigState[SigState.CONNECTED_WITH_FIRST_MEMBER];
     }
     /**
-     * You has successfully been joined a web group and ready to help join others.
+     * Equals to `3`, you has successfully joined a web group and ready to help join others.
      * @type {number}
      */
     static get READY_TO_JOIN_OTHERS() { return SigState.READY_TO_JOIN_OTHERS; }
@@ -109,7 +108,7 @@ export class SignalingState {
      */
     static get [SignalingState.READY_TO_JOIN_OTHERS]() { return SigState[SigState.READY_TO_JOIN_OTHERS]; }
     /**
-     * The connection is closed.
+     * Equals to `4`, the connection is closed.
      * @type {number}
      */
     static get CLOSED() { return SigState.CLOSED; }
