@@ -69,11 +69,9 @@ For a `WebGroup` object all options are optional.
 const wg = new WebGroup({
   signalingURL: 'MY_SIGNALING_URL',
   iceServers: [
+    { urls: 'stun:mystun.org' },
     {
-      urls: 'stun.l.google.com:19302'
-    },
-    {
-      urls: ['turn:myturn.com?transport=udp', 'turn:myturn?transport=tcp'],
+      urls: ['turn:myturn.org?transport=udp', 'turn:myturn.org?transport=tcp'],
       username: 'user',
       password: 'password'
     }
@@ -91,11 +89,9 @@ const wg = new WebGroupBotServer({
   signalingURL: 'MY_SIGNALING_URL',
   webGroupOptions: {
     iceServers: [
+      { urls: 'stun:mystun.org' },
       {
-        urls: 'stun.l.google.com:19302'
-      },
-      {
-        urls: ['turn:myturn.com?transport=udp', 'turn:myturn?transport=tcp'],
+        urls: ['turn:myturn.org?transport=udp', 'turn:myturn.org?transport=tcp'],
         username: 'user',
         password: 'password'
       }
