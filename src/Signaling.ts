@@ -92,7 +92,7 @@ export class Signaling {
     }
     this.setState(SignalingState.CONNECTING)
     this.wc.webSocketBuilder.connect(this.getFullURL(key))
-      .then((ws) => {
+      .then((ws: WebSocket) => {
         this.setState(SignalingState.OPEN)
         this.rxWs = this.createRxWs(ws)
         this.rxWs.onMessage.subscribe(

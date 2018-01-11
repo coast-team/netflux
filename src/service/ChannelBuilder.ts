@@ -107,8 +107,8 @@ export class ChannelBuilder extends Service {
       const { wsUrl, isWrtcSupport } = msg.request
       // If remote peer is listening on WebSocket, connect to him
       if (wsUrl) {
-        this.wc.webSocketBuilder.connectTo(wsUrl, senderId)
-          .then((ch) => this.handleChannel(ch))
+        this.wc.webSocketBuilder.connect(wsUrl, senderId)
+          .then((ch: Channel) => this.handleChannel(ch))
           .catch((reason) => {
             if (ME.wsUrl) {
               // Ask him to connect to me via WebSocket
@@ -162,8 +162,8 @@ export class ChannelBuilder extends Service {
     case 'response': {
       const { wsUrl } = msg.response
       if (wsUrl) {
-        this.wc.webSocketBuilder.connectTo(wsUrl, senderId)
-          .then((ch) => this.handleChannel(ch))
+        this.wc.webSocketBuilder.connect(wsUrl, senderId)
+          .then((ch: Channel) => this.handleChannel(ch))
           .catch((reason) => {
             this.pendingRequests.get(senderId)
               .reject(new Error(`Failed to establish a socket: ${reason}`))
