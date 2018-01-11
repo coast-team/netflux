@@ -10,9 +10,6 @@ const commonjsConfig = {
   }
 }
 const filesizeConfig = { format: { round: 0 } }
-const replaceConfig = {
-  patterns: [{ test: /eval.*\(moduleName\);/g, replace: 'undefined;' }]
-}
 
 export default [
   {
