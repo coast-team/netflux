@@ -14,6 +14,7 @@ import { WebChannel } from './WebChannel'
  * Service id.
  */
 const ID = 300
+const CONNECT_TIMEOUT = 8000
 
 interface ICommonMessage {
   iceCandidate?: webRTCBuilder.IIceCandidate,
@@ -438,8 +439,16 @@ export class WebRTCBuilder extends Service {
     if (id) {
       try {
         const dc = pc.createDataChannel((this.wc.myId).toString())
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            if (dc.readyState !== 'open') {
+              dc.close()
+              log.debug(`RTCDataChannel with ${id} has opened`, (pc as any).sctp)
+              reject(new Error(`RTCDataChannel ${CONNECT_TIMEOUT}ms connection timeout with '${id}'`))
+            }
+          }, CONNECT_TIMEOUT)
           dc.onopen = () => {
+            clearTimeout(timeout)
             log.debug(`RTCDataChannel with ${id} has opened`, (pc as any).sctp)
             resolve(new Channel(this.wc, dc, {rtcPeerConnection: pc, id}))
           }
