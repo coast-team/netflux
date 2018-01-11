@@ -51,6 +51,7 @@ export class WebSocketBuilder {
           const ws = new global.WebSocket(fullUrl)
           const timeout = setTimeout(() => {
             if (ws.readyState !== ws.OPEN) {
+              ws.close()
               reject(new Error(`WebSocket ${CONNECT_TIMEOUT}ms connection timeout with '${url}'`))
             }
           }, CONNECT_TIMEOUT)
