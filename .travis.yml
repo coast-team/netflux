@@ -31,4 +31,4 @@ script:
 after_success:
   - ./cc-test-reporter format-coverage -t lcov ./coverage/lcov/lcov
   - ./cc-test-reporter upload-coverage
-  - npm run semantic-release
+  - ./node_modules/.bin/semantic-release

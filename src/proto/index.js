@@ -3359,108 +3359,6 @@ var webChannel = $root.webChannel = function () {
     return webChannel;
 }();
 
-var channel = $root.channel = function () {
-
-    /**
-     * Namespace channel.
-     * @exports channel
-     * @namespace
-     */
-    var channel = {};
-
-    channel.Message = function () {
-
-        /**
-         * Properties of a Message.
-         * @memberof channel
-         * @interface IMessage
-         * @property {boolean|null} [heartbeat] Message heartbeat
-         */
-
-        /**
-         * Constructs a new Message.
-         * @memberof channel
-         * @classdesc Represents a Message.
-         * @implements IMessage
-         * @constructor
-         * @param {channel.IMessage=} [properties] Properties to set
-         */
-        function Message(properties) {
-            if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
-                if (properties[keys[i]] != null) this[keys[i]] = properties[keys[i]];
-            }
-        }
-
-        /**
-         * Message heartbeat.
-         * @member {boolean} heartbeat
-         * @memberof channel.Message
-         * @instance
-         */
-        Message.prototype.heartbeat = false;
-
-        /**
-         * Creates a new Message instance using the specified properties.
-         * @function create
-         * @memberof channel.Message
-         * @static
-         * @param {channel.IMessage=} [properties] Properties to set
-         * @returns {channel.Message} Message instance
-         */
-        Message.create = function create(properties) {
-            return new Message(properties);
-        };
-
-        /**
-         * Encodes the specified Message message. Does not implicitly {@link channel.Message.verify|verify} messages.
-         * @function encode
-         * @memberof channel.Message
-         * @static
-         * @param {channel.IMessage} message Message message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        Message.encode = function encode(message, writer) {
-            if (!writer) writer = $Writer.create();
-            if (message.heartbeat != null && message.hasOwnProperty("heartbeat")) writer.uint32( /* id 1, wireType 0 =*/8).bool(message.heartbeat);
-            return writer;
-        };
-
-        /**
-         * Decodes a Message message from the specified reader or buffer.
-         * @function decode
-         * @memberof channel.Message
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @param {number} [length] Message length if known beforehand
-         * @returns {channel.Message} Message
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        Message.decode = function decode(reader, length) {
-            if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
-            var end = length === undefined ? reader.len : reader.pos + length,
-                message = new $root.channel.Message();
-            while (reader.pos < end) {
-                var tag = reader.uint32();
-                switch (tag >>> 3) {
-                    case 1:
-                        message.heartbeat = reader.bool();
-                        break;
-                    default:
-                        reader.skipType(tag & 7);
-                        break;
-                }
-            }
-            return message;
-        };
-
-        return Message;
-    }();
-
-    return channel;
-}();
-
 var channelBuilder = $root.channelBuilder = function () {
 
     /**
@@ -4571,5 +4469,5 @@ var signaling = $root.signaling = function () {
     return signaling;
 }();
 
-export { Message, user, service, webChannel, channel, channelBuilder, fullMesh, webRTCBuilder, signaling };
+export { Message, user, service, webChannel, channelBuilder, fullMesh, webRTCBuilder, signaling };
 export default $root;

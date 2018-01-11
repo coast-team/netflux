@@ -426,55 +426,6 @@ export namespace webChannel {
     }
 }
 
-/** Namespace channel. */
-export namespace channel {
-
-    /** Properties of a Message. */
-    interface IMessage {
-
-        /** Message heartbeat */
-        heartbeat?: (boolean|null);
-    }
-
-    /** Represents a Message. */
-    class Message implements IMessage {
-
-        /**
-         * Constructs a new Message.
-         * @param [properties] Properties to set
-         */
-        constructor(properties?: channel.IMessage);
-
-        /** Message heartbeat. */
-        public heartbeat: boolean;
-
-        /**
-         * Creates a new Message instance using the specified properties.
-         * @param [properties] Properties to set
-         * @returns Message instance
-         */
-        public static create(properties?: channel.IMessage): channel.Message;
-
-        /**
-         * Encodes the specified Message message. Does not implicitly {@link channel.Message.verify|verify} messages.
-         * @param message Message message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encode(message: channel.IMessage, writer?: $protobuf.Writer): $protobuf.Writer;
-
-        /**
-         * Decodes a Message message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
-         * @returns Message
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): channel.Message;
-    }
-}
-
 /** Namespace channelBuilder. */
 export namespace channelBuilder {
 
