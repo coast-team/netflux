@@ -1,17 +1,14 @@
+import { LogLevel as Logs, setLogLevel as setLogs } from './misc/Util'
 import { TopologyEnum } from './service/topology/Topology'
 import { SignalingState as SigState } from './Signaling'
 
 export { WebGroup, WebGroupOptions, WebGroupState, DataType } from './WebChannelFacade'
-import { enableLog as debug } from './misc/Util'
 
 /**
- * Enable/Disable console logs. By default the logs are disabled. If enabled
- * 'info' level shows WebGroup and signaling states, connection establishment, disconnection etc.
- * 'debug' level shows all that 'info' level shows plus much more other information for debugging.
- * @param {boolean} value
- * @param {string} [level='info'] Console log level: 'debug' or 'info'
+ * Set log level. By default the logs are disabled.
+ * @param {LogLevel} level Console log level: 'debug' or 'info'
  */
-export function enableLog (value: boolean, level?: string) { debug(value, level) }
+export function setLogLevel (level: LogLevel) { setLogs(level as any) }
 
 /**
  * The state enum of the signaling server for WebRTC.
@@ -85,6 +82,49 @@ export class Topology {
    * @type {string}
    */
   static get [Topology.FULL_MESH] (): string { return TopologyEnum[TopologyEnum.FULL_MESH] }
+}
+
+/**
+ * The log level enum.
+ */
+export class LogLevel {
+  /**
+   * Equals to `1`, allows logs for debug and info.
+   * @type {number}
+   */
+  static get DEBUG (): number { return Logs.DEBUG }
+
+  /**
+   * Equals to `'DEBUG'`.
+   * @type {string}
+   */
+  static get [Logs.DEBUG] (): string {
+    return Logs[Logs.DEBUG]
+  }
+
+  /**
+   * Equals to `2`, allows info logs only.
+   * @type {number}
+   */
+  static get INFO (): number { return Logs.INFO }
+
+  /**
+   * Equals to `'INFO'`.
+   * @type {string}
+   */
+  static get [Logs.INFO] (): string { return Logs[Logs.INFO] }
+
+  /**
+   * Equals to `0`, no logs at all.
+   * @type {number}
+   */
+  static get OFF (): number { return Logs.OFF }
+
+  /**
+   * Equals to `'OFF'`.
+   * @type {string}
+   */
+  static get [Logs.OFF] (): string { return Logs[Logs.OFF] }
 }
 
 /**

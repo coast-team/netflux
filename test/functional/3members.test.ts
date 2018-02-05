@@ -5,7 +5,7 @@ import { MAX_KEY_LENGTH } from '../../src/misc/Util'
 import { areTheSame, BOT_URL, getBotData, IBotData, Queue, SIGNALING_URL, wait, waitBotJoin } from '../util/helper'
 
 const WebGroupOptions = {
-  signalingURL: SIGNALING_URL,
+  signalingServer: SIGNALING_URL,
   autoRejoin: false,
 }
 

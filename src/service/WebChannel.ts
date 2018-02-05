@@ -2,7 +2,7 @@ import { Subject } from 'rxjs/Subject'
 import { Subscription } from 'rxjs/Subscription'
 
 import { Channel } from '../Channel'
-import { generateKey, isURL, log, MAX_KEY_LENGTH, randNumbers } from '../misc/Util'
+import { generateKey, isURL, log, LogLevel, MAX_KEY_LENGTH, randNumbers, setLogLevel } from '../misc/Util'
 import { IMessage, Message, service, webChannel } from '../proto'
 import { Signaling, SignalingState } from '../Signaling'
 import { UserDataType, UserMessage } from '../UserMessage'
@@ -24,7 +24,7 @@ export interface IWebChannelOptions {
   topology?: TopologyEnum,
   signalingServer?: string,
   rtcConfiguration?: RTCConfiguration,
-  autoRejoin?: boolean
+  autoRejoin?: boolean,
 }
 
 export const defaultOptions: IWebChannelOptions = {

@@ -1,9 +1,10 @@
 import { Subject } from 'rxjs/Subject'
 
-import { enableLog, SignalingState, WebGroup, WebGroupState } from '../../src/index.browser'
+import { LogLevel, setLogLevel, SignalingState, WebGroup, WebGroupState } from '../../src/index.browser'
+
+// setLogLevel(LogLevel.DEBUG)
 
 const isBrowser = (typeof window === 'undefined') ? false : true
-enableLog(false, 'info')
 
 // Main signaling server for all tests
 export const SIGNALING_URL = 'ws://localhost:8000'
