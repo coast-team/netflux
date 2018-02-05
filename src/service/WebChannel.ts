@@ -365,27 +365,27 @@ export class WebChannel extends Service {
         if (!generatedIds.includes(this.myId)) {
           console.warn(`Failed merge networks: my members contain intermediary peer id,
             but my id is not included into the intermediary peer members`)
-          channel.close()
+          channel.closeQuietly()
+          this.topologyService.leave()
+          this.setState(WebChannelState.LEFT)
           return
         }
         if (this.topology !== topology) {
           console.warn('Failed merge networks: different topologies')
-          channel.close()
+          channel.closeQuietly()
+          this.topologyService.leave()
+          this.setState(WebChannelState.LEFT)
           return
         }
         log.info(`I:${this.myId} close connection with intermediary member ${senderId},
           because already connected with him`)
         this.setState(WebChannelState.JOINED)
         channel.closeQuietly()
-        log.debug('Here')
       } else {
         this.setTopology(topology)
         this.id = wcId
         channel.id = senderId
-        channel.send(this.encode({
-          recipientId: channel.id,
-          content: super.encode({ initOk: true }),
-        }))
+        channel.send(this.encode({ recipientId: channel.id, content: super.encode({ initOk: true }) }))
         this.topologyService.initJoining(channel, members)
       }
       break
