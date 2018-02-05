@@ -30,47 +30,35 @@ export class SignalingState {
   static get [SignalingState.CONNECTING] (): string { return SigState[SigState.CONNECTING] }
 
   /**
-   * Equals to `1`, the connection is open and ready to communicate.
-   * @type {number}
-   */
-  static get OPEN (): number { return SigState.OPEN }
-
-  /**
-   * Equals to `'OPEN'`.
-   * @type {string}
-   */
-  static get [SignalingState.OPEN] (): string { return SigState[SigState.OPEN] }
-
-  /**
-   * Equals to `2`, `RTCDataChannel` has been established with one of the group member.
+   * Equals to `1`, `RTCDataChannel` has been established with one of the group member.
    * From now the signaling is no longer needed, because the joining process
    * will continue with a help of this member.
    * @type {number}
    */
-  static get CONNECTED_WITH_FIRST_MEMBER (): number { return SigState.CONNECTED_WITH_FIRST_MEMBER }
+  static get CONNECTED (): number { return SigState.CONNECTED }
 
   /**
-   * Equals to `'CONNECTED_WITH_FIRST_MEMBER'`.
+   * Equals to `'CONNECTED'`.
    * @type {string}
    */
-  static get [SignalingState.CONNECTED_WITH_FIRST_MEMBER] (): string {
-    return SigState[SigState.CONNECTED_WITH_FIRST_MEMBER]
+  static get [SignalingState.CONNECTED] (): string {
+    return SigState[SigState.CONNECTED]
   }
 
   /**
-   * Equals to `3`, you has successfully joined a web group and ready to help join others.
+   * Equals to `2`, you has successfully joined a web group and ready to help join others.
    * @type {number}
    */
-  static get READY_TO_JOIN_OTHERS (): number { return SigState.READY_TO_JOIN_OTHERS }
+  static get STABLE (): number { return SigState.STABLE }
 
   /**
-   * Equals to `'READY_TO_JOIN_OTHERS'`.
+   * Equals to `'STABLE'`.
    * @type {string}
    */
-  static get [SignalingState.READY_TO_JOIN_OTHERS] (): string { return SigState[SigState.READY_TO_JOIN_OTHERS] }
+  static get [SignalingState.STABLE] (): string { return SigState[SigState.STABLE] }
 
   /**
-   * Equals to `4`, the connection is closed.
+   * Equals to `3`, the connection is closed.
    * @type {number}
    */
   static get CLOSED (): number { return SigState.CLOSED }

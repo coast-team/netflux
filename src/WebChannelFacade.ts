@@ -92,7 +92,7 @@ export class WebGroupState {
  * wg.onMemberLeave = (id) => {
  *   // YOUR CODE...
  * }
- * wg.onMessage = (id, data, isBroadcast) => {
+ * wg.onMessage = (id, data) => {
  *   // YOUR CODE...
  * }
  * wg.onStateChange = (state) => {
@@ -113,7 +113,7 @@ export class WebGroup {
   public signalingState: SignalingState
   public signalingURL: string
   public autoRejoin: boolean
-  public onMessage: (id: number, data: DataType, isBroadcast: boolean) => void
+  public onMessage: (id: number, data: DataType) => void
   public onMemberJoin: (id: number) => void
   public onMemberLeave: (id: number) => void
   public onStateChange: (state: WebGroupState) => void
@@ -199,16 +199,15 @@ export class WebGroup {
     /**
      * This handler is called when a message has been received from the group.
      * `id` is an identifier of the member who sent this message.
-     * `isBroadcast` aquals to true if the data is sent via {@link WebGroup#send}
      * and false if sent via {@link WebGroup#sendTo}.
-     * @type {function(id: number, data: DataType, isBroadcast: boolean)}
+     * @type {function(id: number, data: DataType)}
      */
     this.onMessage = undefined
     Reflect.defineProperty(this, 'onMessage', {
       configurable: true,
       enumerable: true,
       get: () => (wc.onMessage.name === 'none') ? undefined : wc.onMessage,
-      set: (handler: (id: number, data: DataType, isBroadcast: boolean) => void) => {
+      set: (handler: (id: number, data: DataType) => void) => {
         if (typeof handler !== 'function') {
           wc.onMessage = function none () {}
         } else {

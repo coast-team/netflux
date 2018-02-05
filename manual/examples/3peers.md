@@ -11,7 +11,7 @@ Peers **A**, **B** and **C** will constitute a peer to peer network. We suppose 
 let network = netflux.create();
 
 // When a message  has arrived from the network
-network.onMessage = (peerId, msg, isBroadcast) => {
+network.onMessage = (peerId, msg) => {
   // do something...
 };
 
@@ -37,7 +37,7 @@ network.open()
 // Creates network with default settings
 let network = netflux.create();
 
-network.onMessage = (peerId, msg, isBroadcast) => { /* do something... */};
+network.onMessage = (peerId, msg) => { /* do something... */};
 
 network.onPeerJoin = (peerId) => { /* do something... */};
 
@@ -60,7 +60,7 @@ network.join(key)
 // Creates network with default settings
 let network = netflux.create();
 
-network.onMessage = (peerId, msg, isBroadcast) => { /* do something... */};
+network.onMessage = (peerId, msg) => { /* do something... */};
 
 network.onPeerJoin = (peerId) => { /* do something... */};
 

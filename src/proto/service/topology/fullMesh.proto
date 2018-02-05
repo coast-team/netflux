@@ -3,14 +3,13 @@ package fullMesh;
 
 message Message {
   oneof type {
-    Peers connectTo = 1;
-    Peers connectedTo = 2;
-    uint32 joiningPeerId = 3;
-    bool joinSucceed = 4;
+    Peers members = 1;
+    bool requestMembers = 2;
+    Peers intermediaryIds = 3;
     bool heartbeat = 5;
   }
 }
 
 message Peers {
-  repeated uint32 members = 1;
+  repeated uint32 ids = 1;
 }

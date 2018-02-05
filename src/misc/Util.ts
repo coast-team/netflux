@@ -71,11 +71,11 @@ export function enableLog (isDebug: boolean, level = 'info') {
           console.info(`%cNETFLUX%c: ${msg}`, netfluxCSS, '', ...rest)
         }
       },
-      signalingState: (msg: string): void => {
-        console.info(`%cNETFLUX%c: Signaling: %c${msg}%c`, netfluxCSS, '', signalingStateCSS, '')
+      signalingState: (msg: string, id: number): void => {
+        console.info(`%cNETFLUX ${id}%c: Signaling: %c${msg}%c`, netfluxCSS, '', signalingStateCSS, '')
       },
-      webGroupState: (msg: string): void => {
-        console.info(`%cNETFLUX%c: WebGroup: %c${msg}%c`, netfluxCSS, '', webGroupStateCSS, '')
+      webGroupState: (msg: string, id: number): void => {
+        console.info(`%cNETFLUX ${id}%c: WebGroup: %c${msg}%c`, netfluxCSS, '', webGroupStateCSS, '')
       },
     }
     if (level === 'debug') {

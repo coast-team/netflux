@@ -27,13 +27,7 @@ const FIRST_CONNECTION_ERROR_CODE = 4011
 /* Preconstructed messages */
 const heartbeatMsg = signaling.Message.encode(signaling.Message.create({ heartbeat: true })).finish()
 
-export enum SignalingState {
-  CONNECTING,
-  OPEN,
-  CONNECTED_WITH_FIRST_MEMBER,
-  READY_TO_JOIN_OTHERS,
-  CLOSED,
-}
+export enum SignalingState { CONNECTING, CONNECTED, STABLE, CLOSED }
 
 /**
  * This class represents a door of the `WebChannel` for the current peer. If the door
@@ -77,23 +71,20 @@ export class Signaling {
    * to join new peers to the network.
    */
   open (): void {
-    if (this.state === SignalingState.CONNECTED_WITH_FIRST_MEMBER) {
+    if (this.state === SignalingState.CONNECTED) {
       this.rxWs.send({ joined: true })
-      this.setState(SignalingState.READY_TO_JOIN_OTHERS)
+      this.setState(SignalingState.STABLE)
+      log.debug('Signaling: STABLE')
     }
   }
 
   join (key: string): void {
-    if (this.state === SignalingState.READY_TO_JOIN_OTHERS) {
-      throw new Error('Failed to join via signaling: connection with signaling is already opened')
-    }
+    this.setState(SignalingState.CONNECTING)
     if (this.state !== SignalingState.CLOSED) {
       this.close()
     }
-    this.setState(SignalingState.CONNECTING)
     this.wc.webSocketBuilder.connect(this.getFullURL(key))
       .then((ws: WebSocket) => {
-        this.setState(SignalingState.OPEN)
         this.rxWs = this.createRxWs(ws)
         this.rxWs.onMessage.subscribe(
           (msg) => {
@@ -103,7 +94,8 @@ export class Signaling {
               break
             case 'isFirst':
               if (msg.isFirst) {
-                this.setState(SignalingState.READY_TO_JOIN_OTHERS)
+                log.debug('Signaling: STABLE FIRST')
+                this.setState(SignalingState.STABLE)
               } else {
                 this.wc.webRTCBuilder.connectOverSignaling({
                   onMessage: this.rxWs.onMessage.pipe(
@@ -113,10 +105,11 @@ export class Signaling {
                   send: (m) => this.rxWs.send({ content: m }),
                 })
                   .then((ch: Channel) => {
-                    this.setState(SignalingState.CONNECTED_WITH_FIRST_MEMBER)
-                    ch.markAsIntermediry()
+                    log.debug('Signaling: CONNECTED')
+                    this.setState(SignalingState.CONNECTED)
                   })
                   .catch((err) => {
+                    this.setState(SignalingState.CLOSED)
                     this.rxWs.close(FIRST_CONNECTION_ERROR_CODE, `Failed to join over Signaling: ${err.message}`)
                   })
               }
@@ -142,7 +135,7 @@ export class Signaling {
     if (this.state !== state) {
       this.state = state
       this.stateSubject.next(state)
-      if (state === SignalingState.READY_TO_JOIN_OTHERS) {
+      if (state === SignalingState.STABLE) {
         this.wc.webRTCBuilder.onChannelFromSignaling({
           onMessage: this.rxWs.onMessage.pipe(
             filter(({ type }) => type === 'content'),

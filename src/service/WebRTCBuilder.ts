@@ -14,7 +14,7 @@ import { WebChannel } from './WebChannel'
  * Service id.
  */
 const ID = 300
-const CONNECT_TIMEOUT = 14000
+const CONNECT_TIMEOUT = 9000
 
 interface ICommonMessage {
   iceCandidate?: webRTCBuilder.IIceCandidate,

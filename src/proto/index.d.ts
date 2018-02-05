@@ -264,7 +264,7 @@ export namespace webChannel {
         init?: (webChannel.IInitData|null);
 
         /** Message initOk */
-        initOk?: (webChannel.IPeers|null);
+        initOk?: (boolean|null);
 
         /** Message ping */
         ping?: (boolean|null);
@@ -286,7 +286,7 @@ export namespace webChannel {
         public init?: (webChannel.IInitData|null);
 
         /** Message initOk. */
-        public initOk?: (webChannel.IPeers|null);
+        public initOk: boolean;
 
         /** Message ping. */
         public ping: boolean;
@@ -334,6 +334,9 @@ export namespace webChannel {
 
         /** InitData generatedIds */
         generatedIds?: (number[]|null);
+
+        /** InitData members */
+        members?: (number[]|null);
     }
 
     /** Represents an InitData. */
@@ -353,6 +356,9 @@ export namespace webChannel {
 
         /** InitData generatedIds. */
         public generatedIds: number[];
+
+        /** InitData members. */
+        public members: number[];
 
         /**
          * Creates a new InitData instance using the specified properties.
@@ -378,51 +384,6 @@ export namespace webChannel {
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
         public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): webChannel.InitData;
-    }
-
-    /** Properties of a Peers. */
-    interface IPeers {
-
-        /** Peers members */
-        members?: (number[]|null);
-    }
-
-    /** Represents a Peers. */
-    class Peers implements IPeers {
-
-        /**
-         * Constructs a new Peers.
-         * @param [properties] Properties to set
-         */
-        constructor(properties?: webChannel.IPeers);
-
-        /** Peers members. */
-        public members: number[];
-
-        /**
-         * Creates a new Peers instance using the specified properties.
-         * @param [properties] Properties to set
-         * @returns Peers instance
-         */
-        public static create(properties?: webChannel.IPeers): webChannel.Peers;
-
-        /**
-         * Encodes the specified Peers message. Does not implicitly {@link webChannel.Peers.verify|verify} messages.
-         * @param message Peers message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encode(message: webChannel.IPeers, writer?: $protobuf.Writer): $protobuf.Writer;
-
-        /**
-         * Decodes a Peers message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
-         * @returns Peers
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): webChannel.Peers;
     }
 }
 
@@ -547,17 +508,14 @@ export namespace fullMesh {
     /** Properties of a Message. */
     interface IMessage {
 
-        /** Message connectTo */
-        connectTo?: (fullMesh.IPeers|null);
+        /** Message members */
+        members?: (fullMesh.IPeers|null);
 
-        /** Message connectedTo */
-        connectedTo?: (fullMesh.IPeers|null);
+        /** Message requestMembers */
+        requestMembers?: (boolean|null);
 
-        /** Message joiningPeerId */
-        joiningPeerId?: (number|null);
-
-        /** Message joinSucceed */
-        joinSucceed?: (boolean|null);
+        /** Message intermediaryIds */
+        intermediaryIds?: (fullMesh.IPeers|null);
 
         /** Message heartbeat */
         heartbeat?: (boolean|null);
@@ -572,23 +530,20 @@ export namespace fullMesh {
          */
         constructor(properties?: fullMesh.IMessage);
 
-        /** Message connectTo. */
-        public connectTo?: (fullMesh.IPeers|null);
+        /** Message members. */
+        public members?: (fullMesh.IPeers|null);
 
-        /** Message connectedTo. */
-        public connectedTo?: (fullMesh.IPeers|null);
+        /** Message requestMembers. */
+        public requestMembers: boolean;
 
-        /** Message joiningPeerId. */
-        public joiningPeerId: number;
-
-        /** Message joinSucceed. */
-        public joinSucceed: boolean;
+        /** Message intermediaryIds. */
+        public intermediaryIds?: (fullMesh.IPeers|null);
 
         /** Message heartbeat. */
         public heartbeat: boolean;
 
         /** Message type. */
-        public type?: ("connectTo"|"connectedTo"|"joiningPeerId"|"joinSucceed"|"heartbeat");
+        public type?: ("members"|"requestMembers"|"intermediaryIds"|"heartbeat");
 
         /**
          * Creates a new Message instance using the specified properties.
@@ -619,8 +574,8 @@ export namespace fullMesh {
     /** Properties of a Peers. */
     interface IPeers {
 
-        /** Peers members */
-        members?: (number[]|null);
+        /** Peers ids */
+        ids?: (number[]|null);
     }
 
     /** Represents a Peers. */
@@ -632,8 +587,8 @@ export namespace fullMesh {
          */
         constructor(properties?: fullMesh.IPeers);
 
-        /** Peers members. */
-        public members: number[];
+        /** Peers ids. */
+        public ids: number[];
 
         /**
          * Creates a new Peers instance using the specified properties.

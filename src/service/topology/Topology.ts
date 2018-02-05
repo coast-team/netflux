@@ -1,9 +1,16 @@
+import { Observable } from 'rxjs/Observable'
 import { Channel } from '../../Channel'
 import { IMessage } from '../../proto'
 import { Service } from '../Service'
 
 export enum TopologyEnum {
   FULL_MESH,
+}
+
+export enum TopologyStateEnum {
+  JOINED,
+  STABLE,
+  FAILED,
 }
 
 /**
@@ -20,21 +27,14 @@ export enum TopologyEnum {
  */
 export interface ITopology extends Service {
 
+  onState: Observable<TopologyStateEnum>
+
   /**
    * As a network member, add a new peer into the network.
    *
    * @param ch  A channel between you and the joining peer
    */
-  addJoining (ch: Channel, members: [number]): void
-
-  /**
-   * This method is called just after the channel between you and
-   * one of the network member through whom you are joining has been
-   * established. It called before initJoing method.
-   *
-   * @param ch  A channel between you and one of the network member
-   */
-  initIntermediary (ch: Channel): void
+  addJoining (ch: Channel)
 
   /**
    * This method is called when all necessary initialization messages have been
@@ -42,7 +42,7 @@ export interface ITopology extends Service {
    *
    * @param ch  A channel between you and one of the network member
    */
-  initJoining (ch: Channel): void
+  initJoining (ch: Channel, ids: number[]): void
 
   /**
    * Broadcast a message to the network.
@@ -50,8 +50,7 @@ export interface ITopology extends Service {
   send (msg: IMessage): void
 
   /**
-   * Forward a broadcasted message. This method should be called onces
-   * the peer receives a broadcasted message.
+   * Forward the message to its recipient(s).
    */
   forward (msg: IMessage): void
 
@@ -59,13 +58,6 @@ export interface ITopology extends Service {
    * Send a message to a particular peer in the network.
    */
   sendTo (msg: IMessage): void
-
-  /**
-   * Forward the message to its recipient or to some peer who knowns how
-   * to forward this message to its recipient. This method should be called
-   * onces the peer receives a private message intended to someone else.
-   */
-  forwardTo (msg: IMessage): void
 
   /**
    * Disconnect from the network

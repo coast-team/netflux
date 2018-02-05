@@ -724,7 +724,7 @@ function pool(alloc, slice, size) {
     };
 }
 
-var longbits = LongBits$1;
+var longbits = LongBits;
 
 /**
  * Constructs new long bits.
@@ -734,7 +734,7 @@ var longbits = LongBits$1;
  * @param {number} lo Low 32 bits, unsigned
  * @param {number} hi High 32 bits, unsigned
  */
-function LongBits$1(lo, hi) {
+function LongBits(lo, hi) {
 
     // note that the casts below are theoretically unnecessary as of today, but older statically
     // generated converter code might still call the ctor with signed 32bits. kept for compat.
@@ -757,7 +757,7 @@ function LongBits$1(lo, hi) {
  * @memberof util.LongBits
  * @type {util.LongBits}
  */
-var zero = LongBits$1.zero = new LongBits$1(0, 0);
+var zero = LongBits.zero = new LongBits(0, 0);
 
 zero.toNumber = function () {
     return 0;
@@ -774,14 +774,14 @@ zero.length = function () {
  * @memberof util.LongBits
  * @type {string}
  */
-var zeroHash = LongBits$1.zeroHash = "\0\0\0\0\0\0\0\0";
+var zeroHash = LongBits.zeroHash = "\0\0\0\0\0\0\0\0";
 
 /**
  * Constructs new long bits from the specified number.
  * @param {number} value Value
  * @returns {util.LongBits} Instance
  */
-LongBits$1.fromNumber = function fromNumber(value) {
+LongBits.fromNumber = function fromNumber(value) {
     if (value === 0) return zero;
     var sign = value < 0;
     if (sign) value = -value;
@@ -795,7 +795,7 @@ LongBits$1.fromNumber = function fromNumber(value) {
             if (++hi > 4294967295) hi = 0;
         }
     }
-    return new LongBits$1(lo, hi);
+    return new LongBits(lo, hi);
 };
 
 /**
@@ -803,13 +803,13 @@ LongBits$1.fromNumber = function fromNumber(value) {
  * @param {Long|number|string} value Value
  * @returns {util.LongBits} Instance
  */
-LongBits$1.from = function from(value) {
-    if (typeof value === "number") return LongBits$1.fromNumber(value);
-    if (minimal$2.isString(value)) {
+LongBits.from = function from(value) {
+    if (typeof value === "number") return LongBits.fromNumber(value);
+    if (minimal.isString(value)) {
         /* istanbul ignore else */
-        if (minimal$2.Long) value = minimal$2.Long.fromString(value);else return LongBits$1.fromNumber(parseInt(value, 10));
+        if (minimal.Long) value = minimal.Long.fromString(value);else return LongBits.fromNumber(parseInt(value, 10));
     }
-    return value.low || value.high ? new LongBits$1(value.low >>> 0, value.high >>> 0) : zero;
+    return value.low || value.high ? new LongBits(value.low >>> 0, value.high >>> 0) : zero;
 };
 
 /**
@@ -817,7 +817,7 @@ LongBits$1.from = function from(value) {
  * @param {boolean} [unsigned=false] Whether unsigned or not
  * @returns {number} Possibly unsafe number
  */
-LongBits$1.prototype.toNumber = function toNumber(unsigned) {
+LongBits.prototype.toNumber = function toNumber(unsigned) {
     if (!unsigned && this.hi >>> 31) {
         var lo = ~this.lo + 1 >>> 0,
             hi = ~this.hi >>> 0;
@@ -832,8 +832,8 @@ LongBits$1.prototype.toNumber = function toNumber(unsigned) {
  * @param {boolean} [unsigned=false] Whether unsigned or not
  * @returns {Long} Long
  */
-LongBits$1.prototype.toLong = function toLong(unsigned) {
-    return minimal$2.Long ? new minimal$2.Long(this.lo | 0, this.hi | 0, Boolean(unsigned))
+LongBits.prototype.toLong = function toLong(unsigned) {
+    return minimal.Long ? new minimal.Long(this.lo | 0, this.hi | 0, Boolean(unsigned))
     /* istanbul ignore next */
     : { low: this.lo | 0, high: this.hi | 0, unsigned: Boolean(unsigned) };
 };
@@ -845,16 +845,16 @@ var charCodeAt = String.prototype.charCodeAt;
  * @param {string} hash Hash
  * @returns {util.LongBits} Bits
  */
-LongBits$1.fromHash = function fromHash(hash) {
+LongBits.fromHash = function fromHash(hash) {
     if (hash === zeroHash) return zero;
-    return new LongBits$1((charCodeAt.call(hash, 0) | charCodeAt.call(hash, 1) << 8 | charCodeAt.call(hash, 2) << 16 | charCodeAt.call(hash, 3) << 24) >>> 0, (charCodeAt.call(hash, 4) | charCodeAt.call(hash, 5) << 8 | charCodeAt.call(hash, 6) << 16 | charCodeAt.call(hash, 7) << 24) >>> 0);
+    return new LongBits((charCodeAt.call(hash, 0) | charCodeAt.call(hash, 1) << 8 | charCodeAt.call(hash, 2) << 16 | charCodeAt.call(hash, 3) << 24) >>> 0, (charCodeAt.call(hash, 4) | charCodeAt.call(hash, 5) << 8 | charCodeAt.call(hash, 6) << 16 | charCodeAt.call(hash, 7) << 24) >>> 0);
 };
 
 /**
  * Converts this long bits to a 8 characters long hash.
  * @returns {string} Hash
  */
-LongBits$1.prototype.toHash = function toHash() {
+LongBits.prototype.toHash = function toHash() {
     return String.fromCharCode(this.lo & 255, this.lo >>> 8 & 255, this.lo >>> 16 & 255, this.lo >>> 24, this.hi & 255, this.hi >>> 8 & 255, this.hi >>> 16 & 255, this.hi >>> 24);
 };
 
@@ -862,7 +862,7 @@ LongBits$1.prototype.toHash = function toHash() {
  * Zig-zag encodes this long bits.
  * @returns {util.LongBits} `this`
  */
-LongBits$1.prototype.zzEncode = function zzEncode() {
+LongBits.prototype.zzEncode = function zzEncode() {
     var mask = this.hi >> 31;
     this.hi = ((this.hi << 1 | this.lo >>> 31) ^ mask) >>> 0;
     this.lo = (this.lo << 1 ^ mask) >>> 0;
@@ -873,7 +873,7 @@ LongBits$1.prototype.zzEncode = function zzEncode() {
  * Zig-zag decodes this long bits.
  * @returns {util.LongBits} `this`
  */
-LongBits$1.prototype.zzDecode = function zzDecode() {
+LongBits.prototype.zzDecode = function zzDecode() {
     var mask = -(this.lo & 1);
     this.lo = ((this.lo >>> 1 | this.hi << 31) ^ mask) >>> 0;
     this.hi = (this.hi >>> 1 ^ mask) >>> 0;
@@ -884,7 +884,7 @@ LongBits$1.prototype.zzDecode = function zzDecode() {
  * Calculates the length of this longbits when encoded as a varint.
  * @returns {number} Length
  */
-LongBits$1.prototype.length = function length() {
+LongBits.prototype.length = function length() {
     var part0 = this.lo,
         part1 = (this.lo >>> 28 | this.hi << 4) >>> 0,
         part2 = this.hi >>> 24;
@@ -893,7 +893,7 @@ LongBits$1.prototype.length = function length() {
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-var minimal$2 = createCommonjsModule(function (module, exports) {
+var minimal = createCommonjsModule(function (module, exports) {
     var util = exports;
 
     // used to return a Promise where callback is omitted
@@ -1293,9 +1293,9 @@ var writer = Writer;
 
 var BufferWriter; // cyclic
 
-var LongBits = minimal$2.LongBits;
-var base64 = minimal$2.base64;
-var utf8 = minimal$2.utf8;
+var LongBits$1 = minimal.LongBits;
+var base64 = minimal.base64;
+var utf8 = minimal.utf8;
 
 /**
  * Constructs a new writer operation instance.
@@ -1414,7 +1414,7 @@ function Writer() {
  * @function
  * @returns {BufferWriter|Writer} A {@link BufferWriter} when Buffers are supported, otherwise a {@link Writer}
  */
-Writer.create = minimal$2.Buffer ? function create_buffer_setup() {
+Writer.create = minimal.Buffer ? function create_buffer_setup() {
     return (Writer.create = function create_buffer() {
         return new BufferWriter();
     })();
@@ -1430,12 +1430,12 @@ Writer.create = minimal$2.Buffer ? function create_buffer_setup() {
  * @returns {Uint8Array} Buffer
  */
 Writer.alloc = function alloc(size) {
-    return new minimal$2.Array(size);
+    return new minimal.Array(size);
 };
 
 // Use Uint8Array buffer pool in the browser, just like node does with buffers
 /* istanbul ignore else */
-if (minimal$2.Array !== Array) Writer.alloc = minimal$2.pool(Writer.alloc, minimal$2.Array.prototype.subarray);
+if (minimal.Array !== Array) Writer.alloc = minimal.pool(Writer.alloc, minimal.Array.prototype.subarray);
 
 /**
  * Pushes a new operation to the queue.
@@ -1500,7 +1500,7 @@ Writer.prototype.uint32 = function write_uint32(value) {
  * @returns {Writer} `this`
  */
 Writer.prototype.int32 = function write_int32(value) {
-    return value < 0 ? this._push(writeVarint64, 10, LongBits.fromNumber(value)) // 10 bytes per spec
+    return value < 0 ? this._push(writeVarint64, 10, LongBits$1.fromNumber(value)) // 10 bytes per spec
     : this.uint32(value);
 };
 
@@ -1533,7 +1533,7 @@ function writeVarint64(val, buf, pos) {
  * @throws {TypeError} If `value` is a string and no long library is present.
  */
 Writer.prototype.uint64 = function write_uint64(value) {
-    var bits = LongBits.from(value);
+    var bits = LongBits$1.from(value);
     return this._push(writeVarint64, bits.length(), bits);
 };
 
@@ -1553,7 +1553,7 @@ Writer.prototype.int64 = Writer.prototype.uint64;
  * @throws {TypeError} If `value` is a string and no long library is present.
  */
 Writer.prototype.sint64 = function write_sint64(value) {
-    var bits = LongBits.from(value).zzEncode();
+    var bits = LongBits$1.from(value).zzEncode();
     return this._push(writeVarint64, bits.length(), bits);
 };
 
@@ -1597,7 +1597,7 @@ Writer.prototype.sfixed32 = Writer.prototype.fixed32;
  * @throws {TypeError} If `value` is a string and no long library is present.
  */
 Writer.prototype.fixed64 = function write_fixed64(value) {
-    var bits = LongBits.from(value);
+    var bits = LongBits$1.from(value);
     return this._push(writeFixed32, 4, bits.lo)._push(writeFixed32, 4, bits.hi);
 };
 
@@ -1617,7 +1617,7 @@ Writer.prototype.sfixed64 = Writer.prototype.fixed64;
  * @returns {Writer} `this`
  */
 Writer.prototype.float = function write_float(value) {
-    return this._push(minimal$2.float.writeFloatLE, 4, value);
+    return this._push(minimal.float.writeFloatLE, 4, value);
 };
 
 /**
@@ -1627,10 +1627,10 @@ Writer.prototype.float = function write_float(value) {
  * @returns {Writer} `this`
  */
 Writer.prototype.double = function write_double(value) {
-    return this._push(minimal$2.float.writeDoubleLE, 8, value);
+    return this._push(minimal.float.writeDoubleLE, 8, value);
 };
 
-var writeBytes = minimal$2.Array.prototype.set ? function writeBytes_set(val, buf, pos) {
+var writeBytes = minimal.Array.prototype.set ? function writeBytes_set(val, buf, pos) {
     buf.set(val, pos); // also works for plain array values
 }
 /* istanbul ignore next */
@@ -1648,7 +1648,7 @@ var writeBytes = minimal$2.Array.prototype.set ? function writeBytes_set(val, bu
 Writer.prototype.bytes = function write_bytes(value) {
     var len = value.length >>> 0;
     if (!len) return this._push(writeByte, 1, 0);
-    if (minimal$2.isString(value)) {
+    if (minimal.isString(value)) {
         var buf = Writer.alloc(len = base64.length(value));
         base64.decode(value, buf, 0);
         value = buf;
@@ -1740,7 +1740,7 @@ var writer_buffer = BufferWriter$1;
 
 (BufferWriter$1.prototype = Object.create(writer.prototype)).constructor = BufferWriter$1;
 
-var Buffer = minimal$2.Buffer;
+var Buffer = minimal.Buffer;
 
 /**
  * Constructs a new buffer writer instance.
@@ -1758,7 +1758,7 @@ function BufferWriter$1() {
  * @returns {Buffer} Buffer
  */
 BufferWriter$1.alloc = function alloc_buffer(size) {
-    return (BufferWriter$1.alloc = minimal$2._Buffer_allocUnsafe)(size);
+    return (BufferWriter$1.alloc = minimal._Buffer_allocUnsafe)(size);
 };
 
 var writeBytesBuffer = Buffer && Buffer.prototype instanceof Uint8Array && Buffer.prototype.set.name === "set" ? function writeBytesBuffer_set(val, buf, pos) {
@@ -1778,7 +1778,7 @@ var writeBytesBuffer = Buffer && Buffer.prototype instanceof Uint8Array && Buffe
  * @override
  */
 BufferWriter$1.prototype.bytes = function write_bytes_buffer(value) {
-    if (minimal$2.isString(value)) value = minimal$2._Buffer_from(value, "base64");
+    if (minimal.isString(value)) value = minimal._Buffer_from(value, "base64");
     var len = value.length >>> 0;
     this.uint32(len);
     if (len) this._push(writeBytesBuffer, len, value);
@@ -1787,7 +1787,7 @@ BufferWriter$1.prototype.bytes = function write_bytes_buffer(value) {
 
 function writeStringBuffer(val, buf, pos) {
     if (val.length < 40) // plain js is faster for short strings (probably due to redundant assertions)
-        minimal$2.utf8.write(val, buf, pos);else buf.utf8Write(val, pos);
+        minimal.utf8.write(val, buf, pos);else buf.utf8Write(val, pos);
 }
 
 /**
@@ -1804,8 +1804,8 @@ var reader = Reader;
 
 var BufferReader; // cyclic
 
-var LongBits$2 = minimal$2.LongBits;
-var utf8$1 = minimal$2.utf8;
+var LongBits$2 = minimal.LongBits;
+var utf8$1 = minimal.utf8;
 
 /* istanbul ignore next */
 function indexOutOfRange(reader, writeLength) {
@@ -1856,9 +1856,9 @@ var create_array = typeof Uint8Array !== "undefined" ? function create_typed_arr
  * @returns {Reader|BufferReader} A {@link BufferReader} if `buffer` is a Buffer, otherwise a {@link Reader}
  * @throws {Error} If `buffer` is not a valid buffer
  */
-Reader.create = minimal$2.Buffer ? function create_buffer_setup(buffer) {
+Reader.create = minimal.Buffer ? function create_buffer_setup(buffer) {
     return (Reader.create = function create_buffer(buffer) {
-        return minimal$2.Buffer.isBuffer(buffer) ? new BufferReader(buffer)
+        return minimal.Buffer.isBuffer(buffer) ? new BufferReader(buffer)
         /* istanbul ignore next */
         : create_array(buffer);
     })(buffer);
@@ -1866,7 +1866,7 @@ Reader.create = minimal$2.Buffer ? function create_buffer_setup(buffer) {
 /* istanbul ignore next */
 : create_array;
 
-Reader.prototype._slice = minimal$2.Array.prototype.subarray || /* istanbul ignore next */minimal$2.Array.prototype.slice;
+Reader.prototype._slice = minimal.Array.prototype.subarray || /* istanbul ignore next */minimal.Array.prototype.slice;
 
 /**
  * Reads a varint as an unsigned 32 bit value.
@@ -2054,7 +2054,7 @@ Reader.prototype.float = function read_float() {
     /* istanbul ignore if */
     if (this.pos + 4 > this.len) throw indexOutOfRange(this, 4);
 
-    var value = minimal$2.float.readFloatLE(this.buf, this.pos);
+    var value = minimal.float.readFloatLE(this.buf, this.pos);
     this.pos += 4;
     return value;
 };
@@ -2069,7 +2069,7 @@ Reader.prototype.double = function read_double() {
     /* istanbul ignore if */
     if (this.pos + 8 > this.len) throw indexOutOfRange(this, 4);
 
-    var value = minimal$2.float.readDoubleLE(this.buf, this.pos);
+    var value = minimal.float.readDoubleLE(this.buf, this.pos);
     this.pos += 8;
     return value;
 };
@@ -2158,8 +2158,8 @@ Reader.prototype.skipType = function (wireType) {
 Reader._configure = function (BufferReader_) {
     BufferReader = BufferReader_;
 
-    var fn = minimal$2.Long ? "toLong" : /* istanbul ignore next */"toNumber";
-    minimal$2.merge(Reader.prototype, {
+    var fn = minimal.Long ? "toLong" : /* istanbul ignore next */"toNumber";
+    minimal.merge(Reader.prototype, {
 
         int64: function read_int64() {
             return readLongVarint.call(this)[fn](false);
@@ -2208,7 +2208,7 @@ function BufferReader$1(buffer) {
 }
 
 /* istanbul ignore else */
-if (minimal$2.Buffer) BufferReader$1.prototype._slice = minimal$2.Buffer.prototype.slice;
+if (minimal.Buffer) BufferReader$1.prototype._slice = minimal.Buffer.prototype.slice;
 
 /**
  * @override
@@ -2218,10 +2218,10 @@ BufferReader$1.prototype.string = function read_string_buffer() {
   return this.buf.utf8Slice(this.pos, this.pos = Math.min(this.pos + len, this.len));
 };
 
-var service$1 = Service;
+var service = Service;
 
 // Extends EventEmitter
-(Service.prototype = Object.create(minimal$2.EventEmitter.prototype)).constructor = Service;
+(Service.prototype = Object.create(minimal.EventEmitter.prototype)).constructor = Service;
 
 /**
  * A service method callback as used by {@link rpc.ServiceMethod|ServiceMethod}.
@@ -2260,7 +2260,7 @@ function Service(rpcImpl, requestDelimited, responseDelimited) {
 
     if (typeof rpcImpl !== "function") throw TypeError("rpcImpl must be a function");
 
-    minimal$2.EventEmitter.call(this);
+    minimal.EventEmitter.call(this);
 
     /**
      * RPC implementation. Becomes `null` once the service is ended.
@@ -2297,7 +2297,7 @@ Service.prototype.rpcCall = function rpcCall(method, requestCtor, responseCtor, 
     if (!request) throw TypeError("request must be specified");
 
     var self = this;
-    if (!callback) return minimal$2.asPromise(rpcCall, self, method, requestCtor, responseCtor, request);
+    if (!callback) return minimal.asPromise(rpcCall, self, method, requestCtor, responseCtor, request);
 
     if (!self.rpcImpl) {
         setTimeout(function () {
@@ -2385,7 +2385,7 @@ var rpc_1 = createCommonjsModule(function (module, exports) {
    * @returns {undefined}
    */
 
-  rpc.Service = service$1;
+  rpc.Service = service;
 });
 
 var roots = {};
@@ -2408,7 +2408,7 @@ var indexMinimal = createCommonjsModule(function (module, exports) {
   protobuf.BufferReader = reader_buffer;
 
   // Utility
-  protobuf.util = minimal$2;
+  protobuf.util = minimal;
   protobuf.rpc = rpc_1;
   protobuf.roots = roots;
   protobuf.configure = configure;
@@ -2428,12 +2428,12 @@ var indexMinimal = createCommonjsModule(function (module, exports) {
   configure();
 });
 
-var minimal = indexMinimal;
+var minimal$2 = indexMinimal;
 
-var minimal_1 = minimal.Reader;
-var minimal_2 = minimal.Writer;
-var minimal_3 = minimal.util;
-var minimal_4 = minimal.roots;
+var minimal_1 = minimal$2.Reader;
+var minimal_2 = minimal$2.Writer;
+var minimal_3 = minimal$2.util;
+var minimal_4 = minimal$2.roots;
 
 /*eslint-disable block-scoped-var, no-redeclare, no-control-regex, no-prototype-builtins*/
 // Common aliases
@@ -2859,7 +2859,7 @@ var user = $root.user = function () {
     return user;
 }();
 
-var service = $root.service = function () {
+var service$2 = $root.service = function () {
 
     /**
      * Namespace service.
@@ -2990,7 +2990,7 @@ var webChannel = $root.webChannel = function () {
          * @memberof webChannel
          * @interface IMessage
          * @property {webChannel.IInitData|null} [init] Message init
-         * @property {webChannel.IPeers|null} [initOk] Message initOk
+         * @property {boolean|null} [initOk] Message initOk
          * @property {boolean|null} [ping] Message ping
          * @property {boolean|null} [pong] Message pong
          */
@@ -3019,11 +3019,11 @@ var webChannel = $root.webChannel = function () {
 
         /**
          * Message initOk.
-         * @member {webChannel.IPeers|null|undefined} initOk
+         * @member {boolean} initOk
          * @memberof webChannel.Message
          * @instance
          */
-        Message.prototype.initOk = null;
+        Message.prototype.initOk = false;
 
         /**
          * Message ping.
@@ -3079,7 +3079,7 @@ var webChannel = $root.webChannel = function () {
         Message.encode = function encode(message, writer) {
             if (!writer) writer = $Writer.create();
             if (message.init != null && message.hasOwnProperty("init")) $root.webChannel.InitData.encode(message.init, writer.uint32( /* id 1, wireType 2 =*/10).fork()).ldelim();
-            if (message.initOk != null && message.hasOwnProperty("initOk")) $root.webChannel.Peers.encode(message.initOk, writer.uint32( /* id 2, wireType 2 =*/18).fork()).ldelim();
+            if (message.initOk != null && message.hasOwnProperty("initOk")) writer.uint32( /* id 2, wireType 0 =*/16).bool(message.initOk);
             if (message.ping != null && message.hasOwnProperty("ping")) writer.uint32( /* id 3, wireType 0 =*/24).bool(message.ping);
             if (message.pong != null && message.hasOwnProperty("pong")) writer.uint32( /* id 4, wireType 0 =*/32).bool(message.pong);
             return writer;
@@ -3107,7 +3107,7 @@ var webChannel = $root.webChannel = function () {
                         message.init = $root.webChannel.InitData.decode(reader, reader.uint32());
                         break;
                     case 2:
-                        message.initOk = $root.webChannel.Peers.decode(reader, reader.uint32());
+                        message.initOk = reader.bool();
                         break;
                     case 3:
                         message.ping = reader.bool();
@@ -3135,6 +3135,7 @@ var webChannel = $root.webChannel = function () {
          * @property {number|null} [topology] InitData topology
          * @property {number|null} [wcId] InitData wcId
          * @property {Array.<number>|null} [generatedIds] InitData generatedIds
+         * @property {Array.<number>|null} [members] InitData members
          */
 
         /**
@@ -3147,6 +3148,7 @@ var webChannel = $root.webChannel = function () {
          */
         function InitData(properties) {
             this.generatedIds = [];
+            this.members = [];
             if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
                 if (properties[keys[i]] != null) this[keys[i]] = properties[keys[i]];
             }
@@ -3177,6 +3179,14 @@ var webChannel = $root.webChannel = function () {
         InitData.prototype.generatedIds = $util.emptyArray;
 
         /**
+         * InitData members.
+         * @member {Array.<number>} members
+         * @memberof webChannel.InitData
+         * @instance
+         */
+        InitData.prototype.members = $util.emptyArray;
+
+        /**
          * Creates a new InitData instance using the specified properties.
          * @function create
          * @memberof webChannel.InitData
@@ -3205,6 +3215,12 @@ var webChannel = $root.webChannel = function () {
                 writer.uint32( /* id 3, wireType 2 =*/26).fork();
                 for (var i = 0; i < message.generatedIds.length; ++i) {
                     writer.uint32(message.generatedIds[i]);
+                }writer.ldelim();
+            }
+            if (message.members != null && message.members.length) {
+                writer.uint32( /* id 4, wireType 2 =*/34).fork();
+                for (var _i = 0; _i < message.members.length; ++_i) {
+                    writer.uint32(message.members[_i]);
                 }writer.ldelim();
             }
             return writer;
@@ -3243,104 +3259,11 @@ var webChannel = $root.webChannel = function () {
                             }
                         } else message.generatedIds.push(reader.uint32());
                         break;
-                    default:
-                        reader.skipType(tag & 7);
-                        break;
-                }
-            }
-            return message;
-        };
-
-        return InitData;
-    }();
-
-    webChannel.Peers = function () {
-
-        /**
-         * Properties of a Peers.
-         * @memberof webChannel
-         * @interface IPeers
-         * @property {Array.<number>|null} [members] Peers members
-         */
-
-        /**
-         * Constructs a new Peers.
-         * @memberof webChannel
-         * @classdesc Represents a Peers.
-         * @implements IPeers
-         * @constructor
-         * @param {webChannel.IPeers=} [properties] Properties to set
-         */
-        function Peers(properties) {
-            this.members = [];
-            if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
-                if (properties[keys[i]] != null) this[keys[i]] = properties[keys[i]];
-            }
-        }
-
-        /**
-         * Peers members.
-         * @member {Array.<number>} members
-         * @memberof webChannel.Peers
-         * @instance
-         */
-        Peers.prototype.members = $util.emptyArray;
-
-        /**
-         * Creates a new Peers instance using the specified properties.
-         * @function create
-         * @memberof webChannel.Peers
-         * @static
-         * @param {webChannel.IPeers=} [properties] Properties to set
-         * @returns {webChannel.Peers} Peers instance
-         */
-        Peers.create = function create(properties) {
-            return new Peers(properties);
-        };
-
-        /**
-         * Encodes the specified Peers message. Does not implicitly {@link webChannel.Peers.verify|verify} messages.
-         * @function encode
-         * @memberof webChannel.Peers
-         * @static
-         * @param {webChannel.IPeers} message Peers message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        Peers.encode = function encode(message, writer) {
-            if (!writer) writer = $Writer.create();
-            if (message.members != null && message.members.length) {
-                writer.uint32( /* id 1, wireType 2 =*/10).fork();
-                for (var i = 0; i < message.members.length; ++i) {
-                    writer.uint32(message.members[i]);
-                }writer.ldelim();
-            }
-            return writer;
-        };
-
-        /**
-         * Decodes a Peers message from the specified reader or buffer.
-         * @function decode
-         * @memberof webChannel.Peers
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @param {number} [length] Message length if known beforehand
-         * @returns {webChannel.Peers} Peers
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        Peers.decode = function decode(reader, length) {
-            if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
-            var end = length === undefined ? reader.len : reader.pos + length,
-                message = new $root.webChannel.Peers();
-            while (reader.pos < end) {
-                var tag = reader.uint32();
-                switch (tag >>> 3) {
-                    case 1:
+                    case 4:
                         if (!(message.members && message.members.length)) message.members = [];
                         if ((tag & 7) === 2) {
-                            var end2 = reader.uint32() + reader.pos;
-                            while (reader.pos < end2) {
+                            var _end = reader.uint32() + reader.pos;
+                            while (reader.pos < _end) {
                                 message.members.push(reader.uint32());
                             }
                         } else message.members.push(reader.uint32());
@@ -3353,7 +3276,7 @@ var webChannel = $root.webChannel = function () {
             return message;
         };
 
-        return Peers;
+        return InitData;
     }();
 
     return webChannel;
@@ -3619,10 +3542,9 @@ var fullMesh = $root.fullMesh = function () {
          * Properties of a Message.
          * @memberof fullMesh
          * @interface IMessage
-         * @property {fullMesh.IPeers|null} [connectTo] Message connectTo
-         * @property {fullMesh.IPeers|null} [connectedTo] Message connectedTo
-         * @property {number|null} [joiningPeerId] Message joiningPeerId
-         * @property {boolean|null} [joinSucceed] Message joinSucceed
+         * @property {fullMesh.IPeers|null} [members] Message members
+         * @property {boolean|null} [requestMembers] Message requestMembers
+         * @property {fullMesh.IPeers|null} [intermediaryIds] Message intermediaryIds
          * @property {boolean|null} [heartbeat] Message heartbeat
          */
 
@@ -3641,36 +3563,28 @@ var fullMesh = $root.fullMesh = function () {
         }
 
         /**
-         * Message connectTo.
-         * @member {fullMesh.IPeers|null|undefined} connectTo
+         * Message members.
+         * @member {fullMesh.IPeers|null|undefined} members
          * @memberof fullMesh.Message
          * @instance
          */
-        Message.prototype.connectTo = null;
+        Message.prototype.members = null;
 
         /**
-         * Message connectedTo.
-         * @member {fullMesh.IPeers|null|undefined} connectedTo
+         * Message requestMembers.
+         * @member {boolean} requestMembers
          * @memberof fullMesh.Message
          * @instance
          */
-        Message.prototype.connectedTo = null;
+        Message.prototype.requestMembers = false;
 
         /**
-         * Message joiningPeerId.
-         * @member {number} joiningPeerId
+         * Message intermediaryIds.
+         * @member {fullMesh.IPeers|null|undefined} intermediaryIds
          * @memberof fullMesh.Message
          * @instance
          */
-        Message.prototype.joiningPeerId = 0;
-
-        /**
-         * Message joinSucceed.
-         * @member {boolean} joinSucceed
-         * @memberof fullMesh.Message
-         * @instance
-         */
-        Message.prototype.joinSucceed = false;
+        Message.prototype.intermediaryIds = null;
 
         /**
          * Message heartbeat.
@@ -3685,12 +3599,12 @@ var fullMesh = $root.fullMesh = function () {
 
         /**
          * Message type.
-         * @member {"connectTo"|"connectedTo"|"joiningPeerId"|"joinSucceed"|"heartbeat"|undefined} type
+         * @member {"members"|"requestMembers"|"intermediaryIds"|"heartbeat"|undefined} type
          * @memberof fullMesh.Message
          * @instance
          */
         Object.defineProperty(Message.prototype, "type", {
-            get: $util.oneOfGetter($oneOfFields = ["connectTo", "connectedTo", "joiningPeerId", "joinSucceed", "heartbeat"]),
+            get: $util.oneOfGetter($oneOfFields = ["members", "requestMembers", "intermediaryIds", "heartbeat"]),
             set: $util.oneOfSetter($oneOfFields)
         });
 
@@ -3717,10 +3631,9 @@ var fullMesh = $root.fullMesh = function () {
          */
         Message.encode = function encode(message, writer) {
             if (!writer) writer = $Writer.create();
-            if (message.connectTo != null && message.hasOwnProperty("connectTo")) $root.fullMesh.Peers.encode(message.connectTo, writer.uint32( /* id 1, wireType 2 =*/10).fork()).ldelim();
-            if (message.connectedTo != null && message.hasOwnProperty("connectedTo")) $root.fullMesh.Peers.encode(message.connectedTo, writer.uint32( /* id 2, wireType 2 =*/18).fork()).ldelim();
-            if (message.joiningPeerId != null && message.hasOwnProperty("joiningPeerId")) writer.uint32( /* id 3, wireType 0 =*/24).uint32(message.joiningPeerId);
-            if (message.joinSucceed != null && message.hasOwnProperty("joinSucceed")) writer.uint32( /* id 4, wireType 0 =*/32).bool(message.joinSucceed);
+            if (message.members != null && message.hasOwnProperty("members")) $root.fullMesh.Peers.encode(message.members, writer.uint32( /* id 1, wireType 2 =*/10).fork()).ldelim();
+            if (message.requestMembers != null && message.hasOwnProperty("requestMembers")) writer.uint32( /* id 2, wireType 0 =*/16).bool(message.requestMembers);
+            if (message.intermediaryIds != null && message.hasOwnProperty("intermediaryIds")) $root.fullMesh.Peers.encode(message.intermediaryIds, writer.uint32( /* id 3, wireType 2 =*/26).fork()).ldelim();
             if (message.heartbeat != null && message.hasOwnProperty("heartbeat")) writer.uint32( /* id 5, wireType 0 =*/40).bool(message.heartbeat);
             return writer;
         };
@@ -3744,16 +3657,13 @@ var fullMesh = $root.fullMesh = function () {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
                     case 1:
-                        message.connectTo = $root.fullMesh.Peers.decode(reader, reader.uint32());
+                        message.members = $root.fullMesh.Peers.decode(reader, reader.uint32());
                         break;
                     case 2:
-                        message.connectedTo = $root.fullMesh.Peers.decode(reader, reader.uint32());
+                        message.requestMembers = reader.bool();
                         break;
                     case 3:
-                        message.joiningPeerId = reader.uint32();
-                        break;
-                    case 4:
-                        message.joinSucceed = reader.bool();
+                        message.intermediaryIds = $root.fullMesh.Peers.decode(reader, reader.uint32());
                         break;
                     case 5:
                         message.heartbeat = reader.bool();
@@ -3775,7 +3685,7 @@ var fullMesh = $root.fullMesh = function () {
          * Properties of a Peers.
          * @memberof fullMesh
          * @interface IPeers
-         * @property {Array.<number>|null} [members] Peers members
+         * @property {Array.<number>|null} [ids] Peers ids
          */
 
         /**
@@ -3787,19 +3697,19 @@ var fullMesh = $root.fullMesh = function () {
          * @param {fullMesh.IPeers=} [properties] Properties to set
          */
         function Peers(properties) {
-            this.members = [];
+            this.ids = [];
             if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
                 if (properties[keys[i]] != null) this[keys[i]] = properties[keys[i]];
             }
         }
 
         /**
-         * Peers members.
-         * @member {Array.<number>} members
+         * Peers ids.
+         * @member {Array.<number>} ids
          * @memberof fullMesh.Peers
          * @instance
          */
-        Peers.prototype.members = $util.emptyArray;
+        Peers.prototype.ids = $util.emptyArray;
 
         /**
          * Creates a new Peers instance using the specified properties.
@@ -3824,10 +3734,10 @@ var fullMesh = $root.fullMesh = function () {
          */
         Peers.encode = function encode(message, writer) {
             if (!writer) writer = $Writer.create();
-            if (message.members != null && message.members.length) {
+            if (message.ids != null && message.ids.length) {
                 writer.uint32( /* id 1, wireType 2 =*/10).fork();
-                for (var i = 0; i < message.members.length; ++i) {
-                    writer.uint32(message.members[i]);
+                for (var i = 0; i < message.ids.length; ++i) {
+                    writer.uint32(message.ids[i]);
                 }writer.ldelim();
             }
             return writer;
@@ -3852,13 +3762,13 @@ var fullMesh = $root.fullMesh = function () {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
                     case 1:
-                        if (!(message.members && message.members.length)) message.members = [];
+                        if (!(message.ids && message.ids.length)) message.ids = [];
                         if ((tag & 7) === 2) {
                             var end2 = reader.uint32() + reader.pos;
                             while (reader.pos < end2) {
-                                message.members.push(reader.uint32());
+                                message.ids.push(reader.uint32());
                             }
-                        } else message.members.push(reader.uint32());
+                        } else message.ids.push(reader.uint32());
                         break;
                     default:
                         reader.skipType(tag & 7);
@@ -4469,5 +4379,5 @@ var signaling = $root.signaling = function () {
     return signaling;
 }();
 
-export { Message, user, service, webChannel, channelBuilder, fullMesh, webRTCBuilder, signaling };
 export default $root;
+export { Message, user, service$2 as service, webChannel, channelBuilder, fullMesh, webRTCBuilder, signaling };
