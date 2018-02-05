@@ -4,14 +4,14 @@ import { Subject } from 'rxjs/Subject'
 import { WebGroup, WebGroupState } from '../../src/index.browser'
 import * as helper from '../util/helper'
 
-const USE_CASES = [2, 3, 5]
+const USE_CASES = [2]
 const scenarios = [
   new helper.Scenario('cc'),
-  new helper.Scenario('cb'),
-  new helper.Scenario('ccc'),
-  new helper.Scenario('ccb'),
-  new helper.Scenario('ccccc'),
-  new helper.Scenario('ccbcc'),
+  // new helper.Scenario('cb'),
+  // new helper.Scenario('ccc'),
+  // new helper.Scenario('ccb'),
+  // new helper.Scenario('ccccc'),
+  // new helper.Scenario('ccbcc'),
 ]
 const PEER_FACE = '🙂 '
 const faces = (length) => {
@@ -25,7 +25,7 @@ const faces = (length) => {
 /** @test {WebGroup} */
 describe('Many members', () => {
   /** @test {WebGroup#join} */
-  describe('should join', () => {
+  fdescribe('should join', () => {
     let wgs
     afterEach(() => wgs.forEach((wg) => wg.leave()))
 
@@ -87,6 +87,7 @@ describe('Many members', () => {
                 expect(wg.onMemberJoinCalledTimes).toBe(scenario.nbMembers - 1)
                 expect(wg.onStateChangeCalledTimes).toBe(2)
               })
+              console.log('##############################################################""')
               done()
             })
             .catch(done.fail)

@@ -22,7 +22,9 @@ module.exports = (config) => {
       'src/proto/index.js',
       'test/util/helper.ts',
       'test/functional/1member.test.ts',
-      'test/functional/manyMembers.test.ts'
+      'test/functional/2members.test.ts',
+      'test/functional/3members.test.ts',
+      // 'test/functional/manyMembers.test.ts'
     ],
 
     // list of files to exclude
@@ -45,13 +47,14 @@ module.exports = (config) => {
       },
       bundlerOptions: {
         exclude: ['wrtc', 'text-encoding', 'uws', 'url'],
+        noParse: ['webrtc-adapter/out/adapter_no_edge_no_global.js'],
         addNodeGlobals: false,
       },
-      compilerDelay: 2000,
       include: ['src/**/*', 'test/**/*'],
       coverageOptions: {
         exclude: [/src\/proto\/index\.js/i, /test\/.*/i, /.*polyfills*/i]
       },
+      exclude: ['**/*adapter_factory.js'],
       reports: {
         html: {},
         'text-summary': ''
@@ -62,10 +65,6 @@ module.exports = (config) => {
     // possible values: 'dots', 'progress'
     // available reporters: https://npmjs.org/browse/keyword/karma-reporter
     reporters: ['spec', 'karma-typescript'],
-
-    specReporter: {
-      showSpecTiming: true
-    },
 
     // web server port
     port: 9876,
@@ -78,7 +77,7 @@ module.exports = (config) => {
     logLevel: config.LOG_INFO,
 
     // enable / disable watching file and executing tests whenever any file changes
-    autoWatch: false,
+    autoWatch: true,
 
     failOnEmptyTestSuite: false,
 
@@ -88,7 +87,7 @@ module.exports = (config) => {
 
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits
-    singleRun: true,
+    singleRun: false,
 
     // Concurrency level
     // how many browser should be started simultanous

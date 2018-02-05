@@ -21,7 +21,6 @@ try {
   // Configure router
   router
     .get('/members/:wcId', (ctx, next) => {
-      console.log('check members')
       const wcId = Number(ctx.params.wcId)
       let members = []
       let id
@@ -32,29 +31,35 @@ try {
           break
         }
       }
-      ctx.body = {id, members}
+    })
+    .get('/data/:wcId', (ctx, next) => {
+      const wcId = Number(ctx.params.wcId)
+      for (const wg of bot.webGroups) {
+        if (wg.id === wcId) {
+          ctx.body = fullData(wg)
+          return
+        }
+      }
+      ctx.throw(404, 'WebGroup ' + wcId + ' not found')
     })
     .get('/waitJoin/:wcId', async (ctx, next) => {
       const wcId = Number(ctx.params.wcId)
-      let id = -1
-      await new Promise ((resolve, reject) => {
-        webGroups.pipe(filter((wg) => wg.id === wcId))
-          .subscribe(
-            (wg) => {
-              if (wg.state === WebGroupState.JOINED) {
-                resolve()
-              } else {
-                wg.onStateChange = (state) => {
-                  if (state === WebGroupState.JOINED) {
-                    resolve()
-                  }
-                }
-              }
-              id = wg.myId
-            },
-          )
+      await new Promise((resolve) => {
+        const sub = webGroups.subscribe((wg: WebGroup) => {
+          if (wg.id === wcId) {
+            resolve()
+          }
+        })
       })
-      ctx.body = {id}
+      for (const wg of bot.webGroups) {
+        if (wg.id === wcId) {
+          await wg['waitJoin']
+          ctx.body = {id: wcId}
+          return
+        }
+      }
+      console.log('err')
+      ctx.throw(404, 'WebGroup ' + wcId + ' not found')
     })
     .get('/send/:wcId', (ctx, next) => {
       const wcId = Number(ctx.params.wcId)
@@ -85,23 +90,67 @@ try {
     .use(router.allowedMethods())
 
   // Configure bot
-  bot.onWebGroup = (wc) => {
-    wc.onMessage = (id, msg, isBroadcast) => {
-      onMessageForBot(wc, id, msg, isBroadcast)
+  bot.onWebGroup = (wg: WebGroup) => {
+    const data = {
+      onMemberJoinCalled: 0,
+      joinedMembers: [],
+      onMemberLeaveCalled: 0,
+      leftMembers: [],
+      onStateCalled: 0,
+      states: [],
+      onSignalingStateCalled: 0,
+      signalingStates: [],
+      messages: [],
+      onMessageToBeCalled: 0,
     }
-    webGroups.next(wc)
+    wg['waitJoin'] = new Promise((resolve) => {
+      wg.onStateChange = (state) => {
+        if (state === WebGroupState.JOINED) {
+          resolve()
+        }
+        data.onStateCalled++
+        data.states.push(state)
+      }
+    })
+    wg.onMessage = (id, msg: string | Uint8Array) => {
+      data.onMessageToBeCalled++
+      data.messages.push({
+        id,
+        msg: msg instanceof Uint8Array ? Array.from(msg) : msg,
+      })
+      let feedback
+      let isSend = false
+      if (typeof msg === 'string') {
+        feedback = 'bot: ' + msg
+        isSend = msg.startsWith('send')
+      } else {
+        isSend = msg[0] === 10
+        msg[0] = 42
+        feedback = msg
+      }
+      if (isSend) {
+        wg.send(feedback)
+      } else {
+        wg.sendTo(id, feedback)
+      }
+    }
+    wg.onMemberJoin = (id) => {
+      data.onMemberJoinCalled++
+      data.joinedMembers.push(id)
+    }
+    wg.onMemberLeave = (id) => {
+      data.onMemberLeaveCalled++
+      data.leftMembers.push(id)
+    }
+
+    wg.onSignalingStateChange = (state) => {
+      data.onSignalingStateCalled++
+      data.signalingStates.push(state)
+    }
+    wg['data'] = data
+    webGroups.next(wg)
   }
   bot.onError = (err) => console.error('Bot ERROR: ', err)
-
-  // Add specific web channel to the bot for tests in Chrome
-  // bot.addWebChannel(createWebChannel('CHROME'))
-  //
-  // // Add specific web channel to the bot for tests in Firefox
-  // bot.addWebChannel(createWebChannel('FIREFOX'))
-  //
-  // // Add specific web channel to the bot for tests in NodeJS
-  // bot.addWebChannel(createWebChannel('NODE'))
-
   // Start the server
   server.listen(BOT_PORT, BOT_HOST, () => {
     const host = server.address().address
@@ -115,12 +164,13 @@ try {
   console.error('WebGroupBotServer script error: ', err)
 }
 
-function createWebChannel (env) {
-  // Add specific web channel to the bot for tests in Firefox
-  const wc = new WebGroup({signalingURL: SIGNALING_URL})
-  wc.onMessage = (id, msg, isBroadcast) => {
-    onMessageForBot(wc, id, msg, isBroadcast)
-  }
-  wc.join('FIREFOX')
-  return wc
+function fullData (wg) {
+  wg.data.state = wg.state
+  wg.data.signalingState = wg.signalingState
+  wg.data.key = wg.key
+  wg.data.topology = wg.topology
+  wg.data.members = wg.members
+  wg.data.myId = wg.myId
+  wg.data.id = wg.id
+  return wg.data
 }
