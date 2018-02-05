@@ -2991,8 +2991,6 @@ var webChannel = $root.webChannel = function () {
          * @interface IMessage
          * @property {webChannel.IInitData|null} [init] Message init
          * @property {boolean|null} [initOk] Message initOk
-         * @property {boolean|null} [ping] Message ping
-         * @property {boolean|null} [pong] Message pong
          */
 
         /**
@@ -3025,33 +3023,17 @@ var webChannel = $root.webChannel = function () {
          */
         Message.prototype.initOk = false;
 
-        /**
-         * Message ping.
-         * @member {boolean} ping
-         * @memberof webChannel.Message
-         * @instance
-         */
-        Message.prototype.ping = false;
-
-        /**
-         * Message pong.
-         * @member {boolean} pong
-         * @memberof webChannel.Message
-         * @instance
-         */
-        Message.prototype.pong = false;
-
         // OneOf field names bound to virtual getters and setters
         var $oneOfFields = void 0;
 
         /**
          * Message type.
-         * @member {"init"|"initOk"|"ping"|"pong"|undefined} type
+         * @member {"init"|"initOk"|undefined} type
          * @memberof webChannel.Message
          * @instance
          */
         Object.defineProperty(Message.prototype, "type", {
-            get: $util.oneOfGetter($oneOfFields = ["init", "initOk", "ping", "pong"]),
+            get: $util.oneOfGetter($oneOfFields = ["init", "initOk"]),
             set: $util.oneOfSetter($oneOfFields)
         });
 
@@ -3080,8 +3062,6 @@ var webChannel = $root.webChannel = function () {
             if (!writer) writer = $Writer.create();
             if (message.init != null && message.hasOwnProperty("init")) $root.webChannel.InitData.encode(message.init, writer.uint32( /* id 1, wireType 2 =*/10).fork()).ldelim();
             if (message.initOk != null && message.hasOwnProperty("initOk")) writer.uint32( /* id 2, wireType 0 =*/16).bool(message.initOk);
-            if (message.ping != null && message.hasOwnProperty("ping")) writer.uint32( /* id 3, wireType 0 =*/24).bool(message.ping);
-            if (message.pong != null && message.hasOwnProperty("pong")) writer.uint32( /* id 4, wireType 0 =*/32).bool(message.pong);
             return writer;
         };
 
@@ -3108,12 +3088,6 @@ var webChannel = $root.webChannel = function () {
                         break;
                     case 2:
                         message.initOk = reader.bool();
-                        break;
-                    case 3:
-                        message.ping = reader.bool();
-                        break;
-                    case 4:
-                        message.pong = reader.bool();
                         break;
                     default:
                         reader.skipType(tag & 7);

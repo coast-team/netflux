@@ -53,16 +53,12 @@ export class WebRTCBuilder extends Service {
   }
 
   private wc: WebChannel
-  private rtcConfiguration: any
+  private rtcConfiguration: RTCConfiguration
 
-  constructor (wc: WebChannel, iceServers: RTCIceServer[]) {
+  constructor (wc: WebChannel, rtcConfiguration: RTCConfiguration) {
     super(ID, webRTCBuilder.Message, wc.serviceMessageSubject)
     this.wc = wc
-    this.rtcConfiguration = {
-      iceServers,
-      iceCandidatePoolSize: 10,
-      rtcpMuxPolicy: 'require',
-    }
+    this.rtcConfiguration = rtcConfiguration
   }
 
   /**

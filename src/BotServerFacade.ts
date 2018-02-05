@@ -1,4 +1,6 @@
+// tslint:disable:max-line-length
 import { Server as NodeJSHttpServer } from 'http'
+
 import { Server as NodeJSHttpsServer } from 'https'
 
 import { BotServer, IBotServerOptions as WebGroupBotServerOptions } from './BotServer'
@@ -23,17 +25,19 @@ export { WebGroupBotServerOptions }
  * const bot = new WebGroupBotServer({
  *   server,
  *   webGroupOptions: {
- *     signalingURL: 'wss://mysignaling.com'
- *     iceServers: [
- *       {
- *         urls: 'stun.l.google.com:19302'
- *       },
- *       {
- *         urls: ['turn:myturn.com?transport=udp', 'turn:myturn?transport=tcp'],
- *         username: 'user',
- *         password: 'password'
- *       }
- *     ]
+ *     signalingServer: 'wss://mysignaling.com',
+ *     rtcConfiguration: {
+ *       iceServers: [
+ *         {
+ *           urls: 'stun.l.google.com:19302'
+ *         },
+ *         {
+ *           urls: ['turn:myturn.com?transport=udp', 'turn:myturn?transport=tcp'],
+ *           username: 'user',
+ *           password: 'password'
+ *         }
+ *       ]
+ *     }
  *   }
  * })
  *
@@ -63,8 +67,8 @@ export class WebGroupBotServer {
    * @param {boolean} [options.perMessageDeflate=false] Enable/disable permessage-deflate.
    * @param {WebGroupOptions} options.webGroupOptions Options for each {@link WebGroup} the bot is member of.
    * @param {Topology} [options.webGroupOptions.topology=Topology.FULL_MESH]
-   * @param {string} [options.webGroupOptions.signalingURL='wss://signaling.netflux.coedit.re']
-   * @param {RTCIceServer[]} [options.webGroupOptions.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]
+   * @param {string} [options.webGroupOptions.signalingServer='wss://signaling.netflux.coedit.re']
+   * @param {RTCConfiguration} [options.webGroupOptions.rtcConfiguration={iceServers: [{urls: 'stun:stun3.l.google.com:19302'}]}]
    * @param {boolean} [options.webGroupOptions.autoRejoin=false]
    */
   constructor (options: WebGroupBotServerOptions) {

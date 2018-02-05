@@ -20,25 +20,21 @@ const ID = 200
 
 const REJOIN_TIMEOUT = 3000
 
-/**
- * Timout for ping `WebChannel` in milliseconds.
- * @type {number}
- */
-const PING_TIMEOUT = 5000
-
 export interface IWebChannelOptions {
   topology?: TopologyEnum,
-  signalingURL?: string,
-  iceServers?: RTCIceServer[],
+  signalingServer?: string,
+  rtcConfiguration?: RTCConfiguration,
   autoRejoin?: boolean
 }
 
 export const defaultOptions: IWebChannelOptions = {
   topology: TopologyEnum.FULL_MESH,
-  signalingURL: 'wss://signaling.netflux.coedit.re',
-  iceServers: [
-    {urls: 'stun:stun3.l.google.com:19302'},
-  ],
+  signalingServer: 'wss://signaling.netflux.coedit.re',
+  rtcConfiguration: {
+    iceServers: [
+      {urls: 'stun:stun3.l.google.com:19302'},
+    ],
+  },
   autoRejoin: true,
 }
 
@@ -119,18 +115,14 @@ export class WebChannel extends Service {
   signaling: Signaling
 
   private userMsg: UserMessage
-  private pingTime: number
-  private maxTime: number
-  private pingFinish: (maxTime: number) => void
-  private pongNb: number
   private rejoinTimer: any
   private isRejoinDisabled: boolean
   private topologySub: Subscription
 
   constructor ({
     topology = defaultOptions.topology,
-    signalingURL = defaultOptions.signalingURL,
-    iceServers = defaultOptions.iceServers,
+    signalingServer = defaultOptions.signalingServer,
+    rtcConfiguration = defaultOptions.rtcConfiguration,
     autoRejoin = defaultOptions.autoRejoin,
   }: IWebChannelOptions = {}) {
     super(10, webChannel.Message)
@@ -155,7 +147,7 @@ export class WebChannel extends Service {
     this.userMsg = new UserMessage()
 
     // Signaling init
-    this.signaling = new Signaling(this, signalingURL)
+    this.signaling = new Signaling(this, signalingServer)
     this.signaling.onChannel.subscribe((ch) => this.initChannel(ch))
     this.signaling.onState.subscribe(
       (state: SignalingState) => {
@@ -180,7 +172,7 @@ export class WebChannel extends Service {
     // Services init
     this.serviceMessageSubject = new Subject()
     super.setupServiceMessage(this.serviceMessageSubject)
-    this.webRTCBuilder = new WebRTCBuilder(this, iceServers)
+    this.webRTCBuilder = new WebRTCBuilder(this, rtcConfiguration)
     this.webSocketBuilder = new WebSocketBuilder(this)
     this.channelBuilder = new ChannelBuilder(this)
     this.onServiceMessage.subscribe(
@@ -191,12 +183,6 @@ export class WebChannel extends Service {
     // Topology init
     this.setTopology(topology)
     // FIXME: manage topologyService onState subscription
-
-    // Ping-pong init
-    this.pingTime = 0
-    this.maxTime = 0
-    this.pingFinish = () => {}
-    this.pongNb = 0
   }
 
   /**
@@ -236,15 +222,6 @@ export class WebChannel extends Service {
   }
 
   /**
-   * Close the connection with Signaling server.
-   */
-  closeSignaling (): void {
-    this.isRejoinDisabled = true
-    clearTimeout(this.rejoinTimer)
-    this.signaling.close()
-  }
-
-  /**
    * Leave the network which means close channels with all peers and connection
    * with Signaling server.
    */
@@ -252,7 +229,6 @@ export class WebChannel extends Service {
     this.key = ''
     this.isRejoinDisabled = true
     clearTimeout(this.rejoinTimer)
-    this.initPing()
     this.topologyService.leave()
     this.signaling.close()
   }
@@ -290,27 +266,6 @@ export class WebChannel extends Service {
         msg.content = chunk
         this.topologyService.sendTo(msg)
       }
-    }
-  }
-
-  /**
-   * Get the ping of the `network. It is an amount in milliseconds which
-   * corresponds to the longest ping to each network member.
-   */
-  ping (): Promise<number> {
-    if (this.members.length !== 1 && this.pingTime === 0) {
-      return new Promise((resolve, reject) => {
-        if (this.pingTime === 0) {
-          this.pingTime = Date.now()
-          this.maxTime = 0
-          this.pongNb = 0
-          this.pingFinish = (delay) => resolve(delay)
-          this.sendProxy({ content: super.encode({ ping: true }) })
-          setTimeout(() => resolve(PING_TIMEOUT), PING_TIMEOUT)
-        }
-      })
-    } else {
-      return Promise.reject(new Error('No peers to ping'))
     }
   }
 
@@ -440,23 +395,6 @@ export class WebChannel extends Service {
       this.topologyService.addJoining(channel)
       break
     }
-    case 'ping': {
-      this.sendToProxy({
-        recipientId: channel.id,
-        content: super.encode({ pong: true }),
-      })
-      break
-    }
-    case 'pong': {
-      const now = Date.now()
-      this.pongNb++
-      this.maxTime = Math.max(this.maxTime, now - this.pingTime)
-      if (this.pongNb === this.members.length - 1) {
-        this.pingFinish(this.maxTime)
-        this.pingTime = 0
-      }
-      break
-    }
     default:
       throw new Error(`Unknown message type: "${msg.type}"`)
     }
@@ -467,17 +405,7 @@ export class WebChannel extends Service {
       log.webGroupState(WebChannelState[state], this.myId)
       this.state = state
       this.onStateChange(state)
-      if (state === WebChannelState.LEFT) {
-        this.initPing()
-      }
     }
-  }
-
-  private initPing () {
-    this.pingTime = 0
-    this.maxTime = 0
-    this.pingFinish = () => {}
-    this.pongNb = 0
   }
 
   /**

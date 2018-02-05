@@ -50,9 +50,9 @@ export class WebGroupState {
 
   /**
    * Equals to `2`: left the group. If the connection to the web group has lost other then
-   * by calling {@link WebGroup#leave} or {@link WebGroup#closeSignaling} methods
-   * and {@link WebGroup#autoRejoin} is true, then the state would be `LEFT`,
-   * (usually during a relatively short period) before the rejoining process starts.
+   * by calling {@link WebGroup#leave} methods and {@link WebGroup#autoRejoin} is true,
+   * then the state would be `LEFT`, usually during a relatively short period) before
+   * the rejoining process starts.
    * @type {number}
    */
   static get LEFT (): number { return WebChannelState.LEFT }
@@ -73,17 +73,19 @@ export class WebGroupState {
  * // specified Signaling and ICE servers for WebRTC.
  *
  * const wg = new WebGroup({
- *   signalingURL: 'wss://mysignaling.com'
- *   iceServers: [
- *     {
- *       urls: 'stun.l.google.com:19302'
- *     },
- *     {
- *       urls: ['turn:myturn.com?transport=udp', 'turn:myturn?transport=tcp'],
- *       username: 'user',
- *       password: 'password'
- *     }
- *   ]
+ *   signalingServer: 'wss://mysignaling.com',
+ *   rtcConfiguration: {
+ *     iceServers: [
+ *       {
+ *         urls: 'stun.l.google.com:19302'
+ *       },
+ *       {
+ *         urls: ['turn:myturn.com?transport=udp', 'turn:myturn?transport=tcp'],
+ *         username: 'user',
+ *         password: 'password'
+ *       }
+ *     ]
+ *   }
  * })
  *
  * wg.onMemberJoin = (id) => {
@@ -111,7 +113,7 @@ export class WebGroup {
   public topology: TopologyEnum
   public state: WebChannelState
   public signalingState: SignalingState
-  public signalingURL: string
+  public signalingServer: string
   public autoRejoin: boolean
   public onMessage: (id: number, data: DataType) => void
   public onMemberJoin: (id: number) => void
@@ -122,8 +124,8 @@ export class WebGroup {
   /**
    * @param {WebGroupOptions} [options]
    * @param {Topology} [options.topology=Topology.FULL_MESH]
-   * @param {string} [options.signalingURL='wss://signaling.netflux.coedit.re']
-   * @param {RTCIceServer[]} [options.iceServers=[{urls: 'stun:stun3.l.google.com:19302'}]]
+   * @param {string} [options.signalingServer='wss://signaling.netflux.coedit.re']
+   * @param {RTCConfiguration} [options.rtcConfiguration={iceServers: [{urls: 'stun:stun3.l.google.com:19302'}]}]
    * @param {boolean} [options.autoRejoin=true]
    */
   constructor (options: WebGroupOptions = {}) {
@@ -183,8 +185,11 @@ export class WebGroup {
      * The read-only signaling server URL.
      * @type {string}
      */
-    this.signalingURL = undefined
-    Reflect.defineProperty(this, 'signalingURL', { configurable: false, enumerable: true, get: () => wc.signaling.url })
+    this.signalingServer = undefined
+    Reflect.defineProperty(this, 'signalingServer', {
+      configurable: false,
+      enumerable: true, get: () => wc.signaling.url,
+    })
     /**
      * Enable/Desable the auto rejoin feature.
      * @type {boolean}
@@ -301,15 +306,6 @@ export class WebGroup {
   invite (url: string): void { return wcs.get(this).invite(url) }
 
   /**
-   * Close the connection with Signaling server. It fires Signaling state event
-   * if {@link WebGroup#signalingState} value does not equal to
-   * {@link SignalingState.CLOSED} already.It may also fire state event only
-   * if there is no one left in the group.
-   * value does not equal to {@link SignalingState.CLOSED} already.
-   */
-  closeSignaling (): void { return wcs.get(this).closeSignaling() }
-
-  /**
    * Leave the group which means close channels with all members and connection
    * with the Signaling server.
    */
@@ -327,10 +323,4 @@ export class WebGroup {
    * @param {DataType}  data Message
    */
   sendTo (id: number, data: DataType): void { return wcs.get(this).sendTo(id, data) }
-
-  /**
-   * Get web group latency
-   * @return {Promise<number>} Latency in milliseconds
-   */
-  ping (): Promise<number> { return wcs.get(this).ping() }
 }

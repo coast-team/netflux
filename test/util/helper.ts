@@ -22,7 +22,7 @@ export const LEAVE_CODE = 1
 export function createWebGroups (numberOfPeers) {
   const wgs = []
   for (let i = 0; i < numberOfPeers; i++) {
-    wgs[i] = new WebGroup({signalingURL: SIGNALING_URL})
+    wgs[i] = new WebGroup({signalingServer: SIGNALING_URL})
   }
   return wgs
 }
@@ -35,7 +35,7 @@ export function createAndConnectWebGroups (numberOfPeers) {
 
   // Create web channels
   for (let i = 0; i < numberOfPeers; i++) {
-    wgs[i] = new WebGroup({signalingURL: SIGNALING_URL})
+    wgs[i] = new WebGroup({signalingServer: SIGNALING_URL})
     wgs[i].onStateChange = (state) => {
       if (state === WebGroupState.JOINED) {
         network.next(++i)

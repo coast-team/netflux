@@ -265,12 +265,6 @@ export namespace webChannel {
 
         /** Message initOk */
         initOk?: (boolean|null);
-
-        /** Message ping */
-        ping?: (boolean|null);
-
-        /** Message pong */
-        pong?: (boolean|null);
     }
 
     /** Represents a Message. */
@@ -288,14 +282,8 @@ export namespace webChannel {
         /** Message initOk. */
         public initOk: boolean;
 
-        /** Message ping. */
-        public ping: boolean;
-
-        /** Message pong. */
-        public pong: boolean;
-
         /** Message type. */
-        public type?: ("init"|"initOk"|"ping"|"pong");
+        public type?: ("init"|"initOk");
 
         /**
          * Creates a new Message instance using the specified properties.

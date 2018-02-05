@@ -5,8 +5,6 @@ message Message {
   oneof type {
     InitData init = 1;
     bool initOk = 2;
-    bool ping = 3;
-    bool pong = 4;
   }
 }
 

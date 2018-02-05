@@ -35,8 +35,8 @@ export class BotServer {
     server,
     webGroupOptions = {
       topology: defaultOptions.topology,
-      signalingURL: defaultOptions.signalingURL,
-      iceServers: defaultOptions.iceServers,
+      signalingServer: defaultOptions.signalingServer,
+      rtcConfiguration: defaultOptions.rtcConfiguration,
       autoRejoin: false,
     },
   }: IBotServerOptions = {server: undefined}) {

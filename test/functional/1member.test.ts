@@ -4,7 +4,7 @@ import { MAX_KEY_LENGTH } from '../../src/misc/Util'
 import { areTheSame, Queue, SIGNALING_URL, wait } from '../util/helper'
 
 const WebGroupOptions = {
-  signalingURL: SIGNALING_URL,
+  signalingServer: SIGNALING_URL,
   autoRejoin: false,
 }
 
@@ -15,7 +15,7 @@ describe('1 member', () => {
 
     /** @test {WebGroup#constructor} */
     it('constructor', () => {
-      const wg = new WebGroup({signalingURL: SIGNALING_URL})
+      const wg = new WebGroup({signalingServer: SIGNALING_URL})
 
       // Check members
       expect(typeof wg.id).toBe('number')
@@ -32,8 +32,8 @@ describe('1 member', () => {
       expect(Reflect.getOwnPropertyDescriptor(wg, 'state').set).toBeUndefined()
       expect(wg.signalingState).toBe(SignalingState.CLOSED)
       expect(Reflect.getOwnPropertyDescriptor(wg, 'signalingState').set).toBeUndefined()
-      expect(wg.signalingURL).toBe(SIGNALING_URL)
-      expect(Reflect.getOwnPropertyDescriptor(wg, 'signalingURL').set).toBeUndefined()
+      expect(wg.signalingServer).toBe(SIGNALING_URL)
+      expect(Reflect.getOwnPropertyDescriptor(wg, 'signalingServer').set).toBeUndefined()
       expect(wg.autoRejoin).toBeTruthy()
       wg.autoRejoin = false
       expect(wg.autoRejoin).toBeFalsy()
