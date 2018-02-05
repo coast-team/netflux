@@ -76,19 +76,13 @@ export class FullMesh extends Service implements ITopology {
 
   addJoining (ch: Channel): void {
     this.addDirectMember(ch)
-    if (!this.requestMembersInterval) {
-      this.startIntervals()
-    }
   }
 
   initJoining (ch: Channel, ids: number[]): void {
-    log.info('initJoining: ' + ch.id)
     this.addDirectMember(ch)
     this.connectTo(ch.id, ids)
     this.stateSubject.next(TopologyStateEnum.JOINED)
     this.requestMembers()
-    this.startIntervals()
-    // FIXME: intervals should restart if at least one channel exist
   }
 
   send (msg: IMessage): void {
@@ -206,6 +200,9 @@ export class FullMesh extends Service implements ITopology {
     const oldChannelRef = this.channels.get(channel.id)
     channel.updateHeartbeatMsg(HEARTBEAT_MESSAGE)
     this.channels.set(channel.id, channel)
+    if (this.channels.size === 1) {
+      this.startIntervals()
+    }
     if (oldChannelRef) {
       oldChannelRef.closeQuietly()
     } else {
@@ -215,6 +212,7 @@ export class FullMesh extends Service implements ITopology {
   }
 
   private startIntervals () {
+    this.clean()
     this.requestMembersInterval = setInterval(() => this.requestMembers(), REQUEST_MEMBERS_INTERVAL)
     this.heartbeatInterval = global.setInterval(() => {
       this.channels.forEach((ch) => {
@@ -226,10 +224,6 @@ export class FullMesh extends Service implements ITopology {
           ch.sendHeartbeat()
         } catch (err) {
           log.info(`Closing connection with ${ch.id}. Reason: ${err.message}`)
-          // Maybe unnecessary
-          // this.channels.delete(ch.id)
-          // this.wc.onMemberLeaveProxy(ch.id)
-          log.info('Close START INTERVALS')
           ch.close()
         }
       })
@@ -243,7 +237,6 @@ export class FullMesh extends Service implements ITopology {
         } catch (err) {
           log.info(`${id} has left. Reason: ${err.message}`)
           this.distantPeers.delete(id)
-          this.neighboursChanged()
           this.wc.onMemberLeaveProxy(id)
         }
       })
