@@ -407,7 +407,7 @@ describe('2 members', () => {
           }
         }
         wg1.onMemberJoin = () => queue.pop()
-        wg2.onStateChange = (state: SignalingState) => {
+        wg2.onStateChange = (state: WebGroupState) => {
           if (state === WebGroupState.JOINED) {
             queue.pop()
           }
