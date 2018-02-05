@@ -153,7 +153,7 @@ export class LogLevel {
  */
 
  /**
-  * @external {RTCIceServer} https://developer.mozilla.org/en/docs/Web/API/RTCIceServer
+  * @external {RTCConfiguration} https://developer.mozilla.org/en/docs/Web/API/RTCConfiguration
   */
 
  /**
