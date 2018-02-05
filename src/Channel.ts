@@ -97,7 +97,7 @@ export class Channel {
     try {
       (this.connection as any).send(data)
     } catch (err) {
-      console.error('Channel send', err)
+      log.debug('Channel sendInBrowser ERROR', err)
     }
   }
 
@@ -105,7 +105,7 @@ export class Channel {
     try {
       (this.connection as any).send(data, {binary: true})
     } catch (err) {
-      console.error('Channel send', err)
+      log.debug('Channel sendInNodeViaWebSocket ERROR', err)
     }
   }
 
