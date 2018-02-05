@@ -80,9 +80,9 @@ export class FullMesh extends Service implements ITopology {
 
   initJoining (ch: Channel, ids: number[]): void {
     this.addDirectMember(ch)
-    this.connectTo(ch.id, ids)
     this.stateSubject.next(TopologyStateEnum.JOINED)
-    this.requestMembers()
+    this.connectTo(ch.id, ids)
+      .then(() => this.requestMembers())
   }
 
   send (msg: IMessage): void {
@@ -243,38 +243,40 @@ export class FullMesh extends Service implements ITopology {
     }, HEARTBEAT_INTERVAL)
   }
 
-  private connectTo (memberId: number, ids: number[]) {
-    this.isConnecting = true
-    const attempts = []
+  private connectTo (memberId: number, ids: number[]): Promise<void> {
+    if (!this.isConnecting) {
+      this.isConnecting = true
+      const attempts = []
 
-    // It's important to notify all peers (in ids) about my intermediaryIds first
-    // for some specific case such when you should connect to a peer with
-    // distance more than 1
-    ids.forEach((id) => {
-      if (!this.channels.has(id)) {
-        this.distantPeers.set(id, { intermediaryIds: [memberId], missedHeartbeat: 0 })
-        this.wc.onMemberJoinProxy(id)
-        this.wc.sendToProxy({
-          recipientId: id,
-          content: super.encode({ intermediaryIds: { ids: Array.from(this.channels.keys()) } }),
-        })
-      }
-    })
-    ids.forEach((id) => {
-      if (!this.channels.has(id)) {
-        attempts[attempts.length] = this.wc.channelBuilder.connectTo(id)
-          .then((ch) => this.addDirectMember(ch))
-          .catch((err) => log.info(`${this.wc.myId} failed to connect to ${id}: ${err.message}`))
-      }
-    })
+      // It's important to notify all peers (in ids) about my intermediaryIds first
+      // for some specific case such when you should connect to a peer with
+      // distance more than 1
+      ids.forEach((id) => {
+        if (!this.channels.has(id)) {
+          this.distantPeers.set(id, { intermediaryIds: [memberId], missedHeartbeat: 0 })
+          this.wc.onMemberJoinProxy(id)
+          this.wc.sendToProxy({
+            recipientId: id,
+            content: super.encode({ intermediaryIds: { ids: Array.from(this.channels.keys()) } }),
+          })
+        }
+      })
+      ids.forEach((id) => {
+        if (!this.channels.has(id)) {
+          attempts[attempts.length] = this.wc.channelBuilder.connectTo(id)
+            .then((ch) => this.addDirectMember(ch))
+            .catch((err) => log.info(`${this.wc.myId} failed to connect to ${id}: ${err.message}`))
+        }
+      })
 
-    // Send a request to a group member in order to verify and compare members list
-    Promise.all(attempts).then(() => {
-      this.isConnecting = false
-      if (this.distantPeers.size === 0) {
-        this.stateSubject.next(TopologyStateEnum.STABLE)
-      }
-    })
+      return Promise.all(attempts).then(() => {
+        this.isConnecting = false
+        if (this.distantPeers.size === 0) {
+          this.stateSubject.next(TopologyStateEnum.STABLE)
+        }
+      })
+    }
+    return Promise.resolve()
   }
 
   private requestMembers () {
