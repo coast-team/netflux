@@ -6,7 +6,7 @@ import { Channel } from './Channel'
 import { isBrowser, isURL } from './misc/Util'
 import { WebChannel } from './service/WebChannel'
 
-const CONNECT_TIMEOUT = 10000
+export const CONNECT_TIMEOUT = 6000
 const listenSubject = new BehaviorSubject('')
 
 /**

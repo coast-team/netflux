@@ -3,10 +3,10 @@ import { Subject } from 'rxjs/Subject'
 
 import { Channel } from '../Channel'
 import { channelBuilder } from '../proto'
-import { WebSocketBuilder } from '../WebSocketBuilder'
+import { CONNECT_TIMEOUT as WEBSOCKET_TIMEOUT, WebSocketBuilder } from '../WebSocketBuilder'
 import { IServiceMessageDecoded, Service } from './Service'
 import { WebChannel } from './WebChannel'
-import { WebRTCBuilder } from './WebRTCBuilder'
+import { CONNECT_TIMEOUT as WEBRTC_TIMEOUT, WebRTCBuilder } from './WebRTCBuilder'
 
 /**
  * Service id.
@@ -16,6 +16,13 @@ const ID = 100
 const ME = {
   wsUrl: '',
   isWrtcSupport: false,
+}
+
+const CONNECT_TIMEOUT = Math.max(WEBRTC_TIMEOUT, WEBSOCKET_TIMEOUT) + 3000
+
+interface IPendingRequest {
+  resolve: (ch: Channel) => void,
+  reject: (err: Error) => void,
 }
 
 let request
@@ -29,7 +36,7 @@ let response
 export class ChannelBuilder extends Service {
 
   private wc: WebChannel
-  private pendingRequests: Map<number, {resolve: (ch: Channel) => void, reject: (err: Error) => void}>
+  private pendingRequests: Map<number, IPendingRequest>
   private channelsSubject: Subject<Channel>
 
   constructor (wc: WebChannel) {
@@ -71,9 +78,11 @@ export class ChannelBuilder extends Service {
    */
   connectTo (id: number): Promise<Channel> {
     return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('ChannelBuilder timeout')), CONNECT_TIMEOUT)
       this.pendingRequests.set(id, {
         resolve: (ch: Channel) => {
           this.pendingRequests.delete(id)
+          clearTimeout(timer)
           resolve(ch)
         }, reject: (err: Error) => {
           this.pendingRequests.delete(id)

@@ -14,7 +14,7 @@ import { WebChannel } from './WebChannel'
  * Service id.
  */
 const ID = 300
-const CONNECT_TIMEOUT = 9000
+export const CONNECT_TIMEOUT = 9000
 
 interface ICommonMessage {
   iceCandidate?: webRTCBuilder.IIceCandidate,
@@ -200,7 +200,7 @@ export class WebRTCBuilder extends Service {
               log.debug('Remote peer error, but RTCDataChannel has still been established')
             }
           } else if (answer) {
-            log.debug('REMOTE Answer is received', answer)
+            log.debug('REMOTE Answer is received', {answer})
             pc.setRemoteDescription({ type: 'answer', sdp: answer } as any)
               .then(() => {
                 remoteCandidateStream.subscribe(
@@ -273,7 +273,7 @@ export class WebRTCBuilder extends Service {
       pc.createOffer()
         .then((offer) => pc.setLocalDescription(offer))
         .then(() => {
-          log.debug('Send LOCAL Offer: ', pc.localDescription.sdp)
+          log.debug('Send LOCAL Offer: ', {offer: pc.localDescription.sdp})
           send({ offer: pc.localDescription.sdp })
           isOfferSent = true
           if (pc.iceGatheringState === 'complete') {
@@ -343,7 +343,7 @@ export class WebRTCBuilder extends Service {
               remotes.set(id, [pc, remoteCandidateStream, isAnswerSent])
             }
             if (offer) {
-              log.debug(`${id}: REMOTE OFFER is received`, offer)
+              log.debug(`${id}: REMOTE OFFER is received`, {offer})
               pc.setRemoteDescription({ type: 'offer', sdp: offer })
                 .then(() => remoteCandidateStream.subscribe(
                   (ic) => pc.addIceCandidate(ic).catch((err) => log.debug('${id}: Failed to addIceCandidate', err)),
@@ -351,7 +351,7 @@ export class WebRTCBuilder extends Service {
                 .then(() => pc.createAnswer())
                 .then((answer) => pc.setLocalDescription(answer))
                 .then(() => {
-                  log.debug(`${id}: Send LOCAL ANSWER`, pc.localDescription.sdp)
+                  log.debug(`${id}: Send LOCAL ANSWER`, {answer: pc.localDescription.sdp})
                   send({ answer: pc.localDescription.sdp }, id)
                   isAnswerSent = true
                   if (pc.iceGatheringState === 'complete') {
