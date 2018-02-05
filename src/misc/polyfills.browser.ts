@@ -1,4 +1,4 @@
-// import 'webrtc-adapter/out/adapter_no_edge_no_global.js'
+import 'webrtc-adapter/out/adapter_no_edge_no_global.js'
 
 /**
  * ECMAScript Proposal, specs, and reference implementation for `global`
