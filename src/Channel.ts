@@ -26,9 +26,9 @@ export class Channel {
   constructor (
     wc: WebChannel,
     connection: WebSocket | RTCDataChannel,
-    options: {rtcPeerConnection?: RTCPeerConnection, id: number} = {id: -1},
+    options: {rtcPeerConnection?: RTCPeerConnection, id: number} = {id: 1},
   ) {
-    log.info(`new connection: Me: ${wc.myId} with ${options.id}`)
+    log.info(`New Channel: Me: ${wc.myId} with ${options.id}`)
     this.wc = wc
     this.connection = connection
     this._id = options.id
