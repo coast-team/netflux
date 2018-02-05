@@ -80,9 +80,9 @@ export class FullMesh extends Service implements ITopology {
 
   initJoining (ch: Channel, ids: number[]): void {
     this.addDirectMember(ch)
-    this.stateSubject.next(TopologyStateEnum.JOINED)
     this.connectTo(ch.id, ids)
       .then(() => this.requestMembers())
+    this.stateSubject.next(TopologyStateEnum.JOINED)
   }
 
   send (msg: IMessage): void {
@@ -252,7 +252,7 @@ export class FullMesh extends Service implements ITopology {
       // for some specific case such when you should connect to a peer with
       // distance more than 1
       ids.forEach((id) => {
-        if (!this.channels.has(id)) {
+        if (!this.channels.has(id) && id !== this.wc.myId) {
           this.distantPeers.set(id, { intermediaryIds: [memberId], missedHeartbeat: 0 })
           this.wc.onMemberJoinProxy(id)
           this.wc.sendToProxy({
@@ -262,7 +262,7 @@ export class FullMesh extends Service implements ITopology {
         }
       })
       ids.forEach((id) => {
-        if (!this.channels.has(id)) {
+        if (!this.channels.has(id) && id !== this.wc.myId) {
           attempts[attempts.length] = this.wc.channelBuilder.connectTo(id)
             .then((ch) => this.addDirectMember(ch))
             .catch((err) => log.info(`${this.wc.myId} failed to connect to ${id}: ${err.message}`))

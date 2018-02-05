@@ -113,6 +113,7 @@ try {
       }
     })
     wg.onMessage = (id, msg: string | Uint8Array) => {
+      console.log('Message: ', { id, msg })
       data.onMessageToBeCalled++
       data.messages.push({
         id,
