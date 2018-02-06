@@ -13,7 +13,8 @@ interface ISignalingConnection {
   onMessage: Observable<signaling.Message>,
   send: (msg: signaling.IMessage) => void,
   heartbeat: () => void,
-  close: (code?: number, reason?: string) => void
+  close: (code?: number, reason?: string) => void,
+  isOpen: () => boolean
 }
 
 const MAXIMUM_MISSED_HEARTBEAT = 3
@@ -72,9 +73,8 @@ export class Signaling {
    */
   open (): void {
     if (this.state === SignalingState.CONNECTED) {
-      this.rxWs.send({ joined: true })
+      this.rxWs.send({ stable: true })
       this.setState(SignalingState.STABLE)
-      log.debug('Signaling: STABLE')
     }
   }
 
@@ -94,24 +94,9 @@ export class Signaling {
               break
             case 'isFirst':
               if (msg.isFirst) {
-                log.debug('Signaling: STABLE FIRST')
                 this.setState(SignalingState.STABLE)
               } else {
-                this.wc.webRTCBuilder.connectOverSignaling({
-                  onMessage: this.rxWs.onMessage.pipe(
-                    filter(({ type }) => type === 'content'),
-                    pluck('content'),
-                  ),
-                  send: (m) => this.rxWs.send({ content: m }),
-                })
-                  .then((ch: Channel) => {
-                    log.debug('Signaling: CONNECTED')
-                    this.setState(SignalingState.CONNECTED)
-                  })
-                  .catch((err) => {
-                    this.setState(SignalingState.CLOSED)
-                    this.rxWs.close(FIRST_CONNECTION_ERROR_CODE, `Failed to join over Signaling: ${err.message}`)
-                  })
+                this.connectOverSignaling()
               }
               break
             }
@@ -128,6 +113,23 @@ export class Signaling {
   close (): void {
     if (this.rxWs) {
       this.rxWs.close(1000)
+    }
+  }
+
+  private connectOverSignaling () {
+    if (this.rxWs.isOpen()) {
+      this.wc.webRTCBuilder.connectOverSignaling({
+        onMessage: this.rxWs.onMessage.pipe(
+        filter(({ type }) => type === 'content'),
+        pluck('content'),
+      ),
+        send: (m) => this.rxWs.send({ content: m }),
+      })
+      .then((ch: Channel) => this.setState(SignalingState.CONNECTED))
+      .catch((err) => {
+        this.rxWs.send({ tryAnother: true })
+        this.connectOverSignaling()
+      })
     }
   }
 
@@ -197,6 +199,7 @@ export class Signaling {
         }
       },
       close: (code = 1000, reason = '') => ws.close(code, reason),
+      isOpen: () => ws.readyState === WebSocket.OPEN,
     }
   }
 

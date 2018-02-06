@@ -4072,8 +4072,9 @@ var signaling = $root.signaling = function () {
          * @interface IMessage
          * @property {signaling.IContent|null} [content] Message content
          * @property {boolean|null} [isFirst] Message isFirst
-         * @property {boolean|null} [joined] Message joined
+         * @property {boolean|null} [stable] Message stable
          * @property {boolean|null} [heartbeat] Message heartbeat
+         * @property {boolean|null} [tryAnother] Message tryAnother
          */
 
         /**
@@ -4107,12 +4108,12 @@ var signaling = $root.signaling = function () {
         Message.prototype.isFirst = false;
 
         /**
-         * Message joined.
-         * @member {boolean} joined
+         * Message stable.
+         * @member {boolean} stable
          * @memberof signaling.Message
          * @instance
          */
-        Message.prototype.joined = false;
+        Message.prototype.stable = false;
 
         /**
          * Message heartbeat.
@@ -4122,17 +4123,25 @@ var signaling = $root.signaling = function () {
          */
         Message.prototype.heartbeat = false;
 
+        /**
+         * Message tryAnother.
+         * @member {boolean} tryAnother
+         * @memberof signaling.Message
+         * @instance
+         */
+        Message.prototype.tryAnother = false;
+
         // OneOf field names bound to virtual getters and setters
         var $oneOfFields = void 0;
 
         /**
          * Message type.
-         * @member {"content"|"isFirst"|"joined"|"heartbeat"|undefined} type
+         * @member {"content"|"isFirst"|"stable"|"heartbeat"|"tryAnother"|undefined} type
          * @memberof signaling.Message
          * @instance
          */
         Object.defineProperty(Message.prototype, "type", {
-            get: $util.oneOfGetter($oneOfFields = ["content", "isFirst", "joined", "heartbeat"]),
+            get: $util.oneOfGetter($oneOfFields = ["content", "isFirst", "stable", "heartbeat", "tryAnother"]),
             set: $util.oneOfSetter($oneOfFields)
         });
 
@@ -4161,8 +4170,9 @@ var signaling = $root.signaling = function () {
             if (!writer) writer = $Writer.create();
             if (message.content != null && message.hasOwnProperty("content")) $root.signaling.Content.encode(message.content, writer.uint32( /* id 1, wireType 2 =*/10).fork()).ldelim();
             if (message.isFirst != null && message.hasOwnProperty("isFirst")) writer.uint32( /* id 2, wireType 0 =*/16).bool(message.isFirst);
-            if (message.joined != null && message.hasOwnProperty("joined")) writer.uint32( /* id 3, wireType 0 =*/24).bool(message.joined);
+            if (message.stable != null && message.hasOwnProperty("stable")) writer.uint32( /* id 3, wireType 0 =*/24).bool(message.stable);
             if (message.heartbeat != null && message.hasOwnProperty("heartbeat")) writer.uint32( /* id 4, wireType 0 =*/32).bool(message.heartbeat);
+            if (message.tryAnother != null && message.hasOwnProperty("tryAnother")) writer.uint32( /* id 5, wireType 0 =*/40).bool(message.tryAnother);
             return writer;
         };
 
@@ -4191,10 +4201,13 @@ var signaling = $root.signaling = function () {
                         message.isFirst = reader.bool();
                         break;
                     case 3:
-                        message.joined = reader.bool();
+                        message.stable = reader.bool();
                         break;
                     case 4:
                         message.heartbeat = reader.bool();
+                        break;
+                    case 5:
+                        message.tryAnother = reader.bool();
                         break;
                     default:
                         reader.skipType(tag & 7);

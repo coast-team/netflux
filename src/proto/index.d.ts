@@ -756,11 +756,14 @@ export namespace signaling {
         /** Message isFirst */
         isFirst?: (boolean|null);
 
-        /** Message joined */
-        joined?: (boolean|null);
+        /** Message stable */
+        stable?: (boolean|null);
 
         /** Message heartbeat */
         heartbeat?: (boolean|null);
+
+        /** Message tryAnother */
+        tryAnother?: (boolean|null);
     }
 
     /** Represents a Message. */
@@ -778,14 +781,17 @@ export namespace signaling {
         /** Message isFirst. */
         public isFirst: boolean;
 
-        /** Message joined. */
-        public joined: boolean;
+        /** Message stable. */
+        public stable: boolean;
 
         /** Message heartbeat. */
         public heartbeat: boolean;
 
+        /** Message tryAnother. */
+        public tryAnother: boolean;
+
         /** Message type. */
-        public type?: ("content"|"isFirst"|"joined"|"heartbeat");
+        public type?: ("content"|"isFirst"|"stable"|"heartbeat"|"tryAnother");
 
         /**
          * Creates a new Message instance using the specified properties.
