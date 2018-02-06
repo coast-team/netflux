@@ -72,7 +72,7 @@
     "esdoc-standard-plugin": "^1.0.0",
     "esdoc-typescript-plugin": "^1.0.0",
     "husky": "^0.14.3",
-    "jasmine": "^2.8.0",
+    "jasmine": "^3.0.0",
     "jasmine-core": "^2.8.0",
     "jasmine-spec-reporter": "^4.1.0",
     "json": "^9.0.3",
