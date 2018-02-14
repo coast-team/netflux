@@ -2,7 +2,16 @@
 /* tslint:disable:one-variable-per-declaration */
 import { SignalingState, Topology, WebGroup, WebGroupState } from '../../src/index.browser'
 import { MAX_KEY_LENGTH } from '../../src/misc/Util'
-import { areTheSame, BOT_URL, getBotData, IBotData, Queue, SIGNALING_URL, wait, waitBotJoin } from '../util/helper'
+import {
+  areTheSame,
+  BOT_URL,
+  cleanWebGroup,
+  getBotData,
+  IBotData,
+  Queue,
+  SIGNALING_URL,
+  wait,
+  waitBotJoin } from '../util/helper'
 
 const WebGroupOptions = {
   signalingServer: SIGNALING_URL,
@@ -23,6 +32,12 @@ describe('3 members', () => {
         called2 = 0
         called3 = 0
         const queue = new Queue(4)
+        queue.wait().then(() => {
+          cleanWebGroup(wg1)
+          cleanWebGroup(wg2)
+          cleanWebGroup(wg3)
+          done()
+        })
         wg1 = new WebGroup(WebGroupOptions)
         wg2 = new WebGroup(WebGroupOptions)
         wg3 = new WebGroup(WebGroupOptions)
@@ -44,16 +59,12 @@ describe('3 members', () => {
         }
         wg2.onMemberJoin = () => queue.pop()
         wg1.join()
-        queue.wait().then(() => {
-          wg1.onSignalingStateChange = () => {}
-          wg1.onMemberJoin = () => {}
-          wg2.onStateChange = () => {}
-          wg2.onSignalingStateChange = () => {}
-          done()
-        })
       })
 
       afterEach ((done) => {
+        cleanWebGroup(wg1)
+        cleanWebGroup(wg2)
+        cleanWebGroup(wg3)
         const queue = new Queue(3)
         if (wg1.state !== WebGroupState.LEFT) {
           wg1.onStateChange = (state: WebGroupState) => {
@@ -85,12 +96,16 @@ describe('3 members', () => {
         } else {
           queue.pop()
         }
-        queue.wait().then(done)
+        queue.wait().then(() => {
+          cleanWebGroup(wg1)
+          cleanWebGroup(wg2)
+          cleanWebGroup(wg3)
+          done()
+        })
       })
 
       /** @test {WebGroup#onSignalingStateChange} */
       it('should change the Signaling state', (done) => {
-        const queue = new Queue(2)
         const states: SignalingState[] = []
         const expectedStates = [SignalingState.CONNECTING, SignalingState.CONNECTED, SignalingState.STABLE]
 
@@ -155,7 +170,16 @@ describe('3 members', () => {
       it('should be notified about new member', (done) => {
         const members3: number[] = []
         const expectedMembers3 = [wg1.myId, wg2.myId]
-        const queue = new Queue(2)
+        const queue = new Queue(3)
+        queue.wait()
+          .then(() => wait(1000))
+          .then(() => {
+            expect(called1).toEqual(1)
+            expect(called2).toEqual(1)
+            expect(called3).toEqual(2)
+            expect(areTheSame(members3, expectedMembers3)).toBeTruthy()
+            done()
+          })
 
         // Code for peer 1
         wg1.onMemberJoin = (id) => {
@@ -176,15 +200,7 @@ describe('3 members', () => {
           members3.push(id)
           called3++
           if (called3 === 2) {
-            queue.wait()
-              .then(() => wait(1000))
-              .then(() => {
-                expect(called1).toEqual(1)
-                expect(called2).toEqual(1)
-                expect(called3).toEqual(2)
-                expect(areTheSame(members3, expectedMembers3)).toBeTruthy()
-                done()
-              })
+            queue.pop()
           }
         }
 
@@ -193,7 +209,17 @@ describe('3 members', () => {
       })
 
       it('should have the same members, key, WebGroup id, topology once joined', (done) => {
-        const queue = new Queue(2)
+        const queue = new Queue(3)
+        queue.wait()
+          .then(() => wait(1000))
+          .then(() => {
+            expect(areTheSame(wg3.members, wg1.members)).toBeTruthy()
+            expect(areTheSame(wg3.members, wg2.members)).toBeTruthy()
+            expect(wg3.id).toEqual(wg1.id)
+            expect(wg3.key).toEqual(wg1.key)
+            expect(wg3.topology).toEqual(wg1.topology)
+            done()
+          })
 
         // Code for peer 1
         wg1.onMemberJoin = (id) => queue.pop()
@@ -211,16 +237,7 @@ describe('3 members', () => {
             expect(wg3.id).toEqual(wg1.id)
             expect(wg3.key).toEqual(wg1.key)
             expect(wg3.topology).toEqual(wg1.topology)
-            queue.wait()
-              .then(() => wait(1000))
-              .then(() => {
-                expect(areTheSame(wg3.members, wg1.members)).toBeTruthy()
-                expect(areTheSame(wg3.members, wg2.members)).toBeTruthy()
-                expect(wg3.id).toEqual(wg1.id)
-                expect(wg3.key).toEqual(wg1.key)
-                expect(wg3.topology).toEqual(wg1.topology)
-                done()
-              })
+            queue.pop()
           }
         }
 
@@ -270,17 +287,17 @@ describe('3 members', () => {
 
         wg1.join()
         queue.wait().then(() => {
-          wg1.onSignalingStateChange = () => {}
-          wg1.onMemberJoin = () => {}
-          wg2.onStateChange = () => {}
-          wg2.onSignalingStateChange = () => {}
-          wg2.onMemberJoin = () => {}
-          wg3.onStateChange = () => {}
+          cleanWebGroup(wg1)
+          cleanWebGroup(wg2)
+          cleanWebGroup(wg3)
           done()
         })
       })
 
       afterEach ((done) => {
+        cleanWebGroup(wg1)
+        cleanWebGroup(wg2)
+        cleanWebGroup(wg3)
         const queue = new Queue(3)
         if (wg1.state !== WebGroupState.LEFT) {
           wg1.onStateChange = (state: WebGroupState) => {
@@ -312,12 +329,31 @@ describe('3 members', () => {
         } else {
           queue.pop()
         }
-        queue.wait().then(done)
+        queue.wait().then(() => {
+          cleanWebGroup(wg1)
+          cleanWebGroup(wg2)
+          cleanWebGroup(wg3)
+          done()
+        })
       })
 
       /** @test {WebGroup#send} */
       it('broadcast String', (done) => {
         const queue = new Queue(6)
+        queue.wait()
+          .then(() => wait(1000))
+          .then(() => {
+            expect(called1).toEqual(2)
+            expect(called2).toEqual(2)
+            expect(called3).toEqual(2)
+            expect(areTheSame(messages1.ids, [wg2.myId, wg3.myId])).toBeTruthy()
+            expect(areTheSame(messages1.msgs, [msg2, msg3])).toBeTruthy()
+            expect(areTheSame(messages2.ids, [wg1.myId, wg3.myId])).toBeTruthy()
+            expect(areTheSame(messages2.msgs, [msg1, msg3])).toBeTruthy()
+            expect(areTheSame(messages3.ids, [wg2.myId, wg1.myId])).toBeTruthy()
+            expect(areTheSame(messages3.msgs, [msg2, msg1])).toBeTruthy()
+            done()
+          })
         const msg1 = 'Art is long, life is short'
         const msg2 = 'Do or do not, there is no try'
         const msg3 = 'Never say never'
@@ -353,7 +389,11 @@ describe('3 members', () => {
         wg1.send(msg1)
         wg2.send(msg2)
         wg3.send(msg3)
+      })
 
+      /** @test {WebGroup#send} */
+      it('broadcast ArrayBuffer', (done) => {
+        const queue = new Queue(6)
         queue.wait()
           .then(() => wait(1000))
           .then(() => {
@@ -368,11 +408,6 @@ describe('3 members', () => {
             expect(areTheSame(messages3.msgs, [msg2, msg1])).toBeTruthy()
             done()
           })
-      })
-
-      /** @test {WebGroup#send} */
-      it('broadcast ArrayBuffer', (done) => {
-        const queue = new Queue(6)
         const msg1 = new Uint8Array([42, 347, 248247, 583, 10, 8, 9623])
         const msg2 = new Uint8Array([845, 4, 798240, 3290, 553, 1, 398539857, 84])
         const msg3 = new Uint8Array([84, 79, 240, 30, 53, 3, 339857, 44])
@@ -411,7 +446,11 @@ describe('3 members', () => {
         wg1.send(msg1)
         wg2.send(msg2)
         wg3.send(msg3)
+      })
 
+      /** @test {WebGroup#sendTo} */
+      it('private String', (done) => {
+        const queue = new Queue(6)
         queue.wait()
           .then(() => wait(1000))
           .then(() => {
@@ -419,18 +458,13 @@ describe('3 members', () => {
             expect(called2).toEqual(2)
             expect(called3).toEqual(2)
             expect(areTheSame(messages1.ids, [wg2.myId, wg3.myId])).toBeTruthy()
-            expect(areTheSame(messages1.msgs, [msg2, msg3])).toBeTruthy()
+            expect(areTheSame(messages1.msgs, [msg2For1, msg3For1])).toBeTruthy()
             expect(areTheSame(messages2.ids, [wg1.myId, wg3.myId])).toBeTruthy()
-            expect(areTheSame(messages2.msgs, [msg1, msg3])).toBeTruthy()
+            expect(areTheSame(messages2.msgs, [msg1For2, msg3For2])).toBeTruthy()
             expect(areTheSame(messages3.ids, [wg2.myId, wg1.myId])).toBeTruthy()
-            expect(areTheSame(messages3.msgs, [msg2, msg1])).toBeTruthy()
+            expect(areTheSame(messages3.msgs, [msg2For3, msg1For3])).toBeTruthy()
             done()
           })
-      })
-
-      /** @test {WebGroup#sendTo} */
-      it('private String', (done) => {
-        const queue = new Queue(6)
         const msg1For2 = 'Art is long, life is short2'
         const msg1For3 = 'Art is long, life is short3'
         const msg2For1 = 'Do or do not, there is no try1'
@@ -472,7 +506,11 @@ describe('3 members', () => {
         wg2.sendTo(wg3.myId, msg2For3)
         wg3.sendTo(wg1.myId, msg3For1)
         wg3.sendTo(wg2.myId, msg3For2)
+      })
 
+      /** @test {WebGroup#sendTo} */
+      it('private ArrayBuffer', (done) => {
+        const queue = new Queue(6)
         queue.wait()
           .then(() => wait(1000))
           .then(() => {
@@ -487,11 +525,6 @@ describe('3 members', () => {
             expect(areTheSame(messages3.msgs, [msg2For3, msg1For3])).toBeTruthy()
             done()
           })
-      })
-
-      /** @test {WebGroup#sendTo} */
-      it('private ArrayBuffer', (done) => {
-        const queue = new Queue(6)
         const msg1For2 = new Uint8Array([42, 347, 248247, 583, 10, 8, 2])
         const msg1For3 = new Uint8Array([42, 347, 248247, 583, 10, 8, 3])
         const msg2For1 = new Uint8Array([845, 4, 798240, 3290, 553, 1, 398539857, 1])
@@ -536,21 +569,6 @@ describe('3 members', () => {
         wg2.sendTo(wg3.myId, msg2For3)
         wg3.sendTo(wg1.myId, msg3For1)
         wg3.sendTo(wg2.myId, msg3For2)
-
-        queue.wait()
-          .then(() => wait(1000))
-          .then(() => {
-            expect(called1).toEqual(2)
-            expect(called2).toEqual(2)
-            expect(called3).toEqual(2)
-            expect(areTheSame(messages1.ids, [wg2.myId, wg3.myId])).toBeTruthy()
-            expect(areTheSame(messages1.msgs, [msg2For1, msg3For1])).toBeTruthy()
-            expect(areTheSame(messages2.ids, [wg1.myId, wg3.myId])).toBeTruthy()
-            expect(areTheSame(messages2.msgs, [msg1For2, msg3For2])).toBeTruthy()
-            expect(areTheSame(messages3.ids, [wg2.myId, wg1.myId])).toBeTruthy()
-            expect(areTheSame(messages3.msgs, [msg2For3, msg1For3])).toBeTruthy()
-            done()
-          })
       })
     })
 
@@ -561,6 +579,12 @@ describe('3 members', () => {
         called2 = 0
         called3 = 0
         const queue = new Queue(4)
+        queue.wait().then(() => {
+          cleanWebGroup(wg1)
+          cleanWebGroup(wg2)
+          cleanWebGroup(wg3)
+          done()
+        })
         wg1 = new WebGroup(WebGroupOptions)
         wg2 = new WebGroup(WebGroupOptions)
         wg3 = new WebGroup(WebGroupOptions)
@@ -582,16 +606,12 @@ describe('3 members', () => {
         }
         wg2.onMemberJoin = () => queue.pop()
         wg1.join()
-        queue.wait().then(() => {
-          wg1.onSignalingStateChange = () => {}
-          wg1.onMemberJoin = () => {}
-          wg2.onStateChange = () => {}
-          wg2.onSignalingStateChange = () => {}
-          done()
-        })
       })
 
       afterEach ((done) => {
+        cleanWebGroup(wg1)
+        cleanWebGroup(wg2)
+        cleanWebGroup(wg3)
         const queue = new Queue(3)
         if (wg1.state !== WebGroupState.LEFT) {
           wg1.onStateChange = (state: WebGroupState) => {
@@ -623,7 +643,12 @@ describe('3 members', () => {
         } else {
           queue.pop()
         }
-        queue.wait().then(done)
+        queue.wait().then(() => {
+          cleanWebGroup(wg1)
+          cleanWebGroup(wg2)
+          cleanWebGroup(wg3)
+          done()
+        })
       })
 
       /** @test {WebGroup#leave} */

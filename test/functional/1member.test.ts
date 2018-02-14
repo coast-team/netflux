@@ -1,7 +1,7 @@
 /// <reference types='jasmine' />
 import { SignalingState, Topology, WebGroup, WebGroupState } from '../../src/index.browser'
 import { MAX_KEY_LENGTH } from '../../src/misc/Util'
-import { areTheSame, Queue, SIGNALING_URL, wait } from '../util/helper'
+import { areTheSame, cleanWebGroup, Queue, SIGNALING_URL, wait } from '../util/helper'
 
 const WebGroupOptions = {
   signalingServer: SIGNALING_URL,
@@ -60,6 +60,7 @@ describe('1 member', () => {
       })
 
       afterEach ((done) => {
+        cleanWebGroup(wg1)
         if (wg1.state !== WebGroupState.LEFT) {
           wg1.onStateChange = (state: WebGroupState) => {
             if (state === WebGroupState.LEFT) {
@@ -68,6 +69,7 @@ describe('1 member', () => {
           }
           wg1.leave()
         } else {
+          cleanWebGroup(wg1)
           done()
         }
       })
@@ -186,15 +188,19 @@ describe('1 member', () => {
     })
 
     describe('leaving', () => {
+
       beforeEach ((done) => {
         wg1 = new WebGroup(WebGroupOptions)
         wg1.onStateChange = (state: WebGroupState) => {
           if (state === WebGroupState.JOINED) {
+            cleanWebGroup(wg1)
             done()
           }
         }
         wg1.join()
       })
+
+      afterEach (() => cleanWebGroup(wg1))
 
       /** @test {WebGroup#leave} */
       it('should have the same members, WebGroup id, topology and an empty key', (done) => {
@@ -223,7 +229,7 @@ describe('1 member', () => {
           }
         }
 
-        // Start joining
+        // Start leaving
         wg1.leave()
       })
 
@@ -243,6 +249,7 @@ describe('1 member', () => {
           }
         }
 
+        // Start leaving
         wg1.leave()
       })
 
@@ -261,6 +268,7 @@ describe('1 member', () => {
             })
         }
 
+        // Start leaving
         wg1.leave()
       })
 
@@ -279,6 +287,7 @@ describe('1 member', () => {
             })
         }
 
+        // Start leaving
         wg1.leave()
       })
     })

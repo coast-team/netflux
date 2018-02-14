@@ -2,12 +2,12 @@ import { Subject } from 'rxjs/Subject'
 
 import { LogLevel, setLogLevel, SignalingState, WebGroup, WebGroupState } from '../../src/index.browser'
 
-// setLogLevel(LogLevel.DEBUG)
+// setLogLevel(LogLevel.INFO)
 
 const isBrowser = (typeof window === 'undefined') ? false : true
 
 // Main signaling server for all tests
-export const SIGNALING_URL = 'ws://localhost:8000'
+export const SIGNALING_URL = 'ws://localhost:8010'
 
 // Configuration for bot server
 export const BOT_HOST = 'localhost'
@@ -455,4 +455,12 @@ export function waitBotJoin (wgId) {
 
 export function wait (milliseconds: number): Promise<void> {
   return new Promise((resolve) => setTimeout(() => resolve(), milliseconds))
+}
+
+export function cleanWebGroup (wg: WebGroup) {
+  wg.onMemberJoin = undefined
+  wg.onMemberLeave = undefined
+  wg.onMessage = undefined
+  wg.onSignalingStateChange = undefined
+  wg.onStateChange = undefined
 }
