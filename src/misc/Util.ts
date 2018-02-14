@@ -75,16 +75,16 @@ export function setLogLevel (level: LogLevel) {
   if (level <= LogLevel.INFO) {
     log.info = (msg: string, ...rest: any[]): void => {
       if (rest.length === 0) {
-        console.info(`%cNETFLUX%c: ${msg}`, netfluxCSS, '')
+        console.info(`%cNETFLUX INFO%c: ${msg}`, netfluxCSS, '')
       } else {
-        console.info(`%cNETFLUX%c: ${msg}`, netfluxCSS, '', ...rest)
+        console.info(`%cNETFLUX INFO%c: ${msg}`, netfluxCSS, '', ...rest)
       }
     }
     log.signalingState = (msg: string, id: number): void => {
-      console.info(`%cNETFLUX ${id}%c: Signaling: %c${msg}%c`, netfluxCSS, '', signalingStateCSS, '')
+      console.info(`%cNETFLUX ${id} INFO%c: Signaling: %c${msg}%c`, netfluxCSS, '', signalingStateCSS, '')
     }
     log.webGroupState = (msg: string, id: number): void => {
-      console.info(`%cNETFLUX ${id}%c: WebGroup: %c${msg}%c`, netfluxCSS, '', webGroupStateCSS, '')
+      console.info(`%cNETFLUX ${id} INFO%c: WebGroup: %c${msg}%c`, netfluxCSS, '', webGroupStateCSS, '')
     }
   }
   if (level <= LogLevel.DEBUG) {
