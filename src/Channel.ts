@@ -53,9 +53,6 @@ export class Channel {
     this.connection.onclose = (evt: Event) => {
       log.info(`Connection with ${this.id} has closed`)
       wc.topologyService.onChannelClose(evt, this)
-      if (this.rtcPeerConnection && this.rtcPeerConnection.signalingState !== 'closed') {
-        // this.rtcPeerConnection.close()
-      }
     }
     this.connection.onerror = (evt) => {
       log.debug('Channel error: ', evt)
@@ -74,7 +71,11 @@ export class Channel {
   }
 
   close (): void {
-    this.connection.close()
+    if (this.rtcPeerConnection) {
+      this.rtcPeerConnection.close()
+    } else {
+      this.connection.close()
+    }
   }
 
   closeQuietly (): void {
