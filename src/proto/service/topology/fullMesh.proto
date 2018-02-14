@@ -3,9 +3,9 @@ package fullMesh;
 
 message Message {
   oneof type {
-    Peers members = 1;
-    bool requestMembers = 2;
-    Peers intermediaryIds = 3;
+    Peers membersResponse = 1;
+    bool membersRequest = 2;
+    Peers adjacentMembers = 3;
     bool heartbeat = 5;
   }
 }
