@@ -6,6 +6,8 @@ message Message {
     Connection request = 1;
     Connection response = 2;
     string failed = 3;
+    bool ping = 4;
+    bool pong = 5;
   }
 }
 

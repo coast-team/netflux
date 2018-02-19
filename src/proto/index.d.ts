@@ -389,6 +389,12 @@ export namespace channelBuilder {
 
         /** Message failed */
         failed?: (string|null);
+
+        /** Message ping */
+        ping?: (boolean|null);
+
+        /** Message pong */
+        pong?: (boolean|null);
     }
 
     /** Represents a Message. */
@@ -409,8 +415,14 @@ export namespace channelBuilder {
         /** Message failed. */
         public failed: string;
 
+        /** Message ping. */
+        public ping: boolean;
+
+        /** Message pong. */
+        public pong: boolean;
+
         /** Message type. */
-        public type?: ("request"|"response"|"failed");
+        public type?: ("request"|"response"|"failed"|"ping"|"pong");
 
         /**
          * Creates a new Message instance using the specified properties.

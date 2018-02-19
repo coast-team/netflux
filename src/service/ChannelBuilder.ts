@@ -2,7 +2,7 @@ import { Observable } from 'rxjs/Observable'
 import { Subject } from 'rxjs/Subject'
 
 import { Channel } from '../Channel'
-import { channelBuilder } from '../proto'
+import { channelBuilder as proto } from '../proto'
 import { CONNECT_TIMEOUT as WEBSOCKET_TIMEOUT, WebSocketBuilder } from '../WebSocketBuilder'
 import { IServiceMessageDecoded, Service } from './Service'
 import { WebChannel } from './WebChannel'
@@ -19,6 +19,11 @@ const ME = {
 }
 
 const CONNECT_TIMEOUT = Math.max(WEBRTC_TIMEOUT, WEBSOCKET_TIMEOUT) + 3000
+const PINGPONG_TIMEOUT = 6000
+const ping = Service.encodeServiceMessage(ID,
+  proto.Message.encode(proto.Message.create({ ping: true })).finish())
+const pong = Service.encodeServiceMessage(ID,
+  proto.Message.encode(proto.Message.create({ pong: true })).finish())
 
 interface IPendingRequest {
   resolve: (ch: Channel) => void,
@@ -37,12 +42,14 @@ export class ChannelBuilder extends Service {
 
   private wc: WebChannel
   private pendingRequests: Map<number, IPendingRequest>
+  private pendingPingPongRequests: Map<number, () => void>
   private channelsSubject: Subject<Channel>
 
   constructor (wc: WebChannel) {
-    super(ID, channelBuilder.Message, wc.serviceMessageSubject)
+    super(ID, proto.Message, wc.serviceMessageSubject)
     this.wc = wc
     this.pendingRequests = new Map()
+    this.pendingPingPongRequests = new Map()
     this.channelsSubject = new Subject()
 
     // Listen on Channels as RTCDataChannels if WebRTC is supported
@@ -76,8 +83,9 @@ export class ChannelBuilder extends Service {
   /**
    * Establish a `Channel` with the peer identified by `id`.
    */
-  connectTo (id: number): Promise<Channel> {
-    return new Promise((resolve, reject) => {
+  async connectTo (id: number): Promise<Channel> {
+    await this.isResponding(id)
+    const channel: any = await new Promise((resolve, reject) => {
       const timer = setTimeout(() => reject(new Error('ChannelBuilder timeout')), CONNECT_TIMEOUT)
       this.pendingRequests.set(id, {
         resolve: (ch: Channel) => {
@@ -90,6 +98,19 @@ export class ChannelBuilder extends Service {
         },
       })
       this.wc.sendToProxy({ recipientId: id, content: request })
+    })
+    return channel
+  }
+
+  isResponding (id: number): Promise<boolean> {
+    this.wc.sendToProxy({ recipientId: id, content: ping })
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('pingpong')), PINGPONG_TIMEOUT)
+      this.pendingPingPongRequests.set(id, () => {
+        this.pendingPingPongRequests.delete(id)
+        clearTimeout(timer)
+        resolve()
+      })
     })
   }
 
@@ -104,6 +125,14 @@ export class ChannelBuilder extends Service {
 
   private treatServiceMessage ({ channel, senderId, recipientId, msg }: IServiceMessageDecoded): void {
     switch (msg.type) {
+    case 'ping': {
+      this.wc.sendToProxy({ recipientId: senderId, content: pong })
+      break
+    }
+    case 'pong': {
+      this.pendingPingPongRequests.get(senderId)()
+      break
+    }
     case 'failed': {
       console.warn('treatServiceMessage ERROR: ', msg.failed)
       const pr = this.pendingRequests.get(senderId)

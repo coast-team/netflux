@@ -3274,6 +3274,8 @@ var channelBuilder = $root.channelBuilder = function () {
          * @property {channelBuilder.IConnection|null} [request] Message request
          * @property {channelBuilder.IConnection|null} [response] Message response
          * @property {string|null} [failed] Message failed
+         * @property {boolean|null} [ping] Message ping
+         * @property {boolean|null} [pong] Message pong
          */
 
         /**
@@ -3314,17 +3316,33 @@ var channelBuilder = $root.channelBuilder = function () {
          */
         Message.prototype.failed = "";
 
+        /**
+         * Message ping.
+         * @member {boolean} ping
+         * @memberof channelBuilder.Message
+         * @instance
+         */
+        Message.prototype.ping = false;
+
+        /**
+         * Message pong.
+         * @member {boolean} pong
+         * @memberof channelBuilder.Message
+         * @instance
+         */
+        Message.prototype.pong = false;
+
         // OneOf field names bound to virtual getters and setters
         var $oneOfFields = void 0;
 
         /**
          * Message type.
-         * @member {"request"|"response"|"failed"|undefined} type
+         * @member {"request"|"response"|"failed"|"ping"|"pong"|undefined} type
          * @memberof channelBuilder.Message
          * @instance
          */
         Object.defineProperty(Message.prototype, "type", {
-            get: $util.oneOfGetter($oneOfFields = ["request", "response", "failed"]),
+            get: $util.oneOfGetter($oneOfFields = ["request", "response", "failed", "ping", "pong"]),
             set: $util.oneOfSetter($oneOfFields)
         });
 
@@ -3354,6 +3372,8 @@ var channelBuilder = $root.channelBuilder = function () {
             if (message.request != null && message.hasOwnProperty("request")) $root.channelBuilder.Connection.encode(message.request, writer.uint32( /* id 1, wireType 2 =*/10).fork()).ldelim();
             if (message.response != null && message.hasOwnProperty("response")) $root.channelBuilder.Connection.encode(message.response, writer.uint32( /* id 2, wireType 2 =*/18).fork()).ldelim();
             if (message.failed != null && message.hasOwnProperty("failed")) writer.uint32( /* id 3, wireType 2 =*/26).string(message.failed);
+            if (message.ping != null && message.hasOwnProperty("ping")) writer.uint32( /* id 4, wireType 0 =*/32).bool(message.ping);
+            if (message.pong != null && message.hasOwnProperty("pong")) writer.uint32( /* id 5, wireType 0 =*/40).bool(message.pong);
             return writer;
         };
 
@@ -3383,6 +3403,12 @@ var channelBuilder = $root.channelBuilder = function () {
                         break;
                     case 3:
                         message.failed = reader.string();
+                        break;
+                    case 4:
+                        message.ping = reader.bool();
+                        break;
+                    case 5:
+                        message.pong = reader.bool();
                         break;
                     default:
                         reader.skipType(tag & 7);
