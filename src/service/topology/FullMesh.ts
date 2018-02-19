@@ -257,6 +257,9 @@ export class FullMesh extends Service implements ITopology {
         // at the same time.
         if (id < this.wc.myId) {
           connectingAttempts[connectingAttempts.length] = this.connectTo(id)
+        } else {
+          connectingAttempts[connectingAttempts.length] = this.wc.channelBuilder.isResponding(id)
+            .then(() => this.wc.onMemberJoinProxy(id))
         }
       })
 
