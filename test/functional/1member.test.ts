@@ -256,16 +256,21 @@ describe('1 member', () => {
         /** @test {WebGroup#onStateChange} */
       it('should change the WebGroup state', (done) => {
         let called1 = 0
+        const states: WebGroupState[] = []
+        const expectedStates = [WebGroupState.LEAVING, WebGroupState.LEFT]
 
         wg1.onStateChange = (state: WebGroupState) => {
-          expect(state).toEqual(WebGroupState.LEFT)
+          states.push(state)
           called1++
-          wait(1000)
-            .then(() => {
-              expect(called1).toEqual(1)
-              expect(state).toEqual(WebGroupState.LEFT)
-              done()
-            })
+          if (state === WebGroupState.LEFT) {
+            wait(1000)
+              .then(() => {
+                expect(called1).toEqual(2)
+                expect(states).toEqual(expectedStates)
+                expect(state).toEqual(WebGroupState.LEFT)
+                done()
+              })
+          }
         }
 
         // Start leaving

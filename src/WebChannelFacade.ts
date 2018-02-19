@@ -49,7 +49,19 @@ export class WebGroupState {
   static get [WebGroupState.JOINED] (): string { return WebChannelState[WebChannelState.JOINED] }
 
   /**
-   * Equals to `2`: left the group. If the connection to the web group has lost other then
+   * Equals to `2`: The `WebGroup` is in process of leaving.
+   * @type {number}
+   */
+  static get LEAVING (): number { return WebChannelState.LEAVING }
+
+  /**
+   * Equals to `'LEAVING'`.
+   * @type {string}
+   */
+  static get [WebGroupState.LEAVING] (): string { return WebChannelState[WebChannelState.LEAVING] }
+
+  /**
+   * Equals to `3`: left the group. If the connection to the web group has lost other then
    * by calling {@link WebGroup#leave} methods and {@link WebGroup#autoRejoin} is true,
    * then the state would be `LEFT`, usually during a relatively short period) before
    * the rejoining process starts.

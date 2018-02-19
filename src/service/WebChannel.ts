@@ -38,7 +38,7 @@ export const defaultOptions: IWebChannelOptions = {
   autoRejoin: true,
 }
 
-export enum WebChannelState { JOINING, JOINED, LEFT }
+export enum WebChannelState { JOINING, JOINED, LEAVING, LEFT }
 
 /**
  * This class is an API starting point. It represents a group of collaborators
@@ -226,11 +226,12 @@ export class WebChannel extends Service {
    * with Signaling server.
    */
   leave () {
+    this.setState(WebChannelState.LEAVING)
     this.key = ''
     this.isRejoinDisabled = true
     clearTimeout(this.rejoinTimer)
-    this.topologyService.leave()
     this.signaling.close()
+    this.topologyService.leave()
   }
 
   /**
