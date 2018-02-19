@@ -6,15 +6,18 @@ import { Subject } from 'rxjs/Subject'
 
 import { Channel } from '../Channel'
 import { log } from '../misc/Util'
-import { signaling, webRTCBuilder } from '../proto'
+import { signaling as sigProto, webRTCBuilder } from '../proto'
+import { IWebRTCStream } from '../Signaling'
 import { Service } from './Service'
 import { WebChannel } from './WebChannel'
+
+let counter = 0
 
 /**
  * Service id.
  */
 const ID = 300
-export const CONNECT_TIMEOUT = 9000
+export const CONNECT_TIMEOUT = 20000
 
 interface ICommonMessage {
   iceCandidate?: webRTCBuilder.IIceCandidate,
@@ -36,7 +39,7 @@ interface IAnswer extends ICommonMessage {
 
 export interface ISignalingConnection {
   onMessage: Observable<any>,
-  send: (msg: signaling.IContent) => void
+  send: (msg: sigProto.IContent) => void
 }
 
 /**
@@ -109,10 +112,10 @@ export class WebRTCBuilder extends Service {
    * Listen on `RTCDataChannel` from Signaling server.
    * Starts to listen on **SDP answer**.
    */
-  onChannelFromSignaling (signalingConnection: ISignalingConnection): Observable<Channel> {
+  onChannelFromSignaling (wrtcStream: IWebRTCStream): Observable<Channel> {
     if (WebRTCBuilder.isSupported) {
       return this.onChannel(
-        signalingConnection.onMessage.pipe(
+        wrtcStream.message.pipe(
           filter((msg) => msg.id !== 0),
           map((msg) => {
             if (msg.type === 'data') {
@@ -128,7 +131,7 @@ export class WebRTCBuilder extends Service {
             msg.data = webRTCBuilder.Message.encode(webRTCBuilder.Message.create(msg)).finish()
           }
           msg.id = id
-          signalingConnection.send(msg)
+          wrtcStream.send(msg)
         },
       )
     }
@@ -139,18 +142,18 @@ export class WebRTCBuilder extends Service {
    * Establish an `RTCDataChannel` with a peer identified by `id` trough Signaling server.
    * Starts by sending an **SDP offer**.
    */
-  connectOverSignaling (signalingConnection: ISignalingConnection): Promise<Channel> {
+  connectOverSignaling (wrtcStream: IWebRTCStream): Promise<Channel> {
     if (WebRTCBuilder.isSupported) {
       return this.establishChannel(
-        signalingConnection.onMessage.pipe(
+        wrtcStream.message.pipe(
           filter((msg) => msg.id === 0),
           map((msg) => msg.type === 'data' ? super.decode(msg.data) : msg),
         ),
         (msg) => {
           if (!('isError' in msg || 'isEnd' in msg)) {
-            signalingConnection.send({ data: webRTCBuilder.Message.encode(webRTCBuilder.Message.create(msg)).finish() })
+            wrtcStream.send({ data: webRTCBuilder.Message.encode(webRTCBuilder.Message.create(msg)).finish() })
           } else {
-            signalingConnection.send(msg)
+            wrtcStream.send(msg)
           }
         },
       )
@@ -172,6 +175,7 @@ export class WebRTCBuilder extends Service {
         isOfferSent = false
       }
     }
+    counter++
     pc.onsignalingstatechange = () => {log.debug('SIGNALING STATE changed to', pc.signalingState)}
     const remoteCandidateStream = new ReplaySubject<RTCIceCandidate>()
     this.setupLocalCandidates(pc, (iceCandidate) => send({ iceCandidate }))
@@ -180,27 +184,27 @@ export class WebRTCBuilder extends Service {
       const onMessageSub = onMessage.subscribe(
         ({ answer, iceCandidate, isError, isEnd }) => {
           pc.oniceconnectionstatechange = () => {
-            log.debug('ICE CONNECTION STATE changed to', pc.iceConnectionState)
+            log.debug(counter + ': ICE CONNECTION STATE changed to', pc.iceConnectionState)
             if (pc.iceConnectionState === 'failed') {
               remoteCandidateStream.complete()
               pc.close()
               send({ isError: true })
               onMessageSub.unsubscribe()
-              reject(new Error('Failed to establish RTCDataChannel: Ice Connection failed'))
+              reject(new Error(counter + ': Failed to establish RTCDataChannel: Ice Connection failed'))
             }
           }
           if (isError) {
             remoteCandidateStream.complete()
             onMessageSub.unsubscribe()
             if (pc.iceConnectionState !== 'connected' && pc.iceConnectionState !== 'completed') {
-              log.debug('Failed to establish RTCDataChannel: remote peer error')
+              log.debug(counter + ': Failed to establish RTCDataChannel: remote peer error')
               pc.close()
-              reject(new Error('Remote peer error'))
+              reject(new Error(counter + ': Remote peer error'))
             } else {
-              log.debug('Remote peer error, but RTCDataChannel has still been established')
+              log.debug(counter + ': Remote peer error, but RTCDataChannel has still been established')
             }
           } else if (answer) {
-            log.debug('REMOTE Answer is received', {answer})
+            log.debug(counter + ': REMOTE Answer is received', {answer})
             pc.setRemoteDescription({ type: 'answer', sdp: answer } as any)
               .then(() => {
                 remoteCandidateStream.subscribe(
@@ -209,53 +213,53 @@ export class WebRTCBuilder extends Service {
                 )
               })
               .catch((err) => {
-                log.debug('Failed to establish RTCDataChannel: Set REMOTE Answer ERROR', err)
+                log.debug(counter + ': Failed to establish RTCDataChannel: Set REMOTE Answer ERROR', err)
                 remoteCandidateStream.complete()
                 pc.close()
                 send({ isError: true })
                 onMessageSub.unsubscribe()
-                reject(new Error('Error during setting a remote answer'))
+                reject(new Error(counter + ': Error during setting a remote answer'))
               })
           } else if (iceCandidate) {
             if (iceCandidate.candidate !== '') {
-              log.debug('REMOTE Ice Candidate is received', iceCandidate)
+              log.debug(counter + ': REMOTE Ice Candidate is received', iceCandidate)
               remoteCandidateStream.next(new global.RTCIceCandidate(iceCandidate))
             } else {
-              log.debug('REMOTE Ice Candidate gathering COMPLETED', iceCandidate.candidate)
+              log.debug(counter + ': REMOTE Ice Candidate gathering COMPLETED', iceCandidate.candidate)
               remoteCandidateStream.complete()
             }
           } else if (isEnd) {
-            log.debug('REMOTE Peer FINISHED send all data')
+            log.debug(counter + ': REMOTE Peer FINISHED send all data')
             onMessageSub.unsubscribe()
           } else {
-            log.debug('Unknown message from a remote peer: stopping connection establishment')
+            log.debug(counter + ': Unknown message from a remote peer: stopping connection establishment')
             remoteCandidateStream.complete()
             pc.close()
             send({ isError: true })
             onMessageSub.unsubscribe()
-            reject(new Error('Unknown message from a remote peer'))
+            reject(new Error(counter + ': Unknown message from a remote peer'))
           }
         },
         (err) => {
-          log.debug('Intermidiary steram was interrupted', err)
+          log.debug(counter + ': Intermidiary steram was interrupted', err)
           remoteCandidateStream.complete()
           if (pc.iceConnectionState !== 'connected' && pc.iceConnectionState !== 'completed') {
-            log.debug('Failed to establish RTCDataChannel: Intermidiary steram was interrupted')
+            log.debug(counter + ': Failed to establish RTCDataChannel: Intermidiary steram was interrupted')
             pc.close()
             reject(err)
           } else {
-            log.debug('Intermidiary steram was interrupted, but RTCDataChannel has still been established')
+            log.debug(counter + ': Intermidiary steram was interrupted, but RTCDataChannel has still been established')
           }
         },
         () => {
           remoteCandidateStream.complete()
           if (pc.iceConnectionState !== 'connected' && pc.iceConnectionState !== 'completed') {
             const err = new Error('Intermidiary steram was closed')
-            log.debug('Failed to establish RTCDataChannel', err)
+            log.debug(counter + ': Failed to establish RTCDataChannel', err)
             pc.close()
             reject(err)
           } else {
-            log.debug('Connection with Signaling was closed, but RTCDataChannel has still been established')
+            log.debug(counter + ': Connection with Signaling was closed, but RTCDataChannel has still been established')
           }
         },
       )
@@ -273,7 +277,7 @@ export class WebRTCBuilder extends Service {
       pc.createOffer()
         .then((offer) => pc.setLocalDescription(offer))
         .then(() => {
-          log.debug('Send LOCAL Offer: ', {offer: pc.localDescription.sdp})
+          log.debug(counter + ': Send LOCAL Offer: ', {offer: pc.localDescription.sdp})
           send({ offer: pc.localDescription.sdp })
           isOfferSent = true
           if (pc.iceGatheringState === 'complete') {
@@ -285,7 +289,7 @@ export class WebRTCBuilder extends Service {
           pc.close()
           send({ isError: true })
           onMessageSub.unsubscribe()
-          log.debug('Failed to establish RTCDataChannel: Error while setting LOCAL Offer', err)
+          log.debug(counter + ': Failed to establish RTCDataChannel: Error while setting LOCAL Offer', err)
           reject(err)
         })
     })
@@ -301,12 +305,20 @@ export class WebRTCBuilder extends Service {
       onMessage.pipe(filter(({ id }) => !failedRemotes.includes(id)))
         .subscribe((msg) => {
           const { offer, iceCandidate, id, isError, isEnd } = msg
+
+          const clean = (peerId, pc, remoteCandidateStream) => {
+            pc.oniceconnectionstatechange = undefined
+            remoteCandidateStream.complete()
+            send({ isError: true }, peerId)
+            remotes.delete(id)
+            failedRemotes[failedRemotes.length] = peerId
+          }
+
           if (isError) {
             log.debug(`${id}: Failed to establish RTCDataChannel: remote peer error`)
             if (remotes.has(id)) {
               const [pc, remoteCandidateStream] = remotes.get(id)
               remoteCandidateStream.complete()
-              pc.close()
               remotes.delete(id)
             }
             failedRemotes[failedRemotes.length] = id
@@ -318,35 +330,38 @@ export class WebRTCBuilder extends Service {
               [pc, remoteCandidateStream, isAnswerSent] = remotes.get(id)
             } else {
               isAnswerSent = false
+
               pc = new global.RTCPeerConnection(this.rtcConfiguration)
               pc.oniceconnectionstatechange = () => {
                 log.debug(`${id}: ICE CONNECTION STATE changed to`, pc.iceConnectionState)
                 if (pc.iceConnectionState === 'failed') {
-                  remoteCandidateStream.complete()
-                  pc.close()
-                  send({ isError: true }, id)
-                  remotes.delete(id)
-                  failedRemotes[failedRemotes.length] = id
+                  clean(id, pc, remoteCandidateStream)
                 }
               }
               pc.onicegatheringstatechange = () => {
-                log.debug('ICE GATHERING STATE changed to', pc.iceGatheringState)
+                log.debug(`${id}: ICE GATHERING STATE changed to`, pc.iceGatheringState)
                 if (pc.iceGatheringState === 'complete' && isAnswerSent) {
                   send({ isEnd: true }, id)
-                  isAnswerSent = false
+                  pc.onicegatheringstatechange = undefined
                 }
               }
-              pc.onsignalingstatechange = () => {log.debug('SIGNALING STATE changed to', pc.signalingState)}
+              pc.onsignalingstatechange = () => {log.debug(`${id}: SIGNALING STATE changed to`, pc.signalingState)}
               remoteCandidateStream = new ReplaySubject<RTCIceCandidate>()
               this.setupLocalCandidates(pc, (ic) => send({ iceCandidate: ic }, id))
-              this.openChannel(pc).then((ch) => observer.next(ch))
+              this.openChannel(pc)
+                .then((ch) => {
+                  pc.oniceconnectionstatechange = undefined
+                  observer.next(ch)
+                })
+                .catch((err) => clean(id, pc, remoteCandidateStream))
               remotes.set(id, [pc, remoteCandidateStream, isAnswerSent])
             }
+
             if (offer) {
               log.debug(`${id}: REMOTE OFFER is received`, {offer})
               pc.setRemoteDescription({ type: 'offer', sdp: offer })
                 .then(() => remoteCandidateStream.subscribe(
-                  (ic) => pc.addIceCandidate(ic).catch((err) => log.debug('${id}: Failed to addIceCandidate', err)),
+                  (ic) => pc.addIceCandidate(ic).catch((err) => log.debug(`${id}: Failed to addIceCandidate`, err)),
                 ))
                 .then(() => pc.createAnswer())
                 .then((answer) => pc.setLocalDescription(answer))
@@ -356,16 +371,12 @@ export class WebRTCBuilder extends Service {
                   isAnswerSent = true
                   if (pc.iceGatheringState === 'complete') {
                     send({ isEnd: true }, id)
-                    isAnswerSent = false
+                    pc.onicegatheringstatechange = undefined
                   }
                 })
                 .catch((err) => {
                   log.debug(`${id}: Error during offer/answer setting`, err)
-                  remoteCandidateStream.complete()
-                  failedRemotes[failedRemotes.length] = id
-                  pc.close()
-                  remotes.delete(id)
-                  send({ isError: true }, id)
+                  clean(id, pc, remoteCandidateStream)
                 })
             } else if (iceCandidate) {
               if (iceCandidate.candidate !== '') {
@@ -376,15 +387,11 @@ export class WebRTCBuilder extends Service {
                 remoteCandidateStream.complete()
               }
             } else if (isEnd) {
-              log.debug('REMOTE Peer FINISHED send all data')
+              log.debug(`${id}: REMOTE Peer FINISHED send all data`)
               remotes.delete(id)
             } else {
-              log.debug('Unknown message from a remote peer: stopping connection establishment', msg)
-              remoteCandidateStream.complete()
-              remotes.delete(id)
-              failedRemotes[failedRemotes.length] = id
-              pc.close()
-              send({ isError: true }, id)
+              log.debug(`${id}: Unknown message from a remote peer: stopping connection establishment`, msg)
+              clean(id, pc, remoteCandidateStream)
             }
           }
         },
@@ -396,20 +403,20 @@ export class WebRTCBuilder extends Service {
                 log.debug(`${id}: Failed to establish RTCDataChannel`)
                 pc.close()
               } else {
-                log.debug(`RTCDataChannel with ${id} has still been established`)
+                log.debug(`${id}: RTCDataChannel with ${id} has still been established`)
               }
             }
             observer.error(err)
           },
           () => {
-            log.debug('Intermidiary stream has closed')
+            log.debug('${id}: Intermidiary stream has closed')
             for (const [id, [pc, remoteCandidateStream]] of remotes) {
               remoteCandidateStream.complete()
               if (pc.iceConnectionState !== 'connected' && pc.iceConnectionState !== 'completed') {
-                log.debug(`Failed to establish RTCDataChannel with ${id}: Intermidiary stream has closed`)
+                log.debug(`${id}: Failed to establish RTCDataChannel: Intermidiary stream has closed`)
                 pc.close()
               } else {
-                log.debug(`RTCDataChannel with ${id} has still been established`)
+                log.debug(`${id}: RTCDataChannel has still been established`)
               }
             }
             observer.complete()
@@ -421,7 +428,7 @@ export class WebRTCBuilder extends Service {
   private setupLocalCandidates (pc: RTCPeerConnection, cb: (obj: webRTCBuilder.IIceCandidate) => void): void {
     pc.onicecandidate = (evt: RTCPeerConnectionIceEvent) => {
       if (evt.candidate !== null) {
-        log.debug('LOCAL Ice Candidate gathered', evt.candidate)
+        log.debug('LOCAL Ice Candidate gathered', evt.candidate.candidate)
         cb({
           candidate: evt.candidate.candidate,
           sdpMid: evt.candidate.sdpMid,
@@ -462,7 +469,7 @@ export class WebRTCBuilder extends Service {
             if (dc !== undefined) {
               dc.close()
             }
-            const errMsg = `RTCDataChannel ${CONNECT_TIMEOUT}ms connection timeout with '${id}'`
+            const errMsg = `RTCDataChannel ${CONNECT_TIMEOUT}ms connection timeout with joining peer`
             log.debug(errMsg)
             reject(new Error(errMsg))
           }

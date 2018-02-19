@@ -4,17 +4,22 @@ import { Subject } from 'rxjs/Subject'
 
 import { Channel } from './Channel'
 import { log } from './misc/Util'
-import { signaling } from './proto'
+import { signaling as sigProto } from './proto'
 import { WebChannel } from './service/WebChannel'
 
 /* tslint:disable:variable-name */
 
-interface ISignalingConnection {
-  onMessage: Observable<signaling.Message>,
-  send: (msg: signaling.IMessage) => void,
+interface IStreamSocket {
+  message: Observable<sigProto.Message>,
+  send: (msg: sigProto.IMessage) => void,
   heartbeat: () => void,
   close: (code?: number, reason?: string) => void,
   isOpen: () => boolean
+}
+
+export interface IWebRTCStream {
+  message: Observable<sigProto.Content>,
+  send: (msg: sigProto.IContent) => void
 }
 
 const MAXIMUM_MISSED_HEARTBEAT = 3
@@ -26,7 +31,7 @@ const MESSAGE_ERROR_CODE = 4010
 const FIRST_CONNECTION_ERROR_CODE = 4011
 
 /* Preconstructed messages */
-const heartbeatMsg = signaling.Message.encode(signaling.Message.create({ heartbeat: true })).finish()
+const heartbeatMsg = sigProto.Message.encode(sigProto.Message.create({ heartbeat: true })).finish()
 
 export enum SignalingState { CONNECTING, CONNECTED, STABLE, CLOSED }
 
@@ -43,7 +48,8 @@ export class Signaling {
   private wc: WebChannel
   private stateSubject: Subject<SignalingState>
   private channelSubject: Subject<Channel>
-  private rxWs: ISignalingConnection
+  private ws: WebSocket
+  private wsObservable: Observable<sigProto.Message>
   private heartbeatInterval: any
   private missedHeartbeat: number
 
@@ -56,7 +62,6 @@ export class Signaling {
     this.wc = wc
     this.stateSubject = new Subject<SignalingState>()
     this.channelSubject = new Subject<Channel>()
-    this.rxWs = undefined
   }
 
   get onState (): Observable<SignalingState> {
@@ -73,7 +78,7 @@ export class Signaling {
    */
   open (): void {
     if (this.state === SignalingState.CONNECTED) {
-      this.rxWs.send({ stable: true })
+      this.send({ stable: true })
       this.setState(SignalingState.STABLE)
     }
   }
@@ -83,10 +88,13 @@ export class Signaling {
     if (this.state !== SignalingState.CLOSED) {
       this.close()
     }
-    this.wc.webSocketBuilder.connect(this.getFullURL(key))
+    this.wc.webSocketBuilder
+      .connect(this.getFullURL(key))
       .then((ws: WebSocket) => {
-        this.rxWs = this.createRxWs(ws)
-        this.rxWs.onMessage.subscribe(
+        this.ws = ws
+        this.wsObservable = this.createObservable(ws)
+        this.startHeartbeat()
+        this.wsObservable.subscribe(
           (msg) => {
             switch (msg.type) {
             case 'heartbeat':
@@ -102,7 +110,6 @@ export class Signaling {
             }
           },
         )
-        this.startHeartbeat()
       })
       .catch((err) => this.setState(SignalingState.CLOSED))
   }
@@ -111,25 +118,16 @@ export class Signaling {
    * Close the `WebSocket` with Signaling server.
    */
   close (): void {
-    if (this.rxWs) {
-      this.rxWs.close(1000)
+    if (this.ws) {
+      this.ws.close(1000)
     }
   }
 
   private connectOverSignaling () {
-    if (this.rxWs.isOpen()) {
-      this.wc.webRTCBuilder.connectOverSignaling({
-        onMessage: this.rxWs.onMessage.pipe(
-        filter(({ type }) => type === 'content'),
-        pluck('content'),
-      ),
-        send: (m) => this.rxWs.send({ content: m }),
-      })
-      .then((ch: Channel) => this.setState(SignalingState.CONNECTED))
-      .catch((err) => {
-        this.rxWs.send({ tryAnother: true })
-        this.connectOverSignaling()
-      })
+    if (this.ws.readyState === WebSocket.OPEN) {
+      this.wc.webRTCBuilder.connectOverSignaling(this.getWebRTCStream())
+        .then((ch: Channel) => this.setState(SignalingState.CONNECTED))
+        .catch((err) => this.send({ tryAnother: true }))
     }
   }
 
@@ -138,13 +136,9 @@ export class Signaling {
       this.state = state
       this.stateSubject.next(state)
       if (state === SignalingState.STABLE) {
-        this.wc.webRTCBuilder.onChannelFromSignaling({
-          onMessage: this.rxWs.onMessage.pipe(
-            filter(({ type }) => type === 'content'),
-            pluck('content'),
-          ),
-          send: (msg) => this.rxWs.send({ content: msg }),
-        }).subscribe((ch) => this.channelSubject.next(ch))
+        this.wc.webRTCBuilder
+          .onChannelFromSignaling(this.getWebRTCStream())
+          .subscribe((ch) => this.channelSubject.next(ch))
       }
     }
   }
@@ -153,25 +147,27 @@ export class Signaling {
     this.missedHeartbeat = 0
     this.heartbeatInterval = global.setInterval(() => {
       try {
-        this.missedHeartbeat++
-        if (this.missedHeartbeat >= MAXIMUM_MISSED_HEARTBEAT) {
-          throw new Error('Too many missed heartbeats')
+        if (this.ws.readyState === WebSocket.OPEN) {
+          this.missedHeartbeat++
+          if (this.missedHeartbeat >= MAXIMUM_MISSED_HEARTBEAT) {
+            throw new Error('Too many missed heartbeats')
+          }
+          this.ws.send(heartbeatMsg)
         }
-        this.rxWs.heartbeat()
       } catch (err) {
         global.clearInterval(this.heartbeatInterval)
         log.info('Closing connection with Signaling. Reason: ' + err.message)
-        this.rxWs.close(HEARTBEAT_ERROR_CODE, 'Signaling is not responding')
+        this.ws.close(HEARTBEAT_ERROR_CODE, 'Signaling is not responding')
       }
     }, HEARTBEAT_INTERVAL)
   }
 
-  private createRxWs (ws: WebSocket): ISignalingConnection {
+  private createObservable (ws: WebSocket): Observable<sigProto.Message> {
     const subject = new Subject()
     ws.binaryType = 'arraybuffer'
     ws.onmessage = (evt) => {
       try {
-        subject.next(signaling.Message.decode(new Uint8Array(evt.data)))
+        subject.next(sigProto.Message.decode(new Uint8Array(evt.data)))
       } catch (err) {
         ws.close(MESSAGE_ERROR_CODE, err.message)
       }
@@ -186,20 +182,23 @@ export class Signaling {
       subject.complete()
       log.info(`Connection with Signaling '${this.url}' closed: ${closeEvt.code}: ${closeEvt.reason}`)
     }
+    return subject.asObservable() as Observable<sigProto.Message>
+  }
+
+  private send (msg: sigProto.IMessage) {
+    if (this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(sigProto.Message.encode(sigProto.Message.create(msg)).finish())
+    }
+  }
+
+  private getWebRTCStream (): IWebRTCStream {
     return {
-      onMessage: subject.asObservable() as Observable<signaling.Message>,
-      send: (msg) => {
-        if (ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CLOSED) {
-          ws.send(signaling.Message.encode(signaling.Message.create(msg)).finish())
-        }
-      },
-      heartbeat: () => {
-        if (ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CLOSED) {
-          ws.send(heartbeatMsg)
-        }
-      },
-      close: (code = 1000, reason = '') => ws.close(code, reason),
-      isOpen: () => ws.readyState === WebSocket.OPEN,
+      message: this.wsObservable
+        .pipe(
+          filter(({ type }) => type === 'content'),
+          pluck('content'),
+        ),
+      send: (m) => this.send({ content: m }),
     }
   }
 
