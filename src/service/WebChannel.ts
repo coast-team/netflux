@@ -154,17 +154,16 @@ export class WebChannel extends Service {
         log.signalingState(SignalingState[state], this.myId)
         this.onSignalingStateChange(state)
         if (state === SignalingState.CLOSED) {
-          if (this.members.length === 1) {
-            this.setState(WebChannelState.LEFT)
-            if (this.isRejoinDisabled) {
-              this.key = ''
-            }
-          }
-          if (!this.isRejoinDisabled) {
+          if (this.isRejoinDisabled) {
+            this.key = ''
+          } else {
             this.rejoin()
           }
-        } else if (state === SignalingState.STABLE && this.members.length === 1) {
-          this.setState(WebChannelState.JOINED)
+          if (this.topologyService.state === TopologyStateEnum.DISCONNECTED) {
+            this.setState(WebChannelState.LEFT)
+          }
+        } else if (state === SignalingState.STABLE) {
+          this.topologyService.setStable()
         }
       },
     )
@@ -281,9 +280,6 @@ export class WebChannel extends Service {
     if (this.members.includes(id)) {
       this.members.splice(this.members.indexOf(id), 1)
       this.onMemberLeave(id)
-      if (this.members.length === 1 && this.signaling.state !== SignalingState.STABLE) {
-        this.setState(WebChannelState.LEFT)
-      }
     }
   }
 
@@ -364,18 +360,18 @@ export class WebChannel extends Service {
       // If it is a case then you are already a member of the network.
       if (this.members.includes(senderId)) {
         if (!generatedIds.includes(this.myId)) {
+          this.setState(WebChannelState.LEAVING)
           console.warn(`Failed merge networks: my members contain intermediary peer id,
             but my id is not included into the intermediary peer members`)
           channel.closeQuietly()
           this.topologyService.leave()
-          this.setState(WebChannelState.LEFT)
           return
         }
         if (this.topology !== topology) {
+          this.setState(WebChannelState.LEAVING)
           console.warn('Failed merge networks: different topologies')
           channel.closeQuietly()
           this.topologyService.leave()
-          this.setState(WebChannelState.LEFT)
           return
         }
         log.info(`I:${this.myId} close connection with intermediary member ${senderId},
@@ -446,15 +442,22 @@ export class WebChannel extends Service {
     }
     this.topologySub = this.topologyService.onState.subscribe((state: TopologyStateEnum) => {
       switch (state) {
+      case TopologyStateEnum.JOINING:
+        this.setState(WebChannelState.JOINING)
+        break
       case TopologyStateEnum.JOINED:
         this.setState(WebChannelState.JOINED)
         break
       case TopologyStateEnum.STABLE:
+        this.setState(WebChannelState.JOINED)
         this.signaling.open()
         break
-      case TopologyStateEnum.FAILED:
-        this.setState(WebChannelState.LEFT)
-        console.warn('Failed to join: topology error')
+      case TopologyStateEnum.DISCONNECTED:
+        if (this.signaling.state === SignalingState.CLOSED) {
+          this.setState(WebChannelState.LEFT)
+        } else {
+          this.signaling.close()
+        }
         break
       }
     })

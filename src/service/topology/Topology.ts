@@ -8,9 +8,11 @@ export enum TopologyEnum {
 }
 
 export enum TopologyStateEnum {
+  JOINING,
   JOINED,
   STABLE,
-  FAILED,
+  DISCONNECTING,
+  DISCONNECTED,
 }
 
 /**
@@ -27,7 +29,8 @@ export enum TopologyStateEnum {
  */
 export interface ITopology extends Service {
 
-  onState: Observable<TopologyStateEnum>
+  readonly onState: Observable<TopologyStateEnum>
+  readonly state: TopologyStateEnum
 
   /**
    * As a network member, add a new peer into the network.
@@ -79,4 +82,9 @@ export interface ITopology extends Service {
    * Call this function before switching to another topology.
    */
   clean (): void
+
+  /**
+   * Signaling calls this method, when you are the first peer in the group.
+   */
+  setStable (): void
 }

@@ -280,14 +280,16 @@ describe('1 member', () => {
         /** @test {WebGroup#onSignalingStateChange} */
       it('should change the Signaling state', (done) => {
         let called1 = 0
+        const states: SignalingState[] = []
+        const expectedStates = [SignalingState.CLOSING, SignalingState.CLOSED]
 
         wg1.onSignalingStateChange = (state: SignalingState) => {
-          expect(state).toEqual(SignalingState.CLOSED)
+          states.push(state)
           called1++
           wait(1000)
             .then(() => {
-              expect(called1).toEqual(1)
-              expect(state).toEqual(SignalingState.CLOSED)
+              expect(called1).toEqual(2)
+              expect(states).toEqual(expectedStates)
               done()
             })
         }

@@ -6,7 +6,7 @@ import { WebChannel } from './service/WebChannel'
  */
 export class Channel {
 
-  public connection: WebSocket | RTCDataChannel
+  public connection: any
   public send: (data: Uint8Array) => void
   public isIntermediary: boolean
   public missedHeartbeat: number
@@ -71,10 +71,9 @@ export class Channel {
   }
 
   close (): void {
+    this.connection.close()
     if (this.rtcPeerConnection) {
       this.rtcPeerConnection.close()
-    } else {
-      this.connection.close()
     }
   }
 
@@ -96,7 +95,7 @@ export class Channel {
 
   private sendInBrowser (data: Uint8Array): void {
     try {
-      (this.connection as any).send(data)
+      this.connection.send(data)
     } catch (err) {
       log.debug('Channel sendInBrowser ERROR', err)
     }
@@ -104,7 +103,7 @@ export class Channel {
 
   private sendInNodeViaWebSocket (data: Uint8Array): void {
     try {
-      (this.connection as any).send(data, {binary: true})
+      this.connection.send(data, {binary: true})
     } catch (err) {
       log.debug('Channel sendInNodeViaWebSocket ERROR', err)
     }

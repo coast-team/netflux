@@ -547,16 +547,19 @@ describe('2 members', () => {
 
       /** @test {WebGroup#onStateChange} */
       it('should change the WebGroup state', (done) => {
+        const states: WebGroupState[] = []
+        const expectedStates = [WebGroupState.LEAVING, WebGroupState.LEFT]
         // Code for peer 2
         wg2.onStateChange = (state: WebGroupState) => {
+          states.push(state)
+          called2++
           if (state === WebGroupState.LEFT) {
-            called2++
+            wait(1000).then(() => {
+              expect(called2).toEqual(2)
+              expect(wg2.state).toEqual(WebGroupState.LEFT)
+              done()
+            })
           }
-          wait(1000).then(() => {
-            expect(called2).toEqual(1)
-            expect(wg2.state).toEqual(WebGroupState.LEFT)
-            done()
-          })
         }
 
         // Start leaving
@@ -565,16 +568,19 @@ describe('2 members', () => {
 
       /** @test {WebGroup#onSignalingStateChange} */
       it('should change the Signaling state', (done) => {
+        const states: SignalingState[] = []
+        const expectedStates = [SignalingState.CLOSING, SignalingState.CLOSED]
         // Code for peer 2
         wg2.onSignalingStateChange = (state: SignalingState) => {
+          states.push(state)
+          called2++
           if (state === SignalingState.CLOSED) {
-            called2++
+            wait(1000).then(() => {
+              expect(called2).toEqual(2)
+              expect(wg2.signalingState).toEqual(SignalingState.CLOSED)
+              done()
+            })
           }
-          wait(1000).then(() => {
-            expect(called2).toEqual(1)
-            expect(wg2.signalingState).toEqual(SignalingState.CLOSED)
-            done()
-          })
         }
 
         // Start leaving

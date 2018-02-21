@@ -16,7 +16,6 @@ function read (path) {
 read('test')
 
 const configs = []
-  console.log('inputs: ', inputs)
 for (let input of inputs) {
   configs.push({
     input,

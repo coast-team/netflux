@@ -51,6 +51,12 @@ export function randNumbers (length: number = 1): number[] {
   return res
 }
 
+export function equal (array1: number[], array2: number[]) {
+  return array1 !== undefined && array2 !== undefined
+  && array1.length === array2.length
+  && array1.every((v) => array2.includes(v))
+}
+
 export const MAX_KEY_LENGTH = 512
 const netfluxCSS = 'background-color: #FFCA28; padding: 0 3px'
 const debugCSS = 'background-color: #b3ba2e; padding: 0 3px'
@@ -71,7 +77,12 @@ const log: ILog = {
   debug: () => {},
 }
 
+export enum LogLevel { DEBUG, INFO, OFF }
+
+export let logLevel: LogLevel = LogLevel.OFF
+
 export function setLogLevel (level: LogLevel) {
+  logLevel = level
   if (level <= LogLevel.INFO) {
     log.info = (msg: string, ...rest: any[]): void => {
       if (rest.length === 0) {
@@ -97,7 +108,5 @@ export function setLogLevel (level: LogLevel) {
     }
   }
 }
-
-export enum LogLevel { DEBUG, INFO, OFF }
 
 export { log }

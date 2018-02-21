@@ -55,7 +55,19 @@ export class SignalingState {
   static get [SignalingState.STABLE] (): string { return SigState[SigState.STABLE] }
 
   /**
-   * Equals to `3`, the connection is closed.
+   * Equals to `3`, the connection is in process of closing.
+   * @type {number}
+   */
+  static get CLOSING (): number { return SigState.CLOSING }
+
+  /**
+   * Equals to `'CLOSING'`.
+   * @type {string}
+   */
+  static get [SignalingState.CLOSING] (): string { return SigState[SigState.CLOSING] }
+
+  /**
+   * Equals to `4`, the connection is closed.
    * @type {number}
    */
   static get CLOSED (): number { return SigState.CLOSED }

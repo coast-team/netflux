@@ -33,7 +33,7 @@ const FIRST_CONNECTION_ERROR_CODE = 4011
 /* Preconstructed messages */
 const heartbeatMsg = sigProto.Message.encode(sigProto.Message.create({ heartbeat: true })).finish()
 
-export enum SignalingState { CONNECTING, CONNECTED, STABLE, CLOSED }
+export enum SignalingState { CONNECTING, CONNECTED, STABLE, CLOSING, CLOSED }
 
 /**
  * This class represents a door of the `WebChannel` for the current peer. If the door
@@ -85,9 +85,6 @@ export class Signaling {
 
   join (key: string): void {
     this.setState(SignalingState.CONNECTING)
-    if (this.state !== SignalingState.CLOSED) {
-      this.close()
-    }
     this.wc.webSocketBuilder
       .connect(this.getFullURL(key))
       .then((ws: WebSocket) => {
@@ -118,6 +115,7 @@ export class Signaling {
    * Close the `WebSocket` with Signaling server.
    */
   close (): void {
+    this.setState(SignalingState.CLOSING)
     if (this.ws) {
       this.ws.close(1000)
     }
@@ -157,6 +155,7 @@ export class Signaling {
       } catch (err) {
         global.clearInterval(this.heartbeatInterval)
         log.info('Closing connection with Signaling. Reason: ' + err.message)
+        this.setState(SignalingState.CLOSING)
         this.ws.close(HEARTBEAT_ERROR_CODE, 'Signaling is not responding')
       }
     }, HEARTBEAT_INTERVAL)

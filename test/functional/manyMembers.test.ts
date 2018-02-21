@@ -87,7 +87,6 @@ describe('Many members', () => {
                 expect(wg.onMemberJoinCalledTimes).toBe(scenario.nbMembers - 1)
                 expect(wg.onStateChangeCalledTimes).toBe(2)
               })
-              console.log('##############################################################""')
               done()
             })
             .catch(done.fail)
