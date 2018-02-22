@@ -2,7 +2,7 @@ import { Subject } from 'rxjs/Subject'
 import { Subscription } from 'rxjs/Subscription'
 
 import { Channel } from '../Channel'
-import { generateKey, isURL, log, LogLevel, MAX_KEY_LENGTH, randNumbers, setLogLevel } from '../misc/Util'
+import { generateKey, isBrowser, isURL, log, LogLevel, MAX_KEY_LENGTH, randNumbers, setLogLevel } from '../misc/Util'
 import { IMessage, Message, service, webChannel } from '../proto'
 import { Signaling, SignalingState } from '../Signaling'
 import { UserDataType, UserMessage } from '../UserMessage'
@@ -182,6 +182,22 @@ export class WebChannel extends Service {
     // Topology init
     this.setTopology(topology)
     // FIXME: manage topologyService onState subscription
+
+    // Listen to browser events only
+    // if (isBrowser) {
+    //   global.window.addEventListener('offline', () => {
+    //     setTimeout(() => {
+    //       if (!global.window.navigator.onLine) {
+    //         this.leave()
+    //       }
+    //     }, 1500)
+    //   })
+    //   global.window.addEventListener('online', () => {
+    //     this.isRejoinDisabled = !this.autoRejoin
+    //     this.rejoin()
+    //   })
+    // }
+
   }
 
   /**
@@ -271,6 +287,7 @@ export class WebChannel extends Service {
 
   onMemberJoinProxy (id: number): void {
     if (!this.members.includes(id)) {
+      log.debug(id  + ' has joined')
       this.members[this.members.length] = id
       this.onMemberJoin(id)
     }
@@ -278,6 +295,7 @@ export class WebChannel extends Service {
 
   onMemberLeaveProxy (id: number): void {
     if (this.members.includes(id)) {
+      log.debug(id  + ' has left')
       this.members.splice(this.members.indexOf(id), 1)
       this.onMemberLeave(id)
     }
@@ -425,7 +443,7 @@ export class WebChannel extends Service {
     if (this.topologyService !== undefined) {
       if (this.topology !== topology) {
         this.topology = topology
-        this.topologyService.clean()
+        this.topologyService.leave()
         this.topologyService = new FullMesh(this)
         this.subscribeToTopology()
       }
@@ -464,11 +482,12 @@ export class WebChannel extends Service {
   }
 
   private rejoin () {
-    this.setState(WebChannelState.JOINING)
     this.rejoinTimer = setTimeout(
       () => {
         log.info(`I:${this.myId} rejoin`)
-        this.signaling.join(this.key)
+        if (this.signaling.state === SignalingState.CLOSED) {
+          this.signaling.join(this.key)
+        }
       },
       REJOIN_TIMEOUT,
     )

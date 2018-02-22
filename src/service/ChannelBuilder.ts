@@ -19,7 +19,7 @@ const ME = {
 }
 
 const CONNECT_TIMEOUT = Math.max(WEBRTC_TIMEOUT, WEBSOCKET_TIMEOUT) + 3000
-const PINGPONG_TIMEOUT = 6000
+const PINGPONG_TIMEOUT = 2000
 const ping = Service.encodeServiceMessage(ID,
   proto.Message.encode(proto.Message.create({ ping: true })).finish())
 const pong = Service.encodeServiceMessage(ID,
@@ -86,7 +86,10 @@ export class ChannelBuilder extends Service {
   async connectTo (id: number): Promise<Channel> {
     await this.isResponding(id)
     const channel: any = await new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error('ChannelBuilder timeout')), CONNECT_TIMEOUT)
+      const timer = setTimeout(() => {
+        this.pendingRequests.delete(id)
+        reject(new Error('ChannelBuilder timeout'))
+      }, CONNECT_TIMEOUT)
       this.pendingRequests.set(id, {
         resolve: (ch: Channel) => {
           this.pendingRequests.delete(id)
@@ -105,7 +108,10 @@ export class ChannelBuilder extends Service {
   isResponding (id: number): Promise<boolean> {
     this.wc.sendToProxy({ recipientId: id, content: ping })
     return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error('pingpong')), PINGPONG_TIMEOUT)
+      const timer = setTimeout(() => {
+        this.pendingPingPongRequests.delete(id)
+        reject(new Error('pingpong'))
+      }, PINGPONG_TIMEOUT)
       this.pendingPingPongRequests.set(id, () => {
         this.pendingPingPongRequests.delete(id)
         clearTimeout(timer)

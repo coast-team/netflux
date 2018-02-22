@@ -62,7 +62,7 @@ export class FullMesh extends Service implements ITopology {
   private heartbeatInterval: any
   private membersRequestInterval: any
 
-  constructor (wc) {
+  constructor (wc: WebChannel) {
     super(FULL_MESH, fullMesh.Message, wc.serviceMessageSubject)
     this.wc = wc
     this.adjacentMembers = new Map()
@@ -71,13 +71,7 @@ export class FullMesh extends Service implements ITopology {
     this.stateSubject = new Subject()
     this._state = TopologyStateEnum.DISCONNECTED
     this.onServiceMessage.subscribe((msg) => this.handleSvcMsg(msg))
-    this.wc.channelBuilder.onChannel.subscribe((ch) => {
-      if (this._state === TopologyStateEnum.DISCONNECTED || this._state === TopologyStateEnum.DISCONNECTING) {
-        ch.closeQuietly()
-      } else {
-        this.addAdjacentMember(ch)
-      }
-    })
+    this.wc.channelBuilder.onChannel.subscribe((ch) => this.addAdjacentMember(ch))
     if (logLevel !== LogLevel.OFF) {
       window['fullmesh'] = () => {
         log.debug('Fullmesh info:', {
@@ -88,6 +82,9 @@ export class FullMesh extends Service implements ITopology {
           adjacentMembers: Array.from(this.adjacentMembers.keys()).toString(),
           distantMembers: Array.from(this.distantMembers.keys()).toString(),
           connectingMembers: Array.from(this.connectingMembers.values()).toString(),
+          distantMembersDETAILS: Array.from(this.distantMembers.keys()).map((id: number) => {
+            return {id, adjacentMembers: Array.from(this.distantMembers.get(id).adjacentIds)}
+          }),
         })
       }
     }
@@ -103,15 +100,6 @@ export class FullMesh extends Service implements ITopology {
 
   setStable () {
     this.setState(TopologyStateEnum.STABLE)
-  }
-
-  clean () {
-    this.distantMembers.clear()
-    this.connectingMembers.clear()
-    clearInterval(this.heartbeatInterval)
-    this.heartbeatInterval = undefined
-    clearInterval(this.membersRequestInterval)
-    this.membersRequestInterval = undefined
   }
 
   addJoining (ch: Channel): void {
@@ -142,12 +130,6 @@ export class FullMesh extends Service implements ITopology {
     })
   }
 
-  forward (msg: IMessage): void {
-    if (msg.recipientId > 1) {
-      this.sendTo(msg)
-    }
-  }
-
   sendTo (msg: IMessage): void {
     const ch = this.adjacentMembers.get(msg.recipientId)
     if (ch) {
@@ -157,22 +139,40 @@ export class FullMesh extends Service implements ITopology {
     }
   }
 
+  forward (msg: IMessage): void {
+    if (msg.recipientId > 1) {
+      this.sendTo(msg)
+    }
+  }
+
   leave (): void {
-    if (this.adjacentMembers.size !== 0) {
-      this.setState(TopologyStateEnum.DISCONNECTING)
-      this.adjacentMembers.forEach((ch) => ch.close())
-    } else {
-      this.setState(TopologyStateEnum.DISCONNECTED)
+    if (this._state !== TopologyStateEnum.DISCONNECTED && this._state !== TopologyStateEnum.DISCONNECTING) {
+      if (this.adjacentMembers.size === 0) {
+        this.clean()
+        this.setState(TopologyStateEnum.DISCONNECTED)
+      } else {
+        this.setState(TopologyStateEnum.DISCONNECTING)
+        this.adjacentMembers.forEach((ch) => ch.close())
+      }
     }
   }
 
   onChannelClose (event: Event, channel: Channel): void {
-    log.info(this.wc.myId  + ' detected connection closed with ' + channel.id)
     this.deleteAdjacentMember(channel)
   }
 
   onChannelError (evt: Event, channel: Channel): void {
     console.warn(`Channel error: ${evt.type}`)
+  }
+
+  private clean () {
+    this.distantMembers.forEach((member, id) => this.wc.onMemberLeaveProxy(id))
+    this.distantMembers.clear()
+    this.connectingMembers.clear()
+    clearInterval(this.heartbeatInterval)
+    this.heartbeatInterval = undefined
+    clearInterval(this.membersRequestInterval)
+    this.membersRequestInterval = undefined
   }
 
   private handleSvcMsg ({channel, senderId, recipientId, msg}: IServiceMessageDecoded): void {
@@ -194,6 +194,7 @@ export class FullMesh extends Service implements ITopology {
 
         // If it the first time you have met this ID, then send him your neighbours' ids.
         // Otherwise just update the list of distant peer's neighbours
+
         if (distantPeer) {
           msg.adjacentMembers.ids.forEach((id) => distantPeer.adjacentIds.add(id))
         } else {
@@ -222,73 +223,79 @@ export class FullMesh extends Service implements ITopology {
   }
 
   private addAdjacentMember (ch: Channel): void {
-    console.assert(!this.adjacentMembers.has(ch.id), 'Replicated connection between two peers')
-    this.distantMembers.delete(ch.id)
-    ch.updateHeartbeatMsg(HEARTBEAT_MESSAGE)
-    this.adjacentMembers.set(ch.id, ch)
-    this.notifyDistantPeers()
-    this.wc.onMemberJoinProxy(ch.id)
-    if (this.adjacentMembers.size === 1 && this.membersRequestInterval === undefined) {
-      this.startIntervals()
+    if (this._state === TopologyStateEnum.DISCONNECTED || this._state === TopologyStateEnum.DISCONNECTING) {
+      ch.closeQuietly()
+    } else {
+      console.assert(!this.adjacentMembers.has(ch.id), 'Replicated connection between two peers')
+      ch.updateHeartbeatMsg(HEARTBEAT_MESSAGE)
+      this.distantMembers.delete(ch.id)
+      this.adjacentMembers.set(ch.id, ch)
+      this.notifyDistantPeers()
+      this.wc.onMemberJoinProxy(ch.id)
+      if (this.adjacentMembers.size === 1 && this.membersRequestInterval === undefined) {
+        this.startIntervals()
+      }
     }
   }
 
-  private deleteAdjacentMember (ch: Channel): void {
-    if (this.adjacentMembers.delete(ch.id)) {
-      this.wc.onMemberLeaveProxy(ch.id)
-      if (this.adjacentMembers.size === 0) {
-        this.clean()
-        this.setState(TopologyStateEnum.DISCONNECTED)
-      } else {
-        this.notifyDistantPeers()
-      }
+  private deleteAdjacentMember (ch: Channel) {
+    this.adjacentMembers.delete(ch.id)
+    this.wc.onMemberLeaveProxy(ch.id)
+    if (this.adjacentMembers.size === 0) {
+      this.leave()
+      this.clean()
+      this.setState(TopologyStateEnum.DISCONNECTED)
+    } else {
+      this.notifyDistantPeers()
     }
     ch.close()
   }
 
+  private deleteDistantMember (id: number) {
+    this.distantMembers.delete(id)
+    this.wc.onMemberLeaveProxy(id)
+  }
+
   private connectToMany (ids: number[], adjacentId: number): Promise<void|void[]> {
-    const missingIds = ids.filter((id) => {
-      return !this.adjacentMembers.has(id) && !this.connectingMembers.has(id) && id !== this.wc.myId
-    })
-    if (missingIds.length !== 0) {
-      const adjacentMembers = super.encode({ adjacentMembers: { ids: Array.from(this.adjacentMembers.keys()) } })
-      const connectingAttempts = []
-
-      missingIds.forEach((id) => {
-        const distantPeer = this.distantMembers.get(id)
-        if (distantPeer) {
-          distantPeer.adjacentIds.add(adjacentId)
-        } else {
-          this.distantMembers.set(id, { adjacentIds: new Set([adjacentId]), missedHeartbeat: 0 })
-        }
-
-        // It's important to notify all peers about my adjacentIds first
-        // for some specific case such when you should connect to a peer with
-        // distance more than 1
-        this.wc.sendToProxy({ recipientId: id, content: adjacentMembers})
-
-        // Connect only to the peers whose ids are less than my id. Thus it avoids a
-        // problematic situation when both peers are trying to connect to each other
-        // at the same time.
-        connectingAttempts[connectingAttempts.length] = this.connectTo(id)
+    if (this._state !== TopologyStateEnum.DISCONNECTED && this._state !== TopologyStateEnum.DISCONNECTING) {
+      const missingIds = ids.filter((id) => {
+        return !this.adjacentMembers.has(id) && !this.connectingMembers.has(id) && id !== this.wc.myId
       })
+      if (missingIds.length !== 0) {
+        const adjacentMembers = super.encode({ adjacentMembers: { ids: Array.from(this.adjacentMembers.keys()) } })
+        const connectingAttempts = []
 
-      return Promise.all(connectingAttempts)
+        missingIds.forEach((id) => {
+          const distantPeer = this.distantMembers.get(id)
+          if (distantPeer) {
+            distantPeer.adjacentIds.add(adjacentId)
+          } else {
+            this.distantMembers.set(id, { adjacentIds: new Set([adjacentId]), missedHeartbeat: 0 })
+          }
+
+          // It's important to notify all peers about my adjacentIds first
+          // for some specific case such when you should connect to a peer with
+          // distance more than 1
+          this.wc.sendToProxy({ recipientId: id, content: adjacentMembers})
+
+          // Connect only to the peers whose ids are less than my id. Thus it avoids a
+          // problematic situation when both peers are trying to connect to each other
+          // at the same time.
+          connectingAttempts[connectingAttempts.length] = this.connectTo(id)
+        })
+
+        return Promise.all(connectingAttempts)
+      }
     }
     return Promise.resolve()
   }
 
   private connectTo (id: number): Promise<void> {
+    this.connectingMembers.add(id)
+    let result
     if (id < this.wc.myId) {
-      this.connectingMembers.add(id)
-      return this.wc.channelBuilder.connectTo(id)
-        .then((ch: Channel) => {
-          if (this._state === TopologyStateEnum.DISCONNECTED || this._state === TopologyStateEnum.DISCONNECTING) {
-            ch.closeQuietly()
-          } else {
-            this.addAdjacentMember(ch)
-          }
-        })
+      result = this.wc.channelBuilder.connectTo(id)
+        .then((ch: Channel) => this.addAdjacentMember(ch))
         .catch((err: Error) => {
           if (err.message !== 'pingpong') {
             return this.wc.channelBuilder.isResponding(id)
@@ -297,12 +304,12 @@ export class FullMesh extends Service implements ITopology {
           log.info(`${this.wc.myId} failed to connect to ${id}: ${err.message}`)
         })
         .catch(() => {})
-        .then(() => { this.connectingMembers.delete(id) })
     } else {
-      return this.wc.channelBuilder.isResponding(id)
+      result = this.wc.channelBuilder.isResponding(id)
         .then(() => this.wc.onMemberJoinProxy(id))
         .catch(() => {})
     }
+    return result.then(() => { this.connectingMembers.delete(id) })
   }
 
   private membersRequest () {
@@ -329,8 +336,7 @@ export class FullMesh extends Service implements ITopology {
     for (let d = 1; d <= MAX_ROUTE_DISTANCE; d++) {
       const ch = this.findRoutedChannel(distantPeer, d)
       if (ch) {
-        ch.send(this.wc.encode(msg))
-        return
+        return ch.send(this.wc.encode(msg))
       }
     }
     console.warn(`${this.wc.myId}: the recipient ${msg.recipientId} could not be found`)
@@ -357,10 +363,12 @@ export class FullMesh extends Service implements ITopology {
   }
 
   private notifyDistantPeers () {
-    this.distantMembers.forEach((peer, id) => this.wc.sendToProxy({
-      recipientId: id,
-      content: super.encode({ adjacentMembers: { ids: Array.from(this.adjacentMembers.keys()) } }),
-    }))
+    if (this._state !== TopologyStateEnum.DISCONNECTED && this._state !== TopologyStateEnum.DISCONNECTING) {
+      this.distantMembers.forEach((peer, id) => this.wc.sendToProxy({
+        recipientId: id,
+        content: super.encode({ adjacentMembers: { ids: Array.from(this.adjacentMembers.keys()) } }),
+      }))
+    }
   }
 
   private setState (state: TopologyStateEnum) {
@@ -391,14 +399,13 @@ export class FullMesh extends Service implements ITopology {
       this.distantMembers.forEach((peer, id) => {
         try {
           peer.missedHeartbeat++
-          if (peer.missedHeartbeat >= MAXIMUM_MISSED_HEARTBEAT) {
+          if (peer.missedHeartbeat >= MAXIMUM_MISSED_HEARTBEAT + 1) {
             throw new Error('Too many missed heartbeats')
           }
           this.wc.sendToProxy({ recipientId: id, content: HEARTBEAT_MESSAGE })
         } catch (err) {
           log.info(`Distant peer ${id} has left. Reason: ${err.message}`)
-          this.distantMembers.delete(id)
-          this.wc.onMemberLeaveProxy(id)
+          this.deleteDistantMember(id)
         }
       })
     }, HEARTBEAT_INTERVAL)

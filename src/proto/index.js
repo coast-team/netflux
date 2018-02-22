@@ -1,9 +1,5 @@
 var commonjsGlobal = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
-
-
-
-
 function createCommonjsModule(fn, module) {
 	return module = { exports: {} }, fn(module, module.exports), module.exports;
 }
@@ -59,6 +55,13 @@ function asPromise(fn, ctx /*, varargs */) {
 }
 
 var base64_1 = createCommonjsModule(function (module, exports) {
+
+    /**
+     * A minimal base64 implementation for number arrays.
+     * @memberof util
+     * @namespace
+     */
+
     var base64 = exports;
 
     /**
@@ -587,6 +590,13 @@ function inquire(moduleName) {
 }
 
 var utf8_1 = createCommonjsModule(function (module, exports) {
+
+    /**
+     * A minimal UTF8 implementation for number arrays.
+     * @memberof util
+     * @namespace
+     */
+
     var utf8 = exports;
 
     /**
@@ -894,6 +904,7 @@ LongBits.prototype.length = function length() {
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 var minimal = createCommonjsModule(function (module, exports) {
+
     var util = exports;
 
     // used to return a Promise where callback is omitted
@@ -1293,9 +1304,9 @@ var writer = Writer;
 
 var BufferWriter; // cyclic
 
-var LongBits$1 = minimal.LongBits;
-var base64 = minimal.base64;
-var utf8 = minimal.utf8;
+var LongBits$1 = minimal.LongBits,
+    base64 = minimal.base64,
+    utf8 = minimal.utf8;
 
 /**
  * Constructs a new writer operation instance.
@@ -1804,8 +1815,8 @@ var reader = Reader;
 
 var BufferReader; // cyclic
 
-var LongBits$2 = minimal.LongBits;
-var utf8$1 = minimal.utf8;
+var LongBits$2 = minimal.LongBits,
+    utf8$1 = minimal.utf8;
 
 /* istanbul ignore next */
 function indexOutOfRange(reader, writeLength) {
@@ -2356,6 +2367,12 @@ Service.prototype.end = function end(endedByRPC) {
 };
 
 var rpc_1 = createCommonjsModule(function (module, exports) {
+
+  /**
+   * Streaming RPC helpers.
+   * @namespace
+   */
+
   var rpc = exports;
 
   /**
@@ -2391,6 +2408,7 @@ var rpc_1 = createCommonjsModule(function (module, exports) {
 var roots = {};
 
 var indexMinimal = createCommonjsModule(function (module, exports) {
+
   var protobuf = exports;
 
   /**
@@ -2429,17 +2447,17 @@ var indexMinimal = createCommonjsModule(function (module, exports) {
 });
 
 var minimal$2 = indexMinimal;
-
 var minimal_1 = minimal$2.Reader;
 var minimal_2 = minimal$2.Writer;
 var minimal_3 = minimal$2.util;
 var minimal_4 = minimal$2.roots;
 
 /*eslint-disable block-scoped-var, no-redeclare, no-control-regex, no-prototype-builtins*/
+
 // Common aliases
-var $Reader = minimal_1;
-var $Writer = minimal_2;
-var $util = minimal_3;
+var $Reader = minimal_1,
+    $Writer = minimal_2,
+    $util = minimal_3;
 
 // Exported root namespace
 var $root = minimal_4["default"] || (minimal_4["default"] = {});

@@ -79,11 +79,6 @@ export interface ITopology extends Service {
   onChannelError (event: Event, channel: Channel): void
 
   /**
-   * Call this function before switching to another topology.
-   */
-  clean (): void
-
-  /**
    * Signaling calls this method, when you are the first peer in the group.
    */
   setStable (): void
