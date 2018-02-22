@@ -84,31 +84,33 @@ export class Signaling {
   }
 
   join (key: string): void {
-    this.setState(SignalingState.CONNECTING)
-    this.wc.webSocketBuilder
-      .connect(this.getFullURL(key))
-      .then((ws: WebSocket) => {
-        this.ws = ws
-        this.wsObservable = this.createObservable(ws)
-        this.startHeartbeat()
-        this.wsObservable.subscribe(
-          (msg) => {
-            switch (msg.type) {
-            case 'heartbeat':
-              this.missedHeartbeat = 0
-              break
-            case 'isFirst':
-              if (msg.isFirst) {
-                this.setState(SignalingState.STABLE)
-              } else {
-                this.connectOverSignaling()
+    if (this.state === SignalingState.CLOSED) {
+      this.setState(SignalingState.CONNECTING)
+      this.wc.webSocketBuilder
+        .connect(this.getFullURL(key))
+        .then((ws: WebSocket) => {
+          this.ws = ws
+          this.wsObservable = this.createObservable(ws)
+          this.startHeartbeat()
+          this.wsObservable.subscribe(
+            (msg) => {
+              switch (msg.type) {
+              case 'heartbeat':
+                this.missedHeartbeat = 0
+                break
+              case 'isFirst':
+                if (msg.isFirst) {
+                  this.setState(SignalingState.STABLE)
+                } else {
+                  this.connectOverSignaling()
+                }
+                break
               }
-              break
-            }
-          },
-        )
-      })
-      .catch((err) => this.setState(SignalingState.CLOSED))
+            },
+          )
+        })
+        .catch((err) => this.setState(SignalingState.CLOSED))
+    }
   }
 
   /**
@@ -145,13 +147,11 @@ export class Signaling {
     this.missedHeartbeat = 0
     this.heartbeatInterval = global.setInterval(() => {
       try {
-        if (this.ws.readyState === WebSocket.OPEN) {
-          this.missedHeartbeat++
-          if (this.missedHeartbeat >= MAXIMUM_MISSED_HEARTBEAT) {
-            throw new Error('Too many missed heartbeats')
-          }
-          this.ws.send(heartbeatMsg)
+        this.missedHeartbeat++
+        if (this.missedHeartbeat >= MAXIMUM_MISSED_HEARTBEAT) {
+          throw new Error('Too many missed heartbeats')
         }
+        this.heartbeat()
       } catch (err) {
         global.clearInterval(this.heartbeatInterval)
         log.info('Closing connection with Signaling. Reason: ' + err.message)
@@ -177,6 +177,7 @@ export class Signaling {
     }
     ws.onclose = (closeEvt) => {
       clearInterval(this.heartbeatInterval)
+      this.missedHeartbeat = 0
       this.setState(SignalingState.CLOSED)
       subject.complete()
       log.info(`Connection with Signaling '${this.url}' closed: ${closeEvt.code}: ${closeEvt.reason}`)
@@ -186,7 +187,21 @@ export class Signaling {
 
   private send (msg: sigProto.IMessage) {
     if (this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(sigProto.Message.encode(sigProto.Message.create(msg)).finish())
+      try {
+        this.ws.send(sigProto.Message.encode(sigProto.Message.create(msg)).finish())
+      } catch (err) {
+        log.info('Failed send to Signaling: ' + err.message)
+      }
+    }
+  }
+
+  private heartbeat () {
+    if (this.ws.readyState === WebSocket.OPEN) {
+      try {
+        this.ws.send(heartbeatMsg)
+      } catch (err) {
+        log.info('Failed send to Signaling: ' + err.message)
+      }
     }
   }
 
