@@ -5,6 +5,13 @@ import { Channel } from '../Channel'
  */
 export const isBrowser = (typeof global.window === 'undefined') ? false : true
 
+export function isOnline () {
+  return isBrowser ? global.window.navigator.onLine : true
+}
+export function isVisible () {
+  return isBrowser ? global.window.document.visibilityState === 'visible' : true
+}
+
 /**
  * Check whether the string is a valid URL.
  */

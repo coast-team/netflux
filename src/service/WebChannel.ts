@@ -2,7 +2,17 @@ import { Subject } from 'rxjs/Subject'
 import { Subscription } from 'rxjs/Subscription'
 
 import { Channel } from '../Channel'
-import { generateKey, isBrowser, isURL, log, LogLevel, MAX_KEY_LENGTH, randNumbers, setLogLevel } from '../misc/Util'
+import {
+  generateKey,
+  isBrowser,
+  isOnline,
+  isURL,
+  isVisible,
+  log,
+  LogLevel,
+  MAX_KEY_LENGTH,
+  randNumbers,
+  setLogLevel } from '../misc/Util'
 import { IMessage, Message, service, webChannel } from '../proto'
 import { Signaling, SignalingState } from '../Signaling'
 import { UserDataType, UserMessage } from '../UserMessage'
@@ -17,8 +27,6 @@ import { WebRTCBuilder } from './WebRTCBuilder'
  * Service id.
  */
 const ID = 200
-
-const REJOIN_TIMEOUT = 3000
 
 export interface IWebChannelOptions {
   topology?: TopologyEnum,
@@ -115,7 +123,6 @@ export class WebChannel extends Service {
   signaling: Signaling
 
   private userMsg: UserMessage
-  private rejoinTimer: any
   private isRejoinDisabled: boolean
   private topologySub: Subscription
 
@@ -153,17 +160,19 @@ export class WebChannel extends Service {
       (state: SignalingState) => {
         log.signalingState(SignalingState[state], this.myId)
         this.onSignalingStateChange(state)
-        if (state === SignalingState.CLOSED) {
-          if (this.isRejoinDisabled) {
-            this.key = ''
-          } else {
-            this.rejoin()
-          }
+        switch (state) {
+        case SignalingState.CONNECTING:
+          this.setState(WebChannelState.JOINING)
+          break
+        case SignalingState.CLOSED:
           if (this.topologyService.state === TopologyStateEnum.DISCONNECTED) {
             this.setState(WebChannelState.LEFT)
           }
-        } else if (state === SignalingState.STABLE) {
+          this.rejoin(5000)
+          break
+        case SignalingState.STABLE:
           this.topologyService.setStable()
+          break
         }
       },
     )
@@ -184,42 +193,50 @@ export class WebChannel extends Service {
     // FIXME: manage topologyService onState subscription
 
     // Listen to browser events only
-    // if (isBrowser) {
-    //   global.window.addEventListener('offline', () => {
-    //     setTimeout(() => {
-    //       if (!global.window.navigator.onLine) {
-    //         this.leave()
-    //       }
-    //     }, 1500)
-    //   })
-    //   global.window.addEventListener('online', () => {
-    //     this.isRejoinDisabled = !this.autoRejoin
-    //     this.rejoin()
-    //   })
-    // }
+    if (isBrowser) {
+      global.window.addEventListener('offline', () => {
+        console.log('GONE OFFLINE')
+        setTimeout(() => {
+          console.log('GONE OFFLINE 500ms after. IS ONINE: ' + isOnline())
+          if (!isOnline()) {
+            this.internalLeave()
+          }
+        }, 2000)
+      })
+      global.window.addEventListener('online', () => {
+        console.log('BACK ONLINE')
+        this.rejoin(1000)
+      })
 
+      global.window.addEventListener('visibilitychange', () => {
+        console.log('VISIBILITY CHANGE TO: ' + global.window.document.visibilityState)
+        if (isVisible()) {
+          this.rejoin()
+        }
+      })
+
+      global.window.addEventListener('beforeunload', () => this.internalLeave())
+    }
   }
 
   /**
    * Join the network via a key provided by one of the network member or a `Channel`.
    */
   join (key: string = generateKey()): void {
-    if (this.state === WebChannelState.LEFT && this.signaling.state === SignalingState.CLOSED) {
-      if (typeof key !== 'string') {
-        throw new Error(`Failed to join: the key type "${typeof key}" is not a "string"`)
-      } else if (key === '') {
-        throw new Error('Failed to join: the key is an empty string')
-      } else if (key.length > MAX_KEY_LENGTH) {
-        throw new Error(
-          `Failed to join : the key length of ${key.length} exceeds the maximum of ${MAX_KEY_LENGTH} characters`,
-        )
-      }
-      this.key = key
-      this.isRejoinDisabled = !this.autoRejoin
+    if (typeof key !== 'string') {
+      throw new Error(`Failed to join: the key type "${typeof key}" is not a "string"`)
+    } else if (key === '') {
+      throw new Error('Failed to join: the key is an empty string')
+    } else if (key.length > MAX_KEY_LENGTH) {
+      throw new Error(
+        `Failed to join : the key length of ${key.length} exceeds the maximum of ${MAX_KEY_LENGTH} characters`,
+      )
+    }
+    this.key = key
+    if (isOnline() && this.state === WebChannelState.LEFT && this.signaling.state === SignalingState.CLOSED) {
       this.setState(WebChannelState.JOINING)
+      this.isRejoinDisabled = !this.autoRejoin
       this.signaling.join(this.key)
-    } else {
-      console.warn('Trying to join a group while already joined or joining. Maybe forgot to call leave().')
     }
   }
 
@@ -241,12 +258,13 @@ export class WebChannel extends Service {
    * with Signaling server.
    */
   leave () {
-    this.setState(WebChannelState.LEAVING)
-    this.key = ''
-    this.isRejoinDisabled = true
-    clearTimeout(this.rejoinTimer)
-    this.signaling.close()
-    this.topologyService.leave()
+    if (this.state !== WebChannelState.LEAVING && this.state !== WebChannelState.LEFT) {
+      this.setState(WebChannelState.LEAVING)
+      this.key = ''
+      this.isRejoinDisabled = true
+      this.signaling.close()
+      this.topologyService.leave()
+    }
   }
 
   /**
@@ -481,16 +499,22 @@ export class WebChannel extends Service {
     })
   }
 
-  private rejoin () {
-    this.rejoinTimer = setTimeout(
-      () => {
-        log.info(`I:${this.myId} rejoin`)
-        if (this.signaling.state === SignalingState.CLOSED) {
+  private rejoin (timeout: number = 0) {
+    if (!this.isRejoinDisabled) {
+      this.isRejoinDisabled = !this.autoRejoin
+      setTimeout(() => {
+        console.log('REJOIN: ', {
+          signalingState: SignalingState[this.signaling.state],
+          isOnline: isOnline(),
+          isVisible: isVisible(),
+        })
+        if (this.signaling.state === SignalingState.CLOSED && isOnline() && isVisible()) {
+          log.info(`I:${this.myId} rejoin`)
+          this.setState(WebChannelState.JOINING)
           this.signaling.join(this.key)
         }
-      },
-      REJOIN_TIMEOUT,
-    )
+      }, timeout)
+    }
   }
 
   /**
@@ -502,5 +526,13 @@ export class WebChannel extends Service {
       return this.generateId()
     }
     return id
+  }
+
+  private internalLeave () {
+    if (this.state !== WebChannelState.LEAVING && this.state !== WebChannelState.LEFT) {
+      this.signaling.close()
+      this.topologyService.leave()
+      this.setState(WebChannelState.LEFT)
+    }
   }
 }
