@@ -2,7 +2,7 @@ import { filter } from 'rxjs/operators'
 import { ReplaySubject } from 'rxjs/ReplaySubject'
 
 import { WebGroup, WebGroupBotServer, WebGroupState } from '../../src/index.node'
-import { BOT_HOST, BOT_PORT, onMessageForBot, SIGNALING_URL } from './helper'
+import { BOT_HOST, BOT_PORT, SIGNALING_URL } from './helper'
 
 // Require dependencies
 const http = require('http')
