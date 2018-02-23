@@ -2,6 +2,7 @@ import { Observable } from 'rxjs/Observable'
 import { Subject } from 'rxjs/Subject'
 
 import { Channel } from '../Channel'
+import { log } from '../misc/Util'
 import { channelBuilder as proto } from '../proto'
 import { CONNECT_TIMEOUT as WEBSOCKET_TIMEOUT, WebSocketBuilder } from '../WebSocketBuilder'
 import { IServiceMessageDecoded, Service } from './Service'
@@ -19,15 +20,22 @@ const ME = {
 }
 
 const CONNECT_TIMEOUT = Math.max(WEBRTC_TIMEOUT, WEBSOCKET_TIMEOUT) + 3000
-const PINGPONG_TIMEOUT = 2000
+const DEFAULT_PINGPONG_TIMEOUT = 700
+const MAX_PINGPONG_TIMEOUT = 3000
 const ping = Service.encodeServiceMessage(ID,
   proto.Message.encode(proto.Message.create({ ping: true })).finish())
 const pong = Service.encodeServiceMessage(ID,
   proto.Message.encode(proto.Message.create({ pong: true })).finish())
 
-interface IPendingRequest {
+interface IConnectionRequest {
   resolve: (ch: Channel) => void,
   reject: (err: Error) => void,
+}
+
+interface IPingPongRequest {
+  promise: Promise<void>,
+  resolve: () => void,
+  date: number
 }
 
 let request
@@ -41,16 +49,18 @@ let response
 export class ChannelBuilder extends Service {
 
   private wc: WebChannel
-  private pendingRequests: Map<number, IPendingRequest>
-  private pendingPingPongRequests: Map<number, () => void>
+  private connectionRequests: Map<number, IConnectionRequest>
+  private pingPongRequests: Map<number, IPingPongRequest>
   private channelsSubject: Subject<Channel>
+  private pingPongTimeout: number
 
   constructor (wc: WebChannel) {
     super(ID, proto.Message, wc.serviceMessageSubject)
     this.wc = wc
-    this.pendingRequests = new Map()
-    this.pendingPingPongRequests = new Map()
+    this.connectionRequests = new Map()
+    this.pingPongRequests = new Map()
     this.channelsSubject = new Subject()
+    this.pingPongTimeout = DEFAULT_PINGPONG_TIMEOUT
 
     // Listen on Channels as RTCDataChannels if WebRTC is supported
     ME.isWrtcSupport = WebRTCBuilder.isSupported
@@ -87,16 +97,16 @@ export class ChannelBuilder extends Service {
     await this.isResponding(id)
     const channel: any = await new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
-        this.pendingRequests.delete(id)
+        this.connectionRequests.delete(id)
         reject(new Error('ChannelBuilder timeout'))
       }, CONNECT_TIMEOUT)
-      this.pendingRequests.set(id, {
+      this.connectionRequests.set(id, {
         resolve: (ch: Channel) => {
-          this.pendingRequests.delete(id)
+          this.connectionRequests.delete(id)
           clearTimeout(timer)
           resolve(ch)
         }, reject: (err: Error) => {
-          this.pendingRequests.delete(id)
+          this.connectionRequests.delete(id)
           reject(err)
         },
       })
@@ -105,23 +115,35 @@ export class ChannelBuilder extends Service {
     return channel
   }
 
-  isResponding (id: number): Promise<boolean> {
-    this.wc.sendToProxy({ recipientId: id, content: ping })
-    return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => {
-        this.pendingPingPongRequests.delete(id)
-        reject(new Error('pingpong'))
-      }, PINGPONG_TIMEOUT)
-      this.pendingPingPongRequests.set(id, () => {
-        this.pendingPingPongRequests.delete(id)
-        clearTimeout(timer)
-        resolve()
+  isResponding (id: number): Promise<void> {
+    const ppRequest = this.pingPongRequests.get(id)
+    if (ppRequest) {
+      return ppRequest.promise
+    } else {
+      this.wc.sendToProxy({ recipientId: id, content: ping })
+      const promise: Promise<void> = new Promise((resolve, reject) => {
+
+        const timer = setTimeout(() => {
+          this.pingPongRequests.delete(id)
+          reject(new Error('pingpong'))
+        }, this.pingPongTimeout)
+
+        this.pingPongRequests.set(id, {
+          promise,
+          resolve: () => {
+            this.pingPongRequests.delete(id)
+            clearTimeout(timer)
+            resolve()
+          },
+          date: global.Date.now(),
+        })
       })
-    })
+      return promise
+    }
   }
 
   private handleChannel (ch: Channel): void {
-    const pendReq = this.pendingRequests.get(ch.id)
+    const pendReq = this.connectionRequests.get(ch.id)
     if (pendReq) {
       pendReq.resolve(ch)
     } else {
@@ -136,12 +158,19 @@ export class ChannelBuilder extends Service {
       break
     }
     case 'pong': {
-      this.pendingPingPongRequests.get(senderId)()
+      const ppRequest = this.pingPongRequests.get(senderId)
+      if (ppRequest) {
+        ppRequest.resolve()
+      } else {
+        const date = global.Date.now()
+        log.debug('INCREASING Ping/Pong timeout, as current latency is: ', date - ppRequest.date)
+        this.pingPongTimeout = global.Math.min(date - ppRequest.date + 500, MAX_PINGPONG_TIMEOUT)
+      }
       break
     }
     case 'failed': {
       console.warn('treatServiceMessage ERROR: ', msg.failed)
-      const pr = this.pendingRequests.get(senderId)
+      const pr = this.connectionRequests.get(senderId)
       if (pr !== undefined) {
         pr.reject(new Error(msg.failed))
       }
@@ -209,7 +238,7 @@ export class ChannelBuilder extends Service {
         this.wc.webSocketBuilder.connect(wsUrl, senderId)
           .then((ch: Channel) => this.handleChannel(ch))
           .catch((reason) => {
-            this.pendingRequests.get(senderId)
+            this.connectionRequests.get(senderId)
               .reject(new Error(`Failed to establish a socket: ${reason}`))
           })
       }
