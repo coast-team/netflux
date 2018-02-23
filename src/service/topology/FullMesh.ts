@@ -18,7 +18,7 @@ import { ITopology, TopologyStateEnum } from './Topology'
 export const FULL_MESH = 3
 
 interface IDistantPeer {
-  adjacentIds: Set<number>,
+  adjacentIds: number[],
   missedHeartbeat: number
 }
 
@@ -83,7 +83,7 @@ export class FullMesh extends Service implements ITopology {
           distantMembers: Array.from(this.distantMembers.keys()).toString(),
           connectingMembers: Array.from(this.connectingMembers.values()).toString(),
           distantMembersDETAILS: Array.from(this.distantMembers.keys()).map((id: number) => {
-            return {id, adjacentMembers: Array.from(this.distantMembers.get(id).adjacentIds)}
+            return {id, adjacentMembers: this.distantMembers.get(id).adjacentIds}
           }),
         })
       }
@@ -196,9 +196,9 @@ export class FullMesh extends Service implements ITopology {
         // Otherwise just update the list of distant peer's neighbours
 
         if (distantPeer) {
-          msg.adjacentMembers.ids.forEach((id) => distantPeer.adjacentIds.add(id))
+          distantPeer.adjacentIds = msg.adjacentMembers.ids
         } else {
-          this.distantMembers.set(senderId, { adjacentIds: new Set(msg.adjacentMembers.ids), missedHeartbeat: 0 })
+          this.distantMembers.set(senderId, { adjacentIds: msg.adjacentMembers.ids, missedHeartbeat: 0 })
           const adjacentMembers = super.encode({ adjacentMembers: { ids: Array.from(this.adjacentMembers.keys()) } })
           this.wc.sendToProxy({ recipientId: senderId, content: adjacentMembers})
           this.connectTo(senderId)
@@ -266,11 +266,8 @@ export class FullMesh extends Service implements ITopology {
         const connectingAttempts = []
 
         missingIds.forEach((id) => {
-          const distantPeer = this.distantMembers.get(id)
-          if (distantPeer) {
-            distantPeer.adjacentIds.add(adjacentId)
-          } else {
-            this.distantMembers.set(id, { adjacentIds: new Set([adjacentId]), missedHeartbeat: 0 })
+          if (!this.distantMembers.has(id)) {
+            this.distantMembers.set(id, { adjacentIds: [adjacentId], missedHeartbeat: 0 })
           }
 
           // It's important to notify all peers about my adjacentIds first
@@ -336,16 +333,16 @@ export class FullMesh extends Service implements ITopology {
     for (let d = 1; d <= MAX_ROUTE_DISTANCE; d++) {
       const ch = this.findRoutedChannel(distantPeer, d)
       if (ch) {
-        return ch.send(this.wc.encode(msg))
+        ch.send(this.wc.encode(msg))
+        return
       }
     }
-    console.warn(`${this.wc.myId}: the recipient ${msg.recipientId} could not be found`)
   }
 
   private findRoutedChannel (distantPeer: IDistantPeer, distance: number): Channel {
     if (distantPeer) {
       for (const [neighbourId, ch] of this.adjacentMembers) {
-        if (distantPeer.adjacentIds.has(neighbourId)) {
+        if (distantPeer.adjacentIds.includes(neighbourId)) {
           return ch
         }
       }
@@ -357,7 +354,6 @@ export class FullMesh extends Service implements ITopology {
           }
         }
       }
-      return undefined
     }
     return undefined
   }
