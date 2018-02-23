@@ -32,10 +32,9 @@
   "scripts": {
     "build": "rm -rf dist && tsc -p tsconfig.dist.json && rollup --config",
     "postbuild": "cp src/misc/typings.d.ts dist/esm && mkdir dist/esm/proto && cp src/proto/index.js src/proto/index.d.ts dist/esm/proto && sed -i '1s/^/\\/\\/\\/ <reference path=\\\".\\/typings.d.ts\\\"\\/>\\n/' dist/esm/index.node.d.ts && uglifyjs -o dist/netflux.umd.min.js dist/netflux.umd.js",
-    "build:testbot": "rollup -c test/util/rollup.config.js",
-    "start:testbot": "pm2 gracefulReload test/util/process.yml",
-    "pretest": "npm run build:testbot && npm run start:testbot",
+    "pretest": "rollup -c test/util/rollup.config.js && pm2 restart test/util/process.yml",
     "test": "karma start",
+    "posttest": "pm2 delete test/util/process.yml",
     "test:chrome": "npm test -- --browsers Chrome",
     "test:firefox": "npm test -- --browsers Firefox",
     "test:travis": "npm run build && npm test -- -- travis",
