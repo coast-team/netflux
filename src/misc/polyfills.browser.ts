@@ -1,5 +1,3 @@
-import 'webrtc-adapter/out/adapter_no_edge_no_global.js'
-
 /**
  * ECMAScript Proposal, specs, and reference implementation for `global`
  * http://tc39.github.io/proposal-global/

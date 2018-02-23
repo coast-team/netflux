@@ -47,7 +47,6 @@ module.exports = (config) => {
       },
       bundlerOptions: {
         exclude: ['wrtc', 'text-encoding', 'uws', 'url'],
-        noParse: ['webrtc-adapter/out/adapter_no_edge_no_global.js'],
         addNodeGlobals: false,
       },
       include: ['src/**/*', 'test/**/*'],
@@ -84,6 +83,13 @@ module.exports = (config) => {
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
     browsers: ['Chrome', 'Firefox'],
+
+    customLaunchers: {
+      FirefoxHeadless: {
+        base: 'Firefox',
+        flags: [ '-headless' ],
+      },
+    },
 
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits
