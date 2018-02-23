@@ -1,6 +1,6 @@
 apps:
   - script: node_modules/.bin/sigver
-    name: 'testsignaling'
-    args: '--port 8000'
+    name: 'netflux-test-signaling'
+    args: '--port 8111'
   - script: test/util/.botServer.js
-    name: 'testbot'
+    name: 'netflux-test-bot'
