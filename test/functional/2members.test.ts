@@ -1,7 +1,7 @@
 /// <reference types='jasmine' />
 /* tslint:disable:one-variable-per-declaration */
-import { SignalingState, Topology, WebGroup, WebGroupState } from '../../src/index.browser'
-import { MAX_KEY_LENGTH } from '../../src/misc/Util'
+import { DataType, SignalingState, WebGroup, WebGroupState } from '../../src/index.browser'
+import { } from '../../src/misc/Util'
 import {
   areTheSame,
   BOT_URL,
@@ -171,7 +171,7 @@ describe('2 members', () => {
         const queue = new Queue(1)
 
         // Code for peer 1
-        wg1.onMemberJoin = (id: number) => {
+        wg1.onMemberJoin = () => {
           expect(wg1.members.length).toEqual(2)
           expect(wg1.members.includes(wg1.myId)).toBeTruthy()
           expect(wg1.members.includes(wg2.myId)).toBeTruthy()
@@ -215,7 +215,7 @@ describe('2 members', () => {
             wg2.join(key)
           }
         }
-        wg.onMemberJoin = (id: number) => queue.pop()
+        wg.onMemberJoin = () => queue.pop()
 
         // Code for peer 2
         wg2.onStateChange = (state: WebGroupState) => {
@@ -225,7 +225,7 @@ describe('2 members', () => {
             queue.pop()
           }
         }
-        wg2.onMemberJoin = (id: number) => queue.pop()
+        wg2.onMemberJoin = () => queue.pop()
 
         // Start joining
         wg.join(key)
@@ -332,7 +332,7 @@ describe('2 members', () => {
         const msg2 = new Uint8Array([845, 4, 798240, 3290, 553, 1, 398539857, 84])
 
         // Code for peer 1
-        wg1.onMessage = (id, msg: Uint8Array) => {
+        wg1.onMessage = (id, msg) => {
           expect(id).toEqual(wg2.myId)
           expect(msg instanceof Uint8Array)
           expect(msg).toEqual(msg2)
@@ -341,7 +341,7 @@ describe('2 members', () => {
         }
 
         // Code for peer 2
-        wg2.onMessage = (id, msg: Uint8Array) => {
+        wg2.onMessage = (id, msg) => {
           expect(id).toEqual(wg1.myId)
           expect(msg instanceof Uint8Array)
           expect(msg).toEqual(msg1)
@@ -392,7 +392,7 @@ describe('2 members', () => {
         const msg2 = new Uint8Array([845, 4, 798240, 3290, 553, 1, 398539857, 84])
 
         // Code for peer 1
-        wg1.onMessage = (id, msg: Uint8Array) => {
+        wg1.onMessage = (id, msg) => {
           expect(id).toEqual(wg2.myId)
           expect(msg instanceof Uint8Array)
           expect(msg).toEqual(msg2)
@@ -401,7 +401,7 @@ describe('2 members', () => {
         }
 
         // Code for peer 2
-        wg2.onMessage = (id, msg: Uint8Array) => {
+        wg2.onMessage = (id, msg) => {
           expect(id).toEqual(wg1.myId)
           expect(msg instanceof Uint8Array)
           expect(msg).toEqual(msg1)
@@ -495,7 +495,7 @@ describe('2 members', () => {
           })
 
         // Code for peer 1
-        wg1.onMemberLeave = (id: number) => {
+        wg1.onMemberLeave = () => {
           expect(wg1.members.length).toEqual(1)
           expect(wg1.members.includes(wg1.myId)).toBeTruthy()
           queue.pop()
@@ -556,7 +556,7 @@ describe('2 members', () => {
           if (state === WebGroupState.LEFT) {
             wait(1000).then(() => {
               expect(called2).toEqual(2)
-              expect(wg2.state).toEqual(WebGroupState.LEFT)
+              expect(states).toEqual(expectedStates)
               done()
             })
           }
@@ -577,7 +577,7 @@ describe('2 members', () => {
           if (state === SignalingState.CLOSED) {
             wait(1000).then(() => {
               expect(called2).toEqual(2)
-              expect(wg2.signalingState).toEqual(SignalingState.CLOSED)
+              expect(states).toEqual(expectedStates)
               done()
             })
           }
@@ -697,8 +697,6 @@ describe('2 members', () => {
       })
 
       it('should have the same members, WebGroup id, topology once joined', (done) => {
-        const called1 = 0
-
         // Code for peer 1
         wg1.onSignalingStateChange = (state: SignalingState) => {
           if (state === SignalingState.STABLE) {
@@ -707,7 +705,7 @@ describe('2 members', () => {
           }
         }
 
-        wg1.onMemberJoin = (id: number) => {
+        wg1.onMemberJoin = () => {
           // Check bot data
           waitBotJoin(wg1.id)
             .then(() => wait(1000))
@@ -885,155 +883,6 @@ describe('2 members', () => {
     })
 
     // TODO: finish these tests
-    xdescribe('leaving', () => {
-      let called1: number, called2: number
-      let wg2: WebGroup
-
-      beforeEach ((done) => {
-        called1 = 0
-        const queue = new Queue(2)
-        wg1 = new WebGroup(WebGroupOptions)
-        wg1.onStateChange = (state: WebGroupState) => {
-          if (state === WebGroupState.JOINED) {
-            queue.pop()
-          }
-        }
-        wg1.onSignalingStateChange = (state: SignalingState) => {
-          if (state === SignalingState.STABLE) {
-            // Start inviting
-            wg1.invite(BOT_URL)
-          }
-        }
-        waitBotJoin(wg1.id).then(() => queue.pop())
-        queue.wait().then(() => {
-          cleanWebGroup(wg1)
-          cleanWebGroup(wg2)
-          done()
-        })
-
-        wg1.join()
-      })
-
-      afterEach ((done) => {
-        cleanWebGroup(wg1)
-        if (wg1.state !== WebGroupState.LEFT) {
-          wg1.onStateChange = (state: WebGroupState) => {
-            if (state === WebGroupState.LEFT) {
-              cleanWebGroup(wg1)
-              done()
-            }
-          }
-          wg1.leave()
-        } else {
-          cleanWebGroup(wg1)
-          done()
-        }
-      })
-
-      /** @test {WebGroup#leave} */
-      it('should have no members & an empty key', (done) => {
-        const queue = new Queue(1)
-
-        // Code for peer 1
-        wg1.onMemberLeave = (id: number) => {
-          expect(wg1.members.length).toEqual(1)
-          expect(wg1.members.includes(wg1.myId)).toBeTruthy()
-          queue.pop()
-        }
-
-        // Code for peer 2
-        wg2.onStateChange = (state: WebGroupState) => {
-          if (state === WebGroupState.LEFT) {
-            called2++
-            expect(wg2.members.length).toEqual(1)
-            expect(wg2.members.includes(wg2.myId)).toBeTruthy()
-            expect(wg2.key).toEqual('')
-            queue.wait()
-              .then(() => wait(1000))
-              .then(() => {
-                expect(wg1.members.length).toEqual(1)
-                expect(wg1.members.includes(wg1.myId)).toBeTruthy()
-                expect(wg2.members.length).toEqual(1)
-                expect(wg2.members.includes(wg2.myId)).toBeTruthy()
-                expect(wg2.key).toEqual('')
-                expect(called2).toEqual(1)
-                expect(wg2.key).toEqual('')
-                done()
-              })
-          }
-        }
-
-        // Start leaving
-        wg2.leave()
-      })
-
-      /** @test {WebGroup#onMemberLeave} */
-      it('should be notified about left member', (done) => {
-        const queue = new Queue(2)
-
-        // Code for peer 1
-        wg1.onMemberLeave = (id) => {
-          expect(id).toEqual(wg2.myId)
-          called1++
-          queue.pop()
-        }
-
-        // Code for peer 2
-        wg2.onMemberLeave = (id) => {
-          expect(id).toEqual(wg1.myId)
-          called2++
-          queue.pop()
-        }
-
-        // Start leaving
-        wg2.leave()
-
-        // When finish test
-        queue.wait()
-          .then(() => wait(1000))
-          .then(() => {
-            expect(called1).toEqual(1)
-            expect(called2).toEqual(1)
-            done()
-          })
-      })
-
-      /** @test {WebGroup#onStateChange} */
-      it('should change the WebGroup state', (done) => {
-
-        // Code for peer 2
-        wg2.onStateChange = (state: WebGroupState) => {
-          if (state === WebGroupState.LEFT) {
-            called2++
-          }
-          wait(1000).then(() => {
-            expect(called2).toEqual(1)
-            expect(wg2.state).toEqual(WebGroupState.LEFT)
-            done()
-          })
-        }
-
-        // Start leaving
-        wg2.leave()
-      })
-
-      /** @test {WebGroup#onSignalingStateChange} */
-      it('should change the Signaling state', (done) => {
-        // Code for peer 2
-        wg2.onSignalingStateChange = (state: SignalingState) => {
-          if (state === SignalingState.CLOSED) {
-            called2++
-          }
-          wait(1000).then(() => {
-            expect(called2).toEqual(1)
-            expect(wg2.signalingState).toEqual(SignalingState.CLOSED)
-            done()
-          })
-        }
-
-        // Start leaving
-        wg2.leave()
-      })
-    })
+    xdescribe('leaving', () => { })
   })
 })

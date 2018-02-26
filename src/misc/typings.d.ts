@@ -14,7 +14,7 @@ declare module NodeJS {
     WebSocket: typeof WebSocket
     crypto: Crypto
     Event: typeof Event
-    window?: Window
+    window: Window
   }
 }
 
@@ -43,5 +43,5 @@ interface RTCDataChannel extends EventTarget {
   onclose: (event: Event) => void
   onmessage: (event: Event) => void
   close (): void
-  send (data: string|ArrayBuffer|Blob)
+  send (data: string|ArrayBuffer|Blob): void
 }

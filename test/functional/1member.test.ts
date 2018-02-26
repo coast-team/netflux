@@ -1,7 +1,6 @@
 /// <reference types='jasmine' />
 import { SignalingState, Topology, WebGroup, WebGroupState } from '../../src/index.browser'
-import { MAX_KEY_LENGTH } from '../../src/misc/Util'
-import { areTheSame, cleanWebGroup, Queue, SIGNALING_URL, wait } from '../util/helper'
+import { areTheSame, cleanWebGroup, SIGNALING_URL, wait } from '../util/helper'
 
 const WebGroupOptions = {
   signalingServer: SIGNALING_URL,
@@ -18,22 +17,46 @@ describe('1 member', () => {
       const wg = new WebGroup({signalingServer: SIGNALING_URL})
 
       // Check members
+      const id = Reflect.getOwnPropertyDescriptor(wg, 'id')
+      expect(id).toBeDefined()
       expect(typeof wg.id).toBe('number')
-      expect(Reflect.getOwnPropertyDescriptor(wg, 'id').set).toBeUndefined()
+      expect((id as PropertyDescriptor).set).toBeUndefined()
+
+      const myId = Reflect.getOwnPropertyDescriptor(wg, 'myId')
+      expect(myId).toBeDefined()
       expect(typeof wg.myId).toBe('number')
-      expect(Reflect.getOwnPropertyDescriptor(wg, 'myId').set).toBeUndefined()
+      expect((myId as PropertyDescriptor).set).toBeUndefined()
+
+      const key = Reflect.getOwnPropertyDescriptor(wg, 'key')
+      expect(key).toBeDefined()
       expect(wg.key).toBe('')
-      expect(Reflect.getOwnPropertyDescriptor(wg, 'key').set).toBeUndefined()
+      expect((key as PropertyDescriptor).set).toBeUndefined()
+
+      const members = Reflect.getOwnPropertyDescriptor(wg, 'members')
+      expect(members).toBeDefined()
       expect(wg.members).toEqual([wg.myId])
-      expect(Reflect.getOwnPropertyDescriptor(wg, 'members').set).toBeUndefined()
+      expect((members as PropertyDescriptor).set).toBeUndefined()
+
+      const topology = Reflect.getOwnPropertyDescriptor(wg, 'topology')
+      expect(topology).toBeDefined()
       expect(wg.topology).toBe(Topology.FULL_MESH)
-      expect(Reflect.getOwnPropertyDescriptor(wg, 'topology').set).toBeUndefined()
+      expect((topology as PropertyDescriptor).set).toBeUndefined()
+
+      const state = Reflect.getOwnPropertyDescriptor(wg, 'state')
+      expect(state).toBeDefined()
       expect(wg.state).toBe(WebGroupState.LEFT)
-      expect(Reflect.getOwnPropertyDescriptor(wg, 'state').set).toBeUndefined()
+      expect((state as PropertyDescriptor).set).toBeUndefined()
+
+      const signalingState = Reflect.getOwnPropertyDescriptor(wg, 'signalingState')
+      expect(signalingState).toBeDefined()
       expect(wg.signalingState).toBe(SignalingState.CLOSED)
-      expect(Reflect.getOwnPropertyDescriptor(wg, 'signalingState').set).toBeUndefined()
+      expect((signalingState as PropertyDescriptor).set).toBeUndefined()
+
+      const signalingServer = Reflect.getOwnPropertyDescriptor(wg, 'signalingServer')
+      expect(signalingServer).toBeDefined()
       expect(wg.signalingServer).toBe(SIGNALING_URL)
-      expect(Reflect.getOwnPropertyDescriptor(wg, 'signalingServer').set).toBeUndefined()
+      expect((signalingServer as PropertyDescriptor).set).toBeUndefined()
+
       expect(wg.autoRejoin).toBeTruthy()
       wg.autoRejoin = false
       expect(wg.autoRejoin).toBeFalsy()
@@ -124,7 +147,7 @@ describe('1 member', () => {
       it('should NOT be notified about new member', (done) => {
         let called1 = 0
 
-        wg1.onMemberJoin = (id) => called1++
+        wg1.onMemberJoin = () => called1++
         wg1.onStateChange = (state: WebGroupState) => {
           if (state === WebGroupState.JOINED) {
             wait(1000)
@@ -237,7 +260,7 @@ describe('1 member', () => {
       it('should be NOT notified about left member', (done) => {
         let called1 = 0
 
-        wg1.onMemberJoin = (id) => called1++
+        wg1.onMemberJoin = () => called1++
 
         wg1.onStateChange = (state: WebGroupState) => {
           if (state === WebGroupState.LEFT) {

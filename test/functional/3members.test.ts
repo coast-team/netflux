@@ -1,17 +1,12 @@
 /// <reference types='jasmine' />
 /* tslint:disable:one-variable-per-declaration */
-import { SignalingState, Topology, WebGroup, WebGroupState } from '../../src/index.browser'
-import { MAX_KEY_LENGTH } from '../../src/misc/Util'
+import { SignalingState, WebGroup, WebGroupState } from '../../src/index.browser'
 import {
   areTheSame,
-  BOT_URL,
   cleanWebGroup,
-  getBotData,
-  IBotData,
+  IMessages,
   Queue,
-  SIGNALING_URL,
-  wait,
-  waitBotJoin } from '../util/helper'
+  SIGNALING_URL, wait } from '../util/helper'
 
 const WebGroupOptions = {
   signalingServer: SIGNALING_URL,
@@ -144,7 +139,7 @@ describe('3 members', () => {
         wg1.onStateChange = () => called1++
 
         // Code for peer 2
-        wg2.onStateChange = (state) => called2++
+        wg2.onStateChange = () => called2++
 
         // Code for peer 3
         wg3.onStateChange = (state: WebGroupState) => {
@@ -222,10 +217,10 @@ describe('3 members', () => {
           })
 
         // Code for peer 1
-        wg1.onMemberJoin = (id) => queue.pop()
+        wg1.onMemberJoin = () => queue.pop()
 
         // Code for peer 2
-        wg2.onMemberJoin = (id) => queue.pop()
+        wg2.onMemberJoin = () => queue.pop()
 
         // Code for peer 3
         wg3.onStateChange = (state: WebGroupState) => {
@@ -357,9 +352,9 @@ describe('3 members', () => {
         const msg1 = 'Art is long, life is short'
         const msg2 = 'Do or do not, there is no try'
         const msg3 = 'Never say never'
-        const messages1 = {ids: [], msgs: []}
-        const messages2 = {ids: [], msgs: []}
-        const messages3 = {ids: [], msgs: []}
+        const messages1: IMessages = {ids: [], msgs: []}
+        const messages2: IMessages  = {ids: [], msgs: []}
+        const messages3: IMessages  = {ids: [], msgs: []}
 
         // Code for peer 1
         wg1.onMessage = (id, msg) => {
@@ -411,9 +406,9 @@ describe('3 members', () => {
         const msg1 = new Uint8Array([42, 347, 248247, 583, 10, 8, 9623])
         const msg2 = new Uint8Array([845, 4, 798240, 3290, 553, 1, 398539857, 84])
         const msg3 = new Uint8Array([84, 79, 240, 30, 53, 3, 339857, 44])
-        const messages1 = {ids: [], msgs: []}
-        const messages2 = {ids: [], msgs: []}
-        const messages3 = {ids: [], msgs: []}
+        const messages1: IMessages  = {ids: [], msgs: []}
+        const messages2: IMessages  = {ids: [], msgs: []}
+        const messages3: IMessages  = {ids: [], msgs: []}
 
         // Code for peer 1
         wg1.onMessage = (id, msg) => {
@@ -471,9 +466,9 @@ describe('3 members', () => {
         const msg2For3 = 'Do or do not, there is no try3'
         const msg3For1 = 'Never say never1'
         const msg3For2 = 'Never say never2'
-        const messages1 = {ids: [], msgs: []}
-        const messages2 = {ids: [], msgs: []}
-        const messages3 = {ids: [], msgs: []}
+        const messages1: IMessages  = {ids: [], msgs: []}
+        const messages2: IMessages  = {ids: [], msgs: []}
+        const messages3: IMessages  = {ids: [], msgs: []}
 
         // Code for peer 1
         wg1.onMessage = (id, msg) => {
@@ -531,9 +526,9 @@ describe('3 members', () => {
         const msg2For3 = new Uint8Array([845, 4, 798240, 3290, 553, 1, 398539857, 3])
         const msg3For1 = new Uint8Array([84, 79, 240, 30, 53, 3, 339857, 1])
         const msg3For2 = new Uint8Array([84, 79, 240, 30, 53, 3, 339857, 2])
-        const messages1 = {ids: [], msgs: []}
-        const messages2 = {ids: [], msgs: []}
-        const messages3 = {ids: [], msgs: []}
+        const messages1: IMessages  = {ids: [], msgs: []}
+        const messages2: IMessages  = {ids: [], msgs: []}
+        const messages3: IMessages  = {ids: [], msgs: []}
 
         // Code for peer 1
         wg1.onMessage = (id, msg) => {
@@ -656,7 +651,7 @@ describe('3 members', () => {
         const queue = new Queue(1)
 
         // Code for peer 1
-        wg1.onMemberLeave = (id: number) => {
+        wg1.onMemberLeave = () => {
           expect(wg1.members.length).toEqual(1)
           expect(wg1.members.includes(wg1.myId)).toBeTruthy()
           queue.pop()

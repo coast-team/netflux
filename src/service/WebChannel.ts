@@ -9,10 +9,8 @@ import {
   isURL,
   isVisible,
   log,
-  LogLevel,
   MAX_KEY_LENGTH,
-  randNumbers,
-  setLogLevel } from '../misc/Util'
+  randNumbers } from '../misc/Util'
 import { IMessage, Message, service, webChannel } from '../proto'
 import { Signaling, SignalingState } from '../Signaling'
 import { UserDataType, UserMessage } from '../UserMessage'
@@ -132,7 +130,7 @@ export class WebChannel extends Service {
     rtcConfiguration = defaultOptions.rtcConfiguration,
     autoRejoin = defaultOptions.autoRejoin,
   }: IWebChannelOptions = {}) {
-    super(10, webChannel.Message)
+    super(ID, webChannel.Message)
 
     // PUBLIC MEMBERS
     this.topology = topology
@@ -246,7 +244,7 @@ export class WebChannel extends Service {
   invite (url: string): void {
     if (isURL(url)) {
       this.webSocketBuilder.connect(`${url}/invite?wcId=${this.id}&senderId=${this.myId}`)
-        .then((connection: WebSocket) => this.initChannel(new Channel(this, connection)))
+        .then((connection) => this.initChannel(new Channel(this, connection as WebSocket)))
         .catch((err) => console.error(`Failed to invite the bot ${url}: ${err.message}`))
     } else {
       throw new Error(`Failed to invite a bot: ${url} is not a valid URL`)
@@ -325,30 +323,19 @@ export class WebChannel extends Service {
   sendToProxy ({ senderId = this.myId, recipientId = this.myId, isService = true, content}:
     {senderId?: number, recipientId?: number, isService?: boolean, content?: Uint8Array} = {},
   ): void {
-    const msg = {senderId, recipientId, isService, content}
-    if (msg.recipientId === this.myId) {
-      this.treatMessage(undefined, msg)
-    } else {
-      this.topologyService.sendTo(msg)
-    }
+    this.topologyService.sendTo({senderId, recipientId, isService, content})
   }
 
   /**
    * Broadcast service message to the network.
    */
-  sendProxy ({ senderId = this.myId, recipientId = 0, isService = true, content, isMeIncluded = false}:
-    {senderId?: number, recipientId?: number, isService?: boolean, content?: Uint8Array, isMeIncluded?: boolean} = {},
+  sendProxy ({ senderId = this.myId, recipientId = 0, isService = true, content }:
+    {senderId?: number, recipientId?: number, isService?: boolean, content?: Uint8Array } = {},
   ): void {
-    const msg = {senderId, recipientId, isService, content}
-    if (isMeIncluded) {
-      this.treatMessage(undefined, msg)
-    }
-    this.topologyService.send(msg)
+    this.topologyService.send({senderId, recipientId, isService, content})
   }
 
-  encode ({ senderId = this.myId, recipientId = 0, isService = true, content }:
-    {senderId?: number, recipientId?: number, isService?: boolean, content?: Uint8Array} = {},
-  ): Uint8Array {
+  encode ({ senderId = this.myId, recipientId = 0, isService = true, content }: IMessage = {}): Uint8Array {
     const msg = {senderId, recipientId, isService, content}
     return Message.encode(Message.create(msg)).finish()
   }
@@ -372,22 +359,22 @@ export class WebChannel extends Service {
   private treatMessage (channel: Channel, msg: IMessage): void {
     // User Message
     if (!msg.isService) {
-      const data = this.userMsg.decode(msg.content, msg.senderId)
+      const data = this.userMsg.decode(msg.content as Uint8Array, msg.senderId as number)
       if (data !== undefined) {
-        this.onMessage(msg.senderId, data)
+        this.onMessage(msg.senderId as number, data)
       }
 
     // Service Message
     } else {
-      this.serviceMessageSubject.next(Object.assign({
-        channel,
-        senderId: msg.senderId,
-        recipientId: msg.recipientId,
-      }, service.Message.decode(msg.content)))
+      const fullMsg: any = service.Message.decode(msg.content as Uint8Array)
+      fullMsg.channel = channel
+      fullMsg.senderId = msg.senderId
+      fullMsg.recipientId = msg.recipientId
+      this.serviceMessageSubject.next(fullMsg as IServiceMessageEncoded)
     }
   }
 
-  private treatServiceMessage ({channel, senderId, recipientId, msg}: IServiceMessageDecoded): void {
+  private treatServiceMessage ({channel, senderId, msg}: IServiceMessageDecoded): void {
     switch (msg.type) {
     case 'init': {
       const { topology, wcId, generatedIds, members } = msg.init

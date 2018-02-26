@@ -34,12 +34,11 @@ interface IConnectionRequest {
 
 interface IPingPongRequest {
   promise: Promise<void>,
-  resolve: () => void,
-  date: number
+  resolve: () => void
 }
 
-let request
-let response
+let requestMsg: Uint8Array
+let responseMsg: Uint8Array
 
 /**
  * It is responsible to build a channel between two peers with a help of `WebSocketBuilder` and `WebRTCBuilder`.
@@ -53,6 +52,7 @@ export class ChannelBuilder extends Service {
   private pingPongRequests: Map<number, IPingPongRequest>
   private channelsSubject: Subject<Channel>
   private pingPongTimeout: number
+  private pingPongDates: Map<number, number>
 
   constructor (wc: WebChannel) {
     super(ID, proto.Message, wc.serviceMessageSubject)
@@ -61,6 +61,7 @@ export class ChannelBuilder extends Service {
     this.pingPongRequests = new Map()
     this.channelsSubject = new Subject()
     this.pingPongTimeout = DEFAULT_PINGPONG_TIMEOUT
+    this.pingPongDates = new Map()
 
     // Listen on Channels as RTCDataChannels if WebRTC is supported
     ME.isWrtcSupport = WebRTCBuilder.isSupported
@@ -78,8 +79,8 @@ export class ChannelBuilder extends Service {
 
       // Update preconstructed messages (for performance only)
       const content = { wsUrl: url, isWrtcSupport: ME.isWrtcSupport }
-      request = super.encode({ request: content })
-      response = super.encode({ response: content })
+      requestMsg = super.encode({ request: content })
+      responseMsg = super.encode({ response: content })
     })
 
     // Subscribe to WebChannel internal messages
@@ -110,7 +111,7 @@ export class ChannelBuilder extends Service {
           reject(err)
         },
       })
-      this.wc.sendToProxy({ recipientId: id, content: request })
+      this.wc.sendToProxy({ recipientId: id, content: requestMsg })
     })
     return channel
   }
@@ -135,8 +136,8 @@ export class ChannelBuilder extends Service {
             clearTimeout(timer)
             resolve()
           },
-          date: global.Date.now(),
         })
+        this.pingPongDates.set(id, global.Date.now())
       })
       return promise
     }
@@ -151,7 +152,7 @@ export class ChannelBuilder extends Service {
     }
   }
 
-  private treatServiceMessage ({ channel, senderId, recipientId, msg }: IServiceMessageDecoded): void {
+  private treatServiceMessage ({ senderId, msg }: IServiceMessageDecoded): void {
     switch (msg.type) {
     case 'ping': {
       this.wc.sendToProxy({ recipientId: senderId, content: pong })
@@ -163,8 +164,9 @@ export class ChannelBuilder extends Service {
         ppRequest.resolve()
       } else {
         const date = global.Date.now()
-        log.debug('INCREASING Ping/Pong timeout, as current latency is: ', date - ppRequest.date)
-        this.pingPongTimeout = global.Math.min(date - ppRequest.date + 500, MAX_PINGPONG_TIMEOUT)
+        const requestDate = this.pingPongDates.get(senderId) as number
+        log.debug('INCREASING Ping/Pong timeout, as current latency is: ', date - requestDate)
+        this.pingPongTimeout = global.Math.min(date - requestDate + 500, MAX_PINGPONG_TIMEOUT)
       }
       break
     }
@@ -181,11 +183,11 @@ export class ChannelBuilder extends Service {
       // If remote peer is listening on WebSocket, connect to him
       if (wsUrl) {
         this.wc.webSocketBuilder.connect(wsUrl, senderId)
-          .then((ch: Channel) => this.handleChannel(ch))
+          .then((ch) => this.handleChannel(ch as Channel))
           .catch((reason) => {
             if (ME.wsUrl) {
               // Ask him to connect to me via WebSocket
-              this.wc.sendToProxy({ recipientId: senderId, content: response })
+              this.wc.sendToProxy({ recipientId: senderId, content: responseMsg })
             } else {
               // Send failed reason
               this.wc.sendToProxy({
@@ -199,15 +201,15 @@ export class ChannelBuilder extends Service {
       } else if (isWrtcSupport) {
         if (ME.wsUrl) {
           // Ask him to connect to me via WebSocket
-          this.wc.sendToProxy({ recipientId: senderId, content: response })
+          this.wc.sendToProxy({ recipientId: senderId, content: responseMsg })
         } else if (ME.isWrtcSupport) {
           this.wc.webRTCBuilder.connectOverWebChannel(senderId)
             .then((ch) => this.handleChannel(ch))
-            .catch((reason) => {
+            .catch((err: Error) => {
               // Send failed reason
               this.wc.sendToProxy({
                 recipientId: senderId,
-                content: super.encode({ failed: `Failed establish a data channel: ${reason}` }),
+                content: super.encode({ failed: `Failed establish a data channel: ${err.message}` }),
               })
             })
         } else {
@@ -221,7 +223,7 @@ export class ChannelBuilder extends Service {
       } else if (!wsUrl && !isWrtcSupport) {
         if (ME.wsUrl) {
           // Ask him to connect to me via WebSocket
-          this.wc.sendToProxy({ recipientId: senderId, content: response })
+          this.wc.sendToProxy({ recipientId: senderId, content: responseMsg })
         } else {
           // Send failed reason
           this.wc.sendToProxy({
@@ -236,10 +238,12 @@ export class ChannelBuilder extends Service {
       const { wsUrl } = msg.response
       if (wsUrl) {
         this.wc.webSocketBuilder.connect(wsUrl, senderId)
-          .then((ch: Channel) => this.handleChannel(ch))
-          .catch((reason) => {
-            this.connectionRequests.get(senderId)
-              .reject(new Error(`Failed to establish a socket: ${reason}`))
+          .then((ch) => this.handleChannel(ch as Channel))
+          .catch((err: Error) => {
+            const request = this.connectionRequests.get(senderId)
+            if (request) {
+              request.reject(new Error(`Failed to establish a socket: ${err.message}`))
+            }
           })
       }
       break

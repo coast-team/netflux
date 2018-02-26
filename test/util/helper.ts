@@ -1,10 +1,6 @@
-import { Subject } from 'rxjs/Subject'
-
-import { LogLevel, setLogLevel, SignalingState, WebGroup, WebGroupState } from '../../src/index.browser'
+import { SignalingState, WebGroup, WebGroupState } from '../../src/index.browser'
 
 // setLogLevel(LogLevel.INFO)
-
-const isBrowser = (typeof window === 'undefined') ? false : true
 
 // Main signaling server for all tests
 export const SIGNALING_URL = 'ws://localhost:8111'
@@ -65,7 +61,7 @@ export class Queue {
   private resolvers: Array<() => void>
   private counter: number
 
-  constructor (private length: number) {
+  constructor (length: number) {
     this.counter = 0
     this.promises = []
     this.resolvers = []
@@ -112,7 +108,7 @@ export interface IBotMessage {
   msg: string | Uint8Array
 }
 
-export function getBotData (wgId): Promise<IBotData> {
+export function getBotData (wgId: number): Promise<IBotData> {
   return fetch(`${BOT_FETCH_URL}/data/${wgId}`)
     .then(async (res) => {
       if (res.status !== 200) {
@@ -123,7 +119,7 @@ export function getBotData (wgId): Promise<IBotData> {
     })
 }
 
-export function waitBotJoin (wgId) {
+export function waitBotJoin (wgId: number) {
   return fetch(`${BOT_FETCH_URL}/waitJoin/${wgId}`)
     .then(async (res) => {
       if (res.status !== 200) {
@@ -142,4 +138,9 @@ export function cleanWebGroup (wg: WebGroup) {
   wg.onMessage = undefined
   wg.onSignalingStateChange = undefined
   wg.onStateChange = undefined
+}
+
+export interface IMessages {
+  ids: number[],
+  msgs: Array<string | Uint8Array>
 }

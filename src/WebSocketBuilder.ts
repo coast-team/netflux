@@ -3,7 +3,7 @@ import { Observable } from 'rxjs/Observable'
 import { Subject } from 'rxjs/Subject'
 
 import { Channel } from './Channel'
-import { isBrowser, isURL } from './misc/Util'
+import { isURL } from './misc/Util'
 import { WebChannel } from './service/WebChannel'
 
 export const CONNECT_TIMEOUT = 6000
@@ -19,7 +19,7 @@ export class WebSocketBuilder {
     return listenSubject
   }
 
-  static newIncomingSocket (wc, ws, senderId) {
+  static newIncomingSocket (wc: WebChannel, ws: WebSocket, senderId: number) {
     wc.webSocketBuilder.channelsSubject.next(new Channel(wc, ws, {id: senderId}))
   }
 

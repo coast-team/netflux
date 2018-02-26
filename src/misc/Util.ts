@@ -1,5 +1,3 @@
-import { Channel } from '../Channel'
-
 /**
  * Equals to true in any browser.
  */
@@ -43,7 +41,7 @@ export function generateKey (): string {
   return result
 }
 
-export function randNumbers (length: number = 1): number[] {
+export function randNumbers (length: number = 1): number[] | Uint32Array {
   let res
   if (isBrowser) {
     res = new Uint32Array(length)

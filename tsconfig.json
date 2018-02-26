@@ -5,7 +5,12 @@
     "lib": [ "es2017", "dom" ],
     "moduleResolution": "node",
     "downlevelIteration": true,
-    "types": ["node", "text-encoding"]
+    "types": ["node", "text-encoding"],
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": false,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
   },
   "include": [
     "src/**/*",

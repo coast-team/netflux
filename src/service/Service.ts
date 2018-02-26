@@ -29,7 +29,7 @@ export interface IServiceMessageDecoded {
  */
 export abstract class Service {
 
-  static encodeServiceMessage (serviceId, content: Uint8Array): Uint8Array {
+  static encodeServiceMessage (serviceId: number, content: Uint8Array): Uint8Array {
     return service.Message.encode(
       service.Message.create({
         id: serviceId,

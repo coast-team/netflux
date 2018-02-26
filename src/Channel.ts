@@ -15,7 +15,7 @@ export class Channel {
    * Id of the peer who is at the other end of this channel.
    */
   private _id: number
-  private rtcPeerConnection: RTCPeerConnection
+  private rtcPeerConnection: RTCPeerConnection | undefined
   private wc: WebChannel
   private topologyHeartbeatMsg: Uint8Array
   private fullHeartbeatMsg: Uint8Array
@@ -35,7 +35,7 @@ export class Channel {
     this.rtcPeerConnection = options.rtcPeerConnection
     this.isIntermediary = false
     this.missedHeartbeat = 0
-    this.updateHeartbeatMsg(null)
+    this.updateHeartbeatMsg(this.wc.topologyService.heartbeat)
 
     // Configure `send` function
     if (isBrowser) {
@@ -49,12 +49,12 @@ export class Channel {
     }
 
     // Configure handlers
-    this.connection.onmessage = ({ data }) => wc.onMessageProxy(this, new Uint8Array(data))
+    this.connection.onmessage = ({ data }: { data: ArrayBuffer }) => wc.onMessageProxy(this, new Uint8Array(data))
     this.connection.onclose = (evt: Event) => {
       log.info(`Connection with ${this.id} has closed`)
       wc.topologyService.onChannelClose(evt, this)
     }
-    this.connection.onerror = (evt) => {
+    this.connection.onerror = (evt: Event) => {
       log.debug('Channel error: ', evt)
       wc.topologyService.onChannelError(evt, this)
       this.close()
@@ -67,7 +67,7 @@ export class Channel {
 
   set id (value: number) {
     this._id = value
-    this.updateHeartbeatMsg(this.topologyHeartbeatMsg)
+    this.fullHeartbeatMsg = this.wc.encode({ recipientId: value, content: this.topologyHeartbeatMsg })
   }
 
   close (): void {
@@ -88,7 +88,7 @@ export class Channel {
     this.send(this.fullHeartbeatMsg)
   }
 
-  updateHeartbeatMsg (heartbeatMsg) {
+  updateHeartbeatMsg (heartbeatMsg: Uint8Array) {
     this.topologyHeartbeatMsg = heartbeatMsg
     this.fullHeartbeatMsg = this.wc.encode({ recipientId: this._id, content: heartbeatMsg })
   }

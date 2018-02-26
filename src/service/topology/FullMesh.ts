@@ -1,9 +1,8 @@
 import { Observable } from 'rxjs/Observable'
 import { Subject } from 'rxjs/Subject'
-import { Subscription } from 'rxjs/Subscription'
 
 import { Channel } from '../../Channel'
-import { equal, log, logLevel, LogLevel } from '../../misc/Util'
+import { log, logLevel, LogLevel } from '../../misc/Util'
 import { fullMesh, IMessage } from '../../proto'
 import { SignalingState } from '../../Signaling'
 import { IServiceMessageDecoded, Service } from '../Service'
@@ -28,8 +27,6 @@ const MAX_ROUTE_DISTANCE = 3
 
 const HEARTBEAT_INTERVAL = 3000
 const MAXIMUM_MISSED_HEARTBEAT = 3
-const HEARTBEAT_MESSAGE = Service.encodeServiceMessage(FULL_MESH,
-  fullMesh.Message.encode(fullMesh.Message.create({ heartbeat: true })).finish())
 
 /**
  * Fully connected web channel manager. Implements fully connected topology
@@ -37,6 +34,8 @@ const HEARTBEAT_MESSAGE = Service.encodeServiceMessage(FULL_MESH,
  *
  */
 export class FullMesh extends Service implements ITopology {
+
+  readonly heartbeat: Uint8Array
 
   private wc: WebChannel
 
@@ -69,11 +68,13 @@ export class FullMesh extends Service implements ITopology {
     this.distantMembers = new Map()
     this.connectingMembers = new Set()
     this.stateSubject = new Subject()
+    this.heartbeat = Service.encodeServiceMessage(FULL_MESH,
+      fullMesh.Message.encode(fullMesh.Message.create({ heartbeat: true })).finish())
     this._state = TopologyStateEnum.DISCONNECTED
     this.onServiceMessage.subscribe((msg) => this.handleSvcMsg(msg))
     this.wc.channelBuilder.onChannel.subscribe((ch) => this.addAdjacentMember(ch))
     if (logLevel !== LogLevel.OFF) {
-      window['fullmesh'] = () => {
+      (global as any).fullmesh = () => {
         log.debug('Fullmesh info:', {
           myId: this.wc.myId,
           signalingState: SignalingState[this.wc.signaling.state],
@@ -83,7 +84,8 @@ export class FullMesh extends Service implements ITopology {
           distantMembers: Array.from(this.distantMembers.keys()).toString(),
           connectingMembers: Array.from(this.connectingMembers.values()).toString(),
           distantMembersDETAILS: Array.from(this.distantMembers.keys()).map((id: number) => {
-            return {id, adjacentMembers: this.distantMembers.get(id).adjacentIds}
+            const adjacentMembers = this.distantMembers.get(id)
+            return {id, adjacentMembers: adjacentMembers ? adjacentMembers.adjacentIds : []}
           }),
         })
       }
@@ -131,16 +133,16 @@ export class FullMesh extends Service implements ITopology {
   }
 
   sendTo (msg: IMessage): void {
-    const ch = this.adjacentMembers.get(msg.recipientId)
+    const ch = this.adjacentMembers.get(msg.recipientId as number)
     if (ch) {
       ch.send(this.wc.encode(msg))
     } else {
-      this.sendToDistantPeer(this.distantMembers.get(msg.recipientId), msg)
+      this.sendToDistantPeer(this.distantMembers.get(msg.recipientId as number), msg)
     }
   }
 
   forward (msg: IMessage): void {
-    if (msg.recipientId > 1) {
+    if (msg.recipientId as number > 1) {
       this.sendTo(msg)
     }
   }
@@ -161,7 +163,7 @@ export class FullMesh extends Service implements ITopology {
     this.deleteAdjacentMember(channel)
   }
 
-  onChannelError (evt: Event, channel: Channel): void {
+  onChannelError (evt: Event): void {
     console.warn(`Channel error: ${evt.type}`)
   }
 
@@ -175,7 +177,7 @@ export class FullMesh extends Service implements ITopology {
     this.membersRequestInterval = undefined
   }
 
-  private handleSvcMsg ({channel, senderId, recipientId, msg}: IServiceMessageDecoded): void {
+  private handleSvcMsg ({channel, senderId, msg}: IServiceMessageDecoded): void {
     switch (msg.type) {
     case 'membersResponse': {
       this.connectToMany(msg.membersResponse.ids, senderId)
@@ -218,16 +220,11 @@ export class FullMesh extends Service implements ITopology {
     }
   }
 
-  private addDistantMember (id: number) {
-
-  }
-
   private addAdjacentMember (ch: Channel): void {
     if (this._state === TopologyStateEnum.DISCONNECTED || this._state === TopologyStateEnum.DISCONNECTING) {
       ch.closeQuietly()
     } else {
       console.assert(!this.adjacentMembers.has(ch.id), 'Replicated connection between two peers')
-      ch.updateHeartbeatMsg(HEARTBEAT_MESSAGE)
       this.distantMembers.delete(ch.id)
       this.adjacentMembers.set(ch.id, ch)
       this.notifyDistantPeers()
@@ -263,7 +260,7 @@ export class FullMesh extends Service implements ITopology {
       })
       if (missingIds.length !== 0) {
         const adjacentMembers = super.encode({ adjacentMembers: { ids: Array.from(this.adjacentMembers.keys()) } })
-        const connectingAttempts = []
+        const connectingAttempts: Array<Promise<void>> = []
 
         missingIds.forEach((id) => {
           if (!this.distantMembers.has(id)) {
@@ -299,6 +296,7 @@ export class FullMesh extends Service implements ITopology {
               .then(() => this.wc.onMemberJoinProxy(id))
           }
           log.info(`${this.wc.myId} failed to connect to ${id}: ${err.message}`)
+          return
         })
         .catch(() => {})
     } else {
@@ -325,7 +323,7 @@ export class FullMesh extends Service implements ITopology {
     }
   }
 
-  private sendToDistantPeer (distantPeer: IDistantPeer, msg: IMessage) {
+  private sendToDistantPeer (distantPeer: IDistantPeer | undefined, msg: IMessage) {
     // NO LUCK: recepient is not directly connected to me, thus check distant peers
     // First those who are at distance 1, then 2 etc. up to MAX_ROUTE_DISTANCE
     // (Peer X has a distance equals to 1 if I am not directly connected to X and
@@ -339,7 +337,7 @@ export class FullMesh extends Service implements ITopology {
     }
   }
 
-  private findRoutedChannel (distantPeer: IDistantPeer, distance: number): Channel {
+  private findRoutedChannel (distantPeer: IDistantPeer | undefined, distance: number): Channel | undefined {
     if (distantPeer) {
       for (const [neighbourId, ch] of this.adjacentMembers) {
         if (distantPeer.adjacentIds.includes(neighbourId)) {
@@ -398,7 +396,7 @@ export class FullMesh extends Service implements ITopology {
           if (peer.missedHeartbeat >= MAXIMUM_MISSED_HEARTBEAT + 1) {
             throw new Error('Too many missed heartbeats')
           }
-          this.wc.sendToProxy({ recipientId: id, content: HEARTBEAT_MESSAGE })
+          this.wc.sendToProxy({ recipientId: id, content: this.heartbeat })
         } catch (err) {
           log.info(`Distant peer ${id} has left. Reason: ${err.message}`)
           this.deleteDistantMember(id)

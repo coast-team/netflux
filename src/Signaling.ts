@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs/Observable'
-import { filter, map, pluck } from 'rxjs/operators'
+import { filter, pluck } from 'rxjs/operators'
 import { Subject } from 'rxjs/Subject'
 
 import { Channel } from './Channel'
@@ -8,14 +8,6 @@ import { signaling as sigProto } from './proto'
 import { WebChannel } from './service/WebChannel'
 
 /* tslint:disable:variable-name */
-
-interface IStreamSocket {
-  message: Observable<sigProto.Message>,
-  send: (msg: sigProto.IMessage) => void,
-  heartbeat: () => void,
-  close: (code?: number, reason?: string) => void,
-  isOpen: () => boolean
-}
 
 export interface IWebRTCStream {
   message: Observable<sigProto.Content>,
@@ -28,7 +20,6 @@ const HEARTBEAT_INTERVAL = 5000
 /* WebSocket error codes */
 const HEARTBEAT_ERROR_CODE = 4002
 const MESSAGE_ERROR_CODE = 4010
-const FIRST_CONNECTION_ERROR_CODE = 4011
 
 /* Preconstructed messages */
 const heartbeatMsg = sigProto.Message.encode(sigProto.Message.create({ heartbeat: true })).finish()
@@ -88,9 +79,9 @@ export class Signaling {
       this.setState(SignalingState.CONNECTING)
       this.wc.webSocketBuilder
         .connect(this.getFullURL(key))
-        .then((ws: WebSocket) => {
-          this.ws = ws
-          this.wsObservable = this.createObservable(ws)
+        .then((ws) => {
+          this.ws = ws as WebSocket
+          this.wsObservable = this.createObservable(this.ws)
           this.startHeartbeat()
           this.wsObservable.subscribe(
             (msg) => {
@@ -109,7 +100,7 @@ export class Signaling {
             },
           )
         })
-        .catch((err) => this.setState(SignalingState.CLOSED))
+        .catch(() => this.setState(SignalingState.CLOSED))
     }
   }
 
@@ -126,8 +117,8 @@ export class Signaling {
   private connectOverSignaling () {
     if (this.ws.readyState === WebSocket.OPEN) {
       this.wc.webRTCBuilder.connectOverSignaling(this.getWebRTCStream())
-        .then((ch: Channel) => this.setState(SignalingState.CONNECTED))
-        .catch((err) => this.send({ tryAnother: true }))
+        .then(() => this.setState(SignalingState.CONNECTED))
+        .catch(() => this.send({ tryAnother: true }))
     }
   }
 
@@ -216,7 +207,7 @@ export class Signaling {
     }
   }
 
-  private getFullURL (params) {
+  private getFullURL (params: string) {
     if (this.url.endsWith('/')) {
       return this.url + params
     } else {

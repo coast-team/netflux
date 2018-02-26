@@ -31,7 +31,7 @@ export class UserMessage {
   /**
    * Encode user message for sending over the network.
    */
-  encode (data): Uint8Array[] {
+  encode (data: UserDataType): Uint8Array[] {
     const {type, bytes} = this.userDataToType(data)
     const msg: any = { length: bytes.length, type }
     if (bytes.length <= MAX_USER_MSG_SIZE) {
@@ -60,7 +60,7 @@ export class UserMessage {
    * Decode user message received from the network.
    */
   decode (bytes: Uint8Array, senderId: number): UserDataType {
-    const msg = user.Message.decode(bytes)
+    const msg = user.Message.decode(bytes) as any
     let content
     switch (msg.content) {
     case 'full': {
@@ -98,19 +98,19 @@ export class UserMessage {
   /**
    * Identify the user data type.
    */
-  private userDataToType (data): { type: number , bytes: Uint8Array } {
+  private userDataToType (data: UserDataType): { type: number , bytes: Uint8Array } {
     if (data instanceof Uint8Array) {
       return { type: user.Message.Type.U_INT_8_ARRAY, bytes: data }
     } else if (typeof data === 'string') {
       return { type: user.Message.Type.STRING, bytes: textEncoder.encode(data) }
-    } else if (data instanceof String) {
+    } else if ((data as any) instanceof String) {
       return { type: user.Message.Type.STRING, bytes: textEncoder.encode('' + data) }
     } else {
       throw new Error('Message neigther a string type or a Uint8Array type')
     }
   }
 
-  private getBuffer (peerId: number, msgId: number): Buffer {
+  private getBuffer (peerId: number, msgId: number): Buffer | undefined {
     const buffers = this.buffers.get(peerId)
     if (buffers !== undefined) {
       return buffers.get(msgId)

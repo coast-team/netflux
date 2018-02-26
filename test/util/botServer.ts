@@ -1,14 +1,33 @@
-import { filter } from 'rxjs/operators'
 import { ReplaySubject } from 'rxjs/ReplaySubject'
 
-import { WebGroup, WebGroupBotServer, WebGroupState } from '../../src/index.node'
-import { BOT_HOST, BOT_PORT, SIGNALING_URL } from './helper'
+import { SignalingState, WebGroup, WebGroupBotServer, WebGroupState } from '../../src/index.node'
+import { BOT_HOST, BOT_PORT } from './helper'
 
 // Require dependencies
 const http = require('http')
 const Koa = require('koa')
 const Router = require('koa-router')
 const cors = require('kcors')
+
+interface IData {
+  onMemberJoinCalled: number
+  joinedMembers: number[]
+  onMemberLeaveCalled: number
+  leftMembers: number
+  onStateCalled: number
+  states: WebGroupState[]
+  onSignalingStateCalled: number
+  signalingStates: SignalingState[]
+  messages: any[]
+  onMessageToBeCalled: number
+  state: WebGroupState
+  signalingState: SignalingState
+  key: string
+  topology: number
+  members: number[]
+  myId: number
+  id: number
+}
 
 try {
   // Instantiate main objects
@@ -20,19 +39,7 @@ try {
 
   // Configure router
   router
-    .get('/members/:wcId', (ctx, next) => {
-      const wcId = Number(ctx.params.wcId)
-      let members = []
-      let id
-      for (const wg of bot.webGroups) {
-        if (wg.id === wcId) {
-          members = wg.members
-          id = wg.myId
-          break
-        }
-      }
-    })
-    .get('/data/:wcId', (ctx, next) => {
+    .get('/data/:wcId', (ctx: any) => {
       const wcId = Number(ctx.params.wcId)
       for (const wg of bot.webGroups) {
         if (wg.id === wcId) {
@@ -42,10 +49,10 @@ try {
       }
       ctx.throw(404, 'WebGroup ' + wcId + ' not found')
     })
-    .get('/waitJoin/:wcId', async (ctx, next) => {
+    .get('/waitJoin/:wcId', async (ctx: any) => {
       const wcId = Number(ctx.params.wcId)
       await new Promise((resolve) => {
-        const sub = webGroups.subscribe((wg: WebGroup) => {
+        webGroups.subscribe((wg: WebGroup) => {
           if (wg.id === wcId) {
             resolve()
           }
@@ -53,7 +60,7 @@ try {
       })
       for (const wg of bot.webGroups) {
         if (wg.id === wcId) {
-          await wg['waitJoin']
+          await (wg as any).waitJoin
           ctx.body = {id: wcId}
           return
         }
@@ -61,7 +68,7 @@ try {
       console.log('err')
       ctx.throw(404, 'WebGroup ' + wcId + ' not found')
     })
-    .get('/send/:wcId', (ctx, next) => {
+    .get('/send/:wcId', (ctx: any) => {
       const wcId = Number(ctx.params.wcId)
       for (const wc of bot.webGroups) {
         if (wc.id === wcId) {
@@ -91,7 +98,7 @@ try {
 
   // Configure bot
   bot.onWebGroup = (wg: WebGroup) => {
-    const data = {
+    const data: any = {
       onMemberJoinCalled: 0,
       joinedMembers: [],
       onMemberLeaveCalled: 0,
@@ -103,7 +110,8 @@ try {
       messages: [],
       onMessageToBeCalled: 0,
     }
-    wg['waitJoin'] = new Promise((resolve) => {
+    const anyWg = (wg as any)
+    anyWg.waitJoin = new Promise((resolve) => {
       wg.onStateChange = (state) => {
         if (state === WebGroupState.JOINED) {
           resolve()
@@ -147,7 +155,7 @@ try {
       data.onSignalingStateCalled++
       data.signalingStates.push(state)
     }
-    wg['data'] = data
+    anyWg.data = data
     webGroups.next(wg)
   }
   bot.onError = (err) => console.error('Bot ERROR: ', err)
@@ -164,7 +172,7 @@ try {
   console.error('WebGroupBotServer script error: ', err)
 }
 
-function fullData (wg) {
+function fullData (wg: any): IData {
   wg.data.state = wg.state
   wg.data.signalingState = wg.signalingState
   wg.data.key = wg.key

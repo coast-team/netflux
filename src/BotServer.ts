@@ -27,7 +27,6 @@ export class BotServer {
   private listenUrl: string
   private webSocketServer: any
   private wcOptions: IWebChannelOptions
-  private botSettings: IBotServerOptions
 
   constructor ({
     url = '',
@@ -39,7 +38,7 @@ export class BotServer {
       rtcConfiguration: defaultOptions.rtcConfiguration,
       autoRejoin: false,
     },
-  }: IBotServerOptions = {server: undefined}) {
+  }: IBotServerOptions) {
     // public
     this.wcOptions = Object.assign({}, defaultOptions, { autoRejoin: false }, webGroupOptions)
     this.server = server
@@ -64,7 +63,7 @@ export class BotServer {
     }
   }
 
-  private getWebGroup (id: number): WebGroup {
+  private getWebGroup (id: number): WebGroup | undefined {
     for (const wg of this.webGroups) {
       if (id === wg.id) {
         return wg
@@ -76,19 +75,19 @@ export class BotServer {
   private init (): void {
     this.webSocketServer = new uws.Server({
       perMessageDeflate: this.perMessageDeflate,
-      verifyClient: (info) => this.validateConnection(info),
+      verifyClient: (info: any) => this.validateConnection(info),
       server: this.server,
     })
     const serverListening = this.server || this.webSocketServer
     serverListening.on('listening', () => WebSocketBuilder.listen().next(this.url))
 
-    this.webSocketServer.on('error', (err) => {
+    this.webSocketServer.on('error', (err: Error) => {
       WebSocketBuilder.listen().next('')
       this.onError(err)
     })
 
-    this.webSocketServer.on('connection', (ws) => {
-      const {pathname, query} = urlLib.parse(ws.upgradeReq.url, true)
+    this.webSocketServer.on('connection', (ws: WebSocket) => {
+      const {pathname, query} = urlLib.parse((ws as any).upgradeReq.url, true)
       const wcId = Number(query.wcId)
       let wg = this.getWebGroup(wcId)
       const senderId = Number(query.senderId)
@@ -99,16 +98,16 @@ export class BotServer {
         }
         // FIXME: it is possible to create multiple WebChannels with the same ID
         wg = new WebGroup(this.wcOptions)
-        const wc = wcs.get(wg)
+        const wc = wcs.get(wg) as WebChannel
         wc.id = wcId
         this.webGroups.add(wg)
         this.onWebGroup(wg)
-        const ch = new Channel(wc, ws, {id: senderId})
+        new Channel(wc, ws, {id: senderId}) // tslint:disable-line
         break
       }
       case '/internalChannel': {
         if (wg !== undefined) {
-          WebSocketBuilder.newIncomingSocket(wcs.get(wg), ws, senderId)
+          WebSocketBuilder.newIncomingSocket(wcs.get(wg) as WebChannel, ws, senderId)
         } else {
           console.error('Cannot find WebChannel for a new internal channel')
         }
@@ -129,7 +128,7 @@ export class BotServer {
       }
       return false
     case '/internalChannel':
-      return query.senderId && wcId && this.getWebGroup(wcId) !== undefined
+      return query.senderId !== undefined && wcId !== undefined && this.getWebGroup(wcId) !== undefined
     default:
       return false
     }

@@ -4,8 +4,7 @@ import { Server as NodeJSHttpServer } from 'http'
 import { Server as NodeJSHttpsServer } from 'https'
 
 import { BotServer, IBotServerOptions as WebGroupBotServerOptions } from './BotServer'
-import { WebGroup, WebGroupOptions } from './WebChannelFacade'
-import { WebSocketBuilder } from './WebSocketBuilder'
+import { WebGroup } from './WebChannelFacade'
 
 let botServer: BotServer
 
@@ -57,8 +56,8 @@ export class WebGroupBotServer {
   public perMessageDeflate: boolean
   public webGroups: Set<WebGroup>
   public url: string
-  public onWebGroup: (wg: WebGroup) => void
-  public onError: (err: Error) => void
+  public onWebGroup: (((wg: WebGroup) => void)) | undefined | null
+  public onError: (((err: Error) => void)) | undefined | null
 
   /**
    * @param {WebGroupBotServerOptions} options
@@ -78,13 +77,13 @@ export class WebGroupBotServer {
      * Read-only NodeJS http server instance.
      * @type {NodeJSHttpServer|NodeJSHttpsServer}
      */
-    this.server = undefined
+    this.server = undefined as any
     Reflect.defineProperty(this, 'server', { configurable: false, enumerable: true, get: () => botServer.server })
     /**
      * Read-only property of WebSocket server: permessage-deflate.
      * @type {NodeJSHttpServer|NodeJSHttpsServer}
      */
-    this.perMessageDeflate = undefined
+    this.perMessageDeflate = undefined as any
     Reflect.defineProperty(this, 'perMessageDeflate', {
       configurable: false,
       enumerable: true,
@@ -94,20 +93,20 @@ export class WebGroupBotServer {
       * Read-only set of web groups the bot is member of.
       * @type {Set<WebGroup>}
       */
-    this.webGroups = undefined
+    this.webGroups = undefined as any
     Reflect.defineProperty(this, 'webGroups', { configurable: false, enumerable: true, get: () => botServer.webGroups })
     /**
      * Bot server url. Used to invite the bot in a web group via {@link WebGroup#invite} method.
      * @type {string}
      */
-    this.url = undefined
+    this.url = undefined as any
     Reflect.defineProperty(this, 'url', { configurable: false, enumerable: true, get: () => botServer.url })
 
     /**
      * This handler is called when the bot has been invited into a group by one of its members.
      * @type  {function(wg: WebGroup)} handler
      */
-    this.onWebGroup = undefined
+    this.onWebGroup = undefined as any
     Reflect.defineProperty(this, 'onWebGroup', {
       configurable: true,
       enumerable: true,
@@ -125,7 +124,7 @@ export class WebGroupBotServer {
      * This handler is called when an error occurs on WebSocket server.
      * @type  {function(err: Error)}
      */
-    this.onError = undefined
+    this.onError = undefined as any
     Reflect.defineProperty(this, 'onError', {
       configurable: true,
       enumerable: true,
