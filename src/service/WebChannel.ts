@@ -14,6 +14,7 @@ import {
 import { IMessage, Message, service, webChannel } from '../proto'
 import { Signaling, SignalingState } from '../Signaling'
 import { UserDataType, UserMessage } from '../UserMessage'
+import { WebGroupState } from '../WebChannelFacade'
 import { WebSocketBuilder } from '../WebSocketBuilder'
 import { ChannelBuilder } from './ChannelBuilder'
 import { IServiceMessageDecoded, IServiceMessageEncoded, Service } from './Service'
@@ -123,6 +124,7 @@ export class WebChannel extends Service {
   private userMsg: UserMessage
   private isRejoinDisabled: boolean
   private topologySub: Subscription
+  private rejoinTimer: any
 
   constructor ({
     topology = defaultOptions.topology,
@@ -166,7 +168,7 @@ export class WebChannel extends Service {
           if (this.topologyService.state === TopologyStateEnum.DISCONNECTED) {
             this.setState(WebChannelState.LEFT)
           }
-          this.rejoin(5000)
+          this.rejoin(3000)
           break
         case SignalingState.STABLE:
           this.topologyService.setStable()
@@ -192,23 +194,21 @@ export class WebChannel extends Service {
 
     // Listen to browser events only
     if (isBrowser) {
-      global.window.addEventListener('offline', () => {
-        console.log('GONE OFFLINE')
-        setTimeout(() => {
-          console.log('GONE OFFLINE 500ms after. IS ONINE: ' + isOnline())
-          if (!isOnline()) {
-            this.internalLeave()
-          }
-        }, 2000)
-      })
+      // global.window.addEventListener('offline', () => {
+      //   setTimeout(() => {
+      //     if (!isOnline()) {
+      //       this.internalLeave()
+      //     }
+      //   }, 2000)
+      // })
       global.window.addEventListener('online', () => {
-        console.log('BACK ONLINE')
-        this.rejoin(1000)
+        if (isVisible() && this.state === WebGroupState.LEFT) {
+          this.rejoin()
+        }
       })
 
       global.window.addEventListener('visibilitychange', () => {
-        console.log('VISIBILITY CHANGE TO: ' + global.window.document.visibilityState)
-        if (isVisible()) {
+        if (isVisible() && this.state === WebGroupState.LEFT) {
           this.rejoin()
         }
       })
@@ -303,7 +303,6 @@ export class WebChannel extends Service {
 
   onMemberJoinProxy (id: number): void {
     if (!this.members.includes(id)) {
-      log.debug(id  + ' has joined')
       this.members[this.members.length] = id
       this.onMemberJoin(id)
     }
@@ -311,7 +310,6 @@ export class WebChannel extends Service {
 
   onMemberLeaveProxy (id: number): void {
     if (this.members.includes(id)) {
-      log.debug(id  + ' has left')
       this.members.splice(this.members.indexOf(id), 1)
       this.onMemberLeave(id)
     }
@@ -397,7 +395,7 @@ export class WebChannel extends Service {
           this.topologyService.leave()
           return
         }
-        log.info(`I:${this.myId} close connection with intermediary member ${senderId},
+        log.webgroup(`I:${this.myId} close connection with intermediary member ${senderId},
           because already connected with him`)
         this.setState(WebChannelState.JOINED)
         channel.closeQuietly()
@@ -478,9 +476,8 @@ export class WebChannel extends Service {
       case TopologyStateEnum.DISCONNECTED:
         if (this.signaling.state === SignalingState.CLOSED) {
           this.setState(WebChannelState.LEFT)
-        } else {
-          this.signaling.close()
         }
+        this.rejoin(2000)
         break
       }
     })
@@ -489,15 +486,10 @@ export class WebChannel extends Service {
   private rejoin (timeout: number = 0) {
     if (!this.isRejoinDisabled) {
       this.isRejoinDisabled = !this.autoRejoin
-      setTimeout(() => {
-        console.log('REJOIN: ', {
-          signalingState: SignalingState[this.signaling.state],
-          isOnline: isOnline(),
-          isVisible: isVisible(),
-        })
-        if (this.signaling.state === SignalingState.CLOSED && isOnline() && isVisible()) {
-          log.info(`I:${this.myId} rejoin`)
-          this.setState(WebChannelState.JOINING)
+      global.clearTimeout(this.rejoinTimer)
+      this.rejoinTimer = setTimeout(() => {
+        if (isOnline() && isVisible()) {
+          log.webgroup('REJOIN...')
           this.signaling.join(this.key)
         }
       }, timeout)

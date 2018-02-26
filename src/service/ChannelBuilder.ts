@@ -160,12 +160,14 @@ export class ChannelBuilder extends Service {
     }
     case 'pong': {
       const ppRequest = this.pingPongRequests.get(senderId)
+      const date = global.Date.now()
+      const requestDate = this.pingPongDates.get(senderId) as number
       if (ppRequest) {
+        log.channelBuilder('Ping/Pong latency is: ' + (date - requestDate))
         ppRequest.resolve()
       } else {
-        const date = global.Date.now()
-        const requestDate = this.pingPongDates.get(senderId) as number
-        log.debug('INCREASING Ping/Pong timeout, as current latency is: ', date - requestDate)
+        log.channelBuilder('INCREASING Ping/Pong timeout, as current latency is: '
+          + (date - requestDate) + ' new value: ', date - requestDate + 500)
         this.pingPongTimeout = global.Math.min(date - requestDate + 500, MAX_PINGPONG_TIMEOUT)
       }
       break

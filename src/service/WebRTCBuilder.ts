@@ -81,7 +81,7 @@ export class WebRTCBuilder extends Service {
         (msg, id) => this.wc.sendToProxy({ recipientId: id, content: super.encode(msg) }),
       )
     }
-    log.debug('WebRTC is not supported')
+    log.webrtc('WebRTC is not supported')
     throw new Error('WebRTC is not supported')
   }
 
@@ -169,14 +169,14 @@ export class WebRTCBuilder extends Service {
     let isOfferSent = false
     const pc = new global.RTCPeerConnection(this.rtcConfiguration)
     pc.onicegatheringstatechange = () => {
-      log.debug('ICE GATHERING STATE changed to', pc.iceGatheringState)
+      log.webrtc('ICE GATHERING STATE changed to', pc.iceGatheringState)
       if (pc.iceGatheringState === 'complete' && isOfferSent) {
         send({ isEnd: true })
         isOfferSent = false
       }
     }
     counter++
-    pc.onsignalingstatechange = () => {log.debug('SIGNALING STATE changed to', pc.signalingState)}
+    pc.onsignalingstatechange = () => {log.webrtc('SIGNALING STATE changed to', pc.signalingState)}
     const rcs = new ReplaySubject<RTCIceCandidate>()
     this.setupLocalCandidates(pc, (iceCandidate) => send({ iceCandidate }))
 
@@ -184,7 +184,7 @@ export class WebRTCBuilder extends Service {
       const onMessageSub = onMessage.subscribe(
         ({ answer, iceCandidate, isError, isEnd }) => {
           pc.oniceconnectionstatechange = () => {
-            log.debug(counter + ': ICE CONNECTION STATE changed to', pc.iceConnectionState)
+            log.webrtc(counter + ': ICE CONNECTION STATE changed to', pc.iceConnectionState)
             if (pc.iceConnectionState === 'failed') {
               rcs.complete()
               pc.close()
@@ -197,23 +197,23 @@ export class WebRTCBuilder extends Service {
             rcs.complete()
             onMessageSub.unsubscribe()
             if (pc.iceConnectionState !== 'connected' && pc.iceConnectionState !== 'completed') {
-              log.debug(counter + ': Failed to establish RTCDataChannel: remote peer error')
+              log.webrtc(counter + ': Failed to establish RTCDataChannel: remote peer error')
               pc.close()
               reject(new Error(counter + ': Remote peer error'))
             } else {
-              log.debug(counter + ': Remote peer error, but RTCDataChannel has still been established')
+              log.webrtc(counter + ': Remote peer error, but RTCDataChannel has still been established')
             }
           } else if (answer) {
-            log.debug(counter + ': REMOTE Answer is received', {answer})
+            log.webrtc(counter + ': REMOTE Answer is received', {answer})
             pc.setRemoteDescription({ type: 'answer', sdp: answer } as any)
               .then(() => {
                 rcs.subscribe(
                   (ic) => pc.addIceCandidate(ic)
-                      .catch((err) => log.debug('${id}: Failed to add REMOTE Ice Candidate', err)),
+                      .catch((err) => log.webrtc('${id}: Failed to add REMOTE Ice Candidate', err)),
                 )
               })
               .catch((err) => {
-                log.debug(counter + ': Failed to establish RTCDataChannel: Set REMOTE Answer ERROR', err)
+                log.webrtc(counter + ': Failed to establish RTCDataChannel: Set REMOTE Answer ERROR', err)
                 rcs.complete()
                 pc.close()
                 send({ isError: true })
@@ -222,17 +222,17 @@ export class WebRTCBuilder extends Service {
               })
           } else if (iceCandidate) {
             if (iceCandidate.candidate !== '') {
-              log.debug(counter + ': REMOTE Ice Candidate is received', iceCandidate)
+              log.webrtc(counter + ': REMOTE Ice Candidate is received', iceCandidate)
               rcs.next(new global.RTCIceCandidate(iceCandidate as RTCIceCandidateInit))
             } else {
-              log.debug(counter + ': REMOTE Ice Candidate gathering COMPLETED', iceCandidate.candidate)
+              log.webrtc(counter + ': REMOTE Ice Candidate gathering COMPLETED', iceCandidate.candidate)
               rcs.complete()
             }
           } else if (isEnd) {
-            log.debug(counter + ': REMOTE Peer FINISHED send all data')
+            log.webrtc(counter + ': REMOTE Peer FINISHED send all data')
             onMessageSub.unsubscribe()
           } else {
-            log.debug(counter + ': Unknown message from a remote peer: stopping connection establishment')
+            log.webrtc(counter + ': Unknown message from a remote peer: stopping connection establishment')
             rcs.complete()
             pc.close()
             send({ isError: true })
@@ -241,25 +241,25 @@ export class WebRTCBuilder extends Service {
           }
         },
         (err) => {
-          log.debug(counter + ': Intermidiary steram was interrupted', err)
+          log.webrtc(counter + ': Intermidiary steram was interrupted', err)
           rcs.complete()
           if (pc.iceConnectionState !== 'connected' && pc.iceConnectionState !== 'completed') {
-            log.debug(counter + ': Failed to establish RTCDataChannel: Intermidiary steram was interrupted')
+            log.webrtc(counter + ': Failed to establish RTCDataChannel: Intermidiary steram was interrupted')
             pc.close()
             reject(err)
           } else {
-            log.debug(counter + ': Intermidiary steram was interrupted, but RTCDataChannel has still been established')
+            log.webrtc(counter + ': Intermidiary steram was interrupted, but RTCDataChannel has still been established')
           }
         },
         () => {
           rcs.complete()
           if (pc.iceConnectionState !== 'connected' && pc.iceConnectionState !== 'completed') {
             const err = new Error('Intermidiary steram was closed')
-            log.debug(counter + ': Failed to establish RTCDataChannel', err)
+            log.webrtc(counter + ': Failed to establish RTCDataChannel', err)
             pc.close()
             reject(err)
           } else {
-            log.debug(counter + ': Connection with Signaling was closed, but RTCDataChannel has still been established')
+            log.webrtc(counter + ': Connection with Signaling closed, but RTCDataChannel has still been established')
           }
         },
       )
@@ -290,7 +290,7 @@ export class WebRTCBuilder extends Service {
           pc.close()
           send({ isError: true })
           onMessageSub.unsubscribe()
-          log.debug(counter + ': Failed to establish RTCDataChannel: Error while setting LOCAL Offer', err)
+          log.webrtc(counter + ': Failed to establish RTCDataChannel: Error while setting LOCAL Offer', err)
           reject(err)
         })
     })
@@ -320,7 +320,7 @@ export class WebRTCBuilder extends Service {
           }
 
           if (isError) {
-            log.debug(`${id}: Failed to establish RTCDataChannel: remote peer error`)
+            log.webrtc(`${id}: Failed to establish RTCDataChannel: remote peer error`)
             const remote = remotes.get(id)
             if (remote) {
               remote[1].complete()
@@ -339,19 +339,19 @@ export class WebRTCBuilder extends Service {
 
               pc = new global.RTCPeerConnection(this.rtcConfiguration)
               pc.oniceconnectionstatechange = () => {
-                log.debug(`${id}: ICE CONNECTION STATE changed to`, pc.iceConnectionState)
+                log.webrtc(`${id}: ICE CONNECTION STATE changed to`, pc.iceConnectionState)
                 if (pc.iceConnectionState === 'failed') {
                   clean(id, pc, rcs)
                 }
               }
               pc.onicegatheringstatechange = () => {
-                log.debug(`${id}: ICE GATHERING STATE changed to`, pc.iceGatheringState)
+                log.webrtc(`${id}: ICE GATHERING STATE changed to`, pc.iceGatheringState)
                 if (pc.iceGatheringState === 'complete' && isAnswerSent) {
                   send({ isEnd: true }, id)
                   pc.onicegatheringstatechange = () => {}
                 }
               }
-              pc.onsignalingstatechange = () => {log.debug(`${id}: SIGNALING STATE changed to`, pc.signalingState)}
+              pc.onsignalingstatechange = () => {log.webrtc(`${id}: SIGNALING STATE changed to`, pc.signalingState)}
               rcs = new ReplaySubject<RTCIceCandidate>()
               this.setupLocalCandidates(pc, (ic) => send({ iceCandidate: ic }, id))
               this.openChannel(pc)
@@ -364,16 +364,16 @@ export class WebRTCBuilder extends Service {
             }
 
             if (offer) {
-              log.debug(`${id}: REMOTE OFFER is received`, {offer})
+              log.webrtc(`${id}: REMOTE OFFER is received`, {offer})
               pc.setRemoteDescription({ type: 'offer', sdp: offer } as RTCSessionDescription)
                 .then(() => rcs.subscribe(
-                  (ic) => pc.addIceCandidate(ic).catch((err) => log.debug(`${id}: Failed to addIceCandidate`, err)),
+                  (ic) => pc.addIceCandidate(ic).catch((err) => log.webrtc(`${id}: Failed to addIceCandidate`, err)),
                 ))
                 .then(() => pc.createAnswer())
                 .then((answer) => pc.setLocalDescription(answer))
                 .then(() => {
                   if (pc.localDescription && pc.localDescription.sdp) {
-                    log.debug(`${id}: Send LOCAL ANSWER`, {answer: pc.localDescription.sdp})
+                    log.webrtc(`${id}: Send LOCAL ANSWER`, {answer: pc.localDescription.sdp})
                     send({ answer: pc.localDescription.sdp }, id)
                     isAnswerSent = true
                     if (pc.iceGatheringState === 'complete') {
@@ -383,48 +383,48 @@ export class WebRTCBuilder extends Service {
                   }
                 })
                 .catch((err) => {
-                  log.debug(`${id}: Error during offer/answer setting`, err)
+                  log.webrtc(`${id}: Error during offer/answer setting`, err)
                   clean(id, pc, rcs)
                 })
             } else if (iceCandidate) {
               if (iceCandidate.candidate !== '') {
-                log.debug(`${id}: REMOTE Ice Candidate is received`, iceCandidate)
+                log.webrtc(`${id}: REMOTE Ice Candidate is received`, iceCandidate)
                 rcs.next(new global.RTCIceCandidate(iceCandidate as RTCIceCandidateInit))
               } else {
-                log.debug(`${id}: REMOTE Ice Candidate gathering COMPLETED`, iceCandidate.candidate)
+                log.webrtc(`${id}: REMOTE Ice Candidate gathering COMPLETED`, iceCandidate.candidate)
                 rcs.complete()
               }
             } else if (isEnd) {
-              log.debug(`${id}: REMOTE Peer FINISHED send all data`)
+              log.webrtc(`${id}: REMOTE Peer FINISHED send all data`)
               remotes.delete(id)
             } else {
-              log.debug(`${id}: Unknown message from a remote peer: stopping connection establishment`, msg)
+              log.webrtc(`${id}: Unknown message from a remote peer: stopping connection establishment`, msg)
               clean(id, pc, rcs)
             }
           }
         },
           (err) => {
-            log.debug('Intermidiary steram was interrupted', err)
+            log.webrtc('Intermidiary steram was interrupted', err)
             for (const [id, [pc, rcs]] of remotes) {
               rcs.complete()
               if (pc.iceConnectionState !== 'connected' && pc.iceConnectionState !== 'completed') {
-                log.debug(`${id}: Failed to establish RTCDataChannel`)
+                log.webrtc(`${id}: Failed to establish RTCDataChannel`)
                 pc.close()
               } else {
-                log.debug(`${id}: RTCDataChannel with ${id} has still been established`)
+                log.webrtc(`${id}: RTCDataChannel with ${id} has still been established`)
               }
             }
             observer.error(err)
           },
           () => {
-            log.debug('${id}: Intermidiary stream has closed')
+            log.webrtc('${id}: Intermidiary stream has closed')
             for (const [id, [pc, rcs]] of remotes) {
               rcs.complete()
               if (pc.iceConnectionState !== 'connected' && pc.iceConnectionState !== 'completed') {
-                log.debug(`${id}: Failed to establish RTCDataChannel: Intermidiary stream has closed`)
+                log.webrtc(`${id}: Failed to establish RTCDataChannel: Intermidiary stream has closed`)
                 pc.close()
               } else {
-                log.debug(`${id}: RTCDataChannel has still been established`)
+                log.webrtc(`${id}: RTCDataChannel has still been established`)
               }
             }
             observer.complete()
@@ -436,7 +436,7 @@ export class WebRTCBuilder extends Service {
   private setupLocalCandidates (pc: RTCPeerConnection, cb: (obj: webRTCBuilder.IIceCandidate) => void): void {
     pc.onicecandidate = (evt: RTCPeerConnectionIceEvent) => {
       if (evt.candidate !== null) {
-        log.debug('LOCAL Ice Candidate gathered', evt.candidate.candidate)
+        log.webrtc('LOCAL Ice Candidate gathered', evt.candidate.candidate)
         cb({
           candidate: evt.candidate.candidate,
           sdpMid: evt.candidate.sdpMid,
@@ -452,7 +452,7 @@ export class WebRTCBuilder extends Service {
       try {
         dc = pc.createDataChannel((this.wc.myId).toString())
       } catch (err) {
-        log.debug('Failed to create RTCDataChannel', err)
+        log.webrtc('Failed to create RTCDataChannel', err)
         return Promise.reject(err)
       }
       return new Promise((resolve, reject) => {
@@ -460,13 +460,13 @@ export class WebRTCBuilder extends Service {
           if (dc.readyState !== 'open') {
             dc.close()
             const errMsg = `RTCDataChannel ${CONNECT_TIMEOUT}ms connection timeout with '${id}'`
-            log.debug(errMsg)
+            log.webrtc(errMsg)
             reject(new Error(errMsg))
           }
         }, CONNECT_TIMEOUT)
         dc.onopen = () => {
           clearTimeout(timeout)
-          log.debug(`RTCDataChannel with ${id} has opened`, (pc as any).sctp)
+          log.webrtc(`RTCDataChannel with ${id} has opened`, (pc as any).sctp)
           resolve(new Channel(this.wc, dc, {rtcPeerConnection: pc, id}))
         }
       })
@@ -478,7 +478,7 @@ export class WebRTCBuilder extends Service {
               dc.close()
             }
             const errMsg = `RTCDataChannel ${CONNECT_TIMEOUT}ms connection timeout with joining peer`
-            log.debug(errMsg)
+            log.webrtc(errMsg)
             reject(new Error(errMsg))
           }
         }, CONNECT_TIMEOUT)
@@ -487,7 +487,7 @@ export class WebRTCBuilder extends Service {
           const peerId = Number.parseInt(dc.label, 10)
           dc.onopen = () => {
             clearTimeout(timeout)
-            log.debug(`RTCDataChannel with ${peerId} has opened`, (pc as any).sctp)
+            log.webrtc(`RTCDataChannel with ${peerId} has opened`, (pc as any).sctp)
             resolve(new Channel(this.wc, dc, {rtcPeerConnection: pc, id: peerId}))
           }
         }

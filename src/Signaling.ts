@@ -41,6 +41,7 @@ export class Signaling {
   private channelSubject: Subject<Channel>
   private ws: WebSocket
   private wsObservable: Observable<sigProto.Message>
+  private completeWs: () => void
   private heartbeatInterval: any
   private missedHeartbeat: number
 
@@ -51,6 +52,7 @@ export class Signaling {
 
     // private
     this.wc = wc
+    this.completeWs = () => {}
     this.stateSubject = new Subject<SignalingState>()
     this.channelSubject = new Subject<Channel>()
   }
@@ -75,42 +77,51 @@ export class Signaling {
   }
 
   join (key: string): void {
-    if (this.state === SignalingState.CLOSED) {
-      this.setState(SignalingState.CONNECTING)
-      this.wc.webSocketBuilder
-        .connect(this.getFullURL(key))
-        .then((ws) => {
-          this.ws = ws as WebSocket
-          this.wsObservable = this.createObservable(this.ws)
-          this.startHeartbeat()
-          this.wsObservable.subscribe(
-            (msg) => {
-              switch (msg.type) {
-              case 'heartbeat':
-                this.missedHeartbeat = 0
-                break
-              case 'isFirst':
-                if (msg.isFirst) {
-                  this.setState(SignalingState.STABLE)
-                } else {
-                  this.connectOverSignaling()
-                }
-                break
-              }
-            },
-          )
-        })
-        .catch(() => this.setState(SignalingState.CLOSED))
+    if (this.state !== SignalingState.CLOSING && this.state !== SignalingState.CLOSED) {
+      this.ws.onclose = () => {}
+      this.ws.onmessage = () => {}
+      this.ws.onerror = () => {}
+      clearInterval(this.heartbeatInterval)
+      this.missedHeartbeat = 0
+      this.completeWs()
+      this.ws.close()
     }
+    this.setState(SignalingState.CONNECTING)
+    this.wc.webSocketBuilder
+      .connect(this.getFullURL(key))
+      .then((ws) => {
+        this.ws = ws as WebSocket
+        this.wsObservable = this.createObservable(this.ws)
+        this.startHeartbeat()
+        this.wsObservable.subscribe(
+          (msg) => {
+            switch (msg.type) {
+            case 'heartbeat':
+              this.missedHeartbeat = 0
+              break
+            case 'isFirst':
+              if (msg.isFirst) {
+                this.setState(SignalingState.STABLE)
+              } else {
+                this.connectOverSignaling()
+              }
+              break
+            }
+          },
+        )
+      })
+      .catch(() => this.setState(SignalingState.CLOSED))
   }
 
   /**
    * Close the `WebSocket` with Signaling server.
    */
   close (): void {
-    this.setState(SignalingState.CLOSING)
-    if (this.ws) {
-      this.ws.close(1000)
+    if (this.state !== SignalingState.CLOSING && this.state !== SignalingState.CLOSED) {
+      this.setState(SignalingState.CLOSING)
+      if (this.ws) {
+        this.ws.close(1000)
+      }
     }
   }
 
@@ -145,7 +156,7 @@ export class Signaling {
         this.heartbeat()
       } catch (err) {
         global.clearInterval(this.heartbeatInterval)
-        log.info('Closing connection with Signaling. Reason: ' + err.message)
+        log.signaling('Closing connection with Signaling. Reason: ' + err.message)
         this.setState(SignalingState.CLOSING)
         this.ws.close(HEARTBEAT_ERROR_CODE, 'Signaling is not responding')
       }
@@ -154,6 +165,7 @@ export class Signaling {
 
   private createObservable (ws: WebSocket): Observable<sigProto.Message> {
     const subject = new Subject()
+    this.completeWs = () => subject.complete()
     ws.binaryType = 'arraybuffer'
     ws.onmessage = (evt) => {
       try {
@@ -162,16 +174,13 @@ export class Signaling {
         ws.close(MESSAGE_ERROR_CODE, err.message)
       }
     }
-    ws.onerror = (err) => {
-      log.debug('Signaling ERROR', err)
-      subject.error(err)
-    }
+    ws.onerror = (err) => subject.error(err)
     ws.onclose = (closeEvt) => {
       clearInterval(this.heartbeatInterval)
       this.missedHeartbeat = 0
       this.setState(SignalingState.CLOSED)
       subject.complete()
-      log.info(`Connection with Signaling '${this.url}' closed: ${closeEvt.code}: ${closeEvt.reason}`)
+      log.signaling(`Connection with Signaling '${this.url}' closed: ${closeEvt.code}: ${closeEvt.reason}`)
     }
     return subject.asObservable() as Observable<sigProto.Message>
   }
@@ -181,7 +190,7 @@ export class Signaling {
       try {
         this.ws.send(sigProto.Message.encode(sigProto.Message.create(msg)).finish())
       } catch (err) {
-        log.info('Failed send to Signaling: ' + err.message)
+        log.signaling('Failed send to Signaling: ' + err.message)
       }
     }
   }
@@ -191,7 +200,7 @@ export class Signaling {
       try {
         this.ws.send(heartbeatMsg)
       } catch (err) {
-        log.info('Failed send to Signaling: ' + err.message)
+        log.signaling('Failed send to Signaling: ' + err.message)
       }
     }
   }

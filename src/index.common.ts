@@ -5,10 +5,10 @@ import { SignalingState as SigState } from './Signaling'
 export { WebGroup, WebGroupOptions, WebGroupState, DataType } from './WebChannelFacade'
 
 /**
- * Set log level. By default the logs are disabled.
- * @param {LogLevel} level Console log level: 'debug' or 'info'
+ * Set log level for debugging utility. By default all logs are disabled.
+ * @param {LogLevel} level
  */
-export function setLogLevel (level: LogLevel) { setLogs(level as any) }
+export function setLogLevel (...levels: Logs[]) { setLogs(levels) }
 
 /**
  * The state enum of the signaling server for WebRTC.
@@ -100,8 +100,9 @@ export class Topology {
  * The log level enum.
  */
 export class LogLevel {
+
   /**
-   * Equals to `1`, allows logs for debug and info.
+   * Equals to `1`, allows logs for debug.
    * @type {number}
    */
   static get DEBUG (): number { return Logs.DEBUG }
@@ -110,33 +111,80 @@ export class LogLevel {
    * Equals to `'DEBUG'`.
    * @type {string}
    */
-  static get [Logs.DEBUG] (): string {
-    return Logs[Logs.DEBUG]
-  }
+  static get [Logs.DEBUG] (): string { return Logs[Logs.DEBUG] }
 
   /**
-   * Equals to `2`, allows info logs only.
+   * Equals to `2`, logs for WebGroup module.
    * @type {number}
    */
-  static get INFO (): number { return Logs.INFO }
+  static get WEB_GROUP (): number { return Logs.WEB_GROUP }
 
   /**
-   * Equals to `'INFO'`.
+   * Equals to `'WEB_GROUP'`.
    * @type {string}
    */
-  static get [Logs.INFO] (): string { return Logs[Logs.INFO] }
+  static get [Logs.WEB_GROUP] (): string { return Logs[Logs.WEB_GROUP] }
 
   /**
-   * Equals to `0`, no logs at all.
+   * Equals to `3`, logs for WebRTCBuilder module.
    * @type {number}
    */
-  static get OFF (): number { return Logs.OFF }
+  static get WEBRTC (): number { return Logs.WEBRTC }
 
   /**
-   * Equals to `'OFF'`.
+   * Equals to `'WEBRTC'`.
    * @type {string}
    */
-  static get [Logs.OFF] (): string { return Logs[Logs.OFF] }
+  static get [Logs.WEBRTC] (): string { return Logs[Logs.WEBRTC] }
+
+  /**
+   * Equals to `4`, logs for Channel module.
+   * @type {number}
+   */
+  static get CHANNEL (): number { return Logs.CHANNEL }
+
+  /**
+   * Equals to `'CHANNEL'`.
+   * @type {string}
+   */
+  static get [Logs.CHANNEL] (): string { return Logs[Logs.CHANNEL] }
+
+  /**
+   * Equals to `5`, logs for Topology module.
+   * @type {number}
+   */
+  static get TOPOLOGY (): number { return Logs.TOPOLOGY }
+
+  /**
+   * Equals to `'TOPOLOGY'`.
+   * @type {string}
+   */
+  static get [Logs.TOPOLOGY] (): string { return Logs[Logs.TOPOLOGY] }
+
+  /**
+   * Equals to `6`, logs for Signaling module.
+   * @type {number}
+   */
+  static get SIGNALING (): number { return Logs.SIGNALING }
+
+  /**
+   * Equals to `'SIGNALING'`.
+   * @type {string}
+   */
+  static get [Logs.SIGNALING] (): string { return Logs[Logs.SIGNALING] }
+
+  /**
+   * Equals to `7`, logs for ChannelBuilder module.
+   * @type {number}
+   */
+  static get CHANNEL_BUILDER (): number { return Logs.CHANNEL_BUILDER }
+
+  /**
+   * Equals to `'CHANNEL_BUILDER'`.
+   * @type {string}
+   */
+  static get [Logs.CHANNEL_BUILDER] (): string { return Logs[Logs.CHANNEL_BUILDER] }
+
 }
 
 /**

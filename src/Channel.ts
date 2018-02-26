@@ -28,7 +28,7 @@ export class Channel {
     connection: WebSocket | RTCDataChannel,
     options: {rtcPeerConnection?: RTCPeerConnection, id: number} = {id: 1},
   ) {
-    log.info(`New Channel: Me: ${wc.myId} with ${options.id}`)
+    log.channel(`New Channel: Me: ${wc.myId} with ${options.id}`)
     this.wc = wc
     this.connection = connection
     this._id = options.id
@@ -51,11 +51,11 @@ export class Channel {
     // Configure handlers
     this.connection.onmessage = ({ data }: { data: ArrayBuffer }) => wc.onMessageProxy(this, new Uint8Array(data))
     this.connection.onclose = (evt: Event) => {
-      log.info(`Connection with ${this.id} has closed`)
+      log.channel(`Connection with ${this.id} has closed`)
       wc.topologyService.onChannelClose(evt, this)
     }
     this.connection.onerror = (evt: Event) => {
-      log.debug('Channel error: ', evt)
+      log.channel('Channel error: ', evt)
       wc.topologyService.onChannelError(evt, this)
       this.close()
     }
@@ -97,7 +97,7 @@ export class Channel {
     try {
       this.connection.send(data)
     } catch (err) {
-      log.debug('Channel sendInBrowser ERROR', err)
+      log.channel('Channel sendInBrowser ERROR', err)
     }
   }
 
@@ -105,7 +105,7 @@ export class Channel {
     try {
       this.connection.send(data, {binary: true})
     } catch (err) {
-      log.debug('Channel sendInNodeViaWebSocket ERROR', err)
+      log.channel('Channel sendInNodeViaWebSocket ERROR', err)
     }
   }
 

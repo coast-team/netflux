@@ -1,6 +1,6 @@
-import { SignalingState, WebGroup, WebGroupState } from '../../src/index.browser'
+import { LogLevel, setLogLevel, SignalingState, WebGroup, WebGroupState } from '../../src/index.browser'
 
-// setLogLevel(LogLevel.INFO)
+setLogLevel(LogLevel.CHANNEL_BUILDER)
 
 // Main signaling server for all tests
 export const SIGNALING_URL = 'ws://localhost:8111'
