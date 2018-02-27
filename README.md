@@ -46,34 +46,32 @@
 </p>
 
 <p align="center">
-  <img src="manual/asset/example_support.png" />
+  <img src="manual/asset/example.svg?sanitize=true" />
 </p>
 
 ## Features
 
-- Peer to peer full mesh network which accepts connection failures between some peers.
-- If connection between two members failed, other members will retransmit messages for them.
-- Automatic rejoin the group if connection lost.
-- Automatic selection between [WebSocket][WebSocket] & [RTCDataChannel][RTCDataChannel].
-- Possible to have mixed members: clients (Chrome, Firefox) and servers (NodeJS bot).
-- Send private or broadcast [String][String], [Uint8Array][Uint8Array] data types.
-- Possible to send big size data.
-- All connections are encrypted.
-
-- Full control over WebRTC servers: Signaling, STUN and TURN.
-  - Deploy your own Signaling server ([Sigver][Sigver]) or use one provided by default.
-  - Configure STUN and TURN servers.
-- Small Signaling server payload
-- Signaling server is used only to establish connection between two peers, no user data is passing through it.
-
-- Universal API (works in Chrome/Firefox and NodeJS).
-- TypeScript declaration files are included.
-- Simple and familiar API usage.
-- 4 builds (ES5 code):
-  - `dist/netflux.cjs.js` - CommonJS format for NodeJS (see *package.json#main*)
-  - `dist/esm/index.node.js` - ES module format for NodeJS (see *package.json#module*).
-  - `dist/esm/index.browser.js` - ES module format for browsers (see *package.json#browser*).
-  - `dist/netflux.umd.js` - UMD format for browsers.
+* Peer to peer full mesh network which accepts connection failures between some peers.
+* If connection between two members failed, other members will retransmit messages for them.
+* Automatic rejoin the group if connection lost.
+* Automatic selection between [WebSocket][WebSocket] & [RTCDataChannel][RTCDataChannel].
+* Possible to have mixed members: clients (Chrome, Firefox) and servers (NodeJS bot).
+* Send private or broadcast [String][String], [Uint8Array][Uint8Array] data types.
+* Possible to send big size data.
+* All connections are encrypted.
+* Full control over WebRTC servers: Signaling, STUN and TURN.
+  * Deploy your own Signaling server ([Sigver][Sigver]) or use one provided by default.
+  * Configure STUN and TURN servers.
+* Small Signaling server payload.
+* Signaling server is used only to establish connection between two peers, no user data is passing through it.
+* Universal API (works in Chrome/Firefox and NodeJS).
+* TypeScript declaration files are included.
+* Simple and familiar API usage.
+* 4 builds (ES5 code):
+  * `dist/netflux.cjs.js` * CommonJS format for NodeJS (see *package.json#main*).
+  * `dist/esm/index.node.js` * ES module format for NodeJS (see *package.json#module*).
+  * `dist/esm/index.browser.js` * ES module format for browsers (see *package.json#browser*).
+  * `dist/netflux.umd.js` * UMD format for browsers.
 
 ## Usage
 
@@ -153,8 +151,7 @@ Netflux is used by our team for Multi User Text Editor ([MUTE repo](https://gith
 [WebSocket]: https://developer.mozilla.org/en/docs/Web/API/WebSocket
 [RTCDataChannel]: https://developer.mozilla.org/en/docs/Web/API/RTCDataChannel
 [String]: https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/String
-[ArrayBuffer]: https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer
-[TypedArray]: https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/TypedArray
+[Uint8Array]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array
 [Sigver]: https://github.com/coast-team/sigver
 
 [commitizen]: https://img.shields.io/badge/commitizen-friendly-brightgreen.svg?style=flat-square
@@ -171,3 +168,5 @@ Netflux is used by our team for Multi User Text Editor ([MUTE repo](https://gith
 
 [doc]: https://coast-team.github.io/netflux/badge.svg
 [doc-url]: https://coast-team.github.io/netflux/netflux
+
+[logo]: manual/asset/logo_cropped.png "Netflux logo"

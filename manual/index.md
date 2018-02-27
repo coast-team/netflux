@@ -43,7 +43,7 @@ Send/receive **String** and **Uint8Array** data types.
 </p>
 
 <p align="center">
-  <img src="manual/asset/example_support.png" />
+  <img src="manual/asset/example.svg?sanitize=true" />
 </p>
 
 ## Features
