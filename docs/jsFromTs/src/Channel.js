@@ -6,15 +6,15 @@ export class Channel {
     /**
      * Creates a channel from existing `RTCDataChannel` or `WebSocket`.
      */
-    constructor(wc, connection, options = { id: -1 }) {
-        log.info(`new connection: Me: ${wc.myId} with ${options.id}`);
+    constructor(wc, connection, options = { id: 1 }) {
+        log.channel(`New Channel: Me: ${wc.myId} with ${options.id}`);
         this.wc = wc;
         this.connection = connection;
         this._id = options.id;
         this.rtcPeerConnection = options.rtcPeerConnection;
         this.isIntermediary = false;
         this.missedHeartbeat = 0;
-        this.updateHeartbeatMsg(null);
+        this.updateHeartbeatMsg(this.wc.topologyService.heartbeat);
         // Configure `send` function
         if (isBrowser) {
             connection.binaryType = 'arraybuffer';
@@ -30,23 +30,13 @@ export class Channel {
         // Configure handlers
         this.connection.onmessage = ({ data }) => wc.onMessageProxy(this, new Uint8Array(data));
         this.connection.onclose = (evt) => {
-            log.info(`Connection with ${this.id} has closed`);
-            this.connection.onclose = () => { };
-            this.connection.onmessage = () => { };
-            this.connection.onerror = () => { };
+            log.channel(`Connection with ${this.id} has closed`);
             wc.topologyService.onChannelClose(evt, this);
-            if (this.rtcPeerConnection && this.rtcPeerConnection.signalingState !== 'closed') {
-                this.rtcPeerConnection.close();
-            }
         };
         this.connection.onerror = (evt) => {
-            this.connection.onclose = () => { };
-            this.connection.onmessage = () => { };
-            this.connection.onerror = () => { };
+            log.channel('Channel error: ', evt);
             wc.topologyService.onChannelError(evt, this);
-            if (this.rtcPeerConnection && this.rtcPeerConnection.signalingState !== 'closed') {
-                this.rtcPeerConnection.close();
-            }
+            this.close();
         };
     }
     get id() {
@@ -54,23 +44,12 @@ export class Channel {
     }
     set id(value) {
         this._id = value;
-        this.updateHeartbeatMsg(this.topologyHeartbeatMsg);
-    }
-    markAsIntermediry() {
-        this.wc.topologyService.initIntermediary(this);
+        this.fullHeartbeatMsg = this.wc.encode({ recipientId: value, content: this.topologyHeartbeatMsg });
     }
     close() {
-        if (this.connection.readyState !== 'closed' &&
-            this.connection.readyState !== 'closing' &&
-            this.connection.readyState !== WebSocket.CLOSED &&
-            this.connection.readyState !== WebSocket.CLOSING) {
-            log.info(`I:${this.wc.myId} close connection with ${this.id}`);
-            if (this.rtcPeerConnection && this.rtcPeerConnection.signalingState !== 'closed') {
-                this.rtcPeerConnection.close();
-            }
-            else {
-                this.connection.close();
-            }
+        this.connection.close();
+        if (this.rtcPeerConnection) {
+            this.rtcPeerConnection.close();
         }
     }
     closeQuietly() {
@@ -91,7 +70,7 @@ export class Channel {
             this.connection.send(data);
         }
         catch (err) {
-            console.error('Channel send', err);
+            log.channel('Channel sendInBrowser ERROR', err);
         }
     }
     sendInNodeViaWebSocket(data) {
@@ -99,7 +78,7 @@ export class Channel {
             this.connection.send(data, { binary: true });
         }
         catch (err) {
-            console.error('Channel send', err);
+            log.channel('Channel sendInNodeViaWebSocket ERROR', err);
         }
     }
     sendInNodeViaDataChannel(data) {

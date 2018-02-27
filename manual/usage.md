@@ -1,11 +1,13 @@
 # Usage
 There are 4 builds (all ES5 code):
+
 - `dist/netflux.cjs.js` CommonJS format for NodeJS.
 - `dist/esm/netflux.node.js` ECMAScript 6 module format for NodeJS.
 - `dist/esm/netflux.browser.js` ECMAScript 6 module format for browsers.
 - `dist/netflux.umd.js` UMD format for browsers.
 
 The `package.json` contains the following fields:
+
 ```json
 ...
 "main": "dist/netflux.cjs.js",
@@ -17,7 +19,8 @@ The `package.json` contains the following fields:
 All builds are either for NodeJS or for Browser environment.
 
 **For browser environment** exported members are:
-- `WebGroup`
+
+- `WebGroup` class
 - `WebGroupState` enum
 - `SignalingState` enum
 - `Topology` enum
@@ -25,10 +28,12 @@ All builds are either for NodeJS or for Browser environment.
 - `WebGroupOption` type
 
 **For NodeJS environment** exported members are the same as for browser plus:
-- `WebGroupBotServer`
+
+- `WebGroupBotServer` class
 - `WebGroupBotServerOptions` type.
 
 ## CommonJS
+
 `dist/netflux.cjs.js` - CommonJS format, built for NodeJS.
 
 ```Javascript
@@ -51,6 +56,7 @@ const wg = new WebGroup()
 ```
 
 ## UMD
+
 `dist/netflux.umd.js` - Universal Module Definition format is compatible with AMD, CommonJS and "global" modules. Built for browser and suitable for Webpack, Browserify and any other who
 also understands `package.json#browser` property.
 
@@ -63,31 +69,14 @@ also understands `package.json#browser` property.
 ```
 
 ## Configuration
+
 For a `WebGroup` object all options are optional.
+
 ```javascript
 // Example:
 const wg = new WebGroup({
   signalingURL: 'MY_SIGNALING_URL',
-  iceServers: [
-    { urls: 'stun:mystun.org' },
-    {
-      urls: ['turn:myturn.org?transport=udp', 'turn:myturn.org?transport=tcp'],
-      username: 'user',
-      password: 'password'
-    }
-  ]
-})
-```
-
-For `WebGroupBotServer` the server option is mandatory.
-```javascript
-// Example:
-const http = require('http')
-const myServer = http.createServer()
-const wg = new WebGroupBotServer({
-  server: myServer,
-  signalingURL: 'MY_SIGNALING_URL',
-  webGroupOptions: {
+  rtcConfiguration: {
     iceServers: [
       { urls: 'stun:mystun.org' },
       {
@@ -96,6 +85,30 @@ const wg = new WebGroupBotServer({
         password: 'password'
       }
     ]
+  }
+})
+```
+
+For `WebGroupBotServer` the server option is mandatory.
+
+```javascript
+// Example:
+const http = require('http')
+const myServer = http.createServer()
+const wg = new WebGroupBotServer({
+  server: myServer,
+  signalingServer: 'MY_SIGNALING_URL',
+  webGroupOptions: {
+    rtcConfiguration: {
+    iceServers: [
+      { urls: 'stun:mystun.org' },
+      {
+        urls: ['turn:myturn.org?transport=udp', 'turn:myturn.org?transport=tcp'],
+        username: 'user',
+        password: 'password'
+      }
+    ]
+  }
   }
 })
 ```

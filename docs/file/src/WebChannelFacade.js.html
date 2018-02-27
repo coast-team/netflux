@@ -32,15 +32,16 @@
   <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/BotServerFacade.js~WebGroupBotServer.html">WebGroupBotServer</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroupState.html">WebGroupState</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.js~LogLevel.html">LogLevel</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.js~SignalingState.html">SignalingState</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.js~Topology.html">Topology</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-enableLog">enableLog</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-setLogLevel">setLogLevel</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-DataType">DataType</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupBotServerOptions">WebGroupBotServerOptions</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupOptions">WebGroupOptions</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/http.html#http_class_http_server">NodeJSHttpServer</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/https.html#https_class_https_server">NodeJSHttpsServer</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://developer.mozilla.org/en/docs/Web/API/RTCIceServer">RTCIceServer</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://developer.mozilla.org/en/docs/Web/API/RTCConfiguration">RTCConfiguration</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array">Uint8Array</a></span></span></li>
 </ul>
 </div>
@@ -81,10 +82,20 @@ export class WebGroupState {
      */
     static get [WebGroupState.JOINED]() { return WebChannelState[WebChannelState.JOINED]; }
     /**
-     * Equals to `2`: left the group. If the connection to the web group has lost other then
-     * by calling {@link WebGroup#leave} or {@link WebGroup#closeSignaling} methods
-     * and {@link WebGroup#autoRejoin} is true, then the state would be `LEFT`,
-     * (usually during a relatively short period) before the rejoining process starts.
+     * Equals to `2`: The `WebGroup` is in process of leaving.
+     * @type {number}
+     */
+    static get LEAVING() { return WebChannelState.LEAVING; }
+    /**
+     * Equals to `&apos;LEAVING&apos;`.
+     * @type {string}
+     */
+    static get [WebGroupState.LEAVING]() { return WebChannelState[WebChannelState.LEAVING]; }
+    /**
+     * Equals to `3`: left the group. If the connection to the web group has lost other then
+     * by calling {@link WebGroup#leave} methods and {@link WebGroup#autoRejoin} is true,
+     * then the state would be `LEFT`, usually during a relatively short period) before
+     * the rejoining process starts.
      * @type {number}
      */
     static get LEFT() { return WebChannelState.LEFT; }
@@ -103,17 +114,19 @@ export class WebGroupState {
  * // specified Signaling and ICE servers for WebRTC.
  *
  * const wg = new WebGroup({
- *   signalingURL: &apos;wss://mysignaling.com&apos;
- *   iceServers: [
- *     {
- *       urls: &apos;stun.l.google.com:19302&apos;
- *     },
- *     {
- *       urls: [&apos;turn:myturn.com?transport=udp&apos;, &apos;turn:myturn?transport=tcp&apos;],
- *       username: &apos;user&apos;,
- *       password: &apos;password&apos;
- *     }
- *   ]
+ *   signalingServer: &apos;wss://mysignaling.com&apos;,
+ *   rtcConfiguration: {
+ *     iceServers: [
+ *       {
+ *         urls: &apos;stun.l.google.com:19302&apos;
+ *       },
+ *       {
+ *         urls: [&apos;turn:myturn.com?transport=udp&apos;, &apos;turn:myturn?transport=tcp&apos;],
+ *         username: &apos;user&apos;,
+ *         password: &apos;password&apos;
+ *       }
+ *     ]
+ *   }
  * })
  *
  * wg.onMemberJoin = (id) =&gt; {
@@ -122,7 +135,7 @@ export class WebGroupState {
  * wg.onMemberLeave = (id) =&gt; {
  *   // YOUR CODE...
  * }
- * wg.onMessage = (id, data, isBroadcast) =&gt; {
+ * wg.onMessage = (id, data) =&gt; {
  *   // YOUR CODE...
  * }
  * wg.onStateChange = (state) =&gt; {
@@ -136,8 +149,8 @@ export class WebGroup {
     /**
      * @param {WebGroupOptions} [options]
      * @param {Topology} [options.topology=Topology.FULL_MESH]
-     * @param {string} [options.signalingURL=&apos;wss://signaling.netflux.coedit.re&apos;]
-     * @param {RTCIceServer[]} [options.iceServers=[{urls: &apos;stun:stun3.l.google.com:19302&apos;}]]
+     * @param {string} [options.signalingServer=&apos;wss://signaling.netflux.coedit.re&apos;]
+     * @param {RTCConfiguration} [options.rtcConfiguration={iceServers: [{urls: &apos;stun:stun3.l.google.com:19302&apos;}]}]
      * @param {boolean} [options.autoRejoin=true]
      */
     constructor(options = {}) {
@@ -196,8 +209,11 @@ export class WebGroup {
          * The read-only signaling server URL.
          * @type {string}
          */
-        this.signalingURL = undefined;
-        Reflect.defineProperty(this, &apos;signalingURL&apos;, { configurable: false, enumerable: true, get: () =&gt; wc.signaling.url });
+        this.signalingServer = undefined;
+        Reflect.defineProperty(this, &apos;signalingServer&apos;, {
+            configurable: false,
+            enumerable: true, get: () =&gt; wc.signaling.url,
+        });
         /**
          * Enable/Desable the auto rejoin feature.
          * @type {boolean}
@@ -212,9 +228,8 @@ export class WebGroup {
         /**
          * This handler is called when a message has been received from the group.
          * `id` is an identifier of the member who sent this message.
-         * `isBroadcast` aquals to true if the data is sent via {@link WebGroup#send}
          * and false if sent via {@link WebGroup#sendTo}.
-         * @type {function(id: number, data: DataType, isBroadcast: boolean)}
+         * @type {function(id: number, data: DataType)}
          */
         this.onMessage = undefined;
         Reflect.defineProperty(this, &apos;onMessage&apos;, {
@@ -310,41 +325,58 @@ export class WebGroup {
      * then do nothing.
      * @param {string} [key] Will be generated if not provided
      */
-    join(key) { return wcs.get(this).join(key); }
+    join(key) {
+        const wc = wcs.get(this);
+        if (wc) {
+            return wc.join(key);
+        }
+        throw new Error(&apos;WebChannel is undefined&apos;);
+    }
     /**
      * Invite a bot server to join this group.
      * @param {string} url - Bot server URL (See {@link WebGroupBotServerOptions})
      */
-    invite(url) { return wcs.get(this).invite(url); }
-    /**
-     * Close the connection with Signaling server. It fires Signaling state event
-     * if {@link WebGroup#signalingState} value does not equal to
-     * {@link SignalingState.CLOSED} already.It may also fire state event only
-     * if there is no one left in the group.
-     * value does not equal to {@link SignalingState.CLOSED} already.
-     */
-    closeSignaling() { return wcs.get(this).closeSignaling(); }
+    invite(url) {
+        const wc = wcs.get(this);
+        if (wc) {
+            return wc.invite(url);
+        }
+        throw new Error(&apos;WebChannel is undefined&apos;);
+    }
     /**
      * Leave the group which means close channels with all members and connection
      * with the Signaling server.
      */
-    leave() { return wcs.get(this).leave(); }
+    leave() {
+        const wc = wcs.get(this);
+        if (wc) {
+            return wc.leave();
+        }
+        throw new Error(&apos;WebChannel is undefined&apos;);
+    }
     /**
      * Broadcast a message to the group.
      * @param {DataType} data
      */
-    send(data) { return wcs.get(this).send(data); }
+    send(data) {
+        const wc = wcs.get(this);
+        if (wc) {
+            return wc.send(data);
+        }
+        throw new Error(&apos;WebChannel is undefined&apos;);
+    }
     /**
      * Send a message to a particular group member.
      * @param {number}    id Member identifier
      * @param {DataType}  data Message
      */
-    sendTo(id, data) { return wcs.get(this).sendTo(id, data); }
-    /**
-     * Get web group latency
-     * @return {Promise&lt;number&gt;} Latency in milliseconds
-     */
-    ping() { return wcs.get(this).ping(); }
+    sendTo(id, data) {
+        const wc = wcs.get(this);
+        if (wc) {
+            return wc.sendTo(id, data);
+        }
+        throw new Error(&apos;WebChannel is undefined&apos;);
+    }
 }
 </code></pre>
 

@@ -7,10 +7,10 @@ const uws = require('uws');
 export class BotServer {
     constructor({ url = '', perMessageDeflate = false, server, webGroupOptions = {
             topology: defaultOptions.topology,
-            signalingURL: defaultOptions.signalingURL,
-            iceServers: defaultOptions.iceServers,
+            signalingServer: defaultOptions.signalingServer,
+            rtcConfiguration: defaultOptions.rtcConfiguration,
             autoRejoin: false,
-        }, } = { server: undefined }) {
+        }, }) {
         // public
         this.wcOptions = Object.assign({}, defaultOptions, { autoRejoin: false }, webGroupOptions);
         this.server = server;
@@ -68,7 +68,7 @@ export class BotServer {
                     wc.id = wcId;
                     this.webGroups.add(wg);
                     this.onWebGroup(wg);
-                    const ch = new Channel(wc, ws, { id: senderId });
+                    new Channel(wc, ws, { id: senderId }); // tslint:disable-line
                     break;
                 }
                 case '/internalChannel': {
@@ -94,7 +94,7 @@ export class BotServer {
                 }
                 return false;
             case '/internalChannel':
-                return query.senderId && wcId && this.getWebGroup(wcId) !== undefined;
+                return query.senderId !== undefined && wcId !== undefined && this.getWebGroup(wcId) !== undefined;
             default:
                 return false;
         }

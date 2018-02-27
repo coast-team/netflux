@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl" href="../../../">
+  <title data-ice="title">test/functional/2members.test.js | Netflux</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  <script src="script/manual.js"></script>
+<link rel="stylesheet" href="./inject/css/0-style.css"><meta name="description" content="Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done."><meta property="twitter:card" content="summary"><meta property="twitter:title" content="Netflux"><meta property="twitter:description" content="Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done."></head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./" style="display: flex; align-items: center;"><img src="./image/brand_logo.png" style="width:34px;"></a>
+  
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  <a href="test.html" data-ice="testLink">Test</a>
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+<a style="position:relative; top:3px;" href="https://github.com/coast-team/netflux"><img width="20px" src="./image/github.png"></a></header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/BotServerFacade.js~WebGroupBotServer.html">WebGroupBotServer</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroupState.html">WebGroupState</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.js~LogLevel.html">LogLevel</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.js~SignalingState.html">SignalingState</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.js~Topology.html">Topology</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-setLogLevel">setLogLevel</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-DataType">DataType</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupBotServerOptions">WebGroupBotServerOptions</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupOptions">WebGroupOptions</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/http.html#http_class_http_server">NodeJSHttpServer</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/https.html#https_class_https_server">NodeJSHttpsServer</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://developer.mozilla.org/en/docs/Web/API/RTCConfiguration">RTCConfiguration</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array">Uint8Array</a></span></span></li>
+</ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><h1 data-ice="title">test/functional/2members.test.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">/// &lt;reference types=&apos;jasmine&apos; /&gt;
+/* tslint:disable:one-variable-per-declaration */
+import { SignalingState, WebGroup, WebGroupState } from &apos;../../src/index.browser&apos;;
+import { areTheSame, BOT_URL, cleanWebGroup, getBotData, Queue, SIGNALING_URL, wait, waitBotJoin } from &apos;../util/helper&apos;;
+const WebGroupOptions = {
+    signalingServer: SIGNALING_URL,
+    autoRejoin: false,
+};
+/** @test {WebGroup} */
+describe(&apos;2 members&apos;, () =&gt; {
+    describe(&apos;&#x1F642; &#x1F642;&apos;, () =&gt; {
+        let wg1, wg2;
+        /** @test {WebGroup#join} */
+        describe(&apos;joining&apos;, () =&gt; {
+            beforeEach((done) =&gt; {
+                const queue = new Queue(2);
+                queue.wait().then(() =&gt; {
+                    cleanWebGroup(wg1);
+                    cleanWebGroup(wg2);
+                    done();
+                });
+                wg1 = new WebGroup(WebGroupOptions);
+                wg2 = new WebGroup(WebGroupOptions);
+                wg1.onSignalingStateChange = (state) =&gt; {
+                    if (state === SignalingState.STABLE) {
+                        queue.pop();
+                    }
+                };
+                wg1.onStateChange = (state) =&gt; {
+                    if (state === WebGroupState.JOINED) {
+                        queue.pop();
+                    }
+                };
+                wg1.join();
+            });
+            afterEach((done) =&gt; {
+                cleanWebGroup(wg1);
+                cleanWebGroup(wg2);
+                const queue = new Queue(2);
+                queue.wait().then(() =&gt; {
+                    cleanWebGroup(wg1);
+                    cleanWebGroup(wg2);
+                    done();
+                });
+                if (wg1.state !== WebGroupState.LEFT) {
+                    wg1.onStateChange = (state) =&gt; {
+                        if (state === WebGroupState.LEFT) {
+                            queue.pop();
+                        }
+                    };
+                    wg1.leave();
+                }
+                else {
+                    queue.pop();
+                }
+                if (wg2.state !== WebGroupState.LEFT) {
+                    wg2.onStateChange = (state) =&gt; {
+                        if (state === WebGroupState.LEFT) {
+                            queue.pop();
+                        }
+                    };
+                    wg2.leave();
+                }
+                else {
+                    queue.pop();
+                }
+            });
+            /** @test {WebGroup#onSignalingStateChange} */
+            it(&apos;should change the Signaling state&apos;, (done) =&gt; {
+                let called1 = 0, called2 = 0;
+                const states = [];
+                const expectedStates = [SignalingState.CONNECTING, SignalingState.CONNECTED, SignalingState.STABLE];
+                // Code for peer 1
+                wg1.onSignalingStateChange = () =&gt; called1++;
+                // Code for peer 2
+                wg2.onSignalingStateChange = (state) =&gt; {
+                    states.push(state);
+                    called2++;
+                    if (called2 === 3) {
+                        wait(1000).then(() =&gt; {
+                            expect(called1).toEqual(0);
+                            expect(called2).toEqual(3);
+                            expect(states).toEqual(expectedStates);
+                            expect(wg2.signalingState).toEqual(SignalingState.STABLE);
+                            done();
+                        });
+                    }
+                };
+                // Start joining
+                wg2.join(wg1.key);
+            });
+            /** @test {WebGroup#onStateChange} */
+            it(&apos;should change the WebGroup state&apos;, (done) =&gt; {
+                let called1 = 0, called2 = 0;
+                const states = [];
+                const expectedStates = [WebGroupState.JOINING, WebGroupState.JOINED];
+                // Code for peer 1
+                wg1.onStateChange = () =&gt; called1++;
+                // Code for peer 2
+                wg2.onStateChange = (state) =&gt; {
+                    states.push(state);
+                    called2++;
+                    if (called2 === 2) {
+                        wait(1000).then(() =&gt; {
+                            expect(called1).toEqual(0);
+                            expect(called2).toEqual(2);
+                            expect(states).toEqual(expectedStates);
+                            expect(wg2.state).toEqual(WebGroupState.JOINED);
+                            done();
+                        });
+                    }
+                };
+                // Start joining
+                wg2.join(wg1.key);
+            });
+            /** @test {WebGroup#onMemberJoin} */
+            it(&apos;should be notified about new member&apos;, (done) =&gt; {
+                let called1 = 0, called2 = 0;
+                const queue = new Queue(1);
+                // Code for peer 1
+                wg1.onMemberJoin = (id) =&gt; {
+                    expect(id).toEqual(wg2.myId);
+                    called1++;
+                    queue.pop();
+                };
+                // Code for peer 2
+                wg2.onMemberJoin = (id) =&gt; {
+                    expect(id).toEqual(wg1.myId);
+                    called2++;
+                };
+                wg2.onStateChange = (state) =&gt; {
+                    if (state === WebGroupState.JOINED) {
+                        queue.wait()
+                            .then(() =&gt; wait(1000))
+                            .then(() =&gt; {
+                            expect(called1).toEqual(1);
+                            expect(called2).toEqual(1);
+                            done();
+                        });
+                    }
+                };
+                // Start joining
+                wg2.join(wg1.key);
+            });
+            it(&apos;should have the same members, key, WebGroup id, topology once joined&apos;, (done) =&gt; {
+                const queue = new Queue(1);
+                // Code for peer 1
+                wg1.onMemberJoin = () =&gt; {
+                    expect(wg1.members.length).toEqual(2);
+                    expect(wg1.members.includes(wg1.myId)).toBeTruthy();
+                    expect(wg1.members.includes(wg2.myId)).toBeTruthy();
+                    queue.pop();
+                };
+                // Code for peer 2
+                wg2.onStateChange = (state) =&gt; {
+                    if (state === WebGroupState.JOINED) {
+                        expect(wg2.members.length).toEqual(2);
+                        expect(wg2.members.includes(wg1.myId)).toBeTruthy();
+                        expect(wg2.members.includes(wg2.myId)).toBeTruthy();
+                        expect(wg2.id).toEqual(wg1.id);
+                        expect(wg2.key).toEqual(wg1.key);
+                        expect(wg2.topology).toEqual(wg1.topology);
+                        queue.wait()
+                            .then(() =&gt; wait(1000))
+                            .then(() =&gt; {
+                            expect(areTheSame(wg2.members, wg1.members)).toBeTruthy();
+                            expect(wg2.id).toEqual(wg1.id);
+                            expect(wg2.key).toEqual(wg1.key);
+                            expect(wg2.topology).toEqual(wg1.topology);
+                            done();
+                        });
+                    }
+                };
+                // Start joining
+                wg2.join(wg1.key);
+            });
+            /** @test {WebGroup#join} */
+            it(&apos;should join with the specified key&apos;, (done) =&gt; {
+                const queue = new Queue(3);
+                const key = &apos;ArtIsLongLifeIsShort&apos;;
+                const wg = new WebGroup(WebGroupOptions);
+                // Code for peer 1
+                wg.onSignalingStateChange = (state) =&gt; {
+                    if (state === SignalingState.STABLE) {
+                        wg2.join(key);
+                    }
+                };
+                wg.onMemberJoin = () =&gt; queue.pop();
+                // Code for peer 2
+                wg2.onStateChange = (state) =&gt; {
+                    if (state === WebGroupState.JOINED) {
+                        expect(wg.key).toEqual(key);
+                        expect(wg2.key).toEqual(key);
+                        queue.pop();
+                    }
+                };
+                wg2.onMemberJoin = () =&gt; queue.pop();
+                // Start joining
+                wg.join(key);
+                queue.wait().then(() =&gt; {
+                    wg.leave();
+                    done();
+                });
+            });
+        });
+        describe(&apos;should send/receive&apos;, () =&gt; {
+            let called1, called2;
+            beforeEach((done) =&gt; {
+                called1 = 0;
+                called2 = 0;
+                const queue = new Queue(3);
+                queue.wait().then(() =&gt; {
+                    cleanWebGroup(wg1);
+                    cleanWebGroup(wg2);
+                    done();
+                });
+                wg1 = new WebGroup(WebGroupOptions);
+                wg2 = new WebGroup(WebGroupOptions);
+                wg1.onSignalingStateChange = (state) =&gt; {
+                    if (state === SignalingState.STABLE) {
+                        wg2.join(wg1.key);
+                    }
+                };
+                wg1.onMemberJoin = () =&gt; queue.pop();
+                wg2.onStateChange = (state) =&gt; {
+                    if (state === WebGroupState.JOINED) {
+                        queue.pop();
+                    }
+                };
+                wg2.onMemberJoin = () =&gt; queue.pop();
+                wg1.join();
+            });
+            afterEach((done) =&gt; {
+                cleanWebGroup(wg1);
+                cleanWebGroup(wg2);
+                const queue = new Queue(2);
+                queue.wait().then(() =&gt; {
+                    cleanWebGroup(wg1);
+                    cleanWebGroup(wg2);
+                    done();
+                });
+                if (wg1.state !== WebGroupState.LEFT) {
+                    wg1.onStateChange = (state) =&gt; {
+                        if (state === WebGroupState.LEFT) {
+                            queue.pop();
+                        }
+                    };
+                    wg1.leave();
+                }
+                else {
+                    queue.pop();
+                }
+                if (wg2.state !== WebGroupState.LEFT) {
+                    wg2.onStateChange = (state) =&gt; {
+                        if (state === WebGroupState.LEFT) {
+                            queue.pop();
+                        }
+                    };
+                    wg2.leave();
+                }
+                else {
+                    queue.pop();
+                }
+            });
+            /** @test {WebGroup#send} */
+            it(&apos;broadcast String&apos;, (done) =&gt; {
+                const msg1 = &apos;Art is long, life is short&apos;;
+                const msg2 = &apos;Do or do not, there is no try&apos;;
+                // Code for peer 1
+                wg1.onMessage = (id, msg) =&gt; {
+                    expect(id).toEqual(wg2.myId);
+                    expect(msg).toEqual(msg2);
+                    wg1.send(msg1);
+                    called1++;
+                };
+                // Code for peer 2
+                wg2.onMessage = (id, msg) =&gt; {
+                    expect(id).toEqual(wg1.myId);
+                    expect(msg).toEqual(msg1);
+                    called2++;
+                    wait(1000).then(() =&gt; {
+                        expect(called1).toEqual(1);
+                        expect(called2).toEqual(1);
+                        done();
+                    });
+                };
+                // Start sending message
+                wg2.send(msg2);
+            });
+            /** @test {WebGroup#send} */
+            it(&apos;broadcast ArrayBuffer&apos;, (done) =&gt; {
+                const msg1 = new Uint8Array([42, 347, 248247, 583, 10, 8, 9623]);
+                const msg2 = new Uint8Array([845, 4, 798240, 3290, 553, 1, 398539857, 84]);
+                // Code for peer 1
+                wg1.onMessage = (id, msg) =&gt; {
+                    expect(id).toEqual(wg2.myId);
+                    expect(msg instanceof Uint8Array);
+                    expect(msg).toEqual(msg2);
+                    wg1.send(msg1);
+                    called1++;
+                };
+                // Code for peer 2
+                wg2.onMessage = (id, msg) =&gt; {
+                    expect(id).toEqual(wg1.myId);
+                    expect(msg instanceof Uint8Array);
+                    expect(msg).toEqual(msg1);
+                    called2++;
+                    wait(1000).then(() =&gt; {
+                        expect(called1).toEqual(1);
+                        expect(called2).toEqual(1);
+                        done();
+                    });
+                };
+                // Start sending message
+                wg2.send(msg2);
+            });
+            /** @test {WebGroup#sendTo} */
+            it(&apos;private String&apos;, (done) =&gt; {
+                const msg1 = &apos;Art is long, life is short&apos;;
+                const msg2 = &apos;Do or do not, there is no try&apos;;
+                // Code for peer 1
+                wg1.onMessage = (id, msg) =&gt; {
+                    expect(id).toEqual(wg2.myId);
+                    expect(msg).toEqual(msg2);
+                    wg1.sendTo(wg2.myId, msg1);
+                    called1++;
+                };
+                // Code for peer 2
+                wg2.onMessage = (id, msg) =&gt; {
+                    expect(id).toEqual(wg1.myId);
+                    expect(msg).toEqual(msg1);
+                    called2++;
+                    wait(1000).then(() =&gt; {
+                        expect(called1).toEqual(1);
+                        expect(called2).toEqual(1);
+                        done();
+                    });
+                };
+                // Start sending message
+                wg2.sendTo(wg1.myId, msg2);
+            });
+            /** @test {WebGroup#sendTo} */
+            it(&apos;private ArrayBuffer&apos;, (done) =&gt; {
+                const msg1 = new Uint8Array([42, 347, 248247, 583, 10, 8, 9623]);
+                const msg2 = new Uint8Array([845, 4, 798240, 3290, 553, 1, 398539857, 84]);
+                // Code for peer 1
+                wg1.onMessage = (id, msg) =&gt; {
+                    expect(id).toEqual(wg2.myId);
+                    expect(msg instanceof Uint8Array);
+                    expect(msg).toEqual(msg2);
+                    wg1.sendTo(wg2.myId, msg1);
+                    called1++;
+                };
+                // Code for peer 2
+                wg2.onMessage = (id, msg) =&gt; {
+                    expect(id).toEqual(wg1.myId);
+                    expect(msg instanceof Uint8Array);
+                    expect(msg).toEqual(msg1);
+                    called2++;
+                    wait(1000).then(() =&gt; {
+                        expect(called1).toEqual(1);
+                        expect(called2).toEqual(1);
+                        done();
+                    });
+                };
+                // Start sending message
+                wg2.sendTo(wg1.myId, msg2);
+            });
+        });
+        describe(&apos;leaving&apos;, () =&gt; {
+            let called1, called2;
+            beforeEach((done) =&gt; {
+                called1 = 0;
+                called2 = 0;
+                const queue = new Queue(3);
+                queue.wait().then(() =&gt; {
+                    cleanWebGroup(wg1);
+                    cleanWebGroup(wg2);
+                    done();
+                });
+                wg1 = new WebGroup(WebGroupOptions);
+                wg2 = new WebGroup(WebGroupOptions);
+                wg1.onSignalingStateChange = (state) =&gt; {
+                    if (state === SignalingState.STABLE) {
+                        wg2.join(wg1.key);
+                    }
+                };
+                wg1.onMemberJoin = () =&gt; queue.pop();
+                wg2.onStateChange = (state) =&gt; {
+                    if (state === WebGroupState.JOINED) {
+                        queue.pop();
+                    }
+                };
+                wg2.onMemberJoin = () =&gt; queue.pop();
+                wg1.join();
+            });
+            afterEach((done) =&gt; {
+                cleanWebGroup(wg1);
+                cleanWebGroup(wg2);
+                const queue = new Queue(2);
+                queue.wait().then(() =&gt; {
+                    cleanWebGroup(wg1);
+                    cleanWebGroup(wg2);
+                    wait(1000).then(done);
+                });
+                if (wg1.state !== WebGroupState.LEFT) {
+                    wg1.onStateChange = (state) =&gt; {
+                        if (state === WebGroupState.LEFT) {
+                            queue.pop();
+                        }
+                    };
+                    wg1.leave();
+                }
+                else {
+                    queue.pop();
+                }
+                if (wg2.state !== WebGroupState.LEFT) {
+                    wg2.onStateChange = (state) =&gt; {
+                        if (state === WebGroupState.LEFT) {
+                            queue.pop();
+                        }
+                    };
+                    wg2.leave();
+                }
+                else {
+                    queue.pop();
+                }
+            });
+            /** @test {WebGroup#leave} */
+            it(&apos;should have no members &amp; an empty key&apos;, (done) =&gt; {
+                const queue = new Queue(2);
+                queue.wait()
+                    .then(() =&gt; wait(1000))
+                    .then(() =&gt; {
+                    expect(wg1.members.length).toEqual(1);
+                    expect(wg1.members.includes(wg1.myId)).toBeTruthy();
+                    expect(wg2.members.length).toEqual(1);
+                    expect(wg2.members.includes(wg2.myId)).toBeTruthy();
+                    expect(wg2.key).toEqual(&apos;&apos;);
+                    expect(called2).toEqual(1);
+                    expect(wg2.key).toEqual(&apos;&apos;);
+                    done();
+                });
+                // Code for peer 1
+                wg1.onMemberLeave = () =&gt; {
+                    expect(wg1.members.length).toEqual(1);
+                    expect(wg1.members.includes(wg1.myId)).toBeTruthy();
+                    queue.pop();
+                };
+                // Code for peer 2
+                wg2.onStateChange = (state) =&gt; {
+                    if (state === WebGroupState.LEFT) {
+                        called2++;
+                        expect(wg2.members.length).toEqual(1);
+                        expect(wg2.members.includes(wg2.myId)).toBeTruthy();
+                        expect(wg2.key).toEqual(&apos;&apos;);
+                        queue.pop();
+                    }
+                };
+                // Start leaving
+                wg2.leave();
+            }, 12000);
+            /** @test {WebGroup#onMemberLeave} */
+            it(&apos;should be notified about left member&apos;, (done) =&gt; {
+                const queue = new Queue(2);
+                queue.wait().then(() =&gt; {
+                    wait(1000).then(() =&gt; {
+                        expect(called1).toEqual(1);
+                        expect(called2).toEqual(1);
+                        done();
+                    });
+                });
+                // Code for peer 1
+                wg1.onMemberLeave = (id) =&gt; {
+                    expect(id).toEqual(wg2.myId);
+                    called1++;
+                    queue.pop();
+                };
+                // Code for peer 2
+                wg2.onMemberLeave = (id) =&gt; {
+                    expect(id).toEqual(wg1.myId);
+                    called2++;
+                    queue.pop();
+                };
+                // Start leaving
+                wg2.leave();
+            }, 12000);
+            /** @test {WebGroup#onStateChange} */
+            it(&apos;should change the WebGroup state&apos;, (done) =&gt; {
+                const states = [];
+                const expectedStates = [WebGroupState.LEAVING, WebGroupState.LEFT];
+                // Code for peer 2
+                wg2.onStateChange = (state) =&gt; {
+                    states.push(state);
+                    called2++;
+                    if (state === WebGroupState.LEFT) {
+                        wait(1000).then(() =&gt; {
+                            expect(called2).toEqual(2);
+                            expect(states).toEqual(expectedStates);
+                            done();
+                        });
+                    }
+                };
+                // Start leaving
+                wg2.leave();
+            }, 12000);
+            /** @test {WebGroup#onSignalingStateChange} */
+            it(&apos;should change the Signaling state&apos;, (done) =&gt; {
+                const states = [];
+                const expectedStates = [SignalingState.CLOSING, SignalingState.CLOSED];
+                // Code for peer 2
+                wg2.onSignalingStateChange = (state) =&gt; {
+                    states.push(state);
+                    called2++;
+                    if (state === SignalingState.CLOSED) {
+                        wait(1000).then(() =&gt; {
+                            expect(called2).toEqual(2);
+                            expect(states).toEqual(expectedStates);
+                            done();
+                        });
+                    }
+                };
+                // Start leaving
+                wg2.leave();
+            }, 12000);
+        });
+    });
+    describe(&apos;&#x1F642; &#x1F916;&apos;, () =&gt; {
+        let wg1;
+        /** @test {WebGroup#invite} */
+        describe(&apos;inviting&apos;, () =&gt; {
+            beforeEach(() =&gt; wg1 = new WebGroup(WebGroupOptions));
+            afterEach((done) =&gt; {
+                cleanWebGroup(wg1);
+                if (wg1.state !== WebGroupState.LEFT) {
+                    wg1.onStateChange = (state) =&gt; {
+                        if (state === WebGroupState.LEFT) {
+                            cleanWebGroup(wg1);
+                            done();
+                        }
+                    };
+                    wg1.leave();
+                }
+                else {
+                    cleanWebGroup(wg1);
+                    done();
+                }
+            });
+            /** @test {WebGroup#onSignalingStateChange} */
+            it(&apos;should not change the Signaling state&apos;, (done) =&gt; {
+                // Code for peer 1
+                wg1.onSignalingStateChange = (state) =&gt; {
+                    if (state === SignalingState.STABLE) {
+                        // Start inviting
+                        wg1.invite(BOT_URL);
+                        // Check bot data
+                        waitBotJoin(wg1.id)
+                            .then(() =&gt; wait(1000))
+                            .then(() =&gt; getBotData(wg1.id))
+                            .then((data) =&gt; {
+                            expect(data.onSignalingStateCalled).toEqual(0);
+                            expect(data.signalingState).toEqual(SignalingState.CLOSED);
+                            done();
+                        });
+                    }
+                };
+                // Start joining
+                wg1.join();
+            });
+            /** @test {WebGroup#onStateChange} */
+            it(&apos;should change the WebGroup state&apos;, (done) =&gt; {
+                // Code for peer 1
+                wg1.onSignalingStateChange = (state) =&gt; {
+                    if (state === SignalingState.STABLE) {
+                        // Start inviting
+                        wg1.invite(BOT_URL);
+                        // Check bot data
+                        waitBotJoin(wg1.id)
+                            .then(() =&gt; wait(1000))
+                            .then(() =&gt; getBotData(wg1.id))
+                            .then((data) =&gt; {
+                            expect(data.state).toEqual(WebGroupState.JOINED);
+                            done();
+                        })
+                            .catch(fail);
+                    }
+                };
+                // Start joining
+                wg1.join();
+            });
+            /** @test {WebGroup#onMemberJoin} */
+            it(&apos;should be notified about new member&apos;, (done) =&gt; {
+                let called1 = 0;
+                // Code for peer 1
+                wg1.onSignalingStateChange = (state) =&gt; {
+                    if (state === SignalingState.STABLE) {
+                        // Start inviting
+                        wg1.invite(BOT_URL);
+                    }
+                };
+                wg1.onMemberJoin = (id) =&gt; {
+                    called1++;
+                    // Check bot data
+                    waitBotJoin(wg1.id)
+                        .then(() =&gt; wait(1000))
+                        .then(() =&gt; getBotData(wg1.id))
+                        .then((bot) =&gt; {
+                        expect(id).toEqual(bot.myId);
+                        expect(bot.onMemberJoinCalled).toEqual(1);
+                        expect(bot.joinedMembers.length).toEqual(1);
+                        expect(bot.joinedMembers[0]).toEqual(wg1.myId);
+                        expect(called1).toEqual(1);
+                        done();
+                    })
+                        .catch(fail);
+                };
+                // Start joining
+                wg1.join();
+            });
+            it(&apos;should have the same members, WebGroup id, topology once joined&apos;, (done) =&gt; {
+                // Code for peer 1
+                wg1.onSignalingStateChange = (state) =&gt; {
+                    if (state === SignalingState.STABLE) {
+                        // Start inviting
+                        wg1.invite(BOT_URL);
+                    }
+                };
+                wg1.onMemberJoin = () =&gt; {
+                    // Check bot data
+                    waitBotJoin(wg1.id)
+                        .then(() =&gt; wait(1000))
+                        .then(() =&gt; getBotData(wg1.id))
+                        .then((bot) =&gt; {
+                        expect(areTheSame(bot.members, wg1.members)).toBeTruthy();
+                        expect(bot.key).toEqual(&apos;&apos;);
+                        expect(bot.topology).toEqual(wg1.topology);
+                        expect(bot.id).toEqual(wg1.id);
+                        done();
+                    })
+                        .catch(fail);
+                };
+                // Start joining
+                wg1.join();
+            });
+        });
+        describe(&apos;should send/receive&apos;, () =&gt; {
+            let called1;
+            beforeEach((done) =&gt; {
+                called1 = 0;
+                const queue = new Queue(3);
+                queue.wait().then(() =&gt; {
+                    cleanWebGroup(wg1);
+                    done();
+                });
+                wg1 = new WebGroup(WebGroupOptions);
+                wg1.onStateChange = (state) =&gt; {
+                    if (state === WebGroupState.JOINED) {
+                        queue.pop();
+                    }
+                };
+                wg1.onMemberJoin = () =&gt; queue.pop();
+                wg1.onSignalingStateChange = (state) =&gt; {
+                    if (state === SignalingState.STABLE) {
+                        // Start inviting
+                        wg1.invite(BOT_URL);
+                    }
+                };
+                waitBotJoin(wg1.id).then(() =&gt; queue.pop());
+                wg1.join();
+            });
+            afterEach((done) =&gt; {
+                cleanWebGroup(wg1);
+                if (wg1.state !== WebGroupState.LEFT) {
+                    wg1.onStateChange = (state) =&gt; {
+                        if (state === WebGroupState.LEFT) {
+                            cleanWebGroup(wg1);
+                            done();
+                        }
+                    };
+                    wg1.leave();
+                }
+                else {
+                    cleanWebGroup(wg1);
+                    done();
+                }
+            });
+            /** @test {WebGroup#send} */
+            it(&apos;broadcast String&apos;, (done) =&gt; {
+                const msg1 = &apos;sendArt is long, life is short&apos;;
+                const msgBot = &apos;bot: &apos; + msg1;
+                // Code for peer 1
+                wg1.onMessage = (id, msg) =&gt; {
+                    called1++;
+                    expect(msg).toEqual(msgBot);
+                    // Check bot data
+                    wait(1000)
+                        .then(() =&gt; getBotData(wg1.id))
+                        .then((bot) =&gt; {
+                        expect(called1).toEqual(1);
+                        expect(id).toEqual(bot.myId);
+                        expect(bot.onMessageToBeCalled).toEqual(1);
+                        expect(bot.messages[0].msg).toEqual(msg1);
+                        expect(bot.messages[0].id).toEqual(wg1.myId);
+                        done();
+                    })
+                        .catch(fail);
+                };
+                // Start sending message
+                wg1.send(msg1);
+            });
+            /** @test {WebGroup#send} */
+            it(&apos;broadcast ArrayBuffer&apos;, (done) =&gt; {
+                const msg1 = new Uint8Array([10, 34, 248, 157, 10, 8, 220]);
+                const msgBot = new Uint8Array([42, 34, 248, 157, 10, 8, 220]);
+                // Code for peer 1
+                wg1.onMessage = (id, msg) =&gt; {
+                    called1++;
+                    expect(msg).toEqual(msgBot);
+                    // Check bot data
+                    wait(1000)
+                        .then(() =&gt; getBotData(wg1.id))
+                        .then((bot) =&gt; {
+                        expect(called1).toEqual(1);
+                        expect(id).toEqual(bot.myId);
+                        expect(bot.onMessageToBeCalled).toEqual(1);
+                        expect(bot.messages[0].msg).toEqual(Array.from(msg1));
+                        expect(bot.messages[0].id).toEqual(wg1.myId);
+                        done();
+                    })
+                        .catch(fail);
+                };
+                // Start sending message
+                wg1.send(msg1);
+            });
+            /** @test {WebGroup#sendTo} */
+            it(&apos;private String&apos;, (done) =&gt; {
+                const msg1 = &apos;Art is long, life is short&apos;;
+                const msgBot = &apos;bot: &apos; + msg1;
+                // Code for peer 1
+                wg1.onMessage = (id, msg) =&gt; {
+                    called1++;
+                    expect(msg).toEqual(msgBot);
+                    // Check bot data
+                    wait(1000)
+                        .then(() =&gt; getBotData(wg1.id))
+                        .then((bot) =&gt; {
+                        expect(called1).toEqual(1);
+                        expect(id).toEqual(bot.myId);
+                        expect(bot.onMessageToBeCalled).toEqual(1);
+                        expect(bot.messages[0].msg).toEqual(msg1);
+                        expect(bot.messages[0].id).toEqual(wg1.myId);
+                        done();
+                    })
+                        .catch(fail);
+                };
+                // Start sending message
+                wg1.sendTo(wg1.members[1], msg1);
+            });
+            /** @test {WebGroup#sendTo} */
+            it(&apos;private ArrayBuffer&apos;, (done) =&gt; {
+                const msg1 = new Uint8Array([45, 34, 248, 157, 10, 8, 220]);
+                const msgBot = new Uint8Array([42, 34, 248, 157, 10, 8, 220]);
+                // Code for peer 1
+                wg1.onMessage = (id, msg) =&gt; {
+                    called1++;
+                    expect(msg).toEqual(msgBot);
+                    // Check bot data
+                    wait(1000)
+                        .then(() =&gt; getBotData(wg1.id))
+                        .then((bot) =&gt; {
+                        expect(called1).toEqual(1);
+                        expect(id).toEqual(bot.myId);
+                        expect(bot.onMessageToBeCalled).toEqual(1);
+                        expect(bot.messages[0].msg).toEqual(Array.from(msg1));
+                        expect(bot.messages[0].id).toEqual(wg1.myId);
+                        done();
+                    })
+                        .catch(fail);
+                };
+                // Start sending message
+                wg1.sendTo(wg1.members[1], msg1);
+            });
+        });
+        // TODO: finish these tests
+        xdescribe(&apos;leaving&apos;, () =&gt; { });
+    });
+});
+</code></pre>
+
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(1.0.4)</span><img src="./image/esdoc-logo-mini-black.png"></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>

@@ -23,8 +23,7 @@
           "files": [
             "./manual/installation.md",
             "./manual/usage.md",
-            "./manual/bestpractices.md",
-            "./manual/faq.md"
+            "./manual/knownobstacles.md"
           ]
         },
         "test": {

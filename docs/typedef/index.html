@@ -32,15 +32,16 @@
   <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/BotServerFacade.js~WebGroupBotServer.html">WebGroupBotServer</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroupState.html">WebGroupState</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.js~LogLevel.html">LogLevel</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.js~SignalingState.html">SignalingState</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.js~Topology.html">Topology</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-enableLog">enableLog</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-setLogLevel">setLogLevel</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-DataType">DataType</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupBotServerOptions">WebGroupBotServerOptions</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupOptions">WebGroupOptions</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/http.html#http_class_http_server">NodeJSHttpServer</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/https.html#https_class_https_server">NodeJSHttpsServer</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://developer.mozilla.org/en/docs/Web/API/RTCIceServer">RTCIceServer</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://developer.mozilla.org/en/docs/Web/API/RTCConfiguration">RTCConfiguration</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array">Uint8Array</a></span></span></li>
 </ul>
 </div>
@@ -227,17 +228,17 @@
 </td>
     </tr>
 <tr data-ice="property" data-depth="0">
-      <td data-ice="name" class="code" data-depth="0">signalingURL</td>
+      <td data-ice="name" class="code" data-depth="0">signalingServer</td>
       <td data-ice="type" class="code"><span>string</span></td>
       <td data-ice="appendix"><ul><li>optional</li></ul></td>
-      <td data-ice="description"><p>See WebGroupOptions.signalingURL</p>
+      <td data-ice="description"><p>See WebGroupOptions.signalingServer</p>
 </td>
     </tr>
 <tr data-ice="property" data-depth="0">
-      <td data-ice="name" class="code" data-depth="0">iceServers</td>
-      <td data-ice="type" class="code"><span><span><a href="https://developer.mozilla.org/en/docs/Web/API/RTCIceServer">RTCIceServer</a></span><span>[]</span></span></td>
+      <td data-ice="name" class="code" data-depth="0">rtcConfiguration</td>
+      <td data-ice="type" class="code"><span><a href="https://developer.mozilla.org/en/docs/Web/API/RTCConfiguration">RTCConfiguration</a></span></td>
       <td data-ice="appendix"><ul><li>optional</li></ul></td>
-      <td data-ice="description"><p>See WebGroupOptions.iceServers</p>
+      <td data-ice="description"><p>See WebGroupOptions.rtcConfiguration</p>
 </td>
     </tr>
 <tr data-ice="property" data-depth="0">
@@ -338,17 +339,17 @@
 </td>
     </tr>
 <tr data-ice="property" data-depth="0">
-      <td data-ice="name" class="code" data-depth="0">signalingURL</td>
+      <td data-ice="name" class="code" data-depth="0">signalingServer</td>
       <td data-ice="type" class="code"><span>string</span></td>
       <td data-ice="appendix"><ul><li>optional</li></ul></td>
       <td data-ice="description"><p>Signaling URL for WebRTC.</p>
 </td>
     </tr>
 <tr data-ice="property" data-depth="0">
-      <td data-ice="name" class="code" data-depth="0">iceServers</td>
-      <td data-ice="type" class="code"><span><span><a href="https://developer.mozilla.org/en/docs/Web/API/RTCIceServer">RTCIceServer</a></span><span>[]</span></span></td>
+      <td data-ice="name" class="code" data-depth="0">rtcConfiguration</td>
+      <td data-ice="type" class="code"><span><a href="https://developer.mozilla.org/en/docs/Web/API/RTCConfiguration">RTCConfiguration</a></span></td>
       <td data-ice="appendix"><ul><li>optional</li></ul></td>
-      <td data-ice="description"><p>Array of Ice servers for WebRTC.</p>
+      <td data-ice="description"><p>Configuration for WebRTC.</p>
 </td>
     </tr>
 <tr data-ice="property" data-depth="0">

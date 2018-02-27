@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <base data-ice="baseUrl" href="../../">
-  <title data-ice="title">SignalingState | Netflux</title>
+  <title data-ice="title">LogLevel | Netflux</title>
   <link type="text/css" rel="stylesheet" href="css/style.css">
   <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
   <script src="script/prettify/prettify.js"></script>
@@ -48,17 +48,17 @@
 </nav>
 
 <div class="content" data-ice="content"><div class="header-notice">
-  <div data-ice="importPath" class="import-path"><pre class="prettyprint"><code data-ice="importPathCode">import {SignalingState} from &apos;<span><a href="file/src/index.common.js.html#lineNumber13">netflux/src/index.common.js</a></span>&apos;</code></pre></div>
+  <div data-ice="importPath" class="import-path"><pre class="prettyprint"><code data-ice="importPathCode">import {LogLevel} from &apos;<span><a href="file/src/index.common.js.html#lineNumber87">netflux/src/index.common.js</a></span>&apos;</code></pre></div>
   <span data-ice="access">public</span>
   <span data-ice="kind">class</span>
   
   
   
-  <span data-ice="source">| <span><a href="file/src/index.common.js.html#lineNumber13">source</a></span></span>
+  <span data-ice="source">| <span><a href="file/src/index.common.js.html#lineNumber87">source</a></span></span>
 </div>
 
 <div class="self-detail detail">
-  <h1 data-ice="name">SignalingState</h1>
+  <h1 data-ice="name">LogLevel</h1>
 
   
 
@@ -74,7 +74,7 @@
 
   
   
-  <div class="description" data-ice="description"><p>The state enum of the signaling server for WebRTC.</p>
+  <div class="description" data-ice="description"><p>The log level enum.</p>
 </div>
   
 
@@ -105,13 +105,13 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/index.common.js~SignalingState.html#static-get-CLOSED">CLOSED</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/index.common.js~LogLevel.html#static-get-CHANNEL">CHANNEL</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
         </p>
       </div>
       <div>
         
         
-        <div data-ice="description"><p>Equals to <code>4</code>, the connection is closed.</p>
+        <div data-ice="description"><p>Equals to <code>4</code>, logs for Channel module.</p>
 </div>
       </div>
     </td>
@@ -134,13 +134,13 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/index.common.js~SignalingState.html#static-get-CLOSING">CLOSING</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/index.common.js~LogLevel.html#static-get-CHANNEL_BUILDER">CHANNEL_BUILDER</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
         </p>
       </div>
       <div>
         
         
-        <div data-ice="description"><p>Equals to <code>3</code>, the connection is in process of closing.</p>
+        <div data-ice="description"><p>Equals to <code>7</code>, logs for ChannelBuilder module.</p>
 </div>
       </div>
     </td>
@@ -163,13 +163,13 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/index.common.js~SignalingState.html#static-get-CONNECTED">CONNECTED</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/index.common.js~LogLevel.html#static-get-DEBUG">DEBUG</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
         </p>
       </div>
       <div>
         
         
-        <div data-ice="description"><p>Equals to <code>1</code>, <code>RTCDataChannel</code> has been established with one of the group member.</p>
+        <div data-ice="description"><p>Equals to <code>1</code>, allows logs for debug.</p>
 </div>
       </div>
     </td>
@@ -192,13 +192,13 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/index.common.js~SignalingState.html#static-get-CONNECTING">CONNECTING</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/index.common.js~LogLevel.html#static-get-SIGNALING">SIGNALING</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
         </p>
       </div>
       <div>
         
         
-        <div data-ice="description"><p>Equals to <code>0</code>, the connection is not yet open.</p>
+        <div data-ice="description"><p>Equals to <code>6</code>, logs for Signaling module.</p>
 </div>
       </div>
     </td>
@@ -221,13 +221,13 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/index.common.js~SignalingState.html#static-get-STABLE">STABLE</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/index.common.js~LogLevel.html#static-get-TOPOLOGY">TOPOLOGY</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
         </p>
       </div>
       <div>
         
         
-        <div data-ice="description"><p>Equals to <code>2</code>, you has successfully joined a web group and ready to help join others.</p>
+        <div data-ice="description"><p>Equals to <code>5</code>, logs for Topology module.</p>
 </div>
       </div>
     </td>
@@ -250,13 +250,13 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/index.common.js~SignalingState.html#static-get-[SignalingState.CLOSED]">[SignalingState.CLOSED]</a></span></span><span class="code" data-ice="signature">: <span>string</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/index.common.js~LogLevel.html#static-get-WEBRTC">WEBRTC</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
         </p>
       </div>
       <div>
         
         
-        <div data-ice="description"><p>Equals to <code>&apos;CLOSED&apos;</code>.</p>
+        <div data-ice="description"><p>Equals to <code>3</code>, logs for WebRTCBuilder module.</p>
 </div>
       </div>
     </td>
@@ -279,13 +279,13 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/index.common.js~SignalingState.html#static-get-[SignalingState.CLOSING]">[SignalingState.CLOSING]</a></span></span><span class="code" data-ice="signature">: <span>string</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/index.common.js~LogLevel.html#static-get-WEB_GROUP">WEB_GROUP</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
         </p>
       </div>
       <div>
         
         
-        <div data-ice="description"><p>Equals to <code>&apos;CLOSING&apos;</code>.</p>
+        <div data-ice="description"><p>Equals to <code>2</code>, logs for WebGroup module.</p>
 </div>
       </div>
     </td>
@@ -308,13 +308,13 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/index.common.js~SignalingState.html#static-get-[SignalingState.CONNECTED]">[SignalingState.CONNECTED]</a></span></span><span class="code" data-ice="signature">: <span>string</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/index.common.js~LogLevel.html#static-get-[Logs.CHANNEL]">[Logs.CHANNEL]</a></span></span><span class="code" data-ice="signature">: <span>string</span></span>
         </p>
       </div>
       <div>
         
         
-        <div data-ice="description"><p>Equals to <code>&apos;CONNECTED&apos;</code>.</p>
+        <div data-ice="description"><p>Equals to <code>&apos;CHANNEL&apos;</code>.</p>
 </div>
       </div>
     </td>
@@ -337,13 +337,13 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/index.common.js~SignalingState.html#static-get-[SignalingState.CONNECTING]">[SignalingState.CONNECTING]</a></span></span><span class="code" data-ice="signature">: <span>string</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/index.common.js~LogLevel.html#static-get-[Logs.CHANNEL_BUILDER]">[Logs.CHANNEL_BUILDER]</a></span></span><span class="code" data-ice="signature">: <span>string</span></span>
         </p>
       </div>
       <div>
         
         
-        <div data-ice="description"><p>Equals to <code>&apos;CONNECTING&apos;</code>.</p>
+        <div data-ice="description"><p>Equals to <code>&apos;CHANNEL_BUILDER&apos;</code>.</p>
 </div>
       </div>
     </td>
@@ -366,13 +366,129 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/index.common.js~SignalingState.html#static-get-[SignalingState.STABLE]">[SignalingState.STABLE]</a></span></span><span class="code" data-ice="signature">: <span>string</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/index.common.js~LogLevel.html#static-get-[Logs.DEBUG]">[Logs.DEBUG]</a></span></span><span class="code" data-ice="signature">: <span>string</span></span>
         </p>
       </div>
       <div>
         
         
-        <div data-ice="description"><p>Equals to <code>&apos;STABLE&apos;</code>.</p>
+        <div data-ice="description"><p>Equals to <code>&apos;DEBUG&apos;</code>.</p>
+</div>
+      </div>
+    </td>
+    <td>
+      
+      
+    </td>
+  </tr>
+<tr data-ice="target">
+    <td>
+      <span class="access" data-ice="access">public</span>
+      <span data-ice="static">static</span>
+      <span class="kind" data-ice="kind">get</span>
+      
+      <span class="override" data-ice="override"></span>
+    </td>
+    <td>
+      <div>
+        <p>
+          
+          
+          
+          <span class="code" data-ice="name"><span><a href="class/src/index.common.js~LogLevel.html#static-get-[Logs.SIGNALING]">[Logs.SIGNALING]</a></span></span><span class="code" data-ice="signature">: <span>string</span></span>
+        </p>
+      </div>
+      <div>
+        
+        
+        <div data-ice="description"><p>Equals to <code>&apos;SIGNALING&apos;</code>.</p>
+</div>
+      </div>
+    </td>
+    <td>
+      
+      
+    </td>
+  </tr>
+<tr data-ice="target">
+    <td>
+      <span class="access" data-ice="access">public</span>
+      <span data-ice="static">static</span>
+      <span class="kind" data-ice="kind">get</span>
+      
+      <span class="override" data-ice="override"></span>
+    </td>
+    <td>
+      <div>
+        <p>
+          
+          
+          
+          <span class="code" data-ice="name"><span><a href="class/src/index.common.js~LogLevel.html#static-get-[Logs.TOPOLOGY]">[Logs.TOPOLOGY]</a></span></span><span class="code" data-ice="signature">: <span>string</span></span>
+        </p>
+      </div>
+      <div>
+        
+        
+        <div data-ice="description"><p>Equals to <code>&apos;TOPOLOGY&apos;</code>.</p>
+</div>
+      </div>
+    </td>
+    <td>
+      
+      
+    </td>
+  </tr>
+<tr data-ice="target">
+    <td>
+      <span class="access" data-ice="access">public</span>
+      <span data-ice="static">static</span>
+      <span class="kind" data-ice="kind">get</span>
+      
+      <span class="override" data-ice="override"></span>
+    </td>
+    <td>
+      <div>
+        <p>
+          
+          
+          
+          <span class="code" data-ice="name"><span><a href="class/src/index.common.js~LogLevel.html#static-get-[Logs.WEBRTC]">[Logs.WEBRTC]</a></span></span><span class="code" data-ice="signature">: <span>string</span></span>
+        </p>
+      </div>
+      <div>
+        
+        
+        <div data-ice="description"><p>Equals to <code>&apos;WEBRTC&apos;</code>.</p>
+</div>
+      </div>
+    </td>
+    <td>
+      
+      
+    </td>
+  </tr>
+<tr data-ice="target">
+    <td>
+      <span class="access" data-ice="access">public</span>
+      <span data-ice="static">static</span>
+      <span class="kind" data-ice="kind">get</span>
+      
+      <span class="override" data-ice="override"></span>
+    </td>
+    <td>
+      <div>
+        <p>
+          
+          
+          
+          <span class="code" data-ice="name"><span><a href="class/src/index.common.js~LogLevel.html#static-get-[Logs.WEB_GROUP]">[Logs.WEB_GROUP]</a></span></span><span class="code" data-ice="signature">: <span>string</span></span>
+        </p>
+      </div>
+      <div>
+        
+        
+        <div data-ice="description"><p>Equals to <code>&apos;WEB_GROUP&apos;</code>.</p>
 </div>
       </div>
     </td>
@@ -394,25 +510,25 @@
 <div data-ice="staticMemberDetails"><h2 data-ice="title">Static Public Members</h2>
 
 <div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="static-get-CLOSED">
+  <h3 data-ice="anchor" id="static-get-CHANNEL">
     <span class="access" data-ice="access">public</span>
     <span data-ice="static">static</span>
     <span class="kind" data-ice="kind">get</span>
     
     
     
-    <span class="code" data-ice="name">CLOSED</span><span class="code" data-ice="signature">: <span>number</span></span>
+    <span class="code" data-ice="name">CHANNEL</span><span class="code" data-ice="signature">: <span>number</span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/index.common.js.html#lineNumber62">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/index.common.js.html#lineNumber122">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  <div data-ice="description"><p>Equals to <code>4</code>, the connection is closed.</p>
+  <div data-ice="description"><p>Equals to <code>4</code>, logs for Channel module.</p>
 </div>
 
   
@@ -438,25 +554,25 @@
   
 </div>
 <div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="static-get-CLOSING">
+  <h3 data-ice="anchor" id="static-get-CHANNEL_BUILDER">
     <span class="access" data-ice="access">public</span>
     <span data-ice="static">static</span>
     <span class="kind" data-ice="kind">get</span>
     
     
     
-    <span class="code" data-ice="name">CLOSING</span><span class="code" data-ice="signature">: <span>number</span></span>
+    <span class="code" data-ice="name">CHANNEL_BUILDER</span><span class="code" data-ice="signature">: <span>number</span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/index.common.js.html#lineNumber52">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/index.common.js.html#lineNumber152">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  <div data-ice="description"><p>Equals to <code>3</code>, the connection is in process of closing.</p>
+  <div data-ice="description"><p>Equals to <code>7</code>, logs for ChannelBuilder module.</p>
 </div>
 
   
@@ -482,27 +598,25 @@
   
 </div>
 <div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="static-get-CONNECTED">
+  <h3 data-ice="anchor" id="static-get-DEBUG">
     <span class="access" data-ice="access">public</span>
     <span data-ice="static">static</span>
     <span class="kind" data-ice="kind">get</span>
     
     
     
-    <span class="code" data-ice="name">CONNECTED</span><span class="code" data-ice="signature">: <span>number</span></span>
+    <span class="code" data-ice="name">DEBUG</span><span class="code" data-ice="signature">: <span>number</span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/index.common.js.html#lineNumber30">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/index.common.js.html#lineNumber92">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  <div data-ice="description"><p>Equals to <code>1</code>, <code>RTCDataChannel</code> has been established with one of the group member.
-From now the signaling is no longer needed, because the joining process
-will continue with a help of this member.</p>
+  <div data-ice="description"><p>Equals to <code>1</code>, allows logs for debug.</p>
 </div>
 
   
@@ -528,25 +642,25 @@ will continue with a help of this member.</p>
   
 </div>
 <div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="static-get-CONNECTING">
+  <h3 data-ice="anchor" id="static-get-SIGNALING">
     <span class="access" data-ice="access">public</span>
     <span data-ice="static">static</span>
     <span class="kind" data-ice="kind">get</span>
     
     
     
-    <span class="code" data-ice="name">CONNECTING</span><span class="code" data-ice="signature">: <span>number</span></span>
+    <span class="code" data-ice="name">SIGNALING</span><span class="code" data-ice="signature">: <span>number</span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/index.common.js.html#lineNumber18">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/index.common.js.html#lineNumber142">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  <div data-ice="description"><p>Equals to <code>0</code>, the connection is not yet open. Value</p>
+  <div data-ice="description"><p>Equals to <code>6</code>, logs for Signaling module.</p>
 </div>
 
   
@@ -572,25 +686,25 @@ will continue with a help of this member.</p>
   
 </div>
 <div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="static-get-STABLE">
+  <h3 data-ice="anchor" id="static-get-TOPOLOGY">
     <span class="access" data-ice="access">public</span>
     <span data-ice="static">static</span>
     <span class="kind" data-ice="kind">get</span>
     
     
     
-    <span class="code" data-ice="name">STABLE</span><span class="code" data-ice="signature">: <span>number</span></span>
+    <span class="code" data-ice="name">TOPOLOGY</span><span class="code" data-ice="signature">: <span>number</span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/index.common.js.html#lineNumber42">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/index.common.js.html#lineNumber132">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  <div data-ice="description"><p>Equals to <code>2</code>, you has successfully joined a web group and ready to help join others.</p>
+  <div data-ice="description"><p>Equals to <code>5</code>, logs for Topology module.</p>
 </div>
 
   
@@ -616,25 +730,25 @@ will continue with a help of this member.</p>
   
 </div>
 <div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="static-get-[SignalingState.CLOSED]">
+  <h3 data-ice="anchor" id="static-get-WEBRTC">
     <span class="access" data-ice="access">public</span>
     <span data-ice="static">static</span>
     <span class="kind" data-ice="kind">get</span>
     
     
     
-    <span class="code" data-ice="name">[SignalingState.CLOSED]</span><span class="code" data-ice="signature">: <span>string</span></span>
+    <span class="code" data-ice="name">WEBRTC</span><span class="code" data-ice="signature">: <span>number</span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/index.common.js.html#lineNumber67">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/index.common.js.html#lineNumber112">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  <div data-ice="description"><p>Equals to <code>&apos;CLOSED&apos;</code>.</p>
+  <div data-ice="description"><p>Equals to <code>3</code>, logs for WebRTCBuilder module.</p>
 </div>
 
   
@@ -660,25 +774,25 @@ will continue with a help of this member.</p>
   
 </div>
 <div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="static-get-[SignalingState.CLOSING]">
+  <h3 data-ice="anchor" id="static-get-WEB_GROUP">
     <span class="access" data-ice="access">public</span>
     <span data-ice="static">static</span>
     <span class="kind" data-ice="kind">get</span>
     
     
     
-    <span class="code" data-ice="name">[SignalingState.CLOSING]</span><span class="code" data-ice="signature">: <span>string</span></span>
+    <span class="code" data-ice="name">WEB_GROUP</span><span class="code" data-ice="signature">: <span>number</span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/index.common.js.html#lineNumber57">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/index.common.js.html#lineNumber102">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  <div data-ice="description"><p>Equals to <code>&apos;CLOSING&apos;</code>.</p>
+  <div data-ice="description"><p>Equals to <code>2</code>, logs for WebGroup module.</p>
 </div>
 
   
@@ -704,25 +818,25 @@ will continue with a help of this member.</p>
   
 </div>
 <div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="static-get-[SignalingState.CONNECTED]">
+  <h3 data-ice="anchor" id="static-get-[Logs.CHANNEL]">
     <span class="access" data-ice="access">public</span>
     <span data-ice="static">static</span>
     <span class="kind" data-ice="kind">get</span>
     
     
     
-    <span class="code" data-ice="name">[SignalingState.CONNECTED]</span><span class="code" data-ice="signature">: <span>string</span></span>
+    <span class="code" data-ice="name">[Logs.CHANNEL]</span><span class="code" data-ice="signature">: <span>string</span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/index.common.js.html#lineNumber35">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/index.common.js.html#lineNumber127">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  <div data-ice="description"><p>Equals to <code>&apos;CONNECTED&apos;</code>.</p>
+  <div data-ice="description"><p>Equals to <code>&apos;CHANNEL&apos;</code>.</p>
 </div>
 
   
@@ -748,25 +862,25 @@ will continue with a help of this member.</p>
   
 </div>
 <div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="static-get-[SignalingState.CONNECTING]">
+  <h3 data-ice="anchor" id="static-get-[Logs.CHANNEL_BUILDER]">
     <span class="access" data-ice="access">public</span>
     <span data-ice="static">static</span>
     <span class="kind" data-ice="kind">get</span>
     
     
     
-    <span class="code" data-ice="name">[SignalingState.CONNECTING]</span><span class="code" data-ice="signature">: <span>string</span></span>
+    <span class="code" data-ice="name">[Logs.CHANNEL_BUILDER]</span><span class="code" data-ice="signature">: <span>string</span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/index.common.js.html#lineNumber23">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/index.common.js.html#lineNumber157">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  <div data-ice="description"><p>Equals to <code>&apos;CONNECTING&apos;</code>.</p>
+  <div data-ice="description"><p>Equals to <code>&apos;CHANNEL_BUILDER&apos;</code>.</p>
 </div>
 
   
@@ -792,25 +906,201 @@ will continue with a help of this member.</p>
   
 </div>
 <div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="static-get-[SignalingState.STABLE]">
+  <h3 data-ice="anchor" id="static-get-[Logs.DEBUG]">
     <span class="access" data-ice="access">public</span>
     <span data-ice="static">static</span>
     <span class="kind" data-ice="kind">get</span>
     
     
     
-    <span class="code" data-ice="name">[SignalingState.STABLE]</span><span class="code" data-ice="signature">: <span>string</span></span>
+    <span class="code" data-ice="name">[Logs.DEBUG]</span><span class="code" data-ice="signature">: <span>string</span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/index.common.js.html#lineNumber47">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/index.common.js.html#lineNumber97">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  <div data-ice="description"><p>Equals to <code>&apos;STABLE&apos;</code>.</p>
+  <div data-ice="description"><p>Equals to <code>&apos;DEBUG&apos;</code>.</p>
+</div>
+
+  
+
+  <div data-ice="properties">
+</div>
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+</div>
+<div class="detail" data-ice="detail">
+  <h3 data-ice="anchor" id="static-get-[Logs.SIGNALING]">
+    <span class="access" data-ice="access">public</span>
+    <span data-ice="static">static</span>
+    <span class="kind" data-ice="kind">get</span>
+    
+    
+    
+    <span class="code" data-ice="name">[Logs.SIGNALING]</span><span class="code" data-ice="signature">: <span>string</span></span>
+    <span class="right-info">
+      
+      
+      <span data-ice="source"><span><a href="file/src/index.common.js.html#lineNumber147">source</a></span></span>
+    </span>
+  </h3>
+
+  
+  
+  
+  <div data-ice="description"><p>Equals to <code>&apos;SIGNALING&apos;</code>.</p>
+</div>
+
+  
+
+  <div data-ice="properties">
+</div>
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+</div>
+<div class="detail" data-ice="detail">
+  <h3 data-ice="anchor" id="static-get-[Logs.TOPOLOGY]">
+    <span class="access" data-ice="access">public</span>
+    <span data-ice="static">static</span>
+    <span class="kind" data-ice="kind">get</span>
+    
+    
+    
+    <span class="code" data-ice="name">[Logs.TOPOLOGY]</span><span class="code" data-ice="signature">: <span>string</span></span>
+    <span class="right-info">
+      
+      
+      <span data-ice="source"><span><a href="file/src/index.common.js.html#lineNumber137">source</a></span></span>
+    </span>
+  </h3>
+
+  
+  
+  
+  <div data-ice="description"><p>Equals to <code>&apos;TOPOLOGY&apos;</code>.</p>
+</div>
+
+  
+
+  <div data-ice="properties">
+</div>
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+</div>
+<div class="detail" data-ice="detail">
+  <h3 data-ice="anchor" id="static-get-[Logs.WEBRTC]">
+    <span class="access" data-ice="access">public</span>
+    <span data-ice="static">static</span>
+    <span class="kind" data-ice="kind">get</span>
+    
+    
+    
+    <span class="code" data-ice="name">[Logs.WEBRTC]</span><span class="code" data-ice="signature">: <span>string</span></span>
+    <span class="right-info">
+      
+      
+      <span data-ice="source"><span><a href="file/src/index.common.js.html#lineNumber117">source</a></span></span>
+    </span>
+  </h3>
+
+  
+  
+  
+  <div data-ice="description"><p>Equals to <code>&apos;WEBRTC&apos;</code>.</p>
+</div>
+
+  
+
+  <div data-ice="properties">
+</div>
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+</div>
+<div class="detail" data-ice="detail">
+  <h3 data-ice="anchor" id="static-get-[Logs.WEB_GROUP]">
+    <span class="access" data-ice="access">public</span>
+    <span data-ice="static">static</span>
+    <span class="kind" data-ice="kind">get</span>
+    
+    
+    
+    <span class="code" data-ice="name">[Logs.WEB_GROUP]</span><span class="code" data-ice="signature">: <span>string</span></span>
+    <span class="right-info">
+      
+      
+      <span data-ice="source"><span><a href="file/src/index.common.js.html#lineNumber107">source</a></span></span>
+    </span>
+  </h3>
+
+  
+  
+  
+  <div data-ice="description"><p>Equals to <code>&apos;WEB_GROUP&apos;</code>.</p>
 </div>
 
   

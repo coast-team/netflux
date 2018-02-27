@@ -32,15 +32,16 @@
   <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/BotServerFacade.js~WebGroupBotServer.html">WebGroupBotServer</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroupState.html">WebGroupState</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.js~LogLevel.html">LogLevel</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.js~SignalingState.html">SignalingState</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.js~Topology.html">Topology</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-enableLog">enableLog</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-setLogLevel">setLogLevel</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-DataType">DataType</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupBotServerOptions">WebGroupBotServerOptions</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupOptions">WebGroupOptions</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/http.html#http_class_http_server">NodeJSHttpServer</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/https.html#https_class_https_server">NodeJSHttpsServer</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://developer.mozilla.org/en/docs/Web/API/RTCIceServer">RTCIceServer</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://developer.mozilla.org/en/docs/Web/API/RTCConfiguration">RTCConfiguration</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array">Uint8Array</a></span></span></li>
 </ul>
 </div>
@@ -162,13 +163,42 @@
           
           
           
+          <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroupState.html#static-get-LEAVING">LEAVING</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
+        </p>
+      </div>
+      <div>
+        
+        
+        <div data-ice="description"><p>Equals to <code>2</code>: The <code>WebGroup</code> is in process of leaving.</p>
+</div>
+      </div>
+    </td>
+    <td>
+      
+      
+    </td>
+  </tr>
+<tr data-ice="target">
+    <td>
+      <span class="access" data-ice="access">public</span>
+      <span data-ice="static">static</span>
+      <span class="kind" data-ice="kind">get</span>
+      
+      <span class="override" data-ice="override"></span>
+    </td>
+    <td>
+      <div>
+        <p>
+          
+          
+          
           <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroupState.html#static-get-LEFT">LEFT</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
         </p>
       </div>
       <div>
         
         
-        <div data-ice="description"><p>Equals to <code>2</code>: left the group.</p>
+        <div data-ice="description"><p>Equals to <code>3</code>: left the group.</p>
 </div>
       </div>
     </td>
@@ -227,6 +257,35 @@
         
         
         <div data-ice="description"><p>Equals to <code>&apos;JOINING&apos;</code>.</p>
+</div>
+      </div>
+    </td>
+    <td>
+      
+      
+    </td>
+  </tr>
+<tr data-ice="target">
+    <td>
+      <span class="access" data-ice="access">public</span>
+      <span data-ice="static">static</span>
+      <span class="kind" data-ice="kind">get</span>
+      
+      <span class="override" data-ice="override"></span>
+    </td>
+    <td>
+      <div>
+        <p>
+          
+          
+          
+          <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroupState.html#static-get-[WebGroupState.LEAVING]">[WebGroupState.LEAVING]</a></span></span><span class="code" data-ice="signature">: <span>string</span></span>
+        </p>
+      </div>
+      <div>
+        
+        
+        <div data-ice="description"><p>Equals to <code>&apos;LEAVING&apos;</code>.</p>
 </div>
       </div>
     </td>
@@ -365,6 +424,50 @@
   
 </div>
 <div class="detail" data-ice="detail">
+  <h3 data-ice="anchor" id="static-get-LEAVING">
+    <span class="access" data-ice="access">public</span>
+    <span data-ice="static">static</span>
+    <span class="kind" data-ice="kind">get</span>
+    
+    
+    
+    <span class="code" data-ice="name">LEAVING</span><span class="code" data-ice="signature">: <span>number</span></span>
+    <span class="right-info">
+      
+      
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber38">source</a></span></span>
+    </span>
+  </h3>
+
+  
+  
+  
+  <div data-ice="description"><p>Equals to <code>2</code>: The <code>WebGroup</code> is in process of leaving.</p>
+</div>
+
+  
+
+  <div data-ice="properties">
+</div>
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+</div>
+<div class="detail" data-ice="detail">
   <h3 data-ice="anchor" id="static-get-LEFT">
     <span class="access" data-ice="access">public</span>
     <span data-ice="static">static</span>
@@ -376,17 +479,17 @@
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber41">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber51">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  <div data-ice="description"><p>Equals to <code>2</code>: left the group. If the connection to the web group has lost other then
-by calling <span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-method-leave">WebGroup#leave</a></span> or <span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-method-closeSignaling">WebGroup#closeSignaling</a></span> methods
-and <span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-member-autoRejoin">WebGroup#autoRejoin</a></span> is true, then the state would be <code>LEFT</code>,
-(usually during a relatively short period) before the rejoining process starts.</p>
+  <div data-ice="description"><p>Equals to <code>3</code>: left the group. If the connection to the web group has lost other then
+by calling <span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-method-leave">WebGroup#leave</a></span> methods and <span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-member-autoRejoin">WebGroup#autoRejoin</a></span> is true,
+then the state would be <code>LEFT</code>, usually during a relatively short period) before
+the rejoining process starts.</p>
 </div>
 
   
@@ -500,6 +603,50 @@ and <span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-member-a
   
 </div>
 <div class="detail" data-ice="detail">
+  <h3 data-ice="anchor" id="static-get-[WebGroupState.LEAVING]">
+    <span class="access" data-ice="access">public</span>
+    <span data-ice="static">static</span>
+    <span class="kind" data-ice="kind">get</span>
+    
+    
+    
+    <span class="code" data-ice="name">[WebGroupState.LEAVING]</span><span class="code" data-ice="signature">: <span>string</span></span>
+    <span class="right-info">
+      
+      
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber43">source</a></span></span>
+    </span>
+  </h3>
+
+  
+  
+  
+  <div data-ice="description"><p>Equals to <code>&apos;LEAVING&apos;</code>.</p>
+</div>
+
+  
+
+  <div data-ice="properties">
+</div>
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+</div>
+<div class="detail" data-ice="detail">
   <h3 data-ice="anchor" id="static-get-[WebGroupState.LEFT]">
     <span class="access" data-ice="access">public</span>
     <span data-ice="static">static</span>
@@ -511,7 +658,7 @@ and <span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-member-a
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber46">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber56">source</a></span></span>
     </span>
   </h3>
 

@@ -53,38 +53,15 @@
 <div data-ice="manual">
     <ul class="manual-toc">
       
-    <li data-ice="manualNav" class="indent-h1" data-link="manual/bestpractices.html"><a href="manual/bestpractices.html" data-ice="link">Best practices</a></li>
-<li data-ice="manualNav" class="indent-h2" data-link="manual/bestpractices.html"><a href="manual/bestpractices.html#leave-webgroup-before-browser-tab-close" data-ice="link">Leave WebGroup before Browser/Tab close</a></li>
-<li data-ice="manualNav" class="indent-h2" data-link="manual/bestpractices.html"><a href="manual/bestpractices.html#listen-on-online-offline-events" data-ice="link">Listen on Online/Offline events</a></li>
-<li data-ice="manualNav" class="indent-h2" data-link="manual/bestpractices.html"><a href="manual/bestpractices.html#page-visibility-api-might-be-useful-in-some-scenarios" data-ice="link">Page Visibility API might be useful in some scenarios</a></li>
-</ul>
-  </div>
-<div data-ice="manual">
-    <ul class="manual-toc">
-      
-    <li data-ice="manualNav" class="indent-h1" data-link="manual/faq.html"><a href="manual/faq.html" data-ice="link">FAQ</a></li>
-<li data-ice="manualNav" class="indent-h4" data-link="manual/faq.html"><a href="manual/faq.html#-strong-how--code-rtcdatachannel--code--and--code-websocket--code--are-used---strong-" data-ice="link">How RTCDataChannel and WebSocket are used?</a></li>
+    <li data-ice="manualNav" class="indent-h1" data-link="manual/knownobstacles.html"><a href="manual/knownobstacles.html" data-ice="link">Known WebRTC obstacles</a></li>
+<li data-ice="manualNav" class="indent-h2" data-link="manual/knownobstacles.html"><a href="manual/knownobstacles.html#firefox-extensions" data-ice="link">Firefox extensions</a></li>
 </ul>
   </div>
 </div>
 </nav>
 
-<div class="content" data-ice="content"><div class="github-markdown" data-ice="content"><h1 id="faq">FAQ</h1><h4 id="-strong-how--code-rtcdatachannel--code--and--code-websocket--code--are-used---strong-"><strong>How <code>RTCDataChannel</code> and <code>WebSocket</code> are used?</strong></h4><p>Netflux can create a peer to peer network with the following connection types:</p>
-<ul>
-<li><code>RTCDataChannel</code> (WebRTC)</li>
-<li><code>WebSocket</code></li>
-</ul>
-<p><code>RTCDataChannel</code> connection could be established between:</p>
-<ul>
-<li>Browser &amp; Browser</li>
-<li>Browser &amp; Server (If server supports)</li>
-<li>Server &amp; Server (If both servers support)</li>
-</ul>
-<p>On the other hand, a <code>WebSocket</code> could be created only between:</p>
-<ul>
-<li>Browser &amp; Server</li>
-<li>Server &amp; Server</li>
-</ul>
+<div class="content" data-ice="content"><div class="github-markdown" data-ice="content"><h1 id="known-webrtc-obstacles">Known WebRTC obstacles</h1><p>Connection establishment over WebRTC may ancounter different obstacles like NAT, Firewall, port blocking. But besides network obstacles there is also browser configuration that may prevent from connection creation.</p>
+<h2 id="firefox-extensions">Firefox extensions</h2><p>Some extensions for Firefox (Privacy Badger for instance) modify WebRTC configuration in browser. Checkout <code>about:config</code> and look for <code>peerconnection.ice</code>. If the <em>Status</em> column is <em>default</em> then the parameter was not modified.</p>
 </div>
 </div>
 

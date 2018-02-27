@@ -1,32 +1,39 @@
 # Installation
 
 ## NPM
+
 ```shell
 npm install -S netflux
 ```
-Netflux has an optional peer dependency: `wrtc`. This package provides WebRTC API in NodeJS. It is optional because Netflux can use `WebSocket` instead. For some use cases maybe you still want to connect your server to the peer to peer network via `RTCDataChannel`, then you have to successfully install this dependency, checkout [wrtc repository](https://github.com/js-platform/node-webrtc) then.
 
+Netflux has an optional peer dependency: `wrtc`. This package provides WebRTC API in NodeJS, but for now it is not in use as more tests needed. Checkout [wrtc repository](https://github.com/js-platform/node-webrtc) for more info on it.
 
 ## What you need
-Signaling server is only mandatory server for Netflux, but for a fully functional peer to peer network (to support all use cases) we also need STUN and TURN servers.
 
-Netflux comes with Signaling and STUN servers by default for easier quickstart. For TURN server two solutions are possible: either deploy your own or rent one at [Xirsys](https://xirsys.com/) for example or any other similar services.
+Signaling server is the only mandatory server for Netflux, but for a fully functional peer to peer network which suits all use cases you also need STUN and TURN servers.
 
+> Netflux comes with Signaling and STUN servers by default for easier quickstart.
 
 ### Signaling server
-**Default**: `wss://signaling.netflux.coedit.re`
 
-We developed a Signaling server: [Sigver](https://github.com/coast-team/sigver). It is the only signaling server (signaling mechanism) which is supported by Netflux for now.
+> **Default**: `wss://signaling.netflux.coedit.re`
 
-**TIP**: we recommend to deploy your own instance of Sigver for production.
+The only signaling mechanism which is supported by Netflux for now is [Sigver](https://github.com/coast-team/sigver) (NodeJS WebSocket server developed by us).
+
+> **TIP**: Your own instance of Sigver for production is recommended.
 
 ### STUN server
+
 **Default**: `stun:stun3.l.google.com:19302`
 
-There many other free STUN servers available in the Web.
+There are many other free STUN servers available in the Web.
 
 ### TURN server
-No free TURN server available in the Web. Checkout [Xirsys](https://xirsys.com/) to rent one or deploy your own.
+
+There are no free TURN servers available in the Web. Two solutions exist:
+
+- Rent one. Checkout [Xirsys](https://xirsys.com/) for example.
+- Deploy your own instance. The paragraphe below provides a guide on how to deploy and configure [`coturn`](https://github.com/coturn/coturn) open source TURN server. Also checkout [*Choosing a TURN server*](https://rtcquickstart.org/guide/multi/turn-server-choice.html) for a list of open source TURN servers.
 
 ## How to deploy STUN/TURN servers
 
@@ -50,35 +57,42 @@ Simple config file should look like this:
 listening-port=80
 tls-listening-port=443
 
-listening-ip=your-ip-address
+listening-ip=YOUR_IP_ADDRESS
+relay-ip=YOUR_IP_ADDRESS
 
-relay-ip=your-ip-address
-external-ip=your-ip-address
+realm=YOUR_DOMAIND.COM
+server-name=OUR_DOMAIND.COM
 
-realm=yourdomain.com
-server-name=yourdomain.com
+fingerprint
 
 # webRTC authentication method
 lt-cred-mech
 
-# Database location
-userdb=/var/lib/turn/turndb
+# WebRTC credentials
+user=YOUR_USER_NAME:YOUR_PASSWORD
+
+# Quota
+total-quota=100
+bps-capacity=0
+stable-nonce
 
 # Add ssl certificate for your server
 cert=/etc/ssl/certificate.pem
 pkey=/etc/ssl/private.key
-
+cipher-list="ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:!DH+AES:!ECDH+3DES:!DH+3DES:!RSA+AES:!RSA+3DES:!ADH:!AECDH:!MD5"
+no-loopback-peers
+no-multicast-peers
 no-stdout-log
 ```
 
 If you don't have any SSL certificate, you may use [Let's Encrypt](https://letsencrypt.org/).
 
-Create a user in order to access your Turn server:
-`turnadmin -a -u userName -p password -r yourdomain.com`
+Launch server:
 
-Launch your server:
-`turnserver`
+```turnserver`
+
 or in daemon:
+
 `turnserver -o`
 
-Verify that your server is up and running with [Trickle ICE](https://webrtc.github.io/samples/src/content/peerconnection/trickle-ice/).
+Verify that the server is up and running with [Trickle ICE](https://webrtc.github.io/samples/src/content/peerconnection/trickle-ice/).

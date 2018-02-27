@@ -53,17 +53,8 @@
 <div data-ice="manual">
     <ul class="manual-toc">
       
-    <li data-ice="manualNav" class="indent-h1" data-link="manual/bestpractices.html"><a href="manual/bestpractices.html" data-ice="link">Best practices</a></li>
-<li data-ice="manualNav" class="indent-h2" data-link="manual/bestpractices.html"><a href="manual/bestpractices.html#leave-webgroup-before-browser-tab-close" data-ice="link">Leave WebGroup before Browser/Tab close</a></li>
-<li data-ice="manualNav" class="indent-h2" data-link="manual/bestpractices.html"><a href="manual/bestpractices.html#listen-on-online-offline-events" data-ice="link">Listen on Online/Offline events</a></li>
-<li data-ice="manualNav" class="indent-h2" data-link="manual/bestpractices.html"><a href="manual/bestpractices.html#page-visibility-api-might-be-useful-in-some-scenarios" data-ice="link">Page Visibility API might be useful in some scenarios</a></li>
-</ul>
-  </div>
-<div data-ice="manual">
-    <ul class="manual-toc">
-      
-    <li data-ice="manualNav" class="indent-h1" data-link="manual/faq.html"><a href="manual/faq.html" data-ice="link">FAQ</a></li>
-<li data-ice="manualNav" class="indent-h4" data-link="manual/faq.html"><a href="manual/faq.html#-strong-how--code-rtcdatachannel--code--and--code-websocket--code--are-used---strong-" data-ice="link">How RTCDataChannel and WebSocket are used?</a></li>
+    <li data-ice="manualNav" class="indent-h1" data-link="manual/knownobstacles.html"><a href="manual/knownobstacles.html" data-ice="link">Known WebRTC obstacles</a></li>
+<li data-ice="manualNav" class="indent-h2" data-link="manual/knownobstacles.html"><a href="manual/knownobstacles.html#firefox-extensions" data-ice="link">Firefox extensions</a></li>
 </ul>
   </div>
 </div>
@@ -86,7 +77,7 @@
 <p>All builds are either for NodeJS or for Browser environment.</p>
 <p><strong>For browser environment</strong> exported members are:</p>
 <ul>
-<li><code>WebGroup</code></li>
+<li><code>WebGroup</code> class</li>
 <li><code>WebGroupState</code> enum</li>
 <li><code>SignalingState</code> enum</li>
 <li><code>Topology</code> enum</li>
@@ -95,7 +86,7 @@
 </ul>
 <p><strong>For NodeJS environment</strong> exported members are the same as for browser plus:</p>
 <ul>
-<li><code>WebGroupBotServer</code></li>
+<li><code>WebGroupBotServer</code> class</li>
 <li><code>WebGroupBotServerOptions</code> type.</li>
 </ul>
 <h2 id="commonjs">CommonJS</h2><p><code>dist/netflux.cjs.js</code> - CommonJS format, built for NodeJS.</p>
@@ -121,16 +112,16 @@ also understands <code>package.json#browser</code> property.</p>
 <pre><code class="lang-javascript"><code class="source-code prettyprint">// Example:
 const wg = new WebGroup({
   signalingURL: &apos;MY_SIGNALING_URL&apos;,
-  iceServers: [
-    {
-      urls: &apos;stun.l.google.com:19302&apos;
-    },
-    {
-      urls: [&apos;turn:myturn.com?transport=udp&apos;, &apos;turn:myturn?transport=tcp&apos;],
-      username: &apos;user&apos;,
-      password: &apos;password&apos;
-    }
-  ]
+  rtcConfiguration: {
+    iceServers: [
+      { urls: &apos;stun:mystun.org&apos; },
+      {
+        urls: [&apos;turn:myturn.org?transport=udp&apos;, &apos;turn:myturn.org?transport=tcp&apos;],
+        username: &apos;user&apos;,
+        password: &apos;password&apos;
+      }
+    ]
+  }
 })</code>
 </code></pre>
 <p>For <code>WebGroupBotServer</code> the server option is mandatory.</p>
@@ -139,18 +130,18 @@ const http = require(&apos;http&apos;)
 const myServer = http.createServer()
 const wg = new WebGroupBotServer({
   server: myServer,
-  signalingURL: &apos;MY_SIGNALING_URL&apos;,
+  signalingServer: &apos;MY_SIGNALING_URL&apos;,
   webGroupOptions: {
+    rtcConfiguration: {
     iceServers: [
+      { urls: &apos;stun:mystun.org&apos; },
       {
-        urls: &apos;stun.l.google.com:19302&apos;
-      },
-      {
-        urls: [&apos;turn:myturn.com?transport=udp&apos;, &apos;turn:myturn?transport=tcp&apos;],
+        urls: [&apos;turn:myturn.org?transport=udp&apos;, &apos;turn:myturn.org?transport=tcp&apos;],
         username: &apos;user&apos;,
         password: &apos;password&apos;
       }
     ]
+  }
   }
 })</code>
 </code></pre>

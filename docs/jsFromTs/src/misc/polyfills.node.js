@@ -1,3 +1,4 @@
+"use strict";
 try {
     const wrtc = require('wrtc');
     global.RTCPeerConnection = wrtc.RTCPeerConnection;

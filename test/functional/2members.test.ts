@@ -1,6 +1,6 @@
 /// <reference types='jasmine' />
 /* tslint:disable:one-variable-per-declaration */
-import { DataType, SignalingState, WebGroup, WebGroupState } from '../../src/index.browser'
+import { SignalingState, WebGroup, WebGroupState } from '../../src/index.browser'
 import { } from '../../src/misc/Util'
 import {
   areTheSame,

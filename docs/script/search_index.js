@@ -1,5 +1,365 @@
 window.esdocSearchIndex = [
   [
+    "webgroup src/webchannelfacade.js~webgroup,webgroup",
+    "test-file/test/functional/1member.test.js.html#lineNumber9",
+    "1 member",
+    "test"
+  ],
+  [
+    "",
+    "test-file/test/functional/1member.test.js.html#lineNumber10",
+    "1 member 🙂",
+    "test"
+  ],
+  [
+    "webgroup#constructor src/webchannelfacade.js~webgroup#constructor,webgroup#constructor",
+    "test-file/test/functional/1member.test.js.html#lineNumber13",
+    "1 member 🙂 constructor",
+    "test"
+  ],
+  [
+    "webgroup#join src/webchannelfacade.js~webgroup#join,webgroup#join",
+    "test-file/test/functional/1member.test.js.html#lineNumber65",
+    "1 member 🙂 joining",
+    "test"
+  ],
+  [
+    "webgroup#onmemberjoin src/webchannelfacade.js~webgroup#onmemberjoin,webgroup#onmemberjoin",
+    "test-file/test/functional/1member.test.js.html#lineNumber125",
+    "1 member 🙂 joining should NOT be notified about new member",
+    "test"
+  ],
+  [
+    "webgroup#onsignalingstatechange src/webchannelfacade.js~webgroup#onsignalingstatechange,webgroup#onsignalingstatechange",
+    "test-file/test/functional/1member.test.js.html#lineNumber85",
+    "1 member 🙂 joining should change the Signaling state",
+    "test"
+  ],
+  [
+    "webgroup#onstatechange src/webchannelfacade.js~webgroup#onstatechange,webgroup#onstatechange",
+    "test-file/test/functional/1member.test.js.html#lineNumber105",
+    "1 member 🙂 joining should change the WebGroup state",
+    "test"
+  ],
+  [
+    "",
+    "test-file/test/functional/1member.test.js.html#lineNumber140",
+    "1 member 🙂 joining should have the same members, WebGroup id, topology and NOT empty key once joined",
+    "test"
+  ],
+  [
+    "webgroup#join src/webchannelfacade.js~webgroup#join,webgroup#join",
+    "test-file/test/functional/1member.test.js.html#lineNumber167",
+    "1 member 🙂 joining should join with the specified key",
+    "test"
+  ],
+  [
+    "",
+    "test-file/test/functional/1member.test.js.html#lineNumber181",
+    "1 member 🙂 leaving",
+    "test"
+  ],
+  [
+    "webgroup#onmemberleave src/webchannelfacade.js~webgroup#onmemberleave,webgroup#onmemberleave",
+    "test-file/test/functional/1member.test.js.html#lineNumber221",
+    "1 member 🙂 leaving should be NOT notified about left member",
+    "test"
+  ],
+  [
+    "webgroup#onsignalingstatechange src/webchannelfacade.js~webgroup#onsignalingstatechange,webgroup#onsignalingstatechange",
+    "test-file/test/functional/1member.test.js.html#lineNumber258",
+    "1 member 🙂 leaving should change the Signaling state",
+    "test"
+  ],
+  [
+    "webgroup#onstatechange src/webchannelfacade.js~webgroup#onstatechange,webgroup#onstatechange",
+    "test-file/test/functional/1member.test.js.html#lineNumber237",
+    "1 member 🙂 leaving should change the WebGroup state",
+    "test"
+  ],
+  [
+    "webgroup#leave src/webchannelfacade.js~webgroup#leave,webgroup#leave",
+    "test-file/test/functional/1member.test.js.html#lineNumber194",
+    "1 member 🙂 leaving should have the same members, WebGroup id, topology and an empty key",
+    "test"
+  ],
+  [
+    "webgroup src/webchannelfacade.js~webgroup,webgroup",
+    "test-file/test/functional/2members.test.js.html#lineNumber10",
+    "2 members",
+    "test"
+  ],
+  [
+    "",
+    "test-file/test/functional/2members.test.js.html#lineNumber11",
+    "2 members 🙂 🙂",
+    "test"
+  ],
+  [
+    "webgroup#join src/webchannelfacade.js~webgroup#join,webgroup#join",
+    "test-file/test/functional/2members.test.js.html#lineNumber14",
+    "2 members 🙂 🙂 joining",
+    "test"
+  ],
+  [
+    "webgroup#onmemberjoin src/webchannelfacade.js~webgroup#onmemberjoin,webgroup#onmemberjoin",
+    "test-file/test/functional/2members.test.js.html#lineNumber117",
+    "2 members 🙂 🙂 joining should be notified about new member",
+    "test"
+  ],
+  [
+    "webgroup#onsignalingstatechange src/webchannelfacade.js~webgroup#onsignalingstatechange,webgroup#onsignalingstatechange",
+    "test-file/test/functional/2members.test.js.html#lineNumber69",
+    "2 members 🙂 🙂 joining should change the Signaling state",
+    "test"
+  ],
+  [
+    "webgroup#onstatechange src/webchannelfacade.js~webgroup#onstatechange,webgroup#onstatechange",
+    "test-file/test/functional/2members.test.js.html#lineNumber93",
+    "2 members 🙂 🙂 joining should change the WebGroup state",
+    "test"
+  ],
+  [
+    "",
+    "test-file/test/functional/2members.test.js.html#lineNumber145",
+    "2 members 🙂 🙂 joining should have the same members, key, WebGroup id, topology once joined",
+    "test"
+  ],
+  [
+    "webgroup#join src/webchannelfacade.js~webgroup#join,webgroup#join",
+    "test-file/test/functional/2members.test.js.html#lineNumber178",
+    "2 members 🙂 🙂 joining should join with the specified key",
+    "test"
+  ],
+  [
+    "",
+    "test-file/test/functional/2members.test.js.html#lineNumber370",
+    "2 members 🙂 🙂 leaving",
+    "test"
+  ],
+  [
+    "webgroup#onmemberleave src/webchannelfacade.js~webgroup#onmemberleave,webgroup#onmemberleave",
+    "test-file/test/functional/2members.test.js.html#lineNumber464",
+    "2 members 🙂 🙂 leaving should be notified about left member",
+    "test"
+  ],
+  [
+    "webgroup#onsignalingstatechange src/webchannelfacade.js~webgroup#onsignalingstatechange,webgroup#onsignalingstatechange",
+    "test-file/test/functional/2members.test.js.html#lineNumber508",
+    "2 members 🙂 🙂 leaving should change the Signaling state",
+    "test"
+  ],
+  [
+    "webgroup#onstatechange src/webchannelfacade.js~webgroup#onstatechange,webgroup#onstatechange",
+    "test-file/test/functional/2members.test.js.html#lineNumber489",
+    "2 members 🙂 🙂 leaving should change the WebGroup state",
+    "test"
+  ],
+  [
+    "webgroup#leave src/webchannelfacade.js~webgroup#leave,webgroup#leave",
+    "test-file/test/functional/2members.test.js.html#lineNumber430",
+    "2 members 🙂 🙂 leaving should have no members & an empty key",
+    "test"
+  ],
+  [
+    "",
+    "test-file/test/functional/2members.test.js.html#lineNumber206",
+    "2 members 🙂 🙂 should send/receive",
+    "test"
+  ],
+  [
+    "webgroup#send src/webchannelfacade.js~webgroup#send,webgroup#send",
+    "test-file/test/functional/2members.test.js.html#lineNumber291",
+    "2 members 🙂 🙂 should send/receive broadcast ArrayBuffer",
+    "test"
+  ],
+  [
+    "webgroup#send src/webchannelfacade.js~webgroup#send,webgroup#send",
+    "test-file/test/functional/2members.test.js.html#lineNumber266",
+    "2 members 🙂 🙂 should send/receive broadcast String",
+    "test"
+  ],
+  [
+    "webgroup#sendto src/webchannelfacade.js~webgroup#sendto,webgroup#sendto",
+    "test-file/test/functional/2members.test.js.html#lineNumber343",
+    "2 members 🙂 🙂 should send/receive private ArrayBuffer",
+    "test"
+  ],
+  [
+    "webgroup#sendto src/webchannelfacade.js~webgroup#sendto,webgroup#sendto",
+    "test-file/test/functional/2members.test.js.html#lineNumber318",
+    "2 members 🙂 🙂 should send/receive private String",
+    "test"
+  ],
+  [
+    "",
+    "test-file/test/functional/2members.test.js.html#lineNumber528",
+    "2 members 🙂 🤖",
+    "test"
+  ],
+  [
+    "webgroup#invite src/webchannelfacade.js~webgroup#invite,webgroup#invite",
+    "test-file/test/functional/2members.test.js.html#lineNumber531",
+    "2 members 🙂 🤖 inviting",
+    "test"
+  ],
+  [
+    "webgroup#onmemberjoin src/webchannelfacade.js~webgroup#onmemberjoin,webgroup#onmemberjoin",
+    "test-file/test/functional/2members.test.js.html#lineNumber592",
+    "2 members 🙂 🤖 inviting should be notified about new member",
+    "test"
+  ],
+  [
+    "webgroup#onstatechange src/webchannelfacade.js~webgroup#onstatechange,webgroup#onstatechange",
+    "test-file/test/functional/2members.test.js.html#lineNumber571",
+    "2 members 🙂 🤖 inviting should change the WebGroup state",
+    "test"
+  ],
+  [
+    "",
+    "test-file/test/functional/2members.test.js.html#lineNumber620",
+    "2 members 🙂 🤖 inviting should have the same members, WebGroup id, topology once joined",
+    "test"
+  ],
+  [
+    "webgroup#onsignalingstatechange src/webchannelfacade.js~webgroup#onsignalingstatechange,webgroup#onsignalingstatechange",
+    "test-file/test/functional/2members.test.js.html#lineNumber550",
+    "2 members 🙂 🤖 inviting should not change the Signaling state",
+    "test"
+  ],
+  [
+    "",
+    "test-file/test/functional/2members.test.js.html#lineNumber646",
+    "2 members 🙂 🤖 should send/receive",
+    "test"
+  ],
+  [
+    "webgroup#send src/webchannelfacade.js~webgroup#send,webgroup#send",
+    "test-file/test/functional/2members.test.js.html#lineNumber712",
+    "2 members 🙂 🤖 should send/receive broadcast ArrayBuffer",
+    "test"
+  ],
+  [
+    "webgroup#send src/webchannelfacade.js~webgroup#send,webgroup#send",
+    "test-file/test/functional/2members.test.js.html#lineNumber688",
+    "2 members 🙂 🤖 should send/receive broadcast String",
+    "test"
+  ],
+  [
+    "webgroup#sendto src/webchannelfacade.js~webgroup#sendto,webgroup#sendto",
+    "test-file/test/functional/2members.test.js.html#lineNumber760",
+    "2 members 🙂 🤖 should send/receive private ArrayBuffer",
+    "test"
+  ],
+  [
+    "webgroup#sendto src/webchannelfacade.js~webgroup#sendto,webgroup#sendto",
+    "test-file/test/functional/2members.test.js.html#lineNumber736",
+    "2 members 🙂 🤖 should send/receive private String",
+    "test"
+  ],
+  [
+    "webgroup src/webchannelfacade.js~webgroup,webgroup",
+    "test-file/test/functional/3members.test.js.html#lineNumber10",
+    "3 members",
+    "test"
+  ],
+  [
+    "",
+    "test-file/test/functional/3members.test.js.html#lineNumber11",
+    "3 members 🙂 🙂 🙂",
+    "test"
+  ],
+  [
+    "webgroup#join src/webchannelfacade.js~webgroup#join,webgroup#join",
+    "test-file/test/functional/3members.test.js.html#lineNumber15",
+    "3 members 🙂 🙂 🙂 joining",
+    "test"
+  ],
+  [
+    "webgroup#onmemberjoin src/webchannelfacade.js~webgroup#onmemberjoin,webgroup#onmemberjoin",
+    "test-file/test/functional/3members.test.js.html#lineNumber147",
+    "3 members 🙂 🙂 🙂 joining should be notified about new member",
+    "test"
+  ],
+  [
+    "webgroup#onsignalingstatechange src/webchannelfacade.js~webgroup#onsignalingstatechange,webgroup#onsignalingstatechange",
+    "test-file/test/functional/3members.test.js.html#lineNumber95",
+    "3 members 🙂 🙂 🙂 joining should change the Signaling state",
+    "test"
+  ],
+  [
+    "webgroup#onstatechange src/webchannelfacade.js~webgroup#onstatechange,webgroup#onstatechange",
+    "test-file/test/functional/3members.test.js.html#lineNumber121",
+    "3 members 🙂 🙂 🙂 joining should change the WebGroup state",
+    "test"
+  ],
+  [
+    "",
+    "test-file/test/functional/3members.test.js.html#lineNumber183",
+    "3 members 🙂 🙂 🙂 joining should have the same members, key, WebGroup id, topology once joined",
+    "test"
+  ],
+  [
+    "webgroup#onmemberleave src/webchannelfacade.js~webgroup#onmemberleave,webgroup#onmemberleave",
+    "test-file/test/functional/3members.test.js.html#lineNumber635",
+    "3 members 🙂 🙂 🙂 should be notified about left member",
+    "test"
+  ],
+  [
+    "webgroup#onsignalingstatechange src/webchannelfacade.js~webgroup#onsignalingstatechange,webgroup#onsignalingstatechange",
+    "test-file/test/functional/3members.test.js.html#lineNumber677",
+    "3 members 🙂 🙂 🙂 should change the Signaling state",
+    "test"
+  ],
+  [
+    "webgroup#onstatechange src/webchannelfacade.js~webgroup#onstatechange,webgroup#onstatechange",
+    "test-file/test/functional/3members.test.js.html#lineNumber661",
+    "3 members 🙂 🙂 🙂 should change the WebGroup state",
+    "test"
+  ],
+  [
+    "webgroup#leave src/webchannelfacade.js~webgroup#leave,webgroup#leave",
+    "test-file/test/functional/3members.test.js.html#lineNumber602",
+    "3 members 🙂 🙂 🙂 should have no members & an empty key",
+    "test"
+  ],
+  [
+    "",
+    "test-file/test/functional/3members.test.js.html#lineNumber216",
+    "3 members 🙂 🙂 🙂 should send/receive",
+    "test"
+  ],
+  [
+    "webgroup#send src/webchannelfacade.js~webgroup#send,webgroup#send",
+    "test-file/test/functional/3members.test.js.html#lineNumber356",
+    "3 members 🙂 🙂 🙂 should send/receive broadcast ArrayBuffer",
+    "test"
+  ],
+  [
+    "webgroup#send src/webchannelfacade.js~webgroup#send,webgroup#send",
+    "test-file/test/functional/3members.test.js.html#lineNumber307",
+    "3 members 🙂 🙂 🙂 should send/receive broadcast String",
+    "test"
+  ],
+  [
+    "webgroup#sendto src/webchannelfacade.js~webgroup#sendto,webgroup#sendto",
+    "test-file/test/functional/3members.test.js.html#lineNumber463",
+    "3 members 🙂 🙂 🙂 should send/receive private ArrayBuffer",
+    "test"
+  ],
+  [
+    "webgroup#sendto src/webchannelfacade.js~webgroup#sendto,webgroup#sendto",
+    "test-file/test/functional/3members.test.js.html#lineNumber408",
+    "3 members 🙂 🙂 🙂 should send/receive private String",
+    "test"
+  ],
+  [
+    "netflux/src/index.common.js~loglevel",
+    "class/src/index.common.js~LogLevel.html",
+    "<span>LogLevel</span> <span class=\"search-result-import-path\">netflux/src/index.common.js</span>",
+    "class"
+  ],
+  [
     "netflux/src/index.common.js~signalingstate",
     "class/src/index.common.js~SignalingState.html",
     "<span>SignalingState</span> <span class=\"search-result-import-path\">netflux/src/index.common.js</span>",
@@ -30,148 +390,10 @@ window.esdocSearchIndex = [
     "class"
   ],
   [
-    "netflux/src/index.common.js~enablelog",
-    "function/index.html#static-function-enableLog",
-    "<span>enableLog</span> <span class=\"search-result-import-path\">netflux/src/index.common.js</span>",
+    "netflux/src/index.common.js~setloglevel",
+    "function/index.html#static-function-setLogLevel",
+    "<span>setLogLevel</span> <span class=\"search-result-import-path\">netflux/src/index.common.js</span>",
     "function"
-  ],
-  [
-    "webgroup src/webchannelfacade.js~webgroup,webgroup",
-    "test-file/test/functional/1member.test.js.html#lineNumber6",
-    "Alone",
-    "test"
-  ],
-  [
-    "webgroup#closesignaling src/webchannelfacade.js~webgroup#closesignaling,webgroup#closesignaling",
-    "test-file/test/functional/1member.test.js.html#lineNumber192",
-    "Alone closeSignaling",
-    "test"
-  ],
-  [
-    "webgroup#closesignaling src/webchannelfacade.js~webgroup#closesignaling,webgroup#closesignaling",
-    "test-file/test/functional/1member.test.js.html#lineNumber220",
-    "Alone closeSignaling should close the connection with Signaling server and leave the group after calling join",
-    "test"
-  ],
-  [
-    "webgroup#closesignaling src/webchannelfacade.js~webgroup#closesignaling,webgroup#closesignaling",
-    "test-file/test/functional/1member.test.js.html#lineNumber197",
-    "Alone closeSignaling should do nothing",
-    "test"
-  ],
-  [
-    "webgroup#constructor src/webchannelfacade.js~webgroup#constructor,webgroup#constructor",
-    "test-file/test/functional/1member.test.js.html#lineNumber8",
-    "Alone constructor",
-    "test"
-  ],
-  [
-    "webgroup#join src/webchannelfacade.js~webgroup#join,webgroup#join",
-    "test-file/test/functional/1member.test.js.html#lineNumber46",
-    "Alone join",
-    "test"
-  ],
-  [
-    "webgroup#join src/webchannelfacade.js~webgroup#join,webgroup#join",
-    "test-file/test/functional/1member.test.js.html#lineNumber121",
-    "Alone join should join with a provided key",
-    "test"
-  ],
-  [
-    "webgroup#join src/webchannelfacade.js~webgroup#join,webgroup#join",
-    "test-file/test/functional/1member.test.js.html#lineNumber113",
-    "Alone join should join without a provided key",
-    "test"
-  ],
-  [
-    "webgroup#join src/webchannelfacade.js~webgroup#join,webgroup#join",
-    "test-file/test/functional/1member.test.js.html#lineNumber157",
-    "Alone join should throw an error, because the key is an empty string",
-    "test"
-  ],
-  [
-    "webgroup#join src/webchannelfacade.js~webgroup#join,webgroup#join",
-    "test-file/test/functional/1member.test.js.html#lineNumber148",
-    "Alone join should throw an error, because the key is not a \"string\"",
-    "test"
-  ],
-  [
-    "webgroup#join src/webchannelfacade.js~webgroup#join,webgroup#join",
-    "test-file/test/functional/1member.test.js.html#lineNumber166",
-    "Alone join should throw an error, because the key length is too long",
-    "test"
-  ],
-  [
-    "webgroup src/webchannelfacade.js~webgroup,webgroup",
-    "test-file/test/functional/manyMembers.test.js.html#lineNumber23",
-    "Many members",
-    "test"
-  ],
-  [
-    "",
-    "test-file/test/functional/manyMembers.test.js.html#lineNumber129",
-    "Many members ",
-    "test"
-  ],
-  [
-    "webgroup#leave src/webchannelfacade.js~webgroup#leave,webgroup#leave",
-    "test-file/test/functional/manyMembers.test.js.html#lineNumber148",
-    "Many members Should leave",
-    "test"
-  ],
-  [
-    "",
-    "test-file/test/functional/manyMembers.test.js.html#lineNumber152",
-    "Many members Should leave ",
-    "test"
-  ],
-  [
-    "webgroup#ping src/webchannelfacade.js~webgroup#ping,webgroup#ping",
-    "test-file/test/functional/manyMembers.test.js.html#lineNumber91",
-    "Many members Should ping",
-    "test"
-  ],
-  [
-    "",
-    "test-file/test/functional/manyMembers.test.js.html#lineNumber95",
-    "Many members Should ping ",
-    "test"
-  ],
-  [
-    "",
-    "test-file/test/functional/manyMembers.test.js.html#lineNumber105",
-    "Many members Should send/receive",
-    "test"
-  ],
-  [
-    "webgroup#sendto src/webchannelfacade.js~webgroup#sendto,webgroup#sendto",
-    "test-file/test/functional/manyMembers.test.js.html#lineNumber110",
-    "Many members Should send/receive ",
-    "test"
-  ],
-  [
-    "webgroup#send src/webchannelfacade.js~webgroup#send,webgroup#send",
-    "test-file/test/functional/manyMembers.test.js.html#lineNumber119",
-    "Many members Should send/receive  ",
-    "test"
-  ],
-  [
-    "",
-    "test-file/test/functional/manyMembers.test.js.html#lineNumber111",
-    "Many members Should send/receive  ",
-    "test"
-  ],
-  [
-    "webgroup#join src/webchannelfacade.js~webgroup#join,webgroup#join",
-    "test-file/test/functional/manyMembers.test.js.html#lineNumber25",
-    "Many members should join",
-    "test"
-  ],
-  [
-    "",
-    "test-file/test/functional/manyMembers.test.js.html#lineNumber29",
-    "Many members should join ",
-    "test"
   ],
   [
     "src/botserverfacade.js",
@@ -238,12 +460,6 @@ window.esdocSearchIndex = [
     "class/src/WebChannelFacade.js~WebGroup.html#instance-member-autoRejoin",
     "src/WebChannelFacade.js~WebGroup#autoRejoin",
     "member"
-  ],
-  [
-    "src/webchannelfacade.js~webgroup#closesignaling",
-    "class/src/WebChannelFacade.js~WebGroup.html#instance-method-closeSignaling",
-    "src/WebChannelFacade.js~WebGroup#closeSignaling",
-    "method"
   ],
   [
     "src/webchannelfacade.js~webgroup#constructor",
@@ -324,12 +540,6 @@ window.esdocSearchIndex = [
     "member"
   ],
   [
-    "src/webchannelfacade.js~webgroup#ping",
-    "class/src/WebChannelFacade.js~WebGroup.html#instance-method-ping",
-    "src/WebChannelFacade.js~WebGroup#ping",
-    "method"
-  ],
-  [
     "src/webchannelfacade.js~webgroup#send",
     "class/src/WebChannelFacade.js~WebGroup.html#instance-method-send",
     "src/WebChannelFacade.js~WebGroup#send",
@@ -342,15 +552,15 @@ window.esdocSearchIndex = [
     "method"
   ],
   [
-    "src/webchannelfacade.js~webgroup#signalingstate",
-    "class/src/WebChannelFacade.js~WebGroup.html#instance-member-signalingState",
-    "src/WebChannelFacade.js~WebGroup#signalingState",
+    "src/webchannelfacade.js~webgroup#signalingserver",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-member-signalingServer",
+    "src/WebChannelFacade.js~WebGroup#signalingServer",
     "member"
   ],
   [
-    "src/webchannelfacade.js~webgroup#signalingurl",
-    "class/src/WebChannelFacade.js~WebGroup.html#instance-member-signalingURL",
-    "src/WebChannelFacade.js~WebGroup#signalingURL",
+    "src/webchannelfacade.js~webgroup#signalingstate",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-member-signalingState",
+    "src/WebChannelFacade.js~WebGroup#signalingState",
     "member"
   ],
   [
@@ -378,6 +588,12 @@ window.esdocSearchIndex = [
     "member"
   ],
   [
+    "src/webchannelfacade.js~webgroupstate.leaving",
+    "class/src/WebChannelFacade.js~WebGroupState.html#static-get-LEAVING",
+    "src/WebChannelFacade.js~WebGroupState.LEAVING",
+    "member"
+  ],
+  [
     "src/webchannelfacade.js~webgroupstate.left",
     "class/src/WebChannelFacade.js~WebGroupState.html#static-get-LEFT",
     "src/WebChannelFacade.js~WebGroupState.LEFT",
@@ -396,6 +612,12 @@ window.esdocSearchIndex = [
     "member"
   ],
   [
+    "src/webchannelfacade.js~webgroupstate.[webgroupstate.leaving]",
+    "class/src/WebChannelFacade.js~WebGroupState.html#static-get-[WebGroupState.LEAVING]",
+    "src/WebChannelFacade.js~WebGroupState.[WebGroupState.LEAVING]",
+    "member"
+  ],
+  [
     "src/webchannelfacade.js~webgroupstate.[webgroupstate.left]",
     "class/src/WebChannelFacade.js~WebGroupState.html#static-get-[WebGroupState.LEFT]",
     "src/WebChannelFacade.js~WebGroupState.[WebGroupState.LEFT]",
@@ -406,6 +628,90 @@ window.esdocSearchIndex = [
     "file/src/index.common.js.html",
     "src/index.common.js",
     "file"
+  ],
+  [
+    "src/index.common.js~loglevel.channel",
+    "class/src/index.common.js~LogLevel.html#static-get-CHANNEL",
+    "src/index.common.js~LogLevel.CHANNEL",
+    "member"
+  ],
+  [
+    "src/index.common.js~loglevel.channel_builder",
+    "class/src/index.common.js~LogLevel.html#static-get-CHANNEL_BUILDER",
+    "src/index.common.js~LogLevel.CHANNEL_BUILDER",
+    "member"
+  ],
+  [
+    "src/index.common.js~loglevel.debug",
+    "class/src/index.common.js~LogLevel.html#static-get-DEBUG",
+    "src/index.common.js~LogLevel.DEBUG",
+    "member"
+  ],
+  [
+    "src/index.common.js~loglevel.signaling",
+    "class/src/index.common.js~LogLevel.html#static-get-SIGNALING",
+    "src/index.common.js~LogLevel.SIGNALING",
+    "member"
+  ],
+  [
+    "src/index.common.js~loglevel.topology",
+    "class/src/index.common.js~LogLevel.html#static-get-TOPOLOGY",
+    "src/index.common.js~LogLevel.TOPOLOGY",
+    "member"
+  ],
+  [
+    "src/index.common.js~loglevel.webrtc",
+    "class/src/index.common.js~LogLevel.html#static-get-WEBRTC",
+    "src/index.common.js~LogLevel.WEBRTC",
+    "member"
+  ],
+  [
+    "src/index.common.js~loglevel.web_group",
+    "class/src/index.common.js~LogLevel.html#static-get-WEB_GROUP",
+    "src/index.common.js~LogLevel.WEB_GROUP",
+    "member"
+  ],
+  [
+    "src/index.common.js~loglevel.[logs.channel]",
+    "class/src/index.common.js~LogLevel.html#static-get-[Logs.CHANNEL]",
+    "src/index.common.js~LogLevel.[Logs.CHANNEL]",
+    "member"
+  ],
+  [
+    "src/index.common.js~loglevel.[logs.channel_builder]",
+    "class/src/index.common.js~LogLevel.html#static-get-[Logs.CHANNEL_BUILDER]",
+    "src/index.common.js~LogLevel.[Logs.CHANNEL_BUILDER]",
+    "member"
+  ],
+  [
+    "src/index.common.js~loglevel.[logs.debug]",
+    "class/src/index.common.js~LogLevel.html#static-get-[Logs.DEBUG]",
+    "src/index.common.js~LogLevel.[Logs.DEBUG]",
+    "member"
+  ],
+  [
+    "src/index.common.js~loglevel.[logs.signaling]",
+    "class/src/index.common.js~LogLevel.html#static-get-[Logs.SIGNALING]",
+    "src/index.common.js~LogLevel.[Logs.SIGNALING]",
+    "member"
+  ],
+  [
+    "src/index.common.js~loglevel.[logs.topology]",
+    "class/src/index.common.js~LogLevel.html#static-get-[Logs.TOPOLOGY]",
+    "src/index.common.js~LogLevel.[Logs.TOPOLOGY]",
+    "member"
+  ],
+  [
+    "src/index.common.js~loglevel.[logs.webrtc]",
+    "class/src/index.common.js~LogLevel.html#static-get-[Logs.WEBRTC]",
+    "src/index.common.js~LogLevel.[Logs.WEBRTC]",
+    "member"
+  ],
+  [
+    "src/index.common.js~loglevel.[logs.web_group]",
+    "class/src/index.common.js~LogLevel.html#static-get-[Logs.WEB_GROUP]",
+    "src/index.common.js~LogLevel.[Logs.WEB_GROUP]",
+    "member"
   ],
   [
     "src/index.common.js~nodejshttpserver",
@@ -420,9 +726,9 @@ window.esdocSearchIndex = [
     "external"
   ],
   [
-    "src/index.common.js~rtciceserver",
-    "https://developer.mozilla.org/en/docs/Web/API/RTCIceServer",
-    "src/index.common.js~RTCIceServer",
+    "src/index.common.js~rtcconfiguration",
+    "https://developer.mozilla.org/en/docs/Web/API/RTCConfiguration",
+    "src/index.common.js~RTCConfiguration",
     "external"
   ],
   [
@@ -432,9 +738,15 @@ window.esdocSearchIndex = [
     "member"
   ],
   [
-    "src/index.common.js~signalingstate.connected_with_first_member",
-    "class/src/index.common.js~SignalingState.html#static-get-CONNECTED_WITH_FIRST_MEMBER",
-    "src/index.common.js~SignalingState.CONNECTED_WITH_FIRST_MEMBER",
+    "src/index.common.js~signalingstate.closing",
+    "class/src/index.common.js~SignalingState.html#static-get-CLOSING",
+    "src/index.common.js~SignalingState.CLOSING",
+    "member"
+  ],
+  [
+    "src/index.common.js~signalingstate.connected",
+    "class/src/index.common.js~SignalingState.html#static-get-CONNECTED",
+    "src/index.common.js~SignalingState.CONNECTED",
     "member"
   ],
   [
@@ -444,15 +756,9 @@ window.esdocSearchIndex = [
     "member"
   ],
   [
-    "src/index.common.js~signalingstate.open",
-    "class/src/index.common.js~SignalingState.html#static-get-OPEN",
-    "src/index.common.js~SignalingState.OPEN",
-    "member"
-  ],
-  [
-    "src/index.common.js~signalingstate.ready_to_join_others",
-    "class/src/index.common.js~SignalingState.html#static-get-READY_TO_JOIN_OTHERS",
-    "src/index.common.js~SignalingState.READY_TO_JOIN_OTHERS",
+    "src/index.common.js~signalingstate.stable",
+    "class/src/index.common.js~SignalingState.html#static-get-STABLE",
+    "src/index.common.js~SignalingState.STABLE",
     "member"
   ],
   [
@@ -462,9 +768,15 @@ window.esdocSearchIndex = [
     "member"
   ],
   [
-    "src/index.common.js~signalingstate.[signalingstate.connected_with_first_member]",
-    "class/src/index.common.js~SignalingState.html#static-get-[SignalingState.CONNECTED_WITH_FIRST_MEMBER]",
-    "src/index.common.js~SignalingState.[SignalingState.CONNECTED_WITH_FIRST_MEMBER]",
+    "src/index.common.js~signalingstate.[signalingstate.closing]",
+    "class/src/index.common.js~SignalingState.html#static-get-[SignalingState.CLOSING]",
+    "src/index.common.js~SignalingState.[SignalingState.CLOSING]",
+    "member"
+  ],
+  [
+    "src/index.common.js~signalingstate.[signalingstate.connected]",
+    "class/src/index.common.js~SignalingState.html#static-get-[SignalingState.CONNECTED]",
+    "src/index.common.js~SignalingState.[SignalingState.CONNECTED]",
     "member"
   ],
   [
@@ -474,15 +786,9 @@ window.esdocSearchIndex = [
     "member"
   ],
   [
-    "src/index.common.js~signalingstate.[signalingstate.open]",
-    "class/src/index.common.js~SignalingState.html#static-get-[SignalingState.OPEN]",
-    "src/index.common.js~SignalingState.[SignalingState.OPEN]",
-    "member"
-  ],
-  [
-    "src/index.common.js~signalingstate.[signalingstate.ready_to_join_others]",
-    "class/src/index.common.js~SignalingState.html#static-get-[SignalingState.READY_TO_JOIN_OTHERS]",
-    "src/index.common.js~SignalingState.[SignalingState.READY_TO_JOIN_OTHERS]",
+    "src/index.common.js~signalingstate.[signalingstate.stable]",
+    "class/src/index.common.js~SignalingState.html#static-get-[SignalingState.STABLE]",
+    "src/index.common.js~SignalingState.[SignalingState.STABLE]",
     "member"
   ],
   [
@@ -522,9 +828,15 @@ window.esdocSearchIndex = [
     "testFile"
   ],
   [
-    "test/functional/manymembers.test.js",
-    "test-file/test/functional/manyMembers.test.js.html",
-    "test/functional/manyMembers.test.js",
+    "test/functional/2members.test.js",
+    "test-file/test/functional/2members.test.js.html",
+    "test/functional/2members.test.js",
+    "testFile"
+  ],
+  [
+    "test/functional/3members.test.js",
+    "test-file/test/functional/3members.test.js.html",
+    "test/functional/3members.test.js",
     "testFile"
   ]
 ]

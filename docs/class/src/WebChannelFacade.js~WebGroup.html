@@ -32,28 +32,29 @@
   <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/BotServerFacade.js~WebGroupBotServer.html">WebGroupBotServer</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroupState.html">WebGroupState</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.js~LogLevel.html">LogLevel</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.js~SignalingState.html">SignalingState</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.js~Topology.html">Topology</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-enableLog">enableLog</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-setLogLevel">setLogLevel</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-DataType">DataType</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupBotServerOptions">WebGroupBotServerOptions</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupOptions">WebGroupOptions</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/http.html#http_class_http_server">NodeJSHttpServer</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/https.html#https_class_https_server">NodeJSHttpsServer</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://developer.mozilla.org/en/docs/Web/API/RTCIceServer">RTCIceServer</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://developer.mozilla.org/en/docs/Web/API/RTCConfiguration">RTCConfiguration</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array">Uint8Array</a></span></span></li>
 </ul>
 </div>
 </nav>
 
 <div class="content" data-ice="content"><div class="header-notice">
-  <div data-ice="importPath" class="import-path"><pre class="prettyprint"><code data-ice="importPathCode">import {WebGroup} from &apos;<span><a href="file/src/WebChannelFacade.js.html#lineNumber86">netflux/src/WebChannelFacade.js</a></span>&apos;</code></pre></div>
+  <div data-ice="importPath" class="import-path"><pre class="prettyprint"><code data-ice="importPathCode">import {WebGroup} from &apos;<span><a href="file/src/WebChannelFacade.js.html#lineNumber98">netflux/src/WebChannelFacade.js</a></span>&apos;</code></pre></div>
   <span data-ice="access">public</span>
   <span data-ice="kind">class</span>
   
   
   
-  <span data-ice="source">| <span><a href="file/src/WebChannelFacade.js.html#lineNumber86">source</a></span></span>
+  <span data-ice="source">| <span><a href="file/src/WebChannelFacade.js.html#lineNumber98">source</a></span></span>
 </div>
 
 <div class="self-detail detail">
@@ -90,17 +91,19 @@ as well as personal messages, invite other persons or bots (see <span><a href="c
 // specified Signaling and ICE servers for WebRTC.
 
 const wg = new WebGroup({
-  signalingURL: &apos;wss://mysignaling.com&apos;
-  iceServers: [
-    {
-      urls: &apos;stun.l.google.com:19302&apos;
-    },
-    {
-      urls: [&apos;turn:myturn.com?transport=udp&apos;, &apos;turn:myturn?transport=tcp&apos;],
-      username: &apos;user&apos;,
-      password: &apos;password&apos;
-    }
-  ]
+  signalingServer: &apos;wss://mysignaling.com&apos;,
+  rtcConfiguration: {
+    iceServers: [
+      {
+        urls: &apos;stun.l.google.com:19302&apos;
+      },
+      {
+        urls: [&apos;turn:myturn.com?transport=udp&apos;, &apos;turn:myturn?transport=tcp&apos;],
+        username: &apos;user&apos;,
+        password: &apos;password&apos;
+      }
+    ]
+  }
 })
 
 wg.onMemberJoin = (id) =&gt; {
@@ -109,7 +112,7 @@ wg.onMemberJoin = (id) =&gt; {
 wg.onMemberLeave = (id) =&gt; {
   // YOUR CODE...
 }
-wg.onMessage = (id, data, isBroadcast) =&gt; {
+wg.onMessage = (id, data) =&gt; {
   // YOUR CODE...
 }
 wg.onStateChange = (state) =&gt; {
@@ -125,8 +128,9 @@ wg.onSignalingStateChange = (state) =&gt; {
     <h4>Test:</h4>
     <ul>
       
-    <li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber6">Alone</a></span></li>
-<li data-ice="test"><span><a href="test-file/test/functional/manyMembers.test.js.html#lineNumber23">Many members</a></span></li>
+    <li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber9">1 member</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber10">2 members</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/3members.test.js.html#lineNumber10">3 members</a></span></li>
 </ul>
   </div>
 
@@ -391,7 +395,7 @@ wg.onSignalingStateChange = (state) =&gt; {
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-member-onMessage">onMessage</a></span></span><span class="code" data-ice="signature">: <span><span>function</span><span>(id: <span>number</span>, data: <span><a href="typedef/index.html#static-typedef-DataType">DataType</a></span>, isBroadcast: <span>boolean</span>)</span></span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-member-onMessage">onMessage</a></span></span><span class="code" data-ice="signature">: <span><span>function</span><span>(id: <span>number</span>, data: <span><a href="typedef/index.html#static-typedef-DataType">DataType</a></span>)</span></span></span>
         </p>
       </div>
       <div>
@@ -478,13 +482,13 @@ wg.onSignalingStateChange = (state) =&gt; {
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-member-signalingState">signalingState</a></span></span><span class="code" data-ice="signature">: <span><a href="class/src/index.common.js~SignalingState.html">SignalingState</a></span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-member-signalingServer">signalingServer</a></span></span><span class="code" data-ice="signature">: <span>string</span></span>
         </p>
       </div>
       <div>
         
         
-        <div data-ice="description"><p>The read-only state of the signaling server.</p>
+        <div data-ice="description"><p>The read-only signaling server URL.</p>
 </div>
       </div>
     </td>
@@ -507,13 +511,13 @@ wg.onSignalingStateChange = (state) =&gt; {
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-member-signalingURL">signalingURL</a></span></span><span class="code" data-ice="signature">: <span>string</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-member-signalingState">signalingState</a></span></span><span class="code" data-ice="signature">: <span><a href="class/src/index.common.js~SignalingState.html">SignalingState</a></span></span>
         </p>
       </div>
       <div>
         
         
-        <div data-ice="description"><p>The read-only signaling server URL.</p>
+        <div data-ice="description"><p>The read-only state of the signaling server.</p>
 </div>
       </div>
     </td>
@@ -589,35 +593,6 @@ indicating the topology used for this <span><a href="class/src/WebChannelFacade.
   <tbody>
   
   <tr data-ice="target">
-    <td>
-      <span class="access" data-ice="access">public</span>
-      
-      
-      
-      <span class="override" data-ice="override"></span>
-    </td>
-    <td>
-      <div>
-        <p>
-          
-          
-          
-          <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-method-closeSignaling">closeSignaling</a></span></span><span class="code" data-ice="signature">()</span>
-        </p>
-      </div>
-      <div>
-        
-        
-        <div data-ice="description"><p>Close the connection with Signaling server.</p>
-</div>
-      </div>
-    </td>
-    <td>
-      
-      
-    </td>
-  </tr>
-<tr data-ice="target">
     <td>
       <span class="access" data-ice="access">public</span>
       
@@ -719,35 +694,6 @@ with the Signaling server.</p>
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-method-ping">ping</a></span></span><span class="code" data-ice="signature">(): <span>Promise</span>&lt;<span>number</span>&gt;</span>
-        </p>
-      </div>
-      <div>
-        
-        
-        <div data-ice="description"><p>Get web group latency</p>
-</div>
-      </div>
-    </td>
-    <td>
-      
-      
-    </td>
-  </tr>
-<tr data-ice="target">
-    <td>
-      <span class="access" data-ice="access">public</span>
-      
-      
-      
-      <span class="override" data-ice="override"></span>
-    </td>
-    <td>
-      <div>
-        <p>
-          
-          
-          
           <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-method-send">send</a></span></span><span class="code" data-ice="signature">(data: <span><a href="typedef/index.html#static-typedef-DataType">DataType</a></span>)</span>
         </p>
       </div>
@@ -814,7 +760,7 @@ with the Signaling server.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber94">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber106">source</a></span></span>
     </span>
   </h3>
 
@@ -847,17 +793,17 @@ with the Signaling server.</p>
       <td data-ice="description"></td>
     </tr>
 <tr data-ice="property" data-depth="1">
-      <td data-ice="name" class="code" data-depth="1">options.signalingURL</td>
+      <td data-ice="name" class="code" data-depth="1">options.signalingServer</td>
       <td data-ice="type" class="code"><span>string</span></td>
       <td data-ice="appendix"><ul><li>optional</li>
 <li>default: &apos;wss://signaling.netflux.coedit.re&apos;</li></ul></td>
       <td data-ice="description"></td>
     </tr>
 <tr data-ice="property" data-depth="1">
-      <td data-ice="name" class="code" data-depth="1">options.iceServers</td>
-      <td data-ice="type" class="code"><span><span><a href="https://developer.mozilla.org/en/docs/Web/API/RTCIceServer">RTCIceServer</a></span><span>[]</span></span></td>
+      <td data-ice="name" class="code" data-depth="1">options.rtcConfiguration</td>
+      <td data-ice="type" class="code"><span><a href="https://developer.mozilla.org/en/docs/Web/API/RTCConfiguration">RTCConfiguration</a></span></td>
       <td data-ice="appendix"><ul><li>optional</li>
-<li>default: [{urls: &apos;stun:stun3.l.google.com:19302&apos;}]</li></ul></td>
+<li>default: {iceServers: [{urls: &apos;stun:stun3.l.google.com:19302&apos;}]}</li></ul></td>
       <td data-ice="description"></td>
     </tr>
 <tr data-ice="property" data-depth="1">
@@ -888,7 +834,7 @@ with the Signaling server.</p>
     <h4>Test:</h4>
     <ul>
       
-    <li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber8">Alone constructor</a></span></li>
+    <li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber13">1 member &#x1F642; constructor</a></span></li>
 </ul>
   </div>
 
@@ -910,7 +856,7 @@ with the Signaling server.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber156">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber171">source</a></span></span>
     </span>
   </h3>
 
@@ -954,7 +900,7 @@ with the Signaling server.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber101">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber113">source</a></span></span>
     </span>
   </h3>
 
@@ -998,7 +944,7 @@ with the Signaling server.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber115">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber127">source</a></span></span>
     </span>
   </h3>
 
@@ -1044,7 +990,7 @@ in order to join new members, on the other hand Signaling does not know <span><a
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber121">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber133">source</a></span></span>
     </span>
   </h3>
 
@@ -1088,7 +1034,7 @@ in order to join new members, on the other hand Signaling does not know <span><a
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber107">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber119">source</a></span></span>
     </span>
   </h3>
 
@@ -1132,7 +1078,7 @@ in order to join new members, on the other hand Signaling does not know <span><a
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber188">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber202">source</a></span></span>
     </span>
   </h3>
 
@@ -1159,7 +1105,16 @@ in order to join new members, on the other hand Signaling does not know <span><a
 
   
 
-  
+  <div data-ice="tests">
+    <h4>Test:</h4>
+    <ul>
+      
+    <li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber117">2 members &#x1F642; &#x1F642; joining should be notified about new member</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber592">2 members &#x1F642; &#x1F916; inviting should be notified about new member</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/3members.test.js.html#lineNumber147">3 members &#x1F642; &#x1F642; &#x1F642; joining should be notified about new member</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber125">1 member &#x1F642; joining should NOT be notified about new member</a></span></li>
+</ul>
+  </div>
 
   
   
@@ -1176,7 +1131,7 @@ in order to join new members, on the other hand Signaling does not know <span><a
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber206">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber220">source</a></span></span>
     </span>
   </h3>
 
@@ -1203,7 +1158,15 @@ in order to join new members, on the other hand Signaling does not know <span><a
 
   
 
-  
+  <div data-ice="tests">
+    <h4>Test:</h4>
+    <ul>
+      
+    <li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber221">1 member &#x1F642; leaving should be NOT notified about left member</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber464">2 members &#x1F642; &#x1F642; leaving should be notified about left member</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/3members.test.js.html#lineNumber635">3 members &#x1F642; &#x1F642; &#x1F642; should be notified about left member</a></span></li>
+</ul>
+  </div>
 
   
   
@@ -1216,11 +1179,11 @@ in order to join new members, on the other hand Signaling does not know <span><a
     
     
     
-    <span class="code" data-ice="name">onMessage</span><span class="code" data-ice="signature">: <span><span>function</span><span>(id: <span>number</span>, data: <span><a href="typedef/index.html#static-typedef-DataType">DataType</a></span>, isBroadcast: <span>boolean</span>)</span></span></span>
+    <span class="code" data-ice="name">onMessage</span><span class="code" data-ice="signature">: <span><span>function</span><span>(id: <span>number</span>, data: <span><a href="typedef/index.html#static-typedef-DataType">DataType</a></span>)</span></span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber170">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber184">source</a></span></span>
     </span>
   </h3>
 
@@ -1229,7 +1192,6 @@ in order to join new members, on the other hand Signaling does not know <span><a
   
   <div data-ice="description"><p>This handler is called when a message has been received from the group.
 <code>id</code> is an identifier of the member who sent this message.
-<code>isBroadcast</code> aquals to true if the data is sent via <span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-method-send">WebGroup#send</a></span>
 and false if sent via <span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-method-sendTo">WebGroup#sendTo</a></span>.</p>
 </div>
 
@@ -1267,7 +1229,7 @@ and false if sent via <span><a href="class/src/WebChannelFacade.js~WebGroup.html
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber242">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber256">source</a></span></span>
     </span>
   </h3>
 
@@ -1294,7 +1256,19 @@ and false if sent via <span><a href="class/src/WebChannelFacade.js~WebGroup.html
 
   
 
-  
+  <div data-ice="tests">
+    <h4>Test:</h4>
+    <ul>
+      
+    <li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber258">1 member &#x1F642; leaving should change the Signaling state</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber69">2 members &#x1F642; &#x1F642; joining should change the Signaling state</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber508">2 members &#x1F642; &#x1F642; leaving should change the Signaling state</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber550">2 members &#x1F642; &#x1F916; inviting should not change the Signaling state</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber85">1 member &#x1F642; joining should change the Signaling state</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/3members.test.js.html#lineNumber95">3 members &#x1F642; &#x1F642; &#x1F642; joining should change the Signaling state</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/3members.test.js.html#lineNumber677">3 members &#x1F642; &#x1F642; &#x1F642; should change the Signaling state</a></span></li>
+</ul>
+  </div>
 
   
   
@@ -1311,7 +1285,7 @@ and false if sent via <span><a href="class/src/WebChannelFacade.js~WebGroup.html
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber224">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber238">source</a></span></span>
     </span>
   </h3>
 
@@ -1319,6 +1293,62 @@ and false if sent via <span><a href="class/src/WebChannelFacade.js~WebGroup.html
   
   
   <div data-ice="description"><p>This handler is called when the group state has changed.</p>
+</div>
+
+  
+
+  <div data-ice="properties">
+</div>
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  <div data-ice="tests">
+    <h4>Test:</h4>
+    <ul>
+      
+    <li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber237">1 member &#x1F642; leaving should change the WebGroup state</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber93">2 members &#x1F642; &#x1F642; joining should change the WebGroup state</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber489">2 members &#x1F642; &#x1F642; leaving should change the WebGroup state</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber571">2 members &#x1F642; &#x1F916; inviting should change the WebGroup state</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/3members.test.js.html#lineNumber121">3 members &#x1F642; &#x1F642; &#x1F642; joining should change the WebGroup state</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber105">1 member &#x1F642; joining should change the WebGroup state</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/3members.test.js.html#lineNumber661">3 members &#x1F642; &#x1F642; &#x1F642; should change the WebGroup state</a></span></li>
+</ul>
+  </div>
+
+  
+  
+</div>
+<div class="detail" data-ice="detail">
+  <h3 data-ice="anchor" id="instance-member-signalingServer">
+    <span class="access" data-ice="access">public</span>
+    
+    
+    
+    
+    
+    <span class="code" data-ice="name">signalingServer</span><span class="code" data-ice="signature">: <span>string</span></span>
+    <span class="right-info">
+      
+      
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber162">source</a></span></span>
+    </span>
+  </h3>
+
+  
+  
+  
+  <div data-ice="description"><p>The read-only signaling server URL.</p>
 </div>
 
   
@@ -1355,7 +1385,7 @@ and false if sent via <span><a href="class/src/WebChannelFacade.js~WebGroup.html
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber140">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber152">source</a></span></span>
     </span>
   </h3>
 
@@ -1363,50 +1393,6 @@ and false if sent via <span><a href="class/src/WebChannelFacade.js~WebGroup.html
   
   
   <div data-ice="description"><p>The read-only state of the signaling server.</p>
-</div>
-
-  
-
-  <div data-ice="properties">
-</div>
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-  
-</div>
-<div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="instance-member-signalingURL">
-    <span class="access" data-ice="access">public</span>
-    
-    
-    
-    
-    
-    <span class="code" data-ice="name">signalingURL</span><span class="code" data-ice="signature">: <span>string</span></span>
-    <span class="right-info">
-      
-      
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber150">source</a></span></span>
-    </span>
-  </h3>
-
-  
-  
-  
-  <div data-ice="description"><p>The read-only signaling server URL.</p>
 </div>
 
   
@@ -1443,7 +1429,7 @@ and false if sent via <span><a href="class/src/WebChannelFacade.js~WebGroup.html
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber134">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber146">source</a></span></span>
     </span>
   </h3>
 
@@ -1487,7 +1473,7 @@ and false if sent via <span><a href="class/src/WebChannelFacade.js~WebGroup.html
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber128">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber140">source</a></span></span>
     </span>
   </h3>
 
@@ -1524,62 +1510,6 @@ indicating the topology used for this <span><a href="class/src/WebChannelFacade.
 <div data-ice="methodDetails"><h2 data-ice="title">Public Methods</h2>
 
 <div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="instance-method-closeSignaling">
-    <span class="access" data-ice="access">public</span>
-    
-    
-    
-    
-    
-    <span class="code" data-ice="name">closeSignaling</span><span class="code" data-ice="signature">()</span>
-    <span class="right-info">
-      
-      
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber277">source</a></span></span>
-    </span>
-  </h3>
-
-  
-  
-  
-  <div data-ice="description"><p>Close the connection with Signaling server. It fires Signaling state event
-if <span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-member-signalingState">WebGroup#signalingState</a></span> value does not equal to
-<span><a href="class/src/index.common.js~SignalingState.html#static-get-CLOSED">SignalingState.CLOSED</a></span> already.It may also fire state event only
-if there is no one left in the group.
-value does not equal to <span><a href="class/src/index.common.js~SignalingState.html#static-get-CLOSED">SignalingState.CLOSED</a></span> already.</p>
-</div>
-
-  
-
-  <div data-ice="properties">
-</div>
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  <div data-ice="tests">
-    <h4>Test:</h4>
-    <ul>
-      
-    <li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber192">Alone closeSignaling</a></span></li>
-<li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber220">Alone closeSignaling should close the connection with Signaling server and leave the group after calling join</a></span></li>
-<li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber197">Alone closeSignaling should do nothing</a></span></li>
-</ul>
-  </div>
-
-  
-  
-</div>
-<div class="detail" data-ice="detail">
   <h3 data-ice="anchor" id="instance-method-invite">
     <span class="access" data-ice="access">public</span>
     
@@ -1591,7 +1521,7 @@ value does not equal to <span><a href="class/src/index.common.js~SignalingState.
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber269">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber289">source</a></span></span>
     </span>
   </h3>
 
@@ -1635,7 +1565,13 @@ value does not equal to <span><a href="class/src/index.common.js~SignalingState.
 
   
 
-  
+  <div data-ice="tests">
+    <h4>Test:</h4>
+    <ul>
+      
+    <li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber531">2 members &#x1F642; &#x1F916; inviting</a></span></li>
+</ul>
+  </div>
 
   
   
@@ -1652,7 +1588,7 @@ value does not equal to <span><a href="class/src/index.common.js~SignalingState.
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber264">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber278">source</a></span></span>
     </span>
   </h3>
 
@@ -1703,13 +1639,11 @@ then do nothing.</p>
     <h4>Test:</h4>
     <ul>
       
-    <li data-ice="test"><span><a href="test-file/test/functional/manyMembers.test.js.html#lineNumber25">Many members should join</a></span></li>
-<li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber46">Alone join</a></span></li>
-<li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber113">Alone join should join without a provided key</a></span></li>
-<li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber121">Alone join should join with a provided key</a></span></li>
-<li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber148">Alone join should throw an error, because the key is not a &quot;string&quot;</a></span></li>
-<li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber157">Alone join should throw an error, because the key is an empty string</a></span></li>
-<li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber166">Alone join should throw an error, because the key length is too long</a></span></li>
+    <li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber14">2 members &#x1F642; &#x1F642; joining</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber65">1 member &#x1F642; joining</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/3members.test.js.html#lineNumber15">3 members &#x1F642; &#x1F642; &#x1F642; joining</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber178">2 members &#x1F642; &#x1F642; joining should join with the specified key</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber167">1 member &#x1F642; joining should join with the specified key</a></span></li>
 </ul>
   </div>
 
@@ -1728,7 +1662,7 @@ then do nothing.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber282">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber300">source</a></span></span>
     </span>
   </h3>
 
@@ -1760,70 +1694,9 @@ with the Signaling server.</p>
     <h4>Test:</h4>
     <ul>
       
-    <li data-ice="test"><span><a href="test-file/test/functional/manyMembers.test.js.html#lineNumber148">Many members Should leave</a></span></li>
-</ul>
-  </div>
-
-  
-  
-</div>
-<div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="instance-method-ping">
-    <span class="access" data-ice="access">public</span>
-    
-    
-    
-    
-    
-    <span class="code" data-ice="name">ping</span><span class="code" data-ice="signature">(): <span>Promise</span>&lt;<span>number</span>&gt;</span>
-    <span class="right-info">
-      
-      
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber298">source</a></span></span>
-    </span>
-  </h3>
-
-  
-  
-  
-  <div data-ice="description"><p>Get web group latency</p>
-</div>
-
-  
-
-  <div data-ice="properties">
-</div>
-
-  <div class="return-params" data-ice="returnParams">
-    <h4>Return:</h4>
-    <table>
-      <tbody>
-        <tr>
-          <td class="return-type code" data-ice="returnType"><span>Promise</span>&lt;<span>number</span>&gt;</td>
-          <td class="return-desc" data-ice="returnDescription"><p>Latency in milliseconds</p>
-</td>
-        </tr>
-      </tbody>
-    </table>
-    <div data-ice="returnProperties">
-</div>
-  </div>
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  <div data-ice="tests">
-    <h4>Test:</h4>
-    <ul>
-      
-    <li data-ice="test"><span><a href="test-file/test/functional/manyMembers.test.js.html#lineNumber91">Many members Should ping</a></span></li>
+    <li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber194">1 member &#x1F642; leaving should have the same members, WebGroup id, topology and an empty key</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber430">2 members &#x1F642; &#x1F642; leaving should have no members &amp; an empty key</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/3members.test.js.html#lineNumber602">3 members &#x1F642; &#x1F642; &#x1F642; should have no members &amp; an empty key</a></span></li>
 </ul>
   </div>
 
@@ -1842,7 +1715,7 @@ with the Signaling server.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber287">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber311">source</a></span></span>
     </span>
   </h3>
 
@@ -1889,7 +1762,12 @@ with the Signaling server.</p>
     <h4>Test:</h4>
     <ul>
       
-    <li data-ice="test"><span><a href="test-file/test/functional/manyMembers.test.js.html#lineNumber119">Many members Should send/receive  </a></span></li>
+    <li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber266">2 members &#x1F642; &#x1F642; should send/receive broadcast String</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber291">2 members &#x1F642; &#x1F642; should send/receive broadcast ArrayBuffer</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber688">2 members &#x1F642; &#x1F916; should send/receive broadcast String</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber712">2 members &#x1F642; &#x1F916; should send/receive broadcast ArrayBuffer</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/3members.test.js.html#lineNumber307">3 members &#x1F642; &#x1F642; &#x1F642; should send/receive broadcast String</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/3members.test.js.html#lineNumber356">3 members &#x1F642; &#x1F642; &#x1F642; should send/receive broadcast ArrayBuffer</a></span></li>
 </ul>
   </div>
 
@@ -1908,7 +1786,7 @@ with the Signaling server.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber293">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber323">source</a></span></span>
     </span>
   </h3>
 
@@ -1963,7 +1841,12 @@ with the Signaling server.</p>
     <h4>Test:</h4>
     <ul>
       
-    <li data-ice="test"><span><a href="test-file/test/functional/manyMembers.test.js.html#lineNumber110">Many members Should send/receive </a></span></li>
+    <li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber318">2 members &#x1F642; &#x1F642; should send/receive private String</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber343">2 members &#x1F642; &#x1F642; should send/receive private ArrayBuffer</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber736">2 members &#x1F642; &#x1F916; should send/receive private String</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber760">2 members &#x1F642; &#x1F916; should send/receive private ArrayBuffer</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/3members.test.js.html#lineNumber408">3 members &#x1F642; &#x1F642; &#x1F642; should send/receive private String</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/3members.test.js.html#lineNumber463">3 members &#x1F642; &#x1F642; &#x1F642; should send/receive private ArrayBuffer</a></span></li>
 </ul>
   </div>
 

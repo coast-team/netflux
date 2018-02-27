@@ -53,17 +53,8 @@
 <div data-ice="manual">
     <ul class="manual-toc">
       
-    <li data-ice="manualNav" class="indent-h1" data-link="manual/bestpractices.html"><a href="manual/bestpractices.html" data-ice="link">Best practices</a></li>
-<li data-ice="manualNav" class="indent-h2" data-link="manual/bestpractices.html"><a href="manual/bestpractices.html#leave-webgroup-before-browser-tab-close" data-ice="link">Leave WebGroup before Browser/Tab close</a></li>
-<li data-ice="manualNav" class="indent-h2" data-link="manual/bestpractices.html"><a href="manual/bestpractices.html#listen-on-online-offline-events" data-ice="link">Listen on Online/Offline events</a></li>
-<li data-ice="manualNav" class="indent-h2" data-link="manual/bestpractices.html"><a href="manual/bestpractices.html#page-visibility-api-might-be-useful-in-some-scenarios" data-ice="link">Page Visibility API might be useful in some scenarios</a></li>
-</ul>
-  </div>
-<div data-ice="manual">
-    <ul class="manual-toc">
-      
-    <li data-ice="manualNav" class="indent-h1" data-link="manual/faq.html"><a href="manual/faq.html" data-ice="link">FAQ</a></li>
-<li data-ice="manualNav" class="indent-h4" data-link="manual/faq.html"><a href="manual/faq.html#-strong-how--code-rtcdatachannel--code--and--code-websocket--code--are-used---strong-" data-ice="link">How RTCDataChannel and WebSocket are used?</a></li>
+    <li data-ice="manualNav" class="indent-h1" data-link="manual/knownobstacles.html"><a href="manual/knownobstacles.html" data-ice="link">Known WebRTC obstacles</a></li>
+<li data-ice="manualNav" class="indent-h2" data-link="manual/knownobstacles.html"><a href="manual/knownobstacles.html#firefox-extensions" data-ice="link">Firefox extensions</a></li>
 </ul>
   </div>
 </div>
@@ -71,15 +62,25 @@
 
 <div class="content" data-ice="content"><div class="github-markdown" data-ice="content"><h1 id="installation">Installation</h1><h2 id="npm">NPM</h2><pre><code class="lang-shell"><code class="source-code prettyprint">npm install -S netflux</code>
 </code></pre>
-<p>Netflux has an optional peer dependency: <code>wrtc</code>. This package provides WebRTC API in NodeJS. It is optional because Netflux can use <code>WebSocket</code> instead. For some use cases maybe you still want to connect your server to the peer to peer network via <code>RTCDataChannel</code>, then you have to successfully install this dependency, checkout <a href="https://github.com/js-platform/node-webrtc">wrtc repository</a> then.</p>
-<h2 id="what-you-need">What you need</h2><p>Signaling server is only mandatory server for Netflux, but for a fully functional peer to peer network (to support all use cases) we also need STUN and TURN servers.</p>
-<p>Netflux comes with Signaling and STUN servers by default for easier quickstart. For TURN server two solutions are possible: either deploy your own or rent one at <a href="https://xirsys.com/">Xirsys</a> for example or any other similar services.</p>
-<h3 id="signaling-server">Signaling server</h3><p><strong>Default</strong>: <code>wss://signaling.netflux.coedit.re</code></p>
-<p>We developed a Signaling server: <a href="https://github.com/coast-team/sigver">Sigver</a>. It is the only signaling server (signaling mechanism) which is supported by Netflux for now.</p>
-<p><strong>TIP</strong>: we recommend to deploy your own instance of Sigver for production.</p>
+<p>Netflux has an optional peer dependency: <code>wrtc</code>. This package provides WebRTC API in NodeJS, but for now it is not in use as more tests needed. Checkout <a href="https://github.com/js-platform/node-webrtc">wrtc repository</a> for more info on it.</p>
+<h2 id="what-you-need">What you need</h2><p>Signaling server is the only mandatory server for Netflux, but for a fully functional peer to peer network which suits all use cases you also need STUN and TURN servers.</p>
+<blockquote>
+<p>Netflux comes with Signaling and STUN servers by default for easier quickstart.</p>
+</blockquote>
+<h3 id="signaling-server">Signaling server</h3><blockquote>
+<p><strong>Default</strong>: <code>wss://signaling.netflux.coedit.re</code></p>
+</blockquote>
+<p>The only signaling mechanism which is supported by Netflux for now is <a href="https://github.com/coast-team/sigver">Sigver</a> (NodeJS WebSocket server developed by us).</p>
+<blockquote>
+<p><strong>TIP</strong>: Your own instance of Sigver for production is recommended.</p>
+</blockquote>
 <h3 id="stun-server">STUN server</h3><p><strong>Default</strong>: <code>stun:stun3.l.google.com:19302</code></p>
-<p>There many other free STUN servers available in the Web.</p>
-<h3 id="turn-server">TURN server</h3><p>No free TURN server available in the Web. Checkout <a href="https://xirsys.com/">Xirsys</a> to rent one or deploy your own.</p>
+<p>There are many other free STUN servers available in the Web.</p>
+<h3 id="turn-server">TURN server</h3><p>There are no free TURN servers available in the Web. Two solutions exist:</p>
+<ul>
+<li>Rent one. Checkout <a href="https://xirsys.com/">Xirsys</a> for example.</li>
+<li>Deploy your own instance. The paragraphe below provides a guide on how to deploy and configure <a href="https://github.com/coturn/coturn"><code>coturn</code></a> open source TURN server. Also checkout <a href="https://rtcquickstart.org/guide/multi/turn-server-choice.html"><em>Choosing a TURN server</em></a> for a list of open source TURN servers.</li>
+</ul>
 <h2 id="how-to-deploy-stun-turn-servers">How to deploy STUN/TURN servers</h2><p>This guide present a basic configuration for <a href="https://github.com/coturn/coturn">coturn</a>.
 It allow us to deploy our own STUN/TURN server in order to connect users behind a NAT or Firewall.</p>
 <p>For more informations or options, see coturn <a href="https://github.com/coturn/coturn/wiki/README">documentation</a>.</p>
@@ -94,34 +95,39 @@ It allow us to deploy our own STUN/TURN server in order to connect users behind 
 listening-port=80
 tls-listening-port=443
 
-listening-ip=your-ip-address
+listening-ip=YOUR_IP_ADDRESS
+relay-ip=YOUR_IP_ADDRESS
 
-relay-ip=your-ip-address
-external-ip=your-ip-address
+realm=YOUR_DOMAIND.COM
+server-name=OUR_DOMAIND.COM
 
-realm=yourdomain.com
-server-name=yourdomain.com
+fingerprint
 
 # webRTC authentication method
 lt-cred-mech
 
-# Database location
-userdb=/var/lib/turn/turndb
+# WebRTC credentials
+user=YOUR_USER_NAME:YOUR_PASSWORD
+
+# Quota
+total-quota=100
+bps-capacity=0
+stable-nonce
 
 # Add ssl certificate for your server
 cert=/etc/ssl/certificate.pem
 pkey=/etc/ssl/private.key
-
+cipher-list=&quot;ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:!DH+AES:!ECDH+3DES:!DH+3DES:!RSA+AES:!RSA+3DES:!ADH:!AECDH:!MD5&quot;
+no-loopback-peers
+no-multicast-peers
 no-stdout-log</code>
 </code></pre>
 <p>If you don&apos;t have any SSL certificate, you may use <a href="https://letsencrypt.org/">Let&apos;s Encrypt</a>.</p>
-<p>Create a user in order to access your Turn server:
-<code>turnadmin -a -u userName -p password -r yourdomain.com</code></p>
-<p>Launch your server:
-<code>turnserver</code>
-or in daemon:
-<code>turnserver -o</code></p>
-<p>Verify that your server is up and running with <a href="https://webrtc.github.io/samples/src/content/peerconnection/trickle-ice/">Trickle ICE</a>.</p>
+<p>Launch server:</p>
+<p><code>``turnserver</code></p>
+<p>or in daemon:</p>
+<p><code>turnserver -o</code></p>
+<p>Verify that the server is up and running with <a href="https://webrtc.github.io/samples/src/content/peerconnection/trickle-ice/">Trickle ICE</a>.</p>
 </div>
 </div>
 

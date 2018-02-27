@@ -1,15 +1,21 @@
 # Best practices
+
 The behavior of Chrome and Firefox on Linux/MacOS (likely on Windows also, but not tested) concerning holding JS execution, [Online/Offline](https://developer.mozilla.org/en/docs/Online_and_offline_events) and [Page Visibility](https://developer.mozilla.org/en/docs/Web/API/Page_Visibility_API) APIs maybe different when OS goes into sleep mode and resumes from it. That why the practices listed here might be useful for these scenarios and not only.
 
 ## Leave WebGroup before Browser/Tab close
+
 Clean leave is always preferable. Other members will be notified immediately.
+
 ```Javascript
 // "webGroup" variable has been defined earlier.
 window.addEventListener('beforeunload', () => {
     webGroup.leave()
 })
+
 ```
+
 ## Listen on Online/Offline events
+
 Maybe useful to not rejoin a web group if the client is offline anyway. Checkout [Online/Offline API doc](https://developer.mozilla.org/en/docs/Online_and_offline_events) for more details and to understand what *Online* actually means.
 
 ```Javascript
@@ -42,6 +48,7 @@ window.addEventListener('online', () => {
 ```
 
 ## Page Visibility API might be useful in some scenarios
+
 It was noticed that when MacOS goes into sleep mode, Chrome and Firefox do not stop JS execution, but close WebRTC connections and do not allow to create new. However the WebSocket connection is maintained. This cause problem as you are no longer connected to other peers, but the connection with Signaling server is still alive. For this reason it might be useful to do something like (checkout [Page Visibility API doc](https://developer.mozilla.org/en/docs/Web/API/Page_Visibility_API)):
 
 ```Javascript

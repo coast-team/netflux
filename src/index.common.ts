@@ -6,7 +6,7 @@ export { WebGroup, WebGroupOptions, WebGroupState, DataType } from './WebChannel
 
 /**
  * Set log level for debugging utility. By default all logs are disabled.
- * @param {LogLevel} level
+ * @param {...LogLevel} levels
  */
 export function setLogLevel (...levels: Logs[]) { setLogs(levels) }
 

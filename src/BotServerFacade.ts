@@ -20,7 +20,7 @@ export { WebGroupBotServerOptions }
  * // Bot server is listening on 'ws://BOT_HOST:BOT_PORT'.
  *
  * const http = require('http')
- * const server = http.createServer(app.callback())
+ * const server = http.createServer()
  * const bot = new WebGroupBotServer({
  *   server,
  *   webGroupOptions: {

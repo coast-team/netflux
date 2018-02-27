@@ -1,4 +1,4 @@
-import 'webrtc-adapter';
+"use strict";
 /**
  * ECMAScript Proposal, specs, and reference implementation for `global`
  * http://tc39.github.io/proposal-global/

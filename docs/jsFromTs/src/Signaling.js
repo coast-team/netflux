@@ -1,21 +1,20 @@
 import { filter, pluck } from 'rxjs/operators';
 import { Subject } from 'rxjs/Subject';
 import { log } from './misc/Util';
-import { signaling } from './proto';
+import { signaling as sigProto } from './proto';
 const MAXIMUM_MISSED_HEARTBEAT = 3;
 const HEARTBEAT_INTERVAL = 5000;
 /* WebSocket error codes */
 const HEARTBEAT_ERROR_CODE = 4002;
 const MESSAGE_ERROR_CODE = 4010;
-const FIRST_CONNECTION_ERROR_CODE = 4011;
 /* Preconstructed messages */
-const heartbeatMsg = signaling.Message.encode(signaling.Message.create({ heartbeat: true })).finish();
+const heartbeatMsg = sigProto.Message.encode(sigProto.Message.create({ heartbeat: true })).finish();
 export var SignalingState;
 (function (SignalingState) {
     SignalingState[SignalingState["CONNECTING"] = 0] = "CONNECTING";
-    SignalingState[SignalingState["OPEN"] = 1] = "OPEN";
-    SignalingState[SignalingState["CONNECTED_WITH_FIRST_MEMBER"] = 2] = "CONNECTED_WITH_FIRST_MEMBER";
-    SignalingState[SignalingState["READY_TO_JOIN_OTHERS"] = 3] = "READY_TO_JOIN_OTHERS";
+    SignalingState[SignalingState["CONNECTED"] = 1] = "CONNECTED";
+    SignalingState[SignalingState["STABLE"] = 2] = "STABLE";
+    SignalingState[SignalingState["CLOSING"] = 3] = "CLOSING";
     SignalingState[SignalingState["CLOSED"] = 4] = "CLOSED";
 })(SignalingState || (SignalingState = {}));
 /**
@@ -30,9 +29,9 @@ export class Signaling {
         this.state = SignalingState.CLOSED;
         // private
         this.wc = wc;
+        this.completeWs = () => { };
         this.stateSubject = new Subject();
         this.channelSubject = new Subject();
-        this.rxWs = undefined;
     }
     get onState() {
         return this.stateSubject.asObservable();
@@ -45,69 +44,72 @@ export class Signaling {
      * to join new peers to the network.
      */
     open() {
-        if (this.state === SignalingState.CONNECTED_WITH_FIRST_MEMBER) {
-            this.rxWs.send({ joined: true });
-            this.setState(SignalingState.READY_TO_JOIN_OTHERS);
+        if (this.state === SignalingState.CONNECTED) {
+            this.send({ stable: true });
+            this.setState(SignalingState.STABLE);
         }
     }
     join(key) {
-        if (this.state === SignalingState.READY_TO_JOIN_OTHERS) {
-            throw new Error('Failed to join via signaling: connection with signaling is already opened');
-        }
-        if (this.state !== SignalingState.CLOSED) {
-            this.close();
+        if (this.state !== SignalingState.CLOSING && this.state !== SignalingState.CLOSED) {
+            this.ws.onclose = () => { };
+            this.ws.onmessage = () => { };
+            this.ws.onerror = () => { };
+            clearInterval(this.heartbeatInterval);
+            this.missedHeartbeat = 0;
+            this.completeWs();
+            this.ws.close();
         }
         this.setState(SignalingState.CONNECTING);
-        this.wc.webSocketBuilder.connect(this.getFullURL(key))
+        this.wc.webSocketBuilder
+            .connect(this.getFullURL(key))
             .then((ws) => {
-            this.setState(SignalingState.OPEN);
-            this.rxWs = this.createRxWs(ws);
-            this.rxWs.onMessage.subscribe((msg) => {
+            this.ws = ws;
+            this.wsObservable = this.createObservable(this.ws);
+            this.startHeartbeat();
+            this.wsObservable.subscribe((msg) => {
                 switch (msg.type) {
                     case 'heartbeat':
                         this.missedHeartbeat = 0;
                         break;
                     case 'isFirst':
                         if (msg.isFirst) {
-                            this.setState(SignalingState.READY_TO_JOIN_OTHERS);
+                            this.setState(SignalingState.STABLE);
                         }
                         else {
-                            this.wc.webRTCBuilder.connectOverSignaling({
-                                onMessage: this.rxWs.onMessage.pipe(filter(({ type }) => type === 'content'), pluck('content')),
-                                send: (m) => this.rxWs.send({ content: m }),
-                            })
-                                .then((ch) => {
-                                this.setState(SignalingState.CONNECTED_WITH_FIRST_MEMBER);
-                                ch.markAsIntermediry();
-                            })
-                                .catch((err) => {
-                                this.rxWs.close(FIRST_CONNECTION_ERROR_CODE, `Failed to join over Signaling: ${err.message}`);
-                            });
+                            this.connectOverSignaling();
                         }
                         break;
                 }
             });
-            this.startHeartbeat();
         })
-            .catch((err) => this.setState(SignalingState.CLOSED));
+            .catch(() => this.setState(SignalingState.CLOSED));
     }
     /**
      * Close the `WebSocket` with Signaling server.
      */
     close() {
-        if (this.rxWs) {
-            this.rxWs.close(1000);
+        if (this.state !== SignalingState.CLOSING && this.state !== SignalingState.CLOSED) {
+            this.setState(SignalingState.CLOSING);
+            if (this.ws) {
+                this.ws.close(1000);
+            }
+        }
+    }
+    connectOverSignaling() {
+        if (this.ws.readyState === WebSocket.OPEN) {
+            this.wc.webRTCBuilder.connectOverSignaling(this.getWebRTCStream())
+                .then(() => this.setState(SignalingState.CONNECTED))
+                .catch(() => this.send({ tryAnother: true }));
         }
     }
     setState(state) {
         if (this.state !== state) {
             this.state = state;
             this.stateSubject.next(state);
-            if (state === SignalingState.READY_TO_JOIN_OTHERS) {
-                this.wc.webRTCBuilder.onChannelFromSignaling({
-                    onMessage: this.rxWs.onMessage.pipe(filter(({ type }) => type === 'content'), pluck('content')),
-                    send: (msg) => this.rxWs.send({ content: msg }),
-                }).subscribe((ch) => this.channelSubject.next(ch));
+            if (state === SignalingState.STABLE) {
+                this.wc.webRTCBuilder
+                    .onChannelFromSignaling(this.getWebRTCStream())
+                    .subscribe((ch) => this.channelSubject.next(ch));
             }
         }
     }
@@ -119,49 +121,63 @@ export class Signaling {
                 if (this.missedHeartbeat >= MAXIMUM_MISSED_HEARTBEAT) {
                     throw new Error('Too many missed heartbeats');
                 }
-                this.rxWs.heartbeat();
+                this.heartbeat();
             }
             catch (err) {
                 global.clearInterval(this.heartbeatInterval);
-                log.info('Closing connection with Signaling. Reason: ' + err.message);
-                this.rxWs.close(HEARTBEAT_ERROR_CODE, 'Signaling is not responding');
+                log.signaling('Closing connection with Signaling. Reason: ' + err.message);
+                this.setState(SignalingState.CLOSING);
+                this.ws.close(HEARTBEAT_ERROR_CODE, 'Signaling is not responding');
             }
         }, HEARTBEAT_INTERVAL);
     }
-    createRxWs(ws) {
+    createObservable(ws) {
         const subject = new Subject();
+        this.completeWs = () => subject.complete();
         ws.binaryType = 'arraybuffer';
         ws.onmessage = (evt) => {
             try {
-                subject.next(signaling.Message.decode(new Uint8Array(evt.data)));
+                subject.next(sigProto.Message.decode(new Uint8Array(evt.data)));
             }
             catch (err) {
                 ws.close(MESSAGE_ERROR_CODE, err.message);
             }
         };
-        ws.onerror = (err) => {
-            log.debug('Signaling ERROR', err);
-            subject.error(err);
-        };
+        ws.onerror = (err) => subject.error(err);
         ws.onclose = (closeEvt) => {
             clearInterval(this.heartbeatInterval);
+            this.missedHeartbeat = 0;
             this.setState(SignalingState.CLOSED);
             subject.complete();
-            log.info(`Connection with Signaling '${this.url}' closed: ${closeEvt.code}: ${closeEvt.reason}`);
+            log.signaling(`Connection with Signaling '${this.url}' closed: ${closeEvt.code}: ${closeEvt.reason}`);
         };
+        return subject.asObservable();
+    }
+    send(msg) {
+        if (this.ws.readyState === WebSocket.OPEN) {
+            try {
+                this.ws.send(sigProto.Message.encode(sigProto.Message.create(msg)).finish());
+            }
+            catch (err) {
+                log.signaling('Failed send to Signaling: ' + err.message);
+            }
+        }
+    }
+    heartbeat() {
+        if (this.ws.readyState === WebSocket.OPEN) {
+            try {
+                this.ws.send(heartbeatMsg);
+            }
+            catch (err) {
+                log.signaling('Failed send to Signaling: ' + err.message);
+            }
+        }
+    }
+    getWebRTCStream() {
         return {
-            onMessage: subject.asObservable(),
-            send: (msg) => {
-                if (ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CLOSED) {
-                    ws.send(signaling.Message.encode(signaling.Message.create(msg)).finish());
-                }
-            },
-            heartbeat: () => {
-                if (ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CLOSED) {
-                    ws.send(heartbeatMsg);
-                }
-            },
-            close: (code = 1000, reason = '') => ws.close(code, reason),
+            message: this.wsObservable
+                .pipe(filter(({ type }) => type === 'content'), pluck('content')),
+            send: (m) => this.send({ content: m }),
         };
     }
     getFullURL(params) {
