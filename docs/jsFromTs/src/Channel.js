@@ -15,6 +15,12 @@ export class Channel {
         this.isIntermediary = false;
         this.missedHeartbeat = 0;
         this.updateHeartbeatMsg(this.wc.topologyService.heartbeat);
+        if (this.rtcPeerConnection) {
+            this.maximumMissedHeartBeat = 3;
+        }
+        else {
+            this.maximumMissedHeartBeat = 5;
+        }
         // Configure `send` function
         if (isBrowser) {
             connection.binaryType = 'arraybuffer';

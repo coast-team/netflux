@@ -46,7 +46,7 @@
 </p>
 
 <p align="center">
-  <img src="manual/asset/example.svg?sanitize=true" />
+  <img src="manual/asset/example.png" />
 </p>
 
 ## Features

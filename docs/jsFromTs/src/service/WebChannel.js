@@ -4,7 +4,6 @@ import { generateKey, isBrowser, isOnline, isURL, isVisible, log, MAX_KEY_LENGTH
 import { Message, service, webChannel } from '../proto';
 import { Signaling, SignalingState } from '../Signaling';
 import { UserMessage } from '../UserMessage';
-import { WebGroupState } from '../WebChannelFacade';
 import { WebSocketBuilder } from '../WebSocketBuilder';
 import { ChannelBuilder } from './ChannelBuilder';
 import { Service } from './Service';
@@ -100,12 +99,12 @@ export class WebChannel extends Service {
             //   }, 2000)
             // })
             global.window.addEventListener('online', () => {
-                if (isVisible() && this.state === WebGroupState.LEFT) {
+                if (isVisible() && this.state === WebChannelState.LEFT) {
                     this.rejoin();
                 }
             });
             global.window.addEventListener('visibilitychange', () => {
-                if (isVisible() && this.state === WebGroupState.LEFT) {
+                if (isVisible() && this.state === WebChannelState.LEFT) {
                     this.rejoin();
                 }
             });

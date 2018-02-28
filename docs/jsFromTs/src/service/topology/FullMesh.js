@@ -319,7 +319,7 @@ export class FullMesh extends Service {
             this.adjacentMembers.forEach((ch) => {
                 try {
                     ch.missedHeartbeat++;
-                    if (ch.missedHeartbeat >= MAXIMUM_MISSED_HEARTBEAT) {
+                    if (ch.missedHeartbeat >= ch.maximumMissedHeartBeat) {
                         throw new Error('Too many missed heartbeats');
                     }
                     ch.sendHeartbeat();
