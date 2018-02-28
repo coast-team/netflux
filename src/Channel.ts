@@ -10,6 +10,7 @@ export class Channel {
   public send: (data: Uint8Array) => void
   public isIntermediary: boolean
   public missedHeartbeat: number
+  public maximumMissedHeartBeat: number
 
   /**
    * Id of the peer who is at the other end of this channel.
@@ -36,6 +37,12 @@ export class Channel {
     this.isIntermediary = false
     this.missedHeartbeat = 0
     this.updateHeartbeatMsg(this.wc.topologyService.heartbeat)
+
+    if (this.rtcPeerConnection) {
+      this.maximumMissedHeartBeat = 3
+    } else {
+      this.maximumMissedHeartBeat = 5
+    }
 
     // Configure `send` function
     if (isBrowser) {
