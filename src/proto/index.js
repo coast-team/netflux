@@ -2446,11 +2446,11 @@ var indexMinimal = createCommonjsModule(function (module, exports) {
   configure();
 });
 
-var minimal$2 = indexMinimal;
-var minimal_1 = minimal$2.Reader;
-var minimal_2 = minimal$2.Writer;
-var minimal_3 = minimal$2.util;
-var minimal_4 = minimal$2.roots;
+var minimal$1 = indexMinimal;
+var minimal_1 = minimal$1.Reader;
+var minimal_2 = minimal$1.Writer;
+var minimal_3 = minimal$1.util;
+var minimal_4 = minimal$1.roots;
 
 /*eslint-disable block-scoped-var, no-redeclare, no-control-regex, no-prototype-builtins*/
 
@@ -2877,7 +2877,7 @@ var user = $root.user = function () {
     return user;
 }();
 
-var service$2 = $root.service = function () {
+var service$1 = $root.service = function () {
 
     /**
      * Namespace service.
@@ -4411,4 +4411,4 @@ var signaling = $root.signaling = function () {
 }();
 
 export default $root;
-export { Message, user, service$2 as service, webChannel, channelBuilder, fullMesh, webRTCBuilder, signaling };
+export { Message, user, service$1 as service, webChannel, channelBuilder, fullMesh, webRTCBuilder, signaling };

@@ -50,7 +50,7 @@
     "cz": "git-cz"
   },
   "dependencies": {
-    "protobufjs": "^6.8.5",
+    "protobufjs": "^6.8.6",
     "rxjs": "^5.5.6",
     "text-encoding": "^0.6.4",
     "uws": "^9.14.0"
@@ -70,8 +70,8 @@
     "esdoc-standard-plugin": "^1.0.0",
     "esdoc-typescript-plugin": "^1.0.0",
     "husky": "^0.14.3",
-    "jasmine": "^3.0.0",
-    "jasmine-core": "^2.99.1",
+    "jasmine": "^3.1.0",
+    "jasmine-core": "^3.1.0",
     "jasmine-spec-reporter": "^4.1.0",
     "json": "^9.0.3",
     "karma": "^2.0.0",
@@ -85,7 +85,7 @@
     "koa": "^2.5.0",
     "koa-router": "^7.4.0",
     "pm2": "^2.10.1",
-    "rollup": "^0.56.2",
+    "rollup": "^0.56.3",
     "rollup-plugin-babel": "^3.0.3",
     "rollup-plugin-commonjs": "^8.3.0",
     "rollup-plugin-filesize": "^1.5.0",
@@ -96,7 +96,7 @@
     "sigver": "^18.0.0",
     "tslib": "^1.9.0",
     "tslint": "^5.9.1",
-    "tslint-eslint-rules": "^5.0.0",
+    "tslint-eslint-rules": "^5.1.0",
     "typescript": "~2.6.2",
     "uglify-js": "^3.3.12",
     "validate-commit-msg": "^2.14.0"
