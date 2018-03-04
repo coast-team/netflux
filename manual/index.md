@@ -14,20 +14,13 @@ Send/receive **String** and **Uint8Array** data types.
   </a>&nbsp;
   <a href="https://travis-ci.org/coast-team/netflux">
     <img src="https://travis-ci.org/coast-team/netflux.svg?branch=master" />
-  </a>
-
-  <br />
-
+  </a>&nbsp;
   <a href="https://www.bithound.io/github/coast-team/netflux">
     <img src="https://www.bithound.io/github/coast-team/netflux/badges/score.svg" />
-  </a>&nbsp;
-  <a href="https://codeclimate.com/github/coast-team/netflux">
-    <img src="https://codeclimate.com/github/coast-team/netflux/badges/gpa.svg" />
   </a>&nbsp;
   <a href="https://coast-team.github.io/netflux">
     <img src="https://coast-team.github.io/netflux/badge.svg" />
   </a>&nbsp;
-  <a href="https://codeclimate.com/github/coast-team/netflux/coverage"><img src="https://codeclimate.com/github/coast-team/netflux/badges/coverage.svg" /></a>
 
   <br />
 
@@ -167,3 +160,4 @@ Netflux is used by our team for Multi User Text Editor ([MUTE repo](https://gith
 [doc-url]: https://coast-team.github.io/netflux/netflux
 
 [logo]: manual/asset/logo_cropped.png "Netflux logo"
+
