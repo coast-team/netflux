@@ -49,7 +49,7 @@ var wg = new netflux.WebGroup()
 
 `esm/index.node.js` is build for NodeJS: contains all exported API members and all necessary polyfills for NodeJS environment.
 
-`esm/index.browser.js`  si build for browsers.
+`esm/index.browser.js` is build for browsers.
 
 ```javascript
 export {WebGroup, WebGroupState, WebGroupBotServer, WebGroupBotServerOptions} from 'netflux'
@@ -58,8 +58,7 @@ const wg = new WebGroup()
 
 ## UMD
 
-`dist/netflux.umd.js` - Universal Module Definition format is compatible with AMD, CommonJS and "global" modules. Built for browser and suitable for Webpack, Browserify and any other who
-also understands `package.json#browser` property.
+`dist/netflux.umd.js` - Universal Module Definition format is compatible with AMD, CommonJS and "global" modules. Built for browser and suitable for Webpack, Browserify and any other who also understands `package.json#browser` property.
 
 ```html
 <!-- Browser global usage example -->
@@ -76,7 +75,7 @@ For a `WebGroup` object all options are optional.
 ```javascript
 // Example:
 const wg = new WebGroup({
-  signalingURL: 'MY_SIGNALING_URL',
+  signalingServer: 'MY_SIGNALING_URL',
   rtcConfiguration: {
     iceServers: [
       { urls: 'stun:mystun.org' },
