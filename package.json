@@ -87,7 +87,7 @@
     "pm2": "^2.10.1",
     "rollup": "^0.56.3",
     "rollup-plugin-babel": "^3.0.3",
-    "rollup-plugin-commonjs": "^8.3.0",
+    "rollup-plugin-commonjs": "^9.0.0",
     "rollup-plugin-filesize": "^1.5.0",
     "rollup-plugin-node-resolve": "^3.0.3",
     "rollup-plugin-re": "^1.0.6",
