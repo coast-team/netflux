@@ -91,7 +91,7 @@
     "rollup-plugin-filesize": "^1.5.0",
     "rollup-plugin-node-resolve": "^3.0.3",
     "rollup-plugin-re": "^1.0.6",
-    "rollup-plugin-typescript2": "^0.11.1",
+    "rollup-plugin-typescript2": "^0.12.0",
     "semantic-release": "^12.4.1",
     "sigver": "^18.0.0",
     "tslib": "^1.9.0",
