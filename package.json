@@ -85,7 +85,7 @@
     "koa": "^2.5.0",
     "koa-router": "^7.4.0",
     "pm2": "^2.10.1",
-    "rollup": "^0.56.3",
+    "rollup": "^0.57.0",
     "rollup-plugin-babel": "^3.0.3",
     "rollup-plugin-commonjs": "^8.3.0",
     "rollup-plugin-filesize": "^1.5.0",
