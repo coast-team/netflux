@@ -1,19 +1,19 @@
 /**
  * Equals to true in any browser.
  */
-export const isBrowser = (typeof global.window === 'undefined') ? false : true
+export const isBrowser = typeof global.window === 'undefined' ? false : true
 
-export function isOnline () {
+export function isOnline() {
   return isBrowser ? global.window.navigator.onLine : true
 }
-export function isVisible () {
+export function isVisible() {
   return isBrowser ? global.window.document.visibilityState === 'visible' : true
 }
 
 /**
  * Check whether the string is a valid URL.
  */
-export function isURL (str: string): boolean {
+export function isURL(str: string): boolean {
   const regex =
     '^' +
     // protocol identifier
@@ -24,13 +24,13 @@ export function isURL (str: string): boolean {
     '(?::\\d{2,5})?' +
     '$'
 
-  return (new RegExp(regex, 'i')).test(str)
+  return new RegExp(regex, 'i').test(str)
 }
 
 /**
  * Generate random key which will be used to join the network.
  */
-export function generateKey (): string {
+export function generateKey(): string {
   const mask = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
   const length = 42 // Should be less then MAX_KEY_LENGTH value
   const values = randNumbers(length)
@@ -41,7 +41,7 @@ export function generateKey (): string {
   return result
 }
 
-export function randNumbers (length: number = 1): number[] | Uint32Array {
+export function randNumbers(length: number = 1): number[] | Uint32Array {
   let res
   if (isBrowser) {
     res = new Uint32Array(length)
@@ -56,10 +56,8 @@ export function randNumbers (length: number = 1): number[] | Uint32Array {
   return res
 }
 
-export function equal (array1: number[], array2: number[]) {
-  return array1 !== undefined && array2 !== undefined
-    && array1.length === array2.length
-    && array1.every((v) => array2.includes(v))
+export function equal(array1: number[], array2: number[]) {
+  return array1 !== undefined && array2 !== undefined && array1.length === array2.length && array1.every((v) => array2.includes(v))
 }
 
 export const MAX_KEY_LENGTH = 512
@@ -74,34 +72,42 @@ const signalingStateCSS = 'background-color: #9FA8DA; padding: 0 2px'
 const webGroupStateCSS = 'background-color: #EF9A9A; padding: 0 2px'
 
 export interface ILog {
-  webgroup: (msg: string, ...rest: any[]) => void,
-  signalingState: (msg: string, id: number) => void,
-  webGroupState: (msg: string, id: number) => void,
-  webrtc: (msg: string, ...rest: any[]) => void,
-  channel: (msg: string, ...rest: any[]) => void,
-  topology: (msg: string, ...rest: any[]) => void,
-  signaling: (msg: string, ...rest: any[]) => void,
-  channelBuilder: (msg: string, ...rest: any[]) => void,
+  webgroup: (msg: string, ...rest: any[]) => void
+  signalingState: (msg: string, id: number) => void
+  webGroupState: (msg: string, id: number) => void
+  webrtc: (msg: string, ...rest: any[]) => void
+  channel: (msg: string, ...rest: any[]) => void
+  topology: (msg: string, ...rest: any[]) => void
+  signaling: (msg: string, ...rest: any[]) => void
+  channelBuilder: (msg: string, ...rest: any[]) => void
   debug: (msg: string, ...rest: any[]) => void
 }
 
 const log: ILog = {
-  webgroup: () => { },
-  signalingState: () => { },
-  webGroupState: () => { },
-  webrtc: () => { },
-  channel: () => { },
-  topology: () => { },
-  signaling: () => { },
-  channelBuilder: () => { },
-  debug: () => { },
+  webgroup: () => {},
+  signalingState: () => {},
+  webGroupState: () => {},
+  webrtc: () => {},
+  channel: () => {},
+  topology: () => {},
+  signaling: () => {},
+  channelBuilder: () => {},
+  debug: () => {},
 }
 
-export enum LogLevel { DEBUG, WEB_GROUP, WEBRTC, CHANNEL, TOPOLOGY, SIGNALING, CHANNEL_BUILDER }
+export enum LogLevel {
+  DEBUG,
+  WEB_GROUP,
+  WEBRTC,
+  CHANNEL,
+  TOPOLOGY,
+  SIGNALING,
+  CHANNEL_BUILDER,
+}
 
 export let logLevels: LogLevel[] = []
 
-export function setLogLevel (levels: LogLevel[]) {
+export function setLogLevel(levels: LogLevel[]) {
   logLevels = levels
   if (logLevels.includes(LogLevel.WEB_GROUP)) {
     log.webgroup = (msg: string, ...rest: any[]): void => {

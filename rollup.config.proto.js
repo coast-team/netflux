@@ -9,26 +9,30 @@ export default [
     output: [{ file: 'src/proto/index.js', format: 'es' }],
     plugins: [
       replace({
-        patterns: [{
-          test: /eval.*\(moduleName\);/g,
-          replace: 'undefined;'
-        }]
+        patterns: [
+          {
+            test: /eval.*\(moduleName\);/g,
+            replace: 'undefined;',
+          },
+        ],
       }),
       resolve(),
       commonjs({
         namedExports: {
-          'node_modules/protobufjs/minimal.js': [ 'Reader', 'Writer', 'util', 'roots' ]
-        }
+          'node_modules/protobufjs/minimal.js': ['Reader', 'Writer', 'util', 'roots'],
+        },
       }),
       babel({
         babelrc: false,
-        presets: [[
-          "env",
-          {
-            modules: false
-          }
-        ]]
-      })
-    ]
-  }
+        presets: [
+          [
+            'env',
+            {
+              modules: false,
+            },
+          ],
+        ],
+      }),
+    ],
+  },
 ]

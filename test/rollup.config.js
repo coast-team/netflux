@@ -3,7 +3,7 @@ import commonjs from 'rollup-plugin-commonjs'
 import typescript from 'rollup-plugin-typescript2'
 
 const inputs = []
-function read (path) {
+function read(path) {
   if (path.endsWith('test.js')) {
     inputs.push(path)
   } else if (fs.statSync(path).isDirectory()) {
@@ -21,14 +21,14 @@ for (let input of inputs) {
     input,
     output: {
       file: entry.replace(/^test/, 'test/.rolledup'),
-      format: 'cjs'
+      format: 'cjs',
     },
     plugins: [
       typescript(),
       commonjs({
-        namedExports: { 'node_modules/protobufjs/minimal.js': [ 'Reader', 'Writer', 'util', 'roots' ] }
-      })
-    ]
+        namedExports: { 'node_modules/protobufjs/minimal.js': ['Reader', 'Writer', 'util', 'roots'] },
+      }),
+    ],
   })
 }
 

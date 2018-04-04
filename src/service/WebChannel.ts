@@ -2,15 +2,7 @@ import { Subject } from 'rxjs/Subject'
 import { Subscription } from 'rxjs/Subscription'
 
 import { Channel } from '../Channel'
-import {
-  generateKey,
-  isBrowser,
-  isOnline,
-  isURL,
-  isVisible,
-  log,
-  MAX_KEY_LENGTH,
-  randNumbers } from '../misc/Util'
+import { generateKey, isBrowser, isOnline, isURL, isVisible, log, MAX_KEY_LENGTH, randNumbers } from '../misc/Util'
 import { IMessage, Message, service, webChannel } from '../proto'
 import { Signaling, SignalingState } from '../Signaling'
 import { UserDataType, UserMessage } from '../UserMessage'
@@ -27,24 +19,27 @@ import { WebRTCBuilder } from './WebRTCBuilder'
 const ID = 200
 
 export interface IWebChannelOptions {
-  topology?: TopologyEnum,
-  signalingServer?: string,
-  rtcConfiguration?: RTCConfiguration,
-  autoRejoin?: boolean,
+  topology?: TopologyEnum
+  signalingServer?: string
+  rtcConfiguration?: RTCConfiguration
+  autoRejoin?: boolean
 }
 
 export const defaultOptions: IWebChannelOptions = {
   topology: TopologyEnum.FULL_MESH,
   signalingServer: 'wss://signaling.netflux.coedit.re',
   rtcConfiguration: {
-    iceServers: [
-      {urls: 'stun:stun3.l.google.com:19302'},
-    ],
+    iceServers: [{ urls: 'stun:stun3.l.google.com:19302' }],
   },
   autoRejoin: true,
 }
 
-export enum WebChannelState { JOINING, JOINED, LEAVING, LEFT }
+export enum WebChannelState {
+  JOINING,
+  JOINED,
+  LEAVING,
+  LEFT,
+}
 
 /**
  * This class is an API starting point. It represents a group of collaborators
@@ -55,7 +50,6 @@ export enum WebChannelState { JOINING, JOINED, LEAVING, LEFT }
  * [[include:installation.md]]
  */
 export class WebChannel extends Service {
-
   /**
    * An array of all peer ids except yours.
    */
@@ -125,7 +119,7 @@ export class WebChannel extends Service {
   private topologySub: Subscription
   private rejoinTimer: any
 
-  constructor ({
+  constructor({
     topology = defaultOptions.topology,
     signalingServer = defaultOptions.signalingServer,
     rtcConfiguration = defaultOptions.rtcConfiguration,
@@ -142,11 +136,11 @@ export class WebChannel extends Service {
     this.autoRejoin = autoRejoin
 
     // PUBLIC EVENT HANDLERS
-    this.onMemberJoin = function none () {}
-    this.onMemberLeave = function none () {}
-    this.onMessage = function none () {}
-    this.onStateChange = function none () {}
-    this.onSignalingStateChange = function none () {}
+    this.onMemberJoin = function none() {}
+    this.onMemberLeave = function none() {}
+    this.onMessage = function none() {}
+    this.onStateChange = function none() {}
+    this.onSignalingStateChange = function none() {}
 
     // PRIVATE
     this.state = WebChannelState.LEFT
@@ -155,11 +149,10 @@ export class WebChannel extends Service {
     // Signaling init
     this.signaling = new Signaling(this, signalingServer)
     this.signaling.onChannel.subscribe((ch) => this.initChannel(ch))
-    this.signaling.onState.subscribe(
-      (state: SignalingState) => {
-        log.signalingState(SignalingState[state], this.myId)
-        this.onSignalingStateChange(state)
-        switch (state) {
+    this.signaling.onState.subscribe((state: SignalingState) => {
+      log.signalingState(SignalingState[state], this.myId)
+      this.onSignalingStateChange(state)
+      switch (state) {
         case SignalingState.CONNECTING:
           this.setState(WebChannelState.JOINING)
           break
@@ -172,9 +165,8 @@ export class WebChannel extends Service {
         case SignalingState.STABLE:
           this.topologyService.setStable()
           break
-        }
-      },
-    )
+      }
+    })
 
     // Services init
     this.serviceMessageSubject = new Subject()
@@ -184,7 +176,7 @@ export class WebChannel extends Service {
     this.channelBuilder = new ChannelBuilder(this)
     this.onServiceMessage.subscribe(
       (msg) => this.treatServiceMessage(msg),
-      (err) => console.error('service/WebChannel inner message error', err),
+      (err) => console.error('service/WebChannel inner message error', err)
     )
 
     // Topology init
@@ -219,15 +211,13 @@ export class WebChannel extends Service {
   /**
    * Join the network via a key provided by one of the network member or a `Channel`.
    */
-  join (key: string = generateKey()): void {
+  join(key: string = generateKey()): void {
     if (typeof key !== 'string') {
       throw new Error(`Failed to join: the key type "${typeof key}" is not a "string"`)
     } else if (key === '') {
       throw new Error('Failed to join: the key is an empty string')
     } else if (key.length > MAX_KEY_LENGTH) {
-      throw new Error(
-        `Failed to join : the key length of ${key.length} exceeds the maximum of ${MAX_KEY_LENGTH} characters`,
-      )
+      throw new Error(`Failed to join : the key length of ${key.length} exceeds the maximum of ${MAX_KEY_LENGTH} characters`)
     }
     this.key = key
     if (isOnline() && this.state === WebChannelState.LEFT && this.signaling.state === SignalingState.CLOSED) {
@@ -240,9 +230,10 @@ export class WebChannel extends Service {
   /**
    * Invite a server peer to join the network.
    */
-  invite (url: string): void {
+  invite(url: string): void {
     if (isURL(url)) {
-      this.webSocketBuilder.connect(`${url}/invite?wcId=${this.id}&senderId=${this.myId}`)
+      this.webSocketBuilder
+        .connect(`${url}/invite?wcId=${this.id}&senderId=${this.myId}`)
         .then((connection) => this.initChannel(new Channel(this, connection as WebSocket)))
         .catch((err) => console.error(`Failed to invite the bot ${url}: ${err.message}`))
     } else {
@@ -254,7 +245,7 @@ export class WebChannel extends Service {
    * Leave the network which means close channels with all peers and connection
    * with Signaling server.
    */
-  leave () {
+  leave() {
     if (this.state !== WebChannelState.LEAVING && this.state !== WebChannelState.LEFT) {
       this.setState(WebChannelState.LEAVING)
       this.key = ''
@@ -267,7 +258,7 @@ export class WebChannel extends Service {
   /**
    * Broadcast a message to the network.
    */
-  send (data: UserDataType): void {
+  send(data: UserDataType): void {
     if (this.members.length !== 1) {
       const msg: any = {
         senderId: this.myId,
@@ -285,7 +276,7 @@ export class WebChannel extends Service {
   /**
    * Send a message to a particular peer in the network.
    */
-  sendTo (id: number, data: UserDataType): void {
+  sendTo(id: number, data: UserDataType): void {
     if (this.members.length !== 1) {
       const msg: any = {
         senderId: this.myId,
@@ -300,14 +291,14 @@ export class WebChannel extends Service {
     }
   }
 
-  onMemberJoinProxy (id: number): void {
+  onMemberJoinProxy(id: number): void {
     if (!this.members.includes(id)) {
       this.members[this.members.length] = id
       this.onMemberJoin(id)
     }
   }
 
-  onMemberLeaveProxy (id: number): void {
+  onMemberLeaveProxy(id: number): void {
     if (this.members.includes(id)) {
       this.members.splice(this.members.indexOf(id), 1)
       this.onMemberLeave(id)
@@ -317,30 +308,36 @@ export class WebChannel extends Service {
   /**
    * Send service message to a particular peer in the network.
    */
-  sendToProxy ({ senderId = this.myId, recipientId = this.myId, isService = true, content}:
-    {senderId?: number, recipientId?: number, isService?: boolean, content?: Uint8Array} = {},
-  ): void {
-    this.topologyService.sendTo({senderId, recipientId, isService, content})
+  sendToProxy({
+    senderId = this.myId,
+    recipientId = this.myId,
+    isService = true,
+    content,
+  }: { senderId?: number; recipientId?: number; isService?: boolean; content?: Uint8Array } = {}): void {
+    this.topologyService.sendTo({ senderId, recipientId, isService, content })
   }
 
   /**
    * Broadcast service message to the network.
    */
-  sendProxy ({ senderId = this.myId, recipientId = 0, isService = true, content }:
-    {senderId?: number, recipientId?: number, isService?: boolean, content?: Uint8Array } = {},
-  ): void {
-    this.topologyService.send({senderId, recipientId, isService, content})
+  sendProxy({
+    senderId = this.myId,
+    recipientId = 0,
+    isService = true,
+    content,
+  }: { senderId?: number; recipientId?: number; isService?: boolean; content?: Uint8Array } = {}): void {
+    this.topologyService.send({ senderId, recipientId, isService, content })
   }
 
-  encode ({ senderId = this.myId, recipientId = 0, isService = true, content }: IMessage = {}): Uint8Array {
-    const msg = {senderId, recipientId, isService, content}
+  encode({ senderId = this.myId, recipientId = 0, isService = true, content }: IMessage = {}): Uint8Array {
+    const msg = { senderId, recipientId, isService, content }
     return Message.encode(Message.create(msg)).finish()
   }
 
   /**
    * Message handler. All messages arrive here first.
    */
-  onMessageProxy (channel: Channel, bytes: Uint8Array): void {
+  onMessageProxy(channel: Channel, bytes: Uint8Array): void {
     const msg = Message.decode(new Uint8Array(bytes))
     // recipientId values:
     // 0: broadcast message
@@ -353,7 +350,7 @@ export class WebChannel extends Service {
     }
   }
 
-  private treatMessage (channel: Channel, msg: IMessage): void {
+  private treatMessage(channel: Channel, msg: IMessage): void {
     // User Message
     if (!msg.isService) {
       const data = this.userMsg.decode(msg.content as Uint8Array, msg.senderId as number)
@@ -361,7 +358,7 @@ export class WebChannel extends Service {
         this.onMessage(msg.senderId as number, data)
       }
 
-    // Service Message
+      // Service Message
     } else {
       const fullMsg: any = service.Message.decode(msg.content as Uint8Array)
       fullMsg.channel = channel
@@ -371,53 +368,53 @@ export class WebChannel extends Service {
     }
   }
 
-  private treatServiceMessage ({channel, senderId, msg}: IServiceMessageDecoded): void {
+  private treatServiceMessage({ channel, senderId, msg }: IServiceMessageDecoded): void {
     switch (msg.type) {
-    case 'init': {
-      const { topology, wcId, generatedIds, members } = msg.init
-      // Check whether the intermidiary peer is already a member of your
-      // network (possible when merging two networks (works with FullMesh)).
-      // If it is a case then you are already a member of the network.
-      if (this.members.includes(senderId)) {
-        if (!generatedIds.includes(this.myId)) {
-          this.setState(WebChannelState.LEAVING)
-          console.warn(`Failed merge networks: my members contain intermediary peer id,
+      case 'init': {
+        const { topology, wcId, generatedIds, members } = msg.init
+        // Check whether the intermidiary peer is already a member of your
+        // network (possible when merging two networks (works with FullMesh)).
+        // If it is a case then you are already a member of the network.
+        if (this.members.includes(senderId)) {
+          if (!generatedIds.includes(this.myId)) {
+            this.setState(WebChannelState.LEAVING)
+            console.warn(`Failed merge networks: my members contain intermediary peer id,
             but my id is not included into the intermediary peer members`)
-          channel.closeQuietly()
-          this.topologyService.leave()
-          return
-        }
-        if (this.topology !== topology) {
-          this.setState(WebChannelState.LEAVING)
-          console.warn('Failed merge networks: different topologies')
-          channel.closeQuietly()
-          this.topologyService.leave()
-          return
-        }
-        log.webgroup(`I:${this.myId} close connection with intermediary member ${senderId},
+            channel.closeQuietly()
+            this.topologyService.leave()
+            return
+          }
+          if (this.topology !== topology) {
+            this.setState(WebChannelState.LEAVING)
+            console.warn('Failed merge networks: different topologies')
+            channel.closeQuietly()
+            this.topologyService.leave()
+            return
+          }
+          log.webgroup(`I:${this.myId} close connection with intermediary member ${senderId},
           because already connected with him`)
-        this.setState(WebChannelState.JOINED)
-        channel.closeQuietly()
-      } else {
-        this.setTopology(topology)
-        this.id = wcId
-        channel.id = senderId
-        channel.send(this.encode({ recipientId: channel.id, content: super.encode({ initOk: true }) }))
-        this.topologyService.initJoining(channel, members)
+          this.setState(WebChannelState.JOINED)
+          channel.closeQuietly()
+        } else {
+          this.setTopology(topology)
+          this.id = wcId
+          channel.id = senderId
+          channel.send(this.encode({ recipientId: channel.id, content: super.encode({ initOk: true }) }))
+          this.topologyService.initJoining(channel, members)
+        }
+        break
       }
-      break
-    }
-    case 'initOk': {
-      channel.id = senderId
-      this.topologyService.addJoining(channel)
-      break
-    }
-    default:
-      throw new Error(`Unknown message type: "${msg.type}"`)
+      case 'initOk': {
+        channel.id = senderId
+        this.topologyService.addJoining(channel)
+        break
+      }
+      default:
+        throw new Error(`Unknown message type: "${msg.type}"`)
     }
   }
 
-  private setState (state: WebChannelState): void {
+  private setState(state: WebChannelState): void {
     if (this.state !== state) {
       log.webGroupState(WebChannelState[state], this.myId)
       this.state = state
@@ -428,20 +425,22 @@ export class WebChannel extends Service {
   /**
    * Delegate adding a new peer in the network to topology.
    */
-  private initChannel (ch: Channel): void {
+  private initChannel(ch: Channel): void {
     const msg = this.encode({
       recipientId: 1,
-      content: super.encode({ init: {
-        topology: this.topology,
-        wcId: this.id,
-        generatedIds: this.members,
-        members: this.members,
-      }}),
+      content: super.encode({
+        init: {
+          topology: this.topology,
+          wcId: this.id,
+          generatedIds: this.members,
+          members: this.members,
+        },
+      }),
     })
     ch.send(msg)
   }
 
-  private setTopology (topology: TopologyEnum): void {
+  private setTopology(topology: TopologyEnum): void {
     if (this.topologyService !== undefined) {
       if (this.topology !== topology) {
         this.topology = topology
@@ -456,33 +455,33 @@ export class WebChannel extends Service {
     }
   }
 
-  private subscribeToTopology () {
+  private subscribeToTopology() {
     if (this.topologySub) {
       this.topologySub.unsubscribe()
     }
     this.topologySub = this.topologyService.onState.subscribe((state: TopologyStateEnum) => {
       switch (state) {
-      case TopologyStateEnum.JOINING:
-        this.setState(WebChannelState.JOINING)
-        break
-      case TopologyStateEnum.JOINED:
-        this.setState(WebChannelState.JOINED)
-        break
-      case TopologyStateEnum.STABLE:
-        this.setState(WebChannelState.JOINED)
-        this.signaling.open()
-        break
-      case TopologyStateEnum.DISCONNECTED:
-        if (this.signaling.state === SignalingState.CLOSED) {
-          this.setState(WebChannelState.LEFT)
-        }
-        this.rejoin(2000)
-        break
+        case TopologyStateEnum.JOINING:
+          this.setState(WebChannelState.JOINING)
+          break
+        case TopologyStateEnum.JOINED:
+          this.setState(WebChannelState.JOINED)
+          break
+        case TopologyStateEnum.STABLE:
+          this.setState(WebChannelState.JOINED)
+          this.signaling.open()
+          break
+        case TopologyStateEnum.DISCONNECTED:
+          if (this.signaling.state === SignalingState.CLOSED) {
+            this.setState(WebChannelState.LEFT)
+          }
+          this.rejoin(2000)
+          break
       }
     })
   }
 
-  private rejoin (timeout: number = 0) {
+  private rejoin(timeout: number = 0) {
     if (!this.isRejoinDisabled) {
       this.isRejoinDisabled = !this.autoRejoin
       global.clearTimeout(this.rejoinTimer)
@@ -498,7 +497,7 @@ export class WebChannel extends Service {
   /**
    * Generate random id for a `WebChannel` or a new peer.
    */
-  private generateId (excludeIds: number[] = []): number {
+  private generateId(excludeIds: number[] = []): number {
     const id = randNumbers()[0]
     if (excludeIds.includes(id)) {
       return this.generateId()
@@ -506,7 +505,7 @@ export class WebChannel extends Service {
     return id
   }
 
-  private internalLeave () {
+  private internalLeave() {
     if (this.state !== WebChannelState.LEAVING && this.state !== WebChannelState.LEFT) {
       this.signaling.close()
       this.topologyService.leave()

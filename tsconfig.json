@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "es5",
     "module": "es2015",
-    "lib": [ "es2017", "dom" ],
+    "lib": ["es2017", "dom"],
     "moduleResolution": "node",
     "downlevelIteration": true,
     "types": ["node", "text-encoding"],
@@ -10,11 +10,8 @@
     "noUnusedLocals": true,
     "noUnusedParameters": false,
     "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
+    "noFallthroughCasesInSwitch": true
   },
-  "include": [
-    "src/**/*",
-    "test/**/*"
-  ],
+  "include": ["src/**/*", "test/**/*"],
   "exclude": ["**/proto/index.d.ts"]
 }

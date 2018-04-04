@@ -6,17 +6,17 @@ import { Channel } from '../Channel'
 import { service } from '../proto'
 
 export interface IServiceMessageEncoded {
-  channel: Channel,
-  senderId: number,
-  recipientId: number,
-  id: number,
+  channel: Channel
+  senderId: number
+  recipientId: number
+  id: number
   content: Uint8Array
 }
 
 export interface IServiceMessageDecoded {
-  channel: Channel,
-  senderId: number,
-  recipientId: number,
+  channel: Channel
+  senderId: number
+  recipientId: number
   msg: any
 }
 
@@ -28,13 +28,12 @@ export interface IServiceMessageDecoded {
  * communication protocol.
  */
 export abstract class Service {
-
-  static encodeServiceMessage (serviceId: number, content: Uint8Array): Uint8Array {
+  static encodeServiceMessage(serviceId: number, content: Uint8Array): Uint8Array {
     return service.Message.encode(
       service.Message.create({
         id: serviceId,
         content,
-      }),
+      })
     ).finish()
   }
 
@@ -53,7 +52,7 @@ export abstract class Service {
    */
   private protoMessage: any
 
-  constructor (id: number, protoMessage: any, serviceMessageSubject?: Subject<IServiceMessageEncoded>) {
+  constructor(id: number, protoMessage: any, serviceMessageSubject?: Subject<IServiceMessageEncoded>) {
     this.serviceId = id
     this.protoMessage = protoMessage
     if (serviceMessageSubject !== undefined) {
@@ -66,12 +65,12 @@ export abstract class Service {
    *
    * @param msg Service specific message object
    */
-  encode (msg: any): Uint8Array {
+  encode(msg: any): Uint8Array {
     return service.Message.encode(
       service.Message.create({
         id: this.serviceId,
         content: this.protoMessage.encode(this.protoMessage.create(msg)).finish(),
-      }),
+      })
     ).finish()
   }
 
@@ -80,11 +79,11 @@ export abstract class Service {
    *
    * @return  Service specific message object
    */
-  decode (bytes: Uint8Array): any {
+  decode(bytes: Uint8Array): any {
     return this.protoMessage.decode(bytes)
   }
 
-  protected setupServiceMessage (serviceMessageSubject: Subject<IServiceMessageEncoded>): void {
+  protected setupServiceMessage(serviceMessageSubject: Subject<IServiceMessageEncoded>): void {
     this.onServiceMessage = serviceMessageSubject.pipe(
       filter(({ id }) => id === this.serviceId),
       map(({ channel, senderId, recipientId, content }) => ({
@@ -92,7 +91,7 @@ export abstract class Service {
         senderId,
         recipientId,
         msg: this.protoMessage.decode(content),
-      })),
+      }))
     )
   }
 }

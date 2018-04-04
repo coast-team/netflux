@@ -12,5 +12,5 @@ global.TextEncoder = textEncoding.TextEncoder
 global.TextDecoder = textEncoding.TextDecoder
 global.crypto = require('crypto')
 global.Event = class Event {
-  constructor (public name: string) {}
+  constructor(public name: string) {}
 } as any

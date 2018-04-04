@@ -61,7 +61,7 @@ try {
       for (const wg of bot.webGroups) {
         if (wg.id === wcId) {
           await (wg as any).waitJoin
-          ctx.body = {id: wcId}
+          ctx.body = { id: wcId }
           return
         }
       }
@@ -110,7 +110,7 @@ try {
       messages: [],
       onMessageToBeCalled: 0,
     }
-    const anyWg = (wg as any)
+    const anyWg = wg as any
     anyWg.waitJoin = new Promise((resolve) => {
       wg.onStateChange = (state) => {
         if (state === WebGroupState.JOINED) {
@@ -172,7 +172,7 @@ try {
   console.error('WebGroupBotServer script error: ', err)
 }
 
-function fullData (wg: any): IData {
+function fullData(wg: any): IData {
   wg.data.state = wg.state
   wg.data.signalingState = wg.signalingState
   wg.data.key = wg.key

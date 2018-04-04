@@ -8,7 +8,6 @@ const TYPE = process.argv[4]
 
 module.exports = (config) => {
   config.set({
-
     // base path that will be used to resolve all patterns (eg. files, exclude)
     basePath: '',
 
@@ -34,16 +33,16 @@ module.exports = (config) => {
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
     preprocessors: {
       'test/**/*.ts': ['karma-typescript', 'regex'],
-      'src/**/*.+(js|ts)': ['karma-typescript', 'regex']
+      'src/**/*.+(js|ts)': ['karma-typescript', 'regex'],
     },
 
     karmaTypescriptConfig: {
       compilerOptions: {
-        lib: [ "es2017", "dom" ],
+        lib: ['es2017', 'dom'],
         moduleResolution: 'node',
         downlevelIteration: true,
         types: ['node', 'text-encoding'],
-        allowJs: true
+        allowJs: true,
       },
       bundlerOptions: {
         exclude: ['wrtc', 'text-encoding', 'uws', 'url'],
@@ -51,13 +50,13 @@ module.exports = (config) => {
       },
       include: ['src/**/*', 'test/**/*'],
       coverageOptions: {
-        exclude: [/src\/proto\/index\.js/i, /test\/.*/i, /.*polyfills*/i]
+        exclude: [/src\/proto\/index\.js/i, /test\/.*/i, /.*polyfills*/i],
       },
       exclude: ['**/*adapter_factory.js'],
       reports: {
         html: {},
-        'text-summary': ''
-      }
+        'text-summary': '',
+      },
     },
 
     // test results reporter to use
@@ -87,7 +86,7 @@ module.exports = (config) => {
     customLaunchers: {
       FirefoxHeadless: {
         base: 'Firefox',
-        flags: [ '-headless' ],
+        flags: ['-headless'],
       },
     },
 
@@ -99,37 +98,36 @@ module.exports = (config) => {
     // how many browser should be started simultanous
     concurrency: Infinity,
 
-    browserNoActivityTimeout: 200000
+    browserNoActivityTimeout: 200000,
   })
 
   if (process.env.TRAVIS || TYPE === 'travis') {
-    config.browsers = ['ChromeHeadless'],
-    config.autoWatch = false,
-    config.singleRun = true,
+    config.browsers = ['ChromeHeadless']
+    config.autoWatch = false
+    config.singleRun = true
     config.browserNoActivityTimeout = 120000
     config.karmaTypescriptConfig.reports = {
       lcovonly: {
         subdirectory: 'lcov',
-        filename: 'lcov'
+        filename: 'lcov',
       },
-      'text-summary': ''
+      'text-summary': '',
     }
   } else if (TYPE === 'debug') {
-    config.autoWatch = true,
-    config.singleRun = false,
+    config.autoWatch = true
+    config.singleRun = false
     config.regexPreprocessor = {
       rules: [
         {
-          fileName: 'Util.ts', replacement: [
-            { replace: /enableLog\(false\)/g, with: 'enableLog(true)' }
-          ]
-        }
-      ]
+          fileName: 'Util.ts',
+          replacement: [{ replace: /enableLog\(false\)/g, with: 'enableLog(true)' }],
+        },
+      ],
     }
   } else if (TYPE === 'precommit') {
-    config.browsers = ['ChromeHeadless', 'Firefox'],
-    config.autoWatch = false,
-    config.singleRun = true,
+    config.browsers = ['FirefoxHeadless']
+    config.autoWatch = false
+    config.singleRun = true
     config.karmaTypescriptConfig.reports = { 'text-summary': '' }
   }
 }

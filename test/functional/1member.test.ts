@@ -14,7 +14,7 @@ describe('1 member', () => {
 
     /** @test {WebGroup#constructor} */
     it('constructor', () => {
-      const wg = new WebGroup({signalingServer: SIGNALING_URL})
+      const wg = new WebGroup({ signalingServer: SIGNALING_URL })
 
       // Check members
       const id = Reflect.getOwnPropertyDescriptor(wg, 'id')
@@ -78,11 +78,11 @@ describe('1 member', () => {
 
     /** @test {WebGroup#join} */
     describe('joining', () => {
-      beforeEach (() => {
+      beforeEach(() => {
         wg1 = new WebGroup(WebGroupOptions)
       })
 
-      afterEach ((done) => {
+      afterEach((done) => {
         cleanWebGroup(wg1)
         if (wg1.state !== WebGroupState.LEFT) {
           wg1.onStateChange = (state: WebGroupState) => {
@@ -150,11 +150,10 @@ describe('1 member', () => {
         wg1.onMemberJoin = () => called1++
         wg1.onStateChange = (state: WebGroupState) => {
           if (state === WebGroupState.JOINED) {
-            wait(1000)
-              .then(() => {
-                expect(called1).toEqual(0)
-                done()
-              })
+            wait(1000).then(() => {
+              expect(called1).toEqual(0)
+              done()
+            })
           }
         }
 
@@ -176,15 +175,14 @@ describe('1 member', () => {
             expect(topology).toEqual(wg1.topology)
             expect(wg1.key).not.toEqual('')
 
-            wait(1000)
-              .then(() => {
-                expect(areTheSame(wg1.members, members)).toBeTruthy()
-                expect(myId).toEqual(wg1.myId)
-                expect(id).toEqual(wg1.id)
-                expect(topology).toEqual(wg1.topology)
-                expect(wg1.key).not.toEqual('')
-                done()
-              })
+            wait(1000).then(() => {
+              expect(areTheSame(wg1.members, members)).toBeTruthy()
+              expect(myId).toEqual(wg1.myId)
+              expect(id).toEqual(wg1.id)
+              expect(topology).toEqual(wg1.topology)
+              expect(wg1.key).not.toEqual('')
+              done()
+            })
           }
         }
 
@@ -211,8 +209,7 @@ describe('1 member', () => {
     })
 
     describe('leaving', () => {
-
-      beforeEach ((done) => {
+      beforeEach((done) => {
         wg1 = new WebGroup(WebGroupOptions)
         wg1.onStateChange = (state: WebGroupState) => {
           if (state === WebGroupState.JOINED) {
@@ -223,7 +220,7 @@ describe('1 member', () => {
         wg1.join()
       })
 
-      afterEach (() => cleanWebGroup(wg1))
+      afterEach(() => cleanWebGroup(wg1))
 
       /** @test {WebGroup#leave} */
       it('should have the same members, WebGroup id, topology and an empty key', (done) => {
@@ -240,15 +237,14 @@ describe('1 member', () => {
             expect(topology).toEqual(wg1.topology)
             expect(wg1.key).toEqual('')
 
-            wait(1000)
-              .then(() => {
-                expect(areTheSame(wg1.members, members)).toBeTruthy()
-                expect(myId).toEqual(wg1.myId)
-                expect(id).toEqual(wg1.id)
-                expect(topology).toEqual(wg1.topology)
-                expect(wg1.key).toEqual('')
-                done()
-              })
+            wait(1000).then(() => {
+              expect(areTheSame(wg1.members, members)).toBeTruthy()
+              expect(myId).toEqual(wg1.myId)
+              expect(id).toEqual(wg1.id)
+              expect(topology).toEqual(wg1.topology)
+              expect(wg1.key).toEqual('')
+              done()
+            })
           }
         }
 
@@ -256,7 +252,7 @@ describe('1 member', () => {
         wg1.leave()
       })
 
-        /** @test {WebGroup#onMemberLeave} */
+      /** @test {WebGroup#onMemberLeave} */
       it('should be NOT notified about left member', (done) => {
         let called1 = 0
 
@@ -264,11 +260,10 @@ describe('1 member', () => {
 
         wg1.onStateChange = (state: WebGroupState) => {
           if (state === WebGroupState.LEFT) {
-            wait(1000)
-              .then(() => {
-                expect(called1).toEqual(0)
-                done()
-              })
+            wait(1000).then(() => {
+              expect(called1).toEqual(0)
+              done()
+            })
           }
         }
 
@@ -276,7 +271,7 @@ describe('1 member', () => {
         wg1.leave()
       })
 
-        /** @test {WebGroup#onStateChange} */
+      /** @test {WebGroup#onStateChange} */
       it('should change the WebGroup state', (done) => {
         let called1 = 0
         const states: WebGroupState[] = []
@@ -286,13 +281,12 @@ describe('1 member', () => {
           states.push(state)
           called1++
           if (state === WebGroupState.LEFT) {
-            wait(1000)
-              .then(() => {
-                expect(called1).toEqual(2)
-                expect(states).toEqual(expectedStates)
-                expect(state).toEqual(WebGroupState.LEFT)
-                done()
-              })
+            wait(1000).then(() => {
+              expect(called1).toEqual(2)
+              expect(states).toEqual(expectedStates)
+              expect(state).toEqual(WebGroupState.LEFT)
+              done()
+            })
           }
         }
 
@@ -300,7 +294,7 @@ describe('1 member', () => {
         wg1.leave()
       })
 
-        /** @test {WebGroup#onSignalingStateChange} */
+      /** @test {WebGroup#onSignalingStateChange} */
       it('should change the Signaling state', (done) => {
         let called1 = 0
         const states: SignalingState[] = []
@@ -309,12 +303,11 @@ describe('1 member', () => {
         wg1.onSignalingStateChange = (state: SignalingState) => {
           states.push(state)
           called1++
-          wait(1000)
-            .then(() => {
-              expect(called1).toEqual(2)
-              expect(states).toEqual(expectedStates)
-              done()
-            })
+          wait(1000).then(() => {
+            expect(called1).toEqual(2)
+            expect(states).toEqual(expectedStates)
+            done()
+          })
         }
 
         // Start leaving

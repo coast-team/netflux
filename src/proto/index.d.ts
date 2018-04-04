@@ -1,56 +1,120 @@
-import * as $protobuf from "protobufjs";
+import * as $protobuf from 'protobufjs'
 
 /** Properties of a Message. */
 export interface IMessage {
+  /** Message senderId */
+  senderId?: number | null
 
-    /** Message senderId */
-    senderId?: (number|null);
+  /** Message recipientId */
+  recipientId?: number | null
 
-    /** Message recipientId */
-    recipientId?: (number|null);
+  /** Message isService */
+  isService?: boolean | null
 
-    /** Message isService */
-    isService?: (boolean|null);
-
-    /** Message content */
-    content?: (Uint8Array|null);
+  /** Message content */
+  content?: Uint8Array | null
 }
 
 /** Represents a Message. */
 export class Message implements IMessage {
+  /**
+   * Constructs a new Message.
+   * @param [properties] Properties to set
+   */
+  constructor(properties?: IMessage)
 
+  /** Message senderId. */
+  public senderId: number
+
+  /** Message recipientId. */
+  public recipientId: number
+
+  /** Message isService. */
+  public isService: boolean
+
+  /** Message content. */
+  public content: Uint8Array
+
+  /**
+   * Creates a new Message instance using the specified properties.
+   * @param [properties] Properties to set
+   * @returns Message instance
+   */
+  public static create(properties?: IMessage): Message
+
+  /**
+   * Encodes the specified Message message. Does not implicitly {@link Message.verify|verify} messages.
+   * @param message Message message or plain object to encode
+   * @param [writer] Writer to encode to
+   * @returns Writer
+   */
+  public static encode(message: IMessage, writer?: $protobuf.Writer): $protobuf.Writer
+
+  /**
+   * Decodes a Message message from the specified reader or buffer.
+   * @param reader Reader or buffer to decode from
+   * @param [length] Message length if known beforehand
+   * @returns Message
+   * @throws {Error} If the payload is not a reader or valid buffer
+   * @throws {$protobuf.util.ProtocolError} If required fields are missing
+   */
+  public static decode(reader: $protobuf.Reader | Uint8Array, length?: number): Message
+}
+
+/** Namespace user. */
+export namespace user {
+  /** Properties of a Message. */
+  interface IMessage {
+    /** Message length */
+    length?: number | null
+
+    /** Message type */
+    type?: user.Message.Type | null
+
+    /** Message full */
+    full?: Uint8Array | null
+
+    /** Message chunk */
+    chunk?: user.Message.IChunk | null
+  }
+
+  /** Represents a Message. */
+  class Message implements IMessage {
     /**
      * Constructs a new Message.
      * @param [properties] Properties to set
      */
-    constructor(properties?: IMessage);
+    constructor(properties?: user.IMessage)
 
-    /** Message senderId. */
-    public senderId: number;
+    /** Message length. */
+    public length: number
 
-    /** Message recipientId. */
-    public recipientId: number;
+    /** Message type. */
+    public type: user.Message.Type
 
-    /** Message isService. */
-    public isService: boolean;
+    /** Message full. */
+    public full: Uint8Array
+
+    /** Message chunk. */
+    public chunk?: user.Message.IChunk | null
 
     /** Message content. */
-    public content: Uint8Array;
+    public content?: 'full' | 'chunk'
 
     /**
      * Creates a new Message instance using the specified properties.
      * @param [properties] Properties to set
      * @returns Message instance
      */
-    public static create(properties?: IMessage): Message;
+    public static create(properties?: user.IMessage): user.Message
 
     /**
-     * Encodes the specified Message message. Does not implicitly {@link Message.verify|verify} messages.
+     * Encodes the specified Message message. Does not implicitly {@link user.Message.verify|verify} messages.
      * @param message Message message or plain object to encode
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    public static encode(message: IMessage, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encode(message: user.IMessage, writer?: $protobuf.Writer): $protobuf.Writer
 
     /**
      * Decodes a Message message from the specified reader or buffer.
@@ -60,840 +124,740 @@ export class Message implements IMessage {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): Message;
-}
+    public static decode(reader: $protobuf.Reader | Uint8Array, length?: number): user.Message
+  }
 
-/** Namespace user. */
-export namespace user {
+  namespace Message {
+    /** Properties of a Chunk. */
+    interface IChunk {
+      /** Chunk id */
+      id?: number | null
 
-    /** Properties of a Message. */
-    interface IMessage {
+      /** Chunk number */
+      number?: number | null
 
-        /** Message length */
-        length?: (number|null);
-
-        /** Message type */
-        type?: (user.Message.Type|null);
-
-        /** Message full */
-        full?: (Uint8Array|null);
-
-        /** Message chunk */
-        chunk?: (user.Message.IChunk|null);
+      /** Chunk content */
+      content?: Uint8Array | null
     }
 
-    /** Represents a Message. */
-    class Message implements IMessage {
+    /** Represents a Chunk. */
+    class Chunk implements IChunk {
+      /**
+       * Constructs a new Chunk.
+       * @param [properties] Properties to set
+       */
+      constructor(properties?: user.Message.IChunk)
 
-        /**
-         * Constructs a new Message.
-         * @param [properties] Properties to set
-         */
-        constructor(properties?: user.IMessage);
+      /** Chunk id. */
+      public id: number
 
-        /** Message length. */
-        public length: number;
+      /** Chunk number. */
+      public number: number
 
-        /** Message type. */
-        public type: user.Message.Type;
+      /** Chunk content. */
+      public content: Uint8Array
 
-        /** Message full. */
-        public full: Uint8Array;
+      /**
+       * Creates a new Chunk instance using the specified properties.
+       * @param [properties] Properties to set
+       * @returns Chunk instance
+       */
+      public static create(properties?: user.Message.IChunk): user.Message.Chunk
 
-        /** Message chunk. */
-        public chunk?: (user.Message.IChunk|null);
+      /**
+       * Encodes the specified Chunk message. Does not implicitly {@link user.Message.Chunk.verify|verify} messages.
+       * @param message Chunk message or plain object to encode
+       * @param [writer] Writer to encode to
+       * @returns Writer
+       */
+      public static encode(message: user.Message.IChunk, writer?: $protobuf.Writer): $protobuf.Writer
 
-        /** Message content. */
-        public content?: ("full"|"chunk");
-
-        /**
-         * Creates a new Message instance using the specified properties.
-         * @param [properties] Properties to set
-         * @returns Message instance
-         */
-        public static create(properties?: user.IMessage): user.Message;
-
-        /**
-         * Encodes the specified Message message. Does not implicitly {@link user.Message.verify|verify} messages.
-         * @param message Message message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encode(message: user.IMessage, writer?: $protobuf.Writer): $protobuf.Writer;
-
-        /**
-         * Decodes a Message message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
-         * @returns Message
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): user.Message;
+      /**
+       * Decodes a Chunk message from the specified reader or buffer.
+       * @param reader Reader or buffer to decode from
+       * @param [length] Message length if known beforehand
+       * @returns Chunk
+       * @throws {Error} If the payload is not a reader or valid buffer
+       * @throws {$protobuf.util.ProtocolError} If required fields are missing
+       */
+      public static decode(reader: $protobuf.Reader | Uint8Array, length?: number): user.Message.Chunk
     }
 
-    namespace Message {
-
-        /** Properties of a Chunk. */
-        interface IChunk {
-
-            /** Chunk id */
-            id?: (number|null);
-
-            /** Chunk number */
-            number?: (number|null);
-
-            /** Chunk content */
-            content?: (Uint8Array|null);
-        }
-
-        /** Represents a Chunk. */
-        class Chunk implements IChunk {
-
-            /**
-             * Constructs a new Chunk.
-             * @param [properties] Properties to set
-             */
-            constructor(properties?: user.Message.IChunk);
-
-            /** Chunk id. */
-            public id: number;
-
-            /** Chunk number. */
-            public number: number;
-
-            /** Chunk content. */
-            public content: Uint8Array;
-
-            /**
-             * Creates a new Chunk instance using the specified properties.
-             * @param [properties] Properties to set
-             * @returns Chunk instance
-             */
-            public static create(properties?: user.Message.IChunk): user.Message.Chunk;
-
-            /**
-             * Encodes the specified Chunk message. Does not implicitly {@link user.Message.Chunk.verify|verify} messages.
-             * @param message Chunk message or plain object to encode
-             * @param [writer] Writer to encode to
-             * @returns Writer
-             */
-            public static encode(message: user.Message.IChunk, writer?: $protobuf.Writer): $protobuf.Writer;
-
-            /**
-             * Decodes a Chunk message from the specified reader or buffer.
-             * @param reader Reader or buffer to decode from
-             * @param [length] Message length if known beforehand
-             * @returns Chunk
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): user.Message.Chunk;
-        }
-
-        /** Type enum. */
-        enum Type {
-            STRING = 0,
-            U_INT_8_ARRAY = 1
-        }
+    /** Type enum. */
+    enum Type {
+      STRING = 0,
+      U_INT_8_ARRAY = 1,
     }
+  }
 }
 
 /** Namespace service. */
 export namespace service {
+  /** Properties of a Message. */
+  interface IMessage {
+    /** Message id */
+    id?: number | null
 
-    /** Properties of a Message. */
-    interface IMessage {
+    /** Message content */
+    content?: Uint8Array | null
+  }
 
-        /** Message id */
-        id?: (number|null);
+  /** Represents a Message. */
+  class Message implements IMessage {
+    /**
+     * Constructs a new Message.
+     * @param [properties] Properties to set
+     */
+    constructor(properties?: service.IMessage)
 
-        /** Message content */
-        content?: (Uint8Array|null);
-    }
+    /** Message id. */
+    public id: number
 
-    /** Represents a Message. */
-    class Message implements IMessage {
+    /** Message content. */
+    public content: Uint8Array
 
-        /**
-         * Constructs a new Message.
-         * @param [properties] Properties to set
-         */
-        constructor(properties?: service.IMessage);
+    /**
+     * Creates a new Message instance using the specified properties.
+     * @param [properties] Properties to set
+     * @returns Message instance
+     */
+    public static create(properties?: service.IMessage): service.Message
 
-        /** Message id. */
-        public id: number;
+    /**
+     * Encodes the specified Message message. Does not implicitly {@link service.Message.verify|verify} messages.
+     * @param message Message message or plain object to encode
+     * @param [writer] Writer to encode to
+     * @returns Writer
+     */
+    public static encode(message: service.IMessage, writer?: $protobuf.Writer): $protobuf.Writer
 
-        /** Message content. */
-        public content: Uint8Array;
-
-        /**
-         * Creates a new Message instance using the specified properties.
-         * @param [properties] Properties to set
-         * @returns Message instance
-         */
-        public static create(properties?: service.IMessage): service.Message;
-
-        /**
-         * Encodes the specified Message message. Does not implicitly {@link service.Message.verify|verify} messages.
-         * @param message Message message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encode(message: service.IMessage, writer?: $protobuf.Writer): $protobuf.Writer;
-
-        /**
-         * Decodes a Message message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
-         * @returns Message
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): service.Message;
-    }
+    /**
+     * Decodes a Message message from the specified reader or buffer.
+     * @param reader Reader or buffer to decode from
+     * @param [length] Message length if known beforehand
+     * @returns Message
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    public static decode(reader: $protobuf.Reader | Uint8Array, length?: number): service.Message
+  }
 }
 
 /** Namespace webChannel. */
 export namespace webChannel {
+  /** Properties of a Message. */
+  interface IMessage {
+    /** Message init */
+    init?: webChannel.IInitData | null
 
-    /** Properties of a Message. */
-    interface IMessage {
+    /** Message initOk */
+    initOk?: boolean | null
+  }
 
-        /** Message init */
-        init?: (webChannel.IInitData|null);
+  /** Represents a Message. */
+  class Message implements IMessage {
+    /**
+     * Constructs a new Message.
+     * @param [properties] Properties to set
+     */
+    constructor(properties?: webChannel.IMessage)
 
-        /** Message initOk */
-        initOk?: (boolean|null);
-    }
+    /** Message init. */
+    public init?: webChannel.IInitData | null
 
-    /** Represents a Message. */
-    class Message implements IMessage {
+    /** Message initOk. */
+    public initOk: boolean
 
-        /**
-         * Constructs a new Message.
-         * @param [properties] Properties to set
-         */
-        constructor(properties?: webChannel.IMessage);
+    /** Message type. */
+    public type?: 'init' | 'initOk'
 
-        /** Message init. */
-        public init?: (webChannel.IInitData|null);
+    /**
+     * Creates a new Message instance using the specified properties.
+     * @param [properties] Properties to set
+     * @returns Message instance
+     */
+    public static create(properties?: webChannel.IMessage): webChannel.Message
 
-        /** Message initOk. */
-        public initOk: boolean;
+    /**
+     * Encodes the specified Message message. Does not implicitly {@link webChannel.Message.verify|verify} messages.
+     * @param message Message message or plain object to encode
+     * @param [writer] Writer to encode to
+     * @returns Writer
+     */
+    public static encode(message: webChannel.IMessage, writer?: $protobuf.Writer): $protobuf.Writer
 
-        /** Message type. */
-        public type?: ("init"|"initOk");
+    /**
+     * Decodes a Message message from the specified reader or buffer.
+     * @param reader Reader or buffer to decode from
+     * @param [length] Message length if known beforehand
+     * @returns Message
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    public static decode(reader: $protobuf.Reader | Uint8Array, length?: number): webChannel.Message
+  }
 
-        /**
-         * Creates a new Message instance using the specified properties.
-         * @param [properties] Properties to set
-         * @returns Message instance
-         */
-        public static create(properties?: webChannel.IMessage): webChannel.Message;
+  /** Properties of an InitData. */
+  interface IInitData {
+    /** InitData topology */
+    topology?: number | null
 
-        /**
-         * Encodes the specified Message message. Does not implicitly {@link webChannel.Message.verify|verify} messages.
-         * @param message Message message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encode(message: webChannel.IMessage, writer?: $protobuf.Writer): $protobuf.Writer;
+    /** InitData wcId */
+    wcId?: number | null
 
-        /**
-         * Decodes a Message message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
-         * @returns Message
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): webChannel.Message;
-    }
+    /** InitData generatedIds */
+    generatedIds?: number[] | null
 
-    /** Properties of an InitData. */
-    interface IInitData {
+    /** InitData members */
+    members?: number[] | null
+  }
 
-        /** InitData topology */
-        topology?: (number|null);
+  /** Represents an InitData. */
+  class InitData implements IInitData {
+    /**
+     * Constructs a new InitData.
+     * @param [properties] Properties to set
+     */
+    constructor(properties?: webChannel.IInitData)
 
-        /** InitData wcId */
-        wcId?: (number|null);
+    /** InitData topology. */
+    public topology: number
 
-        /** InitData generatedIds */
-        generatedIds?: (number[]|null);
+    /** InitData wcId. */
+    public wcId: number
 
-        /** InitData members */
-        members?: (number[]|null);
-    }
+    /** InitData generatedIds. */
+    public generatedIds: number[]
 
-    /** Represents an InitData. */
-    class InitData implements IInitData {
+    /** InitData members. */
+    public members: number[]
 
-        /**
-         * Constructs a new InitData.
-         * @param [properties] Properties to set
-         */
-        constructor(properties?: webChannel.IInitData);
+    /**
+     * Creates a new InitData instance using the specified properties.
+     * @param [properties] Properties to set
+     * @returns InitData instance
+     */
+    public static create(properties?: webChannel.IInitData): webChannel.InitData
 
-        /** InitData topology. */
-        public topology: number;
+    /**
+     * Encodes the specified InitData message. Does not implicitly {@link webChannel.InitData.verify|verify} messages.
+     * @param message InitData message or plain object to encode
+     * @param [writer] Writer to encode to
+     * @returns Writer
+     */
+    public static encode(message: webChannel.IInitData, writer?: $protobuf.Writer): $protobuf.Writer
 
-        /** InitData wcId. */
-        public wcId: number;
-
-        /** InitData generatedIds. */
-        public generatedIds: number[];
-
-        /** InitData members. */
-        public members: number[];
-
-        /**
-         * Creates a new InitData instance using the specified properties.
-         * @param [properties] Properties to set
-         * @returns InitData instance
-         */
-        public static create(properties?: webChannel.IInitData): webChannel.InitData;
-
-        /**
-         * Encodes the specified InitData message. Does not implicitly {@link webChannel.InitData.verify|verify} messages.
-         * @param message InitData message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encode(message: webChannel.IInitData, writer?: $protobuf.Writer): $protobuf.Writer;
-
-        /**
-         * Decodes an InitData message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
-         * @returns InitData
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): webChannel.InitData;
-    }
+    /**
+     * Decodes an InitData message from the specified reader or buffer.
+     * @param reader Reader or buffer to decode from
+     * @param [length] Message length if known beforehand
+     * @returns InitData
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    public static decode(reader: $protobuf.Reader | Uint8Array, length?: number): webChannel.InitData
+  }
 }
 
 /** Namespace channelBuilder. */
 export namespace channelBuilder {
+  /** Properties of a Message. */
+  interface IMessage {
+    /** Message request */
+    request?: channelBuilder.IConnection | null
 
-    /** Properties of a Message. */
-    interface IMessage {
+    /** Message response */
+    response?: channelBuilder.IConnection | null
 
-        /** Message request */
-        request?: (channelBuilder.IConnection|null);
+    /** Message failed */
+    failed?: string | null
 
-        /** Message response */
-        response?: (channelBuilder.IConnection|null);
+    /** Message ping */
+    ping?: boolean | null
 
-        /** Message failed */
-        failed?: (string|null);
+    /** Message pong */
+    pong?: boolean | null
+  }
 
-        /** Message ping */
-        ping?: (boolean|null);
+  /** Represents a Message. */
+  class Message implements IMessage {
+    /**
+     * Constructs a new Message.
+     * @param [properties] Properties to set
+     */
+    constructor(properties?: channelBuilder.IMessage)
 
-        /** Message pong */
-        pong?: (boolean|null);
-    }
+    /** Message request. */
+    public request?: channelBuilder.IConnection | null
 
-    /** Represents a Message. */
-    class Message implements IMessage {
+    /** Message response. */
+    public response?: channelBuilder.IConnection | null
 
-        /**
-         * Constructs a new Message.
-         * @param [properties] Properties to set
-         */
-        constructor(properties?: channelBuilder.IMessage);
+    /** Message failed. */
+    public failed: string
 
-        /** Message request. */
-        public request?: (channelBuilder.IConnection|null);
+    /** Message ping. */
+    public ping: boolean
 
-        /** Message response. */
-        public response?: (channelBuilder.IConnection|null);
+    /** Message pong. */
+    public pong: boolean
 
-        /** Message failed. */
-        public failed: string;
+    /** Message type. */
+    public type?: 'request' | 'response' | 'failed' | 'ping' | 'pong'
 
-        /** Message ping. */
-        public ping: boolean;
+    /**
+     * Creates a new Message instance using the specified properties.
+     * @param [properties] Properties to set
+     * @returns Message instance
+     */
+    public static create(properties?: channelBuilder.IMessage): channelBuilder.Message
 
-        /** Message pong. */
-        public pong: boolean;
+    /**
+     * Encodes the specified Message message. Does not implicitly {@link channelBuilder.Message.verify|verify} messages.
+     * @param message Message message or plain object to encode
+     * @param [writer] Writer to encode to
+     * @returns Writer
+     */
+    public static encode(message: channelBuilder.IMessage, writer?: $protobuf.Writer): $protobuf.Writer
 
-        /** Message type. */
-        public type?: ("request"|"response"|"failed"|"ping"|"pong");
+    /**
+     * Decodes a Message message from the specified reader or buffer.
+     * @param reader Reader or buffer to decode from
+     * @param [length] Message length if known beforehand
+     * @returns Message
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    public static decode(reader: $protobuf.Reader | Uint8Array, length?: number): channelBuilder.Message
+  }
 
-        /**
-         * Creates a new Message instance using the specified properties.
-         * @param [properties] Properties to set
-         * @returns Message instance
-         */
-        public static create(properties?: channelBuilder.IMessage): channelBuilder.Message;
+  /** Properties of a Connection. */
+  interface IConnection {
+    /** Connection wsUrl */
+    wsUrl?: string | null
 
-        /**
-         * Encodes the specified Message message. Does not implicitly {@link channelBuilder.Message.verify|verify} messages.
-         * @param message Message message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encode(message: channelBuilder.IMessage, writer?: $protobuf.Writer): $protobuf.Writer;
+    /** Connection isWrtcSupport */
+    isWrtcSupport?: boolean | null
+  }
 
-        /**
-         * Decodes a Message message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
-         * @returns Message
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): channelBuilder.Message;
-    }
+  /** Represents a Connection. */
+  class Connection implements IConnection {
+    /**
+     * Constructs a new Connection.
+     * @param [properties] Properties to set
+     */
+    constructor(properties?: channelBuilder.IConnection)
 
-    /** Properties of a Connection. */
-    interface IConnection {
+    /** Connection wsUrl. */
+    public wsUrl: string
 
-        /** Connection wsUrl */
-        wsUrl?: (string|null);
+    /** Connection isWrtcSupport. */
+    public isWrtcSupport: boolean
 
-        /** Connection isWrtcSupport */
-        isWrtcSupport?: (boolean|null);
-    }
+    /**
+     * Creates a new Connection instance using the specified properties.
+     * @param [properties] Properties to set
+     * @returns Connection instance
+     */
+    public static create(properties?: channelBuilder.IConnection): channelBuilder.Connection
 
-    /** Represents a Connection. */
-    class Connection implements IConnection {
+    /**
+     * Encodes the specified Connection message. Does not implicitly {@link channelBuilder.Connection.verify|verify} messages.
+     * @param message Connection message or plain object to encode
+     * @param [writer] Writer to encode to
+     * @returns Writer
+     */
+    public static encode(message: channelBuilder.IConnection, writer?: $protobuf.Writer): $protobuf.Writer
 
-        /**
-         * Constructs a new Connection.
-         * @param [properties] Properties to set
-         */
-        constructor(properties?: channelBuilder.IConnection);
-
-        /** Connection wsUrl. */
-        public wsUrl: string;
-
-        /** Connection isWrtcSupport. */
-        public isWrtcSupport: boolean;
-
-        /**
-         * Creates a new Connection instance using the specified properties.
-         * @param [properties] Properties to set
-         * @returns Connection instance
-         */
-        public static create(properties?: channelBuilder.IConnection): channelBuilder.Connection;
-
-        /**
-         * Encodes the specified Connection message. Does not implicitly {@link channelBuilder.Connection.verify|verify} messages.
-         * @param message Connection message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encode(message: channelBuilder.IConnection, writer?: $protobuf.Writer): $protobuf.Writer;
-
-        /**
-         * Decodes a Connection message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
-         * @returns Connection
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): channelBuilder.Connection;
-    }
+    /**
+     * Decodes a Connection message from the specified reader or buffer.
+     * @param reader Reader or buffer to decode from
+     * @param [length] Message length if known beforehand
+     * @returns Connection
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    public static decode(reader: $protobuf.Reader | Uint8Array, length?: number): channelBuilder.Connection
+  }
 }
 
 /** Namespace fullMesh. */
 export namespace fullMesh {
+  /** Properties of a Message. */
+  interface IMessage {
+    /** Message membersResponse */
+    membersResponse?: fullMesh.IPeers | null
 
-    /** Properties of a Message. */
-    interface IMessage {
+    /** Message membersRequest */
+    membersRequest?: boolean | null
 
-        /** Message membersResponse */
-        membersResponse?: (fullMesh.IPeers|null);
+    /** Message adjacentMembers */
+    adjacentMembers?: fullMesh.IPeers | null
 
-        /** Message membersRequest */
-        membersRequest?: (boolean|null);
+    /** Message heartbeat */
+    heartbeat?: boolean | null
+  }
 
-        /** Message adjacentMembers */
-        adjacentMembers?: (fullMesh.IPeers|null);
+  /** Represents a Message. */
+  class Message implements IMessage {
+    /**
+     * Constructs a new Message.
+     * @param [properties] Properties to set
+     */
+    constructor(properties?: fullMesh.IMessage)
 
-        /** Message heartbeat */
-        heartbeat?: (boolean|null);
-    }
+    /** Message membersResponse. */
+    public membersResponse?: fullMesh.IPeers | null
 
-    /** Represents a Message. */
-    class Message implements IMessage {
+    /** Message membersRequest. */
+    public membersRequest: boolean
 
-        /**
-         * Constructs a new Message.
-         * @param [properties] Properties to set
-         */
-        constructor(properties?: fullMesh.IMessage);
+    /** Message adjacentMembers. */
+    public adjacentMembers?: fullMesh.IPeers | null
 
-        /** Message membersResponse. */
-        public membersResponse?: (fullMesh.IPeers|null);
+    /** Message heartbeat. */
+    public heartbeat: boolean
 
-        /** Message membersRequest. */
-        public membersRequest: boolean;
+    /** Message type. */
+    public type?: 'membersResponse' | 'membersRequest' | 'adjacentMembers' | 'heartbeat'
 
-        /** Message adjacentMembers. */
-        public adjacentMembers?: (fullMesh.IPeers|null);
+    /**
+     * Creates a new Message instance using the specified properties.
+     * @param [properties] Properties to set
+     * @returns Message instance
+     */
+    public static create(properties?: fullMesh.IMessage): fullMesh.Message
 
-        /** Message heartbeat. */
-        public heartbeat: boolean;
+    /**
+     * Encodes the specified Message message. Does not implicitly {@link fullMesh.Message.verify|verify} messages.
+     * @param message Message message or plain object to encode
+     * @param [writer] Writer to encode to
+     * @returns Writer
+     */
+    public static encode(message: fullMesh.IMessage, writer?: $protobuf.Writer): $protobuf.Writer
 
-        /** Message type. */
-        public type?: ("membersResponse"|"membersRequest"|"adjacentMembers"|"heartbeat");
+    /**
+     * Decodes a Message message from the specified reader or buffer.
+     * @param reader Reader or buffer to decode from
+     * @param [length] Message length if known beforehand
+     * @returns Message
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    public static decode(reader: $protobuf.Reader | Uint8Array, length?: number): fullMesh.Message
+  }
 
-        /**
-         * Creates a new Message instance using the specified properties.
-         * @param [properties] Properties to set
-         * @returns Message instance
-         */
-        public static create(properties?: fullMesh.IMessage): fullMesh.Message;
+  /** Properties of a Peers. */
+  interface IPeers {
+    /** Peers ids */
+    ids?: number[] | null
+  }
 
-        /**
-         * Encodes the specified Message message. Does not implicitly {@link fullMesh.Message.verify|verify} messages.
-         * @param message Message message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encode(message: fullMesh.IMessage, writer?: $protobuf.Writer): $protobuf.Writer;
+  /** Represents a Peers. */
+  class Peers implements IPeers {
+    /**
+     * Constructs a new Peers.
+     * @param [properties] Properties to set
+     */
+    constructor(properties?: fullMesh.IPeers)
 
-        /**
-         * Decodes a Message message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
-         * @returns Message
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): fullMesh.Message;
-    }
+    /** Peers ids. */
+    public ids: number[]
 
-    /** Properties of a Peers. */
-    interface IPeers {
+    /**
+     * Creates a new Peers instance using the specified properties.
+     * @param [properties] Properties to set
+     * @returns Peers instance
+     */
+    public static create(properties?: fullMesh.IPeers): fullMesh.Peers
 
-        /** Peers ids */
-        ids?: (number[]|null);
-    }
+    /**
+     * Encodes the specified Peers message. Does not implicitly {@link fullMesh.Peers.verify|verify} messages.
+     * @param message Peers message or plain object to encode
+     * @param [writer] Writer to encode to
+     * @returns Writer
+     */
+    public static encode(message: fullMesh.IPeers, writer?: $protobuf.Writer): $protobuf.Writer
 
-    /** Represents a Peers. */
-    class Peers implements IPeers {
-
-        /**
-         * Constructs a new Peers.
-         * @param [properties] Properties to set
-         */
-        constructor(properties?: fullMesh.IPeers);
-
-        /** Peers ids. */
-        public ids: number[];
-
-        /**
-         * Creates a new Peers instance using the specified properties.
-         * @param [properties] Properties to set
-         * @returns Peers instance
-         */
-        public static create(properties?: fullMesh.IPeers): fullMesh.Peers;
-
-        /**
-         * Encodes the specified Peers message. Does not implicitly {@link fullMesh.Peers.verify|verify} messages.
-         * @param message Peers message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encode(message: fullMesh.IPeers, writer?: $protobuf.Writer): $protobuf.Writer;
-
-        /**
-         * Decodes a Peers message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
-         * @returns Peers
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): fullMesh.Peers;
-    }
+    /**
+     * Decodes a Peers message from the specified reader or buffer.
+     * @param reader Reader or buffer to decode from
+     * @param [length] Message length if known beforehand
+     * @returns Peers
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    public static decode(reader: $protobuf.Reader | Uint8Array, length?: number): fullMesh.Peers
+  }
 }
 
 /** Namespace webRTCBuilder. */
 export namespace webRTCBuilder {
+  /** Properties of a Message. */
+  interface IMessage {
+    /** Message isInitiator */
+    isInitiator?: boolean | null
 
-    /** Properties of a Message. */
-    interface IMessage {
+    /** Message offer */
+    offer?: string | null
 
-        /** Message isInitiator */
-        isInitiator?: (boolean|null);
+    /** Message answer */
+    answer?: string | null
 
-        /** Message offer */
-        offer?: (string|null);
+    /** Message iceCandidate */
+    iceCandidate?: webRTCBuilder.IIceCandidate | null
 
-        /** Message answer */
-        answer?: (string|null);
+    /** Message isError */
+    isError?: boolean | null
 
-        /** Message iceCandidate */
-        iceCandidate?: (webRTCBuilder.IIceCandidate|null);
+    /** Message isEnd */
+    isEnd?: boolean | null
+  }
 
-        /** Message isError */
-        isError?: (boolean|null);
+  /** Represents a Message. */
+  class Message implements IMessage {
+    /**
+     * Constructs a new Message.
+     * @param [properties] Properties to set
+     */
+    constructor(properties?: webRTCBuilder.IMessage)
 
-        /** Message isEnd */
-        isEnd?: (boolean|null);
-    }
+    /** Message isInitiator. */
+    public isInitiator: boolean
 
-    /** Represents a Message. */
-    class Message implements IMessage {
+    /** Message offer. */
+    public offer: string
 
-        /**
-         * Constructs a new Message.
-         * @param [properties] Properties to set
-         */
-        constructor(properties?: webRTCBuilder.IMessage);
+    /** Message answer. */
+    public answer: string
 
-        /** Message isInitiator. */
-        public isInitiator: boolean;
+    /** Message iceCandidate. */
+    public iceCandidate?: webRTCBuilder.IIceCandidate | null
 
-        /** Message offer. */
-        public offer: string;
+    /** Message isError. */
+    public isError: boolean
 
-        /** Message answer. */
-        public answer: string;
+    /** Message isEnd. */
+    public isEnd: boolean
 
-        /** Message iceCandidate. */
-        public iceCandidate?: (webRTCBuilder.IIceCandidate|null);
+    /** Message type. */
+    public type?: 'offer' | 'answer' | 'iceCandidate' | 'isError' | 'isEnd'
 
-        /** Message isError. */
-        public isError: boolean;
+    /**
+     * Creates a new Message instance using the specified properties.
+     * @param [properties] Properties to set
+     * @returns Message instance
+     */
+    public static create(properties?: webRTCBuilder.IMessage): webRTCBuilder.Message
 
-        /** Message isEnd. */
-        public isEnd: boolean;
+    /**
+     * Encodes the specified Message message. Does not implicitly {@link webRTCBuilder.Message.verify|verify} messages.
+     * @param message Message message or plain object to encode
+     * @param [writer] Writer to encode to
+     * @returns Writer
+     */
+    public static encode(message: webRTCBuilder.IMessage, writer?: $protobuf.Writer): $protobuf.Writer
 
-        /** Message type. */
-        public type?: ("offer"|"answer"|"iceCandidate"|"isError"|"isEnd");
+    /**
+     * Decodes a Message message from the specified reader or buffer.
+     * @param reader Reader or buffer to decode from
+     * @param [length] Message length if known beforehand
+     * @returns Message
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    public static decode(reader: $protobuf.Reader | Uint8Array, length?: number): webRTCBuilder.Message
+  }
 
-        /**
-         * Creates a new Message instance using the specified properties.
-         * @param [properties] Properties to set
-         * @returns Message instance
-         */
-        public static create(properties?: webRTCBuilder.IMessage): webRTCBuilder.Message;
+  /** Properties of an IceCandidate. */
+  interface IIceCandidate {
+    /** IceCandidate candidate */
+    candidate?: string | null
 
-        /**
-         * Encodes the specified Message message. Does not implicitly {@link webRTCBuilder.Message.verify|verify} messages.
-         * @param message Message message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encode(message: webRTCBuilder.IMessage, writer?: $protobuf.Writer): $protobuf.Writer;
+    /** IceCandidate sdpMid */
+    sdpMid?: string | null
 
-        /**
-         * Decodes a Message message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
-         * @returns Message
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): webRTCBuilder.Message;
-    }
+    /** IceCandidate sdpMLineIndex */
+    sdpMLineIndex?: number | null
+  }
 
-    /** Properties of an IceCandidate. */
-    interface IIceCandidate {
+  /** Represents an IceCandidate. */
+  class IceCandidate implements IIceCandidate {
+    /**
+     * Constructs a new IceCandidate.
+     * @param [properties] Properties to set
+     */
+    constructor(properties?: webRTCBuilder.IIceCandidate)
 
-        /** IceCandidate candidate */
-        candidate?: (string|null);
+    /** IceCandidate candidate. */
+    public candidate: string
 
-        /** IceCandidate sdpMid */
-        sdpMid?: (string|null);
+    /** IceCandidate sdpMid. */
+    public sdpMid: string
 
-        /** IceCandidate sdpMLineIndex */
-        sdpMLineIndex?: (number|null);
-    }
+    /** IceCandidate sdpMLineIndex. */
+    public sdpMLineIndex: number
 
-    /** Represents an IceCandidate. */
-    class IceCandidate implements IIceCandidate {
+    /**
+     * Creates a new IceCandidate instance using the specified properties.
+     * @param [properties] Properties to set
+     * @returns IceCandidate instance
+     */
+    public static create(properties?: webRTCBuilder.IIceCandidate): webRTCBuilder.IceCandidate
 
-        /**
-         * Constructs a new IceCandidate.
-         * @param [properties] Properties to set
-         */
-        constructor(properties?: webRTCBuilder.IIceCandidate);
+    /**
+     * Encodes the specified IceCandidate message. Does not implicitly {@link webRTCBuilder.IceCandidate.verify|verify} messages.
+     * @param message IceCandidate message or plain object to encode
+     * @param [writer] Writer to encode to
+     * @returns Writer
+     */
+    public static encode(message: webRTCBuilder.IIceCandidate, writer?: $protobuf.Writer): $protobuf.Writer
 
-        /** IceCandidate candidate. */
-        public candidate: string;
-
-        /** IceCandidate sdpMid. */
-        public sdpMid: string;
-
-        /** IceCandidate sdpMLineIndex. */
-        public sdpMLineIndex: number;
-
-        /**
-         * Creates a new IceCandidate instance using the specified properties.
-         * @param [properties] Properties to set
-         * @returns IceCandidate instance
-         */
-        public static create(properties?: webRTCBuilder.IIceCandidate): webRTCBuilder.IceCandidate;
-
-        /**
-         * Encodes the specified IceCandidate message. Does not implicitly {@link webRTCBuilder.IceCandidate.verify|verify} messages.
-         * @param message IceCandidate message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encode(message: webRTCBuilder.IIceCandidate, writer?: $protobuf.Writer): $protobuf.Writer;
-
-        /**
-         * Decodes an IceCandidate message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
-         * @returns IceCandidate
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): webRTCBuilder.IceCandidate;
-    }
+    /**
+     * Decodes an IceCandidate message from the specified reader or buffer.
+     * @param reader Reader or buffer to decode from
+     * @param [length] Message length if known beforehand
+     * @returns IceCandidate
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    public static decode(reader: $protobuf.Reader | Uint8Array, length?: number): webRTCBuilder.IceCandidate
+  }
 }
 
 /** Namespace signaling. */
 export namespace signaling {
+  /** Properties of a Message. */
+  interface IMessage {
+    /** Message content */
+    content?: signaling.IContent | null
 
-    /** Properties of a Message. */
-    interface IMessage {
+    /** Message isFirst */
+    isFirst?: boolean | null
 
-        /** Message content */
-        content?: (signaling.IContent|null);
+    /** Message stable */
+    stable?: boolean | null
 
-        /** Message isFirst */
-        isFirst?: (boolean|null);
+    /** Message heartbeat */
+    heartbeat?: boolean | null
 
-        /** Message stable */
-        stable?: (boolean|null);
+    /** Message tryAnother */
+    tryAnother?: boolean | null
+  }
 
-        /** Message heartbeat */
-        heartbeat?: (boolean|null);
+  /** Represents a Message. */
+  class Message implements IMessage {
+    /**
+     * Constructs a new Message.
+     * @param [properties] Properties to set
+     */
+    constructor(properties?: signaling.IMessage)
 
-        /** Message tryAnother */
-        tryAnother?: (boolean|null);
-    }
+    /** Message content. */
+    public content?: signaling.IContent | null
 
-    /** Represents a Message. */
-    class Message implements IMessage {
+    /** Message isFirst. */
+    public isFirst: boolean
 
-        /**
-         * Constructs a new Message.
-         * @param [properties] Properties to set
-         */
-        constructor(properties?: signaling.IMessage);
+    /** Message stable. */
+    public stable: boolean
 
-        /** Message content. */
-        public content?: (signaling.IContent|null);
+    /** Message heartbeat. */
+    public heartbeat: boolean
 
-        /** Message isFirst. */
-        public isFirst: boolean;
+    /** Message tryAnother. */
+    public tryAnother: boolean
 
-        /** Message stable. */
-        public stable: boolean;
+    /** Message type. */
+    public type?: 'content' | 'isFirst' | 'stable' | 'heartbeat' | 'tryAnother'
 
-        /** Message heartbeat. */
-        public heartbeat: boolean;
+    /**
+     * Creates a new Message instance using the specified properties.
+     * @param [properties] Properties to set
+     * @returns Message instance
+     */
+    public static create(properties?: signaling.IMessage): signaling.Message
 
-        /** Message tryAnother. */
-        public tryAnother: boolean;
+    /**
+     * Encodes the specified Message message. Does not implicitly {@link signaling.Message.verify|verify} messages.
+     * @param message Message message or plain object to encode
+     * @param [writer] Writer to encode to
+     * @returns Writer
+     */
+    public static encode(message: signaling.IMessage, writer?: $protobuf.Writer): $protobuf.Writer
 
-        /** Message type. */
-        public type?: ("content"|"isFirst"|"stable"|"heartbeat"|"tryAnother");
+    /**
+     * Decodes a Message message from the specified reader or buffer.
+     * @param reader Reader or buffer to decode from
+     * @param [length] Message length if known beforehand
+     * @returns Message
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    public static decode(reader: $protobuf.Reader | Uint8Array, length?: number): signaling.Message
+  }
 
-        /**
-         * Creates a new Message instance using the specified properties.
-         * @param [properties] Properties to set
-         * @returns Message instance
-         */
-        public static create(properties?: signaling.IMessage): signaling.Message;
+  /** Properties of a Content. */
+  interface IContent {
+    /** Content id */
+    id?: number | null
 
-        /**
-         * Encodes the specified Message message. Does not implicitly {@link signaling.Message.verify|verify} messages.
-         * @param message Message message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encode(message: signaling.IMessage, writer?: $protobuf.Writer): $protobuf.Writer;
+    /** Content data */
+    data?: Uint8Array | null
 
-        /**
-         * Decodes a Message message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
-         * @returns Message
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): signaling.Message;
-    }
+    /** Content isError */
+    isError?: boolean | null
 
-    /** Properties of a Content. */
-    interface IContent {
+    /** Content isEnd */
+    isEnd?: boolean | null
+  }
 
-        /** Content id */
-        id?: (number|null);
+  /** Represents a Content. */
+  class Content implements IContent {
+    /**
+     * Constructs a new Content.
+     * @param [properties] Properties to set
+     */
+    constructor(properties?: signaling.IContent)
 
-        /** Content data */
-        data?: (Uint8Array|null);
+    /** Content id. */
+    public id: number
 
-        /** Content isError */
-        isError?: (boolean|null);
+    /** Content data. */
+    public data: Uint8Array
 
-        /** Content isEnd */
-        isEnd?: (boolean|null);
-    }
+    /** Content isError. */
+    public isError: boolean
 
-    /** Represents a Content. */
-    class Content implements IContent {
+    /** Content isEnd. */
+    public isEnd: boolean
 
-        /**
-         * Constructs a new Content.
-         * @param [properties] Properties to set
-         */
-        constructor(properties?: signaling.IContent);
+    /** Content type. */
+    public type?: 'data' | 'isError' | 'isEnd'
 
-        /** Content id. */
-        public id: number;
+    /**
+     * Creates a new Content instance using the specified properties.
+     * @param [properties] Properties to set
+     * @returns Content instance
+     */
+    public static create(properties?: signaling.IContent): signaling.Content
 
-        /** Content data. */
-        public data: Uint8Array;
+    /**
+     * Encodes the specified Content message. Does not implicitly {@link signaling.Content.verify|verify} messages.
+     * @param message Content message or plain object to encode
+     * @param [writer] Writer to encode to
+     * @returns Writer
+     */
+    public static encode(message: signaling.IContent, writer?: $protobuf.Writer): $protobuf.Writer
 
-        /** Content isError. */
-        public isError: boolean;
-
-        /** Content isEnd. */
-        public isEnd: boolean;
-
-        /** Content type. */
-        public type?: ("data"|"isError"|"isEnd");
-
-        /**
-         * Creates a new Content instance using the specified properties.
-         * @param [properties] Properties to set
-         * @returns Content instance
-         */
-        public static create(properties?: signaling.IContent): signaling.Content;
-
-        /**
-         * Encodes the specified Content message. Does not implicitly {@link signaling.Content.verify|verify} messages.
-         * @param message Content message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encode(message: signaling.IContent, writer?: $protobuf.Writer): $protobuf.Writer;
-
-        /**
-         * Decodes a Content message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
-         * @returns Content
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): signaling.Content;
-    }
+    /**
+     * Decodes a Content message from the specified reader or buffer.
+     * @param reader Reader or buffer to decode from
+     * @param [length] Message length if known beforehand
+     * @returns Content
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    public static decode(reader: $protobuf.Reader | Uint8Array, length?: number): signaling.Content
+  }
 }

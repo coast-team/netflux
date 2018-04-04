@@ -4,7 +4,7 @@
 /**
  * Extends "global" variable
  */
-declare module NodeJS {
+declare namespace NodeJS {
   interface Global {
     RTCPeerConnection: typeof RTCPeerConnection
     RTCDataChannel: RTCDataChannel
@@ -25,7 +25,7 @@ declare module NodeJS {
 interface RTCPeerConnection {
   iceCandidateState: RTCIceConnectionState
   ondatachannel: (event: RTCDataChannelEvent) => void
-  createDataChannel (label: string): RTCDataChannel
+  createDataChannel(label: string): RTCDataChannel
 }
 
 interface RTCDataChannelEvent {
@@ -42,6 +42,6 @@ interface RTCDataChannel extends EventTarget {
   onerror: (event: Event) => void
   onclose: (event: Event) => void
   onmessage: (event: Event) => void
-  close (): void
-  send (data: string|ArrayBuffer|Blob): void
+  close(): void
+  send(data: string | ArrayBuffer | Blob): void
 }

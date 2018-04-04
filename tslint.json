@@ -1,8 +1,5 @@
 {
-  "extends": [
-    "tslint-eslint-rules",
-    "tslint:recommended"
-  ],
+  "extends": ["tslint:recommended", "tslint-config-prettier"],
   "rules": {
     "no-console": false,
     "no-var-requires": false,
@@ -12,24 +9,9 @@
     "no-empty": false,
     "no-switch-case-fall-through": true,
     "object-literal-sort-keys": false,
-    "quotemark": [
-      true,
-      "single"
-    ],
-    "semicolon": [
-      true,
-      "never"
-    ],
-    "space-before-function-paren": true,
-    "ter-indent": [true, 2],
     "no-string-literal": false,
     "variable-name": {
-      "options": [
-          "ban-keywords",
-          "check-format",
-          "allow-pascal-case",
-          "allow-leading-underscore"
-      ]
+      "options": ["ban-keywords", "check-format", "allow-pascal-case", "allow-leading-underscore"]
     }
   }
 }
