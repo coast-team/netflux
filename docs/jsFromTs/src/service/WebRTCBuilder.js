@@ -86,7 +86,7 @@ export class WebRTCBuilder extends Service {
      */
     connectOverSignaling(wrtcStream) {
         if (WebRTCBuilder.isSupported) {
-            return this.establishChannel(wrtcStream.message.pipe(filter((msg) => msg.id === 0), map((msg) => msg.type === 'data' ? super.decode(msg.data) : msg)), (msg) => {
+            return this.establishChannel(wrtcStream.message.pipe(filter((msg) => msg.id === 0), map((msg) => (msg.type === 'data' ? super.decode(msg.data) : msg))), (msg) => {
                 if (!('isError' in msg || 'isEnd' in msg)) {
                     wrtcStream.send({ data: webRTCBuilder.Message.encode(webRTCBuilder.Message.create(msg)).finish() });
                 }
@@ -108,7 +108,9 @@ export class WebRTCBuilder extends Service {
             }
         };
         counter++;
-        pc.onsignalingstatechange = () => { log.webrtc('SIGNALING STATE changed to', pc.signalingState); };
+        pc.onsignalingstatechange = () => {
+            log.webrtc('SIGNALING STATE changed to', pc.signalingState);
+        };
         const rcs = new ReplaySubject();
         this.setupLocalCandidates(pc, (iceCandidate) => send({ iceCandidate }));
         return new Promise((resolve, reject) => {
@@ -137,10 +139,10 @@ export class WebRTCBuilder extends Service {
                 }
                 else if (answer) {
                     log.webrtc(counter + ': REMOTE Answer is received', { answer });
-                    pc.setRemoteDescription({ type: 'answer', sdp: answer })
+                    pc
+                        .setRemoteDescription({ type: 'answer', sdp: answer })
                         .then(() => {
-                        rcs.subscribe((ic) => pc.addIceCandidate(ic)
-                            .catch((err) => log.webrtc('${id}: Failed to add REMOTE Ice Candidate', err)));
+                        rcs.subscribe((ic) => pc.addIceCandidate(ic).catch((err) => log.webrtc('${id}: Failed to add REMOTE Ice Candidate', err)));
                     })
                         .catch((err) => {
                         log.webrtc(counter + ': Failed to establish RTCDataChannel: Set REMOTE Answer ERROR', err);
@@ -205,7 +207,8 @@ export class WebRTCBuilder extends Service {
                 onMessageSub.unsubscribe();
                 reject(err);
             });
-            pc.createOffer()
+            pc
+                .createOffer()
                 .then((offer) => pc.setLocalDescription(offer))
                 .then(() => {
                 if (pc.localDescription && pc.localDescription.sdp) {
@@ -230,8 +233,7 @@ export class WebRTCBuilder extends Service {
         const remotes = new Map();
         const failedRemotes = [];
         return Observable.create((observer) => {
-            onMessage.pipe(filter(({ id }) => !failedRemotes.includes(id)))
-                .subscribe((msg) => {
+            onMessage.pipe(filter(({ id }) => !failedRemotes.includes(id))).subscribe((msg) => {
                 const { offer, iceCandidate, id, isError, isEnd } = msg;
                 const clean = (peerId, pc, rcs) => {
                     pc.oniceconnectionstatechange = () => { };
@@ -255,6 +257,7 @@ export class WebRTCBuilder extends Service {
                     let isAnswerSent;
                     const remote = remotes.get(id);
                     if (remote) {
+                        ;
                         [pc, rcs, isAnswerSent] = remote;
                     }
                     else {
@@ -273,7 +276,9 @@ export class WebRTCBuilder extends Service {
                                 pc.onicegatheringstatechange = () => { };
                             }
                         };
-                        pc.onsignalingstatechange = () => { log.webrtc(`${id}: SIGNALING STATE changed to`, pc.signalingState); };
+                        pc.onsignalingstatechange = () => {
+                            log.webrtc(`${id}: SIGNALING STATE changed to`, pc.signalingState);
+                        };
                         rcs = new ReplaySubject();
                         this.setupLocalCandidates(pc, (ic) => send({ iceCandidate: ic }, id));
                         this.openChannel(pc)
@@ -286,7 +291,8 @@ export class WebRTCBuilder extends Service {
                     }
                     if (offer) {
                         log.webrtc(`${id}: REMOTE OFFER is received`, { offer });
-                        pc.setRemoteDescription({ type: 'offer', sdp: offer })
+                        pc
+                            .setRemoteDescription({ type: 'offer', sdp: offer })
                             .then(() => rcs.subscribe((ic) => pc.addIceCandidate(ic).catch((err) => log.webrtc(`${id}: Failed to addIceCandidate`, err))))
                             .then(() => pc.createAnswer())
                             .then((answer) => pc.setLocalDescription(answer))
@@ -370,7 +376,7 @@ export class WebRTCBuilder extends Service {
         let dc;
         if (id) {
             try {
-                dc = pc.createDataChannel((this.wc.myId).toString());
+                dc = pc.createDataChannel(this.wc.myId.toString());
             }
             catch (err) {
                 log.webrtc('Failed to create RTCDataChannel', err);

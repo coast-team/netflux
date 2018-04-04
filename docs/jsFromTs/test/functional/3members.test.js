@@ -148,7 +148,8 @@ describe('3 members', () => {
                 const members3 = [];
                 const expectedMembers3 = [wg1.myId, wg2.myId];
                 const queue = new Queue(3);
-                queue.wait()
+                queue
+                    .wait()
                     .then(() => wait(1000))
                     .then(() => {
                     expect(called1).toEqual(1);
@@ -182,7 +183,8 @@ describe('3 members', () => {
             });
             it('should have the same members, key, WebGroup id, topology once joined', (done) => {
                 const queue = new Queue(3);
-                queue.wait()
+                queue
+                    .wait()
                     .then(() => wait(1000))
                     .then(() => {
                     expect(areTheSame(wg3.members, wg1.members)).toBeTruthy();
@@ -306,7 +308,8 @@ describe('3 members', () => {
             /** @test {WebGroup#send} */
             it('broadcast String', (done) => {
                 const queue = new Queue(6);
-                queue.wait()
+                queue
+                    .wait()
                     .then(() => wait(1000))
                     .then(() => {
                     expect(called1).toEqual(2);
@@ -355,7 +358,8 @@ describe('3 members', () => {
             /** @test {WebGroup#send} */
             it('broadcast ArrayBuffer', (done) => {
                 const queue = new Queue(6);
-                queue.wait()
+                queue
+                    .wait()
                     .then(() => wait(1000))
                     .then(() => {
                     expect(called1).toEqual(2);
@@ -407,7 +411,8 @@ describe('3 members', () => {
             /** @test {WebGroup#sendTo} */
             it('private String', (done) => {
                 const queue = new Queue(6);
-                queue.wait()
+                queue
+                    .wait()
                     .then(() => wait(1000))
                     .then(() => {
                     expect(called1).toEqual(2);
@@ -462,7 +467,8 @@ describe('3 members', () => {
             /** @test {WebGroup#sendTo} */
             it('private ArrayBuffer', (done) => {
                 const queue = new Queue(6);
-                queue.wait()
+                queue
+                    .wait()
                     .then(() => wait(1000))
                     .then(() => {
                     expect(called1).toEqual(2);
@@ -614,7 +620,8 @@ describe('3 members', () => {
                         expect(wg2.members.length).toEqual(1);
                         expect(wg2.members.includes(wg2.myId)).toBeTruthy();
                         expect(wg2.key).toEqual('');
-                        queue.wait()
+                        queue
+                            .wait()
                             .then(() => wait(1000))
                             .then(() => {
                             expect(wg1.members.length).toEqual(1);

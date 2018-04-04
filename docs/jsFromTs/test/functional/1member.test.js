@@ -127,8 +127,7 @@ describe('1 member', () => {
                 wg1.onMemberJoin = () => called1++;
                 wg1.onStateChange = (state) => {
                     if (state === WebGroupState.JOINED) {
-                        wait(1000)
-                            .then(() => {
+                        wait(1000).then(() => {
                             expect(called1).toEqual(0);
                             done();
                         });
@@ -149,8 +148,7 @@ describe('1 member', () => {
                         expect(id).toEqual(wg1.id);
                         expect(topology).toEqual(wg1.topology);
                         expect(wg1.key).not.toEqual('');
-                        wait(1000)
-                            .then(() => {
+                        wait(1000).then(() => {
                             expect(areTheSame(wg1.members, members)).toBeTruthy();
                             expect(myId).toEqual(wg1.myId);
                             expect(id).toEqual(wg1.id);
@@ -203,8 +201,7 @@ describe('1 member', () => {
                         expect(id).toEqual(wg1.id);
                         expect(topology).toEqual(wg1.topology);
                         expect(wg1.key).toEqual('');
-                        wait(1000)
-                            .then(() => {
+                        wait(1000).then(() => {
                             expect(areTheSame(wg1.members, members)).toBeTruthy();
                             expect(myId).toEqual(wg1.myId);
                             expect(id).toEqual(wg1.id);
@@ -223,8 +220,7 @@ describe('1 member', () => {
                 wg1.onMemberJoin = () => called1++;
                 wg1.onStateChange = (state) => {
                     if (state === WebGroupState.LEFT) {
-                        wait(1000)
-                            .then(() => {
+                        wait(1000).then(() => {
                             expect(called1).toEqual(0);
                             done();
                         });
@@ -242,8 +238,7 @@ describe('1 member', () => {
                     states.push(state);
                     called1++;
                     if (state === WebGroupState.LEFT) {
-                        wait(1000)
-                            .then(() => {
+                        wait(1000).then(() => {
                             expect(called1).toEqual(2);
                             expect(states).toEqual(expectedStates);
                             expect(state).toEqual(WebGroupState.LEFT);
@@ -262,8 +257,7 @@ describe('1 member', () => {
                 wg1.onSignalingStateChange = (state) => {
                     states.push(state);
                     called1++;
-                    wait(1000)
-                        .then(() => {
+                    wait(1000).then(() => {
                         expect(called1).toEqual(2);
                         expect(states).toEqual(expectedStates);
                         done();

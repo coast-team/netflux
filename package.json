@@ -112,7 +112,7 @@
   "lint-staged": {
     "linters": {
       "*.md": ["prettier --write --list-different", "git add", "markdownlint"],
-      "*.ts": ["tslint --fix -p tsconfig.json -e src/proto/* ", "git add"],
+      "*.ts": ["tslint --fix -p tsconfig.json -e src/proto/* -e docs/*", "git add"],
       "*.{ts,json,scss,css}": ["prettier --write --list-different", "git add"]
     },
     "concurrent": false

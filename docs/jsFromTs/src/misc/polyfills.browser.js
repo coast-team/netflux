@@ -4,6 +4,7 @@
  * http://tc39.github.io/proposal-global/
  * Code copied from: https://github.com/tc39/proposal-global
  */
+;
 ((global) => {
     if (!global.global) {
         if (Object.defineProperty) {

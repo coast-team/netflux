@@ -36,8 +36,7 @@ export class ChannelBuilder extends Service {
         // Listen on Channels as RTCDataChannels if WebRTC is supported
         ME.isWrtcSupport = WebRTCBuilder.isSupported;
         if (ME.isWrtcSupport) {
-            wc.webRTCBuilder.onChannelFromWebChannel()
-                .subscribe((ch) => this.handleChannel(ch));
+            wc.webRTCBuilder.onChannelFromWebChannel().subscribe((ch) => this.handleChannel(ch));
         }
         // Listen on Channels as WebSockets if the peer is listening on WebSockets
         WebSocketBuilder.listen().subscribe((url) => {
@@ -71,7 +70,8 @@ export class ChannelBuilder extends Service {
                     this.connectionRequests.delete(id);
                     clearTimeout(timer);
                     resolve(ch);
-                }, reject: (err) => {
+                },
+                reject: (err) => {
                     this.connectionRequests.delete(id);
                     reject(err);
                 },
@@ -129,8 +129,7 @@ export class ChannelBuilder extends Service {
                     ppRequest.resolve();
                 }
                 else {
-                    log.channelBuilder('INCREASING Ping/Pong timeout, as current latency is: '
-                        + (date - requestDate) + ' new value: ', date - requestDate + 500);
+                    log.channelBuilder('INCREASING Ping/Pong timeout, as current latency is: ' + (date - requestDate) + ' new value: ', date - requestDate + 500);
                     this.pingPongTimeout = global.Math.min(date - requestDate + 500, MAX_PINGPONG_TIMEOUT);
                 }
                 break;
@@ -147,7 +146,8 @@ export class ChannelBuilder extends Service {
                 const { wsUrl, isWrtcSupport } = msg.request;
                 // If remote peer is listening on WebSocket, connect to him
                 if (wsUrl) {
-                    this.wc.webSocketBuilder.connect(wsUrl, senderId)
+                    this.wc.webSocketBuilder
+                        .connect(wsUrl, senderId)
                         .then((ch) => this.handleChannel(ch))
                         .catch((reason) => {
                         if (ME.wsUrl) {
@@ -170,7 +170,8 @@ export class ChannelBuilder extends Service {
                         this.wc.sendToProxy({ recipientId: senderId, content: responseMsg });
                     }
                     else if (ME.isWrtcSupport) {
-                        this.wc.webRTCBuilder.connectOverWebChannel(senderId)
+                        this.wc.webRTCBuilder
+                            .connectOverWebChannel(senderId)
                             .then((ch) => this.handleChannel(ch))
                             .catch((err) => {
                             // Send failed reason
@@ -207,7 +208,8 @@ export class ChannelBuilder extends Service {
             case 'response': {
                 const { wsUrl } = msg.response;
                 if (wsUrl) {
-                    this.wc.webSocketBuilder.connect(wsUrl, senderId)
+                    this.wc.webSocketBuilder
+                        .connect(wsUrl, senderId)
                         .then((ch) => this.handleChannel(ch))
                         .catch((err) => {
                         const request = this.connectionRequests.get(senderId);

@@ -18,9 +18,7 @@ export const defaultOptions = {
     topology: TopologyEnum.FULL_MESH,
     signalingServer: 'wss://signaling.netflux.coedit.re',
     rtcConfiguration: {
-        iceServers: [
-            { urls: 'stun:stun3.l.google.com:19302' },
-        ],
+        iceServers: [{ urls: 'stun:stun3.l.google.com:19302' }],
     },
     autoRejoin: true,
 };
@@ -136,7 +134,8 @@ export class WebChannel extends Service {
      */
     invite(url) {
         if (isURL(url)) {
-            this.webSocketBuilder.connect(`${url}/invite?wcId=${this.id}&senderId=${this.myId}`)
+            this.webSocketBuilder
+                .connect(`${url}/invite?wcId=${this.id}&senderId=${this.myId}`)
                 .then((connection) => this.initChannel(new Channel(this, connection)))
                 .catch((err) => console.error(`Failed to invite the bot ${url}: ${err.message}`));
         }
@@ -206,13 +205,13 @@ export class WebChannel extends Service {
     /**
      * Send service message to a particular peer in the network.
      */
-    sendToProxy({ senderId = this.myId, recipientId = this.myId, isService = true, content } = {}) {
+    sendToProxy({ senderId = this.myId, recipientId = this.myId, isService = true, content, } = {}) {
         this.topologyService.sendTo({ senderId, recipientId, isService, content });
     }
     /**
      * Broadcast service message to the network.
      */
-    sendProxy({ senderId = this.myId, recipientId = 0, isService = true, content } = {}) {
+    sendProxy({ senderId = this.myId, recipientId = 0, isService = true, content, } = {}) {
         this.topologyService.send({ senderId, recipientId, isService, content });
     }
     encode({ senderId = this.myId, recipientId = 0, isService = true, content } = {}) {
@@ -310,12 +309,14 @@ export class WebChannel extends Service {
     initChannel(ch) {
         const msg = this.encode({
             recipientId: 1,
-            content: super.encode({ init: {
+            content: super.encode({
+                init: {
                     topology: this.topology,
                     wcId: this.id,
                     generatedIds: this.members,
                     members: this.members,
-                } }),
+                },
+            }),
         });
         ch.send(msg);
     }

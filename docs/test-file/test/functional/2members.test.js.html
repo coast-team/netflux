@@ -13,7 +13,7 @@
 
 <header>
   <a href="./" style="display: flex; align-items: center;"><img src="./image/brand_logo.png" style="width:34px;"></a>
-  
+  <a href="./manual/index.html" data-ice="manualHeaderLink">Manual</a>
   <a href="identifiers.html">Reference</a>
   <a href="source.html">Source</a>
   <a href="test.html" data-ice="testLink">Test</a>
@@ -180,7 +180,8 @@ describe(&apos;2 members&apos;, () =&gt; {
                 };
                 wg2.onStateChange = (state) =&gt; {
                     if (state === WebGroupState.JOINED) {
-                        queue.wait()
+                        queue
+                            .wait()
                             .then(() =&gt; wait(1000))
                             .then(() =&gt; {
                             expect(called1).toEqual(1);
@@ -210,7 +211,8 @@ describe(&apos;2 members&apos;, () =&gt; {
                         expect(wg2.id).toEqual(wg1.id);
                         expect(wg2.key).toEqual(wg1.key);
                         expect(wg2.topology).toEqual(wg1.topology);
-                        queue.wait()
+                        queue
+                            .wait()
                             .then(() =&gt; wait(1000))
                             .then(() =&gt; {
                             expect(areTheSame(wg2.members, wg1.members)).toBeTruthy();
@@ -479,7 +481,8 @@ describe(&apos;2 members&apos;, () =&gt; {
             /** @test {WebGroup#leave} */
             it(&apos;should have no members &amp; an empty key&apos;, (done) =&gt; {
                 const queue = new Queue(2);
-                queue.wait()
+                queue
+                    .wait()
                     .then(() =&gt; wait(1000))
                     .then(() =&gt; {
                     expect(wg1.members.length).toEqual(1);
@@ -579,7 +582,7 @@ describe(&apos;2 members&apos;, () =&gt; {
         let wg1;
         /** @test {WebGroup#invite} */
         describe(&apos;inviting&apos;, () =&gt; {
-            beforeEach(() =&gt; wg1 = new WebGroup(WebGroupOptions));
+            beforeEach(() =&gt; (wg1 = new WebGroup(WebGroupOptions)));
             afterEach((done) =&gt; {
                 cleanWebGroup(wg1);
                 if (wg1.state !== WebGroupState.LEFT) {

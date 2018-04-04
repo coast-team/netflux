@@ -66,8 +66,7 @@ export class Queue {
     }
 }
 export function getBotData(wgId) {
-    return fetch(`${BOT_FETCH_URL}/data/${wgId}`)
-        .then(async (res) => {
+    return fetch(`${BOT_FETCH_URL}/data/${wgId}`).then(async (res) => {
         if (res.status !== 200) {
             throw new Error(await res.text());
         }
@@ -77,8 +76,7 @@ export function getBotData(wgId) {
     });
 }
 export function waitBotJoin(wgId) {
-    return fetch(`${BOT_FETCH_URL}/waitJoin/${wgId}`)
-        .then(async (res) => {
+    return fetch(`${BOT_FETCH_URL}/waitJoin/${wgId}`).then(async (res) => {
         if (res.status !== 200) {
             throw new Error(await res.text());
         }

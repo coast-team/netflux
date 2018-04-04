@@ -13,7 +13,7 @@
 
 <header>
   <a href="./" style="display: flex; align-items: center;"><img src="./image/brand_logo.png" style="width:34px;"></a>
-  
+  <a href="./manual/index.html" data-ice="manualHeaderLink">Manual</a>
   <a href="identifiers.html">Reference</a>
   <a href="source.html">Source</a>
   <a href="test.html" data-ice="testLink">Test</a>
@@ -61,140 +61,7 @@
 </nav>
 
 <div class="content" data-ice="content"><div class="github-markdown">
-  <div class="manual-user-index" data-ice="manualUserIndex"><h1 id="netflux">Netflux</h1><p><img src="manual/asset/logo_cropped.png" alt="Netflux logo" title="Netflux logo"></p>
-<p>Universal Javascript <strong>peer to peer</strong> transport API for client and server.</p>
-<p>Secure and fault tolerant full mesh peer to peer network based on <strong>RTCDataChannel</strong> and <strong>WebSocket</strong>.</p>
-<p>Send/receive <strong>String</strong> and <strong>Uint8Array</strong> data types.</p>
-<p></p><p>
-  <a href="https://www.npmjs.com/package/netflux">
-    <img src="https://img.shields.io/npm/v/netflux.svg?style=flat-square">
-  </a>&#xA0;
-  <a href="https://travis-ci.org/coast-team/netflux">
-    <img src="https://travis-ci.org/coast-team/netflux.svg?branch=master">
-  </a>
-
-  <br>
-
-  <a href="https://www.bithound.io/github/coast-team/netflux">
-    <img src="https://www.bithound.io/github/coast-team/netflux/badges/score.svg">
-  </a>&#xA0;
-  <a href="https://codeclimate.com/github/coast-team/netflux">
-    <img src="https://codeclimate.com/github/coast-team/netflux/badges/gpa.svg">
-  </a>&#xA0;
-  <a href="https://coast-team.github.io/netflux">
-    <img src="https://coast-team.github.io/netflux/badge.svg">
-  </a>&#xA0;
-  <a href="https://codeclimate.com/github/coast-team/netflux/coverage"><img src="https://codeclimate.com/github/coast-team/netflux/badges/coverage.svg"></a>
-
-  <br>
-
-  <a href="http://commitizen.github.io/cz-cli">
-    <img src="https://img.shields.io/badge/commitizen-friendly-brightgreen.svg?style=flat-square">
-  </a>&#xA0;
-  <a href="https://github.com/semantic-release/semantic-release">
-    <img src="https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg?style=flat-square">
-  </a>&#xA0;
-  <a href="https://gitter.im/coast-team/netflux?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge&amp;utm_content=badge">
-    <img src="https://img.shields.io/badge/GITTER-join%20chat-green.svg?style=flat-square">
-  </a>
-</p>
-
-<p></p>
-<p></p><p>
-  <img src="manual/asset/example.svg?sanitize=true">
-</p>
-
-<p></p>
-<h2 id="features">Features</h2><ul>
-<li>Peer to peer full mesh network which accepts connection failures between some peers.</li>
-<li>If connection between two members failed, other members will retransmit messages for them.</li>
-<li>Automatic rejoin the group if connection lost.</li>
-<li>Automatic selection between <a href="https://developer.mozilla.org/en/docs/Web/API/WebSocket">WebSocket</a> &amp; <a href="https://developer.mozilla.org/en/docs/Web/API/RTCDataChannel">RTCDataChannel</a>.</li>
-<li>Possible to have mixed members: clients (Chrome, Firefox) and servers (NodeJS bot).</li>
-<li>Send private or broadcast <a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/String">String</a>, <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array">Uint8Array</a> data types.</li>
-<li>Possible to send big size data.</li>
-<li>All connections are encrypted.</li>
-<li>Full control over WebRTC servers: Signaling, STUN and TURN.<ul>
-<li>Deploy your own Signaling server (<a href="https://github.com/coast-team/sigver">Sigver</a>) or use one provided by default.</li>
-<li>Configure STUN and TURN servers.</li>
-</ul>
-</li>
-<li>Small Signaling server payload.</li>
-<li>Signaling server is used only to establish connection between two peers, no user data is passing through it.</li>
-<li>Universal API (works in Chrome/Firefox and NodeJS).</li>
-<li>TypeScript declaration files are included.</li>
-<li>Simple and familiar API usage.</li>
-<li>4 builds (ES5 code):<ul>
-<li><code>dist/netflux.cjs.js</code> <em> CommonJS format for NodeJS (see </em>package.json#main*).</li>
-<li><code>dist/esm/index.node.js</code> <em> ES module format for NodeJS (see </em>package.json#module*).</li>
-<li><code>dist/esm/index.browser.js</code> <em> ES module format for browsers (see </em>package.json#browser*).</li>
-<li><code>dist/netflux.umd.js</code> * UMD format for browsers.</li>
-</ul>
-</li>
-</ul>
-<h2 id="usage">Usage</h2><p>Here is a basic usage example for client and server (checkout the <a href="https://coast-team.github.io/netflux">documenation</a> for more details).</p>
-<blockquote>
-<p>It is possible to have only clients without any bot server as his is not a mandatory member, but like any other group member.</p>
-</blockquote>
-<h3 id="client">Client</h3><pre><code class="lang-javascript"><code class="source-code prettyprint">import { WebGroup, WebGroupState } from &apos;netflux&apos;
-
-// Create instance and set callbacks
-const wg = new WebGroup()
-wg.onMemberJoin = (id) =&gt; {
-  console.log(&apos;Member &apos; + id + &apos; has joined&apos;)
-  console.log(&apos;All members are: &apos;, wg.members)
-}
-wg.onMemberLeave = (id) =&gt; {
-  console.log(&apos;Member &apos; + id + &apos; has left&apos;)
-  console.log(&apos;All members are: &apos;, wg.members)
-}
-wg.onMessage = (id, data) =&gt; {
-  console.log(`Message from ${id} group member`, data)
-}
-wg.onStateChange = (state) =&gt; {
-  console.log(&apos;The new Group state is &apos;, state)
-  switch (state) {
-    case WebGroupState.JOINING:
-      // Do something
-      break
-    case WebGroupState.JOINED:
-      // Do something
-      // For example inviting a bot...
-      wg.invite(&apos;BOT_SERVER_WEB_SOCKET_URL&apos;)
-      break
-    case WebGroupState.LEAVING:
-      // Do something
-      break
-    case WebGroupState.LEFT:
-      // Do something
-      break
-  }
-}
-
-// Join the group
-wg.join(&apos;MY_UNIQUE_KEY_FOR_THE_GROUP&apos;)</code>
-</code></pre>
-<h3 id="bot-server">Bot Server</h3><pre><code class="lang-javascript"><code class="source-code prettyprint">import { WebGroupBotServer } from &apos;netflux&apos;
-const http = require(&apos;http&apos;) // https is also possible
-const server = http.createServer()
-
-const bot = new WebGroupBotServer({
-  server: server,
-  webGroupOptions: {
-    // Any WebGroup options like for a client
-  }
-})
-
-bot.onWebGroup = (wg) =&gt; {
-  // New instance of a WebGroup (Someone has invited this bot).
-  // See example above for client as it is the same API.
-}
-
-server.listen(BOT_PORT, _BOT_HOST)
-// A client may invite this bot with the following URL: &apos;ws://BOT_HOST:BOT_PORT&apos;</code>
-</code></pre>
-<h2 id="demo">Demo</h2><p>Netflux is used by our team for Multi User Text Editor (<a href="https://github.com/coast-team/mute">MUTE repo</a>) development. The demo version is available on: <a href="https://coedit.re">https://coedit.re</a></p>
-</div>
+  
 
   
 

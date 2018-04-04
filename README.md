@@ -1,52 +1,27 @@
-<!-- markdownlint-disable MD033 -->
+# Netflux
 
-<!-- markdownlint-disable MD002 -->
+![Netflux logo][logo]
 
-<!-- markdownlint-disable MD041 -->
+Universal Javascript **peer to peer** transport API for client and server.
 
-<p align="center">
-  <a href="https://coast-team.github.io/netflux">
-    <img src="manual/asset/logo_cropped.png" />
-  </a>
-</p>
+Secure and fault tolerant full mesh peer to peer network based on **RTCDataChannel** and **WebSocket**.
 
-<p align="center">
-  Universal Javascript <strong style="font-weight: bold">peer to peer</strong> transport API for client and server.<br />
-  Secure and fault tolerant full mesh peer to peer network based on <strong style="font-weight: bold">RTCDataChannel</strong> and <strong style="font-weight: bold">WebSocket</strong>.<br />
-  Send/receive <strong style="font-weight: bold">String</strong> and <strong style="font-weight: bold">Uint8Array</strong> data types.<br />
-  Documentation: https://coast-team.github.io/netflux
-</p>
+Send/receive **String** and **Uint8Array** data types.
 
-<p align="center">
-  <a href="https://www.npmjs.com/package/netflux">
-    <img src="https://img.shields.io/npm/v/netflux.svg?style=flat-square" />
-  </a>&nbsp;
-  <a href="https://travis-ci.org/coast-team/netflux">
-    <img src="https://travis-ci.org/coast-team/netflux.svg?branch=master" />
-  </a>&nbsp;
-  <a href="https://coast-team.github.io/netflux">
-    <img src="https://coast-team.github.io/netflux/badge.svg" />
-  </a>&nbsp;
-  <a href="https://www.bithound.io/github/coast-team/netflux">
-    <img src="https://www.bithound.io/github/coast-team/netflux/badges/score.svg" />
-  </a>&nbsp;
+Documentation: <https://coast-team.github.io/netflux>
 
-  <br />
+[![version](https://img.shields.io/npm/v/netflux.svg?style=flat-square)](https://www.npmjs.com/package/netflux)
+[![travis](https://travis-ci.org/coast-team/netflux.svg?branch=master)](https://travis-ci.org/coast-team/netflux)
 
-  <a href="http://commitizen.github.io/cz-cli">
-    <img src="https://img.shields.io/badge/commitizen-friendly-brightgreen.svg?style=flat-square" />
-  </a>&nbsp;
-  <a href="https://github.com/semantic-release/semantic-release">
-    <img src="https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg?style=flat-square" />
-  </a>&nbsp;
-  <a href="https://gitter.im/coast-team/netflux?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge">
-    <img src="https://img.shields.io/badge/GITTER-join%20chat-green.svg?style=flat-square" />
-  </a>
-</p>
+[![bithound](https://www.bithound.io/github/coast-team/netflux/badges/score.svg)](https://www.bithound.io/github/coast-team/netflux)
+[![codeclimate](https://codeclimate.com/github/coast-team/netflux/badges/gpa.svg)](https://codeclimate.com/github/coast-team/netflux)
+[![documentation](https://coast-team.github.io/netflux/badge.svg)](https://coast-team.github.io/netflux)
 
-<p align="center">
-  <img src="manual/asset/example.png" />
-</p>
+[![commitizen](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg?style=flat-square)](http://commitizen.github.io/cz-cli)
+[![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg?style=flat-square)](https://github.com/semantic-release/semantic-release)
+[![gitter](https://img.shields.io/badge/GITTER-join%20chat-green.svg?style=flat-square)](https://gitter.im/coast-team/netflux?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
+![Netflux example][netflux_example]
 
 ## Features
 
@@ -162,4 +137,5 @@ Netflux is used by our team for Multi User Text Editor ([MUTE repo](https://gith
 [coverage-url]: https://codeclimate.com/github/coast-team/netflux/coverage
 [doc]: https://coast-team.github.io/netflux/badge.svg
 [doc-url]: https://coast-team.github.io/netflux/netflux
-[logo]: manual/asset/logo_cropped.png 'Netflux logo'
+[logo]: manual/asset/logo_760px.png
+[netflux_example]: manual/asset/example.png

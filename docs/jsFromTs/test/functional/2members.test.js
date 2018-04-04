@@ -130,7 +130,8 @@ describe('2 members', () => {
                 };
                 wg2.onStateChange = (state) => {
                     if (state === WebGroupState.JOINED) {
-                        queue.wait()
+                        queue
+                            .wait()
                             .then(() => wait(1000))
                             .then(() => {
                             expect(called1).toEqual(1);
@@ -160,7 +161,8 @@ describe('2 members', () => {
                         expect(wg2.id).toEqual(wg1.id);
                         expect(wg2.key).toEqual(wg1.key);
                         expect(wg2.topology).toEqual(wg1.topology);
-                        queue.wait()
+                        queue
+                            .wait()
                             .then(() => wait(1000))
                             .then(() => {
                             expect(areTheSame(wg2.members, wg1.members)).toBeTruthy();
@@ -429,7 +431,8 @@ describe('2 members', () => {
             /** @test {WebGroup#leave} */
             it('should have no members & an empty key', (done) => {
                 const queue = new Queue(2);
-                queue.wait()
+                queue
+                    .wait()
                     .then(() => wait(1000))
                     .then(() => {
                     expect(wg1.members.length).toEqual(1);
@@ -529,7 +532,7 @@ describe('2 members', () => {
         let wg1;
         /** @test {WebGroup#invite} */
         describe('inviting', () => {
-            beforeEach(() => wg1 = new WebGroup(WebGroupOptions));
+            beforeEach(() => (wg1 = new WebGroup(WebGroupOptions)));
             afterEach((done) => {
                 cleanWebGroup(wg1);
                 if (wg1.state !== WebGroupState.LEFT) {

@@ -43,43 +43,43 @@ window.esdocSearchIndex = [
   ],
   [
     "",
-    "test-file/test/functional/1member.test.js.html#lineNumber140",
+    "test-file/test/functional/1member.test.js.html#lineNumber139",
     "1 member 🙂 joining should have the same members, WebGroup id, topology and NOT empty key once joined",
     "test"
   ],
   [
     "webgroup#join src/webchannelfacade.js~webgroup#join,webgroup#join",
-    "test-file/test/functional/1member.test.js.html#lineNumber167",
+    "test-file/test/functional/1member.test.js.html#lineNumber165",
     "1 member 🙂 joining should join with the specified key",
     "test"
   ],
   [
     "",
-    "test-file/test/functional/1member.test.js.html#lineNumber181",
+    "test-file/test/functional/1member.test.js.html#lineNumber179",
     "1 member 🙂 leaving",
     "test"
   ],
   [
     "webgroup#onmemberleave src/webchannelfacade.js~webgroup#onmemberleave,webgroup#onmemberleave",
-    "test-file/test/functional/1member.test.js.html#lineNumber221",
+    "test-file/test/functional/1member.test.js.html#lineNumber218",
     "1 member 🙂 leaving should be NOT notified about left member",
     "test"
   ],
   [
     "webgroup#onsignalingstatechange src/webchannelfacade.js~webgroup#onsignalingstatechange,webgroup#onsignalingstatechange",
-    "test-file/test/functional/1member.test.js.html#lineNumber258",
+    "test-file/test/functional/1member.test.js.html#lineNumber253",
     "1 member 🙂 leaving should change the Signaling state",
     "test"
   ],
   [
     "webgroup#onstatechange src/webchannelfacade.js~webgroup#onstatechange,webgroup#onstatechange",
-    "test-file/test/functional/1member.test.js.html#lineNumber237",
+    "test-file/test/functional/1member.test.js.html#lineNumber233",
     "1 member 🙂 leaving should change the WebGroup state",
     "test"
   ],
   [
     "webgroup#leave src/webchannelfacade.js~webgroup#leave,webgroup#leave",
-    "test-file/test/functional/1member.test.js.html#lineNumber194",
+    "test-file/test/functional/1member.test.js.html#lineNumber192",
     "1 member 🙂 leaving should have the same members, WebGroup id, topology and an empty key",
     "test"
   ],
@@ -121,139 +121,139 @@ window.esdocSearchIndex = [
   ],
   [
     "",
-    "test-file/test/functional/2members.test.js.html#lineNumber145",
+    "test-file/test/functional/2members.test.js.html#lineNumber146",
     "2 members 🙂 🙂 joining should have the same members, key, WebGroup id, topology once joined",
     "test"
   ],
   [
     "webgroup#join src/webchannelfacade.js~webgroup#join,webgroup#join",
-    "test-file/test/functional/2members.test.js.html#lineNumber178",
+    "test-file/test/functional/2members.test.js.html#lineNumber180",
     "2 members 🙂 🙂 joining should join with the specified key",
     "test"
   ],
   [
     "",
-    "test-file/test/functional/2members.test.js.html#lineNumber370",
+    "test-file/test/functional/2members.test.js.html#lineNumber372",
     "2 members 🙂 🙂 leaving",
     "test"
   ],
   [
     "webgroup#onmemberleave src/webchannelfacade.js~webgroup#onmemberleave,webgroup#onmemberleave",
-    "test-file/test/functional/2members.test.js.html#lineNumber464",
+    "test-file/test/functional/2members.test.js.html#lineNumber467",
     "2 members 🙂 🙂 leaving should be notified about left member",
     "test"
   ],
   [
     "webgroup#onsignalingstatechange src/webchannelfacade.js~webgroup#onsignalingstatechange,webgroup#onsignalingstatechange",
-    "test-file/test/functional/2members.test.js.html#lineNumber508",
+    "test-file/test/functional/2members.test.js.html#lineNumber511",
     "2 members 🙂 🙂 leaving should change the Signaling state",
     "test"
   ],
   [
     "webgroup#onstatechange src/webchannelfacade.js~webgroup#onstatechange,webgroup#onstatechange",
-    "test-file/test/functional/2members.test.js.html#lineNumber489",
+    "test-file/test/functional/2members.test.js.html#lineNumber492",
     "2 members 🙂 🙂 leaving should change the WebGroup state",
     "test"
   ],
   [
     "webgroup#leave src/webchannelfacade.js~webgroup#leave,webgroup#leave",
-    "test-file/test/functional/2members.test.js.html#lineNumber430",
+    "test-file/test/functional/2members.test.js.html#lineNumber432",
     "2 members 🙂 🙂 leaving should have no members & an empty key",
     "test"
   ],
   [
     "",
-    "test-file/test/functional/2members.test.js.html#lineNumber206",
+    "test-file/test/functional/2members.test.js.html#lineNumber208",
     "2 members 🙂 🙂 should send/receive",
     "test"
   ],
   [
     "webgroup#send src/webchannelfacade.js~webgroup#send,webgroup#send",
-    "test-file/test/functional/2members.test.js.html#lineNumber291",
+    "test-file/test/functional/2members.test.js.html#lineNumber293",
     "2 members 🙂 🙂 should send/receive broadcast ArrayBuffer",
     "test"
   ],
   [
     "webgroup#send src/webchannelfacade.js~webgroup#send,webgroup#send",
-    "test-file/test/functional/2members.test.js.html#lineNumber266",
+    "test-file/test/functional/2members.test.js.html#lineNumber268",
     "2 members 🙂 🙂 should send/receive broadcast String",
     "test"
   ],
   [
     "webgroup#sendto src/webchannelfacade.js~webgroup#sendto,webgroup#sendto",
-    "test-file/test/functional/2members.test.js.html#lineNumber343",
+    "test-file/test/functional/2members.test.js.html#lineNumber345",
     "2 members 🙂 🙂 should send/receive private ArrayBuffer",
     "test"
   ],
   [
     "webgroup#sendto src/webchannelfacade.js~webgroup#sendto,webgroup#sendto",
-    "test-file/test/functional/2members.test.js.html#lineNumber318",
+    "test-file/test/functional/2members.test.js.html#lineNumber320",
     "2 members 🙂 🙂 should send/receive private String",
     "test"
   ],
   [
     "",
-    "test-file/test/functional/2members.test.js.html#lineNumber528",
+    "test-file/test/functional/2members.test.js.html#lineNumber531",
     "2 members 🙂 🤖",
     "test"
   ],
   [
     "webgroup#invite src/webchannelfacade.js~webgroup#invite,webgroup#invite",
-    "test-file/test/functional/2members.test.js.html#lineNumber531",
+    "test-file/test/functional/2members.test.js.html#lineNumber534",
     "2 members 🙂 🤖 inviting",
     "test"
   ],
   [
     "webgroup#onmemberjoin src/webchannelfacade.js~webgroup#onmemberjoin,webgroup#onmemberjoin",
-    "test-file/test/functional/2members.test.js.html#lineNumber592",
+    "test-file/test/functional/2members.test.js.html#lineNumber595",
     "2 members 🙂 🤖 inviting should be notified about new member",
     "test"
   ],
   [
     "webgroup#onstatechange src/webchannelfacade.js~webgroup#onstatechange,webgroup#onstatechange",
-    "test-file/test/functional/2members.test.js.html#lineNumber571",
+    "test-file/test/functional/2members.test.js.html#lineNumber574",
     "2 members 🙂 🤖 inviting should change the WebGroup state",
     "test"
   ],
   [
     "",
-    "test-file/test/functional/2members.test.js.html#lineNumber620",
+    "test-file/test/functional/2members.test.js.html#lineNumber623",
     "2 members 🙂 🤖 inviting should have the same members, WebGroup id, topology once joined",
     "test"
   ],
   [
     "webgroup#onsignalingstatechange src/webchannelfacade.js~webgroup#onsignalingstatechange,webgroup#onsignalingstatechange",
-    "test-file/test/functional/2members.test.js.html#lineNumber550",
+    "test-file/test/functional/2members.test.js.html#lineNumber553",
     "2 members 🙂 🤖 inviting should not change the Signaling state",
     "test"
   ],
   [
     "",
-    "test-file/test/functional/2members.test.js.html#lineNumber646",
+    "test-file/test/functional/2members.test.js.html#lineNumber649",
     "2 members 🙂 🤖 should send/receive",
     "test"
   ],
   [
     "webgroup#send src/webchannelfacade.js~webgroup#send,webgroup#send",
-    "test-file/test/functional/2members.test.js.html#lineNumber712",
+    "test-file/test/functional/2members.test.js.html#lineNumber715",
     "2 members 🙂 🤖 should send/receive broadcast ArrayBuffer",
     "test"
   ],
   [
     "webgroup#send src/webchannelfacade.js~webgroup#send,webgroup#send",
-    "test-file/test/functional/2members.test.js.html#lineNumber688",
+    "test-file/test/functional/2members.test.js.html#lineNumber691",
     "2 members 🙂 🤖 should send/receive broadcast String",
     "test"
   ],
   [
     "webgroup#sendto src/webchannelfacade.js~webgroup#sendto,webgroup#sendto",
-    "test-file/test/functional/2members.test.js.html#lineNumber760",
+    "test-file/test/functional/2members.test.js.html#lineNumber763",
     "2 members 🙂 🤖 should send/receive private ArrayBuffer",
     "test"
   ],
   [
     "webgroup#sendto src/webchannelfacade.js~webgroup#sendto,webgroup#sendto",
-    "test-file/test/functional/2members.test.js.html#lineNumber736",
+    "test-file/test/functional/2members.test.js.html#lineNumber739",
     "2 members 🙂 🤖 should send/receive private String",
     "test"
   ],
@@ -295,61 +295,61 @@ window.esdocSearchIndex = [
   ],
   [
     "",
-    "test-file/test/functional/3members.test.js.html#lineNumber183",
+    "test-file/test/functional/3members.test.js.html#lineNumber184",
     "3 members 🙂 🙂 🙂 joining should have the same members, key, WebGroup id, topology once joined",
     "test"
   ],
   [
     "webgroup#onmemberleave src/webchannelfacade.js~webgroup#onmemberleave,webgroup#onmemberleave",
-    "test-file/test/functional/3members.test.js.html#lineNumber635",
+    "test-file/test/functional/3members.test.js.html#lineNumber642",
     "3 members 🙂 🙂 🙂 should be notified about left member",
     "test"
   ],
   [
     "webgroup#onsignalingstatechange src/webchannelfacade.js~webgroup#onsignalingstatechange,webgroup#onsignalingstatechange",
-    "test-file/test/functional/3members.test.js.html#lineNumber677",
+    "test-file/test/functional/3members.test.js.html#lineNumber684",
     "3 members 🙂 🙂 🙂 should change the Signaling state",
     "test"
   ],
   [
     "webgroup#onstatechange src/webchannelfacade.js~webgroup#onstatechange,webgroup#onstatechange",
-    "test-file/test/functional/3members.test.js.html#lineNumber661",
+    "test-file/test/functional/3members.test.js.html#lineNumber668",
     "3 members 🙂 🙂 🙂 should change the WebGroup state",
     "test"
   ],
   [
     "webgroup#leave src/webchannelfacade.js~webgroup#leave,webgroup#leave",
-    "test-file/test/functional/3members.test.js.html#lineNumber602",
+    "test-file/test/functional/3members.test.js.html#lineNumber608",
     "3 members 🙂 🙂 🙂 should have no members & an empty key",
     "test"
   ],
   [
     "",
-    "test-file/test/functional/3members.test.js.html#lineNumber216",
+    "test-file/test/functional/3members.test.js.html#lineNumber218",
     "3 members 🙂 🙂 🙂 should send/receive",
     "test"
   ],
   [
     "webgroup#send src/webchannelfacade.js~webgroup#send,webgroup#send",
-    "test-file/test/functional/3members.test.js.html#lineNumber356",
+    "test-file/test/functional/3members.test.js.html#lineNumber359",
     "3 members 🙂 🙂 🙂 should send/receive broadcast ArrayBuffer",
     "test"
   ],
   [
     "webgroup#send src/webchannelfacade.js~webgroup#send,webgroup#send",
-    "test-file/test/functional/3members.test.js.html#lineNumber307",
+    "test-file/test/functional/3members.test.js.html#lineNumber309",
     "3 members 🙂 🙂 🙂 should send/receive broadcast String",
     "test"
   ],
   [
     "webgroup#sendto src/webchannelfacade.js~webgroup#sendto,webgroup#sendto",
-    "test-file/test/functional/3members.test.js.html#lineNumber463",
+    "test-file/test/functional/3members.test.js.html#lineNumber468",
     "3 members 🙂 🙂 🙂 should send/receive private ArrayBuffer",
     "test"
   ],
   [
     "webgroup#sendto src/webchannelfacade.js~webgroup#sendto,webgroup#sendto",
-    "test-file/test/functional/3members.test.js.html#lineNumber408",
+    "test-file/test/functional/3members.test.js.html#lineNumber412",
     "3 members 🙂 🙂 🙂 should send/receive private String",
     "test"
   ],

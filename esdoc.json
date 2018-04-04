@@ -17,7 +17,6 @@
           "repository": "https://github.com/coast-team/netflux"
         },
         "manual": {
-          "index": "./manual/index.md",
           "globalIndex": true,
           "asset": "./manual/asset",
           "files": ["./manual/installation.md", "./manual/usage.md", "./manual/knownobstacles.md"]

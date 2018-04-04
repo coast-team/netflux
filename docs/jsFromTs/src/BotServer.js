@@ -57,28 +57,24 @@ export class BotServer {
             const wcId = Number(query.wcId);
             let wg = this.getWebGroup(wcId);
             const senderId = Number(query.senderId);
-            switch (pathname) {
-                case '/invite': {
-                    if (wg && wg.members.length === 1) {
-                        this.webGroups.delete(wg);
-                    }
-                    // FIXME: it is possible to create multiple WebChannels with the same ID
-                    wg = new WebGroup(this.wcOptions);
-                    const wc = wcs.get(wg);
-                    wc.id = wcId;
-                    this.webGroups.add(wg);
-                    this.onWebGroup(wg);
-                    new Channel(wc, ws, { id: senderId }); // tslint:disable-line
-                    break;
+            if (pathname.endsWith('/invite')) {
+                if (wg && wg.members.length === 1) {
+                    this.webGroups.delete(wg);
                 }
-                case '/internalChannel': {
-                    if (wg !== undefined) {
-                        WebSocketBuilder.newIncomingSocket(wcs.get(wg), ws, senderId);
-                    }
-                    else {
-                        console.error('Cannot find WebChannel for a new internal channel');
-                    }
-                    break;
+                // FIXME: it is possible to create multiple WebChannels with the same ID
+                wg = new WebGroup(this.wcOptions);
+                const wc = wcs.get(wg);
+                wc.id = wcId;
+                this.webGroups.add(wg);
+                this.onWebGroup(wg);
+                new Channel(wc, ws, { id: senderId }); // tslint:disable-line
+            }
+            else if (pathname.endsWith('/internalChannel')) {
+                if (wg !== undefined) {
+                    WebSocketBuilder.newIncomingSocket(wcs.get(wg), ws, senderId);
+                }
+                else {
+                    console.error('Cannot find WebChannel for a new internal channel');
                 }
             }
         });
@@ -86,17 +82,15 @@ export class BotServer {
     validateConnection(info) {
         const { pathname, query } = urlLib.parse(info.req.url, true);
         const wcId = query.wcId ? Number(query.wcId) : undefined;
-        switch (pathname) {
-            case '/invite':
-                if (wcId) {
-                    const wg = this.getWebGroup(wcId);
-                    return (wg === undefined || wg.members.length === 1) && query.senderId;
-                }
-                return false;
-            case '/internalChannel':
-                return query.senderId !== undefined && wcId !== undefined && this.getWebGroup(wcId) !== undefined;
-            default:
-                return false;
+        if (pathname.endsWith('/invite')) {
+            if (wcId) {
+                const wg = this.getWebGroup(wcId);
+                return (wg === undefined || wg.members.length === 1) && query.senderId;
+            }
         }
+        else if (pathname.endsWith('/internalChannel')) {
+            return query.senderId !== undefined && wcId !== undefined && this.getWebGroup(wcId) !== undefined;
+        }
+        return false;
     }
 }
