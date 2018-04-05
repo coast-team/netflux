@@ -2,12 +2,12 @@ import { Observable } from 'rxjs/Observable'
 import { Subject } from 'rxjs/Subject'
 
 import { Channel } from '../Channel'
-import { log } from '../misc/Util'
+import { isWebRTCSupported, log } from '../misc/Util'
 import { channelBuilder as proto } from '../proto'
 import { CONNECT_TIMEOUT as WEBSOCKET_TIMEOUT, WebSocketBuilder } from '../WebSocketBuilder'
 import { IServiceMessageDecoded, Service } from './Service'
 import { WebChannel } from './WebChannel'
-import { CONNECT_TIMEOUT as WEBRTC_TIMEOUT, WebRTCBuilder } from './WebRTCBuilder'
+import { CONNECT_TIMEOUT as WEBRTC_TIMEOUT } from './WebRTCBuilder'
 
 /**
  * Service id.
@@ -61,7 +61,7 @@ export class ChannelBuilder extends Service {
     this.pingPongDates = new Map()
 
     // Listen on Channels as RTCDataChannels if WebRTC is supported
-    ME.isWrtcSupport = WebRTCBuilder.isSupported
+    ME.isWrtcSupport = isWebRTCSupported()
     if (ME.isWrtcSupport) {
       wc.webRTCBuilder.onChannelFromWebChannel().subscribe((ch) => this.handleChannel(ch))
     }

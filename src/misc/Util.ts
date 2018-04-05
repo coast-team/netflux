@@ -60,6 +60,20 @@ export function equal(array1: number[], array2: number[]) {
   return array1 !== undefined && array2 !== undefined && array1.length === array2.length && array1.every((v) => array2.includes(v))
 }
 
+/**
+ * Indicates whether WebRTC and RTCDataChannel are supported by the environment.
+ */
+export function isWebRTCSupported() {
+  return !!global.RTCPeerConnection && 'createDataChannel' in global.RTCPeerConnection.prototype
+}
+
+/**
+ * Indicates whether WebSocket is supported by the environment.
+ */
+export function isWebSocketSupported() {
+  return !!global.WebSocket
+}
+
 export const MAX_KEY_LENGTH = 512
 const netfluxCSS = 'background-color: #FFCA28; padding: 0 3px'
 const debugCSS = 'background-color: #b3ba2e; padding: 0 3px'

@@ -4,7 +4,7 @@ import { filter, map, pluck } from 'rxjs/operators'
 import { ReplaySubject } from 'rxjs/ReplaySubject'
 
 import { Channel } from '../Channel'
-import { log } from '../misc/Util'
+import { isWebRTCSupported, log } from '../misc/Util'
 import { signaling as sigProto, webRTCBuilder } from '../proto'
 import { IWebRTCStream } from '../Signaling'
 import { IServiceMessageDecoded, Service } from './Service'
@@ -48,13 +48,6 @@ export interface ISignalingConnection {
  *
  */
 export class WebRTCBuilder extends Service {
-  /**
-   * Indicates whether WebRTC is supported by the environment.
-   */
-  static get isSupported(): boolean {
-    return global.RTCPeerConnection !== undefined
-  }
-
   private wc: WebChannel
   private rtcConfiguration: RTCConfiguration
 
@@ -69,7 +62,7 @@ export class WebRTCBuilder extends Service {
    * Starts to listen on **SDP answer**.
    */
   onChannelFromWebChannel(): Observable<Channel> {
-    if (WebRTCBuilder.isSupported) {
+    if (isWebRTCSupported()) {
       return this.onChannel(
         this.onServiceMessage.pipe(
           filter(({ msg }: IServiceMessageDecoded) => msg.isInitiator),
@@ -92,7 +85,7 @@ export class WebRTCBuilder extends Service {
    * @param id  Peer id
    */
   connectOverWebChannel(id: number): Promise<Channel> {
-    if (WebRTCBuilder.isSupported) {
+    if (isWebRTCSupported()) {
       return this.establishChannel(
         this.onServiceMessage.pipe(
           filter(({ msg, senderId }: { msg: any; senderId: number }) => senderId === id && !msg.isInitiator),
@@ -113,7 +106,7 @@ export class WebRTCBuilder extends Service {
    * Starts to listen on **SDP answer**.
    */
   onChannelFromSignaling(wrtcStream: IWebRTCStream): Observable<Channel> {
-    if (WebRTCBuilder.isSupported) {
+    if (isWebRTCSupported()) {
       return this.onChannel(
         wrtcStream.message.pipe(
           filter((msg) => msg.id !== 0),
@@ -143,7 +136,7 @@ export class WebRTCBuilder extends Service {
    * Starts by sending an **SDP offer**.
    */
   connectOverSignaling(wrtcStream: IWebRTCStream): Promise<Channel> {
-    if (WebRTCBuilder.isSupported) {
+    if (isWebRTCSupported()) {
       return this.establishChannel(
         wrtcStream.message.pipe(filter((msg) => msg.id === 0), map((msg) => (msg.type === 'data' ? super.decode(msg.data) : msg))),
         (msg) => {
