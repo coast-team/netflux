@@ -57,6 +57,13 @@
 <li data-ice="manualNav" class="indent-h2" data-link="manual/knownobstacles.html"><a href="manual/knownobstacles.html#firefox-extensions" data-ice="link">Firefox extensions</a></li>
 </ul>
   </div>
+<div data-ice="manual">
+    <ul class="manual-toc">
+      
+    <li data-ice="manualNav" class="indent-h1" data-link="manual/faq.html"><a href="manual/faq.html" data-ice="link">FAQ</a></li>
+<li data-ice="manualNav" class="indent-h2" data-link="manual/faq.html"><a href="manual/faq.html#how-netflux-chooses-between--code-rtcdatachannel--code--and--code-websocket--code-" data-ice="link">How Netflux chooses between RTCDataChannel and WebSocket</a></li>
+</ul>
+  </div>
 </div>
 </nav>
 
@@ -191,6 +198,48 @@ const wg = new WebGroupBotServer({
       <div class="manual-card">
         <div data-ice="card"><h1>Known WebRTC obstacles</h1><p>Connection establishment over WebRTC may ancounter different obstacles like NAT, Firewall, port blocking. But besides network obstacles there is also browser configuration that may prevent from connection creation.</p><h2>Firefox extensions</h2><p>Some extensions for Firefox (Privacy Badger for instance) modify WebRTC configuration in browser. Checkout <code>about:config</code> and look for <code>peerconnection.ice</code>. If the <em>Status</em> column is <em>default</em> then the parameter was not modified.</p></div>
         <a data-ice="link" href="manual/knownobstacles.html"></a>
+      </div>
+    </div>
+<div class="manual-card-wrap" data-ice="cards">
+      <div class="manual-card">
+        <div data-ice="card"><h1>FAQ</h1><h2>How Netflux chooses between <code>RTCDataChannel</code> and <code>WebSocket</code></h2><p>Netflux operates with <code>RTCDataChannel</code> (WebRTC) and <code>WebSocket</code> connection technologies.</p><p>Technically <code>RTCDataChannel</code> may be established between:</p><ul>
+<li>Browser and Browser.</li>
+<li>Browser and Server.</li>
+<li>Server and Server.</li>
+</ul><p>On the other hand, a <code>WebSocket</code> may be created only between:</p><ul>
+<li>Browser and Server.</li>
+<li>Server and Server.</li>
+</ul><p>But in practice:</p><ul>
+<li>All modern browsers support <code>WebSocket</code> (Chrome, Firefox, Edge, Safary etc.), but only some of them support <code>RTCDataChannel</code> (Chrome, Firefox, Safari soon and Edge one day maybe).</li>
+<li>Servers may or may not listen on <code>WebSocket</code> or connect over <code>WebSocket</code> and may or may not support <code>RTCDataChannel</code>.</li>
+</ul><p>This technical diversity pushes us to try all possibilities in order to create a connection between two peers based on their capabilities.</p><p>Between two peers, there is always one who initiates the connection, while the other is in a passive state. Lets say peer <em>A</em> wants to connect to peer <em>B</em> (i.e. <em>A</em> is the initiator).</p><p>The following algorithm is the same for <em>A</em> and <em>B</em> and is executed each time a <code>message</code> is received. It runs through all possiblities in order to establish a connection between these peers (i.e. <code>return SUCCESS</code> to <em>A</em> if the connection succeed and <code>return FAILED</code> to <em>A</em> if the connection failed). It is important that the initiator peer (i.e. A) must be notified about the algorithm&apos;s result, while for the second peer (who is in the passive state) this information has no importance.</p><p><code>message</code> variable below persistes the state of the actions for both peers. It is updated by both and is exchanged between them.</p><pre><code class="lang-pseudocode"><code class="source-code prettyprint">// I received a `message` from another peer
+
+if iCanConnectOnWebSocket(message)
+  if connection succeed
+    return SUCCESS
+  else
+    update(message)
+
+if anotherPeerCanConnectOnWebSocket(message)
+  send(message)
+  return
+
+if iCanConnectOnRTCDataChannel(message)
+  if connection succeed
+    return SUCCESS
+  else
+    update(message)
+
+if anotherPeerCanConnectOnRTCDataChannel(message)
+  send(message)
+  return
+
+if iAmTheInitiator(message)
+  return FAILED
+else
+  send(message)</code>
+</code></pre></div>
+        <a data-ice="link" href="manual/faq.html"></a>
       </div>
     </div>
 </div>

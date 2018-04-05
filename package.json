@@ -44,7 +44,7 @@
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
     "predoc": "rm -rf ./docs; tsc -p tsconfig.docs.json",
     "doc": "esdoc -c esdoc.json",
-    "lint": "tslint --fix -p tsconfig.json && prettier --write --list-different src/**/*.ts test/**/*.{ts,config.js} ./*.{ts,js,json,md} && markdownlint ./*.md manual/*.md manual/**/*.md",
+    "lint": "tslint --fix -p tsconfig.json && prettier --write --list-different src/**/*.ts test/**/*.{ts,config.js} ./*.{ts,js,json,md} docs/**/*.md && markdownlint ./*.md manual/*.md manual/**/*.md",
     "precommit": "lint-staged && npm test -- -- precommit",
     "commitmsg": "validate-commit-msg",
     "cz": "git-cz"
@@ -111,9 +111,19 @@
   },
   "lint-staged": {
     "linters": {
-      "*.md": ["prettier --write --list-different", "git add", "markdownlint"],
-      "*.ts": ["tslint --fix -p tsconfig.json -e src/proto/* -e docs/*", "git add"],
-      "*.{ts,json,scss,css}": ["prettier --write --list-different", "git add"]
+      "*.md": [
+        "prettier --write --list-different",
+        "git add",
+        "markdownlint"
+      ],
+      "*.ts": [
+        "tslint --fix -p tsconfig.json -e src/proto/* -e docs/*",
+        "git add"
+      ],
+      "*.{ts,json,scss,css}": [
+        "prettier --write --list-different",
+        "git add"
+      ]
     },
     "concurrent": false
   }

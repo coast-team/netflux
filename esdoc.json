@@ -19,7 +19,7 @@
         "manual": {
           "globalIndex": true,
           "asset": "./manual/asset",
-          "files": ["./manual/installation.md", "./manual/usage.md", "./manual/knownobstacles.md"]
+          "files": ["./manual/installation.md", "./manual/usage.md", "./manual/knownobstacles.md", "./manual/faq.md"]
         },
         "test": {
           "source": "./docs/jsFromTs/test/",
