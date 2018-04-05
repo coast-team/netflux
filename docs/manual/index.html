@@ -212,27 +212,28 @@ const wg = new WebGroupBotServer({
 </ul><p>But in practice:</p><ul>
 <li>All modern browsers support <code>WebSocket</code> (Chrome, Firefox, Edge, Safary etc.), but only some of them support <code>RTCDataChannel</code> (Chrome, Firefox, Safari soon and Edge one day maybe).</li>
 <li>Servers may or may not listen on <code>WebSocket</code> or connect over <code>WebSocket</code> and may or may not support <code>RTCDataChannel</code>.</li>
-</ul><p>This technical diversity pushes us to try all possibilities in order to create a connection between two peers based on their capabilities.</p><p>Between two peers, there is always one who initiates the connection, while the other is in a passive state. Lets say peer <em>A</em> wants to connect to peer <em>B</em> (i.e. <em>A</em> is the initiator).</p><p>The following algorithm is the same for <em>A</em> and <em>B</em> and is executed each time a <code>message</code> is received. It runs through all possiblities in order to establish a connection between these peers (i.e. <code>return SUCCESS</code> to <em>A</em> if the connection succeed and <code>return FAILED</code> to <em>A</em> if the connection failed). It is important that the initiator peer (i.e. A) must be notified about the algorithm&apos;s result, while for the second peer (who is in the passive state) this information has no importance.</p><p><code>message</code> variable below persistes the state of the actions for both peers. It is updated by both and is exchanged between them.</p><pre><code class="lang-pseudocode"><code class="source-code prettyprint">// I received a `message` from another peer
+</ul><p>This technical diversity pushes us to try all possibilities in order to create a connection between two peers based on their capabilities.</p><p>Between two peers, there is always one who initiates the connection, while the other is in a passive state. Lets say peer <em>A</em> wants to connect to peer <em>B</em> (i.e. <em>A</em> is the initiator).</p><p>The following algorithm is the same for <em>A</em> and <em>B</em> and is executed each time a <code>message</code> is received. It runs through all possiblities in order to establish a connection between these peers (i.e. <code>return SUCCESS</code> if the connection succeed and <code>return FAILED</code> otherwise). It is important that the initiator peer (i.e. A) must be notified about the algorithm&apos;s result, while for the second peer (who is in the passive state) this information has no importance.</p><p><code>message</code> variable below persistes the state of the actions for both peers. It is updated by both and is exchanged between them.</p><pre><code class="lang-pseudocode"><code class="source-code prettyprint">// Pseudocode:
+// I received a `message` from another peer
 
-if iCanConnectOnWebSocket(message)
-  if connection succeed
+if anotherPeerIsListeningOnWebSocketAndIHaveNotTriedToConnectYet(message)
+  if WebSocket connection succeed
     return SUCCESS
   else
     update(message)
 
-if anotherPeerCanConnectOnWebSocket(message)
+if iAmListeningOnWebSocketAndAnotherPeerHasNotTriedToConnectYet(message)
   send(message)
   return
 
-if iCanConnectOnRTCDataChannel(message)
-  if connection succeed
-    return SUCCESS
-  else
-    update(message)
-
-if anotherPeerCanConnectOnRTCDataChannel(message)
-  send(message)
-  return
+if bothPeersSupportRTCDataChannel(message)
+  if iHaveNotTriedToConnectYet(message)
+    if RTCDataChannel connection succeed
+      return SUCCESS
+    else
+      update(message)
+  if anotherPeerHasNotTriedToConnectYet(message)
+    send(message)
+    return
 
 if iAmTheInitiator(message)
   return FAILED

@@ -24,32 +24,33 @@ This technical diversity pushes us to try all possibilities in order to create a
 
 Between two peers, there is always one who initiates the connection, while the other is in a passive state. Lets say peer _A_ wants to connect to peer _B_ (i.e. _A_ is the initiator).
 
-The following algorithm is the same for _A_ and _B_ and is executed each time a `message` is received. It runs through all possiblities in order to establish a connection between these peers (i.e. `return SUCCESS` to _A_ if the connection succeed and `return FAILED` to _A_ if the connection failed). It is important that the initiator peer (i.e. A) must be notified about the algorithm's result, while for the second peer (who is in the passive state) this information has no importance.
+The following algorithm is the same for _A_ and _B_ and is executed each time a `message` is received. It runs through all possiblities in order to establish a connection between these peers (i.e. `return SUCCESS` if the connection succeed and `return FAILED` otherwise). It is important that the initiator peer (i.e. A) must be notified about the algorithm's result, while for the second peer (who is in the passive state) this information has no importance.
 
 `message` variable below persistes the state of the actions for both peers. It is updated by both and is exchanged between them.
 
 ```pseudocode
+// Pseudocode:
 // I received a `message` from another peer
 
-if iCanConnectOnWebSocket(message)
-  if connection succeed
+if anotherPeerIsListeningOnWebSocketAndIHaveNotTriedToConnectYet(message)
+  if WebSocket connection succeed
     return SUCCESS
   else
     update(message)
 
-if anotherPeerCanConnectOnWebSocket(message)
+if iAmListeningOnWebSocketAndAnotherPeerHasNotTriedToConnectYet(message)
   send(message)
   return
 
-if iCanConnectOnRTCDataChannel(message)
-  if connection succeed
-    return SUCCESS
-  else
-    update(message)
-
-if anotherPeerCanConnectOnRTCDataChannel(message)
-  send(message)
-  return
+if bothPeersSupportRTCDataChannel(message)
+  if iHaveNotTriedToConnectYet(message)
+    if RTCDataChannel connection succeed
+      return SUCCESS
+    else
+      update(message)
+  if anotherPeerHasNotTriedToConnectYet(message)
+    send(message)
+    return
 
 if iAmTheInitiator(message)
   return FAILED
