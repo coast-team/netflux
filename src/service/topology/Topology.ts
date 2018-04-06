@@ -28,7 +28,6 @@ export enum TopologyStateEnum {
  * @see FullMesh
  */
 export interface ITopology extends Service {
-
   readonly onState: Observable<TopologyStateEnum>
   readonly state: TopologyStateEnum
   readonly heartbeat: Uint8Array
@@ -38,7 +37,7 @@ export interface ITopology extends Service {
    *
    * @param ch  A channel between you and the joining peer
    */
-  addJoining (ch: Channel): void
+  addJoining(ch: Channel): void
 
   /**
    * This method is called when all necessary initialization messages have been
@@ -46,41 +45,41 @@ export interface ITopology extends Service {
    *
    * @param ch  A channel between you and one of the network member
    */
-  initJoining (ch: Channel, ids: number[]): void
+  initJoining(ch: Channel, ids: number[]): void
 
   /**
    * Broadcast a message to the network.
    */
-  send (msg: IMessage): void
+  send(msg: IMessage): void
 
   /**
    * Forward the message to its recipient(s).
    */
-  forward (msg: IMessage): void
+  forward(msg: IMessage): void
 
   /**
    * Send a message to a particular peer in the network.
    */
-  sendTo (msg: IMessage): void
+  sendTo(msg: IMessage): void
 
   /**
    * Disconnect from the network
    */
-  leave (): void
+  leave(): void
 
   /**
    * This handler will be called when one of the network channel closed.
    */
-  onChannelClose (event: Event, channel: Channel): void
+  onChannelClose(event: Event, channel: Channel): void
 
   /**
    * This handler will be called when an error occured on one of the network
    * channel.
    */
-  onChannelError (event: Event, channel: Channel): void
+  onChannelError(event: Event, channel: Channel): void
 
   /**
    * Signaling calls this method, when you are the first peer in the group.
    */
-  setStable (): void
+  setStable(): void
 }

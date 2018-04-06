@@ -5,7 +5,6 @@ import { WebChannel } from './service/WebChannel'
  * Wrapper class for `RTCDataChannel` and `WebSocket`.
  */
 export class Channel {
-
   public connection: any
   public send: (data: Uint8Array) => void
   public isIntermediary: boolean
@@ -24,10 +23,10 @@ export class Channel {
   /**
    * Creates a channel from existing `RTCDataChannel` or `WebSocket`.
    */
-  constructor (
+  constructor(
     wc: WebChannel,
     connection: WebSocket | RTCDataChannel,
-    options: {rtcPeerConnection?: RTCPeerConnection, id: number} = {id: 1},
+    options: { rtcPeerConnection?: RTCPeerConnection; id: number } = { id: 1 }
   ) {
     log.channel(`New Channel: Me: ${wc.myId} with ${options.id}`)
     this.wc = wc
@@ -68,39 +67,39 @@ export class Channel {
     }
   }
 
-  get id () {
+  get id() {
     return this._id
   }
 
-  set id (value: number) {
+  set id(value: number) {
     this._id = value
     this.fullHeartbeatMsg = this.wc.encode({ recipientId: value, content: this.topologyHeartbeatMsg })
   }
 
-  close (): void {
+  close(): void {
     this.connection.close()
     if (this.rtcPeerConnection) {
       this.rtcPeerConnection.close()
     }
   }
 
-  closeQuietly (): void {
+  closeQuietly(): void {
     this.connection.onmessage = undefined
     this.connection.onclose = undefined
     this.connection.onerror = undefined
     this.close()
   }
 
-  sendHeartbeat () {
+  sendHeartbeat() {
     this.send(this.fullHeartbeatMsg)
   }
 
-  updateHeartbeatMsg (heartbeatMsg: Uint8Array) {
+  updateHeartbeatMsg(heartbeatMsg: Uint8Array) {
     this.topologyHeartbeatMsg = heartbeatMsg
     this.fullHeartbeatMsg = this.wc.encode({ recipientId: this._id, content: heartbeatMsg })
   }
 
-  private sendInBrowser (data: Uint8Array): void {
+  private sendInBrowser(data: Uint8Array): void {
     try {
       this.connection.send(data)
     } catch (err) {
@@ -108,15 +107,15 @@ export class Channel {
     }
   }
 
-  private sendInNodeViaWebSocket (data: Uint8Array): void {
+  private sendInNodeViaWebSocket(data: Uint8Array): void {
     try {
-      this.connection.send(data, {binary: true})
+      this.connection.send(data, { binary: true })
     } catch (err) {
       log.channel('Channel sendInNodeViaWebSocket ERROR', err)
     }
   }
 
-  private sendInNodeViaDataChannel (data: Uint8Array): void {
+  private sendInNodeViaDataChannel(data: Uint8Array): void {
     this.sendInBrowser(data.slice(0))
   }
 }

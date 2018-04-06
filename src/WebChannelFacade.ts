@@ -1,8 +1,5 @@
 import { TopologyEnum } from './service/topology/Topology'
-import {
-  IWebChannelOptions as WebGroupOptions,
-  WebChannel,
-  WebChannelState } from './service/WebChannel'
+import { IWebChannelOptions as WebGroupOptions, WebChannel, WebChannelState } from './service/WebChannel'
 import { SignalingState } from './Signaling'
 
 /**
@@ -27,37 +24,49 @@ export class WebGroupState {
    * Equals to `0`: joining the group...
    * @type {number}
    */
-  static get JOINING (): number { return WebChannelState.JOINING }
+  static get JOINING(): number {
+    return WebChannelState.JOINING
+  }
 
   /**
    * Equals to `'JOINING'`.
    * @type {string}
    */
-  static get [WebGroupState.JOINING] (): string { return WebChannelState[WebChannelState.JOINING] }
+  static get [WebGroupState.JOINING](): string {
+    return WebChannelState[WebChannelState.JOINING]
+  }
 
   /**
    * Equals to `1`: joined the group successfully.
    * @type {number}
    */
-  static get JOINED (): number { return WebChannelState.JOINED }
+  static get JOINED(): number {
+    return WebChannelState.JOINED
+  }
 
   /**
    * Equals to `'JOINED'`.
    * @type {string}
    */
-  static get [WebGroupState.JOINED] (): string { return WebChannelState[WebChannelState.JOINED] }
+  static get [WebGroupState.JOINED](): string {
+    return WebChannelState[WebChannelState.JOINED]
+  }
 
   /**
    * Equals to `2`: The `WebGroup` is in process of leaving.
    * @type {number}
    */
-  static get LEAVING (): number { return WebChannelState.LEAVING }
+  static get LEAVING(): number {
+    return WebChannelState.LEAVING
+  }
 
   /**
    * Equals to `'LEAVING'`.
    * @type {string}
    */
-  static get [WebGroupState.LEAVING] (): string { return WebChannelState[WebChannelState.LEAVING] }
+  static get [WebGroupState.LEAVING](): string {
+    return WebChannelState[WebChannelState.LEAVING]
+  }
 
   /**
    * Equals to `3`: left the group. If the connection to the web group has lost other then
@@ -66,13 +75,17 @@ export class WebGroupState {
    * the rejoining process starts.
    * @type {number}
    */
-  static get LEFT (): number { return WebChannelState.LEFT }
+  static get LEFT(): number {
+    return WebChannelState.LEFT
+  }
 
   /**
    * Equals to `'LEFT'`.
    * @type {string}
    */
-  static get [WebGroupState.LEFT] (): string { return WebChannelState[WebChannelState.LEFT] }
+  static get [WebGroupState.LEFT](): string {
+    return WebChannelState[WebChannelState.LEFT]
+  }
 }
 
 /**
@@ -116,7 +129,6 @@ export class WebGroupState {
  * }
  */
 export class WebGroup {
-
   public id: number
   public myId: number
   public key: string
@@ -139,7 +151,7 @@ export class WebGroup {
    * @param {RTCConfiguration} [options.rtcConfiguration={iceServers: [{urls: 'stun:stun3.l.google.com:19302'}]}]
    * @param {boolean} [options.autoRejoin=true]
    */
-  constructor (options: WebGroupOptions = {}) {
+  constructor(options: WebGroupOptions = {}) {
     const wc = new WebChannel(options)
     wcs.set(this, wc)
 
@@ -199,7 +211,8 @@ export class WebGroup {
     this.signalingServer = undefined as any
     Reflect.defineProperty(this, 'signalingServer', {
       configurable: false,
-      enumerable: true, get: () => wc.signaling.url,
+      enumerable: true,
+      get: () => wc.signaling.url,
     })
     /**
      * Enable/Desable the auto rejoin feature.
@@ -210,7 +223,7 @@ export class WebGroup {
       configurable: false,
       enumerable: true,
       get: () => wc.autoRejoin,
-      set: (value: boolean) => wc.autoRejoin = value,
+      set: (value: boolean) => (wc.autoRejoin = value),
     })
     /**
      * This handler is called when a message has been received from the group.
@@ -222,10 +235,10 @@ export class WebGroup {
     Reflect.defineProperty(this, 'onMessage', {
       configurable: true,
       enumerable: true,
-      get: () => (wc.onMessage.name === 'none') ? undefined : wc.onMessage,
+      get: () => (wc.onMessage.name === 'none' ? undefined : wc.onMessage),
       set: (handler: (id: number, data: DataType) => void) => {
         if (typeof handler !== 'function') {
-          wc.onMessage = function none () {}
+          wc.onMessage = function none() {}
         } else {
           wc.onMessage = handler
         }
@@ -239,10 +252,10 @@ export class WebGroup {
     Reflect.defineProperty(this, 'onMemberJoin', {
       configurable: true,
       enumerable: true,
-      get: () => (wc.onMemberJoin.name === 'none') ? undefined : wc.onMemberJoin,
+      get: () => (wc.onMemberJoin.name === 'none' ? undefined : wc.onMemberJoin),
       set: (handler: (id: number) => void) => {
         if (typeof handler !== 'function') {
-          wc.onMemberJoin = function none () {}
+          wc.onMemberJoin = function none() {}
         } else {
           wc.onMemberJoin = handler
         }
@@ -256,10 +269,10 @@ export class WebGroup {
     Reflect.defineProperty(this, 'onMemberLeave', {
       configurable: true,
       enumerable: true,
-      get: () => (wc.onMemberLeave.name === 'none') ? undefined : wc.onMemberLeave,
+      get: () => (wc.onMemberLeave.name === 'none' ? undefined : wc.onMemberLeave),
       set: (handler: (id: number) => void) => {
         if (typeof handler !== 'function') {
-          wc.onMemberLeave = function none () {}
+          wc.onMemberLeave = function none() {}
         } else {
           wc.onMemberLeave = handler
         }
@@ -273,10 +286,10 @@ export class WebGroup {
     Reflect.defineProperty(this, 'onStateChange', {
       configurable: true,
       enumerable: true,
-      get: () => (wc.onStateChange.name === 'none') ? undefined : wc.onStateChange,
+      get: () => (wc.onStateChange.name === 'none' ? undefined : wc.onStateChange),
       set: (handler: (state: WebChannelState) => void) => {
         if (typeof handler !== 'function') {
-          wc.onStateChange = function none () {}
+          wc.onStateChange = function none() {}
         } else {
           wc.onStateChange = handler
         }
@@ -290,10 +303,10 @@ export class WebGroup {
     Reflect.defineProperty(this, 'onSignalingStateChange', {
       configurable: true,
       enumerable: true,
-      get: () => (wc.onSignalingStateChange.name === 'none') ? undefined : wc.onSignalingStateChange,
+      get: () => (wc.onSignalingStateChange.name === 'none' ? undefined : wc.onSignalingStateChange),
       set: (handler: (state: SignalingState) => void) => {
         if (typeof handler !== 'function') {
-          wc.onSignalingStateChange = function none () {}
+          wc.onSignalingStateChange = function none() {}
         } else {
           wc.onSignalingStateChange = handler
         }
@@ -308,7 +321,7 @@ export class WebGroup {
    * then do nothing.
    * @param {string} [key] Will be generated if not provided
    */
-  join (key?: string): void {
+  join(key?: string): void {
     const wc = wcs.get(this)
     if (wc) {
       return wc.join(key)
@@ -320,7 +333,7 @@ export class WebGroup {
    * Invite a bot server to join this group.
    * @param {string} url - Bot server URL (See {@link WebGroupBotServerOptions})
    */
-  invite (url: string): void {
+  invite(url: string): void {
     const wc = wcs.get(this)
     if (wc) {
       return wc.invite(url)
@@ -332,7 +345,7 @@ export class WebGroup {
    * Leave the group which means close channels with all members and connection
    * with the Signaling server.
    */
-  leave () {
+  leave() {
     const wc = wcs.get(this)
     if (wc) {
       return wc.leave()
@@ -344,7 +357,7 @@ export class WebGroup {
    * Broadcast a message to the group.
    * @param {DataType} data
    */
-  send (data: DataType): void {
+  send(data: DataType): void {
     const wc = wcs.get(this)
     if (wc) {
       return wc.send(data)
@@ -357,7 +370,7 @@ export class WebGroup {
    * @param {number}    id Member identifier
    * @param {DataType}  data Message
    */
-  sendTo (id: number, data: DataType): void {
+  sendTo(id: number, data: DataType): void {
     const wc = wcs.get(this)
     if (wc) {
       return wc.sendTo(id, data)

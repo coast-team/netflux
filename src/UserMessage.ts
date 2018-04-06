@@ -21,18 +21,17 @@ export type UserDataType = Uint8Array | string
  * 16ko.
  */
 export class UserMessage {
-
   private buffers: Map<number, Map<number, Buffer>>
 
-  constructor () {
+  constructor() {
     this.buffers = new Map()
   }
 
   /**
    * Encode user message for sending over the network.
    */
-  encode (data: UserDataType): Uint8Array[] {
-    const {type, bytes} = this.userDataToType(data)
+  encode(data: UserDataType): Uint8Array[] {
+    const { type, bytes } = this.userDataToType(data)
     const msg: any = { length: bytes.length, type }
     if (bytes.length <= MAX_USER_MSG_SIZE) {
       msg.full = bytes
@@ -42,10 +41,7 @@ export class UserMessage {
       const numberOfChunks = Math.ceil(bytes.length / MAX_USER_MSG_SIZE)
       const res = new Array(numberOfChunks)
       for (let i = 0; i < numberOfChunks; i++) {
-        const length = Math.min(
-          MAX_USER_MSG_SIZE,
-          bytes.length - MAX_USER_MSG_SIZE * i,
-        )
+        const length = Math.min(MAX_USER_MSG_SIZE, bytes.length - MAX_USER_MSG_SIZE * i)
         const begin = MAX_USER_MSG_SIZE * i
         const end = begin + length
         msg.chunk.number = i
@@ -59,37 +55,37 @@ export class UserMessage {
   /**
    * Decode user message received from the network.
    */
-  decode (bytes: Uint8Array, senderId: number): UserDataType {
+  decode(bytes: Uint8Array, senderId: number): UserDataType {
     const msg = user.Message.decode(bytes) as any
     let content
     switch (msg.content) {
-    case 'full': {
-      content = msg.full
-      break
-    }
-    case 'chunk': {
-      let buffer = this.getBuffer(senderId, msg.chunk.id)
-      if (buffer === undefined) {
-        buffer = new Buffer(msg.length, msg.chunk.content, msg.chunk.number)
-        this.setBuffer(senderId, msg.chunk.id, buffer)
-        content = undefined
-      } else {
-        content = buffer.append(msg.chunk.content, msg.chunk.number)
+      case 'full': {
+        content = msg.full
+        break
       }
-      break
-    }
-    default: {
-      throw new Error('Unknown message integrity')
-    }
+      case 'chunk': {
+        let buffer = this.getBuffer(senderId, msg.chunk.id)
+        if (buffer === undefined) {
+          buffer = new Buffer(msg.length, msg.chunk.content, msg.chunk.number)
+          this.setBuffer(senderId, msg.chunk.id, buffer)
+          content = undefined
+        } else {
+          content = buffer.append(msg.chunk.content, msg.chunk.number)
+        }
+        break
+      }
+      default: {
+        throw new Error('Unknown message integrity')
+      }
     }
     if (content !== undefined) {
       switch (msg.type) {
-      case user.Message.Type.U_INT_8_ARRAY:
-        return content
-      case user.Message.Type.STRING:
-        return textDecoder.decode(content)
-      default:
-        throw new Error('Unknown message type')
+        case user.Message.Type.U_INT_8_ARRAY:
+          return content
+        case user.Message.Type.STRING:
+          return textDecoder.decode(content)
+        default:
+          throw new Error('Unknown message type')
       }
     }
     return content
@@ -98,7 +94,7 @@ export class UserMessage {
   /**
    * Identify the user data type.
    */
-  private userDataToType (data: UserDataType): { type: number , bytes: Uint8Array } {
+  private userDataToType(data: UserDataType): { type: number; bytes: Uint8Array } {
     if (data instanceof Uint8Array) {
       return { type: user.Message.Type.U_INT_8_ARRAY, bytes: data }
     } else if (typeof data === 'string') {
@@ -110,7 +106,7 @@ export class UserMessage {
     }
   }
 
-  private getBuffer (peerId: number, msgId: number): Buffer | undefined {
+  private getBuffer(peerId: number, msgId: number): Buffer | undefined {
     const buffers = this.buffers.get(peerId)
     if (buffers !== undefined) {
       return buffers.get(msgId)
@@ -118,7 +114,7 @@ export class UserMessage {
     return undefined
   }
 
-  private setBuffer (peerId: number, msgId: number, buffer: Buffer): void {
+  private setBuffer(peerId: number, msgId: number, buffer: Buffer): void {
     let buffers = this.buffers.get(peerId)
     if (buffers === undefined) {
       buffers = new Map()
@@ -135,11 +131,10 @@ export class UserMessage {
  * 1 big message at a time).
  */
 class Buffer {
-
   private fullData: Uint8Array
   private currentLength: number
 
-  constructor (totalLength: number, data: Uint8Array, chunkNb: number) {
+  constructor(totalLength: number, data: Uint8Array, chunkNb: number) {
     this.fullData = new Uint8Array(totalLength)
     this.currentLength = 0
     this.append(data, chunkNb)
@@ -148,7 +143,7 @@ class Buffer {
   /**
    * Add a chunk of message to the buffer.
    */
-  append (data: Uint8Array, chunkNb: number): Uint8Array | undefined {
+  append(data: Uint8Array, chunkNb: number): Uint8Array | undefined {
     let i = chunkNb * MAX_USER_MSG_SIZE
     this.currentLength += data.length
     for (const d of data) {

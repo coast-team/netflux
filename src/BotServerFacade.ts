@@ -51,7 +51,6 @@ export { WebGroupBotServerOptions }
  * server.listen(BOT_PORT, BOT_HOST)
  */
 export class WebGroupBotServer {
-
   public server: NodeJSHttpServer | NodeJSHttpsServer
   public perMessageDeflate: boolean
   public webGroups: Set<WebGroup>
@@ -70,7 +69,7 @@ export class WebGroupBotServer {
    * @param {RTCConfiguration} [options.webGroupOptions.rtcConfiguration={iceServers: [{urls: 'stun:stun3.l.google.com:19302'}]}]
    * @param {boolean} [options.webGroupOptions.autoRejoin=false]
    */
-  constructor (options: WebGroupBotServerOptions) {
+  constructor(options: WebGroupBotServerOptions) {
     botServer = new BotServer(options)
 
     /**
@@ -89,10 +88,10 @@ export class WebGroupBotServer {
       enumerable: true,
       get: () => botServer.perMessageDeflate,
     })
-     /**
-      * Read-only set of web groups the bot is member of.
-      * @type {Set<WebGroup>}
-      */
+    /**
+     * Read-only set of web groups the bot is member of.
+     * @type {Set<WebGroup>}
+     */
     this.webGroups = undefined as any
     Reflect.defineProperty(this, 'webGroups', { configurable: false, enumerable: true, get: () => botServer.webGroups })
     /**
@@ -110,10 +109,10 @@ export class WebGroupBotServer {
     Reflect.defineProperty(this, 'onWebGroup', {
       configurable: true,
       enumerable: true,
-      get: () => (botServer.onWebGroup.name === 'none') ? undefined : botServer.onWebGroup,
+      get: () => (botServer.onWebGroup.name === 'none' ? undefined : botServer.onWebGroup),
       set: (handler: (wg: WebGroup) => void) => {
         if (typeof handler !== 'function') {
-          botServer.onWebGroup = function none () {}
+          botServer.onWebGroup = function none() {}
         } else {
           botServer.onWebGroup = handler
         }
@@ -128,15 +127,14 @@ export class WebGroupBotServer {
     Reflect.defineProperty(this, 'onError', {
       configurable: true,
       enumerable: true,
-      get: () => (botServer.onError.name === 'none') ? undefined : botServer.onError,
+      get: () => (botServer.onError.name === 'none' ? undefined : botServer.onError),
       set: (handler: (err: Error) => void) => {
         if (typeof handler !== 'function') {
-          botServer.onError = function none () {}
+          botServer.onError = function none() {}
         } else {
           botServer.onError = handler
         }
       },
     })
   }
-
 }

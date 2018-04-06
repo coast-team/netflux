@@ -3,14 +3,14 @@ import * as helper from 'util/helper'
 
 describe('Signaling', () => {
   const WebChannelMock = class {
-    constructor (onClose = () => {}) {
+    constructor(onClose = () => {}) {
       this.onClose = onClose
-      this.settings = {rtcConfiguration: {}}
+      this.settings = { rtcConfiguration: {} }
     }
   }
   run(`through WebSocket ${helper.SIGNALING_URL}`, helper.SIGNALING_URL)
   // run(`through EventSource ${helper.SIGNALING_URL_EVENT_SOURCE}`, helper.SIGNALING_URL_EVENT_SOURCE)
-  function run (title, url) {
+  function run(title, url) {
     const signalingServer = url
 
     describe(title, () => {
@@ -29,11 +29,12 @@ describe('Signaling', () => {
         expect(key1).not.toEqual(key2)
       })
 
-      it('Should open 2 gates with the same key', done => {
+      it('Should open 2 gates with the same key', (done) => {
         const sg1 = new Signaling(new WebChannelMock(), () => {})
         const sg2 = new Signaling(new WebChannelMock(), () => {})
-        sg1.open(signalingServer)
-          .then(openData => sg2.open(signalingServer, openData.key))
+        sg1
+          .open(signalingServer)
+          .then((openData) => sg2.open(signalingServer, openData.key))
           .then(() => {
             sg1.close()
             sg2.close()
@@ -47,16 +48,17 @@ describe('Signaling', () => {
         const sg = new Signaling(webChannelMock, () => {})
         let openData
 
-        it('Should open the gate', done => {
-          sg.open(signalingServer)
-            .then(data => {
+        it('Should open the gate', (done) => {
+          sg
+            .open(signalingServer)
+            .then((data) => {
               openData = data
               expect(data.key).toBeDefined()
               expect(data.url).toBeDefined()
               expect(data.url).toEqual(signalingServer)
               done()
             })
-            .catch(err => done.fail(err.message))
+            .catch((err) => done.fail(err.message))
         })
 
         it('isOpen should return true', () => {
@@ -67,7 +69,7 @@ describe('Signaling', () => {
           expect(sg.getOpenData()).toEqual(openData)
         })
 
-        it('Should close & onClose should be called', done => {
+        it('Should close & onClose should be called', (done) => {
           webChannelMock.onClose = () => {
             expect(sg.isOpen()).toBeFalsy()
             expect(sg.getOpenData()).toBeNull()
@@ -82,10 +84,11 @@ describe('Signaling', () => {
         const sg = new Signaling(webChannelMock, () => {})
         let openData
 
-        it('Should open the gate', done => {
+        it('Should open the gate', (done) => {
           const key = sg.generateKey()
-          sg.open(signalingServer, key)
-            .then(data => {
+          sg
+            .open(signalingServer, key)
+            .then((data) => {
               openData = data
               expect(data.key).toBeDefined()
               expect(data.url).toBeDefined()
@@ -104,7 +107,7 @@ describe('Signaling', () => {
           expect(sg.getOpenData()).toEqual(openData)
         })
 
-        it('Should close & onClose should be called', done => {
+        it('Should close & onClose should be called', (done) => {
           webChannelMock.onClose = () => {
             expect(sg.isOpen()).toBeFalsy()
             expect(sg.getOpenData()).toBeNull()
