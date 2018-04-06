@@ -363,14 +363,8 @@ export namespace webChannel {
 export namespace channelBuilder {
   /** Properties of a Message. */
   interface IMessage {
-    /** Message request */
-    request?: channelBuilder.IConnection | null
-
-    /** Message response */
-    response?: channelBuilder.IConnection | null
-
-    /** Message failed */
-    failed?: string | null
+    /** Message pair */
+    pair?: channelBuilder.IPeerPair | null
 
     /** Message ping */
     ping?: boolean | null
@@ -387,14 +381,8 @@ export namespace channelBuilder {
      */
     constructor(properties?: channelBuilder.IMessage)
 
-    /** Message request. */
-    public request?: channelBuilder.IConnection | null
-
-    /** Message response. */
-    public response?: channelBuilder.IConnection | null
-
-    /** Message failed. */
-    public failed: string
+    /** Message pair. */
+    public pair?: channelBuilder.IPeerPair | null
 
     /** Message ping. */
     public ping: boolean
@@ -403,7 +391,7 @@ export namespace channelBuilder {
     public pong: boolean
 
     /** Message type. */
-    public type?: 'request' | 'response' | 'failed' | 'ping' | 'pong'
+    public type?: 'pair' | 'ping' | 'pong'
 
     /**
      * Creates a new Message instance using the specified properties.
@@ -431,53 +419,126 @@ export namespace channelBuilder {
     public static decode(reader: $protobuf.Reader | Uint8Array, length?: number): channelBuilder.Message
   }
 
-  /** Properties of a Connection. */
-  interface IConnection {
-    /** Connection wsUrl */
-    wsUrl?: string | null
+  /** Properties of a PeerPair. */
+  interface IPeerPair {
+    /** PeerPair initiator */
+    initiator?: channelBuilder.IPeerInfo | null
 
-    /** Connection isWrtcSupport */
-    isWrtcSupport?: boolean | null
+    /** PeerPair passive */
+    passive?: channelBuilder.IPeerInfo | null
   }
 
-  /** Represents a Connection. */
-  class Connection implements IConnection {
+  /** Represents a PeerPair. */
+  class PeerPair implements IPeerPair {
     /**
-     * Constructs a new Connection.
+     * Constructs a new PeerPair.
      * @param [properties] Properties to set
      */
-    constructor(properties?: channelBuilder.IConnection)
+    constructor(properties?: channelBuilder.IPeerPair)
 
-    /** Connection wsUrl. */
-    public wsUrl: string
+    /** PeerPair initiator. */
+    public initiator?: channelBuilder.IPeerInfo | null
 
-    /** Connection isWrtcSupport. */
-    public isWrtcSupport: boolean
+    /** PeerPair passive. */
+    public passive?: channelBuilder.IPeerInfo | null
 
     /**
-     * Creates a new Connection instance using the specified properties.
+     * Creates a new PeerPair instance using the specified properties.
      * @param [properties] Properties to set
-     * @returns Connection instance
+     * @returns PeerPair instance
      */
-    public static create(properties?: channelBuilder.IConnection): channelBuilder.Connection
+    public static create(properties?: channelBuilder.IPeerPair): channelBuilder.PeerPair
 
     /**
-     * Encodes the specified Connection message. Does not implicitly {@link channelBuilder.Connection.verify|verify} messages.
-     * @param message Connection message or plain object to encode
+     * Encodes the specified PeerPair message. Does not implicitly {@link channelBuilder.PeerPair.verify|verify} messages.
+     * @param message PeerPair message or plain object to encode
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    public static encode(message: channelBuilder.IConnection, writer?: $protobuf.Writer): $protobuf.Writer
+    public static encode(message: channelBuilder.IPeerPair, writer?: $protobuf.Writer): $protobuf.Writer
 
     /**
-     * Decodes a Connection message from the specified reader or buffer.
+     * Decodes a PeerPair message from the specified reader or buffer.
      * @param reader Reader or buffer to decode from
      * @param [length] Message length if known beforehand
-     * @returns Connection
+     * @returns PeerPair
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    public static decode(reader: $protobuf.Reader | Uint8Array, length?: number): channelBuilder.Connection
+    public static decode(reader: $protobuf.Reader | Uint8Array, length?: number): channelBuilder.PeerPair
+  }
+
+  /** Properties of a PeerInfo. */
+  interface IPeerInfo {
+    /** PeerInfo id */
+    id?: number | null
+
+    /** PeerInfo wss */
+    wss?: string | null
+
+    /** PeerInfo wsSupported */
+    wsSupported?: boolean | null
+
+    /** PeerInfo wsTried */
+    wsTried?: boolean | null
+
+    /** PeerInfo dcSupported */
+    dcSupported?: boolean | null
+
+    /** PeerInfo dcTried */
+    dcTried?: boolean | null
+  }
+
+  /** Represents a PeerInfo. */
+  class PeerInfo implements IPeerInfo {
+    /**
+     * Constructs a new PeerInfo.
+     * @param [properties] Properties to set
+     */
+    constructor(properties?: channelBuilder.IPeerInfo)
+
+    /** PeerInfo id. */
+    public id: number
+
+    /** PeerInfo wss. */
+    public wss: string
+
+    /** PeerInfo wsSupported. */
+    public wsSupported: boolean
+
+    /** PeerInfo wsTried. */
+    public wsTried: boolean
+
+    /** PeerInfo dcSupported. */
+    public dcSupported: boolean
+
+    /** PeerInfo dcTried. */
+    public dcTried: boolean
+
+    /**
+     * Creates a new PeerInfo instance using the specified properties.
+     * @param [properties] Properties to set
+     * @returns PeerInfo instance
+     */
+    public static create(properties?: channelBuilder.IPeerInfo): channelBuilder.PeerInfo
+
+    /**
+     * Encodes the specified PeerInfo message. Does not implicitly {@link channelBuilder.PeerInfo.verify|verify} messages.
+     * @param message PeerInfo message or plain object to encode
+     * @param [writer] Writer to encode to
+     * @returns Writer
+     */
+    public static encode(message: channelBuilder.IPeerInfo, writer?: $protobuf.Writer): $protobuf.Writer
+
+    /**
+     * Decodes a PeerInfo message from the specified reader or buffer.
+     * @param reader Reader or buffer to decode from
+     * @param [length] Message length if known beforehand
+     * @returns PeerInfo
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    public static decode(reader: $protobuf.Reader | Uint8Array, length?: number): channelBuilder.PeerInfo
   }
 }
 

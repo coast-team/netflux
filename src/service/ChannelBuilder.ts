@@ -2,10 +2,10 @@ import { Observable } from 'rxjs/Observable'
 import { Subject } from 'rxjs/Subject'
 
 import { Channel } from '../Channel'
-import { isWebRTCSupported, log } from '../misc/Util'
+import { isWebRTCSupported, isWebSocketSupported, log } from '../misc/Util'
 import { channelBuilder as proto } from '../proto'
 import { CONNECT_TIMEOUT as WEBSOCKET_TIMEOUT, WebSocketBuilder } from '../WebSocketBuilder'
-import { IServiceMessageDecoded, Service } from './Service'
+import { Service } from './Service'
 import { WebChannel } from './WebChannel'
 import { CONNECT_TIMEOUT as WEBRTC_TIMEOUT } from './WebRTCBuilder'
 
@@ -14,12 +14,7 @@ import { CONNECT_TIMEOUT as WEBRTC_TIMEOUT } from './WebRTCBuilder'
  */
 const ID = 100
 
-const ME = {
-  wsUrl: '',
-  isWrtcSupport: false,
-}
-
-const CONNECT_TIMEOUT = Math.max(WEBRTC_TIMEOUT, WEBSOCKET_TIMEOUT) + 3000
+const CONNECT_TIMEOUT = 2 * Math.max(WEBRTC_TIMEOUT, WEBSOCKET_TIMEOUT)
 const DEFAULT_PINGPONG_TIMEOUT = 700
 const MAX_PINGPONG_TIMEOUT = 3000
 const ping = Service.encodeServiceMessage(ID, proto.Message.encode(proto.Message.create({ ping: true })).finish())
@@ -35,15 +30,14 @@ interface IPingPongRequest {
   resolve: () => void
 }
 
-let requestMsg: Uint8Array
-let responseMsg: Uint8Array
-
 /**
  * It is responsible to build a channel between two peers with a help of `WebSocketBuilder` and `WebRTCBuilder`.
  * Its algorithm determine which channel (socket or dataChannel) should be created
  * based on the services availability and peers' preferences.
  */
 export class ChannelBuilder extends Service {
+  private peerInfo: proto.IPeerInfo
+  private initiatorContent: Uint8Array
   private wc: WebChannel
   private connectionRequests: Map<number, IConnectionRequest>
   private pingPongRequests: Map<number, IPingPongRequest>
@@ -60,23 +54,41 @@ export class ChannelBuilder extends Service {
     this.pingPongTimeout = DEFAULT_PINGPONG_TIMEOUT
     this.pingPongDates = new Map()
 
+    this.peerInfo = {
+      id: this.wc.myId,
+      wsTried: false,
+      wsSupported: isWebSocketSupported(),
+      dcTried: false,
+      dcSupported: isWebRTCSupported(),
+    }
+    this.initiatorContent = Service.encodeServiceMessage(
+      ID,
+      proto.Message.encode(
+        proto.Message.create({
+          pair: { initiator: this.peerInfo },
+        })
+      ).finish()
+    )
+
     // Listen on Channels as RTCDataChannels if WebRTC is supported
-    ME.isWrtcSupport = isWebRTCSupported()
-    if (ME.isWrtcSupport) {
+    if (this.peerInfo.dcSupported) {
       wc.webRTCBuilder.onChannelFromWebChannel().subscribe((ch) => this.handleChannel(ch))
     }
 
     // Listen on Channels as WebSockets if the peer is listening on WebSockets
     WebSocketBuilder.listen().subscribe((url) => {
-      ME.wsUrl = url
       if (url) {
+        this.peerInfo.wss = url
+        this.initiatorContent = Service.encodeServiceMessage(
+          ID,
+          proto.Message.encode(
+            proto.Message.create({
+              pair: { initiator: this.peerInfo },
+            })
+          ).finish()
+        )
         wc.webSocketBuilder.onChannel.subscribe((ch) => this.handleChannel(ch))
       }
-
-      // Update preconstructed messages (for performance only)
-      const content = { wsUrl: url, isWrtcSupport: ME.isWrtcSupport }
-      requestMsg = super.encode({ request: content })
-      responseMsg = super.encode({ response: content })
     })
 
     // Subscribe to WebChannel internal messages
@@ -108,7 +120,8 @@ export class ChannelBuilder extends Service {
           reject(err)
         },
       })
-      this.wc.sendToProxy({ recipientId: id, content: requestMsg })
+      log.channelBuilder(`connectTo `, this.peerInfo)
+      this.wc.sendToProxy({ recipientId: id, content: this.initiatorContent })
     })
     return channel
   }
@@ -148,7 +161,7 @@ export class ChannelBuilder extends Service {
     }
   }
 
-  private treatServiceMessage({ senderId, msg }: IServiceMessageDecoded): void {
+  private treatServiceMessage({ senderId, msg }: { senderId: number; msg: proto.Message }): void {
     switch (msg.type) {
       case 'ping': {
         this.wc.sendToProxy({ recipientId: senderId, content: pong })
@@ -170,87 +183,92 @@ export class ChannelBuilder extends Service {
         }
         break
       }
-      case 'failed': {
-        console.warn('treatServiceMessage ERROR: ', msg.failed)
-        const pr = this.connectionRequests.get(senderId)
-        if (pr !== undefined) {
-          pr.reject(new Error(msg.failed))
-        }
-        break
-      }
-      case 'request': {
-        const { wsUrl, isWrtcSupport } = msg.request
-        // If remote peer is listening on WebSocket, connect to him
-        if (wsUrl) {
-          this.wc.webSocketBuilder
-            .connect(wsUrl, senderId)
-            .then((ch) => this.handleChannel(ch as Channel))
-            .catch((reason) => {
-              if (ME.wsUrl) {
-                // Ask him to connect to me via WebSocket
-                this.wc.sendToProxy({ recipientId: senderId, content: responseMsg })
-              } else {
-                // Send failed reason
-                this.wc.sendToProxy({
-                  recipientId: senderId,
-                  content: super.encode({ failed: `Failed to establish a socket: ${reason}` }),
-                })
-              }
-            })
+      case 'pair': {
+        const pair = msg.pair as proto.IPeerPair
+        const initiator = pair.initiator as proto.IPeerInfo
+        const passive = pair.passive || Object.assign(this.peerInfo)
+        log.channelBuilder(`${this.wc.myId}: Pair received`, { initiator: JSON.stringify(initiator), passive: JSON.stringify(passive) })
 
-          // If remote peer is able to connect over RTCDataChannel, verify first if I am listening on WebSocket
-        } else if (isWrtcSupport) {
-          if (ME.wsUrl) {
-            // Ask him to connect to me via WebSocket
-            this.wc.sendToProxy({ recipientId: senderId, content: responseMsg })
-          } else if (ME.isWrtcSupport) {
-            this.wc.webRTCBuilder
-              .connectOverWebChannel(senderId)
-              .then((ch) => this.handleChannel(ch))
-              .catch((err: Error) => {
-                // Send failed reason
-                this.wc.sendToProxy({
-                  recipientId: senderId,
-                  content: super.encode({ failed: `Failed establish a data channel: ${err.message}` }),
-                })
-              })
-          } else {
-            // Send failed reason
-            this.wc.sendToProxy({
-              recipientId: senderId,
-              content: super.encode({ failed: 'No common connectors' }),
-            })
-          }
-          // If peer is not listening on WebSocket and is not able to connect over RTCDataChannel
-        } else if (!wsUrl && !isWrtcSupport) {
-          if (ME.wsUrl) {
-            // Ask him to connect to me via WebSocket
-            this.wc.sendToProxy({ recipientId: senderId, content: responseMsg })
-          } else {
-            // Send failed reason
-            this.wc.sendToProxy({
-              recipientId: senderId,
-              content: super.encode({ failed: 'No common connectors' }),
-            })
-          }
-        }
-        break
-      }
-      case 'response': {
-        const { wsUrl } = msg.response
-        if (wsUrl) {
-          this.wc.webSocketBuilder
-            .connect(wsUrl, senderId)
-            .then((ch) => this.handleChannel(ch as Channel))
-            .catch((err: Error) => {
-              const request = this.connectionRequests.get(senderId)
-              if (request) {
-                request.reject(new Error(`Failed to establish a socket: ${err.message}`))
+        this.proceedConnectionAlgorithm(initiator, passive)
+          .then((ch) => {
+            if (ch) {
+              this.handleChannel(ch)
+            }
+          })
+          .catch((err) => {
+            if (initiator.id === this.wc.myId) {
+              const cr = this.connectionRequests.get(passive.id as number)
+              if (cr !== undefined) {
+                cr.reject(err)
               }
-            })
-        }
-        break
+            } else {
+              this.wc.sendToProxy({
+                recipientId: initiator.id as number,
+                content: super.encode({ pair: { initiator, passive } }),
+              })
+            }
+          })
       }
     }
+  }
+
+  private async proceedConnectionAlgorithm(initiator: proto.IPeerInfo, passive: proto.IPeerInfo): Promise<Channel | undefined> {
+    let me: proto.IPeerInfo
+    let other: proto.IPeerInfo
+    if (initiator.id === this.wc.myId) {
+      me = initiator
+      other = passive
+    } else {
+      me = passive
+      other = initiator
+    }
+
+    // Try to connect over WebSocket
+    if (other.wss && !me.wsTried) {
+      try {
+        const channel = (await this.wc.webSocketBuilder.connect(other.wss, other.id as number)) as Channel
+        log.channelBuilder(`Connected over WebSocket with ${other.id}`)
+        return channel
+      } catch (err) {
+        log.channelBuilder(`Failed to connect over WebSocket with ${other.id}`, err)
+        me.wsTried = true
+      }
+    }
+
+    // Prompt other peer to connect over WebSocket as I was not able
+    if (me.wss && !other.wsTried) {
+      log.channelBuilder(`Prompt other to connect over WebSocket`)
+      this.wc.sendToProxy({
+        recipientId: other.id as number,
+        content: super.encode({ pair: { initiator, passive } }),
+      })
+      return
+    }
+
+    // Try to connect over RTCDataChannel, because WebSocket has not been established
+    if (me.dcSupported && other.dcSupported) {
+      if (!me.dcTried) {
+        try {
+          const channel = await this.wc.webRTCBuilder.connectOverWebChannel(other.id as number)
+          log.channelBuilder(`Connected over RTCDataChannel with ${other.id}`)
+          return channel
+        } catch (err) {
+          log.channelBuilder(`${this.wc.myId}: me failed to connect over RTCDataChannel with ${other.id}`, err)
+          me.dcTried = true
+        }
+      }
+      if (!other.dcTried) {
+        log.channelBuilder(`Prompt other to connect over RTCDataChannel`)
+        this.wc.sendToProxy({
+          recipientId: other.id as number,
+          content: super.encode({ pair: { initiator, passive } }),
+        })
+        return
+      }
+    }
+
+    log.channelBuilder(`ChannelBuilder FAILED`)
+    // All connection possibilities have been tried and none of them worked
+    throw new Error(`Failed to establish a connection between ${me.id} and ${other.id}`)
   }
 }

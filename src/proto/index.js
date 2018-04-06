@@ -3289,9 +3289,7 @@ var channelBuilder = $root.channelBuilder = function () {
          * Properties of a Message.
          * @memberof channelBuilder
          * @interface IMessage
-         * @property {channelBuilder.IConnection|null} [request] Message request
-         * @property {channelBuilder.IConnection|null} [response] Message response
-         * @property {string|null} [failed] Message failed
+         * @property {channelBuilder.IPeerPair|null} [pair] Message pair
          * @property {boolean|null} [ping] Message ping
          * @property {boolean|null} [pong] Message pong
          */
@@ -3311,28 +3309,12 @@ var channelBuilder = $root.channelBuilder = function () {
         }
 
         /**
-         * Message request.
-         * @member {channelBuilder.IConnection|null|undefined} request
+         * Message pair.
+         * @member {channelBuilder.IPeerPair|null|undefined} pair
          * @memberof channelBuilder.Message
          * @instance
          */
-        Message.prototype.request = null;
-
-        /**
-         * Message response.
-         * @member {channelBuilder.IConnection|null|undefined} response
-         * @memberof channelBuilder.Message
-         * @instance
-         */
-        Message.prototype.response = null;
-
-        /**
-         * Message failed.
-         * @member {string} failed
-         * @memberof channelBuilder.Message
-         * @instance
-         */
-        Message.prototype.failed = "";
+        Message.prototype.pair = null;
 
         /**
          * Message ping.
@@ -3355,12 +3337,12 @@ var channelBuilder = $root.channelBuilder = function () {
 
         /**
          * Message type.
-         * @member {"request"|"response"|"failed"|"ping"|"pong"|undefined} type
+         * @member {"pair"|"ping"|"pong"|undefined} type
          * @memberof channelBuilder.Message
          * @instance
          */
         Object.defineProperty(Message.prototype, "type", {
-            get: $util.oneOfGetter($oneOfFields = ["request", "response", "failed", "ping", "pong"]),
+            get: $util.oneOfGetter($oneOfFields = ["pair", "ping", "pong"]),
             set: $util.oneOfSetter($oneOfFields)
         });
 
@@ -3387,11 +3369,9 @@ var channelBuilder = $root.channelBuilder = function () {
          */
         Message.encode = function encode(message, writer) {
             if (!writer) writer = $Writer.create();
-            if (message.request != null && message.hasOwnProperty("request")) $root.channelBuilder.Connection.encode(message.request, writer.uint32( /* id 1, wireType 2 =*/10).fork()).ldelim();
-            if (message.response != null && message.hasOwnProperty("response")) $root.channelBuilder.Connection.encode(message.response, writer.uint32( /* id 2, wireType 2 =*/18).fork()).ldelim();
-            if (message.failed != null && message.hasOwnProperty("failed")) writer.uint32( /* id 3, wireType 2 =*/26).string(message.failed);
-            if (message.ping != null && message.hasOwnProperty("ping")) writer.uint32( /* id 4, wireType 0 =*/32).bool(message.ping);
-            if (message.pong != null && message.hasOwnProperty("pong")) writer.uint32( /* id 5, wireType 0 =*/40).bool(message.pong);
+            if (message.pair != null && message.hasOwnProperty("pair")) $root.channelBuilder.PeerPair.encode(message.pair, writer.uint32( /* id 1, wireType 2 =*/10).fork()).ldelim();
+            if (message.ping != null && message.hasOwnProperty("ping")) writer.uint32( /* id 2, wireType 0 =*/16).bool(message.ping);
+            if (message.pong != null && message.hasOwnProperty("pong")) writer.uint32( /* id 3, wireType 0 =*/24).bool(message.pong);
             return writer;
         };
 
@@ -3414,18 +3394,12 @@ var channelBuilder = $root.channelBuilder = function () {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
                     case 1:
-                        message.request = $root.channelBuilder.Connection.decode(reader, reader.uint32());
+                        message.pair = $root.channelBuilder.PeerPair.decode(reader, reader.uint32());
                         break;
                     case 2:
-                        message.response = $root.channelBuilder.Connection.decode(reader, reader.uint32());
-                        break;
-                    case 3:
-                        message.failed = reader.string();
-                        break;
-                    case 4:
                         message.ping = reader.bool();
                         break;
-                    case 5:
+                    case 3:
                         message.pong = reader.bool();
                         break;
                     default:
@@ -3439,97 +3413,97 @@ var channelBuilder = $root.channelBuilder = function () {
         return Message;
     }();
 
-    channelBuilder.Connection = function () {
+    channelBuilder.PeerPair = function () {
 
         /**
-         * Properties of a Connection.
+         * Properties of a PeerPair.
          * @memberof channelBuilder
-         * @interface IConnection
-         * @property {string|null} [wsUrl] Connection wsUrl
-         * @property {boolean|null} [isWrtcSupport] Connection isWrtcSupport
+         * @interface IPeerPair
+         * @property {channelBuilder.IPeerInfo|null} [initiator] PeerPair initiator
+         * @property {channelBuilder.IPeerInfo|null} [passive] PeerPair passive
          */
 
         /**
-         * Constructs a new Connection.
+         * Constructs a new PeerPair.
          * @memberof channelBuilder
-         * @classdesc Represents a Connection.
-         * @implements IConnection
+         * @classdesc Represents a PeerPair.
+         * @implements IPeerPair
          * @constructor
-         * @param {channelBuilder.IConnection=} [properties] Properties to set
+         * @param {channelBuilder.IPeerPair=} [properties] Properties to set
          */
-        function Connection(properties) {
+        function PeerPair(properties) {
             if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
                 if (properties[keys[i]] != null) this[keys[i]] = properties[keys[i]];
             }
         }
 
         /**
-         * Connection wsUrl.
-         * @member {string} wsUrl
-         * @memberof channelBuilder.Connection
+         * PeerPair initiator.
+         * @member {channelBuilder.IPeerInfo|null|undefined} initiator
+         * @memberof channelBuilder.PeerPair
          * @instance
          */
-        Connection.prototype.wsUrl = "";
+        PeerPair.prototype.initiator = null;
 
         /**
-         * Connection isWrtcSupport.
-         * @member {boolean} isWrtcSupport
-         * @memberof channelBuilder.Connection
+         * PeerPair passive.
+         * @member {channelBuilder.IPeerInfo|null|undefined} passive
+         * @memberof channelBuilder.PeerPair
          * @instance
          */
-        Connection.prototype.isWrtcSupport = false;
+        PeerPair.prototype.passive = null;
 
         /**
-         * Creates a new Connection instance using the specified properties.
+         * Creates a new PeerPair instance using the specified properties.
          * @function create
-         * @memberof channelBuilder.Connection
+         * @memberof channelBuilder.PeerPair
          * @static
-         * @param {channelBuilder.IConnection=} [properties] Properties to set
-         * @returns {channelBuilder.Connection} Connection instance
+         * @param {channelBuilder.IPeerPair=} [properties] Properties to set
+         * @returns {channelBuilder.PeerPair} PeerPair instance
          */
-        Connection.create = function create(properties) {
-            return new Connection(properties);
+        PeerPair.create = function create(properties) {
+            return new PeerPair(properties);
         };
 
         /**
-         * Encodes the specified Connection message. Does not implicitly {@link channelBuilder.Connection.verify|verify} messages.
+         * Encodes the specified PeerPair message. Does not implicitly {@link channelBuilder.PeerPair.verify|verify} messages.
          * @function encode
-         * @memberof channelBuilder.Connection
+         * @memberof channelBuilder.PeerPair
          * @static
-         * @param {channelBuilder.IConnection} message Connection message or plain object to encode
+         * @param {channelBuilder.IPeerPair} message PeerPair message or plain object to encode
          * @param {$protobuf.Writer} [writer] Writer to encode to
          * @returns {$protobuf.Writer} Writer
          */
-        Connection.encode = function encode(message, writer) {
+        PeerPair.encode = function encode(message, writer) {
             if (!writer) writer = $Writer.create();
-            if (message.wsUrl != null && message.hasOwnProperty("wsUrl")) writer.uint32( /* id 1, wireType 2 =*/10).string(message.wsUrl);
-            if (message.isWrtcSupport != null && message.hasOwnProperty("isWrtcSupport")) writer.uint32( /* id 2, wireType 0 =*/16).bool(message.isWrtcSupport);
+            if (message.initiator != null && message.hasOwnProperty("initiator")) $root.channelBuilder.PeerInfo.encode(message.initiator, writer.uint32( /* id 1, wireType 2 =*/10).fork()).ldelim();
+            if (message.passive != null && message.hasOwnProperty("passive")) $root.channelBuilder.PeerInfo.encode(message.passive, writer.uint32( /* id 2, wireType 2 =*/18).fork()).ldelim();
             return writer;
         };
 
         /**
-         * Decodes a Connection message from the specified reader or buffer.
+         * Decodes a PeerPair message from the specified reader or buffer.
          * @function decode
-         * @memberof channelBuilder.Connection
+         * @memberof channelBuilder.PeerPair
          * @static
          * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
          * @param {number} [length] Message length if known beforehand
-         * @returns {channelBuilder.Connection} Connection
+         * @returns {channelBuilder.PeerPair} PeerPair
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        Connection.decode = function decode(reader, length) {
+        PeerPair.decode = function decode(reader, length) {
             if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
             var end = length === undefined ? reader.len : reader.pos + length,
-                message = new $root.channelBuilder.Connection();
+                message = new $root.channelBuilder.PeerPair();
             while (reader.pos < end) {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
                     case 1:
-                        message.wsUrl = reader.string();
+                        message.initiator = $root.channelBuilder.PeerInfo.decode(reader, reader.uint32());
                         break;
                     case 2:
-                        message.isWrtcSupport = reader.bool();
+                        message.passive = $root.channelBuilder.PeerInfo.decode(reader, reader.uint32());
                         break;
                     default:
                         reader.skipType(tag & 7);
@@ -3539,7 +3513,162 @@ var channelBuilder = $root.channelBuilder = function () {
             return message;
         };
 
-        return Connection;
+        return PeerPair;
+    }();
+
+    channelBuilder.PeerInfo = function () {
+
+        /**
+         * Properties of a PeerInfo.
+         * @memberof channelBuilder
+         * @interface IPeerInfo
+         * @property {number|null} [id] PeerInfo id
+         * @property {string|null} [wss] PeerInfo wss
+         * @property {boolean|null} [wsSupported] PeerInfo wsSupported
+         * @property {boolean|null} [wsTried] PeerInfo wsTried
+         * @property {boolean|null} [dcSupported] PeerInfo dcSupported
+         * @property {boolean|null} [dcTried] PeerInfo dcTried
+         */
+
+        /**
+         * Constructs a new PeerInfo.
+         * @memberof channelBuilder
+         * @classdesc Represents a PeerInfo.
+         * @implements IPeerInfo
+         * @constructor
+         * @param {channelBuilder.IPeerInfo=} [properties] Properties to set
+         */
+        function PeerInfo(properties) {
+            if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
+                if (properties[keys[i]] != null) this[keys[i]] = properties[keys[i]];
+            }
+        }
+
+        /**
+         * PeerInfo id.
+         * @member {number} id
+         * @memberof channelBuilder.PeerInfo
+         * @instance
+         */
+        PeerInfo.prototype.id = 0;
+
+        /**
+         * PeerInfo wss.
+         * @member {string} wss
+         * @memberof channelBuilder.PeerInfo
+         * @instance
+         */
+        PeerInfo.prototype.wss = "";
+
+        /**
+         * PeerInfo wsSupported.
+         * @member {boolean} wsSupported
+         * @memberof channelBuilder.PeerInfo
+         * @instance
+         */
+        PeerInfo.prototype.wsSupported = false;
+
+        /**
+         * PeerInfo wsTried.
+         * @member {boolean} wsTried
+         * @memberof channelBuilder.PeerInfo
+         * @instance
+         */
+        PeerInfo.prototype.wsTried = false;
+
+        /**
+         * PeerInfo dcSupported.
+         * @member {boolean} dcSupported
+         * @memberof channelBuilder.PeerInfo
+         * @instance
+         */
+        PeerInfo.prototype.dcSupported = false;
+
+        /**
+         * PeerInfo dcTried.
+         * @member {boolean} dcTried
+         * @memberof channelBuilder.PeerInfo
+         * @instance
+         */
+        PeerInfo.prototype.dcTried = false;
+
+        /**
+         * Creates a new PeerInfo instance using the specified properties.
+         * @function create
+         * @memberof channelBuilder.PeerInfo
+         * @static
+         * @param {channelBuilder.IPeerInfo=} [properties] Properties to set
+         * @returns {channelBuilder.PeerInfo} PeerInfo instance
+         */
+        PeerInfo.create = function create(properties) {
+            return new PeerInfo(properties);
+        };
+
+        /**
+         * Encodes the specified PeerInfo message. Does not implicitly {@link channelBuilder.PeerInfo.verify|verify} messages.
+         * @function encode
+         * @memberof channelBuilder.PeerInfo
+         * @static
+         * @param {channelBuilder.IPeerInfo} message PeerInfo message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        PeerInfo.encode = function encode(message, writer) {
+            if (!writer) writer = $Writer.create();
+            if (message.id != null && message.hasOwnProperty("id")) writer.uint32( /* id 1, wireType 0 =*/8).uint32(message.id);
+            if (message.wss != null && message.hasOwnProperty("wss")) writer.uint32( /* id 2, wireType 2 =*/18).string(message.wss);
+            if (message.wsSupported != null && message.hasOwnProperty("wsSupported")) writer.uint32( /* id 3, wireType 0 =*/24).bool(message.wsSupported);
+            if (message.wsTried != null && message.hasOwnProperty("wsTried")) writer.uint32( /* id 4, wireType 0 =*/32).bool(message.wsTried);
+            if (message.dcSupported != null && message.hasOwnProperty("dcSupported")) writer.uint32( /* id 5, wireType 0 =*/40).bool(message.dcSupported);
+            if (message.dcTried != null && message.hasOwnProperty("dcTried")) writer.uint32( /* id 6, wireType 0 =*/48).bool(message.dcTried);
+            return writer;
+        };
+
+        /**
+         * Decodes a PeerInfo message from the specified reader or buffer.
+         * @function decode
+         * @memberof channelBuilder.PeerInfo
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {channelBuilder.PeerInfo} PeerInfo
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        PeerInfo.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length,
+                message = new $root.channelBuilder.PeerInfo();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                    case 1:
+                        message.id = reader.uint32();
+                        break;
+                    case 2:
+                        message.wss = reader.string();
+                        break;
+                    case 3:
+                        message.wsSupported = reader.bool();
+                        break;
+                    case 4:
+                        message.wsTried = reader.bool();
+                        break;
+                    case 5:
+                        message.dcSupported = reader.bool();
+                        break;
+                    case 6:
+                        message.dcTried = reader.bool();
+                        break;
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                }
+            }
+            return message;
+        };
+
+        return PeerInfo;
     }();
 
     return channelBuilder;
