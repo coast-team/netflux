@@ -4,9 +4,8 @@ import { Subject } from 'rxjs/Subject'
 import { Channel } from '../../Channel'
 import { log } from '../../misc/Util'
 import { fullMesh as proto } from '../../proto'
-import { SignalingState } from '../../Signaling'
 import { IMessage, Service } from '../Service'
-import { WebChannel, WebChannelState } from '../WebChannel'
+import { WebChannel } from '../WebChannel'
 import { ITopology, TopologyStateEnum } from './Topology'
 
 interface IDistantPeer {
@@ -67,8 +66,8 @@ export class FullMesh extends Service implements ITopology {
     globalAny.fullmesh = () => {
       log.topology('Fullmesh info:', {
         myId: this.wc.myId,
-        signalingState: SignalingState[this.wc.signaling.state],
-        webGroupState: WebChannelState[this.wc.state],
+        signalingState: this.wc.signaling.state,
+        webGroupState: this.wc.state,
         topologyState: TopologyStateEnum[this._state],
         adjacentMembers: Array.from(this.adjacentMembers.keys()).toString(),
         distantMembers: Array.from(this.distantMembers.keys()).toString(),
