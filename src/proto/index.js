@@ -2470,7 +2470,7 @@ var Message = $root.Message = function () {
      * @interface IMessage
      * @property {number|null} [senderId] Message senderId
      * @property {number|null} [recipientId] Message recipientId
-     * @property {boolean|null} [isService] Message isService
+     * @property {number|null} [serviceId] Message serviceId
      * @property {Uint8Array|null} [content] Message content
      */
 
@@ -2505,12 +2505,12 @@ var Message = $root.Message = function () {
     Message.prototype.recipientId = 0;
 
     /**
-     * Message isService.
-     * @member {boolean} isService
+     * Message serviceId.
+     * @member {number} serviceId
      * @memberof Message
      * @instance
      */
-    Message.prototype.isService = false;
+    Message.prototype.serviceId = 0;
 
     /**
      * Message content.
@@ -2545,7 +2545,7 @@ var Message = $root.Message = function () {
         if (!writer) writer = $Writer.create();
         if (message.senderId != null && message.hasOwnProperty("senderId")) writer.uint32( /* id 1, wireType 0 =*/8).uint32(message.senderId);
         if (message.recipientId != null && message.hasOwnProperty("recipientId")) writer.uint32( /* id 2, wireType 0 =*/16).uint32(message.recipientId);
-        if (message.isService != null && message.hasOwnProperty("isService")) writer.uint32( /* id 3, wireType 0 =*/24).bool(message.isService);
+        if (message.serviceId != null && message.hasOwnProperty("serviceId")) writer.uint32( /* id 3, wireType 0 =*/24).uint32(message.serviceId);
         if (message.content != null && message.hasOwnProperty("content")) writer.uint32( /* id 4, wireType 2 =*/34).bytes(message.content);
         return writer;
     };
@@ -2575,7 +2575,7 @@ var Message = $root.Message = function () {
                     message.recipientId = reader.uint32();
                     break;
                 case 3:
-                    message.isService = reader.bool();
+                    message.serviceId = reader.uint32();
                     break;
                 case 4:
                     message.content = reader.bytes();
@@ -2591,34 +2591,34 @@ var Message = $root.Message = function () {
     return Message;
 }();
 
-var user = $root.user = function () {
+var userMessage = $root.userMessage = function () {
 
     /**
-     * Namespace user.
-     * @exports user
+     * Namespace userMessage.
+     * @exports userMessage
      * @namespace
      */
-    var user = {};
+    var userMessage = {};
 
-    user.Message = function () {
+    userMessage.Message = function () {
 
         /**
          * Properties of a Message.
-         * @memberof user
+         * @memberof userMessage
          * @interface IMessage
          * @property {number|null} [length] Message length
-         * @property {user.Message.Type|null} [type] Message type
+         * @property {userMessage.Message.Type|null} [type] Message type
          * @property {Uint8Array|null} [full] Message full
-         * @property {user.Message.IChunk|null} [chunk] Message chunk
+         * @property {userMessage.Message.IChunk|null} [chunk] Message chunk
          */
 
         /**
          * Constructs a new Message.
-         * @memberof user
+         * @memberof userMessage
          * @classdesc Represents a Message.
          * @implements IMessage
          * @constructor
-         * @param {user.IMessage=} [properties] Properties to set
+         * @param {userMessage.IMessage=} [properties] Properties to set
          */
         function Message(properties) {
             if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
@@ -2629,15 +2629,15 @@ var user = $root.user = function () {
         /**
          * Message length.
          * @member {number} length
-         * @memberof user.Message
+         * @memberof userMessage.Message
          * @instance
          */
         Message.prototype.length = 0;
 
         /**
          * Message type.
-         * @member {user.Message.Type} type
-         * @memberof user.Message
+         * @member {userMessage.Message.Type} type
+         * @memberof userMessage.Message
          * @instance
          */
         Message.prototype.type = 0;
@@ -2645,15 +2645,15 @@ var user = $root.user = function () {
         /**
          * Message full.
          * @member {Uint8Array} full
-         * @memberof user.Message
+         * @memberof userMessage.Message
          * @instance
          */
         Message.prototype.full = $util.newBuffer([]);
 
         /**
          * Message chunk.
-         * @member {user.Message.IChunk|null|undefined} chunk
-         * @memberof user.Message
+         * @member {userMessage.Message.IChunk|null|undefined} chunk
+         * @memberof userMessage.Message
          * @instance
          */
         Message.prototype.chunk = null;
@@ -2664,7 +2664,7 @@ var user = $root.user = function () {
         /**
          * Message content.
          * @member {"full"|"chunk"|undefined} content
-         * @memberof user.Message
+         * @memberof userMessage.Message
          * @instance
          */
         Object.defineProperty(Message.prototype, "content", {
@@ -2675,21 +2675,21 @@ var user = $root.user = function () {
         /**
          * Creates a new Message instance using the specified properties.
          * @function create
-         * @memberof user.Message
+         * @memberof userMessage.Message
          * @static
-         * @param {user.IMessage=} [properties] Properties to set
-         * @returns {user.Message} Message instance
+         * @param {userMessage.IMessage=} [properties] Properties to set
+         * @returns {userMessage.Message} Message instance
          */
         Message.create = function create(properties) {
             return new Message(properties);
         };
 
         /**
-         * Encodes the specified Message message. Does not implicitly {@link user.Message.verify|verify} messages.
+         * Encodes the specified Message message. Does not implicitly {@link userMessage.Message.verify|verify} messages.
          * @function encode
-         * @memberof user.Message
+         * @memberof userMessage.Message
          * @static
-         * @param {user.IMessage} message Message message or plain object to encode
+         * @param {userMessage.IMessage} message Message message or plain object to encode
          * @param {$protobuf.Writer} [writer] Writer to encode to
          * @returns {$protobuf.Writer} Writer
          */
@@ -2698,25 +2698,25 @@ var user = $root.user = function () {
             if (message.length != null && message.hasOwnProperty("length")) writer.uint32( /* id 1, wireType 0 =*/8).uint32(message.length);
             if (message.type != null && message.hasOwnProperty("type")) writer.uint32( /* id 2, wireType 0 =*/16).int32(message.type);
             if (message.full != null && message.hasOwnProperty("full")) writer.uint32( /* id 3, wireType 2 =*/26).bytes(message.full);
-            if (message.chunk != null && message.hasOwnProperty("chunk")) $root.user.Message.Chunk.encode(message.chunk, writer.uint32( /* id 4, wireType 2 =*/34).fork()).ldelim();
+            if (message.chunk != null && message.hasOwnProperty("chunk")) $root.userMessage.Message.Chunk.encode(message.chunk, writer.uint32( /* id 4, wireType 2 =*/34).fork()).ldelim();
             return writer;
         };
 
         /**
          * Decodes a Message message from the specified reader or buffer.
          * @function decode
-         * @memberof user.Message
+         * @memberof userMessage.Message
          * @static
          * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
          * @param {number} [length] Message length if known beforehand
-         * @returns {user.Message} Message
+         * @returns {userMessage.Message} Message
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
         Message.decode = function decode(reader, length) {
             if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
             var end = length === undefined ? reader.len : reader.pos + length,
-                message = new $root.user.Message();
+                message = new $root.userMessage.Message();
             while (reader.pos < end) {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
@@ -2730,7 +2730,7 @@ var user = $root.user = function () {
                         message.full = reader.bytes();
                         break;
                     case 4:
-                        message.chunk = $root.user.Message.Chunk.decode(reader, reader.uint32());
+                        message.chunk = $root.userMessage.Message.Chunk.decode(reader, reader.uint32());
                         break;
                     default:
                         reader.skipType(tag & 7);
@@ -2744,7 +2744,7 @@ var user = $root.user = function () {
 
             /**
              * Properties of a Chunk.
-             * @memberof user.Message
+             * @memberof userMessage.Message
              * @interface IChunk
              * @property {number|null} [id] Chunk id
              * @property {number|null} [number] Chunk number
@@ -2753,11 +2753,11 @@ var user = $root.user = function () {
 
             /**
              * Constructs a new Chunk.
-             * @memberof user.Message
+             * @memberof userMessage.Message
              * @classdesc Represents a Chunk.
              * @implements IChunk
              * @constructor
-             * @param {user.Message.IChunk=} [properties] Properties to set
+             * @param {userMessage.Message.IChunk=} [properties] Properties to set
              */
             function Chunk(properties) {
                 if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
@@ -2768,7 +2768,7 @@ var user = $root.user = function () {
             /**
              * Chunk id.
              * @member {number} id
-             * @memberof user.Message.Chunk
+             * @memberof userMessage.Message.Chunk
              * @instance
              */
             Chunk.prototype.id = 0;
@@ -2776,7 +2776,7 @@ var user = $root.user = function () {
             /**
              * Chunk number.
              * @member {number} number
-             * @memberof user.Message.Chunk
+             * @memberof userMessage.Message.Chunk
              * @instance
              */
             Chunk.prototype.number = 0;
@@ -2784,7 +2784,7 @@ var user = $root.user = function () {
             /**
              * Chunk content.
              * @member {Uint8Array} content
-             * @memberof user.Message.Chunk
+             * @memberof userMessage.Message.Chunk
              * @instance
              */
             Chunk.prototype.content = $util.newBuffer([]);
@@ -2792,21 +2792,21 @@ var user = $root.user = function () {
             /**
              * Creates a new Chunk instance using the specified properties.
              * @function create
-             * @memberof user.Message.Chunk
+             * @memberof userMessage.Message.Chunk
              * @static
-             * @param {user.Message.IChunk=} [properties] Properties to set
-             * @returns {user.Message.Chunk} Chunk instance
+             * @param {userMessage.Message.IChunk=} [properties] Properties to set
+             * @returns {userMessage.Message.Chunk} Chunk instance
              */
             Chunk.create = function create(properties) {
                 return new Chunk(properties);
             };
 
             /**
-             * Encodes the specified Chunk message. Does not implicitly {@link user.Message.Chunk.verify|verify} messages.
+             * Encodes the specified Chunk message. Does not implicitly {@link userMessage.Message.Chunk.verify|verify} messages.
              * @function encode
-             * @memberof user.Message.Chunk
+             * @memberof userMessage.Message.Chunk
              * @static
-             * @param {user.Message.IChunk} message Chunk message or plain object to encode
+             * @param {userMessage.Message.IChunk} message Chunk message or plain object to encode
              * @param {$protobuf.Writer} [writer] Writer to encode to
              * @returns {$protobuf.Writer} Writer
              */
@@ -2821,18 +2821,18 @@ var user = $root.user = function () {
             /**
              * Decodes a Chunk message from the specified reader or buffer.
              * @function decode
-             * @memberof user.Message.Chunk
+             * @memberof userMessage.Message.Chunk
              * @static
              * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
              * @param {number} [length] Message length if known beforehand
-             * @returns {user.Message.Chunk} Chunk
+             * @returns {userMessage.Message.Chunk} Chunk
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
             Chunk.decode = function decode(reader, length) {
                 if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
                 var end = length === undefined ? reader.len : reader.pos + length,
-                    message = new $root.user.Message.Chunk();
+                    message = new $root.userMessage.Message.Chunk();
                 while (reader.pos < end) {
                     var tag = reader.uint32();
                     switch (tag >>> 3) {
@@ -2858,7 +2858,7 @@ var user = $root.user = function () {
 
         /**
          * Type enum.
-         * @name user.Message.Type
+         * @name userMessage.Message.Type
          * @enum {string}
          * @property {number} STRING=0 STRING value
          * @property {number} U_INT_8_ARRAY=1 U_INT_8_ARRAY value
@@ -2874,122 +2874,7 @@ var user = $root.user = function () {
         return Message;
     }();
 
-    return user;
-}();
-
-var service$1 = $root.service = function () {
-
-    /**
-     * Namespace service.
-     * @exports service
-     * @namespace
-     */
-    var service = {};
-
-    service.Message = function () {
-
-        /**
-         * Properties of a Message.
-         * @memberof service
-         * @interface IMessage
-         * @property {number|null} [id] Message id
-         * @property {Uint8Array|null} [content] Message content
-         */
-
-        /**
-         * Constructs a new Message.
-         * @memberof service
-         * @classdesc Represents a Message.
-         * @implements IMessage
-         * @constructor
-         * @param {service.IMessage=} [properties] Properties to set
-         */
-        function Message(properties) {
-            if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
-                if (properties[keys[i]] != null) this[keys[i]] = properties[keys[i]];
-            }
-        }
-
-        /**
-         * Message id.
-         * @member {number} id
-         * @memberof service.Message
-         * @instance
-         */
-        Message.prototype.id = 0;
-
-        /**
-         * Message content.
-         * @member {Uint8Array} content
-         * @memberof service.Message
-         * @instance
-         */
-        Message.prototype.content = $util.newBuffer([]);
-
-        /**
-         * Creates a new Message instance using the specified properties.
-         * @function create
-         * @memberof service.Message
-         * @static
-         * @param {service.IMessage=} [properties] Properties to set
-         * @returns {service.Message} Message instance
-         */
-        Message.create = function create(properties) {
-            return new Message(properties);
-        };
-
-        /**
-         * Encodes the specified Message message. Does not implicitly {@link service.Message.verify|verify} messages.
-         * @function encode
-         * @memberof service.Message
-         * @static
-         * @param {service.IMessage} message Message message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        Message.encode = function encode(message, writer) {
-            if (!writer) writer = $Writer.create();
-            if (message.id != null && message.hasOwnProperty("id")) writer.uint32( /* id 1, wireType 0 =*/8).uint32(message.id);
-            if (message.content != null && message.hasOwnProperty("content")) writer.uint32( /* id 2, wireType 2 =*/18).bytes(message.content);
-            return writer;
-        };
-
-        /**
-         * Decodes a Message message from the specified reader or buffer.
-         * @function decode
-         * @memberof service.Message
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @param {number} [length] Message length if known beforehand
-         * @returns {service.Message} Message
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        Message.decode = function decode(reader, length) {
-            if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
-            var end = length === undefined ? reader.len : reader.pos + length,
-                message = new $root.service.Message();
-            while (reader.pos < end) {
-                var tag = reader.uint32();
-                switch (tag >>> 3) {
-                    case 1:
-                        message.id = reader.uint32();
-                        break;
-                    case 2:
-                        message.content = reader.bytes();
-                        break;
-                    default:
-                        reader.skipType(tag & 7);
-                        break;
-                }
-            }
-            return message;
-        };
-
-        return Message;
-    }();
-
-    return service;
+    return userMessage;
 }();
 
 var webChannel = $root.webChannel = function () {
@@ -4540,4 +4425,4 @@ var signaling = $root.signaling = function () {
 }();
 
 export default $root;
-export { Message, user, service$1 as service, webChannel, channelBuilder, fullMesh, webRTCBuilder, signaling };
+export { Message, userMessage, webChannel, channelBuilder, fullMesh, webRTCBuilder, signaling };

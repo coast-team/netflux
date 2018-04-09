@@ -1,4 +1,5 @@
 import { isBrowser, log } from './misc/Util'
+import { IMessage as IProtoMessage, Message } from './proto'
 import { WebChannel } from './service/WebChannel'
 
 /**
@@ -55,7 +56,11 @@ export class Channel {
     }
 
     // Configure handlers
-    this.connection.onmessage = ({ data }: { data: ArrayBuffer }) => wc.onMessageProxy(this, new Uint8Array(data))
+    this.connection.onmessage = ({ data }: { data: ArrayBuffer }) => {
+      const msg = Message.decode(new Uint8Array(data))
+      log.debug('onmessage: ', msg)
+      wc.onMessageProxy(this, msg)
+    }
     this.connection.onclose = (evt: Event) => {
       log.channel(`Connection with ${this.id} has closed`)
       wc.topologyService.onChannelClose(evt, this)
@@ -73,7 +78,13 @@ export class Channel {
 
   set id(value: number) {
     this._id = value
-    this.fullHeartbeatMsg = this.wc.encode({ recipientId: value, content: this.topologyHeartbeatMsg })
+    this.fullHeartbeatMsg = Message.encode(
+      Message.create({ senderId: this.wc.myId, recipientId: value, content: this.topologyHeartbeatMsg })
+    ).finish()
+  }
+
+  encodeAndSend({ senderId = this.wc.myId, recipientId = 0, serviceId, content }: IProtoMessage = {}) {
+    return this.send(Message.encode(Message.create({ senderId, recipientId, serviceId, content })).finish())
   }
 
   close(): void {
@@ -96,7 +107,10 @@ export class Channel {
 
   updateHeartbeatMsg(heartbeatMsg: Uint8Array) {
     this.topologyHeartbeatMsg = heartbeatMsg
-    this.fullHeartbeatMsg = this.wc.encode({ recipientId: this._id, content: heartbeatMsg })
+
+    this.fullHeartbeatMsg = Message.encode(
+      Message.create({ senderId: this.wc.myId, recipientId: this._id, content: heartbeatMsg })
+    ).finish()
   }
 
   private sendInBrowser(data: Uint8Array): void {

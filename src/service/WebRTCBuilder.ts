@@ -5,21 +5,17 @@ import { ReplaySubject } from 'rxjs/ReplaySubject'
 
 import { Channel } from '../Channel'
 import { isWebRTCSupported, log } from '../misc/Util'
-import { signaling as sigProto, webRTCBuilder } from '../proto'
+import { signaling as protoSig, webRTCBuilder as proto } from '../proto'
 import { IWebRTCStream } from '../Signaling'
-import { IServiceMessageDecoded, Service } from './Service'
+import { Service } from './Service'
 import { WebChannel } from './WebChannel'
 
 let counter = 0
 
-/**
- * Service id.
- */
-const ID = 300
 export const CONNECT_TIMEOUT = 20000
 
 interface ICommonMessage {
-  iceCandidate?: webRTCBuilder.IIceCandidate
+  iceCandidate?: proto.IIceCandidate
   isError?: boolean
   isEnd?: boolean
 }
@@ -39,7 +35,7 @@ interface IAnswer extends ICommonMessage {
 
 export interface ISignalingConnection {
   onMessage: Observable<any>
-  send: (msg: sigProto.IContent) => void
+  send: (msg: protoSig.IContent) => void
 }
 
 /**
@@ -48,11 +44,11 @@ export interface ISignalingConnection {
  *
  */
 export class WebRTCBuilder extends Service {
-  private wc: WebChannel
+  public static readonly SERVICE_ID = 7431
   private rtcConfiguration: RTCConfiguration
 
   constructor(wc: WebChannel, rtcConfiguration: RTCConfiguration) {
-    super(ID, webRTCBuilder.Message, wc.serviceMessageSubject)
+    super(WebRTCBuilder.SERVICE_ID, proto.Message, wc.serviceMessageSubject)
     this.wc = wc
     this.rtcConfiguration = rtcConfiguration
   }
@@ -65,13 +61,13 @@ export class WebRTCBuilder extends Service {
     if (isWebRTCSupported()) {
       return this.onChannel(
         this.onServiceMessage.pipe(
-          filter(({ msg }: IServiceMessageDecoded) => msg.isInitiator),
+          filter(({ msg }) => msg.isInitiator),
           map(({ msg, senderId }: { msg: any; senderId: number }) => {
             msg.id = senderId
             return msg
           })
         ),
-        (msg, id) => this.wc.sendToProxy({ recipientId: id, content: super.encode(msg) })
+        (msg, id) => super._sendTo(id, msg)
       )
     }
     log.webrtc('WebRTC is not supported')
@@ -93,7 +89,7 @@ export class WebRTCBuilder extends Service {
         ),
         (msg: IOfferSend) => {
           msg.isInitiator = true
-          this.wc.sendToProxy({ recipientId: id, content: super.encode(msg) })
+          super._sendTo(id, msg)
         },
         id
       )
@@ -121,7 +117,7 @@ export class WebRTCBuilder extends Service {
         ),
         (msg: any, id) => {
           if (!('isError' in msg || 'isEnd' in msg)) {
-            msg.data = webRTCBuilder.Message.encode(webRTCBuilder.Message.create(msg)).finish()
+            msg.data = proto.Message.encode(proto.Message.create(msg)).finish()
           }
           msg.id = id
           wrtcStream.send(msg)
@@ -141,7 +137,7 @@ export class WebRTCBuilder extends Service {
         wrtcStream.message.pipe(filter((msg) => msg.id === 0), map((msg) => (msg.type === 'data' ? super.decode(msg.data) : msg))),
         (msg) => {
           if (!('isError' in msg || 'isEnd' in msg)) {
-            wrtcStream.send({ data: webRTCBuilder.Message.encode(webRTCBuilder.Message.create(msg)).finish() })
+            wrtcStream.send({ data: proto.Message.encode(proto.Message.create(msg)).finish() })
           } else {
             wrtcStream.send(msg)
           }
@@ -416,7 +412,7 @@ export class WebRTCBuilder extends Service {
     })
   }
 
-  private setupLocalCandidates(pc: RTCPeerConnection, cb: (obj: webRTCBuilder.IIceCandidate) => void): void {
+  private setupLocalCandidates(pc: RTCPeerConnection, cb: (obj: proto.IIceCandidate) => void): void {
     pc.onicecandidate = (evt: RTCPeerConnectionIceEvent) => {
       if (evt.candidate !== null) {
         log.webrtc('LOCAL Ice Candidate gathered', evt.candidate.candidate)

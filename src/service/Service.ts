@@ -3,17 +3,10 @@ import { filter, map } from 'rxjs/operators'
 import { Subject } from 'rxjs/Subject'
 
 import { Channel } from '../Channel'
-import { service } from '../proto'
+import { IMessage as IProtoMessage } from '../proto'
+import { WebChannel } from './WebChannel'
 
-export interface IServiceMessageEncoded {
-  channel: Channel
-  senderId: number
-  recipientId: number
-  id: number
-  content: Uint8Array
-}
-
-export interface IServiceMessageDecoded {
+export interface IMessage extends IProtoMessage {
   channel: Channel
   senderId: number
   recipientId: number
@@ -28,35 +21,35 @@ export interface IServiceMessageDecoded {
  * communication protocol.
  */
 export abstract class Service {
-  static encodeServiceMessage(serviceId: number, content: Uint8Array): Uint8Array {
-    return service.Message.encode(
-      service.Message.create({
-        id: serviceId,
-        content,
-      })
-    ).finish()
-  }
-
-  /*
-   * Unique service identifier.
-   */
-  public serviceId: number
-
   /*
    * Service message observable.
    */
-  protected onServiceMessage: Observable<IServiceMessageDecoded>
+  protected onServiceMessage: Observable<IMessage>
+
+  protected wc: WebChannel
+  /*
+   * Unique service identifier.
+   */
+  private serviceId: number
 
   /*
-   * Service protobujs object generated from `.proto` file.
+   * Service protobufjs object generated from `.proto` file.
    */
   private protoMessage: any
 
-  constructor(id: number, protoMessage: any, serviceMessageSubject?: Subject<IServiceMessageEncoded>) {
-    this.serviceId = id
+  constructor(serviceId: number, protoMessage: any, serviceMessageSubject?: Subject<IMessage>) {
+    this.serviceId = serviceId
     this.protoMessage = protoMessage
     if (serviceMessageSubject !== undefined) {
       this.setupServiceMessage(serviceMessageSubject)
+    }
+  }
+
+  protected _sendTo(id: number, content: Uint8Array | object) {
+    if (content instanceof Uint8Array) {
+      this.wc.topologyService.sendTo({ senderId: this.wc.myId, recipientId: id, serviceId: this.serviceId, content })
+    } else {
+      this.wc.topologyService.sendTo({ senderId: this.wc.myId, recipientId: id, serviceId: this.serviceId, content: this.encode(content) })
     }
   }
 
@@ -65,13 +58,8 @@ export abstract class Service {
    *
    * @param msg Service specific message object
    */
-  encode(msg: any): Uint8Array {
-    return service.Message.encode(
-      service.Message.create({
-        id: this.serviceId,
-        content: this.protoMessage.encode(this.protoMessage.create(msg)).finish(),
-      })
-    ).finish()
+  protected encode(msg: any): Uint8Array {
+    return this.protoMessage.encode(this.protoMessage.create(msg)).finish()
   }
 
   /**
@@ -79,13 +67,13 @@ export abstract class Service {
    *
    * @return  Service specific message object
    */
-  decode(bytes: Uint8Array): any {
+  protected decode(bytes: Uint8Array): any {
     return this.protoMessage.decode(bytes)
   }
 
-  protected setupServiceMessage(serviceMessageSubject: Subject<IServiceMessageEncoded>): void {
+  protected setupServiceMessage(serviceMessageSubject: Subject<IMessage>): void {
     this.onServiceMessage = serviceMessageSubject.pipe(
-      filter(({ id }) => id === this.serviceId),
+      filter(({ serviceId }) => serviceId === this.serviceId),
       map(({ channel, senderId, recipientId, content }) => ({
         channel,
         senderId,

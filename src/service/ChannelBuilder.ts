@@ -9,16 +9,14 @@ import { Service } from './Service'
 import { WebChannel } from './WebChannel'
 import { CONNECT_TIMEOUT as WEBRTC_TIMEOUT } from './WebRTCBuilder'
 
-/**
- * Service id.
- */
-const ID = 100
-
+// Timeout constants
 const CONNECT_TIMEOUT = 2 * Math.max(WEBRTC_TIMEOUT, WEBSOCKET_TIMEOUT)
 const DEFAULT_PINGPONG_TIMEOUT = 700
 const MAX_PINGPONG_TIMEOUT = 3000
-const ping = Service.encodeServiceMessage(ID, proto.Message.encode(proto.Message.create({ ping: true })).finish())
-const pong = Service.encodeServiceMessage(ID, proto.Message.encode(proto.Message.create({ pong: true })).finish())
+
+// Pre-built messages for better performance
+let pingPreBuiltMsg: Uint8Array
+let pongPreBuiltMsg: Uint8Array
 
 interface IConnectionRequest {
   resolve: (ch: Channel) => void
@@ -36,9 +34,9 @@ interface IPingPongRequest {
  * based on the services availability and peers' preferences.
  */
 export class ChannelBuilder extends Service {
-  private peerInfo: proto.IPeerInfo
-  private initiatorContent: Uint8Array
-  private wc: WebChannel
+  public static readonly SERVICE_ID = 74
+  private myInfo: proto.IPeerInfo
+  private pairPreBuiltMsg: Uint8Array
   private connectionRequests: Map<number, IConnectionRequest>
   private pingPongRequests: Map<number, IPingPongRequest>
   private channelsSubject: Subject<Channel>
@@ -46,7 +44,7 @@ export class ChannelBuilder extends Service {
   private pingPongDates: Map<number, number>
 
   constructor(wc: WebChannel) {
-    super(ID, proto.Message, wc.serviceMessageSubject)
+    super(ChannelBuilder.SERVICE_ID, proto.Message, wc.serviceMessageSubject)
     this.wc = wc
     this.connectionRequests = new Map()
     this.pingPongRequests = new Map()
@@ -54,45 +52,33 @@ export class ChannelBuilder extends Service {
     this.pingPongTimeout = DEFAULT_PINGPONG_TIMEOUT
     this.pingPongDates = new Map()
 
-    this.peerInfo = {
+    this.myInfo = {
       id: this.wc.myId,
       wsTried: false,
       wsSupported: isWebSocketSupported(),
       dcTried: false,
       dcSupported: isWebRTCSupported(),
     }
-    this.initiatorContent = Service.encodeServiceMessage(
-      ID,
-      proto.Message.encode(
-        proto.Message.create({
-          pair: { initiator: this.peerInfo },
-        })
-      ).finish()
-    )
+    this.pairPreBuiltMsg = super.encode({ pair: { initiator: this.myInfo } })
+    pingPreBuiltMsg = super.encode({ ping: true })
+    pongPreBuiltMsg = super.encode({ pong: true })
 
     // Listen on Channels as RTCDataChannels if WebRTC is supported
-    if (this.peerInfo.dcSupported) {
+    if (this.myInfo.dcSupported) {
       wc.webRTCBuilder.onChannelFromWebChannel().subscribe((ch) => this.handleChannel(ch))
     }
 
     // Listen on Channels as WebSockets if the peer is listening on WebSockets
     WebSocketBuilder.listen().subscribe((url) => {
       if (url) {
-        this.peerInfo.wss = url
-        this.initiatorContent = Service.encodeServiceMessage(
-          ID,
-          proto.Message.encode(
-            proto.Message.create({
-              pair: { initiator: this.peerInfo },
-            })
-          ).finish()
-        )
+        this.myInfo.wss = url
+        this.pairPreBuiltMsg = super.encode({ pair: { initiator: this.myInfo } })
         wc.webSocketBuilder.onChannel.subscribe((ch) => this.handleChannel(ch))
       }
     })
 
     // Subscribe to WebChannel internal messages
-    this.onServiceMessage.subscribe((msg) => this.treatServiceMessage(msg))
+    this.onServiceMessage.subscribe((msg) => this.handleServiceMessage(msg))
   }
 
   get onChannel(): Observable<Channel> {
@@ -120,8 +106,8 @@ export class ChannelBuilder extends Service {
           reject(err)
         },
       })
-      log.channelBuilder(`connectTo `, this.peerInfo)
-      this.wc.sendToProxy({ recipientId: id, content: this.initiatorContent })
+      log.channelBuilder(`connectTo `, this.myInfo)
+      super._sendTo(id, this.pairPreBuiltMsg)
     })
     return channel
   }
@@ -131,7 +117,7 @@ export class ChannelBuilder extends Service {
     if (ppRequest) {
       return ppRequest.promise
     } else {
-      this.wc.sendToProxy({ recipientId: id, content: ping })
+      super._sendTo(id, pingPreBuiltMsg)
       const promise: Promise<void> = new Promise((resolve, reject) => {
         const timer = setTimeout(() => {
           this.pingPongRequests.delete(id)
@@ -161,10 +147,10 @@ export class ChannelBuilder extends Service {
     }
   }
 
-  private treatServiceMessage({ senderId, msg }: { senderId: number; msg: proto.Message }): void {
+  private handleServiceMessage({ senderId, msg }: { senderId: number; msg: proto.Message }): void {
     switch (msg.type) {
       case 'ping': {
-        this.wc.sendToProxy({ recipientId: senderId, content: pong })
+        super._sendTo(senderId, pongPreBuiltMsg)
         break
       }
       case 'pong': {
@@ -186,7 +172,7 @@ export class ChannelBuilder extends Service {
       case 'pair': {
         const pair = msg.pair as proto.IPeerPair
         const initiator = pair.initiator as proto.IPeerInfo
-        const passive = pair.passive || Object.assign(this.peerInfo)
+        const passive = pair.passive || Object.assign(this.myInfo)
         log.channelBuilder(`${this.wc.myId}: Pair received`, { initiator: JSON.stringify(initiator), passive: JSON.stringify(passive) })
 
         this.proceedConnectionAlgorithm(initiator, passive)
@@ -202,10 +188,7 @@ export class ChannelBuilder extends Service {
                 cr.reject(err)
               }
             } else {
-              this.wc.sendToProxy({
-                recipientId: initiator.id as number,
-                content: super.encode({ pair: { initiator, passive } }),
-              })
+              super._sendTo(initiator.id as number, { pair: { initiator, passive } })
             }
           })
       }
@@ -238,10 +221,7 @@ export class ChannelBuilder extends Service {
     // Prompt other peer to connect over WebSocket as I was not able
     if (me.wss && !other.wsTried) {
       log.channelBuilder(`Prompt other to connect over WebSocket`)
-      this.wc.sendToProxy({
-        recipientId: other.id as number,
-        content: super.encode({ pair: { initiator, passive } }),
-      })
+      super._sendTo(other.id as number, { pair: { initiator, passive } })
       return
     }
 
@@ -259,10 +239,7 @@ export class ChannelBuilder extends Service {
       }
       if (!other.dcTried) {
         log.channelBuilder(`Prompt other to connect over RTCDataChannel`)
-        this.wc.sendToProxy({
-          recipientId: other.id as number,
-          content: super.encode({ pair: { initiator, passive } }),
-        })
+        super._sendTo(other.id as number, { pair: { initiator, passive } })
         return
       }
     }

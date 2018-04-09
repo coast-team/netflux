@@ -3,20 +3,15 @@ import { Subscription } from 'rxjs/Subscription'
 
 import { Channel } from '../Channel'
 import { generateKey, isBrowser, isOnline, isURL, isVisible, log, MAX_KEY_LENGTH, randNumbers } from '../misc/Util'
-import { IMessage, Message, service, webChannel } from '../proto'
+import { IMessage as IProtoMessage, webChannel as proto } from '../proto'
 import { Signaling, SignalingState } from '../Signaling'
-import { UserDataType, UserMessage } from '../UserMessage'
 import { WebSocketBuilder } from '../WebSocketBuilder'
 import { ChannelBuilder } from './ChannelBuilder'
-import { IServiceMessageDecoded, IServiceMessageEncoded, Service } from './Service'
+import { IMessage, Service } from './Service'
 import { FullMesh } from './topology/FullMesh'
 import { ITopology, TopologyEnum, TopologyStateEnum } from './topology/Topology'
+import { UserDataType, UserMessage } from './UserMessage'
 import { WebRTCBuilder } from './WebRTCBuilder'
-
-/**
- * Service id.
- */
-const ID = 200
 
 export interface IWebChannelOptions {
   topology?: TopologyEnum
@@ -50,6 +45,7 @@ export enum WebChannelState {
  * [[include:installation.md]]
  */
 export class WebChannel extends Service {
+  public static readonly SERVICE_ID = 7
   /**
    * An array of all peer ids except yours.
    */
@@ -106,7 +102,7 @@ export class WebChannel extends Service {
    */
   onMessage: (id: number, msg: UserDataType) => void
 
-  serviceMessageSubject: Subject<IServiceMessageEncoded>
+  serviceMessageSubject: Subject<IMessage>
   webRTCBuilder: WebRTCBuilder
   webSocketBuilder: WebSocketBuilder
   channelBuilder: ChannelBuilder
@@ -125,7 +121,8 @@ export class WebChannel extends Service {
     rtcConfiguration = defaultOptions.rtcConfiguration,
     autoRejoin = defaultOptions.autoRejoin,
   }: IWebChannelOptions = {}) {
-    super(ID, webChannel.Message)
+    super(WebChannel.SERVICE_ID, proto.Message)
+    this.wc = this
 
     // PUBLIC MEMBERS
     this.topology = topology
@@ -144,7 +141,7 @@ export class WebChannel extends Service {
 
     // PRIVATE
     this.state = WebChannelState.LEFT
-    this.userMsg = new UserMessage()
+    this.userMsg = new UserMessage(this)
 
     // Signaling init
     this.signaling = new Signaling(this, signalingServer)
@@ -175,7 +172,7 @@ export class WebChannel extends Service {
     this.webSocketBuilder = new WebSocketBuilder(this)
     this.channelBuilder = new ChannelBuilder(this)
     this.onServiceMessage.subscribe(
-      (msg) => this.treatServiceMessage(msg),
+      (msg) => this.handleServiceMessage(msg),
       (err) => console.error('service/WebChannel inner message error', err)
     )
 
@@ -260,15 +257,8 @@ export class WebChannel extends Service {
    */
   send(data: UserDataType): void {
     if (this.members.length !== 1) {
-      const msg: any = {
-        senderId: this.myId,
-        recipientId: 0,
-        isService: false,
-      }
-      const chunkedData = this.userMsg.encode(data)
-      for (const chunk of chunkedData) {
-        msg.content = chunk
-        this.topologyService.send(msg)
+      for (const chunk of this.userMsg.encodeUserMessage(data)) {
+        this.topologyService.send({ senderId: this.myId, recipientId: 0, serviceId: UserMessage.SERVICE_ID, content: chunk })
       }
     }
   }
@@ -278,15 +268,12 @@ export class WebChannel extends Service {
    */
   sendTo(id: number, data: UserDataType): void {
     if (this.members.length !== 1) {
-      const msg: any = {
-        senderId: this.myId,
-        recipientId: id,
-        isService: false,
-      }
-      const chunkedData = this.userMsg.encode(data)
-      for (const chunk of chunkedData) {
-        msg.content = chunk
-        this.topologyService.sendTo(msg)
+      for (const chunk of this.userMsg.encodeUserMessage(data)) {
+        this.wc.topologyService.sendTo({
+          recipientId: id,
+          serviceId: UserMessage.SERVICE_ID,
+          content: chunk,
+        })
       }
     }
   }
@@ -306,69 +293,34 @@ export class WebChannel extends Service {
   }
 
   /**
-   * Send service message to a particular peer in the network.
-   */
-  sendToProxy({
-    senderId = this.myId,
-    recipientId = this.myId,
-    isService = true,
-    content,
-  }: { senderId?: number; recipientId?: number; isService?: boolean; content?: Uint8Array } = {}): void {
-    this.topologyService.sendTo({ senderId, recipientId, isService, content })
-  }
-
-  /**
-   * Broadcast service message to the network.
-   */
-  sendProxy({
-    senderId = this.myId,
-    recipientId = 0,
-    isService = true,
-    content,
-  }: { senderId?: number; recipientId?: number; isService?: boolean; content?: Uint8Array } = {}): void {
-    this.topologyService.send({ senderId, recipientId, isService, content })
-  }
-
-  encode({ senderId = this.myId, recipientId = 0, isService = true, content }: IMessage = {}): Uint8Array {
-    const msg = { senderId, recipientId, isService, content }
-    return Message.encode(Message.create(msg)).finish()
-  }
-
-  /**
    * Message handler. All messages arrive here first.
    */
-  onMessageProxy(channel: Channel, bytes: Uint8Array): void {
-    const msg = Message.decode(new Uint8Array(bytes))
+  onMessageProxy(channel: Channel, msg: IProtoMessage): void {
+    log.debug('onMessageProxy: ', msg)
     // recipientId values:
     // 0: broadcast message
-    // 1: is a message to me from a peer who does not know yet my ID
+    // 1: is a message to me from a peer who does not know my ID yet
     if (msg.recipientId === 0 || msg.recipientId === this.myId || msg.recipientId === 1) {
-      this.treatMessage(channel, msg)
+      // User Message
+      if (msg.serviceId === UserMessage.SERVICE_ID) {
+        const data = this.userMsg.decodeUserMessage(msg.content as Uint8Array, msg.senderId as number)
+        if (data !== undefined) {
+          this.onMessage(msg.senderId as number, data)
+        }
+
+        // Service Message
+      } else {
+        ;(msg as any).channel = channel
+        this.serviceMessageSubject.next(msg as IMessage)
+      }
     }
     if (msg.recipientId !== this.myId) {
       this.topologyService.forward(msg)
     }
   }
 
-  private treatMessage(channel: Channel, msg: IMessage): void {
-    // User Message
-    if (!msg.isService) {
-      const data = this.userMsg.decode(msg.content as Uint8Array, msg.senderId as number)
-      if (data !== undefined) {
-        this.onMessage(msg.senderId as number, data)
-      }
-
-      // Service Message
-    } else {
-      const fullMsg: any = service.Message.decode(msg.content as Uint8Array)
-      fullMsg.channel = channel
-      fullMsg.senderId = msg.senderId
-      fullMsg.recipientId = msg.recipientId
-      this.serviceMessageSubject.next(fullMsg as IServiceMessageEncoded)
-    }
-  }
-
-  private treatServiceMessage({ channel, senderId, msg }: IServiceMessageDecoded): void {
+  private handleServiceMessage({ channel, senderId, msg }: { channel: Channel; senderId: number; msg: any }): void {
+    log.debug('Service message: ', msg)
     switch (msg.type) {
       case 'init': {
         const { topology, wcId, generatedIds, members } = msg.init
@@ -399,7 +351,7 @@ export class WebChannel extends Service {
           this.setTopology(topology)
           this.id = wcId
           channel.id = senderId
-          channel.send(this.encode({ recipientId: channel.id, content: super.encode({ initOk: true }) }))
+          channel.encodeAndSend({ recipientId: channel.id, serviceId: WebChannel.SERVICE_ID, content: super.encode({ initOk: true }) })
           this.topologyService.initJoining(channel, members)
         }
         break
@@ -426,8 +378,10 @@ export class WebChannel extends Service {
    * Delegate adding a new peer in the network to topology.
    */
   private initChannel(ch: Channel): void {
-    const msg = this.encode({
+    log.debug('initChannel: ')
+    ch.encodeAndSend({
       recipientId: 1,
+      serviceId: WebChannel.SERVICE_ID,
       content: super.encode({
         init: {
           topology: this.topology,
@@ -437,7 +391,6 @@ export class WebChannel extends Service {
         },
       }),
     })
-    ch.send(msg)
   }
 
   private setTopology(topology: TopologyEnum): void {

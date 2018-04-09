@@ -1,11 +1,15 @@
 syntax = "proto3";
-import "user.proto";
-import "service/service.proto";
+
+import "service/userMessage.proto";
+import "service/webChannel.proto";
+import "service/channelBuilder.proto";
+import "service/topology/fullMesh.proto";
+import "service/webRTCBuilder.proto";
 import "signaling.proto";
 
 message Message {
   uint32 senderId = 1;
   uint32 recipientId = 2;
-  bool isService = 3;
+  uint32 serviceId = 3;
   bytes content = 4;
 }

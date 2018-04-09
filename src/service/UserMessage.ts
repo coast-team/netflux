@@ -1,4 +1,6 @@
-import { user } from './proto'
+import { userMessage as proto } from '../proto'
+import { Service } from '../service/Service'
+import { WebChannel } from './WebChannel'
 
 /**
  * Maximum size of the user message sent over `Channel` (without metadata).
@@ -20,22 +22,25 @@ export type UserDataType = Uint8Array | string
  * big messages (more then 16ko) sent by users. Internal messages are always less
  * 16ko.
  */
-export class UserMessage {
+export class UserMessage extends Service {
+  public static readonly SERVICE_ID = 743
   private buffers: Map<number, Map<number, Buffer>>
 
-  constructor() {
+  constructor(wc: WebChannel) {
+    super(UserMessage.SERVICE_ID, proto.Message)
+    this.wc = wc
     this.buffers = new Map()
   }
 
   /**
    * Encode user message for sending over the network.
    */
-  encode(data: UserDataType): Uint8Array[] {
+  encodeUserMessage(data: UserDataType): Uint8Array[] {
     const { type, bytes } = this.userDataToType(data)
     const msg: any = { length: bytes.length, type }
     if (bytes.length <= MAX_USER_MSG_SIZE) {
       msg.full = bytes
-      return [user.Message.encode(user.Message.create(msg)).finish()]
+      return [super.encode(msg)]
     } else {
       msg.chunk = { id: Math.ceil(Math.random() * MAX_MSG_ID_SIZE) }
       const numberOfChunks = Math.ceil(bytes.length / MAX_USER_MSG_SIZE)
@@ -46,7 +51,7 @@ export class UserMessage {
         const end = begin + length
         msg.chunk.number = i
         msg.chunk.content = new Uint8Array(bytes.slice(begin, end))
-        res[i] = user.Message.encode(user.Message.create(msg)).finish()
+        res[i] = super.encode(msg)
       }
       return res
     }
@@ -55,8 +60,8 @@ export class UserMessage {
   /**
    * Decode user message received from the network.
    */
-  decode(bytes: Uint8Array, senderId: number): UserDataType {
-    const msg = user.Message.decode(bytes) as any
+  decodeUserMessage(bytes: Uint8Array, senderId: number): UserDataType {
+    const msg = super.decode(bytes) as any
     let content
     switch (msg.content) {
       case 'full': {
@@ -80,9 +85,9 @@ export class UserMessage {
     }
     if (content !== undefined) {
       switch (msg.type) {
-        case user.Message.Type.U_INT_8_ARRAY:
+        case proto.Message.Type.U_INT_8_ARRAY:
           return content
-        case user.Message.Type.STRING:
+        case proto.Message.Type.STRING:
           return textDecoder.decode(content)
         default:
           throw new Error('Unknown message type')
@@ -96,11 +101,11 @@ export class UserMessage {
    */
   private userDataToType(data: UserDataType): { type: number; bytes: Uint8Array } {
     if (data instanceof Uint8Array) {
-      return { type: user.Message.Type.U_INT_8_ARRAY, bytes: data }
+      return { type: proto.Message.Type.U_INT_8_ARRAY, bytes: data }
     } else if (typeof data === 'string') {
-      return { type: user.Message.Type.STRING, bytes: textEncoder.encode(data) }
+      return { type: proto.Message.Type.STRING, bytes: textEncoder.encode(data) }
     } else if ((data as any) instanceof String) {
-      return { type: user.Message.Type.STRING, bytes: textEncoder.encode('' + data) }
+      return { type: proto.Message.Type.STRING, bytes: textEncoder.encode('' + data) }
     } else {
       throw new Error('Message neigther a string type or a Uint8Array type')
     }
