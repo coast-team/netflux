@@ -9,6 +9,7 @@ export default {
     file: 'test/util/.botServer.js',
     format: 'cjs',
   },
+  context: 'global',
   plugins: [
     typescript({
       include: ['src/**/*.ts', 'test/**/*.ts'],
