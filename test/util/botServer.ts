@@ -1,7 +1,10 @@
 import { ReplaySubject } from 'rxjs/ReplaySubject'
 
 import { SignalingState, WebGroup, WebGroupBotServer, WebGroupState } from '../../src/index.node'
+import { LogLevel, setLogLevel } from '../../src/misc/Util'
 import { BOT_HOST, BOT_PORT } from './helper'
+
+setLogLevel([LogLevel.DEBUG])
 
 // Require dependencies
 const http = require('http')

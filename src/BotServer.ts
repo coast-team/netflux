@@ -1,10 +1,9 @@
 import { Server as NodeJSHttpServer } from 'http'
 import { Server as NodeJSHttpsServer } from 'https'
 
-import { Channel } from './Channel'
+import { ChannelBuilder } from './service/ChannelBuilder'
 import { defaultOptions, IWebChannelOptions, WebChannel } from './service/WebChannel'
 import { wcs, WebGroup } from './WebChannelFacade'
-import { WebSocketBuilder } from './WebSocketBuilder'
 
 const urlLib = require('url')
 const uws = require('uws')
@@ -78,10 +77,10 @@ export class BotServer {
       server: this.server,
     })
     const serverListening = this.server || this.webSocketServer
-    serverListening.on('listening', () => WebSocketBuilder.listen().next(this.url))
+    serverListening.on('listening', () => ChannelBuilder.webSocketListenUrl.next(this.url))
 
     this.webSocketServer.on('error', (err: Error) => {
-      WebSocketBuilder.listen().next('')
+      ChannelBuilder.webSocketListenUrl.next('')
       this.onError(err)
     })
 
@@ -100,10 +99,10 @@ export class BotServer {
         wc.id = wcId
         this.webGroups.add(wg)
         this.onWebGroup(wg)
-        new Channel(wc, ws, { id: senderId }) // tslint:disable-line
+        wc.channelBuilder.createChannel(ws, senderId)
       } else if (pathname.endsWith('/internalChannel')) {
         if (wg !== undefined) {
-          WebSocketBuilder.newIncomingSocket(wcs.get(wg) as WebChannel, ws, senderId)
+          ;(wcs.get(wg) as WebChannel).channelBuilder.newWebSocket(ws, senderId)
         } else {
           console.error('Cannot find WebChannel for a new internal channel')
         }
@@ -120,7 +119,9 @@ export class BotServer {
         return (wg === undefined || wg.members.length === 1) && query.senderId
       }
     } else if (pathname.endsWith('/internalChannel')) {
-      return query.senderId !== undefined && wcId !== undefined && this.getWebGroup(wcId) !== undefined
+      return (
+        query.senderId !== undefined && wcId !== undefined && this.getWebGroup(wcId) !== undefined
+      )
     }
     return false
   }

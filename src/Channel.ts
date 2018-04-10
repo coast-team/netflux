@@ -45,7 +45,6 @@ export class Channel {
     this.isIntermediary = false
     this.missedHeartbeat = 0
     this.updateHeartbeatMsg(this.wc.topologyService.heartbeat)
-
     if (this.rtcPeerConnection) {
       this.maximumMissedHeartBeat = 3
     } else {
@@ -85,12 +84,23 @@ export class Channel {
   set id(value: number) {
     this._id = value
     this.fullHeartbeatMsg = Message.encode(
-      Message.create({ senderId: this.wc.myId, recipientId: value, content: this.topologyHeartbeatMsg })
+      Message.create({
+        senderId: this.wc.myId,
+        recipientId: value,
+        content: this.topologyHeartbeatMsg,
+      })
     ).finish()
   }
 
-  encodeAndSend({ senderId = this.wc.myId, recipientId = 0, serviceId, content }: IProtoMessage = {}) {
-    return this.send(Message.encode(Message.create({ senderId, recipientId, serviceId, content })).finish())
+  encodeAndSend({
+    senderId = this.wc.myId,
+    recipientId = 0,
+    serviceId,
+    content,
+  }: IProtoMessage = {}) {
+    this.send(
+      Message.encode(Message.create({ senderId, recipientId, serviceId, content })).finish()
+    )
   }
 
   close(): void {

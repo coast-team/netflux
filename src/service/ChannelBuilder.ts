@@ -1,10 +1,11 @@
+import { BehaviorSubject } from 'rxjs/BehaviorSubject'
 import { Observable } from 'rxjs/Observable'
 import { Subject } from 'rxjs/Subject'
 
 import { Channel } from '../Channel'
 import { isWebRTCSupported, isWebSocketSupported, log } from '../misc/Util'
 import { channelBuilder as proto } from '../proto'
-import { CONNECT_TIMEOUT as WEBSOCKET_TIMEOUT, WebSocketBuilder } from '../WebSocketBuilder'
+import { CONNECT_TIMEOUT as WEBSOCKET_TIMEOUT } from '../WebSocketBuilder'
 import { Service } from './Service'
 import { WebChannel } from './WebChannel'
 import { CONNECT_TIMEOUT as WEBRTC_TIMEOUT } from './WebRTCBuilder'
@@ -35,6 +36,8 @@ interface IPingPongRequest {
  */
 export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
   public static readonly SERVICE_ID = 74
+  public static readonly webSocketListenUrl = new BehaviorSubject('')
+
   private myInfo: proto.IPeerInfo
   private pairPreBuiltMsg: Uint8Array
   private connectionRequests: Map<number, IConnectionRequest>
@@ -69,11 +72,10 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
     }
 
     // Listen on Channels as WebSockets if the peer is listening on WebSockets
-    WebSocketBuilder.listen().subscribe((url) => {
+    ChannelBuilder.webSocketListenUrl.subscribe((url) => {
       if (url) {
         this.myInfo.wss = url
         this.pairPreBuiltMsg = super.encode({ pair: { initiator: this.myInfo } })
-        wc.webSocketBuilder.onChannel.subscribe((ch) => this.handleChannel(ch))
       }
     })
 
@@ -136,6 +138,15 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
       })
       return promise
     }
+  }
+
+  createChannel(ws: WebSocket, id?: number) {
+    return id ? new Channel(this.wc, ws, { id }) : new Channel(this.wc, ws)
+  }
+
+  newWebSocket(ws: WebSocket, id?: number) {
+    const channel = this.createChannel(ws, id)
+    this.handleChannel(channel)
   }
 
   private handleChannel(ch: Channel): void {
