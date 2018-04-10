@@ -84,7 +84,10 @@ export class WebRTCBuilder extends Service<proto.IMessage, proto.Message> {
     if (isWebRTCSupported()) {
       return this.establishChannel(
         this.onServiceMessage.pipe(
-          filter(({ msg, senderId }: { msg: any; senderId: number }) => senderId === id && !msg.isInitiator),
+          filter(
+            ({ msg, senderId }: { msg: any; senderId: number }) =>
+              senderId === id && !msg.isInitiator
+          ),
           pluck('msg')
         ),
         (msg: IOfferSend) => {
@@ -106,7 +109,10 @@ export class WebRTCBuilder extends Service<proto.IMessage, proto.Message> {
       return this.onChannel(
         wrtcStream.message.pipe(
           filter((msg) => msg.id !== 0),
-          map((msg) => (msg.type === 'data' ? Object.assign({ id: msg.id }, super.decode(msg.data)) : msg))
+          map(
+            (msg) =>
+              msg.type === 'data' ? Object.assign({ id: msg.id }, super.decode(msg.data)) : msg
+          )
         ),
         (msg: any, id: number) => {
           if (!('isError' in msg || 'isEnd' in msg)) {
@@ -127,7 +133,10 @@ export class WebRTCBuilder extends Service<proto.IMessage, proto.Message> {
   connectOverSignaling(wrtcStream: IWebRTCStream): Promise<Channel> {
     if (isWebRTCSupported()) {
       return this.establishChannel(
-        wrtcStream.message.pipe(filter((msg) => msg.id === 0), map((msg) => (msg.type === 'data' ? (super.decode(msg.data) as any) : msg))),
+        wrtcStream.message.pipe(
+          filter((msg) => msg.id === 0),
+          map((msg) => (msg.type === 'data' ? (super.decode(msg.data) as any) : msg))
+        ),
         (msg: any) => {
           if (!('isError' in msg || 'isEnd' in msg)) {
             wrtcStream.send({ data: super.encode(msg) })
@@ -140,7 +149,11 @@ export class WebRTCBuilder extends Service<proto.IMessage, proto.Message> {
     throw new Error('WebRTC is not supported')
   }
 
-  private establishChannel(onMessage: Observable<IAnswer>, send: (msg: IOfferSend) => void, id = 1): Promise<Channel> {
+  private establishChannel(
+    onMessage: Observable<IAnswer>,
+    send: (msg: IOfferSend) => void,
+    id = 1
+  ): Promise<Channel> {
     let isOfferSent = false
     const pc = new global.RTCPeerConnection(this.rtcConfiguration)
     pc.onicegatheringstatechange = () => {
@@ -167,7 +180,9 @@ export class WebRTCBuilder extends Service<proto.IMessage, proto.Message> {
               pc.close()
               send({ isError: true })
               onMessageSub.unsubscribe()
-              reject(new Error(counter + ': Failed to establish RTCDataChannel: Ice Connection failed'))
+              reject(
+                new Error(counter + ': Failed to establish RTCDataChannel: Ice Connection failed')
+              )
             }
           }
           if (isError) {
@@ -178,17 +193,26 @@ export class WebRTCBuilder extends Service<proto.IMessage, proto.Message> {
               pc.close()
               reject(new Error(counter + ': Remote peer error'))
             } else {
-              log.webrtc(counter + ': Remote peer error, but RTCDataChannel has still been established')
+              log.webrtc(
+                counter + ': Remote peer error, but RTCDataChannel has still been established'
+              )
             }
           } else if (answer) {
             log.webrtc(counter + ': REMOTE Answer is received', { answer })
             pc
               .setRemoteDescription({ type: 'answer', sdp: answer } as any)
               .then(() => {
-                rcs.subscribe((ic) => pc.addIceCandidate(ic).catch((err) => log.webrtc('${id}: Failed to add REMOTE Ice Candidate', err)))
+                rcs.subscribe((ic) =>
+                  pc
+                    .addIceCandidate(ic)
+                    .catch((err) => log.webrtc('${id}: Failed to add REMOTE Ice Candidate', err))
+                )
               })
               .catch((err) => {
-                log.webrtc(counter + ': Failed to establish RTCDataChannel: Set REMOTE Answer ERROR', err)
+                log.webrtc(
+                  counter + ': Failed to establish RTCDataChannel: Set REMOTE Answer ERROR',
+                  err
+                )
                 rcs.complete()
                 pc.close()
                 send({ isError: true })
@@ -200,14 +224,19 @@ export class WebRTCBuilder extends Service<proto.IMessage, proto.Message> {
               log.webrtc(counter + ': REMOTE Ice Candidate is received', iceCandidate)
               rcs.next(new global.RTCIceCandidate(iceCandidate as RTCIceCandidateInit))
             } else {
-              log.webrtc(counter + ': REMOTE Ice Candidate gathering COMPLETED', iceCandidate.candidate)
+              log.webrtc(
+                counter + ': REMOTE Ice Candidate gathering COMPLETED',
+                iceCandidate.candidate
+              )
               rcs.complete()
             }
           } else if (isEnd) {
             log.webrtc(counter + ': REMOTE Peer FINISHED send all data')
             onMessageSub.unsubscribe()
           } else {
-            log.webrtc(counter + ': Unknown message from a remote peer: stopping connection establishment')
+            log.webrtc(
+              counter + ': Unknown message from a remote peer: stopping connection establishment'
+            )
             rcs.complete()
             pc.close()
             send({ isError: true })
@@ -219,11 +248,16 @@ export class WebRTCBuilder extends Service<proto.IMessage, proto.Message> {
           log.webrtc(counter + ': Intermidiary steram was interrupted', err)
           rcs.complete()
           if (pc.iceConnectionState !== 'connected' && pc.iceConnectionState !== 'completed') {
-            log.webrtc(counter + ': Failed to establish RTCDataChannel: Intermidiary steram was interrupted')
+            log.webrtc(
+              counter + ': Failed to establish RTCDataChannel: Intermidiary steram was interrupted'
+            )
             pc.close()
             reject(err)
           } else {
-            log.webrtc(counter + ': Intermidiary steram was interrupted, but RTCDataChannel has still been established')
+            log.webrtc(
+              counter +
+                ': Intermidiary steram was interrupted, but RTCDataChannel has still been established'
+            )
           }
         },
         () => {
@@ -234,7 +268,10 @@ export class WebRTCBuilder extends Service<proto.IMessage, proto.Message> {
             pc.close()
             reject(err)
           } else {
-            log.webrtc(counter + ': Connection with Signaling closed, but RTCDataChannel has still been established')
+            log.webrtc(
+              counter +
+                ': Connection with Signaling closed, but RTCDataChannel has still been established'
+            )
           }
         }
       )
@@ -266,21 +303,34 @@ export class WebRTCBuilder extends Service<proto.IMessage, proto.Message> {
           pc.close()
           send({ isError: true })
           onMessageSub.unsubscribe()
-          log.webrtc(counter + ': Failed to establish RTCDataChannel: Error while setting LOCAL Offer', err)
+          log.webrtc(
+            counter + ': Failed to establish RTCDataChannel: Error while setting LOCAL Offer',
+            err
+          )
           reject(err)
         })
     })
   }
 
-  private onChannel(onMessage: Observable<IOfferReceived>, send: (msg: IAnswer, id: number) => void): Observable<Channel> {
-    const remotes: Map<number, [RTCPeerConnection, ReplaySubject<RTCIceCandidate>, boolean]> = new Map()
+  private onChannel(
+    onMessage: Observable<IOfferReceived>,
+    send: (msg: IAnswer, id: number) => void
+  ): Observable<Channel> {
+    const remotes: Map<
+      number,
+      [RTCPeerConnection, ReplaySubject<RTCIceCandidate>, boolean]
+    > = new Map()
     const failedRemotes: number[] = []
     return Observable.create((observer: Observer<Channel>) => {
       onMessage.pipe(filter(({ id }) => !failedRemotes.includes(id))).subscribe(
         (msg) => {
           const { offer, iceCandidate, id, isError, isEnd } = msg
 
-          const clean = (peerId: number, pc: RTCPeerConnection, rcs: ReplaySubject<RTCIceCandidate>) => {
+          const clean = (
+            peerId: number,
+            pc: RTCPeerConnection,
+            rcs: ReplaySubject<RTCIceCandidate>
+          ) => {
             pc.oniceconnectionstatechange = () => {}
             rcs.complete()
             send({ isError: true }, peerId)
@@ -339,7 +389,11 @@ export class WebRTCBuilder extends Service<proto.IMessage, proto.Message> {
               pc
                 .setRemoteDescription({ type: 'offer', sdp: offer } as RTCSessionDescription)
                 .then(() =>
-                  rcs.subscribe((ic) => pc.addIceCandidate(ic).catch((err) => log.webrtc(`${id}: Failed to addIceCandidate`, err)))
+                  rcs.subscribe((ic) =>
+                    pc
+                      .addIceCandidate(ic)
+                      .catch((err) => log.webrtc(`${id}: Failed to addIceCandidate`, err))
+                  )
                 )
                 .then(() => pc.createAnswer())
                 .then((answer) => pc.setLocalDescription(answer))
@@ -363,14 +417,20 @@ export class WebRTCBuilder extends Service<proto.IMessage, proto.Message> {
                 log.webrtc(`${id}: REMOTE Ice Candidate is received`, iceCandidate)
                 rcs.next(new global.RTCIceCandidate(iceCandidate as RTCIceCandidateInit))
               } else {
-                log.webrtc(`${id}: REMOTE Ice Candidate gathering COMPLETED`, iceCandidate.candidate)
+                log.webrtc(
+                  `${id}: REMOTE Ice Candidate gathering COMPLETED`,
+                  iceCandidate.candidate
+                )
                 rcs.complete()
               }
             } else if (isEnd) {
               log.webrtc(`${id}: REMOTE Peer FINISHED send all data`)
               remotes.delete(id)
             } else {
-              log.webrtc(`${id}: Unknown message from a remote peer: stopping connection establishment`, msg)
+              log.webrtc(
+                `${id}: Unknown message from a remote peer: stopping connection establishment`,
+                msg
+              )
               clean(id, pc, rcs)
             }
           }
@@ -393,7 +453,9 @@ export class WebRTCBuilder extends Service<proto.IMessage, proto.Message> {
           for (const [id, [pc, rcs]] of remotes) {
             rcs.complete()
             if (pc.iceConnectionState !== 'connected' && pc.iceConnectionState !== 'completed') {
-              log.webrtc(`${id}: Failed to establish RTCDataChannel: Intermidiary stream has closed`)
+              log.webrtc(
+                `${id}: Failed to establish RTCDataChannel: Intermidiary stream has closed`
+              )
               pc.close()
             } else {
               log.webrtc(`${id}: RTCDataChannel has still been established`)
@@ -405,7 +467,10 @@ export class WebRTCBuilder extends Service<proto.IMessage, proto.Message> {
     })
   }
 
-  private setupLocalCandidates(pc: RTCPeerConnection, cb: (obj: proto.IIceCandidate) => void): void {
+  private setupLocalCandidates(
+    pc: RTCPeerConnection,
+    cb: (obj: proto.IIceCandidate) => void
+  ): void {
     pc.onicecandidate = (evt: RTCPeerConnectionIceEvent) => {
       if (evt.candidate !== null) {
         log.webrtc('LOCAL Ice Candidate gathered', evt.candidate.candidate)

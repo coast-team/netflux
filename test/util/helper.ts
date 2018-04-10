@@ -12,7 +12,10 @@ export const BOT_PORT = 10001
 export const BOT_URL = `ws://${BOT_HOST}:${BOT_PORT}`
 const BOT_FETCH_URL = `http://${BOT_HOST}:${BOT_PORT}`
 
-export function areTheSame(array1: Array<number | string | boolean | Uint8Array>, array2: Array<number | string | boolean | Uint8Array>) {
+export function areTheSame(
+  array1: Array<number | string | boolean | Uint8Array>,
+  array2: Array<number | string | boolean | Uint8Array>
+) {
   if (array1.length === array2.length) {
     if (array1.length !== 0) {
       const array2Copy: any[] = Array.from(array2)
@@ -47,7 +50,10 @@ export function areTheSame(array1: Array<number | string | boolean | Uint8Array>
   }
 }
 
-function areIdentical(array1: Array<number | string | boolean> | Uint8Array, array2: Array<number | string | boolean> | Uint8Array) {
+function areIdentical(
+  array1: Array<number | string | boolean> | Uint8Array,
+  array2: Array<number | string | boolean> | Uint8Array
+) {
   return (array1 as any[]).every((v, i) => v === (array2 as any[])[i])
 }
 

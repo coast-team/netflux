@@ -57,7 +57,12 @@ export function randNumbers(length: number = 1): number[] | Uint32Array {
 }
 
 export function equal(array1: number[], array2: number[]) {
-  return array1 !== undefined && array2 !== undefined && array1.length === array2.length && array1.every((v) => array2.includes(v))
+  return (
+    array1 !== undefined &&
+    array2 !== undefined &&
+    array1.length === array2.length &&
+    array1.every((v) => array2.includes(v))
+  )
 }
 
 /**
@@ -132,10 +137,22 @@ export function setLogLevel(levels: LogLevel[]) {
       }
     }
     log.signalingState = (msg: string, id: number): void => {
-      console.info(`%cNETFLUX ${id} WebGroup%c: Signaling: %c${msg}%c`, netfluxCSS, '', signalingStateCSS, '')
+      console.info(
+        `%cNETFLUX ${id} WebGroup%c: Signaling: %c${msg}%c`,
+        netfluxCSS,
+        '',
+        signalingStateCSS,
+        ''
+      )
     }
     log.webGroupState = (msg: string, id: number): void => {
-      console.info(`%cNETFLUX ${id} WebGroup%c: WebGroup: %c${msg}%c`, netfluxCSS, '', webGroupStateCSS, '')
+      console.info(
+        `%cNETFLUX ${id} WebGroup%c: WebGroup: %c${msg}%c`,
+        netfluxCSS,
+        '',
+        webGroupStateCSS,
+        ''
+      )
     }
   } else {
     log.webgroup = () => {}

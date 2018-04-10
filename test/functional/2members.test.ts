@@ -2,7 +2,17 @@
 /* tslint:disable:one-variable-per-declaration */
 import { SignalingState, WebGroup, WebGroupState } from '../../src/index.browser'
 import {} from '../../src/misc/Util'
-import { areTheSame, BOT_URL, cleanWebGroup, getBotData, IBotData, Queue, SIGNALING_URL, wait, waitBotJoin } from '../util/helper'
+import {
+  areTheSame,
+  BOT_URL,
+  cleanWebGroup,
+  getBotData,
+  IBotData,
+  Queue,
+  SIGNALING_URL,
+  wait,
+  waitBotJoin,
+} from '../util/helper'
 
 const WebGroupOptions = {
   signalingServer: SIGNALING_URL,
@@ -74,7 +84,11 @@ describe('2 members', () => {
         let called1 = 0,
           called2 = 0
         const states: SignalingState[] = []
-        const expectedStates = [SignalingState.CONNECTING, SignalingState.CONNECTED, SignalingState.STABLE]
+        const expectedStates = [
+          SignalingState.CONNECTING,
+          SignalingState.CONNECTED,
+          SignalingState.STABLE,
+        ]
 
         // Code for peer 1
         wg1.onSignalingStateChange = () => called1++

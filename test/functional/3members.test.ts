@@ -96,7 +96,11 @@ describe('3 members', () => {
       /** @test {WebGroup#onSignalingStateChange} */
       it('should change the Signaling state', (done) => {
         const states: SignalingState[] = []
-        const expectedStates = [SignalingState.CONNECTING, SignalingState.CONNECTED, SignalingState.STABLE]
+        const expectedStates = [
+          SignalingState.CONNECTING,
+          SignalingState.CONNECTED,
+          SignalingState.STABLE,
+        ]
 
         // Code for peer 1
         wg1.onSignalingStateChange = () => called1++

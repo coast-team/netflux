@@ -40,7 +40,11 @@ export abstract class Service<IMessage, Message extends IMessage> {
    */
   private proto: IMessageFactory<IMessage, Message>
 
-  constructor(serviceId: number, proto: IMessageFactory<IMessage, Message>, serviceMessageSubject?: Subject<IIncomingMessage>) {
+  constructor(
+    serviceId: number,
+    proto: IMessageFactory<IMessage, Message>,
+    serviceMessageSubject?: Subject<IIncomingMessage>
+  ) {
     this.serviceId = serviceId
     this.proto = proto
     if (serviceMessageSubject !== undefined) {
@@ -50,9 +54,19 @@ export abstract class Service<IMessage, Message extends IMessage> {
 
   protected _sendTo(id: number, content: Uint8Array | IMessage) {
     if (content instanceof Uint8Array) {
-      this.wc.topologyService.sendTo({ senderId: this.wc.myId, recipientId: id, serviceId: this.serviceId, content })
+      this.wc.topologyService.sendTo({
+        senderId: this.wc.myId,
+        recipientId: id,
+        serviceId: this.serviceId,
+        content,
+      })
     } else {
-      this.wc.topologyService.sendTo({ senderId: this.wc.myId, recipientId: id, serviceId: this.serviceId, content: this.encode(content) })
+      this.wc.topologyService.sendTo({
+        senderId: this.wc.myId,
+        recipientId: id,
+        serviceId: this.serviceId,
+        content: this.encode(content),
+      })
     }
   }
 

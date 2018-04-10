@@ -2,7 +2,16 @@ import { Subject } from 'rxjs/Subject'
 import { Subscription } from 'rxjs/Subscription'
 
 import { Channel, IIncomingMessage } from '../Channel'
-import { generateKey, isBrowser, isOnline, isURL, isVisible, log, MAX_KEY_LENGTH, randNumbers } from '../misc/Util'
+import {
+  generateKey,
+  isBrowser,
+  isOnline,
+  isURL,
+  isVisible,
+  log,
+  MAX_KEY_LENGTH,
+  randNumbers,
+} from '../misc/Util'
 import { webChannel as proto } from '../proto'
 import { Signaling, SignalingState } from '../Signaling'
 import { WebSocketBuilder } from '../WebSocketBuilder'
@@ -214,10 +223,18 @@ export class WebChannel extends Service<proto.IMessage, proto.Message> {
     } else if (key === '') {
       throw new Error('Failed to join: the key is an empty string')
     } else if (key.length > MAX_KEY_LENGTH) {
-      throw new Error(`Failed to join : the key length of ${key.length} exceeds the maximum of ${MAX_KEY_LENGTH} characters`)
+      throw new Error(
+        `Failed to join : the key length of ${
+          key.length
+        } exceeds the maximum of ${MAX_KEY_LENGTH} characters`
+      )
     }
     this.key = key
-    if (isOnline() && this.state === WebChannelState.LEFT && this.signaling.state === SignalingState.CLOSED) {
+    if (
+      isOnline() &&
+      this.state === WebChannelState.LEFT &&
+      this.signaling.state === SignalingState.CLOSED
+    ) {
       this.setState(WebChannelState.JOINING)
       this.isRejoinDisabled = !this.autoRejoin
       this.signaling.join(this.key)
@@ -258,7 +275,12 @@ export class WebChannel extends Service<proto.IMessage, proto.Message> {
   send(data: UserDataType): void {
     if (this.members.length !== 1) {
       for (const chunk of this.userMsg.encodeUserMessage(data)) {
-        this.topologyService.send({ senderId: this.myId, recipientId: 0, serviceId: UserMessage.SERVICE_ID, content: chunk })
+        this.topologyService.send({
+          senderId: this.myId,
+          recipientId: 0,
+          serviceId: UserMessage.SERVICE_ID,
+          content: chunk,
+        })
       }
     }
   }
@@ -302,7 +324,10 @@ export class WebChannel extends Service<proto.IMessage, proto.Message> {
     if (msg.recipientId === 0 || msg.recipientId === this.myId || msg.recipientId === 1) {
       // User Message
       if (msg.serviceId === UserMessage.SERVICE_ID) {
-        const data = this.userMsg.decodeUserMessage(msg.content as Uint8Array, msg.senderId as number)
+        const data = this.userMsg.decodeUserMessage(
+          msg.content as Uint8Array,
+          msg.senderId as number
+        )
         if (data !== undefined) {
           this.onMessage(msg.senderId as number, data)
         }
@@ -318,7 +343,15 @@ export class WebChannel extends Service<proto.IMessage, proto.Message> {
     }
   }
 
-  private handleServiceMessage({ channel, senderId, msg }: { channel: Channel; senderId: number; msg: any }): void {
+  private handleServiceMessage({
+    channel,
+    senderId,
+    msg,
+  }: {
+    channel: Channel
+    senderId: number
+    msg: any
+  }): void {
     switch (msg.type) {
       case 'init': {
         const { topology, wcId, generatedIds, members } = msg.init
@@ -349,7 +382,11 @@ export class WebChannel extends Service<proto.IMessage, proto.Message> {
           this.setTopology(topology)
           this.id = wcId
           channel.id = senderId
-          channel.encodeAndSend({ recipientId: channel.id, serviceId: WebChannel.SERVICE_ID, content: super.encode({ initOk: true }) })
+          channel.encodeAndSend({
+            recipientId: channel.id,
+            serviceId: WebChannel.SERVICE_ID,
+            content: super.encode({ initOk: true }),
+          })
           this.topologyService.initJoining(channel, members)
         }
         break

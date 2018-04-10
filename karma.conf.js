@@ -27,7 +27,10 @@ module.exports = (config) => {
     exclude: ['**/*.node.ts', '**/*BotServer*'],
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
-    preprocessors: { 'test/**/*.ts': ['karma-typescript', 'regex'], 'src/**/*.+(js|ts)': ['karma-typescript', 'regex'] },
+    preprocessors: {
+      'test/**/*.ts': ['karma-typescript', 'regex'],
+      'src/**/*.+(js|ts)': ['karma-typescript', 'regex'],
+    },
     karmaTypescriptConfig: {
       compilerOptions: {
         lib: ['es2017', 'dom'],

@@ -163,7 +163,9 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
             ppRequest.resolve()
           } else {
             log.channelBuilder(
-              'INCREASING Ping/Pong timeout, as current latency is: ' + (date - requestDate) + ' new value: ',
+              'INCREASING Ping/Pong timeout, as current latency is: ' +
+                (date - requestDate) +
+                ' new value: ',
               date - requestDate + 500
             )
             this.pingPongTimeout = global.Math.min(date - requestDate + 500, MAX_PINGPONG_TIMEOUT)
@@ -172,9 +174,14 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
         break
       }
       case 'pair': {
-        const { pair, pair: { initiator } } = msg as { pair: { initiator: proto.PeerInfo; passive: proto.PeerInfo | undefined } }
+        const { pair, pair: { initiator } } = msg as {
+          pair: { initiator: proto.PeerInfo; passive: proto.PeerInfo | undefined }
+        }
         const passive: proto.PeerInfo = pair.passive || Object.assign(this.myInfo)
-        log.channelBuilder(`${this.wc.myId}: Pair received`, { initiator: JSON.stringify(initiator), passive: JSON.stringify(passive) })
+        log.channelBuilder(`${this.wc.myId}: Pair received`, {
+          initiator: JSON.stringify(initiator),
+          passive: JSON.stringify(passive),
+        })
 
         this.proceedConnectionAlgorithm(initiator, passive)
           .then((ch) => {
@@ -196,7 +203,10 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
     }
   }
 
-  private async proceedConnectionAlgorithm(initiator: proto.PeerInfo, passive: proto.PeerInfo): Promise<Channel | undefined> {
+  private async proceedConnectionAlgorithm(
+    initiator: proto.PeerInfo,
+    passive: proto.PeerInfo
+  ): Promise<Channel | undefined> {
     let me: proto.PeerInfo
     let other: proto.PeerInfo
     if (initiator.id === this.wc.myId) {
@@ -234,7 +244,10 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
           log.channelBuilder(`Connected over RTCDataChannel with ${other.id}`)
           return channel
         } catch (err) {
-          log.channelBuilder(`${this.wc.myId}: me failed to connect over RTCDataChannel with ${other.id}`, err)
+          log.channelBuilder(
+            `${this.wc.myId}: me failed to connect over RTCDataChannel with ${other.id}`,
+            err
+          )
           me.dcTried = true
         }
       }
