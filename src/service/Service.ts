@@ -2,15 +2,13 @@ import { Observable } from 'rxjs/Observable'
 import { filter, map } from 'rxjs/operators'
 import { Subject } from 'rxjs/Subject'
 
-import { Channel } from '../Channel'
-import { IMessage as IProtoMessage } from '../proto'
+import { Channel, IIncomingMessage } from '../Channel'
 import { WebChannel } from './WebChannel'
 
-export interface IMessage extends IProtoMessage {
-  channel: Channel
-  senderId: number
-  recipientId: number
-  msg: any
+interface IMessageFactory<IMessage, Message extends IMessage> {
+  create: (properties?: IMessage) => Message
+  encode: (message: IMessage) => { finish: () => Uint8Array }
+  decode: (reader: Uint8Array) => Message
 }
 
 /**
@@ -20,11 +18,16 @@ export interface IMessage extends IProtoMessage {
  * Each service has `.proto` file containing the desciption of its
  * communication protocol.
  */
-export abstract class Service {
+export abstract class Service<IMessage, Message extends IMessage> {
   /*
    * Service message observable.
    */
-  protected onServiceMessage: Observable<IMessage>
+  protected onServiceMessage: Observable<{
+    channel: Channel
+    senderId: number
+    recipientId: number
+    msg: Message
+  }>
 
   protected wc: WebChannel
   /*
@@ -35,17 +38,17 @@ export abstract class Service {
   /*
    * Service protobufjs object generated from `.proto` file.
    */
-  private protoMessage: any
+  private proto: IMessageFactory<IMessage, Message>
 
-  constructor(serviceId: number, protoMessage: any, serviceMessageSubject?: Subject<IMessage>) {
+  constructor(serviceId: number, proto: IMessageFactory<IMessage, Message>, serviceMessageSubject?: Subject<IIncomingMessage>) {
     this.serviceId = serviceId
-    this.protoMessage = protoMessage
+    this.proto = proto
     if (serviceMessageSubject !== undefined) {
       this.setupServiceMessage(serviceMessageSubject)
     }
   }
 
-  protected _sendTo(id: number, content: Uint8Array | object) {
+  protected _sendTo(id: number, content: Uint8Array | IMessage) {
     if (content instanceof Uint8Array) {
       this.wc.topologyService.sendTo({ senderId: this.wc.myId, recipientId: id, serviceId: this.serviceId, content })
     } else {
@@ -58,8 +61,8 @@ export abstract class Service {
    *
    * @param msg Service specific message object
    */
-  protected encode(msg: any): Uint8Array {
-    return this.protoMessage.encode(this.protoMessage.create(msg)).finish()
+  protected encode(msg: IMessage): Uint8Array {
+    return this.proto.encode(this.proto.create(msg) as IMessage).finish()
   }
 
   /**
@@ -67,18 +70,18 @@ export abstract class Service {
    *
    * @return  Service specific message object
    */
-  protected decode(bytes: Uint8Array): any {
-    return this.protoMessage.decode(bytes)
+  protected decode(bytes: Uint8Array): Message {
+    return this.proto.decode(bytes)
   }
 
-  protected setupServiceMessage(serviceMessageSubject: Subject<IMessage>): void {
+  protected setupServiceMessage(serviceMessageSubject: Subject<IIncomingMessage>): void {
     this.onServiceMessage = serviceMessageSubject.pipe(
       filter(({ serviceId }) => serviceId === this.serviceId),
       map(({ channel, senderId, recipientId, content }) => ({
         channel,
         senderId,
         recipientId,
-        msg: this.protoMessage.decode(content),
+        msg: this.decode(content),
       }))
     )
   }

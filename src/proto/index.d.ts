@@ -103,8 +103,8 @@ export namespace userMessage {
         /** Message chunk. */
         public chunk?: (userMessage.Message.IChunk|null);
 
-        /** Message content. */
-        public content?: ("full"|"chunk");
+        /** Message contentType. */
+        public contentType?: ("full"|"chunk");
 
         /**
          * Creates a new Message instance using the specified properties.
@@ -140,8 +140,8 @@ export namespace userMessage {
             /** Chunk id */
             id?: (number|null);
 
-            /** Chunk number */
-            number?: (number|null);
+            /** Chunk nb */
+            nb?: (number|null);
 
             /** Chunk content */
             content?: (Uint8Array|null);
@@ -159,8 +159,8 @@ export namespace userMessage {
             /** Chunk id. */
             public id: number;
 
-            /** Chunk number. */
-            public number: number;
+            /** Chunk nb. */
+            public nb: number;
 
             /** Chunk content. */
             public content: Uint8Array;

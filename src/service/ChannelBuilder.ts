@@ -33,7 +33,7 @@ interface IPingPongRequest {
  * Its algorithm determine which channel (socket or dataChannel) should be created
  * based on the services availability and peers' preferences.
  */
-export class ChannelBuilder extends Service {
+export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
   public static readonly SERVICE_ID = 74
   private myInfo: proto.IPeerInfo
   private pairPreBuiltMsg: Uint8Array
@@ -156,23 +156,24 @@ export class ChannelBuilder extends Service {
       case 'pong': {
         const ppRequest = this.pingPongRequests.get(senderId)
         const date = global.Date.now()
-        const requestDate = this.pingPongDates.get(senderId) as number
-        if (ppRequest) {
-          log.channelBuilder('Ping/Pong latency is: ' + (date - requestDate))
-          ppRequest.resolve()
-        } else {
-          log.channelBuilder(
-            'INCREASING Ping/Pong timeout, as current latency is: ' + (date - requestDate) + ' new value: ',
-            date - requestDate + 500
-          )
-          this.pingPongTimeout = global.Math.min(date - requestDate + 500, MAX_PINGPONG_TIMEOUT)
+        const requestDate = this.pingPongDates.get(senderId)
+        if (requestDate) {
+          if (ppRequest) {
+            log.channelBuilder('Ping/Pong latency is: ' + (date - requestDate))
+            ppRequest.resolve()
+          } else {
+            log.channelBuilder(
+              'INCREASING Ping/Pong timeout, as current latency is: ' + (date - requestDate) + ' new value: ',
+              date - requestDate + 500
+            )
+            this.pingPongTimeout = global.Math.min(date - requestDate + 500, MAX_PINGPONG_TIMEOUT)
+          }
         }
         break
       }
       case 'pair': {
-        const pair = msg.pair as proto.IPeerPair
-        const initiator = pair.initiator as proto.IPeerInfo
-        const passive = pair.passive || Object.assign(this.myInfo)
+        const { pair, pair: { initiator } } = msg as { pair: { initiator: proto.PeerInfo; passive: proto.PeerInfo | undefined } }
+        const passive: proto.PeerInfo = pair.passive || Object.assign(this.myInfo)
         log.channelBuilder(`${this.wc.myId}: Pair received`, { initiator: JSON.stringify(initiator), passive: JSON.stringify(passive) })
 
         this.proceedConnectionAlgorithm(initiator, passive)
@@ -183,21 +184,21 @@ export class ChannelBuilder extends Service {
           })
           .catch((err) => {
             if (initiator.id === this.wc.myId) {
-              const cr = this.connectionRequests.get(passive.id as number)
+              const cr = this.connectionRequests.get(passive.id)
               if (cr !== undefined) {
                 cr.reject(err)
               }
             } else {
-              super._sendTo(initiator.id as number, { pair: { initiator, passive } })
+              super._sendTo(initiator.id, { pair: { initiator, passive } })
             }
           })
       }
     }
   }
 
-  private async proceedConnectionAlgorithm(initiator: proto.IPeerInfo, passive: proto.IPeerInfo): Promise<Channel | undefined> {
-    let me: proto.IPeerInfo
-    let other: proto.IPeerInfo
+  private async proceedConnectionAlgorithm(initiator: proto.PeerInfo, passive: proto.PeerInfo): Promise<Channel | undefined> {
+    let me: proto.PeerInfo
+    let other: proto.PeerInfo
     if (initiator.id === this.wc.myId) {
       me = initiator
       other = passive
@@ -209,7 +210,7 @@ export class ChannelBuilder extends Service {
     // Try to connect over WebSocket
     if (other.wss && !me.wsTried) {
       try {
-        const channel = (await this.wc.webSocketBuilder.connect(other.wss, other.id as number)) as Channel
+        const channel = (await this.wc.webSocketBuilder.connect(other.wss, other.id)) as Channel
         log.channelBuilder(`Connected over WebSocket with ${other.id}`)
         return channel
       } catch (err) {
@@ -221,7 +222,7 @@ export class ChannelBuilder extends Service {
     // Prompt other peer to connect over WebSocket as I was not able
     if (me.wss && !other.wsTried) {
       log.channelBuilder(`Prompt other to connect over WebSocket`)
-      super._sendTo(other.id as number, { pair: { initiator, passive } })
+      super._sendTo(other.id, { pair: { initiator, passive } })
       return
     }
 
@@ -229,7 +230,7 @@ export class ChannelBuilder extends Service {
     if (me.dcSupported && other.dcSupported) {
       if (!me.dcTried) {
         try {
-          const channel = await this.wc.webRTCBuilder.connectOverWebChannel(other.id as number)
+          const channel = await this.wc.webRTCBuilder.connectOverWebChannel(other.id)
           log.channelBuilder(`Connected over RTCDataChannel with ${other.id}`)
           return channel
         } catch (err) {
@@ -239,7 +240,7 @@ export class ChannelBuilder extends Service {
       }
       if (!other.dcTried) {
         log.channelBuilder(`Prompt other to connect over RTCDataChannel`)
-        super._sendTo(other.id as number, { pair: { initiator, passive } })
+        super._sendTo(other.id, { pair: { initiator, passive } })
         return
       }
     }

@@ -2,6 +2,14 @@ import { isBrowser, log } from './misc/Util'
 import { IMessage as IProtoMessage, Message } from './proto'
 import { WebChannel } from './service/WebChannel'
 
+export interface IIncomingMessage {
+  channel: Channel
+  senderId: number
+  recipientId: number
+  serviceId: number
+  content: Uint8Array
+}
+
 /**
  * Wrapper class for `RTCDataChannel` and `WebSocket`.
  */
@@ -57,9 +65,7 @@ export class Channel {
 
     // Configure handlers
     this.connection.onmessage = ({ data }: { data: ArrayBuffer }) => {
-      const msg = Message.decode(new Uint8Array(data))
-      log.debug('onmessage: ', msg)
-      wc.onMessageProxy(this, msg)
+      wc.onMessageProxy(this, Message.decode(new Uint8Array(data)) as IIncomingMessage)
     }
     this.connection.onclose = (evt: Event) => {
       log.channel(`Connection with ${this.id} has closed`)

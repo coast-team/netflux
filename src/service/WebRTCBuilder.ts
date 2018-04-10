@@ -43,7 +43,7 @@ export interface ISignalingConnection {
  * signaling server or `WebChannel`.
  *
  */
-export class WebRTCBuilder extends Service {
+export class WebRTCBuilder extends Service<proto.IMessage, proto.Message> {
   public static readonly SERVICE_ID = 7431
   private rtcConfiguration: RTCConfiguration
 
@@ -106,18 +106,11 @@ export class WebRTCBuilder extends Service {
       return this.onChannel(
         wrtcStream.message.pipe(
           filter((msg) => msg.id !== 0),
-          map((msg) => {
-            if (msg.type === 'data') {
-              const data = super.decode(msg.data)
-              data.id = msg.id
-              return data
-            }
-            return msg
-          })
+          map((msg) => (msg.type === 'data' ? Object.assign({ id: msg.id }, super.decode(msg.data)) : msg))
         ),
-        (msg: any, id) => {
+        (msg: any, id: number) => {
           if (!('isError' in msg || 'isEnd' in msg)) {
-            msg.data = proto.Message.encode(proto.Message.create(msg)).finish()
+            msg.data = super.encode(msg)
           }
           msg.id = id
           wrtcStream.send(msg)
@@ -134,10 +127,10 @@ export class WebRTCBuilder extends Service {
   connectOverSignaling(wrtcStream: IWebRTCStream): Promise<Channel> {
     if (isWebRTCSupported()) {
       return this.establishChannel(
-        wrtcStream.message.pipe(filter((msg) => msg.id === 0), map((msg) => (msg.type === 'data' ? super.decode(msg.data) : msg))),
-        (msg) => {
+        wrtcStream.message.pipe(filter((msg) => msg.id === 0), map((msg) => (msg.type === 'data' ? (super.decode(msg.data) as any) : msg))),
+        (msg: any) => {
           if (!('isError' in msg || 'isEnd' in msg)) {
-            wrtcStream.send({ data: proto.Message.encode(proto.Message.create(msg)).finish() })
+            wrtcStream.send({ data: super.encode(msg) })
           } else {
             wrtcStream.send(msg)
           }

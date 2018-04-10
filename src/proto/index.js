@@ -2662,12 +2662,12 @@ var userMessage = $root.userMessage = function () {
         var $oneOfFields = void 0;
 
         /**
-         * Message content.
-         * @member {"full"|"chunk"|undefined} content
+         * Message contentType.
+         * @member {"full"|"chunk"|undefined} contentType
          * @memberof userMessage.Message
          * @instance
          */
-        Object.defineProperty(Message.prototype, "content", {
+        Object.defineProperty(Message.prototype, "contentType", {
             get: $util.oneOfGetter($oneOfFields = ["full", "chunk"]),
             set: $util.oneOfSetter($oneOfFields)
         });
@@ -2747,7 +2747,7 @@ var userMessage = $root.userMessage = function () {
              * @memberof userMessage.Message
              * @interface IChunk
              * @property {number|null} [id] Chunk id
-             * @property {number|null} [number] Chunk number
+             * @property {number|null} [nb] Chunk nb
              * @property {Uint8Array|null} [content] Chunk content
              */
 
@@ -2774,12 +2774,12 @@ var userMessage = $root.userMessage = function () {
             Chunk.prototype.id = 0;
 
             /**
-             * Chunk number.
-             * @member {number} number
+             * Chunk nb.
+             * @member {number} nb
              * @memberof userMessage.Message.Chunk
              * @instance
              */
-            Chunk.prototype.number = 0;
+            Chunk.prototype.nb = 0;
 
             /**
              * Chunk content.
@@ -2813,7 +2813,7 @@ var userMessage = $root.userMessage = function () {
             Chunk.encode = function encode(message, writer) {
                 if (!writer) writer = $Writer.create();
                 if (message.id != null && message.hasOwnProperty("id")) writer.uint32( /* id 1, wireType 0 =*/8).uint32(message.id);
-                if (message.number != null && message.hasOwnProperty("number")) writer.uint32( /* id 2, wireType 0 =*/16).uint32(message.number);
+                if (message.nb != null && message.hasOwnProperty("nb")) writer.uint32( /* id 2, wireType 0 =*/16).uint32(message.nb);
                 if (message.content != null && message.hasOwnProperty("content")) writer.uint32( /* id 4, wireType 2 =*/34).bytes(message.content);
                 return writer;
             };
@@ -2840,7 +2840,7 @@ var userMessage = $root.userMessage = function () {
                             message.id = reader.uint32();
                             break;
                         case 2:
-                            message.number = reader.uint32();
+                            message.nb = reader.uint32();
                             break;
                         case 4:
                             message.content = reader.bytes();

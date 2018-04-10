@@ -22,7 +22,7 @@ export type UserDataType = Uint8Array | string
  * big messages (more then 16ko) sent by users. Internal messages are always less
  * 16ko.
  */
-export class UserMessage extends Service {
+export class UserMessage extends Service<proto.IMessage, proto.Message> {
   public static readonly SERVICE_ID = 743
   private buffers: Map<number, Map<number, Buffer>>
 
@@ -60,22 +60,28 @@ export class UserMessage extends Service {
   /**
    * Decode user message received from the network.
    */
-  decodeUserMessage(bytes: Uint8Array, senderId: number): UserDataType {
-    const msg = super.decode(bytes) as any
-    let content
-    switch (msg.content) {
+  decodeUserMessage(bytes: Uint8Array, senderId: number): UserDataType | undefined {
+    const { length, type, contentType, full, chunk } = super.decode(bytes) as {
+      length: number
+      type: proto.Message.Type
+      contentType: string
+      full: Uint8Array | undefined
+      chunk: proto.Message.Chunk
+    }
+    let result
+    switch (contentType) {
       case 'full': {
-        content = msg.full
+        result = full
         break
       }
       case 'chunk': {
-        let buffer = this.getBuffer(senderId, msg.chunk.id)
+        let buffer = this.getBuffer(senderId, chunk.id)
         if (buffer === undefined) {
-          buffer = new Buffer(msg.length, msg.chunk.content, msg.chunk.number)
-          this.setBuffer(senderId, msg.chunk.id, buffer)
-          content = undefined
+          buffer = new Buffer(length, chunk.content, chunk.nb)
+          this.setBuffer(senderId, chunk.id, buffer)
+          result = undefined
         } else {
-          content = buffer.append(msg.chunk.content, msg.chunk.number)
+          result = buffer.append(chunk.content, chunk.nb)
         }
         break
       }
@@ -83,17 +89,17 @@ export class UserMessage extends Service {
         throw new Error('Unknown message integrity')
       }
     }
-    if (content !== undefined) {
-      switch (msg.type) {
+    if (result !== undefined) {
+      switch (type) {
         case proto.Message.Type.U_INT_8_ARRAY:
-          return content
+          return result
         case proto.Message.Type.STRING:
-          return textDecoder.decode(content)
+          return textDecoder.decode(result)
         default:
           throw new Error('Unknown message type')
       }
     }
-    return content
+    return result
   }
 
   /**

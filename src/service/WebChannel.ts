@@ -1,13 +1,13 @@
 import { Subject } from 'rxjs/Subject'
 import { Subscription } from 'rxjs/Subscription'
 
-import { Channel } from '../Channel'
+import { Channel, IIncomingMessage } from '../Channel'
 import { generateKey, isBrowser, isOnline, isURL, isVisible, log, MAX_KEY_LENGTH, randNumbers } from '../misc/Util'
-import { IMessage as IProtoMessage, webChannel as proto } from '../proto'
+import { webChannel as proto } from '../proto'
 import { Signaling, SignalingState } from '../Signaling'
 import { WebSocketBuilder } from '../WebSocketBuilder'
 import { ChannelBuilder } from './ChannelBuilder'
-import { IMessage, Service } from './Service'
+import { Service } from './Service'
 import { FullMesh } from './topology/FullMesh'
 import { ITopology, TopologyEnum, TopologyStateEnum } from './topology/Topology'
 import { UserDataType, UserMessage } from './UserMessage'
@@ -44,7 +44,7 @@ export enum WebChannelState {
  * preserving the current `WebChannel` structure (network topology).
  * [[include:installation.md]]
  */
-export class WebChannel extends Service {
+export class WebChannel extends Service<proto.IMessage, proto.Message> {
   public static readonly SERVICE_ID = 7
   /**
    * An array of all peer ids except yours.
@@ -102,7 +102,7 @@ export class WebChannel extends Service {
    */
   onMessage: (id: number, msg: UserDataType) => void
 
-  serviceMessageSubject: Subject<IMessage>
+  serviceMessageSubject: Subject<IIncomingMessage>
   webRTCBuilder: WebRTCBuilder
   webSocketBuilder: WebSocketBuilder
   channelBuilder: ChannelBuilder
@@ -295,8 +295,7 @@ export class WebChannel extends Service {
   /**
    * Message handler. All messages arrive here first.
    */
-  onMessageProxy(channel: Channel, msg: IProtoMessage): void {
-    log.debug('onMessageProxy: ', msg)
+  onMessageProxy(channel: Channel, msg: IIncomingMessage): void {
     // recipientId values:
     // 0: broadcast message
     // 1: is a message to me from a peer who does not know my ID yet
@@ -311,7 +310,7 @@ export class WebChannel extends Service {
         // Service Message
       } else {
         ;(msg as any).channel = channel
-        this.serviceMessageSubject.next(msg as IMessage)
+        this.serviceMessageSubject.next(msg)
       }
     }
     if (msg.recipientId !== this.myId) {
@@ -320,7 +319,6 @@ export class WebChannel extends Service {
   }
 
   private handleServiceMessage({ channel, senderId, msg }: { channel: Channel; senderId: number; msg: any }): void {
-    log.debug('Service message: ', msg)
     switch (msg.type) {
       case 'init': {
         const { topology, wcId, generatedIds, members } = msg.init
@@ -378,7 +376,6 @@ export class WebChannel extends Service {
    * Delegate adding a new peer in the network to topology.
    */
   private initChannel(ch: Channel): void {
-    log.debug('initChannel: ')
     ch.encodeAndSend({
       recipientId: 1,
       serviceId: WebChannel.SERVICE_ID,

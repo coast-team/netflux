@@ -3,8 +3,8 @@ import { Subject } from 'rxjs/Subject'
 
 import { Channel } from '../../Channel'
 import { log } from '../../misc/Util'
-import { fullMesh as proto } from '../../proto'
-import { IMessage, Service } from '../Service'
+import { fullMesh as proto, IMessage } from '../../proto'
+import { Service } from '../Service'
 import { WebChannel } from '../WebChannel'
 import { ITopology, TopologyStateEnum } from './Topology'
 
@@ -25,7 +25,7 @@ const MAXIMUM_MISSED_HEARTBEAT = 3
  * network, when each peer is connected to each other.
  *
  */
-export class FullMesh extends Service implements ITopology {
+export class FullMesh extends Service<proto.IMessage, proto.Message> implements ITopology {
   public static readonly SERVICE_ID = 74315
   readonly heartbeat: Uint8Array
 
@@ -163,10 +163,11 @@ export class FullMesh extends Service implements ITopology {
     this.membersRequestInterval = undefined
   }
 
-  private handleServiceMessage({ channel, senderId, msg }: IMessage): void {
+  private handleServiceMessage({ channel, senderId, msg }: { channel: Channel; senderId: number; msg: proto.Message }): void {
     switch (msg.type) {
       case 'membersResponse': {
-        this.connectToMany(msg.membersResponse.ids, senderId)
+        const { membersResponse } = msg as { membersResponse: proto.Peers }
+        this.connectToMany(membersResponse.ids, senderId)
         break
       }
       case 'membersRequest': {
@@ -178,6 +179,7 @@ export class FullMesh extends Service implements ITopology {
         break
       }
       case 'adjacentMembers': {
+        const { adjacentMembers } = msg as { adjacentMembers: proto.Peers }
         if (!this.adjacentMembers.has(senderId) && senderId !== this.wc.myId) {
           const distantPeer = this.distantMembers.get(senderId)
 
@@ -185,9 +187,9 @@ export class FullMesh extends Service implements ITopology {
           // Otherwise just update the list of distant peer's neighbours
 
           if (distantPeer) {
-            distantPeer.adjacentIds = msg.adjacentMembers.ids
+            distantPeer.adjacentIds = adjacentMembers.ids
           } else {
-            this.distantMembers.set(senderId, { adjacentIds: msg.adjacentMembers.ids, missedHeartbeat: 0 })
+            this.distantMembers.set(senderId, { adjacentIds: adjacentMembers.ids, missedHeartbeat: 0 })
             super._sendTo(senderId, { adjacentMembers: { ids: Array.from(this.adjacentMembers.keys()) } })
             this.connectTo(senderId)
           }

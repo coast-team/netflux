@@ -1,7 +1,6 @@
 import { Observable } from 'rxjs/Observable'
 import { Channel } from '../../Channel'
 import { IMessage } from '../../proto'
-import { Service } from '../Service'
 
 export enum TopologyEnum {
   FULL_MESH,
@@ -27,7 +26,7 @@ export enum TopologyStateEnum {
  *
  * @see FullMesh
  */
-export interface ITopology extends Service {
+export interface ITopology {
   readonly onState: Observable<TopologyStateEnum>
   readonly state: TopologyStateEnum
   readonly heartbeat: Uint8Array
