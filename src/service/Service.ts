@@ -5,6 +5,13 @@ import { Subject } from 'rxjs/Subject'
 import { Channel, IIncomingMessage } from '../Channel'
 import { WebChannel } from './WebChannel'
 
+export interface IServiceMessage<Message> {
+  channel: Channel
+  senderId: number
+  recipientId: number
+  msg: Message
+}
+
 interface IMessageFactory<IMessage, Message extends IMessage> {
   create: (properties?: IMessage) => Message
   encode: (message: IMessage) => { finish: () => Uint8Array }
@@ -22,12 +29,7 @@ export abstract class Service<IMessage, Message extends IMessage> {
   /*
    * Service message observable.
    */
-  protected onServiceMessage: Observable<{
-    channel: Channel
-    senderId: number
-    recipientId: number
-    msg: Message
-  }>
+  protected onServiceMessage: Observable<IServiceMessage<Message>>
 
   protected wc: WebChannel
   /*

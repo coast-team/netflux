@@ -6,7 +6,7 @@ import { Channel } from '../Channel'
 import { isWebRTCSupported, isWebSocketSupported, log } from '../misc/Util'
 import { channelBuilder as proto } from '../proto'
 import { CONNECT_TIMEOUT as WEBSOCKET_TIMEOUT } from '../WebSocketBuilder'
-import { Service } from './Service'
+import { IServiceMessage, Service } from './Service'
 import { WebChannel } from './WebChannel'
 import { CONNECT_TIMEOUT as WEBRTC_TIMEOUT } from './WebRTCBuilder'
 
@@ -158,7 +158,7 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
     }
   }
 
-  private handleServiceMessage({ senderId, msg }: { senderId: number; msg: proto.Message }): void {
+  private handleServiceMessage({ senderId, msg }: IServiceMessage<proto.Message>): void {
     switch (msg.type) {
       case 'ping': {
         super._sendTo(senderId, pongPreBuiltMsg)

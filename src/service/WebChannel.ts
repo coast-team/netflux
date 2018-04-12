@@ -16,7 +16,7 @@ import { webChannel as proto } from '../proto'
 import { Signaling, SignalingState } from '../Signaling'
 import { WebSocketBuilder } from '../WebSocketBuilder'
 import { ChannelBuilder } from './ChannelBuilder'
-import { Service } from './Service'
+import { IServiceMessage, Service } from './Service'
 import { FullMesh } from './topology/FullMesh'
 import { ITopology, TopologyEnum, TopologyStateEnum } from './topology/Topology'
 import { UserDataType, UserMessage } from './UserMessage'
@@ -346,18 +346,10 @@ export class WebChannel extends Service<proto.IMessage, proto.Message> {
     }
   }
 
-  private handleServiceMessage({
-    channel,
-    senderId,
-    msg,
-  }: {
-    channel: Channel
-    senderId: number
-    msg: any
-  }): void {
+  private handleServiceMessage({ channel, senderId, msg }: IServiceMessage<proto.Message>): void {
     switch (msg.type) {
       case 'init': {
-        const { topology, wcId, generatedIds, members } = msg.init
+        const { topology, wcId, generatedIds, members } = msg.init as proto.InitData
         // Check whether the intermidiary peer is already a member of your
         // network (possible when merging two networks (works with FullMesh)).
         // If it is a case then you are already a member of the network.

@@ -4,7 +4,7 @@ import { Subject } from 'rxjs/Subject'
 import { Channel, IIncomingMessage } from '../../Channel'
 import { log } from '../../misc/Util'
 import { fullMesh as proto } from '../../proto'
-import { Service } from '../Service'
+import { IServiceMessage, Service } from '../Service'
 import { WebChannel } from '../WebChannel'
 import { ITopology, TopologyStateEnum } from './Topology'
 
@@ -161,15 +161,7 @@ export class FullMesh extends Service<proto.IMessage, proto.Message> implements 
     this.membersRequestInterval = undefined
   }
 
-  private handleServiceMessage({
-    channel,
-    senderId,
-    msg,
-  }: {
-    channel: Channel
-    senderId: number
-    msg: proto.Message
-  }): void {
+  private handleServiceMessage({ channel, senderId, msg }: IServiceMessage<proto.Message>): void {
     switch (msg.type) {
       case 'membersResponse': {
         const { membersResponse } = msg as { membersResponse: proto.Peers }
