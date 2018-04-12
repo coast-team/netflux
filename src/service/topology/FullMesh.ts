@@ -1,9 +1,9 @@
 import { Observable } from 'rxjs/Observable'
 import { Subject } from 'rxjs/Subject'
 
-import { Channel } from '../../Channel'
+import { Channel, IIncomingMessage } from '../../Channel'
 import { log } from '../../misc/Util'
-import { fullMesh as proto, IMessage } from '../../proto'
+import { fullMesh as proto } from '../../proto'
 import { Service } from '../Service'
 import { WebChannel } from '../WebChannel'
 import { ITopology, TopologyStateEnum } from './Topology'
@@ -112,26 +112,24 @@ export class FullMesh extends Service<proto.IMessage, proto.Message> implements 
     }
   }
 
-  send(msg: IMessage): void {
+  send(msg: IIncomingMessage): void {
     this.adjacentMembers.forEach((ch) => ch.encodeAndSend(msg))
     this.distantMembers.forEach((distantPeer, id) => {
-      this.sendToDistantPeer(distantPeer, { recipientId: id, serviceId: msg.serviceId, content: msg.content })
+      this.sendToDistantPeer(distantPeer, Object.assign(msg, { recipientId: id }))
     })
   }
 
-  sendTo(msg: IMessage): void {
-    const ch = this.adjacentMembers.get(msg.recipientId as number)
+  sendTo(msg: IIncomingMessage): void {
+    const ch = this.adjacentMembers.get(msg.recipientId)
     if (ch) {
       ch.encodeAndSend(msg)
     } else {
-      this.sendToDistantPeer(this.distantMembers.get(msg.recipientId as number), msg)
+      this.sendToDistantPeer(this.distantMembers.get(msg.recipientId), msg)
     }
   }
 
-  forward(msg: IMessage): void {
-    if ((msg.recipientId as number) > 1) {
-      this.sendTo(msg)
-    }
+  forward(msg: IIncomingMessage): void {
+    this.sendTo(msg)
   }
 
   leave(): void {
@@ -163,7 +161,15 @@ export class FullMesh extends Service<proto.IMessage, proto.Message> implements 
     this.membersRequestInterval = undefined
   }
 
-  private handleServiceMessage({ channel, senderId, msg }: { channel: Channel; senderId: number; msg: proto.Message }): void {
+  private handleServiceMessage({
+    channel,
+    senderId,
+    msg,
+  }: {
+    channel: Channel
+    senderId: number
+    msg: proto.Message
+  }): void {
     switch (msg.type) {
       case 'membersResponse': {
         const { membersResponse } = msg as { membersResponse: proto.Peers }
@@ -189,8 +195,13 @@ export class FullMesh extends Service<proto.IMessage, proto.Message> implements 
           if (distantPeer) {
             distantPeer.adjacentIds = adjacentMembers.ids
           } else {
-            this.distantMembers.set(senderId, { adjacentIds: adjacentMembers.ids, missedHeartbeat: 0 })
-            super._sendTo(senderId, { adjacentMembers: { ids: Array.from(this.adjacentMembers.keys()) } })
+            this.distantMembers.set(senderId, {
+              adjacentIds: adjacentMembers.ids,
+              missedHeartbeat: 0,
+            })
+            super._sendTo(senderId, {
+              adjacentMembers: { ids: Array.from(this.adjacentMembers.keys()) },
+            })
             this.connectTo(senderId)
           }
         }
@@ -210,7 +221,10 @@ export class FullMesh extends Service<proto.IMessage, proto.Message> implements 
 
   private addAdjacentMember(ch: Channel): void {
     if (this._state === TopologyStateEnum.DISCONNECTED) {
-      log.topology('Closing channel quietly as the topology state is: ', TopologyStateEnum[this._state])
+      log.topology(
+        'Closing channel quietly as the topology state is: ',
+        TopologyStateEnum[this._state]
+      )
       ch.closeQuietly()
     } else {
       log.topology('Adding new adjacent member: ', ch.id)
@@ -247,10 +261,14 @@ export class FullMesh extends Service<proto.IMessage, proto.Message> implements 
   private connectToMany(ids: number[], adjacentId: number): Promise<void | void[]> {
     if (this._state !== TopologyStateEnum.DISCONNECTED) {
       const missingIds = ids.filter((id) => {
-        return !this.adjacentMembers.has(id) && !this.connectingMembers.has(id) && id !== this.wc.myId
+        return (
+          !this.adjacentMembers.has(id) && !this.connectingMembers.has(id) && id !== this.wc.myId
+        )
       })
       if (missingIds.length !== 0) {
-        const adjacentMembers = super.encode({ adjacentMembers: { ids: Array.from(this.adjacentMembers.keys()) } })
+        const adjacentMembers = super.encode({
+          adjacentMembers: { ids: Array.from(this.adjacentMembers.keys()) },
+        })
         const connectingAttempts: Array<Promise<void>> = []
 
         missingIds.forEach((id) => {
@@ -332,7 +350,10 @@ export class FullMesh extends Service<proto.IMessage, proto.Message> implements 
     }
   }
 
-  private findRoutedChannel(distantPeer: IDistantPeer | undefined, distance: number): Channel | undefined {
+  private findRoutedChannel(
+    distantPeer: IDistantPeer | undefined,
+    distance: number
+  ): Channel | undefined {
     if (distantPeer) {
       for (const [neighbourId, ch] of this.adjacentMembers) {
         if (distantPeer.adjacentIds.includes(neighbourId)) {
@@ -353,7 +374,9 @@ export class FullMesh extends Service<proto.IMessage, proto.Message> implements 
 
   private notifyDistantPeers() {
     if (this._state !== TopologyStateEnum.DISCONNECTED) {
-      this.distantMembers.forEach((peer, id) => super._sendTo(id, { adjacentMembers: { ids: Array.from(this.adjacentMembers.keys()) } }))
+      this.distantMembers.forEach((peer, id) =>
+        super._sendTo(id, { adjacentMembers: { ids: Array.from(this.adjacentMembers.keys()) } })
+      )
     }
   }
 
@@ -366,7 +389,10 @@ export class FullMesh extends Service<proto.IMessage, proto.Message> implements 
 
   private startIntervals() {
     // Members check interval
-    this.membersRequestInterval = global.setInterval(() => this.membersRequest(), REQUEST_MEMBERS_INTERVAL)
+    this.membersRequestInterval = global.setInterval(
+      () => this.membersRequest(),
+      REQUEST_MEMBERS_INTERVAL
+    )
 
     // Heartbeat interval
     this.heartbeatInterval = global.setInterval(() => {

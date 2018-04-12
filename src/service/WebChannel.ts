@@ -294,6 +294,7 @@ export class WebChannel extends Service<proto.IMessage, proto.Message> {
     if (this.members.length !== 1) {
       for (const chunk of this.userMsg.encodeUserMessage(data)) {
         this.wc.topologyService.sendTo({
+          senderId: this.myId,
           recipientId: id,
           serviceId: UserMessage.SERVICE_ID,
           content: chunk,
@@ -340,7 +341,7 @@ export class WebChannel extends Service<proto.IMessage, proto.Message> {
         this.serviceMessageSubject.next(msg)
       }
     }
-    if (msg.recipientId !== this.myId) {
+    if (msg.recipientId !== this.myId && msg.recipientId !== 1) {
       this.topologyService.forward(msg)
     }
   }
