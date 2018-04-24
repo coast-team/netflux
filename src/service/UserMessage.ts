@@ -1,6 +1,6 @@
 import { userMessage as proto } from '../proto'
 import { Service } from '../service/Service'
-import { WebChannel } from './WebChannel'
+import { WebChannel } from '../WebChannel'
 
 /**
  * Maximum size of the user message sent over `Channel` (without metadata).

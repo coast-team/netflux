@@ -2877,288 +2877,6 @@ var userMessage = $root.userMessage = function () {
     return userMessage;
 }();
 
-var webChannel = $root.webChannel = function () {
-
-    /**
-     * Namespace webChannel.
-     * @exports webChannel
-     * @namespace
-     */
-    var webChannel = {};
-
-    webChannel.Message = function () {
-
-        /**
-         * Properties of a Message.
-         * @memberof webChannel
-         * @interface IMessage
-         * @property {webChannel.IInitData|null} [init] Message init
-         * @property {boolean|null} [initOk] Message initOk
-         */
-
-        /**
-         * Constructs a new Message.
-         * @memberof webChannel
-         * @classdesc Represents a Message.
-         * @implements IMessage
-         * @constructor
-         * @param {webChannel.IMessage=} [properties] Properties to set
-         */
-        function Message(properties) {
-            if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
-                if (properties[keys[i]] != null) this[keys[i]] = properties[keys[i]];
-            }
-        }
-
-        /**
-         * Message init.
-         * @member {webChannel.IInitData|null|undefined} init
-         * @memberof webChannel.Message
-         * @instance
-         */
-        Message.prototype.init = null;
-
-        /**
-         * Message initOk.
-         * @member {boolean} initOk
-         * @memberof webChannel.Message
-         * @instance
-         */
-        Message.prototype.initOk = false;
-
-        // OneOf field names bound to virtual getters and setters
-        var $oneOfFields = void 0;
-
-        /**
-         * Message type.
-         * @member {"init"|"initOk"|undefined} type
-         * @memberof webChannel.Message
-         * @instance
-         */
-        Object.defineProperty(Message.prototype, "type", {
-            get: $util.oneOfGetter($oneOfFields = ["init", "initOk"]),
-            set: $util.oneOfSetter($oneOfFields)
-        });
-
-        /**
-         * Creates a new Message instance using the specified properties.
-         * @function create
-         * @memberof webChannel.Message
-         * @static
-         * @param {webChannel.IMessage=} [properties] Properties to set
-         * @returns {webChannel.Message} Message instance
-         */
-        Message.create = function create(properties) {
-            return new Message(properties);
-        };
-
-        /**
-         * Encodes the specified Message message. Does not implicitly {@link webChannel.Message.verify|verify} messages.
-         * @function encode
-         * @memberof webChannel.Message
-         * @static
-         * @param {webChannel.IMessage} message Message message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        Message.encode = function encode(message, writer) {
-            if (!writer) writer = $Writer.create();
-            if (message.init != null && message.hasOwnProperty("init")) $root.webChannel.InitData.encode(message.init, writer.uint32( /* id 1, wireType 2 =*/10).fork()).ldelim();
-            if (message.initOk != null && message.hasOwnProperty("initOk")) writer.uint32( /* id 2, wireType 0 =*/16).bool(message.initOk);
-            return writer;
-        };
-
-        /**
-         * Decodes a Message message from the specified reader or buffer.
-         * @function decode
-         * @memberof webChannel.Message
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @param {number} [length] Message length if known beforehand
-         * @returns {webChannel.Message} Message
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        Message.decode = function decode(reader, length) {
-            if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
-            var end = length === undefined ? reader.len : reader.pos + length,
-                message = new $root.webChannel.Message();
-            while (reader.pos < end) {
-                var tag = reader.uint32();
-                switch (tag >>> 3) {
-                    case 1:
-                        message.init = $root.webChannel.InitData.decode(reader, reader.uint32());
-                        break;
-                    case 2:
-                        message.initOk = reader.bool();
-                        break;
-                    default:
-                        reader.skipType(tag & 7);
-                        break;
-                }
-            }
-            return message;
-        };
-
-        return Message;
-    }();
-
-    webChannel.InitData = function () {
-
-        /**
-         * Properties of an InitData.
-         * @memberof webChannel
-         * @interface IInitData
-         * @property {number|null} [topology] InitData topology
-         * @property {number|null} [wcId] InitData wcId
-         * @property {Array.<number>|null} [generatedIds] InitData generatedIds
-         * @property {Array.<number>|null} [members] InitData members
-         */
-
-        /**
-         * Constructs a new InitData.
-         * @memberof webChannel
-         * @classdesc Represents an InitData.
-         * @implements IInitData
-         * @constructor
-         * @param {webChannel.IInitData=} [properties] Properties to set
-         */
-        function InitData(properties) {
-            this.generatedIds = [];
-            this.members = [];
-            if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
-                if (properties[keys[i]] != null) this[keys[i]] = properties[keys[i]];
-            }
-        }
-
-        /**
-         * InitData topology.
-         * @member {number} topology
-         * @memberof webChannel.InitData
-         * @instance
-         */
-        InitData.prototype.topology = 0;
-
-        /**
-         * InitData wcId.
-         * @member {number} wcId
-         * @memberof webChannel.InitData
-         * @instance
-         */
-        InitData.prototype.wcId = 0;
-
-        /**
-         * InitData generatedIds.
-         * @member {Array.<number>} generatedIds
-         * @memberof webChannel.InitData
-         * @instance
-         */
-        InitData.prototype.generatedIds = $util.emptyArray;
-
-        /**
-         * InitData members.
-         * @member {Array.<number>} members
-         * @memberof webChannel.InitData
-         * @instance
-         */
-        InitData.prototype.members = $util.emptyArray;
-
-        /**
-         * Creates a new InitData instance using the specified properties.
-         * @function create
-         * @memberof webChannel.InitData
-         * @static
-         * @param {webChannel.IInitData=} [properties] Properties to set
-         * @returns {webChannel.InitData} InitData instance
-         */
-        InitData.create = function create(properties) {
-            return new InitData(properties);
-        };
-
-        /**
-         * Encodes the specified InitData message. Does not implicitly {@link webChannel.InitData.verify|verify} messages.
-         * @function encode
-         * @memberof webChannel.InitData
-         * @static
-         * @param {webChannel.IInitData} message InitData message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        InitData.encode = function encode(message, writer) {
-            if (!writer) writer = $Writer.create();
-            if (message.topology != null && message.hasOwnProperty("topology")) writer.uint32( /* id 1, wireType 0 =*/8).uint32(message.topology);
-            if (message.wcId != null && message.hasOwnProperty("wcId")) writer.uint32( /* id 2, wireType 0 =*/16).uint32(message.wcId);
-            if (message.generatedIds != null && message.generatedIds.length) {
-                writer.uint32( /* id 3, wireType 2 =*/26).fork();
-                for (var i = 0; i < message.generatedIds.length; ++i) {
-                    writer.uint32(message.generatedIds[i]);
-                }writer.ldelim();
-            }
-            if (message.members != null && message.members.length) {
-                writer.uint32( /* id 4, wireType 2 =*/34).fork();
-                for (var _i = 0; _i < message.members.length; ++_i) {
-                    writer.uint32(message.members[_i]);
-                }writer.ldelim();
-            }
-            return writer;
-        };
-
-        /**
-         * Decodes an InitData message from the specified reader or buffer.
-         * @function decode
-         * @memberof webChannel.InitData
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @param {number} [length] Message length if known beforehand
-         * @returns {webChannel.InitData} InitData
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        InitData.decode = function decode(reader, length) {
-            if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
-            var end = length === undefined ? reader.len : reader.pos + length,
-                message = new $root.webChannel.InitData();
-            while (reader.pos < end) {
-                var tag = reader.uint32();
-                switch (tag >>> 3) {
-                    case 1:
-                        message.topology = reader.uint32();
-                        break;
-                    case 2:
-                        message.wcId = reader.uint32();
-                        break;
-                    case 3:
-                        if (!(message.generatedIds && message.generatedIds.length)) message.generatedIds = [];
-                        if ((tag & 7) === 2) {
-                            var end2 = reader.uint32() + reader.pos;
-                            while (reader.pos < end2) {
-                                message.generatedIds.push(reader.uint32());
-                            }
-                        } else message.generatedIds.push(reader.uint32());
-                        break;
-                    case 4:
-                        if (!(message.members && message.members.length)) message.members = [];
-                        if ((tag & 7) === 2) {
-                            var _end = reader.uint32() + reader.pos;
-                            while (reader.pos < _end) {
-                                message.members.push(reader.uint32());
-                            }
-                        } else message.members.push(reader.uint32());
-                        break;
-                    default:
-                        reader.skipType(tag & 7);
-                        break;
-                }
-            }
-            return message;
-        };
-
-        return InitData;
-    }();
-
-    return webChannel;
-}();
-
 var channelBuilder = $root.channelBuilder = function () {
 
     /**
@@ -3409,6 +3127,7 @@ var channelBuilder = $root.channelBuilder = function () {
          * @interface IPeerInfo
          * @property {number|null} [id] PeerInfo id
          * @property {string|null} [wss] PeerInfo wss
+         * @property {number|null} [wcId] PeerInfo wcId
          * @property {boolean|null} [wsSupported] PeerInfo wsSupported
          * @property {boolean|null} [wsTried] PeerInfo wsTried
          * @property {boolean|null} [dcSupported] PeerInfo dcSupported
@@ -3444,6 +3163,14 @@ var channelBuilder = $root.channelBuilder = function () {
          * @instance
          */
         PeerInfo.prototype.wss = "";
+
+        /**
+         * PeerInfo wcId.
+         * @member {number} wcId
+         * @memberof channelBuilder.PeerInfo
+         * @instance
+         */
+        PeerInfo.prototype.wcId = 0;
 
         /**
          * PeerInfo wsSupported.
@@ -3502,10 +3229,11 @@ var channelBuilder = $root.channelBuilder = function () {
             if (!writer) writer = $Writer.create();
             if (message.id != null && message.hasOwnProperty("id")) writer.uint32( /* id 1, wireType 0 =*/8).uint32(message.id);
             if (message.wss != null && message.hasOwnProperty("wss")) writer.uint32( /* id 2, wireType 2 =*/18).string(message.wss);
-            if (message.wsSupported != null && message.hasOwnProperty("wsSupported")) writer.uint32( /* id 3, wireType 0 =*/24).bool(message.wsSupported);
-            if (message.wsTried != null && message.hasOwnProperty("wsTried")) writer.uint32( /* id 4, wireType 0 =*/32).bool(message.wsTried);
-            if (message.dcSupported != null && message.hasOwnProperty("dcSupported")) writer.uint32( /* id 5, wireType 0 =*/40).bool(message.dcSupported);
-            if (message.dcTried != null && message.hasOwnProperty("dcTried")) writer.uint32( /* id 6, wireType 0 =*/48).bool(message.dcTried);
+            if (message.wcId != null && message.hasOwnProperty("wcId")) writer.uint32( /* id 3, wireType 0 =*/24).uint32(message.wcId);
+            if (message.wsSupported != null && message.hasOwnProperty("wsSupported")) writer.uint32( /* id 4, wireType 0 =*/32).bool(message.wsSupported);
+            if (message.wsTried != null && message.hasOwnProperty("wsTried")) writer.uint32( /* id 5, wireType 0 =*/40).bool(message.wsTried);
+            if (message.dcSupported != null && message.hasOwnProperty("dcSupported")) writer.uint32( /* id 6, wireType 0 =*/48).bool(message.dcSupported);
+            if (message.dcTried != null && message.hasOwnProperty("dcTried")) writer.uint32( /* id 7, wireType 0 =*/56).bool(message.dcTried);
             return writer;
         };
 
@@ -3534,15 +3262,18 @@ var channelBuilder = $root.channelBuilder = function () {
                         message.wss = reader.string();
                         break;
                     case 3:
-                        message.wsSupported = reader.bool();
+                        message.wcId = reader.uint32();
                         break;
                     case 4:
-                        message.wsTried = reader.bool();
+                        message.wsSupported = reader.bool();
                         break;
                     case 5:
-                        message.dcSupported = reader.bool();
+                        message.wsTried = reader.bool();
                         break;
                     case 6:
+                        message.dcSupported = reader.bool();
+                        break;
+                    case 7:
                         message.dcTried = reader.bool();
                         break;
                     default:
@@ -3666,7 +3397,7 @@ var fullMesh = $root.fullMesh = function () {
             if (message.membersResponse != null && message.hasOwnProperty("membersResponse")) $root.fullMesh.Peers.encode(message.membersResponse, writer.uint32( /* id 1, wireType 2 =*/10).fork()).ldelim();
             if (message.membersRequest != null && message.hasOwnProperty("membersRequest")) writer.uint32( /* id 2, wireType 0 =*/16).bool(message.membersRequest);
             if (message.adjacentMembers != null && message.hasOwnProperty("adjacentMembers")) $root.fullMesh.Peers.encode(message.adjacentMembers, writer.uint32( /* id 3, wireType 2 =*/26).fork()).ldelim();
-            if (message.heartbeat != null && message.hasOwnProperty("heartbeat")) writer.uint32( /* id 5, wireType 0 =*/40).bool(message.heartbeat);
+            if (message.heartbeat != null && message.hasOwnProperty("heartbeat")) writer.uint32( /* id 4, wireType 0 =*/32).bool(message.heartbeat);
             return writer;
         };
 
@@ -3697,7 +3428,7 @@ var fullMesh = $root.fullMesh = function () {
                     case 3:
                         message.adjacentMembers = $root.fullMesh.Peers.decode(reader, reader.uint32());
                         break;
-                    case 5:
+                    case 4:
                         message.heartbeat = reader.bool();
                         break;
                     default:
@@ -3831,12 +3562,9 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
          * Properties of a Message.
          * @memberof webRTCBuilder
          * @interface IMessage
-         * @property {boolean|null} [isInitiator] Message isInitiator
          * @property {string|null} [offer] Message offer
          * @property {string|null} [answer] Message answer
-         * @property {webRTCBuilder.IIceCandidate|null} [iceCandidate] Message iceCandidate
-         * @property {boolean|null} [isError] Message isError
-         * @property {boolean|null} [isEnd] Message isEnd
+         * @property {webRTCBuilder.IIceCandidate|null} [candidate] Message candidate
          */
 
         /**
@@ -3852,14 +3580,6 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
                 if (properties[keys[i]] != null) this[keys[i]] = properties[keys[i]];
             }
         }
-
-        /**
-         * Message isInitiator.
-         * @member {boolean} isInitiator
-         * @memberof webRTCBuilder.Message
-         * @instance
-         */
-        Message.prototype.isInitiator = false;
 
         /**
          * Message offer.
@@ -3878,40 +3598,24 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
         Message.prototype.answer = "";
 
         /**
-         * Message iceCandidate.
-         * @member {webRTCBuilder.IIceCandidate|null|undefined} iceCandidate
+         * Message candidate.
+         * @member {webRTCBuilder.IIceCandidate|null|undefined} candidate
          * @memberof webRTCBuilder.Message
          * @instance
          */
-        Message.prototype.iceCandidate = null;
-
-        /**
-         * Message isError.
-         * @member {boolean} isError
-         * @memberof webRTCBuilder.Message
-         * @instance
-         */
-        Message.prototype.isError = false;
-
-        /**
-         * Message isEnd.
-         * @member {boolean} isEnd
-         * @memberof webRTCBuilder.Message
-         * @instance
-         */
-        Message.prototype.isEnd = false;
+        Message.prototype.candidate = null;
 
         // OneOf field names bound to virtual getters and setters
         var $oneOfFields = void 0;
 
         /**
          * Message type.
-         * @member {"offer"|"answer"|"iceCandidate"|"isError"|"isEnd"|undefined} type
+         * @member {"offer"|"answer"|"candidate"|undefined} type
          * @memberof webRTCBuilder.Message
          * @instance
          */
         Object.defineProperty(Message.prototype, "type", {
-            get: $util.oneOfGetter($oneOfFields = ["offer", "answer", "iceCandidate", "isError", "isEnd"]),
+            get: $util.oneOfGetter($oneOfFields = ["offer", "answer", "candidate"]),
             set: $util.oneOfSetter($oneOfFields)
         });
 
@@ -3938,12 +3642,9 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
          */
         Message.encode = function encode(message, writer) {
             if (!writer) writer = $Writer.create();
-            if (message.isInitiator != null && message.hasOwnProperty("isInitiator")) writer.uint32( /* id 1, wireType 0 =*/8).bool(message.isInitiator);
-            if (message.offer != null && message.hasOwnProperty("offer")) writer.uint32( /* id 2, wireType 2 =*/18).string(message.offer);
-            if (message.answer != null && message.hasOwnProperty("answer")) writer.uint32( /* id 3, wireType 2 =*/26).string(message.answer);
-            if (message.iceCandidate != null && message.hasOwnProperty("iceCandidate")) $root.webRTCBuilder.IceCandidate.encode(message.iceCandidate, writer.uint32( /* id 4, wireType 2 =*/34).fork()).ldelim();
-            if (message.isError != null && message.hasOwnProperty("isError")) writer.uint32( /* id 5, wireType 0 =*/40).bool(message.isError);
-            if (message.isEnd != null && message.hasOwnProperty("isEnd")) writer.uint32( /* id 6, wireType 0 =*/48).bool(message.isEnd);
+            if (message.offer != null && message.hasOwnProperty("offer")) writer.uint32( /* id 1, wireType 2 =*/10).string(message.offer);
+            if (message.answer != null && message.hasOwnProperty("answer")) writer.uint32( /* id 2, wireType 2 =*/18).string(message.answer);
+            if (message.candidate != null && message.hasOwnProperty("candidate")) $root.webRTCBuilder.IceCandidate.encode(message.candidate, writer.uint32( /* id 3, wireType 2 =*/26).fork()).ldelim();
             return writer;
         };
 
@@ -3966,22 +3667,13 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
                     case 1:
-                        message.isInitiator = reader.bool();
-                        break;
-                    case 2:
                         message.offer = reader.string();
                         break;
-                    case 3:
+                    case 2:
                         message.answer = reader.string();
                         break;
-                    case 4:
-                        message.iceCandidate = $root.webRTCBuilder.IceCandidate.decode(reader, reader.uint32());
-                        break;
-                    case 5:
-                        message.isError = reader.bool();
-                        break;
-                    case 6:
-                        message.isEnd = reader.bool();
+                    case 3:
+                        message.candidate = $root.webRTCBuilder.IceCandidate.decode(reader, reader.uint32());
                         break;
                     default:
                         reader.skipType(tag & 7);
@@ -4111,6 +3803,276 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
     }();
 
     return webRTCBuilder;
+}();
+
+var channel = $root.channel = function () {
+
+    /**
+     * Namespace channel.
+     * @exports channel
+     * @namespace
+     */
+    var channel = {};
+
+    channel.Message = function () {
+
+        /**
+         * Properties of a Message.
+         * @memberof channel
+         * @interface IMessage
+         * @property {channel.IData|null} [initPing] Message initPing
+         * @property {number|null} [initPong] Message initPong
+         */
+
+        /**
+         * Constructs a new Message.
+         * @memberof channel
+         * @classdesc Represents a Message.
+         * @implements IMessage
+         * @constructor
+         * @param {channel.IMessage=} [properties] Properties to set
+         */
+        function Message(properties) {
+            if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
+                if (properties[keys[i]] != null) this[keys[i]] = properties[keys[i]];
+            }
+        }
+
+        /**
+         * Message initPing.
+         * @member {channel.IData|null|undefined} initPing
+         * @memberof channel.Message
+         * @instance
+         */
+        Message.prototype.initPing = null;
+
+        /**
+         * Message initPong.
+         * @member {number} initPong
+         * @memberof channel.Message
+         * @instance
+         */
+        Message.prototype.initPong = 0;
+
+        // OneOf field names bound to virtual getters and setters
+        var $oneOfFields = void 0;
+
+        /**
+         * Message type.
+         * @member {"initPing"|"initPong"|undefined} type
+         * @memberof channel.Message
+         * @instance
+         */
+        Object.defineProperty(Message.prototype, "type", {
+            get: $util.oneOfGetter($oneOfFields = ["initPing", "initPong"]),
+            set: $util.oneOfSetter($oneOfFields)
+        });
+
+        /**
+         * Creates a new Message instance using the specified properties.
+         * @function create
+         * @memberof channel.Message
+         * @static
+         * @param {channel.IMessage=} [properties] Properties to set
+         * @returns {channel.Message} Message instance
+         */
+        Message.create = function create(properties) {
+            return new Message(properties);
+        };
+
+        /**
+         * Encodes the specified Message message. Does not implicitly {@link channel.Message.verify|verify} messages.
+         * @function encode
+         * @memberof channel.Message
+         * @static
+         * @param {channel.IMessage} message Message message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        Message.encode = function encode(message, writer) {
+            if (!writer) writer = $Writer.create();
+            if (message.initPing != null && message.hasOwnProperty("initPing")) $root.channel.Data.encode(message.initPing, writer.uint32( /* id 1, wireType 2 =*/10).fork()).ldelim();
+            if (message.initPong != null && message.hasOwnProperty("initPong")) writer.uint32( /* id 2, wireType 0 =*/16).uint32(message.initPong);
+            return writer;
+        };
+
+        /**
+         * Decodes a Message message from the specified reader or buffer.
+         * @function decode
+         * @memberof channel.Message
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {channel.Message} Message
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        Message.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length,
+                message = new $root.channel.Message();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                    case 1:
+                        message.initPing = $root.channel.Data.decode(reader, reader.uint32());
+                        break;
+                    case 2:
+                        message.initPong = reader.uint32();
+                        break;
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                }
+            }
+            return message;
+        };
+
+        return Message;
+    }();
+
+    channel.Data = function () {
+
+        /**
+         * Properties of a Data.
+         * @memberof channel
+         * @interface IData
+         * @property {number|null} [topology] Data topology
+         * @property {number|null} [wcId] Data wcId
+         * @property {number|null} [senderId] Data senderId
+         * @property {Array.<number>|null} [members] Data members
+         */
+
+        /**
+         * Constructs a new Data.
+         * @memberof channel
+         * @classdesc Represents a Data.
+         * @implements IData
+         * @constructor
+         * @param {channel.IData=} [properties] Properties to set
+         */
+        function Data(properties) {
+            this.members = [];
+            if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
+                if (properties[keys[i]] != null) this[keys[i]] = properties[keys[i]];
+            }
+        }
+
+        /**
+         * Data topology.
+         * @member {number} topology
+         * @memberof channel.Data
+         * @instance
+         */
+        Data.prototype.topology = 0;
+
+        /**
+         * Data wcId.
+         * @member {number} wcId
+         * @memberof channel.Data
+         * @instance
+         */
+        Data.prototype.wcId = 0;
+
+        /**
+         * Data senderId.
+         * @member {number} senderId
+         * @memberof channel.Data
+         * @instance
+         */
+        Data.prototype.senderId = 0;
+
+        /**
+         * Data members.
+         * @member {Array.<number>} members
+         * @memberof channel.Data
+         * @instance
+         */
+        Data.prototype.members = $util.emptyArray;
+
+        /**
+         * Creates a new Data instance using the specified properties.
+         * @function create
+         * @memberof channel.Data
+         * @static
+         * @param {channel.IData=} [properties] Properties to set
+         * @returns {channel.Data} Data instance
+         */
+        Data.create = function create(properties) {
+            return new Data(properties);
+        };
+
+        /**
+         * Encodes the specified Data message. Does not implicitly {@link channel.Data.verify|verify} messages.
+         * @function encode
+         * @memberof channel.Data
+         * @static
+         * @param {channel.IData} message Data message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        Data.encode = function encode(message, writer) {
+            if (!writer) writer = $Writer.create();
+            if (message.topology != null && message.hasOwnProperty("topology")) writer.uint32( /* id 1, wireType 0 =*/8).uint32(message.topology);
+            if (message.wcId != null && message.hasOwnProperty("wcId")) writer.uint32( /* id 2, wireType 0 =*/16).uint32(message.wcId);
+            if (message.senderId != null && message.hasOwnProperty("senderId")) writer.uint32( /* id 3, wireType 0 =*/24).uint32(message.senderId);
+            if (message.members != null && message.members.length) {
+                writer.uint32( /* id 4, wireType 2 =*/34).fork();
+                for (var i = 0; i < message.members.length; ++i) {
+                    writer.uint32(message.members[i]);
+                }writer.ldelim();
+            }
+            return writer;
+        };
+
+        /**
+         * Decodes a Data message from the specified reader or buffer.
+         * @function decode
+         * @memberof channel.Data
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {channel.Data} Data
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        Data.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length,
+                message = new $root.channel.Data();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                    case 1:
+                        message.topology = reader.uint32();
+                        break;
+                    case 2:
+                        message.wcId = reader.uint32();
+                        break;
+                    case 3:
+                        message.senderId = reader.uint32();
+                        break;
+                    case 4:
+                        if (!(message.members && message.members.length)) message.members = [];
+                        if ((tag & 7) === 2) {
+                            var end2 = reader.uint32() + reader.pos;
+                            while (reader.pos < end2) {
+                                message.members.push(reader.uint32());
+                            }
+                        } else message.members.push(reader.uint32());
+                        break;
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                }
+            }
+            return message;
+        };
+
+        return Data;
+    }();
+
+    return channel;
 }();
 
 var signaling = $root.signaling = function () {
@@ -4285,9 +4247,8 @@ var signaling = $root.signaling = function () {
          * @memberof signaling
          * @interface IContent
          * @property {number|null} [id] Content id
+         * @property {boolean|null} [unsubscribe] Content unsubscribe
          * @property {Uint8Array|null} [data] Content data
-         * @property {boolean|null} [isError] Content isError
-         * @property {boolean|null} [isEnd] Content isEnd
          */
 
         /**
@@ -4313,42 +4274,20 @@ var signaling = $root.signaling = function () {
         Content.prototype.id = 0;
 
         /**
+         * Content unsubscribe.
+         * @member {boolean} unsubscribe
+         * @memberof signaling.Content
+         * @instance
+         */
+        Content.prototype.unsubscribe = false;
+
+        /**
          * Content data.
          * @member {Uint8Array} data
          * @memberof signaling.Content
          * @instance
          */
         Content.prototype.data = $util.newBuffer([]);
-
-        /**
-         * Content isError.
-         * @member {boolean} isError
-         * @memberof signaling.Content
-         * @instance
-         */
-        Content.prototype.isError = false;
-
-        /**
-         * Content isEnd.
-         * @member {boolean} isEnd
-         * @memberof signaling.Content
-         * @instance
-         */
-        Content.prototype.isEnd = false;
-
-        // OneOf field names bound to virtual getters and setters
-        var $oneOfFields = void 0;
-
-        /**
-         * Content type.
-         * @member {"data"|"isError"|"isEnd"|undefined} type
-         * @memberof signaling.Content
-         * @instance
-         */
-        Object.defineProperty(Content.prototype, "type", {
-            get: $util.oneOfGetter($oneOfFields = ["data", "isError", "isEnd"]),
-            set: $util.oneOfSetter($oneOfFields)
-        });
 
         /**
          * Creates a new Content instance using the specified properties.
@@ -4374,9 +4313,8 @@ var signaling = $root.signaling = function () {
         Content.encode = function encode(message, writer) {
             if (!writer) writer = $Writer.create();
             if (message.id != null && message.hasOwnProperty("id")) writer.uint32( /* id 1, wireType 0 =*/8).uint32(message.id);
-            if (message.data != null && message.hasOwnProperty("data")) writer.uint32( /* id 2, wireType 2 =*/18).bytes(message.data);
-            if (message.isError != null && message.hasOwnProperty("isError")) writer.uint32( /* id 3, wireType 0 =*/24).bool(message.isError);
-            if (message.isEnd != null && message.hasOwnProperty("isEnd")) writer.uint32( /* id 4, wireType 0 =*/32).bool(message.isEnd);
+            if (message.unsubscribe != null && message.hasOwnProperty("unsubscribe")) writer.uint32( /* id 2, wireType 0 =*/16).bool(message.unsubscribe);
+            if (message.data != null && message.hasOwnProperty("data")) writer.uint32( /* id 3, wireType 2 =*/26).bytes(message.data);
             return writer;
         };
 
@@ -4402,13 +4340,10 @@ var signaling = $root.signaling = function () {
                         message.id = reader.uint32();
                         break;
                     case 2:
-                        message.data = reader.bytes();
+                        message.unsubscribe = reader.bool();
                         break;
                     case 3:
-                        message.isError = reader.bool();
-                        break;
-                    case 4:
-                        message.isEnd = reader.bool();
+                        message.data = reader.bytes();
                         break;
                     default:
                         reader.skipType(tag & 7);
@@ -4425,4 +4360,4 @@ var signaling = $root.signaling = function () {
 }();
 
 export default $root;
-export { Message, userMessage, webChannel, channelBuilder, fullMesh, webRTCBuilder, signaling };
+export { Message, userMessage, channelBuilder, fullMesh, webRTCBuilder, channel, signaling };

@@ -6,7 +6,7 @@ message Message {
     Peers membersResponse = 1;
     bool membersRequest = 2;
     Peers adjacentMembers = 3;
-    bool heartbeat = 5;
+    bool heartbeat = 4;
   }
 }
 

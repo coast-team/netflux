@@ -9,7 +9,6 @@ message Message {
   }
 }
 
-
 message PeerPair {
   PeerInfo initiator = 1;
   PeerInfo passive = 2;
@@ -18,8 +17,9 @@ message PeerPair {
 message PeerInfo {
   uint32 id = 1;
   string wss = 2;
-  bool wsSupported = 3;
-  bool wsTried = 4;
-  bool dcSupported = 5;
-  bool dcTried = 6;
+  uint32 wcId = 3;
+  bool wsSupported = 4;
+  bool wsTried = 5;
+  bool dcSupported = 6;
+  bool dcTried = 7;
 }

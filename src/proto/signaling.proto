@@ -13,9 +13,6 @@ message Message {
 
 message Content {
   uint32 id = 1;
-  oneof type {
-    bytes data = 2;
-    bool isError = 3;
-    bool isEnd = 4;
-  }
+  bool unsubscribe = 2; // Forward last data and unsubscribe from the peer
+  bytes data = 3;
 }

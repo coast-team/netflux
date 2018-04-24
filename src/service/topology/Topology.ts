@@ -29,22 +29,6 @@ export enum TopologyStateEnum {
 export interface ITopology {
   readonly onState: Observable<TopologyStateEnum>
   readonly state: TopologyStateEnum
-  readonly heartbeat: Uint8Array
-
-  /**
-   * As a network member, add a new peer into the network.
-   *
-   * @param ch  A channel between you and the joining peer
-   */
-  addJoining(ch: Channel): void
-
-  /**
-   * This method is called when all necessary initialization messages have been
-   * sent by WebChannel and notifies the topology that it is ready to be used.
-   *
-   * @param ch  A channel between you and one of the network member
-   */
-  initJoining(ch: Channel, ids: number[]): void
 
   /**
    * Broadcast a message to the network.

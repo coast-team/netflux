@@ -1,33 +1,46 @@
 import { isBrowser, log } from './misc/Util'
-import { IMessage as IProtoMessage, Message } from './proto'
-import { WebChannel } from './service/WebChannel'
+import { channel as proto, IMessage, Message } from './proto'
+import { UserMessage } from './service/UserMessage'
+import { WebChannel } from './WebChannel'
 
-export interface IIncomingMessage {
-  channel: Channel
-  senderId: number
-  recipientId: number
-  serviceId: number
-  content: Uint8Array
+export enum ChannelType {
+  INTERNAL,
+  INVITED,
+  JOINING,
 }
+
+export interface IChannelInitData {
+  members: number[]
+}
+
+const heartbeat = Message.create({ serviceId: 0 })
+export const MAXIMUM_MISSED_HEARTBEAT = 3
 
 /**
  * Wrapper class for `RTCDataChannel` and `WebSocket`.
  */
 export class Channel {
-  public connection: any
+  public static heartbeatMsg(senderId: number, recipientId: number): Uint8Array {
+    heartbeat.senderId = senderId
+    heartbeat.recipientId = recipientId
+    return Message.encode(heartbeat).finish()
+  }
+
+  public id: number
   public send: (data: Uint8Array) => void
-  public isIntermediary: boolean
+  public type: ChannelType
   public missedHeartbeat: number
-  public maximumMissedHeartBeat: number
+  public init: Promise<void>
+  public initData: IChannelInitData | undefined
 
   /**
    * Id of the peer who is at the other end of this channel.
    */
-  private _id: number
+  private connection: any
   private rtcPeerConnection: RTCPeerConnection | undefined
   private wc: WebChannel
-  private topologyHeartbeatMsg: Uint8Array
-  private fullHeartbeatMsg: Uint8Array
+  private heartbeatMsg: Uint8Array
+  private resolveInit: () => void
 
   /**
    * Creates a channel from existing `RTCDataChannel` or `WebSocket`.
@@ -35,69 +48,63 @@ export class Channel {
   constructor(
     wc: WebChannel,
     connection: WebSocket | RTCDataChannel,
-    options: { rtcPeerConnection?: RTCPeerConnection; id: number } = { id: 1 }
+    type: ChannelType,
+    id = 1,
+    rtcPeerConnection?: RTCPeerConnection
   ) {
-    log.channel(`New Channel: Me: ${wc.myId} with ${options.id}`)
+    log.channel(`New Channel ${ChannelType[type]}: Me: ${wc.myId} with ${id}`)
     this.wc = wc
     this.connection = connection
-    this._id = options.id
-    this.rtcPeerConnection = options.rtcPeerConnection
-    this.isIntermediary = false
+    this.type = type
+    this.id = id
+    this.rtcPeerConnection = rtcPeerConnection
     this.missedHeartbeat = 0
-    this.updateHeartbeatMsg(this.wc.topologyService.heartbeat)
-    if (this.rtcPeerConnection) {
-      this.maximumMissedHeartBeat = 3
-    } else {
-      this.maximumMissedHeartBeat = 5
-    }
 
     // Configure `send` function
     if (isBrowser) {
       connection.binaryType = 'arraybuffer'
       this.send = this.sendInBrowser
     } else if (!this.rtcPeerConnection) {
-      this.send = this.sendInNodeViaWebSocket
+      this.send = this.sendInNodeOverWebSocket
     } else {
       connection.binaryType = 'arraybuffer'
-      this.send = this.sendInNodeViaDataChannel
+      this.send = this.sendInNodeOverDataChannel
     }
 
-    // Configure handlers
-    this.connection.onmessage = ({ data }: { data: ArrayBuffer }) => {
-      wc.onMessageProxy(this, Message.decode(new Uint8Array(data)) as IIncomingMessage)
-    }
-    this.connection.onclose = (evt: Event) => {
-      log.channel(`Connection with ${this.id} has closed`)
-      wc.topologyService.onChannelClose(evt, this)
-    }
-    this.connection.onerror = (evt: Event) => {
-      log.channel('Channel error: ', evt)
-      wc.topologyService.onChannelError(evt, this)
-      this.close()
+    if (type === ChannelType.INTERNAL) {
+      this.heartbeatMsg = Channel.heartbeatMsg(this.wc.myId, this.id)
+      this.init = Promise.resolve()
+      this.initHandlers()
+    } else {
+      this.init = new Promise(
+        (resolve, reject) =>
+          (this.resolveInit = () => {
+            this.heartbeatMsg = Channel.heartbeatMsg(this.wc.myId, this.id)
+            resolve()
+          })
+      )
+      this.connection.onmessage = ({ data }: { data: ArrayBuffer }) => {
+        this.handleInitMessage(proto.Message.decode(new Uint8Array(data)))
+      }
     }
   }
 
-  get id() {
-    return this._id
+  initialize() {
+    this.send(
+      proto.Message.encode(
+        proto.Message.create({
+          initPing: {
+            topology: this.wc.topology,
+            wcId: this.wc.id,
+            senderId: this.wc.myId,
+            members: this.wc.members,
+          },
+        })
+      ).finish()
+    )
   }
 
-  set id(value: number) {
-    this._id = value
-    this.fullHeartbeatMsg = Message.encode(
-      Message.create({
-        senderId: this.wc.myId,
-        recipientId: value,
-        content: this.topologyHeartbeatMsg,
-      })
-    ).finish()
-  }
-
-  encodeAndSend({
-    senderId = this.wc.myId,
-    recipientId = 0,
-    serviceId,
-    content,
-  }: IProtoMessage = {}) {
+  encodeAndSend({ senderId = this.wc.myId, recipientId = 0, serviceId, content }: IMessage = {}) {
     this.send(
       Message.encode(Message.create({ senderId, recipientId, serviceId, content })).finish()
     )
@@ -118,15 +125,12 @@ export class Channel {
   }
 
   sendHeartbeat() {
-    this.send(this.fullHeartbeatMsg)
-  }
-
-  updateHeartbeatMsg(heartbeatMsg: Uint8Array) {
-    this.topologyHeartbeatMsg = heartbeatMsg
-
-    this.fullHeartbeatMsg = Message.encode(
-      Message.create({ senderId: this.wc.myId, recipientId: this._id, content: heartbeatMsg })
-    ).finish()
+    this.missedHeartbeat++
+    if (this.missedHeartbeat >= MAXIMUM_MISSED_HEARTBEAT) {
+      log.channel(`${this.id} channel closed: too many missed heartbeats`)
+      this.close()
+    }
+    this.send(this.heartbeatMsg)
   }
 
   private sendInBrowser(data: Uint8Array): void {
@@ -137,15 +141,93 @@ export class Channel {
     }
   }
 
-  private sendInNodeViaWebSocket(data: Uint8Array): void {
+  private sendInNodeOverWebSocket(data: Uint8Array): void {
     try {
       this.connection.send(data, { binary: true })
     } catch (err) {
-      log.channel('Channel sendInNodeViaWebSocket ERROR', err)
+      log.channel('Channel sendInNodeOverWebSocket ERROR', err)
     }
   }
 
-  private sendInNodeViaDataChannel(data: Uint8Array): void {
+  private sendInNodeOverDataChannel(data: Uint8Array): void {
     this.sendInBrowser(data.slice(0))
+  }
+
+  private handleInitMessage(msg: proto.Message) {
+    switch (msg.type) {
+      case 'initPing': {
+        log.channel(`${this.wc.myId} received InitPing`)
+        const { topology, wcId, senderId, members } = msg.initPing as proto.Data
+        if (this.wc.topology !== topology) {
+          // TODO: implement when there are more than one topology implementation
+          // Reinitialize WebChannel: clean/leave etc.
+          // change topology
+          log.channel('Different topology. This message should never be shown: something is wrong')
+        } else if (members.includes(this.id) && wcId !== this.wc.id) {
+          // TODO: this is a rare case, when the joining peer id equals to the
+          // one among group members  (the different identifiers insure that
+          // the peer was not a member of the group previously)
+          // clean/leave
+          // generate new Id (this.wc.myId) which is not in members
+        }
+        this.wc.id = wcId
+        this.id = senderId
+        log.channel(`${this.wc.myId} send InitPong`)
+        this.send(proto.Message.encode(proto.Message.create({ initPong: this.wc.myId })).finish())
+        this.initData = { members }
+        this.initHandlers()
+        this.resolveInit()
+        break
+      }
+      case 'initPong':
+        log.channel(`${this.wc.myId} received InitPong`)
+        this.id = msg.initPong
+        this.initHandlers()
+        this.resolveInit()
+        break
+      default:
+        log.channel(
+          `Unknown message type: "${
+            msg.type
+          }". This message should never be shown: something went wrong`
+        )
+    }
+  }
+
+  private initHandlers() {
+    // Configure handlers
+    this.connection.onmessage = ({ data }: { data: ArrayBuffer }) => {
+      const msg = Message.decode(new Uint8Array(data))
+
+      // 0: broadcast message
+      if (msg.recipientId === 0 || msg.recipientId === this.wc.myId) {
+        // User Message
+        if (msg.serviceId === UserMessage.SERVICE_ID) {
+          const userData = this.wc.userMsg.decodeUserMessage(msg.content, msg.senderId)
+          if (userData) {
+            this.wc.onMessage(msg.senderId as number, userData)
+          }
+
+          // Heartbeat message
+        } else if (msg.serviceId === 0) {
+          this.missedHeartbeat = 0
+          // Service Message
+        } else {
+          this.wc.streamSubject.next(Object.assign({ channel: this }, msg))
+        }
+      }
+      if (msg.recipientId !== this.wc.myId) {
+        this.wc.topologyService.forward(msg)
+      }
+    }
+    this.connection.onclose = (evt: Event) => {
+      log.channel(`Connection with ${this.id} has closed`)
+      this.wc.topologyService.onChannelClose(evt, this)
+    }
+    this.connection.onerror = (evt: Event) => {
+      log.channel('Channel error: ', evt)
+      this.wc.topologyService.onChannelError(evt, this)
+      this.close()
+    }
   }
 }

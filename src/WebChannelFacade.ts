@@ -1,6 +1,7 @@
 import { TopologyEnum } from './service/topology/Topology'
-import { IWebChannelOptions as WebGroupOptions, WebChannel, WebChannelState } from './service/WebChannel'
 import { SignalingState } from './Signaling'
+import { IWebChannelOptions as WebGroupOptions, WebChannel } from './WebChannel'
+import { WebChannelState } from './WebChannelState'
 
 /**
  * Is a helper type representing types that can be sent/received over a web group.
@@ -166,7 +167,11 @@ export class WebGroup {
      * @type {number}
      */
     this.myId = undefined as any
-    Reflect.defineProperty(this, 'myId', { configurable: false, enumerable: true, get: () => wc.myId })
+    Reflect.defineProperty(this, 'myId', {
+      configurable: false,
+      enumerable: true,
+      get: () => wc.myId,
+    })
     /**
      * The read-only group session identifier. Equals to an empty string before calling {@link WebGroup#join}.
      * Different to {@link WebGroup#id}. This key is known and used by Signaling server
@@ -174,26 +179,42 @@ export class WebGroup {
      * @type {string}
      */
     this.key = undefined as any
-    Reflect.defineProperty(this, 'key', { configurable: false, enumerable: true, get: () => wc.key })
+    Reflect.defineProperty(this, 'key', {
+      configurable: false,
+      enumerable: true,
+      get: () => wc.key,
+    })
     /**
      * The read-only array of all members including yourself (i.e. {@link WebGroup#myId})
      * @type {number[]}
      */
     this.members = undefined as any
-    Reflect.defineProperty(this, 'members', { configurable: false, enumerable: true, get: () => wc.members })
+    Reflect.defineProperty(this, 'members', {
+      configurable: false,
+      enumerable: true,
+      get: () => wc.members,
+    })
     /**
      * The read-only property which is an enum of type {@link Topology}
      * indicating the topology used for this {@link WebGroup} instance.
      * @type {Topology}
      */
     this.topology = undefined as any
-    Reflect.defineProperty(this, 'topology', { configurable: false, enumerable: true, get: () => wc.topology })
+    Reflect.defineProperty(this, 'topology', {
+      configurable: false,
+      enumerable: true,
+      get: () => wc.topology,
+    })
     /**
      * The read-only state of the {@link WebGroup} connection.
      * @type {WebGroupState}
      */
     this.state = undefined as any
-    Reflect.defineProperty(this, 'state', { configurable: false, enumerable: true, get: () => wc.state })
+    Reflect.defineProperty(this, 'state', {
+      configurable: false,
+      enumerable: true,
+      get: () => wc.state,
+    })
     /**
      * The read-only state of the signaling server.
      * @type {SignalingState}
@@ -303,7 +324,8 @@ export class WebGroup {
     Reflect.defineProperty(this, 'onSignalingStateChange', {
       configurable: true,
       enumerable: true,
-      get: () => (wc.onSignalingStateChange.name === 'none' ? undefined : wc.onSignalingStateChange),
+      get: () =>
+        wc.onSignalingStateChange.name === 'none' ? undefined : wc.onSignalingStateChange,
       set: (handler: (state: SignalingState) => void) => {
         if (typeof handler !== 'function') {
           wc.onSignalingStateChange = function none() {}

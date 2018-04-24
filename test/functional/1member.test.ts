@@ -77,7 +77,7 @@ describe('1 member', () => {
     })
 
     /** @test {WebGroup#join} */
-    describe('joining', () => {
+    fdescribe('joining', () => {
       beforeEach(() => {
         wg1 = new WebGroup(WebGroupOptions)
       })

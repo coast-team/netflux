@@ -2,13 +2,10 @@ syntax = "proto3";
 package webRTCBuilder;
 
 message Message {
-  bool isInitiator = 1;
   oneof type {
-    string offer = 2;
-    string answer = 3;
-    IceCandidate iceCandidate = 4;
-    bool isError = 5;
-    bool isEnd = 6;
+    string offer = 1;
+    string answer = 2;
+    IceCandidate candidate = 3;
   }
 }
 

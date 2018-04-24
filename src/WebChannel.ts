@@ -1,7 +1,9 @@
 import { Subject } from 'rxjs/Subject'
 import { Subscription } from 'rxjs/Subscription'
 
-import { Channel, IIncomingMessage } from '../Channel'
+import { Observable } from 'rxjs/Observable'
+import { Channel } from './Channel'
+import { IStream } from './IStream'
 import {
   generateKey,
   isBrowser,
@@ -11,16 +13,15 @@ import {
   log,
   MAX_KEY_LENGTH,
   randNumbers,
-} from '../misc/Util'
-import { webChannel as proto } from '../proto'
-import { Signaling, SignalingState } from '../Signaling'
-import { WebSocketBuilder } from '../WebSocketBuilder'
-import { ChannelBuilder } from './ChannelBuilder'
-import { IServiceMessage, Service } from './Service'
-import { FullMesh } from './topology/FullMesh'
-import { ITopology, TopologyEnum, TopologyStateEnum } from './topology/Topology'
-import { UserDataType, UserMessage } from './UserMessage'
-import { WebRTCBuilder } from './WebRTCBuilder'
+} from './misc/Util'
+import { IMessage, Message } from './proto'
+import { ChannelBuilder } from './service/channelBuilder/ChannelBuilder'
+import { FullMesh } from './service/topology/FullMesh'
+import { ITopology, TopologyEnum, TopologyStateEnum } from './service/topology/Topology'
+import { UserDataType, UserMessage } from './service/UserMessage'
+import { Signaling, SignalingState } from './Signaling'
+import { WebChannelState } from './WebChannelState'
+import { WebSocketBuilder } from './WebSocketBuilder'
 
 export interface IWebChannelOptions {
   topology?: TopologyEnum
@@ -38,12 +39,11 @@ export const defaultOptions: IWebChannelOptions = {
   autoRejoin: true,
 }
 
-export enum WebChannelState {
-  JOINING,
-  JOINED,
-  LEAVING,
-  LEFT,
+export interface InWcMsg extends Message {
+  channel: Channel
 }
+
+export type OutWcMessage = IMessage
 
 /**
  * This class is an API starting point. It represents a group of collaborators
@@ -53,73 +53,30 @@ export enum WebChannelState {
  * preserving the current `WebChannel` structure (network topology).
  * [[include:installation.md]]
  */
-export class WebChannel extends Service<proto.IMessage, proto.Message> {
-  public static readonly SERVICE_ID = 7
-  /**
-   * An array of all peer ids except yours.
-   */
-  readonly members: number[]
+export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
+  public readonly STREAM_ID = 2
+  public readonly members: number[]
+  public topology: TopologyEnum
+  public id: number
+  public myId: number
+  public key: string
+  public autoRejoin: boolean
+  public rtcConfiguration: RTCConfiguration
+  public state: WebChannelState
 
-  /**
-   * Topology id.
-   */
-  topology: TopologyEnum
+  public onSignalingStateChange: (state: SignalingState) => void
+  public onStateChange: (state: WebChannelState) => void
+  public onMemberJoin: (id: number) => void
+  public onMemberLeave: (id: number) => void
+  public onMessage: (id: number, msg: UserDataType) => void
 
-  /**
-   * WebChannel id.
-   */
-  id: number
+  public webSocketBuilder: WebSocketBuilder
+  public channelBuilder: ChannelBuilder
+  public topologyService: ITopology
+  public signaling: Signaling
+  public userMsg: UserMessage
+  public streamSubject: Subject<InWcMsg>
 
-  /**
-   * Your id as a peer in the network.
-   */
-  myId: number
-
-  /**
-   * Unique string mandatory to join a network.
-   */
-  key: string
-
-  /**
-   * If true, when the connection with Signaling is closed, will continuously
-   * trying to reconnect to Signaling until succeed in order to join the network.
-   */
-  autoRejoin: boolean
-
-  /**
-   * Thi handler is called each time the state of Signaling server changes.
-   */
-  onSignalingStateChange: (state: SignalingState) => void
-
-  /**
-   * Thi handler is called each time the state of the network changes.
-   */
-  onStateChange: (state: WebChannelState) => void
-
-  /**
-   * This handler is called when a new peer has joined the network.
-   */
-  onMemberJoin: (id: number) => void
-
-  /**
-   * This handler is called when a peer hes left the network.
-   */
-  onMemberLeave: (id: number) => void
-
-  /**
-   *  This handler is called when a message has been received from the network.
-   */
-  onMessage: (id: number, msg: UserDataType) => void
-
-  serviceMessageSubject: Subject<IIncomingMessage>
-  webRTCBuilder: WebRTCBuilder
-  webSocketBuilder: WebSocketBuilder
-  channelBuilder: ChannelBuilder
-  topologyService: ITopology
-  state: WebChannelState
-  signaling: Signaling
-
-  private userMsg: UserMessage
   private isRejoinDisabled: boolean
   private topologySub: Subscription
   private rejoinTimer: any
@@ -130,8 +87,7 @@ export class WebChannel extends Service<proto.IMessage, proto.Message> {
     rtcConfiguration = defaultOptions.rtcConfiguration,
     autoRejoin = defaultOptions.autoRejoin,
   }: IWebChannelOptions = {}) {
-    super(WebChannel.SERVICE_ID, proto.Message)
-    this.wc = this
+    this.streamSubject = new Subject()
 
     // PUBLIC MEMBERS
     this.topology = topology
@@ -140,6 +96,7 @@ export class WebChannel extends Service<proto.IMessage, proto.Message> {
     this.members = [this.myId]
     this.key = ''
     this.autoRejoin = autoRejoin
+    this.rtcConfiguration = rtcConfiguration
 
     // PUBLIC EVENT HANDLERS
     this.onMemberJoin = function none() {}
@@ -154,7 +111,6 @@ export class WebChannel extends Service<proto.IMessage, proto.Message> {
 
     // Signaling init
     this.signaling = new Signaling(this, signalingServer)
-    this.signaling.onChannel.subscribe((ch) => this.initChannel(ch))
     this.signaling.onState.subscribe((state: SignalingState) => {
       log.signalingState(SignalingState[state], this.myId)
       this.onSignalingStateChange(state)
@@ -175,48 +131,36 @@ export class WebChannel extends Service<proto.IMessage, proto.Message> {
     })
 
     // Services init
-    this.serviceMessageSubject = new Subject()
-    super.setupServiceMessage(this.serviceMessageSubject)
-    this.webRTCBuilder = new WebRTCBuilder(this, rtcConfiguration)
     this.webSocketBuilder = new WebSocketBuilder(this)
     this.channelBuilder = new ChannelBuilder(this)
-    this.onServiceMessage.subscribe(
-      (msg) => this.handleServiceMessage(msg),
-      (err) => console.error('service/WebChannel inner message error', err)
-    )
 
     // Topology init
     this.setTopology(topology)
-    // FIXME: manage topologyService onState subscription
 
     // Listen to browser events only
     if (isBrowser) {
-      // global.window.addEventListener('offline', () => {
-      //   setTimeout(() => {
-      //     if (!isOnline()) {
-      //       this.internalLeave()
-      //     }
-      //   }, 2000)
-      // })
       global.window.addEventListener('online', () => {
         if (isVisible() && this.state === WebChannelState.LEFT) {
           this.rejoin()
         }
       })
-
       global.window.addEventListener('visibilitychange', () => {
         if (isVisible() && this.state === WebChannelState.LEFT) {
           this.rejoin()
         }
       })
-
       global.window.addEventListener('beforeunload', () => this.internalLeave())
     }
   }
 
-  /**
-   * Join the network via a key provided by one of the network member or a `Channel`.
-   */
+  get messageFromStream(): Observable<InWcMsg> {
+    return this.streamSubject.asObservable()
+  }
+
+  sendOverStream(msg: OutWcMessage) {
+    this.topologyService.sendTo(msg)
+  }
+
   join(key: string = generateKey()): void {
     if (typeof key !== 'string') {
       throw new Error(`Failed to join: the key type "${typeof key}" is not a "string"`)
@@ -241,26 +185,16 @@ export class WebChannel extends Service<proto.IMessage, proto.Message> {
     }
   }
 
-  /**
-   * Invite a server peer to join the network.
-   */
   invite(url: string): void {
     if (isURL(url)) {
       this.webSocketBuilder
-        .connect(`${url}/invite?wcId=${this.id}&senderId=${this.myId}`)
-        .then((connection) =>
-          this.initChannel(this.wc.channelBuilder.createChannel(connection as WebSocket))
-        )
-        .catch((err) => console.error(`Failed to invite the bot ${url}: ${err.message}`))
+        .connectToInvite(url)
+        .catch((err) => log.webgroup(`Failed to invite the bot ${url}: ${err.message}`))
     } else {
       throw new Error(`Failed to invite a bot: ${url} is not a valid URL`)
     }
   }
 
-  /**
-   * Leave the network which means close channels with all peers and connection
-   * with Signaling server.
-   */
   leave() {
     if (this.state !== WebChannelState.LEAVING && this.state !== WebChannelState.LEFT) {
       this.setState(WebChannelState.LEAVING)
@@ -271,9 +205,6 @@ export class WebChannel extends Service<proto.IMessage, proto.Message> {
     }
   }
 
-  /**
-   * Broadcast a message to the network.
-   */
   send(data: UserDataType): void {
     if (this.members.length !== 1) {
       for (const chunk of this.userMsg.encodeUserMessage(data)) {
@@ -287,13 +218,10 @@ export class WebChannel extends Service<proto.IMessage, proto.Message> {
     }
   }
 
-  /**
-   * Send a message to a particular peer in the network.
-   */
   sendTo(id: number, data: UserDataType): void {
     if (this.members.length !== 1) {
       for (const chunk of this.userMsg.encodeUserMessage(data)) {
-        this.wc.topologyService.sendTo({
+        this.topologyService.sendTo({
           senderId: this.myId,
           recipientId: id,
           serviceId: UserMessage.SERVICE_ID,
@@ -317,109 +245,12 @@ export class WebChannel extends Service<proto.IMessage, proto.Message> {
     }
   }
 
-  /**
-   * Message handler. All messages arrive here first.
-   */
-  onMessageProxy(channel: Channel, msg: IIncomingMessage): void {
-    // recipientId values:
-    // 0: broadcast message
-    // 1: is a message to me from a peer who does not know my ID yet
-    if (msg.recipientId === 0 || msg.recipientId === this.myId || msg.recipientId === 1) {
-      // User Message
-      if (msg.serviceId === UserMessage.SERVICE_ID) {
-        const data = this.userMsg.decodeUserMessage(
-          msg.content as Uint8Array,
-          msg.senderId as number
-        )
-        if (data !== undefined) {
-          this.onMessage(msg.senderId as number, data)
-        }
-
-        // Service Message
-      } else {
-        ;(msg as any).channel = channel
-        this.serviceMessageSubject.next(msg)
-      }
-    }
-    if (msg.recipientId !== this.myId && msg.recipientId !== 1) {
-      this.topologyService.forward(msg)
-    }
-  }
-
-  private handleServiceMessage({ channel, senderId, msg }: IServiceMessage<proto.Message>): void {
-    switch (msg.type) {
-      case 'init': {
-        const { topology, wcId, generatedIds, members } = msg.init as proto.InitData
-        // Check whether the intermidiary peer is already a member of your
-        // network (possible when merging two networks (works with FullMesh)).
-        // If it is a case then you are already a member of the network.
-        if (this.members.includes(senderId)) {
-          if (!generatedIds.includes(this.myId)) {
-            this.setState(WebChannelState.LEAVING)
-            console.warn(`Failed merge networks: my members contain intermediary peer id,
-            but my id is not included into the intermediary peer members`)
-            channel.closeQuietly()
-            this.topologyService.leave()
-            return
-          }
-          if (this.topology !== topology) {
-            this.setState(WebChannelState.LEAVING)
-            console.warn('Failed merge networks: different topologies')
-            channel.closeQuietly()
-            this.topologyService.leave()
-            return
-          }
-          log.webgroup(`I:${this.myId} close connection with intermediary member ${senderId},
-          because already connected with him`)
-          this.setState(WebChannelState.JOINED)
-          channel.closeQuietly()
-        } else {
-          this.setTopology(topology)
-          this.id = wcId
-          channel.id = senderId
-          channel.encodeAndSend({
-            recipientId: channel.id,
-            serviceId: WebChannel.SERVICE_ID,
-            content: super.encode({ initOk: true }),
-          })
-          this.topologyService.initJoining(channel, members)
-        }
-        break
-      }
-      case 'initOk': {
-        channel.id = senderId
-        this.topologyService.addJoining(channel)
-        break
-      }
-      default:
-        throw new Error(`Unknown message type: "${msg.type}"`)
-    }
-  }
-
   private setState(state: WebChannelState): void {
     if (this.state !== state) {
       log.webGroupState(WebChannelState[state], this.myId)
       this.state = state
       this.onStateChange(state)
     }
-  }
-
-  /**
-   * Delegate adding a new peer in the network to topology.
-   */
-  private initChannel(ch: Channel): void {
-    ch.encodeAndSend({
-      recipientId: 1,
-      serviceId: WebChannel.SERVICE_ID,
-      content: super.encode({
-        init: {
-          topology: this.topology,
-          wcId: this.id,
-          generatedIds: this.members,
-          members: this.members,
-        },
-      }),
-    })
   }
 
   private setTopology(topology: TopologyEnum): void {

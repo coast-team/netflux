@@ -199,127 +199,6 @@ export namespace userMessage {
     }
 }
 
-/** Namespace webChannel. */
-export namespace webChannel {
-
-    /** Properties of a Message. */
-    interface IMessage {
-
-        /** Message init */
-        init?: (webChannel.IInitData|null);
-
-        /** Message initOk */
-        initOk?: (boolean|null);
-    }
-
-    /** Represents a Message. */
-    class Message implements IMessage {
-
-        /**
-         * Constructs a new Message.
-         * @param [properties] Properties to set
-         */
-        constructor(properties?: webChannel.IMessage);
-
-        /** Message init. */
-        public init?: (webChannel.IInitData|null);
-
-        /** Message initOk. */
-        public initOk: boolean;
-
-        /** Message type. */
-        public type?: ("init"|"initOk");
-
-        /**
-         * Creates a new Message instance using the specified properties.
-         * @param [properties] Properties to set
-         * @returns Message instance
-         */
-        public static create(properties?: webChannel.IMessage): webChannel.Message;
-
-        /**
-         * Encodes the specified Message message. Does not implicitly {@link webChannel.Message.verify|verify} messages.
-         * @param message Message message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encode(message: webChannel.IMessage, writer?: $protobuf.Writer): $protobuf.Writer;
-
-        /**
-         * Decodes a Message message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
-         * @returns Message
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): webChannel.Message;
-    }
-
-    /** Properties of an InitData. */
-    interface IInitData {
-
-        /** InitData topology */
-        topology?: (number|null);
-
-        /** InitData wcId */
-        wcId?: (number|null);
-
-        /** InitData generatedIds */
-        generatedIds?: (number[]|null);
-
-        /** InitData members */
-        members?: (number[]|null);
-    }
-
-    /** Represents an InitData. */
-    class InitData implements IInitData {
-
-        /**
-         * Constructs a new InitData.
-         * @param [properties] Properties to set
-         */
-        constructor(properties?: webChannel.IInitData);
-
-        /** InitData topology. */
-        public topology: number;
-
-        /** InitData wcId. */
-        public wcId: number;
-
-        /** InitData generatedIds. */
-        public generatedIds: number[];
-
-        /** InitData members. */
-        public members: number[];
-
-        /**
-         * Creates a new InitData instance using the specified properties.
-         * @param [properties] Properties to set
-         * @returns InitData instance
-         */
-        public static create(properties?: webChannel.IInitData): webChannel.InitData;
-
-        /**
-         * Encodes the specified InitData message. Does not implicitly {@link webChannel.InitData.verify|verify} messages.
-         * @param message InitData message or plain object to encode
-         * @param [writer] Writer to encode to
-         * @returns Writer
-         */
-        public static encode(message: webChannel.IInitData, writer?: $protobuf.Writer): $protobuf.Writer;
-
-        /**
-         * Decodes an InitData message from the specified reader or buffer.
-         * @param reader Reader or buffer to decode from
-         * @param [length] Message length if known beforehand
-         * @returns InitData
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): webChannel.InitData;
-    }
-}
-
 /** Namespace channelBuilder. */
 export namespace channelBuilder {
 
@@ -443,6 +322,9 @@ export namespace channelBuilder {
         /** PeerInfo wss */
         wss?: (string|null);
 
+        /** PeerInfo wcId */
+        wcId?: (number|null);
+
         /** PeerInfo wsSupported */
         wsSupported?: (boolean|null);
 
@@ -470,6 +352,9 @@ export namespace channelBuilder {
 
         /** PeerInfo wss. */
         public wss: string;
+
+        /** PeerInfo wcId. */
+        public wcId: number;
 
         /** PeerInfo wsSupported. */
         public wsSupported: boolean;
@@ -631,23 +516,14 @@ export namespace webRTCBuilder {
     /** Properties of a Message. */
     interface IMessage {
 
-        /** Message isInitiator */
-        isInitiator?: (boolean|null);
-
         /** Message offer */
         offer?: (string|null);
 
         /** Message answer */
         answer?: (string|null);
 
-        /** Message iceCandidate */
-        iceCandidate?: (webRTCBuilder.IIceCandidate|null);
-
-        /** Message isError */
-        isError?: (boolean|null);
-
-        /** Message isEnd */
-        isEnd?: (boolean|null);
+        /** Message candidate */
+        candidate?: (webRTCBuilder.IIceCandidate|null);
     }
 
     /** Represents a Message. */
@@ -659,26 +535,17 @@ export namespace webRTCBuilder {
          */
         constructor(properties?: webRTCBuilder.IMessage);
 
-        /** Message isInitiator. */
-        public isInitiator: boolean;
-
         /** Message offer. */
         public offer: string;
 
         /** Message answer. */
         public answer: string;
 
-        /** Message iceCandidate. */
-        public iceCandidate?: (webRTCBuilder.IIceCandidate|null);
-
-        /** Message isError. */
-        public isError: boolean;
-
-        /** Message isEnd. */
-        public isEnd: boolean;
+        /** Message candidate. */
+        public candidate?: (webRTCBuilder.IIceCandidate|null);
 
         /** Message type. */
-        public type?: ("offer"|"answer"|"iceCandidate"|"isError"|"isEnd");
+        public type?: ("offer"|"answer"|"candidate");
 
         /**
          * Creates a new Message instance using the specified properties.
@@ -764,6 +631,127 @@ export namespace webRTCBuilder {
     }
 }
 
+/** Namespace channel. */
+export namespace channel {
+
+    /** Properties of a Message. */
+    interface IMessage {
+
+        /** Message initPing */
+        initPing?: (channel.IData|null);
+
+        /** Message initPong */
+        initPong?: (number|null);
+    }
+
+    /** Represents a Message. */
+    class Message implements IMessage {
+
+        /**
+         * Constructs a new Message.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: channel.IMessage);
+
+        /** Message initPing. */
+        public initPing?: (channel.IData|null);
+
+        /** Message initPong. */
+        public initPong: number;
+
+        /** Message type. */
+        public type?: ("initPing"|"initPong");
+
+        /**
+         * Creates a new Message instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns Message instance
+         */
+        public static create(properties?: channel.IMessage): channel.Message;
+
+        /**
+         * Encodes the specified Message message. Does not implicitly {@link channel.Message.verify|verify} messages.
+         * @param message Message message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: channel.IMessage, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a Message message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns Message
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): channel.Message;
+    }
+
+    /** Properties of a Data. */
+    interface IData {
+
+        /** Data topology */
+        topology?: (number|null);
+
+        /** Data wcId */
+        wcId?: (number|null);
+
+        /** Data senderId */
+        senderId?: (number|null);
+
+        /** Data members */
+        members?: (number[]|null);
+    }
+
+    /** Represents a Data. */
+    class Data implements IData {
+
+        /**
+         * Constructs a new Data.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: channel.IData);
+
+        /** Data topology. */
+        public topology: number;
+
+        /** Data wcId. */
+        public wcId: number;
+
+        /** Data senderId. */
+        public senderId: number;
+
+        /** Data members. */
+        public members: number[];
+
+        /**
+         * Creates a new Data instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns Data instance
+         */
+        public static create(properties?: channel.IData): channel.Data;
+
+        /**
+         * Encodes the specified Data message. Does not implicitly {@link channel.Data.verify|verify} messages.
+         * @param message Data message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: channel.IData, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a Data message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns Data
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): channel.Data;
+    }
+}
+
 /** Namespace signaling. */
 export namespace signaling {
 
@@ -845,14 +833,11 @@ export namespace signaling {
         /** Content id */
         id?: (number|null);
 
+        /** Content unsubscribe */
+        unsubscribe?: (boolean|null);
+
         /** Content data */
         data?: (Uint8Array|null);
-
-        /** Content isError */
-        isError?: (boolean|null);
-
-        /** Content isEnd */
-        isEnd?: (boolean|null);
     }
 
     /** Represents a Content. */
@@ -867,17 +852,11 @@ export namespace signaling {
         /** Content id. */
         public id: number;
 
+        /** Content unsubscribe. */
+        public unsubscribe: boolean;
+
         /** Content data. */
         public data: Uint8Array;
-
-        /** Content isError. */
-        public isError: boolean;
-
-        /** Content isEnd. */
-        public isEnd: boolean;
-
-        /** Content type. */
-        public type?: ("data"|"isError"|"isEnd");
 
         /**
          * Creates a new Content instance using the specified properties.

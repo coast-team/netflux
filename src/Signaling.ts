@@ -1,28 +1,23 @@
 import { Observable } from 'rxjs/Observable'
-import { filter, pluck } from 'rxjs/operators'
 import { Subject } from 'rxjs/Subject'
 
-import { Channel } from './Channel'
-import { log } from './misc/Util'
-import { signaling as sigProto } from './proto'
-import { WebChannel } from './service/WebChannel'
+import { IStream } from './IStream'
+import { isWebSocketSupported, log } from './misc/Util'
+import { IMessage, Message, signaling as proto } from './proto'
+import { WebChannel } from './WebChannel'
 
-/* tslint:disable:variable-name */
-
-export interface IWebRTCStream {
-  message: Observable<sigProto.Content>
-  send: (msg: sigProto.IContent) => void
-}
+export type InSigMsg = Message
+export type OutSigMsg = IMessage
 
 const MAXIMUM_MISSED_HEARTBEAT = 3
 const HEARTBEAT_INTERVAL = 5000
 
 /* WebSocket error codes */
 const HEARTBEAT_ERROR_CODE = 4002
-const MESSAGE_ERROR_CODE = 4010
+// const MESSAGE_ERROR_CODE = 4010
 
 /* Preconstructed messages */
-const heartbeatMsg = sigProto.Message.encode(sigProto.Message.create({ heartbeat: true })).finish()
+const heartbeatMsg = proto.Message.encode(proto.Message.create({ heartbeat: true })).finish()
 
 export enum SignalingState {
   CONNECTING,
@@ -32,42 +27,60 @@ export enum SignalingState {
   CLOSED,
 }
 
+// export enum SignalingState {
+//   CONNECTING,
+//   CHECKING,
+//   CONNECTED,
+//   CLOSING,
+//   CLOSED
+// }
+
 /**
  * This class represents a door of the `WebChannel` for the current peer. If the door
  * is open, then clients can join the `WebChannel` through this peer. There are as
  * many doors as peers in the `WebChannel` and each of them can be closed or opened.
  */
-export class Signaling {
+export class Signaling implements IStream<OutSigMsg, InSigMsg> {
+  public readonly STREAM_ID = 1
   public url: string
   public state: SignalingState
 
   private wc: WebChannel
   private stateSubject: Subject<SignalingState>
-  private channelSubject: Subject<Channel>
   private ws: WebSocket
-  private wsObservable: Observable<sigProto.Message>
-  private completeWs: () => void
+  private timeout: NodeJS.Timer
+  private streamSubject: Subject<InSigMsg>
+
+  // Heartbeat
   private heartbeatInterval: any
   private missedHeartbeat: number
 
   constructor(wc: WebChannel, url: string) {
-    // public
+    this.wc = wc
     this.url = url
     this.state = SignalingState.CLOSED
 
-    // private
-    this.wc = wc
-    this.completeWs = () => {}
+    this.streamSubject = new Subject()
     this.stateSubject = new Subject<SignalingState>()
-    this.channelSubject = new Subject<Channel>()
+  }
+
+  get messageFromStream(): Observable<InSigMsg> {
+    return this.streamSubject.asObservable()
+  }
+
+  sendOverStream(msg: OutSigMsg) {
+    log.signaling(this.wc.myId + ' Forward message', msg)
+    this.send({
+      content: {
+        id: msg.recipientId,
+        unsubscribe: msg.content === undefined,
+        data: Message.encode(Message.create(msg)).finish(),
+      },
+    })
   }
 
   get onState(): Observable<SignalingState> {
     return this.stateSubject.asObservable()
-  }
-
-  get onChannel(): Observable<Channel> {
-    return this.channelSubject.asObservable()
   }
 
   /**
@@ -75,45 +88,50 @@ export class Signaling {
    * to join new peers to the network.
    */
   open(): void {
-    if (this.state === SignalingState.CONNECTED) {
-      this.send({ stable: true })
-      this.setState(SignalingState.STABLE)
+    this.send({ stable: true })
+    if (this.state === SignalingState.CONNECTING) {
+      this.setState(SignalingState.CONNECTED)
     }
+    this.setState(SignalingState.STABLE)
   }
 
   join(key: string): void {
-    if (this.state !== SignalingState.CLOSING && this.state !== SignalingState.CLOSED) {
-      this.ws.onclose = () => {}
-      this.ws.onmessage = () => {}
-      this.ws.onerror = () => {}
-      clearInterval(this.heartbeatInterval)
-      this.missedHeartbeat = 0
-      this.completeWs()
-      this.ws.close()
-    }
-    this.setState(SignalingState.CONNECTING)
-    this.wc.webSocketBuilder
-      .connect(this.getFullURL(key))
-      .then((ws) => {
-        this.ws = ws as WebSocket
-        this.wsObservable = this.createObservable(this.ws)
+    log.signaling('join', key)
+    if (isWebSocketSupported()) {
+      if (this.state !== SignalingState.CLOSING && this.state !== SignalingState.CLOSED) {
+        this.ws.onclose = () => {}
+        this.ws.onmessage = () => {}
+        this.ws.onerror = () => {}
+        clearInterval(this.heartbeatInterval)
+        clearTimeout(this.timeout)
+        this.missedHeartbeat = 0
+        this.close()
+      }
+      this.setState(SignalingState.CONNECTING)
+      this.ws = new global.WebSocket(this.url.endsWith('/') ? this.url + key : this.url + '/' + key)
+      this.ws.binaryType = 'arraybuffer'
+      this.timeout = setTimeout(() => {
+        if (this.ws.readyState !== this.ws.OPEN) {
+          log.signaling(`Failed to connect to Signaling server ${this.url}: connection timeout`)
+          this.close()
+        }
+      }, 10000)
+      this.ws.onopen = () => {
+        log.signaling('WebSocket OPENED', key)
+        clearTimeout(this.timeout)
         this.startHeartbeat()
-        this.wsObservable.subscribe((msg) => {
-          switch (msg.type) {
-            case 'heartbeat':
-              this.missedHeartbeat = 0
-              break
-            case 'isFirst':
-              if (msg.isFirst) {
-                this.setState(SignalingState.STABLE)
-              } else {
-                this.connectOverSignaling()
-              }
-              break
-          }
-        })
-      })
-      .catch(() => this.setState(SignalingState.CLOSED))
+      }
+      this.ws.onerror = (err) => log.signaling(`WebSocket ERROR`, err)
+      this.ws.onclose = (closeEvt) => {
+        log.signaling('WebSocket CLOSED', closeEvt)
+        this.setState(SignalingState.CLOSED)
+      }
+      this.ws.onmessage = ({ data }: { data: ArrayBuffer }) => this.handleMessage(data)
+    } else {
+      throw new Error(
+        'Failed to join over Signaling: WebSocket is not supported by your environment'
+      )
+    }
   }
 
   /**
@@ -128,21 +146,42 @@ export class Signaling {
     }
   }
 
-  private connectOverSignaling() {
-    if (this.ws.readyState === WebSocket.OPEN) {
-      this.wc.webRTCBuilder
-        .connectOverSignaling(this.getWebRTCStream())
-        .then(() => this.setState(SignalingState.CONNECTED))
-        .catch(() => this.send({ tryAnother: true }))
+  private handleMessage(bytes: ArrayBuffer) {
+    const msg = proto.Message.decode(new Uint8Array(bytes))
+    switch (msg.type) {
+      case 'heartbeat':
+        this.missedHeartbeat = 0
+        break
+      case 'isFirst':
+        if (msg.isFirst) {
+          this.setState(SignalingState.STABLE)
+        } else {
+          this.wc.channelBuilder
+            .connectOverSignaling()
+            .then(() => this.setState(SignalingState.CONNECTED))
+            .catch((err) => this.send({ tryAnother: true }))
+        }
+        break
+      case 'content': {
+        const { data, id } = msg.content as proto.Content
+        const streamMessage = Message.decode(data)
+        streamMessage.senderId = id
+        log.signaling('StreamMessage RECEIVED: ', streamMessage)
+        this.streamSubject.next(streamMessage)
+        break
+      }
     }
   }
 
   private setState(state: SignalingState) {
     if (this.state !== state) {
-      this.state = state
-      this.stateSubject.next(state)
-      if (state === SignalingState.STABLE) {
-        this.wc.webRTCBuilder.onChannelFromSignaling(this.getWebRTCStream()).subscribe((ch) => this.channelSubject.next(ch))
+      if (
+        state !== SignalingState.CONNECTED ||
+        (state === SignalingState.CONNECTED && this.state !== SignalingState.STABLE)
+      ) {
+        log.signaling('State is ', SignalingState[state])
+        this.state = state
+        this.stateSubject.next(state)
       }
     }
   }
@@ -165,35 +204,11 @@ export class Signaling {
     }, HEARTBEAT_INTERVAL)
   }
 
-  private createObservable(ws: WebSocket): Observable<sigProto.Message> {
-    const subject = new Subject()
-    this.completeWs = () => subject.complete()
-    ws.binaryType = 'arraybuffer'
-    ws.onmessage = (evt) => {
-      try {
-        subject.next(sigProto.Message.decode(new Uint8Array(evt.data)))
-      } catch (err) {
-        ws.close(MESSAGE_ERROR_CODE, err.message)
-      }
-    }
-    ws.onerror = (err) => subject.error(err)
-    ws.onclose = (closeEvt) => {
-      clearInterval(this.heartbeatInterval)
-      this.missedHeartbeat = 0
-      this.setState(SignalingState.CLOSED)
-      subject.complete()
-      log.signaling(`Connection with Signaling '${this.url}' closed: ${closeEvt.code}: ${closeEvt.reason}`)
-    }
-    return subject.asObservable() as Observable<sigProto.Message>
-  }
-
-  private send(msg: sigProto.IMessage) {
-    if (this.ws.readyState === WebSocket.OPEN) {
-      try {
-        this.ws.send(sigProto.Message.encode(sigProto.Message.create(msg)).finish())
-      } catch (err) {
-        log.signaling('Failed send to Signaling: ' + err.message)
-      }
+  private send(msg: proto.IMessage) {
+    try {
+      this.ws.send(proto.Message.encode(proto.Message.create(msg)).finish())
+    } catch (err) {
+      log.signaling('Failed send to Signaling', err)
     }
   }
 
@@ -204,21 +219,6 @@ export class Signaling {
       } catch (err) {
         log.signaling('Failed send to Signaling: ' + err.message)
       }
-    }
-  }
-
-  private getWebRTCStream(): IWebRTCStream {
-    return {
-      message: this.wsObservable.pipe(filter(({ type }) => type === 'content'), pluck('content')),
-      send: (m) => this.send({ content: m }),
-    }
-  }
-
-  private getFullURL(params: string) {
-    if (this.url.endsWith('/')) {
-      return this.url + params
-    } else {
-      return this.url + '/' + params
     }
   }
 }

@@ -66,17 +66,17 @@ export function equal(array1: number[], array2: number[]) {
 }
 
 /**
- * Indicates whether WebRTC and RTCDataChannel are supported by the environment.
- */
-export function isWebRTCSupported() {
-  return !!global.RTCPeerConnection && 'createDataChannel' in global.RTCPeerConnection.prototype
-}
-
-/**
  * Indicates whether WebSocket is supported by the environment.
  */
 export function isWebSocketSupported() {
   return !!global.WebSocket
+}
+
+/**
+ * Indicates whether WebRTC & RTCDataChannel is supported by the environment.
+ */
+export function isWebRTCSupported() {
+  return !!global.RTCPeerConnection && 'createDataChannel' in global.RTCPeerConnection.prototype
 }
 
 export const MAX_KEY_LENGTH = 512
@@ -212,7 +212,7 @@ export function setLogLevel(levels: LogLevel[]) {
     log.signaling = () => {}
   }
 
-  // Signaling logs
+  // ChannelBuilder logs
   if (logLevels.includes(LogLevel.CHANNEL_BUILDER)) {
     log.channelBuilder = (msg: string, ...rest: any[]) => {
       if (rest.length === 0) {

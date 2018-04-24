@@ -1,10 +1,10 @@
 syntax = "proto3";
 
 import "service/userMessage.proto";
-import "service/webChannel.proto";
 import "service/channelBuilder.proto";
 import "service/topology/fullMesh.proto";
 import "service/webRTCBuilder.proto";
+import "channel.proto";
 import "signaling.proto";
 
 message Message {

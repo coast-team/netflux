@@ -1,0 +1,16 @@
+syntax = "proto3";
+package channel;
+
+message Message {
+  oneof type {
+    Data initPing = 1;
+    uint32 initPong = 2; // The joining peer id
+  }
+}
+
+message Data {
+  uint32 topology = 1;
+  uint32 wcId = 2;
+  uint32 senderId = 3; // The member peer id
+  repeated uint32 members = 4;
+}
