@@ -41,18 +41,20 @@ export class Signaling implements IStream<OutSigMsg, InSigMsg> {
 
   private wc: WebChannel
   private stateSubject: Subject<SignalingState>
-  private ws: WebSocket
-  private timeout: NodeJS.Timer
+  private ws: WebSocket | undefined
+  private connectionTimeout: NodeJS.Timer | undefined
   private streamSubject: Subject<InSigMsg>
 
   // Heartbeat
-  private heartbeatInterval: any
+  private heartbeatInterval: NodeJS.Timer | undefined
   private missedHeartbeat: number
 
   constructor(wc: WebChannel, url: string) {
     this.wc = wc
     this.url = url
     this.state = SignalingState.CLOSED
+    this.connected = false
+    this.missedHeartbeat = 0
 
     this.streamSubject = new Subject()
     this.stateSubject = new Subject<SignalingState>()
@@ -89,21 +91,22 @@ export class Signaling implements IStream<OutSigMsg, InSigMsg> {
       this.setState(SignalingState.CONNECTING)
       this.ws = new global.WebSocket(this.url.endsWith('/') ? this.url + key : this.url + '/' + key)
       this.ws.binaryType = 'arraybuffer'
-      this.timeout = setTimeout(() => {
-        if (this.ws.readyState !== this.ws.OPEN) {
+      this.connectionTimeout = setTimeout(() => {
+        if (this.ws && this.ws.readyState !== this.ws.OPEN) {
           log.signaling(`Failed to connect to Signaling server ${this.url}: connection timeout`)
           this.close()
         }
       }, 10000)
       this.ws.onopen = () => {
         this.setState(SignalingState.OPEN)
-        clearTimeout(this.timeout)
+        if (this.connectionTimeout) {
+          clearTimeout(this.connectionTimeout)
+        }
         this.startHeartbeat()
       }
       this.ws.onerror = (err) => log.signaling(`WebSocket ERROR`, err)
       this.ws.onclose = (closeEvt) => {
-        clearTimeout(this.timeout)
-        global.clearInterval(this.heartbeatInterval)
+        this.clean()
         this.setState(SignalingState.CLOSED)
       }
       this.ws.onmessage = ({ data }: { data: ArrayBuffer }) => this.handleMessage(data)
@@ -124,6 +127,16 @@ export class Signaling implements IStream<OutSigMsg, InSigMsg> {
         this.ws.close(1000)
       }
     }
+  }
+
+  private clean() {
+    if (this.connectionTimeout) {
+      global.clearTimeout(this.connectionTimeout)
+    }
+    if (this.heartbeatInterval) {
+      global.clearInterval(this.heartbeatInterval)
+    }
+    this.ws = undefined
   }
 
   private handleMessage(bytes: ArrayBuffer) {
@@ -167,24 +180,32 @@ export class Signaling implements IStream<OutSigMsg, InSigMsg> {
         }
         this.heartbeat()
       } catch (err) {
-        global.clearInterval(this.heartbeatInterval)
-        log.signaling('Closing connection with Signaling. Reason: ' + err.message)
-        this.setState(SignalingState.CLOSING)
-        this.ws.close(HEARTBEAT_ERROR_CODE, 'Signaling is not responding')
+        if (this.ws) {
+          if (this.state !== SignalingState.CLOSED) {
+            if (this.state !== SignalingState.CLOSING) {
+              this.clean()
+              log.signaling('Closing connection with Signaling. Reason: ' + err.message)
+              this.ws.close(HEARTBEAT_ERROR_CODE, 'Signaling is not responding')
+            }
+            this.setState(SignalingState.CLOSING)
+          }
+        }
       }
     }, HEARTBEAT_INTERVAL)
   }
 
   private send(msg: proto.IMessage) {
-    try {
-      this.ws.send(proto.Message.encode(proto.Message.create(msg)).finish())
-    } catch (err) {
-      log.signaling('Failed send to Signaling', err)
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      try {
+        this.ws.send(proto.Message.encode(proto.Message.create(msg)).finish())
+      } catch (err) {
+        log.signaling('Failed send to Signaling', err)
+      }
     }
   }
 
   private heartbeat() {
-    if (this.ws.readyState === WebSocket.OPEN) {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       try {
         this.ws.send(heartbeatMsg)
       } catch (err) {
