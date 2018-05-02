@@ -1,7 +1,7 @@
 /// <reference types='jasmine' />
 /* tslint:disable:one-variable-per-declaration */
 import { SignalingState, WebGroup, WebGroupState } from '../../src/index.browser';
-import { areTheSame, BOT_URL, cleanWebGroup, getBotData, Queue, SIGNALING_URL, wait, waitBotJoin } from '../util/helper';
+import { areTheSame, BOT_URL, cleanWebGroup, getBotData, Queue, SIGNALING_URL, wait, waitBotJoin, } from '../util/helper';
 const WebGroupOptions = {
     signalingServer: SIGNALING_URL,
     autoRejoin: false,
@@ -13,75 +13,69 @@ describe('2 members', () => {
         /** @test {WebGroup#join} */
         describe('joining', () => {
             beforeEach((done) => {
-                const queue = new Queue(2);
-                queue.wait().then(() => {
-                    cleanWebGroup(wg1);
-                    cleanWebGroup(wg2);
-                    done();
-                });
                 wg1 = new WebGroup(WebGroupOptions);
                 wg2 = new WebGroup(WebGroupOptions);
-                wg1.onSignalingStateChange = (state) => {
-                    if (state === SignalingState.STABLE) {
-                        queue.pop();
-                    }
-                };
                 wg1.onStateChange = (state) => {
                     if (state === WebGroupState.JOINED) {
-                        queue.pop();
+                        cleanWebGroup(wg1, wg2);
+                        done();
                     }
                 };
                 wg1.join();
             });
             afterEach((done) => {
-                cleanWebGroup(wg1);
-                cleanWebGroup(wg2);
-                const queue = new Queue(2);
-                queue.wait().then(() => {
-                    cleanWebGroup(wg1);
-                    cleanWebGroup(wg2);
+                cleanWebGroup(wg1, wg2);
+                const queue = new Queue(2, () => {
+                    cleanWebGroup(wg1, wg2);
                     done();
                 });
                 if (wg1.state !== WebGroupState.LEFT) {
                     wg1.onStateChange = (state) => {
                         if (state === WebGroupState.LEFT) {
-                            queue.pop();
+                            queue.done();
                         }
                     };
                     wg1.leave();
                 }
                 else {
-                    queue.pop();
+                    queue.done();
                 }
                 if (wg2.state !== WebGroupState.LEFT) {
                     wg2.onStateChange = (state) => {
                         if (state === WebGroupState.LEFT) {
-                            queue.pop();
+                            queue.done();
                         }
                     };
                     wg2.leave();
                 }
                 else {
-                    queue.pop();
+                    queue.done();
                 }
             });
             /** @test {WebGroup#onSignalingStateChange} */
             it('should change the Signaling state', (done) => {
                 let called1 = 0, called2 = 0;
                 const states = [];
-                const expectedStates = [SignalingState.CONNECTING, SignalingState.CONNECTED, SignalingState.STABLE];
+                const expectedStates = [
+                    SignalingState.CONNECTING,
+                    SignalingState.OPEN,
+                    SignalingState.CHECKING,
+                    SignalingState.CHECKED,
+                    SignalingState.CHECKING,
+                    SignalingState.CHECKED,
+                ];
                 // Code for peer 1
                 wg1.onSignalingStateChange = () => called1++;
                 // Code for peer 2
                 wg2.onSignalingStateChange = (state) => {
                     states.push(state);
                     called2++;
-                    if (called2 === 3) {
+                    if (called2 === expectedStates.length) {
                         wait(1000).then(() => {
                             expect(called1).toEqual(0);
-                            expect(called2).toEqual(3);
+                            expect(called2).toEqual(expectedStates.length);
                             expect(states).toEqual(expectedStates);
-                            expect(wg2.signalingState).toEqual(SignalingState.STABLE);
+                            expect(wg2.signalingState).toEqual(SignalingState.CHECKED);
                             done();
                         });
                     }
@@ -100,7 +94,7 @@ describe('2 members', () => {
                 wg2.onStateChange = (state) => {
                     states.push(state);
                     called2++;
-                    if (called2 === 2) {
+                    if (called2 === expectedStates.length) {
                         wait(1000).then(() => {
                             expect(called1).toEqual(0);
                             expect(called2).toEqual(2);
@@ -116,41 +110,44 @@ describe('2 members', () => {
             /** @test {WebGroup#onMemberJoin} */
             it('should be notified about new member', (done) => {
                 let called1 = 0, called2 = 0;
-                const queue = new Queue(1);
+                const queue = new Queue(2, () => {
+                    wait(1000).then(() => {
+                        expect(called1).toEqual(1);
+                        expect(called2).toEqual(1);
+                        done();
+                    });
+                });
                 // Code for peer 1
                 wg1.onMemberJoin = (id) => {
                     expect(id).toEqual(wg2.myId);
                     called1++;
-                    queue.pop();
+                    queue.done();
                 };
                 // Code for peer 2
                 wg2.onMemberJoin = (id) => {
                     expect(id).toEqual(wg1.myId);
                     called2++;
-                };
-                wg2.onStateChange = (state) => {
-                    if (state === WebGroupState.JOINED) {
-                        queue
-                            .wait()
-                            .then(() => wait(1000))
-                            .then(() => {
-                            expect(called1).toEqual(1);
-                            expect(called2).toEqual(1);
-                            done();
-                        });
-                    }
+                    queue.done();
                 };
                 // Start joining
                 wg2.join(wg1.key);
             });
             it('should have the same members, key, WebGroup id, topology once joined', (done) => {
-                const queue = new Queue(1);
+                const queue = new Queue(2, () => {
+                    wait(1000).then(() => {
+                        expect(areTheSame(wg2.members, wg1.members)).toBeTruthy();
+                        expect(wg2.id).toEqual(wg1.id);
+                        expect(wg2.key).toEqual(wg1.key);
+                        expect(wg2.topology).toEqual(wg1.topology);
+                        done();
+                    });
+                });
                 // Code for peer 1
                 wg1.onMemberJoin = () => {
                     expect(wg1.members.length).toEqual(2);
                     expect(wg1.members.includes(wg1.myId)).toBeTruthy();
                     expect(wg1.members.includes(wg2.myId)).toBeTruthy();
-                    queue.pop();
+                    queue.done();
                 };
                 // Code for peer 2
                 wg2.onStateChange = (state) => {
@@ -161,16 +158,7 @@ describe('2 members', () => {
                         expect(wg2.id).toEqual(wg1.id);
                         expect(wg2.key).toEqual(wg1.key);
                         expect(wg2.topology).toEqual(wg1.topology);
-                        queue
-                            .wait()
-                            .then(() => wait(1000))
-                            .then(() => {
-                            expect(areTheSame(wg2.members, wg1.members)).toBeTruthy();
-                            expect(wg2.id).toEqual(wg1.id);
-                            expect(wg2.key).toEqual(wg1.key);
-                            expect(wg2.topology).toEqual(wg1.topology);
-                            done();
-                        });
+                        queue.done();
                     }
                 };
                 // Start joining
@@ -178,31 +166,30 @@ describe('2 members', () => {
             });
             /** @test {WebGroup#join} */
             it('should join with the specified key', (done) => {
-                const queue = new Queue(3);
+                const queue = new Queue(3, () => {
+                    wg.leave();
+                    done();
+                });
                 const key = 'ArtIsLongLifeIsShort';
                 const wg = new WebGroup(WebGroupOptions);
                 // Code for peer 1
-                wg.onSignalingStateChange = (state) => {
-                    if (state === SignalingState.STABLE) {
+                wg.onStateChange = (state) => {
+                    if (state === WebGroupState.JOINED) {
                         wg2.join(key);
                     }
                 };
-                wg.onMemberJoin = () => queue.pop();
+                wg.onMemberJoin = () => queue.done();
                 // Code for peer 2
                 wg2.onStateChange = (state) => {
                     if (state === WebGroupState.JOINED) {
                         expect(wg.key).toEqual(key);
                         expect(wg2.key).toEqual(key);
-                        queue.pop();
+                        queue.done();
                     }
                 };
-                wg2.onMemberJoin = () => queue.pop();
+                wg2.onMemberJoin = () => queue.done();
                 // Start joining
                 wg.join(key);
-                queue.wait().then(() => {
-                    wg.leave();
-                    done();
-                });
             });
         });
         describe('should send/receive', () => {
@@ -210,58 +197,53 @@ describe('2 members', () => {
             beforeEach((done) => {
                 called1 = 0;
                 called2 = 0;
-                const queue = new Queue(3);
-                queue.wait().then(() => {
-                    cleanWebGroup(wg1);
-                    cleanWebGroup(wg2);
+                const queue = new Queue(3, () => {
+                    cleanWebGroup(wg1, wg2);
                     done();
                 });
                 wg1 = new WebGroup(WebGroupOptions);
                 wg2 = new WebGroup(WebGroupOptions);
-                wg1.onSignalingStateChange = (state) => {
-                    if (state === SignalingState.STABLE) {
+                wg1.onStateChange = (state) => {
+                    if (state === WebGroupState.JOINED) {
                         wg2.join(wg1.key);
                     }
                 };
-                wg1.onMemberJoin = () => queue.pop();
+                wg1.onMemberJoin = () => queue.done();
                 wg2.onStateChange = (state) => {
                     if (state === WebGroupState.JOINED) {
-                        queue.pop();
+                        queue.done();
                     }
                 };
-                wg2.onMemberJoin = () => queue.pop();
+                wg2.onMemberJoin = () => queue.done();
                 wg1.join();
             });
             afterEach((done) => {
-                cleanWebGroup(wg1);
-                cleanWebGroup(wg2);
-                const queue = new Queue(2);
-                queue.wait().then(() => {
-                    cleanWebGroup(wg1);
-                    cleanWebGroup(wg2);
+                cleanWebGroup(wg1, wg2);
+                const queue = new Queue(2, () => {
+                    cleanWebGroup(wg1, wg2);
                     done();
                 });
                 if (wg1.state !== WebGroupState.LEFT) {
                     wg1.onStateChange = (state) => {
                         if (state === WebGroupState.LEFT) {
-                            queue.pop();
+                            queue.done();
                         }
                     };
                     wg1.leave();
                 }
                 else {
-                    queue.pop();
+                    queue.done();
                 }
                 if (wg2.state !== WebGroupState.LEFT) {
                     wg2.onStateChange = (state) => {
                         if (state === WebGroupState.LEFT) {
-                            queue.pop();
+                            queue.done();
                         }
                     };
                     wg2.leave();
                 }
                 else {
-                    queue.pop();
+                    queue.done();
                 }
             });
             /** @test {WebGroup#send} */
@@ -374,81 +356,74 @@ describe('2 members', () => {
             beforeEach((done) => {
                 called1 = 0;
                 called2 = 0;
-                const queue = new Queue(3);
-                queue.wait().then(() => {
-                    cleanWebGroup(wg1);
-                    cleanWebGroup(wg2);
+                const queue = new Queue(3, () => {
+                    cleanWebGroup(wg1, wg2);
                     done();
                 });
                 wg1 = new WebGroup(WebGroupOptions);
                 wg2 = new WebGroup(WebGroupOptions);
-                wg1.onSignalingStateChange = (state) => {
-                    if (state === SignalingState.STABLE) {
+                wg1.onStateChange = (state) => {
+                    if (state === WebGroupState.JOINED) {
                         wg2.join(wg1.key);
                     }
                 };
-                wg1.onMemberJoin = () => queue.pop();
+                wg1.onMemberJoin = () => queue.done();
                 wg2.onStateChange = (state) => {
                     if (state === WebGroupState.JOINED) {
-                        queue.pop();
+                        queue.done();
                     }
                 };
-                wg2.onMemberJoin = () => queue.pop();
+                wg2.onMemberJoin = () => queue.done();
                 wg1.join();
             });
             afterEach((done) => {
-                cleanWebGroup(wg1);
-                cleanWebGroup(wg2);
-                const queue = new Queue(2);
-                queue.wait().then(() => {
-                    cleanWebGroup(wg1);
-                    cleanWebGroup(wg2);
+                cleanWebGroup(wg1, wg2);
+                const queue = new Queue(2, () => {
+                    cleanWebGroup(wg1, wg2);
                     wait(1000).then(done);
                 });
                 if (wg1.state !== WebGroupState.LEFT) {
                     wg1.onStateChange = (state) => {
                         if (state === WebGroupState.LEFT) {
-                            queue.pop();
+                            queue.done();
                         }
                     };
                     wg1.leave();
                 }
                 else {
-                    queue.pop();
+                    queue.done();
                 }
                 if (wg2.state !== WebGroupState.LEFT) {
                     wg2.onStateChange = (state) => {
                         if (state === WebGroupState.LEFT) {
-                            queue.pop();
+                            queue.done();
                         }
                     };
                     wg2.leave();
                 }
                 else {
-                    queue.pop();
+                    queue.done();
                 }
             });
             /** @test {WebGroup#leave} */
             it('should have no members & an empty key', (done) => {
-                const queue = new Queue(2);
-                queue
-                    .wait()
-                    .then(() => wait(1000))
-                    .then(() => {
-                    expect(wg1.members.length).toEqual(1);
-                    expect(wg1.members.includes(wg1.myId)).toBeTruthy();
-                    expect(wg2.members.length).toEqual(1);
-                    expect(wg2.members.includes(wg2.myId)).toBeTruthy();
-                    expect(wg2.key).toEqual('');
-                    expect(called2).toEqual(1);
-                    expect(wg2.key).toEqual('');
-                    done();
+                const queue = new Queue(2, () => {
+                    wait(1000).then(() => {
+                        expect(wg1.members.length).toEqual(1);
+                        expect(wg1.members.includes(wg1.myId)).toBeTruthy();
+                        expect(wg2.members.length).toEqual(1);
+                        expect(wg2.members.includes(wg2.myId)).toBeTruthy();
+                        expect(wg2.key).toEqual('');
+                        expect(called2).toEqual(1);
+                        expect(wg2.key).toEqual('');
+                        done();
+                    });
                 });
                 // Code for peer 1
                 wg1.onMemberLeave = () => {
                     expect(wg1.members.length).toEqual(1);
                     expect(wg1.members.includes(wg1.myId)).toBeTruthy();
-                    queue.pop();
+                    queue.done();
                 };
                 // Code for peer 2
                 wg2.onStateChange = (state) => {
@@ -457,7 +432,7 @@ describe('2 members', () => {
                         expect(wg2.members.length).toEqual(1);
                         expect(wg2.members.includes(wg2.myId)).toBeTruthy();
                         expect(wg2.key).toEqual('');
-                        queue.pop();
+                        queue.done();
                     }
                 };
                 // Start leaving
@@ -465,8 +440,7 @@ describe('2 members', () => {
             }, 12000);
             /** @test {WebGroup#onMemberLeave} */
             it('should be notified about left member', (done) => {
-                const queue = new Queue(2);
-                queue.wait().then(() => {
+                const queue = new Queue(2, () => {
                     wait(1000).then(() => {
                         expect(called1).toEqual(1);
                         expect(called2).toEqual(1);
@@ -477,13 +451,13 @@ describe('2 members', () => {
                 wg1.onMemberLeave = (id) => {
                     expect(id).toEqual(wg2.myId);
                     called1++;
-                    queue.pop();
+                    queue.done();
                 };
                 // Code for peer 2
                 wg2.onMemberLeave = (id) => {
                     expect(id).toEqual(wg1.myId);
                     called2++;
-                    queue.pop();
+                    queue.done();
                 };
                 // Start leaving
                 wg2.leave();
@@ -545,15 +519,14 @@ describe('2 members', () => {
                     wg1.leave();
                 }
                 else {
-                    cleanWebGroup(wg1);
                     done();
                 }
             });
             /** @test {WebGroup#onSignalingStateChange} */
             it('should not change the Signaling state', (done) => {
                 // Code for peer 1
-                wg1.onSignalingStateChange = (state) => {
-                    if (state === SignalingState.STABLE) {
+                wg1.onStateChange = (state) => {
+                    if (state === WebGroupState.JOINED) {
                         // Start inviting
                         wg1.invite(BOT_URL);
                         // Check bot data
@@ -573,8 +546,8 @@ describe('2 members', () => {
             /** @test {WebGroup#onStateChange} */
             it('should change the WebGroup state', (done) => {
                 // Code for peer 1
-                wg1.onSignalingStateChange = (state) => {
-                    if (state === SignalingState.STABLE) {
+                wg1.onStateChange = (state) => {
+                    if (state === WebGroupState.JOINED) {
                         // Start inviting
                         wg1.invite(BOT_URL);
                         // Check bot data
@@ -595,8 +568,8 @@ describe('2 members', () => {
             it('should be notified about new member', (done) => {
                 let called1 = 0;
                 // Code for peer 1
-                wg1.onSignalingStateChange = (state) => {
-                    if (state === SignalingState.STABLE) {
+                wg1.onStateChange = (state) => {
+                    if (state === WebGroupState.JOINED) {
                         // Start inviting
                         wg1.invite(BOT_URL);
                     }
@@ -622,8 +595,8 @@ describe('2 members', () => {
             });
             it('should have the same members, WebGroup id, topology once joined', (done) => {
                 // Code for peer 1
-                wg1.onSignalingStateChange = (state) => {
-                    if (state === SignalingState.STABLE) {
+                wg1.onStateChange = (state) => {
+                    if (state === WebGroupState.JOINED) {
                         // Start inviting
                         wg1.invite(BOT_URL);
                     }
@@ -650,25 +623,18 @@ describe('2 members', () => {
             let called1;
             beforeEach((done) => {
                 called1 = 0;
-                const queue = new Queue(3);
-                queue.wait().then(() => {
+                const queue = new Queue(2, () => {
                     cleanWebGroup(wg1);
                     done();
                 });
                 wg1 = new WebGroup(WebGroupOptions);
+                wg1.onMemberJoin = () => queue.done();
                 wg1.onStateChange = (state) => {
                     if (state === WebGroupState.JOINED) {
-                        queue.pop();
-                    }
-                };
-                wg1.onMemberJoin = () => queue.pop();
-                wg1.onSignalingStateChange = (state) => {
-                    if (state === SignalingState.STABLE) {
-                        // Start inviting
                         wg1.invite(BOT_URL);
+                        waitBotJoin(wg1.id).then(() => queue.done());
                     }
                 };
-                waitBotJoin(wg1.id).then(() => queue.pop());
                 wg1.join();
             });
             afterEach((done) => {

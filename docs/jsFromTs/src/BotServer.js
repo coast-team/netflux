@@ -1,7 +1,7 @@
-import { Channel } from './Channel';
-import { defaultOptions } from './service/WebChannel';
+// import { log } from './misc/Util'
+import { defaultOptions } from './WebChannel';
 import { wcs, WebGroup } from './WebChannelFacade';
-import { WebSocketBuilder } from './WebSocketBuilder';
+import { Route, WebSocketBuilder } from './WebSocketBuilder';
 const urlLib = require('url');
 const uws = require('uws');
 export class BotServer {
@@ -11,13 +11,11 @@ export class BotServer {
             rtcConfiguration: defaultOptions.rtcConfiguration,
             autoRejoin: false,
         }, }) {
-        // public
         this.wcOptions = Object.assign({}, defaultOptions, { autoRejoin: false }, webGroupOptions);
         this.server = server;
         this.listenUrl = url;
         this.perMessageDeflate = perMessageDeflate;
-        // private
-        this.webGroups = new Set();
+        this.webGroups = new Map();
         this.onWebGroup = function none() { };
         this.onError = function none() { };
         // initialize server
@@ -32,14 +30,6 @@ export class BotServer {
             return `ws://${info.address}:${info.port}`;
         }
     }
-    getWebGroup(id) {
-        for (const wg of this.webGroups) {
-            if (id === wg.id) {
-                return wg;
-            }
-        }
-        return undefined;
-    }
     init() {
         this.webSocketServer = new uws.Server({
             perMessageDeflate: this.perMessageDeflate,
@@ -47,50 +37,67 @@ export class BotServer {
             server: this.server,
         });
         const serverListening = this.server || this.webSocketServer;
-        serverListening.on('listening', () => WebSocketBuilder.listen().next(this.url));
+        serverListening.on('listening', () => WebSocketBuilder.listenUrl.next(this.url));
         this.webSocketServer.on('error', (err) => {
-            WebSocketBuilder.listen().next('');
+            WebSocketBuilder.listenUrl.next('');
             this.onError(err);
         });
         this.webSocketServer.on('connection', (ws) => {
-            const { pathname, query } = urlLib.parse(ws.upgradeReq.url, true);
-            const wcId = Number(query.wcId);
-            let wg = this.getWebGroup(wcId);
-            const senderId = Number(query.senderId);
-            if (pathname.endsWith('/invite')) {
-                if (wg && wg.members.length === 1) {
-                    this.webGroups.delete(wg);
-                }
-                // FIXME: it is possible to create multiple WebChannels with the same ID
-                wg = new WebGroup(this.wcOptions);
-                const wc = wcs.get(wg);
-                wc.id = wcId;
-                this.webGroups.add(wg);
-                this.onWebGroup(wg);
-                new Channel(wc, ws, { id: senderId }); // tslint:disable-line
-            }
-            else if (pathname.endsWith('/internalChannel')) {
-                if (wg !== undefined) {
-                    WebSocketBuilder.newIncomingSocket(wcs.get(wg), ws, senderId);
+            const { route, wcId, senderId } = this.readUrl(ws.upgradeReq.url);
+            let wg = this.webGroups.get(wcId);
+            if (route === Route.INTERNAL) {
+                if (wg) {
+                    const wc = wcs.get(wg);
+                    wc.webSocketBuilder.newInternalWebSocket(ws, senderId);
                 }
                 else {
-                    console.error('Cannot find WebChannel for a new internal channel');
+                    ws.close(4000, 'WebGroup no longer exist');
                 }
+            }
+            else if (route === Route.INVITE || route === Route.JOIN) {
+                if (!wg || wg.members.length === 1) {
+                    wg = new WebGroup(this.wcOptions);
+                    this.webGroups.set(wcId, wg);
+                    this.onWebGroup(wg);
+                }
+                // FIXME: it is possible to create multiple WebChannels with the same ID
+                const wc = wcs.get(wg);
+                wc.id = wcId;
+                if (route === Route.INVITE) {
+                    wc.webSocketBuilder.newInviteWebSocket(ws, senderId);
+                }
+                else {
+                    wc.webSocketBuilder.newJoinWebSocket(ws);
+                }
+            }
+            else {
+                ws.close(4000, 'Unknown route');
             }
         });
     }
     validateConnection(info) {
-        const { pathname, query } = urlLib.parse(info.req.url, true);
-        const wcId = query.wcId ? Number(query.wcId) : undefined;
-        if (pathname.endsWith('/invite')) {
-            if (wcId) {
-                const wg = this.getWebGroup(wcId);
-                return (wg === undefined || wg.members.length === 1) && query.senderId;
-            }
+        const { route, wcId, senderId } = this.readUrl(info.req.url);
+        if (wcId === undefined) {
+            return false;
         }
-        else if (pathname.endsWith('/internalChannel')) {
-            return query.senderId !== undefined && wcId !== undefined && this.getWebGroup(wcId) !== undefined;
+        switch (route) {
+            case Route.INTERNAL:
+                return !!senderId && this.webGroups.has(wcId);
+            case Route.INVITE:
+                const wg = this.webGroups.get(wcId);
+                return (wg === undefined || wg.members.length === 1) && !!senderId;
+            case Route.JOIN:
+                return wg !== undefined && wg.members.length > 1;
+            default:
+                return false;
         }
-        return false;
+    }
+    readUrl(url) {
+        const { pathname, query: { senderId, wcId }, } = urlLib.parse(url, true);
+        return {
+            route: pathname.replace('/', ''),
+            wcId: wcId ? Number(wcId) : undefined,
+            senderId: senderId ? Number(senderId) : undefined,
+        };
     }
 }

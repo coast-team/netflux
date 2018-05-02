@@ -1,6 +1,9 @@
-// setLogLevel(LogLevel.CHANNEL_BUILDER)
+import { LogLevel, setLogLevel } from '../../src/misc/Util';
+setLogLevel([
+    LogLevel.DEBUG,
+]);
 // Main signaling server for all tests
-export const SIGNALING_URL = 'ws://localhost:8111';
+export const SIGNALING_URL = 'ws://localhost:8010';
 // Configuration for bot server
 export const BOT_HOST = 'localhost';
 export const BOT_PORT = 10001;
@@ -46,7 +49,7 @@ function areIdentical(array1, array2) {
     return array1.every((v, i) => v === array2[i]);
 }
 export class Queue {
-    constructor(length) {
+    constructor(length, afterAllDone) {
         this.counter = 0;
         this.promises = [];
         this.resolvers = [];
@@ -55,14 +58,12 @@ export class Queue {
                 this.resolvers.push(() => resolve());
             }));
         }
+        Promise.all(this.promises).then(() => afterAllDone());
     }
-    pop() {
+    done() {
         if (this.counter < this.resolvers.length) {
             this.resolvers[this.counter++]();
         }
-    }
-    wait() {
-        return Promise.all(this.promises);
     }
 }
 export function getBotData(wgId) {
@@ -76,19 +77,28 @@ export function getBotData(wgId) {
     });
 }
 export function waitBotJoin(wgId) {
-    return fetch(`${BOT_FETCH_URL}/waitJoin/${wgId}`).then(async (res) => {
-        if (res.status !== 200) {
-            throw new Error(await res.text());
-        }
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            fetch(`${BOT_FETCH_URL}/waitJoin/${wgId}`)
+                .then(async (res) => {
+                if (res.status !== 200) {
+                    throw new Error(await res.text());
+                }
+            })
+                .then(() => resolve())
+                .catch((err) => reject(err));
+        }, 500);
     });
 }
 export function wait(milliseconds) {
     return new Promise((resolve) => setTimeout(() => resolve(), milliseconds));
 }
-export function cleanWebGroup(wg) {
-    wg.onMemberJoin = undefined;
-    wg.onMemberLeave = undefined;
-    wg.onMessage = undefined;
-    wg.onSignalingStateChange = undefined;
-    wg.onStateChange = undefined;
+export function cleanWebGroup(...wgs) {
+    wgs.forEach((wg) => {
+        wg.onMemberJoin = undefined;
+        wg.onMemberLeave = undefined;
+        wg.onMessage = undefined;
+        wg.onSignalingStateChange = undefined;
+        wg.onStateChange = undefined;
+    });
 }

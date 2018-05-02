@@ -31,10 +31,10 @@
     
   <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/BotServerFacade.js~WebGroupBotServer.html">WebGroupBotServer</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroupState.html">WebGroupState</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.js~LogLevel.html">LogLevel</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.js~SignalingState.html">SignalingState</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.js~Topology.html">Topology</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~LogLevel.html">LogLevel</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~SignalingState.html">SignalingState</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~Topology.html">Topology</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~WebGroupState.html">WebGroupState</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-setLogLevel">setLogLevel</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-DataType">DataType</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupBotServerOptions">WebGroupBotServerOptions</a></span></span></li>
@@ -51,7 +51,7 @@
 <pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">/// &lt;reference types=&apos;jasmine&apos; /&gt;
 /* tslint:disable:one-variable-per-declaration */
 import { SignalingState, WebGroup, WebGroupState } from &apos;../../src/index.browser&apos;;
-import { areTheSame, BOT_URL, cleanWebGroup, getBotData, Queue, SIGNALING_URL, wait, waitBotJoin } from &apos;../util/helper&apos;;
+import { areTheSame, BOT_URL, cleanWebGroup, getBotData, Queue, SIGNALING_URL, wait, waitBotJoin, } from &apos;../util/helper&apos;;
 const WebGroupOptions = {
     signalingServer: SIGNALING_URL,
     autoRejoin: false,
@@ -63,75 +63,69 @@ describe(&apos;2 members&apos;, () =&gt; {
         /** @test {WebGroup#join} */
         describe(&apos;joining&apos;, () =&gt; {
             beforeEach((done) =&gt; {
-                const queue = new Queue(2);
-                queue.wait().then(() =&gt; {
-                    cleanWebGroup(wg1);
-                    cleanWebGroup(wg2);
-                    done();
-                });
                 wg1 = new WebGroup(WebGroupOptions);
                 wg2 = new WebGroup(WebGroupOptions);
-                wg1.onSignalingStateChange = (state) =&gt; {
-                    if (state === SignalingState.STABLE) {
-                        queue.pop();
-                    }
-                };
                 wg1.onStateChange = (state) =&gt; {
                     if (state === WebGroupState.JOINED) {
-                        queue.pop();
+                        cleanWebGroup(wg1, wg2);
+                        done();
                     }
                 };
                 wg1.join();
             });
             afterEach((done) =&gt; {
-                cleanWebGroup(wg1);
-                cleanWebGroup(wg2);
-                const queue = new Queue(2);
-                queue.wait().then(() =&gt; {
-                    cleanWebGroup(wg1);
-                    cleanWebGroup(wg2);
+                cleanWebGroup(wg1, wg2);
+                const queue = new Queue(2, () =&gt; {
+                    cleanWebGroup(wg1, wg2);
                     done();
                 });
                 if (wg1.state !== WebGroupState.LEFT) {
                     wg1.onStateChange = (state) =&gt; {
                         if (state === WebGroupState.LEFT) {
-                            queue.pop();
+                            queue.done();
                         }
                     };
                     wg1.leave();
                 }
                 else {
-                    queue.pop();
+                    queue.done();
                 }
                 if (wg2.state !== WebGroupState.LEFT) {
                     wg2.onStateChange = (state) =&gt; {
                         if (state === WebGroupState.LEFT) {
-                            queue.pop();
+                            queue.done();
                         }
                     };
                     wg2.leave();
                 }
                 else {
-                    queue.pop();
+                    queue.done();
                 }
             });
             /** @test {WebGroup#onSignalingStateChange} */
             it(&apos;should change the Signaling state&apos;, (done) =&gt; {
                 let called1 = 0, called2 = 0;
                 const states = [];
-                const expectedStates = [SignalingState.CONNECTING, SignalingState.CONNECTED, SignalingState.STABLE];
+                const expectedStates = [
+                    SignalingState.CONNECTING,
+                    SignalingState.OPEN,
+                    SignalingState.CHECKING,
+                    SignalingState.CHECKED,
+                    SignalingState.CHECKING,
+                    SignalingState.CHECKED,
+                ];
                 // Code for peer 1
                 wg1.onSignalingStateChange = () =&gt; called1++;
                 // Code for peer 2
                 wg2.onSignalingStateChange = (state) =&gt; {
                     states.push(state);
                     called2++;
-                    if (called2 === 3) {
+                    if (called2 === expectedStates.length) {
                         wait(1000).then(() =&gt; {
                             expect(called1).toEqual(0);
-                            expect(called2).toEqual(3);
+                            expect(called2).toEqual(expectedStates.length);
                             expect(states).toEqual(expectedStates);
-                            expect(wg2.signalingState).toEqual(SignalingState.STABLE);
+                            expect(wg2.signalingState).toEqual(SignalingState.CHECKED);
                             done();
                         });
                     }
@@ -150,7 +144,7 @@ describe(&apos;2 members&apos;, () =&gt; {
                 wg2.onStateChange = (state) =&gt; {
                     states.push(state);
                     called2++;
-                    if (called2 === 2) {
+                    if (called2 === expectedStates.length) {
                         wait(1000).then(() =&gt; {
                             expect(called1).toEqual(0);
                             expect(called2).toEqual(2);
@@ -166,41 +160,44 @@ describe(&apos;2 members&apos;, () =&gt; {
             /** @test {WebGroup#onMemberJoin} */
             it(&apos;should be notified about new member&apos;, (done) =&gt; {
                 let called1 = 0, called2 = 0;
-                const queue = new Queue(1);
+                const queue = new Queue(2, () =&gt; {
+                    wait(1000).then(() =&gt; {
+                        expect(called1).toEqual(1);
+                        expect(called2).toEqual(1);
+                        done();
+                    });
+                });
                 // Code for peer 1
                 wg1.onMemberJoin = (id) =&gt; {
                     expect(id).toEqual(wg2.myId);
                     called1++;
-                    queue.pop();
+                    queue.done();
                 };
                 // Code for peer 2
                 wg2.onMemberJoin = (id) =&gt; {
                     expect(id).toEqual(wg1.myId);
                     called2++;
-                };
-                wg2.onStateChange = (state) =&gt; {
-                    if (state === WebGroupState.JOINED) {
-                        queue
-                            .wait()
-                            .then(() =&gt; wait(1000))
-                            .then(() =&gt; {
-                            expect(called1).toEqual(1);
-                            expect(called2).toEqual(1);
-                            done();
-                        });
-                    }
+                    queue.done();
                 };
                 // Start joining
                 wg2.join(wg1.key);
             });
             it(&apos;should have the same members, key, WebGroup id, topology once joined&apos;, (done) =&gt; {
-                const queue = new Queue(1);
+                const queue = new Queue(2, () =&gt; {
+                    wait(1000).then(() =&gt; {
+                        expect(areTheSame(wg2.members, wg1.members)).toBeTruthy();
+                        expect(wg2.id).toEqual(wg1.id);
+                        expect(wg2.key).toEqual(wg1.key);
+                        expect(wg2.topology).toEqual(wg1.topology);
+                        done();
+                    });
+                });
                 // Code for peer 1
                 wg1.onMemberJoin = () =&gt; {
                     expect(wg1.members.length).toEqual(2);
                     expect(wg1.members.includes(wg1.myId)).toBeTruthy();
                     expect(wg1.members.includes(wg2.myId)).toBeTruthy();
-                    queue.pop();
+                    queue.done();
                 };
                 // Code for peer 2
                 wg2.onStateChange = (state) =&gt; {
@@ -211,16 +208,7 @@ describe(&apos;2 members&apos;, () =&gt; {
                         expect(wg2.id).toEqual(wg1.id);
                         expect(wg2.key).toEqual(wg1.key);
                         expect(wg2.topology).toEqual(wg1.topology);
-                        queue
-                            .wait()
-                            .then(() =&gt; wait(1000))
-                            .then(() =&gt; {
-                            expect(areTheSame(wg2.members, wg1.members)).toBeTruthy();
-                            expect(wg2.id).toEqual(wg1.id);
-                            expect(wg2.key).toEqual(wg1.key);
-                            expect(wg2.topology).toEqual(wg1.topology);
-                            done();
-                        });
+                        queue.done();
                     }
                 };
                 // Start joining
@@ -228,31 +216,30 @@ describe(&apos;2 members&apos;, () =&gt; {
             });
             /** @test {WebGroup#join} */
             it(&apos;should join with the specified key&apos;, (done) =&gt; {
-                const queue = new Queue(3);
+                const queue = new Queue(3, () =&gt; {
+                    wg.leave();
+                    done();
+                });
                 const key = &apos;ArtIsLongLifeIsShort&apos;;
                 const wg = new WebGroup(WebGroupOptions);
                 // Code for peer 1
-                wg.onSignalingStateChange = (state) =&gt; {
-                    if (state === SignalingState.STABLE) {
+                wg.onStateChange = (state) =&gt; {
+                    if (state === WebGroupState.JOINED) {
                         wg2.join(key);
                     }
                 };
-                wg.onMemberJoin = () =&gt; queue.pop();
+                wg.onMemberJoin = () =&gt; queue.done();
                 // Code for peer 2
                 wg2.onStateChange = (state) =&gt; {
                     if (state === WebGroupState.JOINED) {
                         expect(wg.key).toEqual(key);
                         expect(wg2.key).toEqual(key);
-                        queue.pop();
+                        queue.done();
                     }
                 };
-                wg2.onMemberJoin = () =&gt; queue.pop();
+                wg2.onMemberJoin = () =&gt; queue.done();
                 // Start joining
                 wg.join(key);
-                queue.wait().then(() =&gt; {
-                    wg.leave();
-                    done();
-                });
             });
         });
         describe(&apos;should send/receive&apos;, () =&gt; {
@@ -260,58 +247,53 @@ describe(&apos;2 members&apos;, () =&gt; {
             beforeEach((done) =&gt; {
                 called1 = 0;
                 called2 = 0;
-                const queue = new Queue(3);
-                queue.wait().then(() =&gt; {
-                    cleanWebGroup(wg1);
-                    cleanWebGroup(wg2);
+                const queue = new Queue(3, () =&gt; {
+                    cleanWebGroup(wg1, wg2);
                     done();
                 });
                 wg1 = new WebGroup(WebGroupOptions);
                 wg2 = new WebGroup(WebGroupOptions);
-                wg1.onSignalingStateChange = (state) =&gt; {
-                    if (state === SignalingState.STABLE) {
+                wg1.onStateChange = (state) =&gt; {
+                    if (state === WebGroupState.JOINED) {
                         wg2.join(wg1.key);
                     }
                 };
-                wg1.onMemberJoin = () =&gt; queue.pop();
+                wg1.onMemberJoin = () =&gt; queue.done();
                 wg2.onStateChange = (state) =&gt; {
                     if (state === WebGroupState.JOINED) {
-                        queue.pop();
+                        queue.done();
                     }
                 };
-                wg2.onMemberJoin = () =&gt; queue.pop();
+                wg2.onMemberJoin = () =&gt; queue.done();
                 wg1.join();
             });
             afterEach((done) =&gt; {
-                cleanWebGroup(wg1);
-                cleanWebGroup(wg2);
-                const queue = new Queue(2);
-                queue.wait().then(() =&gt; {
-                    cleanWebGroup(wg1);
-                    cleanWebGroup(wg2);
+                cleanWebGroup(wg1, wg2);
+                const queue = new Queue(2, () =&gt; {
+                    cleanWebGroup(wg1, wg2);
                     done();
                 });
                 if (wg1.state !== WebGroupState.LEFT) {
                     wg1.onStateChange = (state) =&gt; {
                         if (state === WebGroupState.LEFT) {
-                            queue.pop();
+                            queue.done();
                         }
                     };
                     wg1.leave();
                 }
                 else {
-                    queue.pop();
+                    queue.done();
                 }
                 if (wg2.state !== WebGroupState.LEFT) {
                     wg2.onStateChange = (state) =&gt; {
                         if (state === WebGroupState.LEFT) {
-                            queue.pop();
+                            queue.done();
                         }
                     };
                     wg2.leave();
                 }
                 else {
-                    queue.pop();
+                    queue.done();
                 }
             });
             /** @test {WebGroup#send} */
@@ -424,81 +406,74 @@ describe(&apos;2 members&apos;, () =&gt; {
             beforeEach((done) =&gt; {
                 called1 = 0;
                 called2 = 0;
-                const queue = new Queue(3);
-                queue.wait().then(() =&gt; {
-                    cleanWebGroup(wg1);
-                    cleanWebGroup(wg2);
+                const queue = new Queue(3, () =&gt; {
+                    cleanWebGroup(wg1, wg2);
                     done();
                 });
                 wg1 = new WebGroup(WebGroupOptions);
                 wg2 = new WebGroup(WebGroupOptions);
-                wg1.onSignalingStateChange = (state) =&gt; {
-                    if (state === SignalingState.STABLE) {
+                wg1.onStateChange = (state) =&gt; {
+                    if (state === WebGroupState.JOINED) {
                         wg2.join(wg1.key);
                     }
                 };
-                wg1.onMemberJoin = () =&gt; queue.pop();
+                wg1.onMemberJoin = () =&gt; queue.done();
                 wg2.onStateChange = (state) =&gt; {
                     if (state === WebGroupState.JOINED) {
-                        queue.pop();
+                        queue.done();
                     }
                 };
-                wg2.onMemberJoin = () =&gt; queue.pop();
+                wg2.onMemberJoin = () =&gt; queue.done();
                 wg1.join();
             });
             afterEach((done) =&gt; {
-                cleanWebGroup(wg1);
-                cleanWebGroup(wg2);
-                const queue = new Queue(2);
-                queue.wait().then(() =&gt; {
-                    cleanWebGroup(wg1);
-                    cleanWebGroup(wg2);
+                cleanWebGroup(wg1, wg2);
+                const queue = new Queue(2, () =&gt; {
+                    cleanWebGroup(wg1, wg2);
                     wait(1000).then(done);
                 });
                 if (wg1.state !== WebGroupState.LEFT) {
                     wg1.onStateChange = (state) =&gt; {
                         if (state === WebGroupState.LEFT) {
-                            queue.pop();
+                            queue.done();
                         }
                     };
                     wg1.leave();
                 }
                 else {
-                    queue.pop();
+                    queue.done();
                 }
                 if (wg2.state !== WebGroupState.LEFT) {
                     wg2.onStateChange = (state) =&gt; {
                         if (state === WebGroupState.LEFT) {
-                            queue.pop();
+                            queue.done();
                         }
                     };
                     wg2.leave();
                 }
                 else {
-                    queue.pop();
+                    queue.done();
                 }
             });
             /** @test {WebGroup#leave} */
             it(&apos;should have no members &amp; an empty key&apos;, (done) =&gt; {
-                const queue = new Queue(2);
-                queue
-                    .wait()
-                    .then(() =&gt; wait(1000))
-                    .then(() =&gt; {
-                    expect(wg1.members.length).toEqual(1);
-                    expect(wg1.members.includes(wg1.myId)).toBeTruthy();
-                    expect(wg2.members.length).toEqual(1);
-                    expect(wg2.members.includes(wg2.myId)).toBeTruthy();
-                    expect(wg2.key).toEqual(&apos;&apos;);
-                    expect(called2).toEqual(1);
-                    expect(wg2.key).toEqual(&apos;&apos;);
-                    done();
+                const queue = new Queue(2, () =&gt; {
+                    wait(1000).then(() =&gt; {
+                        expect(wg1.members.length).toEqual(1);
+                        expect(wg1.members.includes(wg1.myId)).toBeTruthy();
+                        expect(wg2.members.length).toEqual(1);
+                        expect(wg2.members.includes(wg2.myId)).toBeTruthy();
+                        expect(wg2.key).toEqual(&apos;&apos;);
+                        expect(called2).toEqual(1);
+                        expect(wg2.key).toEqual(&apos;&apos;);
+                        done();
+                    });
                 });
                 // Code for peer 1
                 wg1.onMemberLeave = () =&gt; {
                     expect(wg1.members.length).toEqual(1);
                     expect(wg1.members.includes(wg1.myId)).toBeTruthy();
-                    queue.pop();
+                    queue.done();
                 };
                 // Code for peer 2
                 wg2.onStateChange = (state) =&gt; {
@@ -507,7 +482,7 @@ describe(&apos;2 members&apos;, () =&gt; {
                         expect(wg2.members.length).toEqual(1);
                         expect(wg2.members.includes(wg2.myId)).toBeTruthy();
                         expect(wg2.key).toEqual(&apos;&apos;);
-                        queue.pop();
+                        queue.done();
                     }
                 };
                 // Start leaving
@@ -515,8 +490,7 @@ describe(&apos;2 members&apos;, () =&gt; {
             }, 12000);
             /** @test {WebGroup#onMemberLeave} */
             it(&apos;should be notified about left member&apos;, (done) =&gt; {
-                const queue = new Queue(2);
-                queue.wait().then(() =&gt; {
+                const queue = new Queue(2, () =&gt; {
                     wait(1000).then(() =&gt; {
                         expect(called1).toEqual(1);
                         expect(called2).toEqual(1);
@@ -527,13 +501,13 @@ describe(&apos;2 members&apos;, () =&gt; {
                 wg1.onMemberLeave = (id) =&gt; {
                     expect(id).toEqual(wg2.myId);
                     called1++;
-                    queue.pop();
+                    queue.done();
                 };
                 // Code for peer 2
                 wg2.onMemberLeave = (id) =&gt; {
                     expect(id).toEqual(wg1.myId);
                     called2++;
-                    queue.pop();
+                    queue.done();
                 };
                 // Start leaving
                 wg2.leave();
@@ -595,15 +569,14 @@ describe(&apos;2 members&apos;, () =&gt; {
                     wg1.leave();
                 }
                 else {
-                    cleanWebGroup(wg1);
                     done();
                 }
             });
             /** @test {WebGroup#onSignalingStateChange} */
             it(&apos;should not change the Signaling state&apos;, (done) =&gt; {
                 // Code for peer 1
-                wg1.onSignalingStateChange = (state) =&gt; {
-                    if (state === SignalingState.STABLE) {
+                wg1.onStateChange = (state) =&gt; {
+                    if (state === WebGroupState.JOINED) {
                         // Start inviting
                         wg1.invite(BOT_URL);
                         // Check bot data
@@ -623,8 +596,8 @@ describe(&apos;2 members&apos;, () =&gt; {
             /** @test {WebGroup#onStateChange} */
             it(&apos;should change the WebGroup state&apos;, (done) =&gt; {
                 // Code for peer 1
-                wg1.onSignalingStateChange = (state) =&gt; {
-                    if (state === SignalingState.STABLE) {
+                wg1.onStateChange = (state) =&gt; {
+                    if (state === WebGroupState.JOINED) {
                         // Start inviting
                         wg1.invite(BOT_URL);
                         // Check bot data
@@ -645,8 +618,8 @@ describe(&apos;2 members&apos;, () =&gt; {
             it(&apos;should be notified about new member&apos;, (done) =&gt; {
                 let called1 = 0;
                 // Code for peer 1
-                wg1.onSignalingStateChange = (state) =&gt; {
-                    if (state === SignalingState.STABLE) {
+                wg1.onStateChange = (state) =&gt; {
+                    if (state === WebGroupState.JOINED) {
                         // Start inviting
                         wg1.invite(BOT_URL);
                     }
@@ -672,8 +645,8 @@ describe(&apos;2 members&apos;, () =&gt; {
             });
             it(&apos;should have the same members, WebGroup id, topology once joined&apos;, (done) =&gt; {
                 // Code for peer 1
-                wg1.onSignalingStateChange = (state) =&gt; {
-                    if (state === SignalingState.STABLE) {
+                wg1.onStateChange = (state) =&gt; {
+                    if (state === WebGroupState.JOINED) {
                         // Start inviting
                         wg1.invite(BOT_URL);
                     }
@@ -700,25 +673,18 @@ describe(&apos;2 members&apos;, () =&gt; {
             let called1;
             beforeEach((done) =&gt; {
                 called1 = 0;
-                const queue = new Queue(3);
-                queue.wait().then(() =&gt; {
+                const queue = new Queue(2, () =&gt; {
                     cleanWebGroup(wg1);
                     done();
                 });
                 wg1 = new WebGroup(WebGroupOptions);
+                wg1.onMemberJoin = () =&gt; queue.done();
                 wg1.onStateChange = (state) =&gt; {
                     if (state === WebGroupState.JOINED) {
-                        queue.pop();
-                    }
-                };
-                wg1.onMemberJoin = () =&gt; queue.pop();
-                wg1.onSignalingStateChange = (state) =&gt; {
-                    if (state === SignalingState.STABLE) {
-                        // Start inviting
                         wg1.invite(BOT_URL);
+                        waitBotJoin(wg1.id).then(() =&gt; queue.done());
                     }
                 };
-                waitBotJoin(wg1.id).then(() =&gt; queue.pop());
                 wg1.join();
             });
             afterEach((done) =&gt; {
@@ -843,7 +809,7 @@ describe(&apos;2 members&apos;, () =&gt; {
 </div>
 
 <footer class="footer">
-  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(1.0.4)</span><img src="./image/esdoc-logo-mini-black.png"></a>
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(1.1.0)</span><img src="./image/esdoc-logo-mini-black.png"></a>
 </footer>
 
 <script src="script/search_index.js"></script>

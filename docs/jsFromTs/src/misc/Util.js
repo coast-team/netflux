@@ -35,7 +35,14 @@ export function generateKey() {
     }
     return result;
 }
-export function randNumbers(length = 1) {
+export function generateId(exclude = []) {
+    const id = randNumbers()[0];
+    if (exclude.includes(id)) {
+        return generateId(exclude);
+    }
+    return id;
+}
+function randNumbers(length = 1) {
     let res;
     if (isBrowser) {
         res = new Uint32Array(length);
@@ -43,7 +50,7 @@ export function randNumbers(length = 1) {
     }
     else {
         res = [];
-        const bytes = crypto.randomBytes(4 * length);
+        const bytes = global.crypto.randomBytes(4 * length);
         for (let i = 0; i < bytes.length; i += 4) {
             res[res.length] = bytes.readUInt32BE(i, true);
         }
@@ -51,7 +58,22 @@ export function randNumbers(length = 1) {
     return res;
 }
 export function equal(array1, array2) {
-    return array1 !== undefined && array2 !== undefined && array1.length === array2.length && array1.every((v) => array2.includes(v));
+    return (array1 !== undefined &&
+        array2 !== undefined &&
+        array1.length === array2.length &&
+        array1.every((v) => array2.includes(v)));
+}
+/**
+ * Indicates whether WebSocket is supported by the environment.
+ */
+export function isWebSocketSupported() {
+    return !!global.WebSocket;
+}
+/**
+ * Indicates whether WebRTC & RTCDataChannel is supported by the environment.
+ */
+export function isWebRTCSupported() {
+    return !!global.RTCPeerConnection && 'createDataChannel' in global.RTCPeerConnection.prototype;
 }
 export const MAX_KEY_LENGTH = 512;
 const netfluxCSS = 'background-color: #FFCA28; padding: 0 3px';
@@ -164,7 +186,7 @@ export function setLogLevel(levels) {
     else {
         log.signaling = () => { };
     }
-    // Signaling logs
+    // ChannelBuilder logs
     if (logLevels.includes(LogLevel.CHANNEL_BUILDER)) {
         log.channelBuilder = (msg, ...rest) => {
             if (rest.length === 0) {

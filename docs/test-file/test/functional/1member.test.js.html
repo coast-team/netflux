@@ -31,10 +31,10 @@
     
   <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/BotServerFacade.js~WebGroupBotServer.html">WebGroupBotServer</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroupState.html">WebGroupState</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.js~LogLevel.html">LogLevel</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.js~SignalingState.html">SignalingState</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.js~Topology.html">Topology</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~LogLevel.html">LogLevel</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~SignalingState.html">SignalingState</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~Topology.html">Topology</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~WebGroupState.html">WebGroupState</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-setLogLevel">setLogLevel</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-DataType">DataType</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupBotServerOptions">WebGroupBotServerOptions</a></span></span></li>
@@ -133,17 +133,22 @@ describe(&apos;1 member&apos;, () =&gt; {
             });
             /** @test {WebGroup#onSignalingStateChange} */
             it(&apos;should change the Signaling state&apos;, (done) =&gt; {
-                let called1 = 0;
+                let called = 0;
                 const states = [];
-                const expectedStates = [SignalingState.CONNECTING, SignalingState.STABLE];
+                const expectedStates = [
+                    SignalingState.CONNECTING,
+                    SignalingState.OPEN,
+                    SignalingState.CHECKING,
+                    SignalingState.CHECKED,
+                ];
                 wg1.onSignalingStateChange = (state) =&gt; {
+                    called++;
                     states.push(state);
-                    called1++;
-                    if (called1 === 2) {
+                    if (called === expectedStates.length) {
                         wait(1000).then(() =&gt; {
-                            expect(called1).toEqual(2);
                             expect(states).toEqual(expectedStates);
-                            expect(wg1.signalingState).toEqual(SignalingState.STABLE);
+                            expect(called).toEqual(expectedStates.length);
+                            expect(wg1.signalingState).toEqual(SignalingState.CHECKED);
                             done();
                         });
                     }
@@ -153,16 +158,16 @@ describe(&apos;1 member&apos;, () =&gt; {
             });
             /** @test {WebGroup#onStateChange} */
             it(&apos;should change the WebGroup state&apos;, (done) =&gt; {
-                let called1 = 0;
+                let called = 0;
                 const states = [];
                 const expectedStates = [WebGroupState.JOINING, WebGroupState.JOINED];
                 wg1.onStateChange = (state) =&gt; {
+                    called++;
                     states.push(state);
-                    called1++;
-                    if (called1 === 2) {
+                    if (called === expectedStates.length) {
                         wait(1000).then(() =&gt; {
-                            expect(called1).toEqual(2);
                             expect(states).toEqual(expectedStates);
+                            expect(called).toEqual(expectedStates.length);
                             expect(wg1.state).toEqual(WebGroupState.JOINED);
                             done();
                         });
@@ -324,7 +329,7 @@ describe(&apos;1 member&apos;, () =&gt; {
 </div>
 
 <footer class="footer">
-  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(1.0.4)</span><img src="./image/esdoc-logo-mini-black.png"></a>
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(1.1.0)</span><img src="./image/esdoc-logo-mini-black.png"></a>
 </footer>
 
 <script src="script/search_index.js"></script>

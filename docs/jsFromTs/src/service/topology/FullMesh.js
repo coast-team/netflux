@@ -1,20 +1,12 @@
 import { Subject } from 'rxjs/Subject';
+import { Channel, ChannelType, MAXIMUM_MISSED_HEARTBEAT } from '../../Channel';
 import { log } from '../../misc/Util';
-import { fullMesh } from '../../proto';
-import { SignalingState } from '../../Signaling';
+import { fullMesh as proto } from '../../proto';
 import { Service } from '../Service';
-import { WebChannelState } from '../WebChannel';
-import { TopologyStateEnum } from './Topology';
-/**
- * {@link FullMesh} identifier.
- * @ignore
- * @type {number}
- */
-export const FULL_MESH = 3;
+import { TopologyState } from './Topology';
 const REQUEST_MEMBERS_INTERVAL = 6000;
 const MAX_ROUTE_DISTANCE = 3;
 const HEARTBEAT_INTERVAL = 3000;
-const MAXIMUM_MISSED_HEARTBEAT = 3;
 /**
  * Fully connected web channel manager. Implements fully connected topology
  * network, when each peer is connected to each other.
@@ -22,23 +14,51 @@ const MAXIMUM_MISSED_HEARTBEAT = 3;
  */
 export class FullMesh extends Service {
     constructor(wc) {
-        super(FULL_MESH, fullMesh.Message, wc.serviceMessageSubject);
-        this.wc = wc;
+        super(FullMesh.SERVICE_ID, proto.Message);
+        super.useWebChannelStream(wc);
+        this.wcStream.message.subscribe(({ channel, senderId, msg }) => this.handleServiceMessage(channel, senderId, msg));
         this.adjacentMembers = new Map();
         this.distantMembers = new Map();
         this.connectingMembers = new Set();
         this.stateSubject = new Subject();
-        this.heartbeat = Service.encodeServiceMessage(FULL_MESH, fullMesh.Message.encode(fullMesh.Message.create({ heartbeat: true })).finish());
-        this._state = TopologyStateEnum.DISCONNECTED;
-        this.onServiceMessage.subscribe((msg) => this.handleSvcMsg(msg));
-        this.wc.channelBuilder.onChannel.subscribe((ch) => this.addAdjacentMember(ch));
+        this._state = TopologyState.DISCONNECTED;
+        this.wc.channelBuilder.onChannel.subscribe((ch) => {
+            // if (
+            //   (ch.type === ChannelType.INTERNAL && this._state === TopologyState.DISCONNECTED) ||
+            //   this._state !== TopologyState.DISCONNECTING
+            // ) {
+            //   ch.closeQuietly()
+            // } else {
+            log.topology('Adding new adjacent member: ', ch.id);
+            this.distantMembers.delete(ch.id);
+            const member = this.adjacentMembers.get(ch.id);
+            if (member) {
+                log.topology('Replacing the same channel');
+                member.closeQuietly();
+            }
+            this.adjacentMembers.set(ch.id, ch);
+            this.notifyDistantPeers();
+            this.wc.onMemberJoinProxy(ch.id);
+            if (this.adjacentMembers.size === 1 && this.membersRequestInterval === undefined) {
+                this.startIntervals();
+            }
+            if (ch.type === ChannelType.JOINING) {
+                this.setState(TopologyState.JOINING);
+                const { members } = ch.initData;
+                this.connectToMany(members, ch.id).then(() => {
+                    this.membersRequest();
+                    this.setState(TopologyState.JOINED);
+                });
+            }
+            // }
+        });
         const globalAny = global;
         globalAny.fullmesh = () => {
             log.topology('Fullmesh info:', {
                 myId: this.wc.myId,
-                signalingState: SignalingState[this.wc.signaling.state],
-                webGroupState: WebChannelState[this.wc.state],
-                topologyState: TopologyStateEnum[this._state],
+                signalingState: this.wc.signaling.state,
+                webGroupState: this.wc.state,
+                topologyState: TopologyState[this._state],
                 adjacentMembers: Array.from(this.adjacentMembers.keys()).toString(),
                 distantMembers: Array.from(this.distantMembers.keys()).toString(),
                 connectingMembers: Array.from(this.connectingMembers.values()).toString(),
@@ -55,68 +75,49 @@ export class FullMesh extends Service {
     get state() {
         return this._state;
     }
-    setStable() {
-        this.setState(TopologyStateEnum.STABLE);
-    }
-    addJoining(ch) {
-        // FIXME: test if `ch` already exists among `adjacentMembers`
-        this.addAdjacentMember(ch);
-    }
-    initJoining(ch, ids) {
-        this.setState(TopologyStateEnum.JOINING);
-        // FIXME: test if `ch` already exists among `adjacentMembers`
-        this.addAdjacentMember(ch);
-        if (ids.length === 1) {
-            this.setState(TopologyStateEnum.STABLE);
-        }
-        else {
-            this.connectToMany(ids, ch.id)
-                .then(() => {
-                this.membersRequest();
-                this.setState(TopologyStateEnum.JOINED);
-                this.setState(TopologyStateEnum.STABLE);
-            });
-        }
-    }
     send(msg) {
-        this.adjacentMembers.forEach((ch) => ch.send(this.wc.encode(msg)));
+        this.adjacentMembers.forEach((ch) => ch.encodeAndSend(msg));
         this.distantMembers.forEach((distantPeer, id) => {
-            this.sendToDistantPeer(distantPeer, { recipientId: id, isService: msg.isService, content: msg.content });
+            this.sendToDistantPeer(distantPeer, Object.assign(msg, { recipientId: id }));
         });
     }
     sendTo(msg) {
         const ch = this.adjacentMembers.get(msg.recipientId);
         if (ch) {
-            ch.send(this.wc.encode(msg));
+            ch.encodeAndSend(msg);
         }
         else {
             this.sendToDistantPeer(this.distantMembers.get(msg.recipientId), msg);
         }
     }
     forward(msg) {
-        if (msg.recipientId > 1) {
-            this.sendTo(msg);
-        }
+        this.sendTo(msg);
     }
     leave() {
-        if (this._state !== TopologyStateEnum.DISCONNECTED) {
-            if (this.adjacentMembers.size === 0) {
-                this.clean();
-                this.setState(TopologyStateEnum.DISCONNECTED);
-            }
-            else {
-                this.adjacentMembers.forEach((ch) => this.deleteAdjacentMember(ch));
-            }
+        if (this._state !== TopologyState.DISCONNECTED && this._state !== TopologyState.DISCONNECTING) {
+            this.setState(TopologyState.DISCONNECTING);
+            this.adjacentMembers.forEach((ch) => {
+                this.wc.onMemberLeaveProxy(ch.id, true);
+                ch.close();
+            });
         }
     }
     onChannelClose(event, channel) {
-        this.deleteAdjacentMember(channel, false);
+        this.adjacentMembers.delete(channel.id);
+        this.wc.onMemberLeaveProxy(channel.id, true);
+        if (this.adjacentMembers.size === 0) {
+            this.clean();
+            this.setState(TopologyState.DISCONNECTED);
+        }
+        else {
+            this.notifyDistantPeers();
+        }
     }
     onChannelError(evt) {
         log.topology(`Channel error: ${evt.type}`);
     }
     clean() {
-        this.distantMembers.forEach((member, id) => this.wc.onMemberLeaveProxy(id));
+        this.distantMembers.forEach((member, id) => this.wc.onMemberLeaveProxy(id, false));
         this.distantMembers.clear();
         this.connectingMembers.clear();
         clearInterval(this.heartbeatInterval);
@@ -124,31 +125,36 @@ export class FullMesh extends Service {
         clearInterval(this.membersRequestInterval);
         this.membersRequestInterval = undefined;
     }
-    handleSvcMsg({ channel, senderId, msg }) {
+    handleServiceMessage(channel, senderId, msg) {
         switch (msg.type) {
             case 'membersResponse': {
-                this.connectToMany(msg.membersResponse.ids, senderId);
+                const { membersResponse } = msg;
+                this.connectToMany(membersResponse.ids, senderId);
                 break;
             }
             case 'membersRequest': {
-                channel.send(this.wc.encode({
+                channel.encodeAndSend({
                     recipientId: channel.id,
+                    serviceId: FullMesh.SERVICE_ID,
                     content: super.encode({ membersResponse: { ids: this.wc.members } }),
-                }));
+                });
                 break;
             }
             case 'adjacentMembers': {
+                const { adjacentMembers } = msg;
                 if (!this.adjacentMembers.has(senderId) && senderId !== this.wc.myId) {
                     const distantPeer = this.distantMembers.get(senderId);
                     // If it the first time you have met this ID, then send him your neighbours' ids.
                     // Otherwise just update the list of distant peer's neighbours
                     if (distantPeer) {
-                        distantPeer.adjacentIds = msg.adjacentMembers.ids;
+                        distantPeer.adjacentIds = adjacentMembers.ids;
                     }
                     else {
-                        this.distantMembers.set(senderId, { adjacentIds: msg.adjacentMembers.ids, missedHeartbeat: 0 });
-                        const adjacentMembers = super.encode({ adjacentMembers: { ids: Array.from(this.adjacentMembers.keys()) } });
-                        this.wc.sendToProxy({ recipientId: senderId, content: adjacentMembers });
+                        this.distantMembers.set(senderId, {
+                            adjacentIds: adjacentMembers.ids,
+                            missedHeartbeat: 0,
+                        });
+                        this.wcStream.send({ adjacentMembers: { ids: Array.from(this.adjacentMembers.keys()) } }, senderId);
                         this.connectTo(senderId);
                     }
                 }
@@ -159,56 +165,19 @@ export class FullMesh extends Service {
                 if (distantPeer) {
                     distantPeer.missedHeartbeat = 0;
                 }
-                else if (channel.id === senderId) {
-                    channel.missedHeartbeat = 0;
-                }
                 break;
             }
         }
     }
-    addAdjacentMember(ch) {
-        if (this._state === TopologyStateEnum.DISCONNECTED) {
-            log.topology('Closing channel quietly as the topology state is: ', TopologyStateEnum[this._state]);
-            ch.closeQuietly();
-        }
-        else {
-            log.topology('Adding new adjacent member: ', ch.id);
-            this.distantMembers.delete(ch.id);
-            const member = this.adjacentMembers.get(ch.id);
-            if (member) {
-                log.topology('Replacing the same channel');
-                member.closeQuietly();
-            }
-            this.adjacentMembers.set(ch.id, ch);
-            this.notifyDistantPeers();
-            this.wc.onMemberJoinProxy(ch.id);
-            if (this.adjacentMembers.size === 1 && this.membersRequestInterval === undefined) {
-                this.startIntervals();
-            }
-        }
-    }
-    deleteAdjacentMember(ch, quietly = true) {
-        log.topology('Removing adjacent member: ', ch.id);
-        this.adjacentMembers.delete(ch.id);
-        this.wc.onMemberLeaveProxy(ch.id);
-        if (this.adjacentMembers.size === 0) {
-            this.clean();
-            this.setState(TopologyStateEnum.DISCONNECTED);
-        }
-        else {
-            this.notifyDistantPeers();
-        }
-        if (quietly) {
-            ch.closeQuietly();
-        }
-    }
     connectToMany(ids, adjacentId) {
-        if (this._state !== TopologyStateEnum.DISCONNECTED) {
+        if (this._state !== TopologyState.DISCONNECTED) {
             const missingIds = ids.filter((id) => {
-                return !this.adjacentMembers.has(id) && !this.connectingMembers.has(id) && id !== this.wc.myId;
+                return (!this.adjacentMembers.has(id) && !this.connectingMembers.has(id) && id !== this.wc.myId);
             });
             if (missingIds.length !== 0) {
-                const adjacentMembers = super.encode({ adjacentMembers: { ids: Array.from(this.adjacentMembers.keys()) } });
+                const adjacentMembers = super.encode({
+                    adjacentMembers: { ids: Array.from(this.adjacentMembers.keys()) },
+                });
                 const connectingAttempts = [];
                 missingIds.forEach((id) => {
                     if (!this.distantMembers.has(id)) {
@@ -217,7 +186,7 @@ export class FullMesh extends Service {
                     // It's important to notify all peers about my adjacentIds first
                     // for some specific case such when you should connect to a peer with
                     // distance more than 1
-                    this.wc.sendToProxy({ recipientId: id, content: adjacentMembers });
+                    this.wcStream.send(adjacentMembers, id);
                     // Connect only to the peers whose ids are less than my id. Thus it avoids a
                     // problematic situation when both peers are trying to connect to each other
                     // at the same time.
@@ -232,12 +201,11 @@ export class FullMesh extends Service {
         this.connectingMembers.add(id);
         let result;
         if (id < this.wc.myId) {
-            result = this.wc.channelBuilder.connectTo(id)
-                .then((ch) => this.addAdjacentMember(ch))
+            result = this.wc.channelBuilder
+                .connectOverWebChannel(id)
                 .catch((err) => {
                 if (err.message !== 'pingpong') {
-                    return this.wc.channelBuilder.isResponding(id)
-                        .then(() => this.wc.onMemberJoinProxy(id));
+                    return this.wc.channelBuilder.ping(id).then(() => this.wc.onMemberJoinProxy(id));
                 }
                 log.topology(`${this.wc.myId} failed to connect to ${id}: ${err.message}`);
                 return;
@@ -245,11 +213,14 @@ export class FullMesh extends Service {
                 .catch(() => { });
         }
         else {
-            result = this.wc.channelBuilder.isResponding(id)
+            result = this.wc.channelBuilder
+                .ping(id)
                 .then(() => this.wc.onMemberJoinProxy(id))
                 .catch(() => { });
         }
-        return result.then(() => { this.connectingMembers.delete(id); });
+        return result.then(() => {
+            this.connectingMembers.delete(id);
+        });
     }
     membersRequest() {
         if (this.adjacentMembers.size !== 0) {
@@ -260,10 +231,11 @@ export class FullMesh extends Service {
                 iterator.next();
             }
             const channel = iterator.next().value;
-            channel.send(this.wc.encode({
+            channel.encodeAndSend({
                 recipientId: channel.id,
+                serviceId: FullMesh.SERVICE_ID,
                 content: super.encode({ membersRequest: true }),
-            }));
+            });
         }
     }
     sendToDistantPeer(distantPeer, msg) {
@@ -274,7 +246,7 @@ export class FullMesh extends Service {
         for (let d = 1; d <= MAX_ROUTE_DISTANCE; d++) {
             const ch = this.findRoutedChannel(distantPeer, d);
             if (ch) {
-                ch.send(this.wc.encode(msg));
+                ch.encodeAndSend(msg);
                 return;
             }
         }
@@ -298,11 +270,8 @@ export class FullMesh extends Service {
         return undefined;
     }
     notifyDistantPeers() {
-        if (this._state !== TopologyStateEnum.DISCONNECTED) {
-            this.distantMembers.forEach((peer, id) => this.wc.sendToProxy({
-                recipientId: id,
-                content: super.encode({ adjacentMembers: { ids: Array.from(this.adjacentMembers.keys()) } }),
-            }));
+        if (this._state !== TopologyState.DISCONNECTED) {
+            this.distantMembers.forEach((peer, id) => this.wcStream.send({ adjacentMembers: { ids: Array.from(this.adjacentMembers.keys()) } }, id));
         }
     }
     setState(state) {
@@ -316,33 +285,17 @@ export class FullMesh extends Service {
         this.membersRequestInterval = global.setInterval(() => this.membersRequest(), REQUEST_MEMBERS_INTERVAL);
         // Heartbeat interval
         this.heartbeatInterval = global.setInterval(() => {
-            this.adjacentMembers.forEach((ch) => {
-                try {
-                    ch.missedHeartbeat++;
-                    if (ch.missedHeartbeat >= ch.maximumMissedHeartBeat) {
-                        throw new Error('Too many missed heartbeats');
-                    }
-                    ch.sendHeartbeat();
-                }
-                catch (err) {
-                    log.topology(`Closing connection with ${ch.id}. Reason: ${err.message}`);
-                    this.deleteAdjacentMember(ch);
-                }
-            });
+            this.adjacentMembers.forEach((ch) => ch.sendHeartbeat());
             this.distantMembers.forEach((peer, id) => {
-                try {
-                    peer.missedHeartbeat++;
-                    if (peer.missedHeartbeat >= MAXIMUM_MISSED_HEARTBEAT + 1) {
-                        throw new Error('Too many missed heartbeats');
-                    }
-                    this.wc.sendToProxy({ recipientId: id, content: this.heartbeat });
-                }
-                catch (err) {
-                    log.topology(`Distant peer ${id} has left. Reason: ${err.message}`);
+                peer.missedHeartbeat++;
+                if (peer.missedHeartbeat >= MAXIMUM_MISSED_HEARTBEAT + 1) {
+                    log.topology(`Distant peer ${id} has left: too many missed heartbeats`);
                     this.distantMembers.delete(id);
-                    this.wc.onMemberLeaveProxy(id);
+                    this.wc.onMemberLeaveProxy(id, false);
                 }
+                this.wcStream.send(Channel.heartbeatMsg(this.wc.id, id));
             });
         }, HEARTBEAT_INTERVAL);
     }
 }
+FullMesh.SERVICE_ID = 74315;

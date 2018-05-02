@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <base data-ice="baseUrl" href="../../">
-  <title data-ice="title">WebGroupState | Netflux</title>
+  <title data-ice="title">SignalingState | Netflux</title>
   <link type="text/css" rel="stylesheet" href="css/style.css">
   <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
   <script src="script/prettify/prettify.js"></script>
@@ -31,10 +31,10 @@
     
   <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/BotServerFacade.js~WebGroupBotServer.html">WebGroupBotServer</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroupState.html">WebGroupState</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.js~LogLevel.html">LogLevel</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.js~SignalingState.html">SignalingState</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.js~Topology.html">Topology</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~LogLevel.html">LogLevel</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~SignalingState.html">SignalingState</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~Topology.html">Topology</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~WebGroupState.html">WebGroupState</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-setLogLevel">setLogLevel</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-DataType">DataType</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupBotServerOptions">WebGroupBotServerOptions</a></span></span></li>
@@ -48,17 +48,17 @@
 </nav>
 
 <div class="content" data-ice="content"><div class="header-notice">
-  <div data-ice="importPath" class="import-path"><pre class="prettyprint"><code data-ice="importPathCode">import {WebGroupState} from &apos;<span><a href="file/src/WebChannelFacade.js.html#lineNumber13">netflux/src/WebChannelFacade.js</a></span>&apos;</code></pre></div>
+  <div data-ice="importPath" class="import-path"><pre class="prettyprint"><code data-ice="importPathCode">import {SignalingState} from &apos;<span><a href="file/src/index.common.doc.js.html#lineNumber16">netflux/src/index.common.doc.js</a></span>&apos;</code></pre></div>
   <span data-ice="access">public</span>
   <span data-ice="kind">class</span>
   
   
   
-  <span data-ice="source">| <span><a href="file/src/WebChannelFacade.js.html#lineNumber13">source</a></span></span>
+  <span data-ice="source">| <span><a href="file/src/index.common.doc.js.html#lineNumber16">source</a></span></span>
 </div>
 
 <div class="self-detail detail">
-  <h1 data-ice="name">WebGroupState</h1>
+  <h1 data-ice="name">SignalingState</h1>
 
   
 
@@ -74,7 +74,7 @@
 
   
   
-  <div class="description" data-ice="description"><p><span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span> state enum.</p>
+  <div class="description" data-ice="description"><p>The state enum of the signaling server.</p>
 </div>
   
 
@@ -105,13 +105,13 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroupState.html#static-get-JOINED">JOINED</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/index.common.doc.js~SignalingState.html#static-get-CHECKED">CHECKED</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
         </p>
       </div>
       <div>
         
         
-        <div data-ice="description"><p>Equals to <code>1</code>: joined the group successfully.</p>
+        <div data-ice="description"><p><code>5</code>: a connection has been established with one of the group member or you are the only member of the group.</p>
 </div>
       </div>
     </td>
@@ -134,13 +134,13 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroupState.html#static-get-JOINING">JOINING</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/index.common.doc.js~SignalingState.html#static-get-CHECKING">CHECKING</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
         </p>
       </div>
       <div>
         
         
-        <div data-ice="description"><p>Equals to <code>0</code>: joining the group...</p>
+        <div data-ice="description"><p><code>4</code>: signaling server is checking wether you are still connected to the group.</p>
 </div>
       </div>
     </td>
@@ -163,13 +163,13 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroupState.html#static-get-LEAVING">LEAVING</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/index.common.doc.js~SignalingState.html#static-get-CLOSED">CLOSED</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
         </p>
       </div>
       <div>
         
         
-        <div data-ice="description"><p>Equals to <code>2</code>: The <code>WebGroup</code> is in process of leaving.</p>
+        <div data-ice="description"><p><code>3</code>: the connection is closed or couldn&apos;t be opened (equivalent to <code>WebSocket.CLOSED</code>).</p>
 </div>
       </div>
     </td>
@@ -192,13 +192,13 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroupState.html#static-get-LEFT">LEFT</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/index.common.doc.js~SignalingState.html#static-get-CLOSING">CLOSING</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
         </p>
       </div>
       <div>
         
         
-        <div data-ice="description"><p>Equals to <code>3</code>: left the group.</p>
+        <div data-ice="description"><p><code>2</code>: the connection is in the process of closing (equivalent to <code>WebSocket.CLOSING</code>).</p>
 </div>
       </div>
     </td>
@@ -221,13 +221,13 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroupState.html#static-get-[WebGroupState.JOINED]">[WebGroupState.JOINED]</a></span></span><span class="code" data-ice="signature">: <span>string</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/index.common.doc.js~SignalingState.html#static-get-CONNECTING">CONNECTING</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
         </p>
       </div>
       <div>
         
         
-        <div data-ice="description"><p>Equals to <code>&apos;JOINED&apos;</code>.</p>
+        <div data-ice="description"><p><code>0</code>: the connection is not yet open (equivalent to <code>WebSocket.CONNECTING</code>).</p>
 </div>
       </div>
     </td>
@@ -250,71 +250,13 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroupState.html#static-get-[WebGroupState.JOINING]">[WebGroupState.JOINING]</a></span></span><span class="code" data-ice="signature">: <span>string</span></span>
+          <span class="code" data-ice="name"><span><a href="class/src/index.common.doc.js~SignalingState.html#static-get-OPEN">OPEN</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
         </p>
       </div>
       <div>
         
         
-        <div data-ice="description"><p>Equals to <code>&apos;JOINING&apos;</code>.</p>
-</div>
-      </div>
-    </td>
-    <td>
-      
-      
-    </td>
-  </tr>
-<tr data-ice="target">
-    <td>
-      <span class="access" data-ice="access">public</span>
-      <span data-ice="static">static</span>
-      <span class="kind" data-ice="kind">get</span>
-      
-      <span class="override" data-ice="override"></span>
-    </td>
-    <td>
-      <div>
-        <p>
-          
-          
-          
-          <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroupState.html#static-get-[WebGroupState.LEAVING]">[WebGroupState.LEAVING]</a></span></span><span class="code" data-ice="signature">: <span>string</span></span>
-        </p>
-      </div>
-      <div>
-        
-        
-        <div data-ice="description"><p>Equals to <code>&apos;LEAVING&apos;</code>.</p>
-</div>
-      </div>
-    </td>
-    <td>
-      
-      
-    </td>
-  </tr>
-<tr data-ice="target">
-    <td>
-      <span class="access" data-ice="access">public</span>
-      <span data-ice="static">static</span>
-      <span class="kind" data-ice="kind">get</span>
-      
-      <span class="override" data-ice="override"></span>
-    </td>
-    <td>
-      <div>
-        <p>
-          
-          
-          
-          <span class="code" data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroupState.html#static-get-[WebGroupState.LEFT]">[WebGroupState.LEFT]</a></span></span><span class="code" data-ice="signature">: <span>string</span></span>
-        </p>
-      </div>
-      <div>
-        
-        
-        <div data-ice="description"><p>Equals to <code>&apos;LEFT&apos;</code>.</p>
+        <div data-ice="description"><p><code>1</code>: the connection is open and ready to communicate (equivalent to <code>WebSocket.OPEN</code>).</p>
 </div>
       </div>
     </td>
@@ -336,25 +278,26 @@
 <div data-ice="staticMemberDetails"><h2 data-ice="title">Static Public Members</h2>
 
 <div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="static-get-JOINED">
+  <h3 data-ice="anchor" id="static-get-CHECKED">
     <span class="access" data-ice="access">public</span>
     <span data-ice="static">static</span>
     <span class="kind" data-ice="kind">get</span>
     
     
     
-    <span class="code" data-ice="name">JOINED</span><span class="code" data-ice="signature">: <span>number</span></span>
+    <span class="code" data-ice="name">CHECKED</span><span class="code" data-ice="signature">: <span>number</span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber28">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/index.common.doc.js.html#lineNumber58">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  <div data-ice="description"><p>Equals to <code>1</code>: joined the group successfully.</p>
+  <div data-ice="description"><p><code>5</code>: a connection has been established with one of the group member or you are the only member of the group.
+From now the signaling is no longer needed, because the joining process will continue with a help of this member.</p>
 </div>
 
   
@@ -380,25 +323,26 @@
   
 </div>
 <div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="static-get-JOINING">
+  <h3 data-ice="anchor" id="static-get-CHECKING">
     <span class="access" data-ice="access">public</span>
     <span data-ice="static">static</span>
     <span class="kind" data-ice="kind">get</span>
     
     
     
-    <span class="code" data-ice="name">JOINING</span><span class="code" data-ice="signature">: <span>number</span></span>
+    <span class="code" data-ice="name">CHECKING</span><span class="code" data-ice="signature">: <span>number</span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber18">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/index.common.doc.js.html#lineNumber50">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  <div data-ice="description"><p>Equals to <code>0</code>: joining the group...</p>
+  <div data-ice="description"><p><code>4</code>: signaling server is checking wether you are still connected to the group. If it is not the case, then
+subscribs you to one of the group member in order to create a connection with him.</p>
 </div>
 
   
@@ -424,25 +368,25 @@
   
 </div>
 <div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="static-get-LEAVING">
+  <h3 data-ice="anchor" id="static-get-CLOSED">
     <span class="access" data-ice="access">public</span>
     <span data-ice="static">static</span>
     <span class="kind" data-ice="kind">get</span>
     
     
     
-    <span class="code" data-ice="name">LEAVING</span><span class="code" data-ice="signature">: <span>number</span></span>
+    <span class="code" data-ice="name">CLOSED</span><span class="code" data-ice="signature">: <span>number</span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber38">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/index.common.doc.js.html#lineNumber42">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  <div data-ice="description"><p>Equals to <code>2</code>: The <code>WebGroup</code> is in process of leaving.</p>
+  <div data-ice="description"><p><code>3</code>: the connection is closed or couldn&apos;t be opened (equivalent to <code>WebSocket.CLOSED</code>).</p>
 </div>
 
   
@@ -468,28 +412,25 @@
   
 </div>
 <div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="static-get-LEFT">
+  <h3 data-ice="anchor" id="static-get-CLOSING">
     <span class="access" data-ice="access">public</span>
     <span data-ice="static">static</span>
     <span class="kind" data-ice="kind">get</span>
     
     
     
-    <span class="code" data-ice="name">LEFT</span><span class="code" data-ice="signature">: <span>number</span></span>
+    <span class="code" data-ice="name">CLOSING</span><span class="code" data-ice="signature">: <span>number</span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber51">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/index.common.doc.js.html#lineNumber35">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  <div data-ice="description"><p>Equals to <code>3</code>: left the group. If the connection to the web group has lost other then
-by calling <span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-method-leave">WebGroup#leave</a></span> methods and <span><a href="class/src/WebChannelFacade.js~WebGroup.html#instance-member-autoRejoin">WebGroup#autoRejoin</a></span> is true,
-then the state would be <code>LEFT</code>, usually during a relatively short period) before
-the rejoining process starts.</p>
+  <div data-ice="description"><p><code>2</code>: the connection is in the process of closing (equivalent to <code>WebSocket.CLOSING</code>).</p>
 </div>
 
   
@@ -515,25 +456,25 @@ the rejoining process starts.</p>
   
 </div>
 <div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="static-get-[WebGroupState.JOINED]">
+  <h3 data-ice="anchor" id="static-get-CONNECTING">
     <span class="access" data-ice="access">public</span>
     <span data-ice="static">static</span>
     <span class="kind" data-ice="kind">get</span>
     
     
     
-    <span class="code" data-ice="name">[WebGroupState.JOINED]</span><span class="code" data-ice="signature">: <span>string</span></span>
+    <span class="code" data-ice="name">CONNECTING</span><span class="code" data-ice="signature">: <span>number</span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber33">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/index.common.doc.js.html#lineNumber21">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  <div data-ice="description"><p>Equals to <code>&apos;JOINED&apos;</code>.</p>
+  <div data-ice="description"><p><code>0</code>: the connection is not yet open (equivalent to <code>WebSocket.CONNECTING</code>).</p>
 </div>
 
   
@@ -559,113 +500,25 @@ the rejoining process starts.</p>
   
 </div>
 <div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="static-get-[WebGroupState.JOINING]">
+  <h3 data-ice="anchor" id="static-get-OPEN">
     <span class="access" data-ice="access">public</span>
     <span data-ice="static">static</span>
     <span class="kind" data-ice="kind">get</span>
     
     
     
-    <span class="code" data-ice="name">[WebGroupState.JOINING]</span><span class="code" data-ice="signature">: <span>string</span></span>
+    <span class="code" data-ice="name">OPEN</span><span class="code" data-ice="signature">: <span>number</span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber23">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/index.common.doc.js.html#lineNumber28">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  <div data-ice="description"><p>Equals to <code>&apos;JOINING&apos;</code>.</p>
-</div>
-
-  
-
-  <div data-ice="properties">
-</div>
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-  
-</div>
-<div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="static-get-[WebGroupState.LEAVING]">
-    <span class="access" data-ice="access">public</span>
-    <span data-ice="static">static</span>
-    <span class="kind" data-ice="kind">get</span>
-    
-    
-    
-    <span class="code" data-ice="name">[WebGroupState.LEAVING]</span><span class="code" data-ice="signature">: <span>string</span></span>
-    <span class="right-info">
-      
-      
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber43">source</a></span></span>
-    </span>
-  </h3>
-
-  
-  
-  
-  <div data-ice="description"><p>Equals to <code>&apos;LEAVING&apos;</code>.</p>
-</div>
-
-  
-
-  <div data-ice="properties">
-</div>
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-  
-</div>
-<div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="static-get-[WebGroupState.LEFT]">
-    <span class="access" data-ice="access">public</span>
-    <span data-ice="static">static</span>
-    <span class="kind" data-ice="kind">get</span>
-    
-    
-    
-    <span class="code" data-ice="name">[WebGroupState.LEFT]</span><span class="code" data-ice="signature">: <span>string</span></span>
-    <span class="right-info">
-      
-      
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumber56">source</a></span></span>
-    </span>
-  </h3>
-
-  
-  
-  
-  <div data-ice="description"><p>Equals to <code>&apos;LEFT&apos;</code>.</p>
+  <div data-ice="description"><p><code>1</code>: the connection is open and ready to communicate (equivalent to <code>WebSocket.OPEN</code>).</p>
 </div>
 
   
@@ -698,7 +551,7 @@ the rejoining process starts.</p>
 </div>
 
 <footer class="footer">
-  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(1.0.4)</span><img src="./image/esdoc-logo-mini-black.png"></a>
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(1.1.0)</span><img src="./image/esdoc-logo-mini-black.png"></a>
 </footer>
 
 <script src="script/search_index.js"></script>

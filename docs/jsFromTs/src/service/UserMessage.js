@@ -1,4 +1,5 @@
-import { user } from './proto';
+import { userMessage as proto } from '../proto';
+import { Service } from '../service/Service';
 /**
  * Maximum size of the user message sent over `Channel` (without metadata).
  */
@@ -15,19 +16,21 @@ const textDecoder = new global.TextDecoder();
  * big messages (more then 16ko) sent by users. Internal messages are always less
  * 16ko.
  */
-export class UserMessage {
-    constructor() {
+export class UserMessage extends Service {
+    constructor(wc) {
+        super(UserMessage.SERVICE_ID, proto.Message);
+        this.wc = wc;
         this.buffers = new Map();
     }
     /**
      * Encode user message for sending over the network.
      */
-    encode(data) {
+    encodeUserMessage(data) {
         const { type, bytes } = this.userDataToType(data);
         const msg = { length: bytes.length, type };
         if (bytes.length <= MAX_USER_MSG_SIZE) {
             msg.full = bytes;
-            return [user.Message.encode(user.Message.create(msg)).finish()];
+            return [super.encode(msg)];
         }
         else {
             msg.chunk = { id: Math.ceil(Math.random() * MAX_MSG_ID_SIZE) };
@@ -39,7 +42,7 @@ export class UserMessage {
                 const end = begin + length;
                 msg.chunk.number = i;
                 msg.chunk.content = new Uint8Array(bytes.slice(begin, end));
-                res[i] = user.Message.encode(user.Message.create(msg)).finish();
+                res[i] = super.encode(msg);
             }
             return res;
         }
@@ -47,23 +50,23 @@ export class UserMessage {
     /**
      * Decode user message received from the network.
      */
-    decode(bytes, senderId) {
-        const msg = user.Message.decode(bytes);
-        let content;
-        switch (msg.content) {
+    decodeUserMessage(bytes, senderId) {
+        const { length, type, contentType, full, chunk } = super.decode(bytes);
+        let result;
+        switch (contentType) {
             case 'full': {
-                content = msg.full;
+                result = full;
                 break;
             }
             case 'chunk': {
-                let buffer = this.getBuffer(senderId, msg.chunk.id);
+                let buffer = this.getBuffer(senderId, chunk.id);
                 if (buffer === undefined) {
-                    buffer = new Buffer(msg.length, msg.chunk.content, msg.chunk.number);
-                    this.setBuffer(senderId, msg.chunk.id, buffer);
-                    content = undefined;
+                    buffer = new Buffer(length, chunk.content, chunk.nb);
+                    this.setBuffer(senderId, chunk.id, buffer);
+                    result = undefined;
                 }
                 else {
-                    content = buffer.append(msg.chunk.content, msg.chunk.number);
+                    result = buffer.append(chunk.content, chunk.nb);
                 }
                 break;
             }
@@ -71,30 +74,30 @@ export class UserMessage {
                 throw new Error('Unknown message integrity');
             }
         }
-        if (content !== undefined) {
-            switch (msg.type) {
-                case user.Message.Type.U_INT_8_ARRAY:
-                    return content;
-                case user.Message.Type.STRING:
-                    return textDecoder.decode(content);
+        if (result !== undefined) {
+            switch (type) {
+                case proto.Message.Type.U_INT_8_ARRAY:
+                    return result;
+                case proto.Message.Type.STRING:
+                    return textDecoder.decode(result);
                 default:
                     throw new Error('Unknown message type');
             }
         }
-        return content;
+        return result;
     }
     /**
      * Identify the user data type.
      */
     userDataToType(data) {
         if (data instanceof Uint8Array) {
-            return { type: user.Message.Type.U_INT_8_ARRAY, bytes: data };
+            return { type: proto.Message.Type.U_INT_8_ARRAY, bytes: data };
         }
         else if (typeof data === 'string') {
-            return { type: user.Message.Type.STRING, bytes: textEncoder.encode(data) };
+            return { type: proto.Message.Type.STRING, bytes: textEncoder.encode(data) };
         }
         else if (data instanceof String) {
-            return { type: user.Message.Type.STRING, bytes: textEncoder.encode('' + data) };
+            return { type: proto.Message.Type.STRING, bytes: textEncoder.encode('' + data) };
         }
         else {
             throw new Error('Message neigther a string type or a Uint8Array type');
@@ -116,6 +119,7 @@ export class UserMessage {
         this.buffers.set(peerId, buffers);
     }
 }
+UserMessage.SERVICE_ID = 743;
 /**
  * Buffer class used when the user message exceeds the message size limit which
  * may be sent over a `Channel`. Each buffer is identified by `WebChannel` id,

@@ -1,4 +1,4 @@
-import { WebChannel, WebChannelState } from './service/WebChannel';
+import { WebChannel } from './WebChannel';
 /**
  * Is a helper type representing types that can be sent/received over a web group.
  * @typedef {string|Uint8Array} DataType
@@ -7,54 +7,6 @@ import { WebChannel, WebChannelState } from './service/WebChannel';
  * @ignore
  */
 export const wcs = new WeakMap();
-/**
- * {@link WebGroup} state enum.
- */
-export class WebGroupState {
-    /**
-     * Equals to `0`: joining the group...
-     * @type {number}
-     */
-    static get JOINING() { return WebChannelState.JOINING; }
-    /**
-     * Equals to `'JOINING'`.
-     * @type {string}
-     */
-    static get [WebGroupState.JOINING]() { return WebChannelState[WebChannelState.JOINING]; }
-    /**
-     * Equals to `1`: joined the group successfully.
-     * @type {number}
-     */
-    static get JOINED() { return WebChannelState.JOINED; }
-    /**
-     * Equals to `'JOINED'`.
-     * @type {string}
-     */
-    static get [WebGroupState.JOINED]() { return WebChannelState[WebChannelState.JOINED]; }
-    /**
-     * Equals to `2`: The `WebGroup` is in process of leaving.
-     * @type {number}
-     */
-    static get LEAVING() { return WebChannelState.LEAVING; }
-    /**
-     * Equals to `'LEAVING'`.
-     * @type {string}
-     */
-    static get [WebGroupState.LEAVING]() { return WebChannelState[WebChannelState.LEAVING]; }
-    /**
-     * Equals to `3`: left the group. If the connection to the web group has lost other then
-     * by calling {@link WebGroup#leave} methods and {@link WebGroup#autoRejoin} is true,
-     * then the state would be `LEFT`, usually during a relatively short period) before
-     * the rejoining process starts.
-     * @type {number}
-     */
-    static get LEFT() { return WebChannelState.LEFT; }
-    /**
-     * Equals to `'LEFT'`.
-     * @type {string}
-     */
-    static get [WebGroupState.LEFT]() { return WebChannelState[WebChannelState.LEFT]; }
-}
 /**
  * This class is an API starting point. It represents a peer to peer network,
  * simply called a group. Each group member can send/receive broadcast
@@ -117,7 +69,11 @@ export class WebGroup {
          * @type {number}
          */
         this.myId = undefined;
-        Reflect.defineProperty(this, 'myId', { configurable: false, enumerable: true, get: () => wc.myId });
+        Reflect.defineProperty(this, 'myId', {
+            configurable: false,
+            enumerable: true,
+            get: () => wc.myId,
+        });
         /**
          * The read-only group session identifier. Equals to an empty string before calling {@link WebGroup#join}.
          * Different to {@link WebGroup#id}. This key is known and used by Signaling server
@@ -125,26 +81,42 @@ export class WebGroup {
          * @type {string}
          */
         this.key = undefined;
-        Reflect.defineProperty(this, 'key', { configurable: false, enumerable: true, get: () => wc.key });
+        Reflect.defineProperty(this, 'key', {
+            configurable: false,
+            enumerable: true,
+            get: () => wc.key,
+        });
         /**
          * The read-only array of all members including yourself (i.e. {@link WebGroup#myId})
          * @type {number[]}
          */
         this.members = undefined;
-        Reflect.defineProperty(this, 'members', { configurable: false, enumerable: true, get: () => wc.members });
+        Reflect.defineProperty(this, 'members', {
+            configurable: false,
+            enumerable: true,
+            get: () => wc.members,
+        });
         /**
          * The read-only property which is an enum of type {@link Topology}
          * indicating the topology used for this {@link WebGroup} instance.
          * @type {Topology}
          */
         this.topology = undefined;
-        Reflect.defineProperty(this, 'topology', { configurable: false, enumerable: true, get: () => wc.topology });
+        Reflect.defineProperty(this, 'topology', {
+            configurable: false,
+            enumerable: true,
+            get: () => wc.topology,
+        });
         /**
          * The read-only state of the {@link WebGroup} connection.
          * @type {WebGroupState}
          */
         this.state = undefined;
-        Reflect.defineProperty(this, 'state', { configurable: false, enumerable: true, get: () => wc.state });
+        Reflect.defineProperty(this, 'state', {
+            configurable: false,
+            enumerable: true,
+            get: () => wc.state,
+        });
         /**
          * The read-only state of the signaling server.
          * @type {SignalingState}
@@ -162,7 +134,8 @@ export class WebGroup {
         this.signalingServer = undefined;
         Reflect.defineProperty(this, 'signalingServer', {
             configurable: false,
-            enumerable: true, get: () => wc.signaling.url,
+            enumerable: true,
+            get: () => wc.signaling.url,
         });
         /**
          * Enable/Desable the auto rejoin feature.
@@ -173,7 +146,7 @@ export class WebGroup {
             configurable: false,
             enumerable: true,
             get: () => wc.autoRejoin,
-            set: (value) => wc.autoRejoin = value,
+            set: (value) => (wc.autoRejoin = value),
         });
         /**
          * This handler is called when a message has been received from the group.
@@ -185,7 +158,7 @@ export class WebGroup {
         Reflect.defineProperty(this, 'onMessage', {
             configurable: true,
             enumerable: true,
-            get: () => (wc.onMessage.name === 'none') ? undefined : wc.onMessage,
+            get: () => (wc.onMessage.name === 'none' ? undefined : wc.onMessage),
             set: (handler) => {
                 if (typeof handler !== 'function') {
                     wc.onMessage = function none() { };
@@ -203,7 +176,7 @@ export class WebGroup {
         Reflect.defineProperty(this, 'onMemberJoin', {
             configurable: true,
             enumerable: true,
-            get: () => (wc.onMemberJoin.name === 'none') ? undefined : wc.onMemberJoin,
+            get: () => (wc.onMemberJoin.name === 'none' ? undefined : wc.onMemberJoin),
             set: (handler) => {
                 if (typeof handler !== 'function') {
                     wc.onMemberJoin = function none() { };
@@ -221,7 +194,7 @@ export class WebGroup {
         Reflect.defineProperty(this, 'onMemberLeave', {
             configurable: true,
             enumerable: true,
-            get: () => (wc.onMemberLeave.name === 'none') ? undefined : wc.onMemberLeave,
+            get: () => (wc.onMemberLeave.name === 'none' ? undefined : wc.onMemberLeave),
             set: (handler) => {
                 if (typeof handler !== 'function') {
                     wc.onMemberLeave = function none() { };
@@ -239,7 +212,7 @@ export class WebGroup {
         Reflect.defineProperty(this, 'onStateChange', {
             configurable: true,
             enumerable: true,
-            get: () => (wc.onStateChange.name === 'none') ? undefined : wc.onStateChange,
+            get: () => (wc.onStateChange.name === 'none' ? undefined : wc.onStateChange),
             set: (handler) => {
                 if (typeof handler !== 'function') {
                     wc.onStateChange = function none() { };
@@ -257,7 +230,7 @@ export class WebGroup {
         Reflect.defineProperty(this, 'onSignalingStateChange', {
             configurable: true,
             enumerable: true,
-            get: () => (wc.onSignalingStateChange.name === 'none') ? undefined : wc.onSignalingStateChange,
+            get: () => wc.onSignalingStateChange.name === 'none' ? undefined : wc.onSignalingStateChange,
             set: (handler) => {
                 if (typeof handler !== 'function') {
                     wc.onSignalingStateChange = function none() { };

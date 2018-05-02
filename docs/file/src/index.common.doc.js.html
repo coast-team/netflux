@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <base data-ice="baseUrl" href="../../">
-  <title data-ice="title">src/index.common.js | Netflux</title>
+  <title data-ice="title">src/index.common.doc.js | Netflux</title>
   <link type="text/css" rel="stylesheet" href="css/style.css">
   <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
   <script src="script/prettify/prettify.js"></script>
@@ -31,10 +31,10 @@
     
   <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/BotServerFacade.js~WebGroupBotServer.html">WebGroupBotServer</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroupState.html">WebGroupState</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.js~LogLevel.html">LogLevel</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.js~SignalingState.html">SignalingState</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.js~Topology.html">Topology</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~LogLevel.html">LogLevel</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~SignalingState.html">SignalingState</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~Topology.html">Topology</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~WebGroupState.html">WebGroupState</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-setLogLevel">setLogLevel</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-DataType">DataType</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupBotServerOptions">WebGroupBotServerOptions</a></span></span></li>
@@ -47,164 +47,166 @@
 </div>
 </nav>
 
-<div class="content" data-ice="content"><h1 data-ice="title">src/index.common.js</h1>
+<div class="content" data-ice="content"><h1 data-ice="title">src/index.common.doc.js</h1>
 <pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">import { LogLevel as Logs, setLogLevel as setLogs } from &apos;./misc/Util&apos;;
 import { TopologyEnum } from &apos;./service/topology/Topology&apos;;
 import { SignalingState as SigState } from &apos;./Signaling&apos;;
-export { WebGroup, WebGroupState } from &apos;./WebChannelFacade&apos;;
+import { WebChannelState } from &apos;./WebChannelState&apos;;
+export { WebGroup } from &apos;./WebChannelFacade&apos;;
 /**
  * Set log level for debugging utility. By default all logs are disabled.
  * @param {...LogLevel} levels
  */
-export function setLogLevel(...levels) { setLogs(levels); }
+export function setLogLevel(...levels) {
+    setLogs(levels);
+}
 /**
- * The state enum of the signaling server for WebRTC.
+ * The state enum of the signaling server.
  */
 export class SignalingState {
     /**
-     * Equals to `0`, the connection is not yet open. Value
+     * `0`: the connection is not yet open (equivalent to `WebSocket.CONNECTING`).
      * @type {number}
      */
-    static get CONNECTING() { return SigState.CONNECTING; }
-    /**
-     * Equals to `&apos;CONNECTING&apos;`.
-     * @type {string}
-     */
-    static get [SignalingState.CONNECTING]() { return SigState[SigState.CONNECTING]; }
-    /**
-     * Equals to `1`, `RTCDataChannel` has been established with one of the group member.
-     * From now the signaling is no longer needed, because the joining process
-     * will continue with a help of this member.
-     * @type {number}
-     */
-    static get CONNECTED() { return SigState.CONNECTED; }
-    /**
-     * Equals to `&apos;CONNECTED&apos;`.
-     * @type {string}
-     */
-    static get [SignalingState.CONNECTED]() {
-        return SigState[SigState.CONNECTED];
+    static get CONNECTING() {
+        return SigState.CONNECTING;
     }
     /**
-     * Equals to `2`, you has successfully joined a web group and ready to help join others.
+     * `1`: the connection is open and ready to communicate (equivalent to `WebSocket.OPEN`).
      * @type {number}
      */
-    static get STABLE() { return SigState.STABLE; }
+    static get OPEN() {
+        return SigState.OPEN;
+    }
     /**
-     * Equals to `&apos;STABLE&apos;`.
-     * @type {string}
-     */
-    static get [SignalingState.STABLE]() { return SigState[SigState.STABLE]; }
-    /**
-     * Equals to `3`, the connection is in process of closing.
+     * `2`: the connection is in the process of closing (equivalent to `WebSocket.CLOSING`).
      * @type {number}
      */
-    static get CLOSING() { return SigState.CLOSING; }
+    static get CLOSING() {
+        return SigState.CLOSING;
+    }
     /**
-     * Equals to `&apos;CLOSING&apos;`.
-     * @type {string}
-     */
-    static get [SignalingState.CLOSING]() { return SigState[SigState.CLOSING]; }
-    /**
-     * Equals to `4`, the connection is closed.
+     * `3`: the connection is closed or couldn&apos;t be opened (equivalent to `WebSocket.CLOSED`).
      * @type {number}
      */
-    static get CLOSED() { return SigState.CLOSED; }
+    static get CLOSED() {
+        return SigState.CLOSED;
+    }
     /**
-     * Equals to `&apos;CLOSED&apos;`.
-     * @type {string}
+     * `4`: signaling server is checking wether you are still connected to the group. If it is not the case, then
+     * subscribs you to one of the group member in order to create a connection with him.
+     * @type {number}
      */
-    static get [SignalingState.CLOSED]() { return SigState[SigState.CLOSED]; }
+    static get CHECKING() {
+        return SigState.CHECKING;
+    }
+    /**
+     * `5`: a connection has been established with one of the group member or you are the only member of the group.
+     * From now the signaling is no longer needed, because the joining process will continue with a help of this member.
+     * @type {number}
+     */
+    static get CHECKED() {
+        return SigState.CHECKED;
+    }
 }
 /**
- * The topology enum.
+ * The state enum of {@link WebGroup}.
+ */
+export class WebGroupState {
+    /**
+     * `0`: you haven&apos;t joined the group yet.
+     * @type {number}
+     */
+    static get JOINING() {
+        return WebChannelState.JOINING;
+    }
+    /**
+     * `1`: you have sussessfully joined the group and ready to communicate.
+     * @type {number}
+     */
+    static get JOINED() {
+        return WebChannelState.JOINED;
+    }
+    /**
+     * `2`: you are about to leave the group.
+     * @type {number}
+     */
+    static get LEAVING() {
+        return WebChannelState.LEAVING;
+    }
+    /**
+     * `3`: you have sussessfully left the group.
+     * @type {number}
+     */
+    static get LEFT() {
+        return WebChannelState.LEFT;
+    }
+}
+/**
+ * The topology enum. More topologies will be added in the future
  */
 export class Topology {
     /**
      * Full mesh topology identifier.
      * @type {number}
      */
-    static get FULL_MESH() { return TopologyEnum.FULL_MESH; }
-    /**
-     * Equals to `&apos;FULL_MESH&apos;`.
-     * @type {string}
-     */
-    static get [Topology.FULL_MESH]() { return TopologyEnum[TopologyEnum.FULL_MESH]; }
+    static get FULL_MESH() {
+        return TopologyEnum.FULL_MESH;
+    }
 }
 /**
- * The log level enum.
+ * The log level enum for debugging purposes.
  */
 export class LogLevel {
     /**
      * Equals to `1`, allows logs for debug.
      * @type {number}
      */
-    static get DEBUG() { return Logs.DEBUG; }
-    /**
-     * Equals to `&apos;DEBUG&apos;`.
-     * @type {string}
-     */
-    static get [Logs.DEBUG]() { return Logs[Logs.DEBUG]; }
+    static get DEBUG() {
+        return Logs.DEBUG;
+    }
     /**
      * Equals to `2`, logs for WebGroup module.
      * @type {number}
      */
-    static get WEB_GROUP() { return Logs.WEB_GROUP; }
-    /**
-     * Equals to `&apos;WEB_GROUP&apos;`.
-     * @type {string}
-     */
-    static get [Logs.WEB_GROUP]() { return Logs[Logs.WEB_GROUP]; }
+    static get WEB_GROUP() {
+        return Logs.WEB_GROUP;
+    }
     /**
      * Equals to `3`, logs for WebRTCBuilder module.
      * @type {number}
      */
-    static get WEBRTC() { return Logs.WEBRTC; }
-    /**
-     * Equals to `&apos;WEBRTC&apos;`.
-     * @type {string}
-     */
-    static get [Logs.WEBRTC]() { return Logs[Logs.WEBRTC]; }
+    static get WEBRTC() {
+        return Logs.WEBRTC;
+    }
     /**
      * Equals to `4`, logs for Channel module.
      * @type {number}
      */
-    static get CHANNEL() { return Logs.CHANNEL; }
-    /**
-     * Equals to `&apos;CHANNEL&apos;`.
-     * @type {string}
-     */
-    static get [Logs.CHANNEL]() { return Logs[Logs.CHANNEL]; }
+    static get CHANNEL() {
+        return Logs.CHANNEL;
+    }
     /**
      * Equals to `5`, logs for Topology module.
      * @type {number}
      */
-    static get TOPOLOGY() { return Logs.TOPOLOGY; }
-    /**
-     * Equals to `&apos;TOPOLOGY&apos;`.
-     * @type {string}
-     */
-    static get [Logs.TOPOLOGY]() { return Logs[Logs.TOPOLOGY]; }
+    static get TOPOLOGY() {
+        return Logs.TOPOLOGY;
+    }
     /**
      * Equals to `6`, logs for Signaling module.
      * @type {number}
      */
-    static get SIGNALING() { return Logs.SIGNALING; }
-    /**
-     * Equals to `&apos;SIGNALING&apos;`.
-     * @type {string}
-     */
-    static get [Logs.SIGNALING]() { return Logs[Logs.SIGNALING]; }
+    static get SIGNALING() {
+        return Logs.SIGNALING;
+    }
     /**
      * Equals to `7`, logs for ChannelBuilder module.
      * @type {number}
      */
-    static get CHANNEL_BUILDER() { return Logs.CHANNEL_BUILDER; }
-    /**
-     * Equals to `&apos;CHANNEL_BUILDER&apos;`.
-     * @type {string}
-     */
-    static get [Logs.CHANNEL_BUILDER]() { return Logs[Logs.CHANNEL_BUILDER]; }
+    static get CHANNEL_BUILDER() {
+        return Logs.CHANNEL_BUILDER;
+    }
 }
 /**
  * The options to be passed into {@link WebGroup} constructor.
@@ -246,7 +248,7 @@ export class LogLevel {
 </div>
 
 <footer class="footer">
-  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(1.0.4)</span><img src="./image/esdoc-logo-mini-black.png"></a>
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(1.1.0)</span><img src="./image/esdoc-logo-mini-black.png"></a>
 </footer>
 
 <script src="script/search_index.js"></script>

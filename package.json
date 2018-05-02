@@ -52,7 +52,7 @@
   "dependencies": {
     "core-js": "^2.5.5",
     "protobufjs": "^6.8.6",
-    "rxjs": "^5.5.10",
+    "rxjs": "^5.5.8",
     "text-encoding": "^0.6.4",
     "uws": "^9.148.0",
     "webrtc-adapter": "^6.1.5"
@@ -67,10 +67,9 @@
     "babel-preset-env": "^1.6.1",
     "commitizen": "^2.9.6",
     "cz-conventional-changelog": "^2.1.0",
-    "esdoc": "^1.0.4",
+    "esdoc": "^1.1.0",
     "esdoc-inject-style-plugin": "^1.0.0",
     "esdoc-standard-plugin": "^1.0.0",
-    "esdoc-typescript-plugin": "^1.0.0",
     "husky": "^0.14.3",
     "jasmine": "^3.1.0",
     "jasmine-core": "^3.1.0",

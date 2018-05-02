@@ -1,5 +1,5 @@
+import { merge } from 'rxjs/observable/merge';
 import { filter, map } from 'rxjs/operators';
-import { service } from '../proto';
 /**
  * Services are specific classes. Instance of such class communicates via
  * network with another instance of the same class. Indeed each peer in the
@@ -8,18 +8,72 @@ import { service } from '../proto';
  * communication protocol.
  */
 export class Service {
-    static encodeServiceMessage(serviceId, content) {
-        return service.Message.encode(service.Message.create({
-            id: serviceId,
-            content,
-        })).finish();
+    constructor(serviceId, proto) {
+        this.serviceId = serviceId;
+        this.proto = proto;
     }
-    constructor(id, protoMessage, serviceMessageSubject) {
-        this.serviceId = id;
-        this.protoMessage = protoMessage;
-        if (serviceMessageSubject !== undefined) {
-            this.setupServiceMessage(serviceMessageSubject);
-        }
+    useWebChannelStream(wc) {
+        this.wc = wc;
+        this.wcStream = {
+            id: this.wc.STREAM_ID,
+            message: wc.messageFromStream.pipe(filter(({ serviceId }) => serviceId === this.serviceId), map(({ channel, senderId, recipientId, content }) => ({
+                channel,
+                senderId,
+                recipientId,
+                msg: this.decode(content),
+            }))),
+            send: (content, id) => {
+                if (content && !(content instanceof Uint8Array)) {
+                    wc.sendOverStream({
+                        senderId: this.wc.myId,
+                        recipientId: id,
+                        serviceId: this.serviceId,
+                        content: this.encode(content),
+                    });
+                }
+                else {
+                    wc.sendOverStream({
+                        senderId: this.wc.myId,
+                        recipientId: id,
+                        serviceId: this.serviceId,
+                        content: content,
+                    });
+                }
+            },
+        };
+    }
+    useSignalingStream(sig) {
+        this.sigStream = {
+            id: sig.STREAM_ID,
+            message: sig.messageFromStream.pipe(filter(({ serviceId }) => serviceId === this.serviceId), map(({ senderId, content }) => ({ senderId, msg: this.decode(content) }))),
+            send: (content, id) => {
+                if (content && !(content instanceof Uint8Array)) {
+                    sig.sendOverStream({
+                        recipientId: id,
+                        serviceId: this.serviceId,
+                        content: this.encode(content),
+                    });
+                }
+                else {
+                    sig.sendOverStream({
+                        recipientId: id,
+                        serviceId: this.serviceId,
+                        content: content,
+                    });
+                }
+            },
+        };
+        this.streams = {
+            message: merge(this.wcStream.message.pipe(map(({ senderId, msg }) => ({ streamId: this.wcStream.id, senderId, msg }))), this.sigStream.message.pipe(map(({ senderId, msg }) => ({ streamId: this.sigStream.id, senderId, msg })))),
+            sendOver: (streamId, msg, id) => {
+                if (streamId === this.wcStream.id) {
+                    this.wcStream.send(msg, id);
+                }
+                else {
+                    this.sigStream.send(msg, id);
+                }
+            },
+        };
     }
     /**
      * Encode service message for sending over the network.
@@ -27,10 +81,7 @@ export class Service {
      * @param msg Service specific message object
      */
     encode(msg) {
-        return service.Message.encode(service.Message.create({
-            id: this.serviceId,
-            content: this.protoMessage.encode(this.protoMessage.create(msg)).finish(),
-        })).finish();
+        return this.proto.encode(this.proto.create(msg)).finish();
     }
     /**
      * Decode service message received from the network.
@@ -38,14 +89,6 @@ export class Service {
      * @return  Service specific message object
      */
     decode(bytes) {
-        return this.protoMessage.decode(bytes);
-    }
-    setupServiceMessage(serviceMessageSubject) {
-        this.onServiceMessage = serviceMessageSubject.pipe(filter(({ id }) => id === this.serviceId), map(({ channel, senderId, recipientId, content }) => ({
-            channel,
-            senderId,
-            recipientId,
-            msg: this.protoMessage.decode(content),
-        })));
+        return this.proto.decode(bytes);
     }
 }
