@@ -3,16 +3,20 @@ package signaling;
 
 message Message {
   oneof type {
-    Content content = 1;
-    bool isFirst = 2; // Only incoming
-    bool stable = 3; // Only outcoming
-    bool heartbeat = 4; // Ping/Pong message
-    bool tryAnother = 5; // Only outcoming
+    bool heartbeat = 1; // Incoming and outcoming message
+    Content content = 2; // Incoming and outcoming message
+    GroupData connect = 3; // Outcoming message
+    bool connected = 4; // Incoming message
   }
 }
 
 message Content {
   uint32 id = 1;
-  bool unsubscribe = 2; // Forward last data and unsubscribe from the peer
+  bool lastData = 2; // Forward last data and unsubscribe from the peer
   bytes data = 3;
+}
+
+message GroupData {
+  uint32 id = 1;
+  repeated uint32 members = 2;
 }

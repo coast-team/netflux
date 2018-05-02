@@ -41,14 +41,22 @@ export function generateKey(): string {
   return result
 }
 
-export function randNumbers(length: number = 1): number[] | Uint32Array {
+export function generateId(exclude: number[] = []): number {
+  const id = randNumbers()[0]
+  if (exclude.includes(id)) {
+    return generateId(exclude)
+  }
+  return id
+}
+
+function randNumbers(length: number = 1): number[] | Uint32Array {
   let res
   if (isBrowser) {
     res = new Uint32Array(length)
     global.crypto.getRandomValues(res)
   } else {
     res = []
-    const bytes = (crypto as any).randomBytes(4 * length)
+    const bytes = (global.crypto as any).randomBytes(4 * length)
     for (let i = 0; i < bytes.length; i += 4) {
       res[res.length] = bytes.readUInt32BE(i, true)
     }

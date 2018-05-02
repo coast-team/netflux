@@ -5,6 +5,7 @@ import { Observable } from 'rxjs/Observable'
 import { Channel } from './Channel'
 import { IStream } from './IStream'
 import {
+  generateId,
   generateKey,
   isBrowser,
   isOnline,
@@ -12,12 +13,11 @@ import {
   isVisible,
   log,
   MAX_KEY_LENGTH,
-  randNumbers,
 } from './misc/Util'
 import { IMessage, Message } from './proto'
 import { ChannelBuilder } from './service/channelBuilder/ChannelBuilder'
 import { FullMesh } from './service/topology/FullMesh'
-import { ITopology, TopologyEnum, TopologyStateEnum } from './service/topology/Topology'
+import { ITopology, TopologyEnum, TopologyState } from './service/topology/Topology'
 import { UserDataType, UserMessage } from './service/UserMessage'
 import { Signaling, SignalingState } from './Signaling'
 import { WebChannelState } from './WebChannelState'
@@ -44,6 +44,8 @@ export interface InWcMsg extends Message {
 }
 
 export type OutWcMessage = IMessage
+
+const REJOIN_TIMEOUT = 3000
 
 /**
  * This class is an API starting point. It represents a group of collaborators
@@ -78,8 +80,9 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
   public streamSubject: Subject<InWcMsg>
 
   private isRejoinDisabled: boolean
+  private isJoinRequested: boolean
   private topologySub: Subscription
-  private rejoinTimer: any
+  private rejoinTimer: NodeJS.Timer | undefined
 
   constructor({
     topology = defaultOptions.topology,
@@ -91,8 +94,8 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
 
     // PUBLIC MEMBERS
     this.topology = topology
-    this.id = this.generateId()
-    this.myId = this.generateId()
+    this.id = generateId()
+    this.myId = generateId()
     this.members = [this.myId]
     this.key = ''
     this.autoRejoin = autoRejoin
@@ -106,7 +109,9 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
     this.onSignalingStateChange = function none() {}
 
     // PRIVATE
+    this.isJoinRequested = false
     this.state = WebChannelState.LEFT
+    this.rejoinTimer = undefined
     this.userMsg = new UserMessage(this)
 
     // Signaling init
@@ -115,17 +120,38 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
       log.signalingState(SignalingState[state], this.myId)
       this.onSignalingStateChange(state)
       switch (state) {
-        case SignalingState.CONNECTING:
-          this.setState(WebChannelState.JOINING)
-          break
         case SignalingState.CLOSED:
-          if (this.topologyService.state === TopologyStateEnum.DISCONNECTED) {
-            this.setState(WebChannelState.LEFT)
+          if (this.topologyService.state === TopologyState.DISCONNECTED) {
+            if (
+              isVisible() &&
+              isOnline() &&
+              !this.rejoinTimer &&
+              (this.isJoinRequested || !this.isRejoinDisabled)
+            ) {
+              this.startJoin()
+            } else {
+              this.setState(WebChannelState.LEFT)
+            }
+          } else if (this.state !== WebChannelState.LEAVING) {
+            this.signaling.connect(this.key)
           }
-          this.rejoin(3000)
           break
-        case SignalingState.STABLE:
-          this.topologyService.setStable()
+        case SignalingState.OPEN:
+          if (
+            this.topologyService.state === TopologyState.DISCONNECTED ||
+            this.topologyService.state === TopologyState.JOINED
+          ) {
+            this.signaling.sendConnectRequest()
+          }
+          break
+        case SignalingState.CHECKED:
+          if (
+            this.state === WebChannelState.JOINING &&
+            this.topologyService.state === TopologyState.DISCONNECTED &&
+            this.signaling.connected
+          ) {
+            this.setJoined()
+          }
           break
       }
     })
@@ -140,16 +166,20 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
     // Listen to browser events only
     if (isBrowser) {
       global.window.addEventListener('online', () => {
-        if (isVisible() && this.state === WebChannelState.LEFT) {
-          this.rejoin()
+        if (this.state === WebChannelState.LEFT && isVisible() && !this.rejoinTimer) {
+          if (this.isJoinRequested || !this.isRejoinDisabled) {
+            this.startJoin()
+          }
         }
       })
       global.window.addEventListener('visibilitychange', () => {
-        if (isVisible() && this.state === WebChannelState.LEFT) {
-          this.rejoin()
+        if (isVisible() && this.state === WebChannelState.LEFT && isOnline() && !this.rejoinTimer) {
+          if (this.isJoinRequested || !this.isRejoinDisabled) {
+            this.startJoin()
+          }
         }
       })
-      global.window.addEventListener('beforeunload', () => this.internalLeave())
+      global.window.addEventListener('beforeunload', () => this.leave())
     }
   }
 
@@ -175,13 +205,13 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
     }
     this.key = key
     if (
-      isOnline() &&
-      this.state === WebChannelState.LEFT &&
-      this.signaling.state === SignalingState.CLOSED
+      this.state === WebChannelState.LEAVING ||
+      (this.state === WebChannelState.LEFT && (!isOnline() || !isVisible()))
     ) {
-      this.setState(WebChannelState.JOINING)
       this.isRejoinDisabled = !this.autoRejoin
-      this.signaling.join(this.key)
+      this.isJoinRequested = true
+    } else {
+      this.startJoin()
     }
   }
 
@@ -196,7 +226,7 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
   }
 
   leave() {
-    if (this.state !== WebChannelState.LEAVING && this.state !== WebChannelState.LEFT) {
+    if (this.state === WebChannelState.JOINING || this.state === WebChannelState.JOINED) {
       this.setState(WebChannelState.LEAVING)
       this.key = ''
       this.isRejoinDisabled = true
@@ -238,10 +268,17 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
     }
   }
 
-  onMemberLeaveProxy(id: number): void {
+  onMemberLeaveProxy(id: number, isAdjacent: boolean): void {
     if (this.members.includes(id)) {
       this.members.splice(this.members.indexOf(id), 1)
       this.onMemberLeave(id)
+    }
+    if (
+      isAdjacent &&
+      this.signaling.state === SignalingState.CHECKED &&
+      this.topologyService.state === TopologyState.JOINED
+    ) {
+      this.signaling.sendConnectRequest()
     }
   }
 
@@ -272,57 +309,58 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
     if (this.topologySub) {
       this.topologySub.unsubscribe()
     }
-    this.topologySub = this.topologyService.onState.subscribe((state: TopologyStateEnum) => {
+    this.topologySub = this.topologyService.onState.subscribe((state: TopologyState) => {
       switch (state) {
-        case TopologyStateEnum.JOINING:
+        case TopologyState.JOINING:
           this.setState(WebChannelState.JOINING)
           break
-        case TopologyStateEnum.JOINED:
-          this.setState(WebChannelState.JOINED)
+        case TopologyState.JOINED:
+          this.setJoined()
+          if (
+            this.signaling.state === SignalingState.OPEN ||
+            this.signaling.state === SignalingState.CHECKED
+          ) {
+            this.signaling.sendConnectRequest()
+          }
           break
-        case TopologyStateEnum.STABLE:
-          this.setState(WebChannelState.JOINED)
-          this.signaling.open()
-          break
-        case TopologyStateEnum.DISCONNECTED:
-          if (this.signaling.state === SignalingState.CLOSED) {
+        case TopologyState.DISCONNECTED:
+          if (
+            this.signaling.state === SignalingState.CLOSED &&
+            isVisible() &&
+            isOnline() &&
+            !this.rejoinTimer &&
+            (this.isJoinRequested || !this.isRejoinDisabled)
+          ) {
+            this.startJoin()
+          } else {
             this.setState(WebChannelState.LEFT)
           }
-          this.rejoin(2000)
           break
       }
     })
   }
 
-  private rejoin(timeout: number = 0) {
-    if (!this.isRejoinDisabled) {
-      this.isRejoinDisabled = !this.autoRejoin
-      global.clearTimeout(this.rejoinTimer)
-      this.rejoinTimer = setTimeout(() => {
-        if (isOnline() && isVisible()) {
-          log.webgroup('REJOIN...')
-          this.signaling.join(this.key)
-        }
-      }, timeout)
-    }
+  private startJoin() {
+    this.setState(WebChannelState.JOINING)
+    this.signaling.connect(this.key)
+    this.isJoinRequested = false
+    this.rejoinTimer = global.setTimeout(() => {
+      if (
+        this.state === WebChannelState.LEFT &&
+        isVisible() &&
+        isOnline() &&
+        !this.isRejoinDisabled
+      ) {
+        this.startJoin()
+      } else {
+        this.rejoinTimer = undefined
+      }
+    }, REJOIN_TIMEOUT)
   }
 
-  /**
-   * Generate random id for a `WebChannel` or a new peer.
-   */
-  private generateId(excludeIds: number[] = []): number {
-    const id = randNumbers()[0]
-    if (excludeIds.includes(id)) {
-      return this.generateId()
-    }
-    return id
-  }
-
-  private internalLeave() {
-    if (this.state !== WebChannelState.LEAVING && this.state !== WebChannelState.LEFT) {
-      this.signaling.close()
-      this.topologyService.leave()
-      this.setState(WebChannelState.LEFT)
-    }
+  private setJoined() {
+    this.setState(WebChannelState.JOINED)
+    global.clearTimeout(this.rejoinTimer as NodeJS.Timer)
+    this.rejoinTimer = undefined
   }
 }

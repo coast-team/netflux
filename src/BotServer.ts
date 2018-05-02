@@ -1,7 +1,7 @@
 import { Server as NodeJSHttpServer } from 'http'
 import { Server as NodeJSHttpsServer } from 'https'
 
-import { log } from './misc/Util'
+// import { log } from './misc/Util'
 import { defaultOptions, IWebChannelOptions, WebChannel } from './WebChannel'
 import { wcs, WebGroup } from './WebChannelFacade'
 import { Route, WebSocketBuilder } from './WebSocketBuilder'
@@ -38,13 +38,10 @@ export class BotServer {
       autoRejoin: false,
     },
   }: IBotServerOptions) {
-    // public
     this.wcOptions = Object.assign({}, defaultOptions, { autoRejoin: false }, webGroupOptions)
     this.server = server
     this.listenUrl = url
     this.perMessageDeflate = perMessageDeflate
-
-    // private
     this.webGroups = new Map()
     this.onWebGroup = function none() {}
     this.onError = function none() {}
@@ -82,34 +79,30 @@ export class BotServer {
         wcId: number
         senderId: number | undefined
       }
-      switch (route) {
-        case Route.INTERNAL: {
-          const wg = this.webGroups.get(wcId) as WebGroup
+      let wg = this.webGroups.get(wcId) as WebGroup
+      if (route === Route.INTERNAL) {
+        if (wg) {
           const wc = wcs.get(wg) as WebChannel
           wc.webSocketBuilder.newInternalWebSocket(ws, senderId as number)
-          break
+        } else {
+          ws.close(4000, 'WebGroup no longer exist')
         }
-        case Route.INVITE: {
-          let wg = this.webGroups.get(wcId) as WebGroup
-          if (wg && wg.members.length === 1) {
-            wg = new WebGroup(this.wcOptions)
-            this.webGroups.set(wcId, wg)
-          }
-          // FIXME: it is possible to create multiple WebChannels with the same ID
-          const wc = wcs.get(wg) as WebChannel
-          wc.id = wcId
+      } else if (route === Route.INVITE || route === Route.JOIN) {
+        if (!wg || wg.members.length === 1) {
+          wg = new WebGroup(this.wcOptions)
+          this.webGroups.set(wcId, wg)
           this.onWebGroup(wg)
+        }
+        // FIXME: it is possible to create multiple WebChannels with the same ID
+        const wc = wcs.get(wg) as WebChannel
+        wc.id = wcId
+        if (route === Route.INVITE) {
           wc.webSocketBuilder.newInviteWebSocket(ws, senderId as number)
-          break
-        }
-        case Route.JOIN: {
-          const wg = this.webGroups.get(wcId) as WebGroup
-          const wc = wcs.get(wg) as WebChannel
+        } else {
           wc.webSocketBuilder.newJoinWebSocket(ws)
-          break
         }
-        default:
-          log.debug('Unknown route: ', route)
+      } else {
+        ws.close(4000, 'Unknown route')
       }
     })
   }
@@ -140,7 +133,7 @@ export class BotServer {
       query: { senderId, wcId },
     }: { pathname: string; query: { senderId: string; wcId: string } } = urlLib.parse(url, true)
     return {
-      route: pathname.substr(pathname.lastIndexOf('/')),
+      route: pathname.replace('/', ''),
       wcId: wcId ? Number(wcId) : undefined,
       senderId: senderId ? Number(senderId) : undefined,
     }

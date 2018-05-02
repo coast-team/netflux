@@ -18,78 +18,6 @@ export { WebGroupOptions }
 export type DataType = string | Uint8Array
 
 /**
- * {@link WebGroup} state enum.
- */
-export class WebGroupState {
-  /**
-   * Equals to `0`: joining the group...
-   * @type {number}
-   */
-  static get JOINING(): number {
-    return WebChannelState.JOINING
-  }
-
-  /**
-   * Equals to `'JOINING'`.
-   * @type {string}
-   */
-  static get [WebGroupState.JOINING](): string {
-    return WebChannelState[WebChannelState.JOINING]
-  }
-
-  /**
-   * Equals to `1`: joined the group successfully.
-   * @type {number}
-   */
-  static get JOINED(): number {
-    return WebChannelState.JOINED
-  }
-
-  /**
-   * Equals to `'JOINED'`.
-   * @type {string}
-   */
-  static get [WebGroupState.JOINED](): string {
-    return WebChannelState[WebChannelState.JOINED]
-  }
-
-  /**
-   * Equals to `2`: The `WebGroup` is in process of leaving.
-   * @type {number}
-   */
-  static get LEAVING(): number {
-    return WebChannelState.LEAVING
-  }
-
-  /**
-   * Equals to `'LEAVING'`.
-   * @type {string}
-   */
-  static get [WebGroupState.LEAVING](): string {
-    return WebChannelState[WebChannelState.LEAVING]
-  }
-
-  /**
-   * Equals to `3`: left the group. If the connection to the web group has lost other then
-   * by calling {@link WebGroup#leave} methods and {@link WebGroup#autoRejoin} is true,
-   * then the state would be `LEFT`, usually during a relatively short period) before
-   * the rejoining process starts.
-   * @type {number}
-   */
-  static get LEFT(): number {
-    return WebChannelState.LEFT
-  }
-
-  /**
-   * Equals to `'LEFT'`.
-   * @type {string}
-   */
-  static get [WebGroupState.LEFT](): string {
-    return WebChannelState[WebChannelState.LEFT]
-  }
-}
-
-/**
  * This class is an API starting point. It represents a peer to peer network,
  * simply called a group. Each group member can send/receive broadcast
  * as well as personal messages, invite other persons or bots (see {@link WebGroupBotServer}).
@@ -135,14 +63,14 @@ export class WebGroup {
   public key: string
   public members: number[]
   public topology: TopologyEnum
-  public state: WebChannelState
+  public state: number
   public signalingState: SignalingState
   public signalingServer: string
   public autoRejoin: boolean
   public onMessage: ((id: number, data: DataType) => void) | undefined | null
   public onMemberJoin: ((id: number) => void) | undefined | null
   public onMemberLeave: ((id: number) => void) | undefined | null
-  public onStateChange: ((state: WebGroupState) => void) | undefined | null
+  public onStateChange: ((state: number) => void) | undefined | null
   public onSignalingStateChange: ((state: SignalingState) => void) | undefined | null
 
   /**

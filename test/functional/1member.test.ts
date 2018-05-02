@@ -77,7 +77,7 @@ describe('1 member', () => {
     })
 
     /** @test {WebGroup#join} */
-    fdescribe('joining', () => {
+    describe('joining', () => {
       beforeEach(() => {
         wg1 = new WebGroup(WebGroupOptions)
       })
@@ -99,18 +99,23 @@ describe('1 member', () => {
 
       /** @test {WebGroup#onSignalingStateChange} */
       it('should change the Signaling state', (done) => {
-        let called1 = 0
+        let called = 0
         const states: SignalingState[] = []
-        const expectedStates = [SignalingState.CONNECTING, SignalingState.STABLE]
+        const expectedStates = [
+          SignalingState.CONNECTING,
+          SignalingState.OPEN,
+          SignalingState.CHECKING,
+          SignalingState.CHECKED,
+        ]
 
         wg1.onSignalingStateChange = (state: SignalingState) => {
+          called++
           states.push(state)
-          called1++
-          if (called1 === 2) {
+          if (called === expectedStates.length) {
             wait(1000).then(() => {
-              expect(called1).toEqual(2)
               expect(states).toEqual(expectedStates)
-              expect(wg1.signalingState).toEqual(SignalingState.STABLE)
+              expect(called).toEqual(expectedStates.length)
+              expect(wg1.signalingState).toEqual(SignalingState.CHECKED)
               done()
             })
           }
@@ -122,17 +127,17 @@ describe('1 member', () => {
 
       /** @test {WebGroup#onStateChange} */
       it('should change the WebGroup state', (done) => {
-        let called1 = 0
+        let called = 0
         const states: WebGroupState[] = []
         const expectedStates = [WebGroupState.JOINING, WebGroupState.JOINED]
 
         wg1.onStateChange = (state: WebGroupState) => {
+          called++
           states.push(state)
-          called1++
-          if (called1 === 2) {
+          if (called === expectedStates.length) {
             wait(1000).then(() => {
-              expect(called1).toEqual(2)
               expect(states).toEqual(expectedStates)
+              expect(called).toEqual(expectedStates.length)
               expect(wg1.state).toEqual(WebGroupState.JOINED)
               done()
             })

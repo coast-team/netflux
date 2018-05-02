@@ -69,7 +69,7 @@ export class Queue {
   private resolvers: Array<() => void>
   private counter: number
 
-  constructor(length: number) {
+  constructor(length: number, afterAllDone: () => void) {
     this.counter = 0
     this.promises = []
     this.resolvers = []
@@ -80,16 +80,13 @@ export class Queue {
         })
       )
     }
+    Promise.all(this.promises).then(() => afterAllDone())
   }
 
-  pop() {
+  done() {
     if (this.counter < this.resolvers.length) {
       this.resolvers[this.counter++]()
     }
-  }
-
-  wait(): Promise<void[]> {
-    return Promise.all(this.promises)
   }
 }
 
@@ -129,10 +126,17 @@ export function getBotData(wgId: number): Promise<IBotData> {
 }
 
 export function waitBotJoin(wgId: number) {
-  return fetch(`${BOT_FETCH_URL}/waitJoin/${wgId}`).then(async (res) => {
-    if (res.status !== 200) {
-      throw new Error(await res.text())
-    }
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      fetch(`${BOT_FETCH_URL}/waitJoin/${wgId}`)
+        .then(async (res) => {
+          if (res.status !== 200) {
+            throw new Error(await res.text())
+          }
+        })
+        .then(() => resolve())
+        .catch((err) => reject(err))
+    }, 500)
   })
 }
 
@@ -140,12 +144,14 @@ export function wait(milliseconds: number): Promise<void> {
   return new Promise((resolve) => setTimeout(() => resolve(), milliseconds))
 }
 
-export function cleanWebGroup(wg: WebGroup) {
-  wg.onMemberJoin = undefined
-  wg.onMemberLeave = undefined
-  wg.onMessage = undefined
-  wg.onSignalingStateChange = undefined
-  wg.onStateChange = undefined
+export function cleanWebGroup(...wgs: WebGroup[]) {
+  wgs.forEach((wg) => {
+    wg.onMemberJoin = undefined
+    wg.onMemberLeave = undefined
+    wg.onMessage = undefined
+    wg.onSignalingStateChange = undefined
+    wg.onStateChange = undefined
+  })
 }
 
 export interface IMessages {

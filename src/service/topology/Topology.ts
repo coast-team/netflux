@@ -6,10 +6,9 @@ export enum TopologyEnum {
   FULL_MESH,
 }
 
-export enum TopologyStateEnum {
+export enum TopologyState {
   JOINING,
   JOINED,
-  STABLE,
   DISCONNECTING,
   DISCONNECTED,
 }
@@ -27,8 +26,8 @@ export enum TopologyStateEnum {
  * @see FullMesh
  */
 export interface ITopology {
-  readonly onState: Observable<TopologyStateEnum>
-  readonly state: TopologyStateEnum
+  readonly onState: Observable<TopologyState>
+  readonly state: TopologyState
 
   /**
    * Broadcast a message to the network.
@@ -60,9 +59,4 @@ export interface ITopology {
    * channel.
    */
   onChannelError(event: Event, channel: Channel): void
-
-  /**
-   * Signaling calls this method, when you are the first peer in the group.
-   */
-  setStable(): void
 }

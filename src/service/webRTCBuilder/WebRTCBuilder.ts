@@ -2,7 +2,7 @@ import { Observable } from 'rxjs/Observable'
 import { Subject } from 'rxjs/Subject'
 
 import { Channel, ChannelType } from '../../Channel'
-import { isWebRTCSupported, log } from '../../misc/Util'
+import { log } from '../../misc/Util'
 import { webRTCBuilder as proto } from '../../proto'
 import { WebChannel } from '../../WebChannel'
 import { WebChannelState } from '../../WebChannelState'
@@ -26,20 +26,18 @@ export class WebRTCBuilder extends Service<proto.IMessage, proto.Message> {
   constructor(wc: WebChannel, rtcConfiguration: RTCConfiguration) {
     super(WebRTCBuilder.SERVICE_ID, proto.Message)
 
-    if (isWebRTCSupported()) {
-      super.useWebChannelStream(wc)
-      super.useSignalingStream(wc.signaling)
-      this.rtcConfiguration = rtcConfiguration
-      this.channelsSubject = new Subject()
-      this.remotes = new Map()
-      this.remotes.set(this.wcStream.id, new Map())
-      this.remotes.set(this.sigStream.id, new Map())
-      this.streams.message.subscribe(({ streamId, senderId, msg }) => {
-        const remote =
-          this.getRemotes(streamId).get(senderId) || this.createRemote(streamId, senderId, true)
-        remote.handleMessage(msg)
-      })
-    }
+    super.useWebChannelStream(wc)
+    super.useSignalingStream(wc.signaling)
+    this.rtcConfiguration = rtcConfiguration
+    this.channelsSubject = new Subject()
+    this.remotes = new Map()
+    this.remotes.set(this.wcStream.id, new Map())
+    this.remotes.set(this.sigStream.id, new Map())
+    this.streams.message.subscribe(({ streamId, senderId, msg }) => {
+      const remote =
+        this.getRemotes(streamId).get(senderId) || this.createRemote(streamId, senderId, true)
+      remote.handleMessage(msg)
+    })
   }
 
   onChannel(): Observable<Channel> {

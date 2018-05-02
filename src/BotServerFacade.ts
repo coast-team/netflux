@@ -53,7 +53,7 @@ export { WebGroupBotServerOptions }
 export class WebGroupBotServer {
   public server: NodeJSHttpServer | NodeJSHttpsServer
   public perMessageDeflate: boolean
-  public webGroups: Set<WebGroup>
+  public webGroups: Map<number, WebGroup>
   public url: string
   public onWebGroup: (((wg: WebGroup) => void)) | undefined | null
   public onError: (((err: Error) => void)) | undefined | null
@@ -77,7 +77,11 @@ export class WebGroupBotServer {
      * @type {NodeJSHttpServer|NodeJSHttpsServer}
      */
     this.server = undefined as any
-    Reflect.defineProperty(this, 'server', { configurable: false, enumerable: true, get: () => botServer.server })
+    Reflect.defineProperty(this, 'server', {
+      configurable: false,
+      enumerable: true,
+      get: () => botServer.server,
+    })
     /**
      * Read-only property of WebSocket server: permessage-deflate.
      * @type {NodeJSHttpServer|NodeJSHttpsServer}
@@ -93,13 +97,21 @@ export class WebGroupBotServer {
      * @type {Set<WebGroup>}
      */
     this.webGroups = undefined as any
-    Reflect.defineProperty(this, 'webGroups', { configurable: false, enumerable: true, get: () => botServer.webGroups })
+    Reflect.defineProperty(this, 'webGroups', {
+      configurable: false,
+      enumerable: true,
+      get: () => botServer.webGroups,
+    })
     /**
      * Bot server url. Used to invite the bot in a web group via {@link WebGroup#invite} method.
      * @type {string}
      */
     this.url = undefined as any
-    Reflect.defineProperty(this, 'url', { configurable: false, enumerable: true, get: () => botServer.url })
+    Reflect.defineProperty(this, 'url', {
+      configurable: false,
+      enumerable: true,
+      get: () => botServer.url,
+    })
 
     /**
      * This handler is called when the bot has been invited into a group by one of its members.

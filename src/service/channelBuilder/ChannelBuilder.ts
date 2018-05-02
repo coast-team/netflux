@@ -3,7 +3,7 @@ import { merge } from 'rxjs/observable/merge'
 import { Subject } from 'rxjs/Subject'
 
 import { Channel, ChannelType } from '../../Channel'
-import { isWebSocketSupported, log } from '../../misc/Util'
+import { isWebRTCSupported, isWebSocketSupported, log } from '../../misc/Util'
 import { channelBuilder as proto } from '../../proto'
 import { WebChannel } from '../../WebChannel'
 import { CONNECT_TIMEOUT as WEBSOCKET_TIMEOUT, WebSocketBuilder } from '../../WebSocketBuilder'
@@ -54,7 +54,7 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
       wsTried: false,
       wsSupported: isWebSocketSupported(),
       dcTried: false,
-      dcSupported: !!this.webRTCBuilder,
+      dcSupported: isWebRTCSupported(),
     }
     this.pairPreBuiltMsg = super.encode({ pair: { initiator: this.myInfo } })
     pingPreBuiltMsg = super.encode({ ping: true })

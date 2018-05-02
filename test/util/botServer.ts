@@ -44,8 +44,8 @@ try {
   router
     .get('/data/:wcId', (ctx: any) => {
       const wcId = Number(ctx.params.wcId)
-      for (const wg of bot.webGroups) {
-        if (wg.id === wcId) {
+      for (const [id, wg] of bot.webGroups) {
+        if (id === wcId) {
           ctx.body = fullData(wg)
           return
         }
@@ -61,30 +61,29 @@ try {
           }
         })
       })
-      for (const wg of bot.webGroups) {
-        if (wg.id === wcId) {
+      for (const [id, wg] of bot.webGroups) {
+        if (id === wcId) {
           await (wg as any).waitJoin
           ctx.body = { id: wcId }
           return
         }
       }
-      console.log('err')
       ctx.throw(404, 'WebGroup ' + wcId + ' not found')
     })
     .get('/send/:wcId', (ctx: any) => {
       const wcId = Number(ctx.params.wcId)
-      for (const wc of bot.webGroups) {
-        if (wc.id === wcId) {
+      for (const [id, wg] of bot.webGroups) {
+        if (id === wcId) {
           // Create a message
-          const msg = JSON.stringify({ id: wc.myId })
+          const msg = JSON.stringify({ id: wg.myId })
 
           // Broadcast the message
-          wc.send(msg)
+          wg.send(msg)
 
           // Send the message privately to each peer
-          wc.members.forEach((id) => {
-            if (id !== wc.myId) {
-              wc.sendTo(id, msg)
+          wg.members.forEach((i) => {
+            if (i !== wg.myId) {
+              wg.sendTo(id, msg)
             }
           })
           ctx.status = 200

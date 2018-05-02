@@ -15,7 +15,11 @@ export enum Route {
 }
 
 export function composeUrl(url: string, route: Route, wcId: number, senderId?: number) {
-  return `${url}/${route}?wcId=${wcId}` + senderId ? `&senderId=${senderId}` : ''
+  let fullUrl = `${url}/${route}?wcId=${wcId}`
+  if (senderId) {
+    fullUrl += `&senderId=${senderId}`
+  }
+  return fullUrl
 }
 
 /**
@@ -84,37 +88,35 @@ export class WebSocketBuilder {
    * @param url Server URL
    * @param id  Peer id
    */
-  private connect(url: string, type: ChannelType, id?: number): Promise<Channel> {
+  private async connect(url: string, type: ChannelType, id?: number): Promise<Channel> {
+    if (isURL(url) && url.search(/^wss?/) !== -1) {
+    } else {
+      throw new Error(`${url} is not a valid URL`)
+    }
+    const ws = new global.WebSocket(url)
     return new Promise((resolve, reject) => {
-      try {
-        if (isURL(url) && url.search(/^wss?/) !== -1) {
-          const ws = new global.WebSocket(url)
-          const timeout = setTimeout(() => {
-            if (ws.readyState !== ws.OPEN) {
-              ws.close()
-              reject(new Error(`WebSocket ${CONNECT_TIMEOUT}ms connection timeout with '${url}'`))
-            }
-          }, CONNECT_TIMEOUT)
-          const channel = new Channel(this.wc, ws, type, id)
-          ws.onopen = () => {
-            clearTimeout(timeout)
-            resolve(channel)
-          }
-          ws.onerror = (err) => reject(err)
-          ws.onclose = (closeEvt) =>
-            reject(
-              new Error(
-                `WebSocket connection to '${url}' failed with code ${closeEvt.code}: ${
-                  closeEvt.reason
-                }`
-              )
-            )
-        } else {
-          reject(new Error(`${url} is not a valid URL`))
+      const timeout = setTimeout(() => {
+        if (ws.readyState !== ws.OPEN) {
+          ws.close()
+          reject(new Error(`WebSocket ${CONNECT_TIMEOUT}ms connection timeout with '${url}'`))
         }
-      } catch (err) {
-        reject(err)
+      }, CONNECT_TIMEOUT)
+      const channel = new Channel(this.wc, ws, type, id)
+      ws.onopen = () => {
+        clearTimeout(timeout)
+        if (type === ChannelType.INVITED) {
+          channel.initialize()
+        }
+        resolve(channel)
       }
-    })
+      ws.onerror = (err) => reject(err)
+      ws.onclose = (closeEvt) => {
+        reject(
+          new Error(
+            `WebSocket connection to '${url}' failed with code ${closeEvt.code}: ${closeEvt.reason}`
+          )
+        )
+      }
+    }) as Promise<Channel>
   }
 }

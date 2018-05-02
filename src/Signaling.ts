@@ -21,19 +21,12 @@ const heartbeatMsg = proto.Message.encode(proto.Message.create({ heartbeat: true
 
 export enum SignalingState {
   CONNECTING,
-  CONNECTED,
-  STABLE,
+  OPEN,
   CLOSING,
   CLOSED,
+  CHECKING,
+  CHECKED,
 }
-
-// export enum SignalingState {
-//   CONNECTING,
-//   CHECKING,
-//   CONNECTED,
-//   CLOSING,
-//   CLOSED
-// }
 
 /**
  * This class represents a door of the `WebChannel` for the current peer. If the door
@@ -44,6 +37,7 @@ export class Signaling implements IStream<OutSigMsg, InSigMsg> {
   public readonly STREAM_ID = 1
   public url: string
   public state: SignalingState
+  public connected: boolean
 
   private wc: WebChannel
   private stateSubject: Subject<SignalingState>
@@ -73,7 +67,7 @@ export class Signaling implements IStream<OutSigMsg, InSigMsg> {
     this.send({
       content: {
         id: msg.recipientId,
-        unsubscribe: msg.content === undefined,
+        lastData: msg.content === undefined,
         data: Message.encode(Message.create(msg)).finish(),
       },
     })
@@ -83,30 +77,15 @@ export class Signaling implements IStream<OutSigMsg, InSigMsg> {
     return this.stateSubject.asObservable()
   }
 
-  /**
-   * Notify Signaling server that you had joined the network and ready
-   * to join new peers to the network.
-   */
-  open(): void {
-    this.send({ stable: true })
-    if (this.state === SignalingState.CONNECTING) {
-      this.setState(SignalingState.CONNECTED)
-    }
-    this.setState(SignalingState.STABLE)
+  sendConnectRequest(): void {
+    this.setState(SignalingState.CHECKING)
+    this.send({
+      connect: { id: this.wc.myId, members: this.wc.members.filter((id) => id !== this.wc.myId) },
+    })
   }
 
-  join(key: string): void {
-    log.signaling('join', key)
+  connect(key: string): void {
     if (isWebSocketSupported()) {
-      if (this.state !== SignalingState.CLOSING && this.state !== SignalingState.CLOSED) {
-        this.ws.onclose = () => {}
-        this.ws.onmessage = () => {}
-        this.ws.onerror = () => {}
-        clearInterval(this.heartbeatInterval)
-        clearTimeout(this.timeout)
-        this.missedHeartbeat = 0
-        this.close()
-      }
       this.setState(SignalingState.CONNECTING)
       this.ws = new global.WebSocket(this.url.endsWith('/') ? this.url + key : this.url + '/' + key)
       this.ws.binaryType = 'arraybuffer'
@@ -117,13 +96,14 @@ export class Signaling implements IStream<OutSigMsg, InSigMsg> {
         }
       }, 10000)
       this.ws.onopen = () => {
-        log.signaling('WebSocket OPENED', key)
+        this.setState(SignalingState.OPEN)
         clearTimeout(this.timeout)
         this.startHeartbeat()
       }
       this.ws.onerror = (err) => log.signaling(`WebSocket ERROR`, err)
       this.ws.onclose = (closeEvt) => {
-        log.signaling('WebSocket CLOSED', closeEvt)
+        clearTimeout(this.timeout)
+        global.clearInterval(this.heartbeatInterval)
         this.setState(SignalingState.CLOSED)
       }
       this.ws.onmessage = ({ data }: { data: ArrayBuffer }) => this.handleMessage(data)
@@ -152,14 +132,11 @@ export class Signaling implements IStream<OutSigMsg, InSigMsg> {
       case 'heartbeat':
         this.missedHeartbeat = 0
         break
-      case 'isFirst':
-        if (msg.isFirst) {
-          this.setState(SignalingState.STABLE)
-        } else {
-          this.wc.channelBuilder
-            .connectOverSignaling()
-            .then(() => this.setState(SignalingState.CONNECTED))
-            .catch((err) => this.send({ tryAnother: true }))
+      case 'connected':
+        this.connected = msg.connected
+        this.setState(SignalingState.CHECKED)
+        if (!msg.connected) {
+          this.wc.channelBuilder.connectOverSignaling().catch(() => this.sendConnectRequest())
         }
         break
       case 'content': {
@@ -175,14 +152,8 @@ export class Signaling implements IStream<OutSigMsg, InSigMsg> {
 
   private setState(state: SignalingState) {
     if (this.state !== state) {
-      if (
-        state !== SignalingState.CONNECTED ||
-        (state === SignalingState.CONNECTED && this.state !== SignalingState.STABLE)
-      ) {
-        log.signaling('State is ', SignalingState[state])
-        this.state = state
-        this.stateSubject.next(state)
-      }
+      this.state = state
+      this.stateSubject.next(state)
     }
   }
 
