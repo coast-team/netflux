@@ -1,6 +1,4 @@
-import { Observable } from 'rxjs/Observable'
-import { merge } from 'rxjs/observable/merge'
-import { Subject } from 'rxjs/Subject'
+import { merge, Observable, Subject } from 'rxjs'
 
 import { Channel, ChannelType } from '../../Channel'
 import { isWebRTCSupported, isWebSocketSupported, log } from '../../misc/Util'

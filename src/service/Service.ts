@@ -1,7 +1,6 @@
-import { merge } from 'rxjs/observable/merge'
+import { merge, Observable } from 'rxjs'
 import { filter, map } from 'rxjs/operators'
 
-import { Observable } from 'rxjs/Observable'
 import { Channel } from '../Channel'
 import { IStream } from '../IStream'
 import { InSigMsg, OutSigMsg } from '../Signaling'

@@ -1,6 +1,4 @@
-import { BehaviorSubject } from 'rxjs/BehaviorSubject'
-import { Observable } from 'rxjs/Observable'
-import { Subject } from 'rxjs/Subject'
+import { BehaviorSubject, Observable, Subject } from 'rxjs'
 
 import { Channel, ChannelType } from './Channel'
 import { isURL } from './misc/Util'

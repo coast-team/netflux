@@ -1,4 +1,4 @@
-import { ReplaySubject } from 'rxjs/ReplaySubject'
+import { ReplaySubject } from 'rxjs'
 
 import { log } from '../../misc/Util'
 import { webRTCBuilder as proto } from '../../proto'

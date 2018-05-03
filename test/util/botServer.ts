@@ -1,4 +1,4 @@
-import { ReplaySubject } from 'rxjs/ReplaySubject'
+import { ReplaySubject } from 'rxjs'
 
 import { SignalingState, WebGroup, WebGroupBotServer, WebGroupState } from '../../src/index.node'
 import { LogLevel, setLogLevel } from '../../src/misc/Util'
