@@ -1,12 +1,8 @@
-import { Observable } from 'rxjs/Observable'
-import { Subject } from 'rxjs/Subject'
-
 import { Channel, ChannelType, IChannelInitData, MAXIMUM_MISSED_HEARTBEAT } from '../../Channel'
 import { log } from '../../misc/Util'
 import { fullMesh as proto } from '../../proto'
 import { InWcMsg, WebChannel } from '../../WebChannel'
-import { IWebChannelStream, Service } from '../Service'
-import { ITopology, TopologyState } from './Topology'
+import { Topology, TopologyState } from './Topology'
 
 interface IDistantPeer {
   adjacentIds: number[]
@@ -24,7 +20,7 @@ const HEARTBEAT_INTERVAL = 3000
  * network, when each peer is connected to each other.
  *
  */
-export class FullMesh extends Service<proto.IMessage, proto.Message> implements ITopology {
+export class FullMesh extends Topology<proto.IMessage, proto.Message> {
   public static readonly SERVICE_ID = 74315
 
   /**
@@ -43,18 +39,12 @@ export class FullMesh extends Service<proto.IMessage, proto.Message> implements 
    */
   private connectingMembers: Set<number>
 
-  private stateSubject: Subject<TopologyState>
-  private _state: TopologyState
-  private wcStream: IWebChannelStream<proto.IMessage, proto.Message>
-  private wc: WebChannel
-
   private heartbeatInterval: any
   private membersRequestInterval: any
 
   constructor(wc: WebChannel) {
-    super(FullMesh.SERVICE_ID, proto.Message)
-    this.wc = wc
-    this.wcStream = super.useWebChannelStream(wc)
+    super(wc, FullMesh.SERVICE_ID, proto.Message)
+
     this.wcStream.message.subscribe(({ channel, senderId, msg }) =>
       this.handleServiceMessage(channel, senderId, msg as proto.Message)
     )
@@ -62,8 +52,6 @@ export class FullMesh extends Service<proto.IMessage, proto.Message> implements 
     this.adjacentMembers = new Map()
     this.distantMembers = new Map()
     this.connectingMembers = new Set()
-    this.stateSubject = new Subject()
-    this._state = TopologyState.DISCONNECTED
 
     this.wc.channelBuilder.onChannel.subscribe((ch) => {
       // if (
@@ -103,7 +91,7 @@ export class FullMesh extends Service<proto.IMessage, proto.Message> implements 
         myId: this.wc.myId,
         signalingState: this.wc.signaling.state,
         webGroupState: this.wc.state,
-        topologyState: TopologyState[this._state],
+        topologyState: TopologyState[this.state],
         adjacentMembers: Array.from(this.adjacentMembers.keys()).toString(),
         distantMembers: Array.from(this.distantMembers.keys()).toString(),
         connectingMembers: Array.from(this.connectingMembers.values()).toString(),
@@ -113,14 +101,6 @@ export class FullMesh extends Service<proto.IMessage, proto.Message> implements 
         }),
       })
     }
-  }
-
-  get onState(): Observable<TopologyState> {
-    return this.stateSubject.asObservable()
-  }
-
-  get state(): TopologyState {
-    return this._state
   }
 
   send(msg: InWcMsg): void {
@@ -144,7 +124,7 @@ export class FullMesh extends Service<proto.IMessage, proto.Message> implements 
   }
 
   leave(): void {
-    if (this._state !== TopologyState.DISCONNECTED && this._state !== TopologyState.DISCONNECTING) {
+    if (this.state !== TopologyState.DISCONNECTED && this.state !== TopologyState.DISCONNECTING) {
       this.setState(TopologyState.DISCONNECTING)
       this.adjacentMembers.forEach((ch) => {
         this.wc.onMemberLeaveProxy(ch.id, true)
@@ -228,7 +208,7 @@ export class FullMesh extends Service<proto.IMessage, proto.Message> implements 
   }
 
   private connectToMany(ids: number[], adjacentId: number): Promise<void | void[]> {
-    if (this._state !== TopologyState.DISCONNECTED) {
+    if (this.state !== TopologyState.DISCONNECTED) {
       const missingIds = ids.filter((id) => {
         return (
           !this.adjacentMembers.has(id) && !this.connectingMembers.has(id) && id !== this.wc.myId
@@ -341,20 +321,13 @@ export class FullMesh extends Service<proto.IMessage, proto.Message> implements 
   }
 
   private notifyDistantPeers() {
-    if (this._state !== TopologyState.DISCONNECTED) {
+    if (this.state !== TopologyState.DISCONNECTED) {
       this.distantMembers.forEach((peer, id) =>
         this.wcStream.send(
           { adjacentMembers: { ids: Array.from(this.adjacentMembers.keys()) } },
           id
         )
       )
-    }
-  }
-
-  private setState(state: TopologyState) {
-    if (this._state !== state) {
-      this._state = state
-      this.stateSubject.next(state)
     }
   }
 
