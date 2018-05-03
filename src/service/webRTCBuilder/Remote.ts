@@ -58,7 +58,7 @@ export class Remote {
     return this._onError
   }
 
-  set onerror(handler: (err: Error) => void) {
+  set onError(handler: (err: Error) => void) {
     this._onError = handler
   }
 

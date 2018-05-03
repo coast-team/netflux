@@ -1,6 +1,7 @@
 import { Observable } from 'rxjs/Observable'
 import { Subject } from 'rxjs/Subject'
 
+import { Subscription } from 'rxjs/Subscription'
 import { Channel, ChannelType } from '../../Channel'
 import { log } from '../../misc/Util'
 import { webRTCBuilder as proto } from '../../proto'
@@ -14,7 +15,6 @@ export const CONNECT_TIMEOUT = 20000
 /**
  * Service class responsible to establish `RTCDataChannel` between two remotes via
  * signaling server or `WebChannel`.
- *
  */
 export class WebRTCBuilder extends Service<proto.IMessage, proto.Message> {
   public static readonly SERVICE_ID = 7431
@@ -22,6 +22,7 @@ export class WebRTCBuilder extends Service<proto.IMessage, proto.Message> {
   private readonly remotes: Map<number, Map<number, Remote>>
   private readonly channelsSubject: Subject<Channel>
   private rtcConfiguration: RTCConfiguration
+  private streamSub: Subscription
 
   constructor(wc: WebChannel, rtcConfiguration: RTCConfiguration) {
     super(WebRTCBuilder.SERVICE_ID, proto.Message)
@@ -33,7 +34,7 @@ export class WebRTCBuilder extends Service<proto.IMessage, proto.Message> {
     this.remotes = new Map()
     this.remotes.set(this.wcStream.id, new Map())
     this.remotes.set(this.sigStream.id, new Map())
-    this.streams.message.subscribe(({ streamId, senderId, msg }) => {
+    this.streamSub = this.streams.message.subscribe(({ streamId, senderId, msg }) => {
       const remote =
         this.getRemotes(streamId).get(senderId) || this.createRemote(streamId, senderId, true)
       remote.handleMessage(msg)
@@ -59,6 +60,15 @@ export class WebRTCBuilder extends Service<proto.IMessage, proto.Message> {
     this.channelsSubject.next(await this.connect(this.sigStream.id, ChannelType.INVITED, id))
   }
 
+  clean() {
+    this.remotes.forEach((remotes) =>
+      remotes.forEach((remote) => {
+        remote.onError(new Error('clean'))
+        remote.clean()
+      })
+    )
+  }
+
   /**
    * Establish an `RTCDataChannel`. Starts by sending an **SDP offer**.
    */
@@ -76,8 +86,8 @@ export class WebRTCBuilder extends Service<proto.IMessage, proto.Message> {
       )
       remote.sdpIsSent()
 
-      return (await new Promise((resolve, reject) => {
-        remote.onerror = (err) => reject(err)
+      const channel = (await new Promise((resolve, reject) => {
+        remote.onError = (err) => reject(err)
         const timeout = setTimeout(() => {
           if (dc.readyState !== 'open') {
             reject(new Error(`RTCDataChannel ${CONNECT_TIMEOUT}ms connection timeout with '${id}'`))
@@ -94,6 +104,7 @@ export class WebRTCBuilder extends Service<proto.IMessage, proto.Message> {
           resolve(ch)
         }
       })) as Channel
+      return channel
     } catch (err) {
       log.webrtc('Error on initiator: ', err)
       remote.clean()
@@ -111,7 +122,7 @@ export class WebRTCBuilder extends Service<proto.IMessage, proto.Message> {
     )
     if (passive) {
       remote.peerToLog = '----------- PASSIVE'
-      remote.onerror = (err) => {
+      remote.onError = (err) => {
         log.webrtc('Error on passive: ', err)
         remote.clean()
       }
@@ -122,7 +133,7 @@ export class WebRTCBuilder extends Service<proto.IMessage, proto.Message> {
             dc.close()
           }
           log.webrtc('Timer EXECUTED for ' + id, timer)
-          remote.onerror(new Error(`${CONNECT_TIMEOUT}ms connection timeout`))
+          remote.onError(new Error(`${CONNECT_TIMEOUT}ms connection timeout`))
         }
       }, CONNECT_TIMEOUT)
       log.webrtc('Timer SET for ' + id, timer)
