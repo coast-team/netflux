@@ -227,8 +227,8 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
     }
   }
 
-  private init(key: string) {
-    this.id = generateId()
+  init(key: string, id: number = generateId()) {
+    this.id = id
     this.myId = generateId()
     this.members = [this.myId]
     this.key = key

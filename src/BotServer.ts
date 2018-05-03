@@ -74,52 +74,54 @@ export class BotServer {
     })
 
     this.webSocketServer.on('connection', (ws: WebSocket) => {
-      const { route, wcId, senderId } = this.readUrl((ws as any).upgradeReq.url) as {
+      const { route, wcId, senderId, key } = this.readUrl((ws as any).upgradeReq.url) as {
         route: string
         wcId: number
         senderId: number | undefined
+        key: string | undefined
       }
-      let wg = this.webGroups.get(wcId) as WebGroup
-      if (route === Route.INTERNAL) {
-        if (wg) {
+      switch (route) {
+        case Route.INTERNAL: {
+          const wg = this.webGroups.get(wcId) as WebGroup
           const wc = wcs.get(wg) as WebChannel
           wc.webSocketBuilder.newInternalWebSocket(ws, senderId as number)
-        } else {
-          ws.close(4000, 'WebGroup no longer exist')
+          break
         }
-      } else if (route === Route.INVITE || route === Route.JOIN) {
-        if (!wg || wg.members.length === 1) {
-          wg = new WebGroup(this.wcOptions)
-          this.webGroups.set(wcId, wg)
-          this.onWebGroup(wg)
-        }
-        // FIXME: it is possible to create multiple WebChannels with the same ID
-        const wc = wcs.get(wg) as WebChannel
-        wc.id = wcId
-        if (route === Route.INVITE) {
-          wc.webSocketBuilder.newInviteWebSocket(ws, senderId as number)
-        } else {
+        case Route.JOIN: {
+          const wg = this.webGroups.get(wcId) as WebGroup
+          const wc = wcs.get(wg as WebGroup) as WebChannel
           wc.webSocketBuilder.newJoinWebSocket(ws)
+          break
         }
-      } else {
-        ws.close(4000, 'Unknown route')
+        case Route.INVITE: {
+          const wg = new WebGroup(this.wcOptions)
+          this.webGroups.set(wcId, wg)
+          const wc = wcs.get(wg) as WebChannel
+          wc.init(key as string, wcId)
+          this.onWebGroup(wg)
+          wc.webSocketBuilder.newInviteWebSocket(ws, senderId as number)
+          break
+        }
       }
     })
   }
 
   private validateConnection(info: any): boolean {
-    const { route, wcId, senderId } = this.readUrl(info.req.url)
+    const { route, wcId, senderId, key } = this.readUrl(info.req.url)
     if (wcId === undefined) {
       return false
     }
     switch (route) {
       case Route.INTERNAL:
-        return !!senderId && this.webGroups.has(wcId)
-      case Route.INVITE:
+        return this.webGroups.has(wcId) && !!senderId
+      case Route.INVITE: {
         const wg = this.webGroups.get(wcId)
-        return (wg === undefined || wg.members.length === 1) && !!senderId
-      case Route.JOIN:
-        return wg !== undefined && wg.members.length > 1
+        return (wg === undefined || wg.members.length === 1) && !!key
+      }
+      case Route.JOIN: {
+        const wg = this.webGroups.get(wcId)
+        return wg !== undefined && wg.members.length > 0 && !!key && wg.key === key
+      }
       default:
         return false
     }
@@ -127,15 +129,24 @@ export class BotServer {
 
   private readUrl(
     url: string
-  ): { route: string; wcId: number | undefined; senderId: number | undefined } {
+  ): {
+    route: string
+    wcId: number | undefined
+    senderId: number | undefined
+    key: string | undefined
+  } {
     const {
       pathname,
-      query: { senderId, wcId },
-    }: { pathname: string; query: { senderId: string; wcId: string } } = urlLib.parse(url, true)
+      query: { senderId, wcId, key },
+    }: {
+      pathname: string
+      query: { senderId: string | undefined; wcId: string; key: string | undefined }
+    } = urlLib.parse(url, true)
     return {
       route: pathname.replace('/', ''),
       wcId: wcId ? Number(wcId) : undefined,
       senderId: senderId ? Number(senderId) : undefined,
+      key,
     }
   }
 }

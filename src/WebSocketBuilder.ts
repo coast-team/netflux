@@ -14,14 +14,6 @@ export enum Route {
   INTERNAL = 'internal',
 }
 
-export function composeUrl(url: string, route: Route, wcId: number, senderId?: number) {
-  let fullUrl = `${url}/${route}?wcId=${wcId}`
-  if (senderId) {
-    fullUrl += `&senderId=${senderId}`
-  }
-  return fullUrl
-}
-
 /**
  * Service class responsible to establish connections between peers via
  * `WebSocket`.
@@ -42,7 +34,7 @@ export class WebSocketBuilder {
 
   async connectToInvite(url: string): Promise<void> {
     if (isURL(url) && url.search(/^wss?/) !== -1) {
-      const fullUrl = composeUrl(url, Route.INVITE, this.wc.id, this.wc.myId)
+      const fullUrl = this.composeUrl(url, Route.INVITE)
       this.channelsSubject.next(await this.connect(fullUrl, ChannelType.INVITED))
     } else {
       throw new Error(`Invalid URL format: ${url}`)
@@ -53,10 +45,10 @@ export class WebSocketBuilder {
     this.channelsSubject.next(new Channel(this.wc, ws, ChannelType.JOINING))
   }
 
-  async connectToJoin(url: string): Promise<void> {
+  async connectToJoin(url: string, wcId: number): Promise<void> {
     if (isURL(url) && url.search(/^wss?/) !== -1) {
       // FIXME: wcId should be the one received via signaling server
-      const fullUrl = composeUrl(url, Route.JOIN, this.wc.id)
+      const fullUrl = this.composeUrl(url, Route.JOIN, wcId)
       this.channelsSubject.next(await this.connect(fullUrl, ChannelType.JOINING))
     } else {
       throw new Error(`Invalid URL format: ${url}`)
@@ -69,7 +61,7 @@ export class WebSocketBuilder {
 
   async connectInternal(url: string): Promise<void> {
     if (isURL(url) && url.search(/^wss?/) !== -1) {
-      const fullUrl = composeUrl(url, Route.INTERNAL, this.wc.id, this.wc.myId)
+      const fullUrl = this.composeUrl(url, Route.INTERNAL)
       this.channelsSubject.next(await this.connect(fullUrl, ChannelType.INTERNAL))
     } else {
       throw new Error(`Invalid URL format: ${url}`)
@@ -118,5 +110,13 @@ export class WebSocketBuilder {
         )
       }
     }) as Promise<Channel>
+  }
+
+  private composeUrl(url: string, route: Route, wcId = this.wc.id): string {
+    if (route === Route.INTERNAL) {
+      return `${url}/${route}?wcId=${wcId}&senderId=${this.wc.myId}`
+    } else {
+      return `${url}/${route}?wcId=${wcId}&key=${this.wc.key}`
+    }
   }
 }

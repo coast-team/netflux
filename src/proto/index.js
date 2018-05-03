@@ -3941,6 +3941,7 @@ var channel = $root.channel = function () {
          * @property {number|null} [wcId] Data wcId
          * @property {number|null} [senderId] Data senderId
          * @property {Array.<number>|null} [members] Data members
+         * @property {string|null} [key] Data key
          */
 
         /**
@@ -3991,6 +3992,14 @@ var channel = $root.channel = function () {
         Data.prototype.members = $util.emptyArray;
 
         /**
+         * Data key.
+         * @member {string} key
+         * @memberof channel.Data
+         * @instance
+         */
+        Data.prototype.key = "";
+
+        /**
          * Creates a new Data instance using the specified properties.
          * @function create
          * @memberof channel.Data
@@ -4022,6 +4031,7 @@ var channel = $root.channel = function () {
                     writer.uint32(message.members[i]);
                 }writer.ldelim();
             }
+            if (message.key != null && message.hasOwnProperty("key")) writer.uint32( /* id 5, wireType 2 =*/42).string(message.key);
             return writer;
         };
 
@@ -4060,6 +4070,9 @@ var channel = $root.channel = function () {
                                 message.members.push(reader.uint32());
                             }
                         } else message.members.push(reader.uint32());
+                        break;
+                    case 5:
+                        message.key = reader.string();
                         break;
                     default:
                         reader.skipType(tag & 7);

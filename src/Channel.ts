@@ -100,6 +100,7 @@ export class Channel {
             wcId: this.wc.id,
             senderId: this.wc.myId,
             members: this.wc.members,
+            key: this.wc.key,
           },
         })
       ).finish()
@@ -159,7 +160,7 @@ export class Channel {
     switch (msg.type) {
       case 'initPing': {
         log.channel(`${this.wc.myId} received InitPing`)
-        const { topology, wcId, senderId, members } = msg.initPing as proto.Data
+        const { topology, wcId, senderId, members, key } = msg.initPing as proto.Data
         if (this.wc.topologyEnum !== topology) {
           // TODO: implement when there are more than one topology implementation
           // Reinitialize WebChannel: clean/leave etc.
@@ -173,6 +174,7 @@ export class Channel {
           // generate new Id (this.wc.myId) which is not in members
         }
         this.wc.id = wcId
+        this.wc.key = key
         this.id = senderId
         log.channel(`${this.wc.myId} send InitPong`)
         this.send(proto.Message.encode(proto.Message.create({ initPong: this.wc.myId })).finish())

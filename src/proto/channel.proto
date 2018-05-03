@@ -13,4 +13,5 @@ message Data {
   uint32 wcId = 2;
   uint32 senderId = 3; // The member peer id
   repeated uint32 members = 4;
+  string key = 5;
 }

@@ -240,7 +240,7 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
         if (streamId === this.wc.STREAM_ID) {
           await this.wc.webSocketBuilder.connectInternal(other.wss)
         } else if (initiator.id === this.wc.myId) {
-          await this.wc.webSocketBuilder.connectToJoin(other.wss)
+          await this.wc.webSocketBuilder.connectToJoin(other.wss, other.wcId)
         } else {
           await this.wc.webSocketBuilder.connectToInvite(other.wss)
         }

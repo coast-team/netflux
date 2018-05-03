@@ -468,8 +468,7 @@ describe('2 members', () => {
             wait(1000).then(() => {
               expect(wg1.members.length).toEqual(1)
               expect(wg1.members.includes(wg1.myId)).toBeTruthy()
-              expect(wg2.members.length).toEqual(1)
-              expect(wg2.members.includes(wg2.myId)).toBeTruthy()
+              expect(wg2.members.length).toEqual(0)
               expect(wg2.key).toEqual('')
               expect(called2).toEqual(1)
               expect(wg2.key).toEqual('')
@@ -488,8 +487,7 @@ describe('2 members', () => {
           wg2.onStateChange = (state: WebGroupState) => {
             if (state === WebGroupState.LEFT) {
               called2++
-              expect(wg2.members.length).toEqual(1)
-              expect(wg2.members.includes(wg2.myId)).toBeTruthy()
+              expect(wg2.members.length).toEqual(0)
               expect(wg2.key).toEqual('')
               queue.done()
             }
@@ -505,6 +503,7 @@ describe('2 members', () => {
       it(
         'should be notified about left member',
         (done) => {
+          const wg2peerId = wg2.myId
           const queue = new Queue(2, () => {
             wait(1000).then(() => {
               expect(called1).toEqual(1)
@@ -515,7 +514,7 @@ describe('2 members', () => {
 
           // Code for peer 1
           wg1.onMemberLeave = (id) => {
-            expect(id).toEqual(wg2.myId)
+            expect(id).toEqual(wg2peerId)
             called1++
             queue.done()
           }
@@ -704,7 +703,7 @@ describe('2 members', () => {
             .then(() => getBotData(wg1.id))
             .then((bot: IBotData) => {
               expect(areTheSame(bot.members, wg1.members)).toBeTruthy()
-              expect(bot.key).toEqual('')
+              expect(bot.key).toEqual(wg1.key)
               expect(bot.topology).toEqual(wg1.topology)
               expect(bot.id).toEqual(wg1.id)
               done()

@@ -702,6 +702,9 @@ export namespace channel {
 
         /** Data members */
         members?: (number[]|null);
+
+        /** Data key */
+        key?: (string|null);
     }
 
     /** Represents a Data. */
@@ -724,6 +727,9 @@ export namespace channel {
 
         /** Data members. */
         public members: number[];
+
+        /** Data key. */
+        public key: string;
 
         /**
          * Creates a new Data instance using the specified properties.
