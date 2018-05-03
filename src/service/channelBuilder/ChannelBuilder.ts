@@ -59,7 +59,7 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
     this.webRTCBuilder = new WebRTCBuilder(this.wc, this.wc.rtcConfiguration)
     this.pingTimeout = 0
     this.myInfo = {}
-    this.pairPreBuiltMsg = new Uint8Array()
+    this.pairPreBuiltMsg = new Uint8Array(0)
 
     // Preconstruct messages for optimization
     if (!ChannelBuilder.pingPreBuiltMsg && !ChannelBuilder.pongPreBuiltMsg) {

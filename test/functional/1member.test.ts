@@ -1,6 +1,6 @@
 /// <reference types='jasmine' />
 import { SignalingState, Topology, WebGroup, WebGroupState } from '../../src/index.browser'
-import { areTheSame, cleanWebGroup, SIGNALING_URL, wait } from '../util/helper'
+import { cleanWebGroup, SIGNALING_URL, wait } from '../util/helper'
 
 const WebGroupOptions = {
   signalingServer: SIGNALING_URL,
@@ -19,12 +19,12 @@ describe('1 member', () => {
       // Check members
       const id = Reflect.getOwnPropertyDescriptor(wg, 'id')
       expect(id).toBeDefined()
-      expect(typeof wg.id).toBe('number')
+      expect(wg.id).toBe(0)
       expect((id as PropertyDescriptor).set).toBeUndefined()
 
       const myId = Reflect.getOwnPropertyDescriptor(wg, 'myId')
       expect(myId).toBeDefined()
-      expect(typeof wg.myId).toBe('number')
+      expect(wg.myId).toBe(0)
       expect((myId as PropertyDescriptor).set).toBeUndefined()
 
       const key = Reflect.getOwnPropertyDescriptor(wg, 'key')
@@ -34,7 +34,7 @@ describe('1 member', () => {
 
       const members = Reflect.getOwnPropertyDescriptor(wg, 'members')
       expect(members).toBeDefined()
-      expect(wg.members).toEqual([wg.myId])
+      expect(wg.members).toEqual([])
       expect((members as PropertyDescriptor).set).toBeUndefined()
 
       const topology = Reflect.getOwnPropertyDescriptor(wg, 'topology')
@@ -167,23 +167,20 @@ describe('1 member', () => {
       })
 
       it('should have the same members, WebGroup id, topology and NOT empty key once joined', (done) => {
-        const members = Array.from(wg1.members)
-        const myId = wg1.myId
-        const id = wg1.id
         const topology = wg1.topology
 
         wg1.onStateChange = (state: WebGroupState) => {
           if (state === WebGroupState.JOINED) {
-            expect(areTheSame(wg1.members, members)).toBeTruthy()
-            expect(myId).toEqual(wg1.myId)
-            expect(id).toEqual(wg1.id)
+            expect(wg1.members).toEqual([wg1.myId])
+            expect(wg1.myId).not.toEqual(0)
+            expect(wg1.id).not.toEqual(0)
             expect(topology).toEqual(wg1.topology)
             expect(wg1.key).not.toEqual('')
 
             wait(1000).then(() => {
-              expect(areTheSame(wg1.members, members)).toBeTruthy()
-              expect(myId).toEqual(wg1.myId)
-              expect(id).toEqual(wg1.id)
+              expect(wg1.members).toEqual([wg1.myId])
+              expect(wg1.myId).not.toEqual(0)
+              expect(wg1.id).not.toEqual(0)
               expect(topology).toEqual(wg1.topology)
               expect(wg1.key).not.toEqual('')
               done()
@@ -229,23 +226,20 @@ describe('1 member', () => {
 
       /** @test {WebGroup#leave} */
       it('should have the same members, WebGroup id, topology and an empty key', (done) => {
-        const members = Array.from(wg1.members)
-        const myId = wg1.myId
-        const id = wg1.id
         const topology = wg1.topology
 
         wg1.onStateChange = (state: WebGroupState) => {
           if (state === WebGroupState.LEFT) {
-            expect(areTheSame(wg1.members, members)).toBeTruthy()
-            expect(myId).toEqual(wg1.myId)
-            expect(id).toEqual(wg1.id)
+            expect(wg1.members).toEqual([])
+            expect(wg1.myId).toBe(0)
+            expect(wg1.id).toBe(0)
             expect(topology).toEqual(wg1.topology)
             expect(wg1.key).toEqual('')
 
             wait(1000).then(() => {
-              expect(areTheSame(wg1.members, members)).toBeTruthy()
-              expect(myId).toEqual(wg1.myId)
-              expect(id).toEqual(wg1.id)
+              expect(wg1.members).toEqual([])
+              expect(wg1.myId).toBe(0)
+              expect(wg1.id).toBe(0)
               expect(topology).toEqual(wg1.topology)
               expect(wg1.key).toEqual('')
               done()

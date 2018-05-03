@@ -59,7 +59,7 @@ export class Channel {
     this.id = id
     this.rtcPeerConnection = rtcPeerConnection
     this.missedHeartbeat = 0
-    this.heartbeatMsg = new Uint8Array()
+    this.heartbeatMsg = new Uint8Array(0)
     this.resolveInit = () => {}
 
     // Configure `send` function

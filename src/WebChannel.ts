@@ -1,5 +1,4 @@
 import { Subject } from 'rxjs/Subject'
-import { Subscription } from 'rxjs/Subscription'
 
 import { Observable } from 'rxjs/Observable'
 import { Channel } from './Channel'
@@ -81,7 +80,6 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
   private _myId: number
   private rejoinEnabled: boolean
   private joinRequested: boolean
-  private topologySub: Subscription
   private rejoinTimer: NodeJS.Timer | undefined
 
   constructor({
@@ -103,7 +101,6 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
     this.joinRequested = false
     this.rejoinTimer = undefined
     this.topology = {} as ITopology
-    this.topologySub = {} as Subscription
     this.onMemberJoin = function none() {}
     this.onMemberLeave = function none() {}
     this.onMessage = function none() {}
@@ -177,6 +174,9 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
       this.topology.leave()
       this.channelBuilder.clean()
       this.userMsg.clean()
+      this.members = []
+      this.id = 0
+      this._myId = 0
     }
   }
 
@@ -247,10 +247,7 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
   private setTopology(topologyEnum: TopologyEnum): void {
     this.topologyEnum = topologyEnum
     this.topology = new FullMesh(this)
-    if (this.topologySub) {
-      this.topologySub.unsubscribe()
-    }
-    this.topologySub = this.topology.onState.subscribe((state: TopologyState) => {
+    this.topology.onState.subscribe((state: TopologyState) => {
       switch (state) {
         case TopologyState.JOINING:
           this.setState(WebChannelState.JOINING)
