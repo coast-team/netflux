@@ -16,16 +16,16 @@ export interface IChannelInitData {
 const heartbeat = Message.create({ serviceId: 0 })
 export const MAXIMUM_MISSED_HEARTBEAT = 3
 
+export function createHeartbeatMsg(senderId: number, recipientId: number): Uint8Array {
+  heartbeat.senderId = senderId
+  heartbeat.recipientId = recipientId
+  return Message.encode(heartbeat).finish()
+}
+
 /**
  * Wrapper class for `RTCDataChannel` and `WebSocket`.
  */
 export class Channel {
-  public static heartbeatMsg(senderId: number, recipientId: number): Uint8Array {
-    heartbeat.senderId = senderId
-    heartbeat.recipientId = recipientId
-    return Message.encode(heartbeat).finish()
-  }
-
   public id: number
   public send: (data: Uint8Array) => void
   public type: ChannelType
@@ -59,6 +59,8 @@ export class Channel {
     this.id = id
     this.rtcPeerConnection = rtcPeerConnection
     this.missedHeartbeat = 0
+    this.heartbeatMsg = new Uint8Array()
+    this.resolveInit = () => {}
 
     // Configure `send` function
     if (isBrowser) {
@@ -72,14 +74,14 @@ export class Channel {
     }
 
     if (type === ChannelType.INTERNAL) {
-      this.heartbeatMsg = Channel.heartbeatMsg(this.wc.myId, this.id)
+      this.heartbeatMsg = createHeartbeatMsg(this.wc.myId, this.id)
       this.init = Promise.resolve()
       this.initHandlers()
     } else {
       this.init = new Promise(
         (resolve, reject) =>
           (this.resolveInit = () => {
-            this.heartbeatMsg = Channel.heartbeatMsg(this.wc.myId, this.id)
+            this.heartbeatMsg = createHeartbeatMsg(this.wc.myId, this.id)
             resolve()
           })
       )

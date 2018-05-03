@@ -1,4 +1,10 @@
-import { Channel, ChannelType, IChannelInitData, MAXIMUM_MISSED_HEARTBEAT } from '../../Channel'
+import {
+  Channel,
+  ChannelType,
+  createHeartbeatMsg,
+  IChannelInitData,
+  MAXIMUM_MISSED_HEARTBEAT,
+} from '../../Channel'
 import { log } from '../../misc/Util'
 import { fullMesh as proto } from '../../proto'
 import { InWcMsg, WebChannel } from '../../WebChannel'
@@ -348,7 +354,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
           this.distantMembers.delete(id)
           this.wc.onMemberLeaveProxy(id, false)
         }
-        this.wcStream.send(Channel.heartbeatMsg(this.wc.id, id))
+        this.wcStream.send(createHeartbeatMsg(this.wc.id, id))
       })
     }, HEARTBEAT_INTERVAL)
   }
