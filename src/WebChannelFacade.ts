@@ -131,7 +131,7 @@ export class WebGroup {
     Reflect.defineProperty(this, 'topology', {
       configurable: false,
       enumerable: true,
-      get: () => wc.topology,
+      get: () => wc.topologyEnum,
     })
     /**
      * The read-only state of the {@link WebGroup} connection.

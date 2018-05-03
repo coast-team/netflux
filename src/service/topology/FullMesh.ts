@@ -2,7 +2,7 @@ import { Channel, ChannelType, IChannelInitData, MAXIMUM_MISSED_HEARTBEAT } from
 import { log } from '../../misc/Util'
 import { fullMesh as proto } from '../../proto'
 import { InWcMsg, WebChannel } from '../../WebChannel'
-import { Topology, TopologyState } from './Topology'
+import { ITopology, Topology, TopologyState } from './Topology'
 
 interface IDistantPeer {
   adjacentIds: number[]
@@ -20,7 +20,7 @@ const HEARTBEAT_INTERVAL = 3000
  * network, when each peer is connected to each other.
  *
  */
-export class FullMesh extends Topology<proto.IMessage, proto.Message> {
+export class FullMesh extends Topology<proto.IMessage, proto.Message> implements ITopology {
   public static readonly SERVICE_ID = 74315
 
   /**

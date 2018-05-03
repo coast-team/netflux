@@ -94,7 +94,7 @@ export class Channel {
       proto.Message.encode(
         proto.Message.create({
           initPing: {
-            topology: this.wc.topology,
+            topology: this.wc.topologyEnum,
             wcId: this.wc.id,
             senderId: this.wc.myId,
             members: this.wc.members,
@@ -158,7 +158,7 @@ export class Channel {
       case 'initPing': {
         log.channel(`${this.wc.myId} received InitPing`)
         const { topology, wcId, senderId, members } = msg.initPing as proto.Data
-        if (this.wc.topology !== topology) {
+        if (this.wc.topologyEnum !== topology) {
           // TODO: implement when there are more than one topology implementation
           // Reinitialize WebChannel: clean/leave etc.
           // change topology
@@ -217,16 +217,16 @@ export class Channel {
         }
       }
       if (msg.recipientId !== this.wc.myId) {
-        this.wc.topologyService.forward(msg)
+        this.wc.topology.forward(msg)
       }
     }
     this.connection.onclose = (evt: Event) => {
       log.channel(`Connection with ${this.id} has closed`)
-      this.wc.topologyService.onChannelClose(evt, this)
+      this.wc.topology.onChannelClose(evt, this)
     }
     this.connection.onerror = (evt: Event) => {
       log.channel('Channel error: ', evt)
-      this.wc.topologyService.onChannelError(evt, this)
+      this.wc.topology.onChannelError(evt, this)
       this.close()
     }
   }

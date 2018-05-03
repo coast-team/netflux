@@ -49,6 +49,21 @@ export function generateId(exclude: number[] = []): number {
   return id
 }
 
+const MAX_KEY_LENGTH = 512
+
+export function validateKey(key: string): boolean {
+  if (typeof key !== 'string') {
+    throw new Error(`The key type "${typeof key}" is not a "string"`)
+  } else if (key === '') {
+    throw new Error('The key is an empty string')
+  } else if (key.length > MAX_KEY_LENGTH) {
+    throw new Error(
+      `The key length of ${key.length} exceeds the maximum of ${MAX_KEY_LENGTH} characters`
+    )
+  }
+  return true
+}
+
 function randNumbers(length: number = 1): number[] | Uint32Array {
   let res
   if (isBrowser) {
@@ -87,7 +102,6 @@ export function isWebRTCSupported() {
   return !!global.RTCPeerConnection && 'createDataChannel' in global.RTCPeerConnection.prototype
 }
 
-export const MAX_KEY_LENGTH = 512
 const netfluxCSS = 'background-color: #FFCA28; padding: 0 3px'
 const debugCSS = 'background-color: #b3ba2e; padding: 0 3px'
 const webrtcCSS = 'background-color: #CE93D8; padding: 0 3px'

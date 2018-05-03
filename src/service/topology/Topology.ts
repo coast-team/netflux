@@ -52,41 +52,47 @@ export abstract class Topology<OutMsg, InMsg extends OutMsg> extends Service<Out
     return this._state
   }
 
-  /**
-   * Broadcast a message to the network.
-   */
-  abstract send(msg: IMessage): void
-
-  /**
-   * Forward the message to its recipient(s).
-   */
-  abstract forward(msg: IMessage): void
-
-  /**
-   * Send a message to a particular peer in the network.
-   */
-  abstract sendTo(msg: IMessage): void
-
-  /**
-   * Disconnect from the network
-   */
-  abstract leave(): void
-
-  /**
-   * This handler will be called when one of the network channel closed.
-   */
-  abstract onChannelClose(event: Event, channel: Channel): void
-
-  /**
-   * This handler will be called when an error occured on one of the network
-   * channel.
-   */
-  abstract onChannelError(event: Event, channel: Channel): void
-
   protected setState(state: TopologyState) {
     if (this.state !== state) {
       this._state = state
       this.stateSubject.next(state)
     }
   }
+}
+
+export interface ITopology {
+  onState: Observable<TopologyState>
+
+  state: TopologyState
+
+  /**
+   * Broadcast a message to the network.
+   */
+  send(msg: IMessage): void
+
+  /**
+   * Forward the message to its recipient(s).
+   */
+  forward(msg: IMessage): void
+
+  /**
+   * Send a message to a particular peer in the network.
+   */
+  sendTo(msg: IMessage): void
+
+  /**
+   * Disconnect from the network
+   */
+  leave(): void
+
+  /**
+   * This handler will be called when one of the network channel closed.
+   */
+  onChannelClose(event: Event, channel: Channel): void
+
+  /**
+   * This handler will be called when an error occured on one of the network
+   * channel.
+   */
+  onChannelError(event: Event, channel: Channel): void
 }
