@@ -1,6 +1,5 @@
 import { userMessage as proto } from '../proto'
 import { Service } from '../service/Service'
-import { WebChannel } from '../WebChannel'
 
 /**
  * Maximum size of the user message sent over `Channel` (without metadata).
@@ -26,10 +25,13 @@ export class UserMessage extends Service<proto.IMessage, proto.Message> {
   public static readonly SERVICE_ID = 743
   private buffers: Map<number, Map<number, Buffer>>
 
-  constructor(wc: WebChannel) {
+  constructor() {
     super(UserMessage.SERVICE_ID, proto.Message)
-    this.wc = wc
     this.buffers = new Map()
+  }
+
+  clean() {
+    this.buffers.clear()
   }
 
   /**
