@@ -5,7 +5,7 @@ import { Channel, ChannelType, IChannelInitData, MAXIMUM_MISSED_HEARTBEAT } from
 import { log } from '../../misc/Util'
 import { fullMesh as proto } from '../../proto'
 import { InWcMsg, WebChannel } from '../../WebChannel'
-import { Service } from '../Service'
+import { IWebChannelStream, Service } from '../Service'
 import { ITopology, TopologyState } from './Topology'
 
 interface IDistantPeer {
@@ -45,13 +45,16 @@ export class FullMesh extends Service<proto.IMessage, proto.Message> implements 
 
   private stateSubject: Subject<TopologyState>
   private _state: TopologyState
+  private wcStream: IWebChannelStream<proto.IMessage, proto.Message>
+  private wc: WebChannel
 
   private heartbeatInterval: any
   private membersRequestInterval: any
 
   constructor(wc: WebChannel) {
     super(FullMesh.SERVICE_ID, proto.Message)
-    super.useWebChannelStream(wc)
+    this.wc = wc
+    this.wcStream = super.useWebChannelStream(wc)
     this.wcStream.message.subscribe(({ channel, senderId, msg }) =>
       this.handleServiceMessage(channel, senderId, msg as proto.Message)
     )

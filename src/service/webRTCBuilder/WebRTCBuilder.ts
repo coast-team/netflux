@@ -1,13 +1,12 @@
 import { Observable } from 'rxjs/Observable'
 import { Subject } from 'rxjs/Subject'
 
-import { Subscription } from 'rxjs/Subscription'
 import { Channel, ChannelType } from '../../Channel'
 import { log } from '../../misc/Util'
 import { webRTCBuilder as proto } from '../../proto'
 import { WebChannel } from '../../WebChannel'
 import { WebChannelState } from '../../WebChannelState'
-import { Service } from '../Service'
+import { IAllStreams, Service } from '../Service'
 import { Remote } from './Remote'
 
 export const CONNECT_TIMEOUT = 20000
@@ -22,19 +21,20 @@ export class WebRTCBuilder extends Service<proto.IMessage, proto.Message> {
   private readonly remotes: Map<number, Map<number, Remote>>
   private readonly channelsSubject: Subject<Channel>
   private rtcConfiguration: RTCConfiguration
-  private streamSub: Subscription
+  private allStreams: IAllStreams<proto.IMessage, proto.Message>
+  private wc: WebChannel
 
   constructor(wc: WebChannel, rtcConfiguration: RTCConfiguration) {
     super(WebRTCBuilder.SERVICE_ID, proto.Message)
+    this.wc = wc
+    this.allStreams = super.useAllStreams(wc, wc.signaling)
 
-    super.useWebChannelStream(wc)
-    super.useSignalingStream(wc.signaling)
     this.rtcConfiguration = rtcConfiguration
     this.channelsSubject = new Subject()
     this.remotes = new Map()
-    this.remotes.set(this.wcStream.id, new Map())
-    this.remotes.set(this.sigStream.id, new Map())
-    this.streamSub = this.streams.message.subscribe(({ streamId, senderId, msg }) => {
+    this.remotes.set(this.wc.STREAM_ID, new Map())
+    this.remotes.set(this.wc.signaling.STREAM_ID, new Map())
+    this.allStreams.message.subscribe(({ streamId, senderId, msg }) => {
       const remote =
         this.getRemotes(streamId).get(senderId) || this.createRemote(streamId, senderId, true)
       remote.handleMessage(msg)
@@ -47,17 +47,21 @@ export class WebRTCBuilder extends Service<proto.IMessage, proto.Message> {
 
   async connectInternal(id: number): Promise<void> {
     log.webrtc('connectInternal')
-    this.channelsSubject.next(await this.connect(this.wcStream.id, ChannelType.INTERNAL, id))
+    this.channelsSubject.next(await this.connect(this.wc.STREAM_ID, ChannelType.INTERNAL, id))
   }
 
   async connectToJoin(id: number): Promise<void> {
     log.webrtc('connectToJoin')
-    this.channelsSubject.next(await this.connect(this.sigStream.id, ChannelType.JOINING, id))
+    this.channelsSubject.next(
+      await this.connect(this.wc.signaling.STREAM_ID, ChannelType.JOINING, id)
+    )
   }
 
   async connectToInvite(id: number): Promise<void> {
     log.webrtc('connectToInvite')
-    this.channelsSubject.next(await this.connect(this.sigStream.id, ChannelType.INVITED, id))
+    this.channelsSubject.next(
+      await this.connect(this.wc.signaling.STREAM_ID, ChannelType.INVITED, id)
+    )
   }
 
   clean() {
@@ -79,7 +83,7 @@ export class WebRTCBuilder extends Service<proto.IMessage, proto.Message> {
       const offer = await remote.pc.createOffer()
       await remote.pc.setLocalDescription(offer)
 
-      this.streams.sendOver(
+      this.allStreams.sendOver(
         streamId,
         { offer: (remote.pc.localDescription as RTCSessionDescription).sdp },
         id
@@ -117,7 +121,7 @@ export class WebRTCBuilder extends Service<proto.IMessage, proto.Message> {
     const remote = new Remote(
       id,
       new global.RTCPeerConnection(this.rtcConfiguration),
-      (msg) => this.streams.sendOver(streamId, msg, id),
+      (msg) => this.allStreams.sendOver(streamId, msg, id),
       this.getRemotes(streamId)
     )
     if (passive) {

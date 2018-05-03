@@ -7,7 +7,7 @@ import { isWebRTCSupported, isWebSocketSupported, log } from '../../misc/Util'
 import { channelBuilder as proto } from '../../proto'
 import { WebChannel } from '../../WebChannel'
 import { CONNECT_TIMEOUT as WEBSOCKET_TIMEOUT, WebSocketBuilder } from '../../WebSocketBuilder'
-import { Service } from '../Service'
+import { IAllStreams, Service } from '../Service'
 import { CONNECT_TIMEOUT as WEBRTC_TIMEOUT, WebRTCBuilder } from '../webRTCBuilder/WebRTCBuilder'
 import { PendingRequests } from './PendingRequests'
 
@@ -28,6 +28,9 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
   private static pingPreBuiltMsg: Uint8Array
   private static pongPreBuiltMsg: Uint8Array
 
+  private allStreams: IAllStreams<proto.IMessage, proto.Message>
+  private wc: WebChannel
+
   private webRTCBuilder: WebRTCBuilder
   private channelsSubject: Subject<Channel>
   private webChannelReqs: PendingRequests
@@ -41,11 +44,11 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
 
   constructor(wc: WebChannel) {
     super(ChannelBuilder.SERVICE_ID, proto.Message)
-    super.useWebChannelStream(wc)
-    super.useSignalingStream(wc.signaling)
+    this.wc = wc
+    this.allStreams = super.useAllStreams(wc, wc.signaling)
 
     // Subscribe to streams
-    this.streams.message.subscribe(({ streamId, senderId, msg }) => {
+    this.allStreams.message.subscribe(({ streamId, senderId, msg }) => {
       this.handleMessage(streamId, senderId, msg as proto.Message)
     })
 
@@ -125,7 +128,7 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
     let req = this.webChannelReqs.get(id)
     if (!req) {
       req = this.webChannelReqs.add(id, CONNECT_TIMEOUT)
-      this.wcStream.send(this.pairPreBuiltMsg, id)
+      this.allStreams.sendOver(this.wc.STREAM_ID, this.pairPreBuiltMsg, id)
     }
     return req.promise
   }
@@ -135,7 +138,8 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
     let req = this.signalingReqs.get(1)
     if (!req) {
       req = this.signalingReqs.add(1, CONNECT_TIMEOUT)
-      this.sigStream.send(
+      this.allStreams.sendOver(
+        this.wc.signaling.STREAM_ID,
         super.encode({
           pair: {
             initiator: Object.assign({}, this.myInfo, { id: undefined }),
@@ -152,7 +156,7 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
     let req = this.pingReqs.get(id)
     if (!req) {
       req = this.pingReqs.add(id, this.pingTimeout)
-      this.streams.sendOver(streamId, ChannelBuilder.pingPreBuiltMsg, id)
+      this.allStreams.sendOver(streamId, ChannelBuilder.pingPreBuiltMsg, id)
     }
     return req.promise
   }
@@ -160,7 +164,7 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
   private handleMessage(streamId: number, senderId: number, msg: proto.Message): void {
     switch (msg.type) {
       case 'ping': {
-        this.streams.sendOver(streamId, ChannelBuilder.pongPreBuiltMsg, senderId)
+        this.allStreams.sendOver(streamId, ChannelBuilder.pongPreBuiltMsg, senderId)
         break
       }
       case 'pong': {
@@ -208,7 +212,7 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
               )
             }
           } else {
-            this.streams.sendOver(streamId, { pair: { initiator, passive } }, initiator.id)
+            this.allStreams.sendOver(streamId, { pair: { initiator, passive } }, initiator.id)
           }
         })
       }
@@ -233,7 +237,7 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
     // Try to connect over WebSocket
     if (other.wss && !me.wsTried) {
       try {
-        if (streamId === this.wcStream.id) {
+        if (streamId === this.wc.STREAM_ID) {
           await this.wc.webSocketBuilder.connectInternal(other.wss)
         } else if (initiator.id === this.wc.myId) {
           await this.wc.webSocketBuilder.connectToJoin(other.wss)
@@ -255,7 +259,7 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
     // Prompt other peer to connect over WebSocket as I was not able
     if (me.wss && !other.wsTried) {
       log.channelBuilder(`Prompt other to connect over WebSocket`)
-      this.streams.sendOver(streamId, { pair: { initiator, passive } }, other.id)
+      this.allStreams.sendOver(streamId, { pair: { initiator, passive } }, other.id)
       return
     }
 
@@ -263,7 +267,7 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
     if (me.dcSupported && other.dcSupported) {
       if (!me.dcTried) {
         try {
-          if (streamId === this.wcStream.id) {
+          if (streamId === this.wc.STREAM_ID) {
             await this.webRTCBuilder.connectInternal(other.id)
           } else if (initiator.id === this.wc.myId) {
             await this.webRTCBuilder.connectToJoin(other.id)
@@ -285,7 +289,7 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
       // Prompt other peer to connect over RTCDataChannel as I was not able
       if (!other.dcTried) {
         log.channelBuilder(`Prompt other to connect over RTCDataChannel`)
-        this.streams.sendOver(streamId, { pair: { initiator, passive } }, other.id)
+        this.allStreams.sendOver(streamId, { pair: { initiator, passive } }, other.id)
         return
       }
     }
