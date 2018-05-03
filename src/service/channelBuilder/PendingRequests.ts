@@ -30,7 +30,6 @@ export class PendingRequests {
       log.channelBuilder('Timer SET for ' + id, timer)
 
       const beforeFullfilled = () => {
-        log.channelBuilder('Timer CLEARED for ' + id, timer)
         clearTimeout(timer)
         this.requests.delete(id)
       }
@@ -56,5 +55,11 @@ export class PendingRequests {
 
   getTimeoutDate(id: number) {
     return this.timeoutDates.get(id)
+  }
+
+  clean() {
+    this.requests.forEach((req) => req.reject(new Error('clean')))
+    this.requests.clear()
+    this.timeoutDates.clear()
   }
 }
