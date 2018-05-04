@@ -10,7 +10,7 @@ import { CONNECT_TIMEOUT as WEBRTC_TIMEOUT, WebRTCBuilder } from '../webRTCBuild
 import { PendingRequests } from './PendingRequests'
 
 // Timeout constants
-const CONNECT_TIMEOUT = 2 * Math.max(WEBRTC_TIMEOUT, WEBSOCKET_TIMEOUT)
+const CONNECT_TIMEOUT = Math.max(WEBRTC_TIMEOUT, WEBSOCKET_TIMEOUT) + 5000
 const PING_DEFAULT_TIMEOUT = 700
 const PING_MAX_TIMEOUT = 3000
 
@@ -22,37 +22,27 @@ const PING_MAX_TIMEOUT = 3000
 export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
   public static readonly SERVICE_ID = 74
 
-  // Pre-built messages for optimization (same for all ChannelBuilder instances)
-  private static pingPreBuiltMsg: Uint8Array
-  private static pongPreBuiltMsg: Uint8Array
+  // Pre-built messages for optimization
+  private static pingEncoded: Uint8Array
+  private static pongEncoded: Uint8Array
+  private pairEncoded: Uint8Array
 
   private allStreams: IAllStreams<proto.IMessage, proto.Message>
   private wc: WebChannel
 
   private webRTCBuilder: WebRTCBuilder
   private channelsSubject: Subject<Channel>
-  private webChannelReqs: PendingRequests
-  private signalingReqs: PendingRequests
-  private pingReqs: PendingRequests
+  private pendingReqs: PendingRequests
 
   // Parameters to be initialized after leave
   private myInfo: proto.IPeerInfo
-  private pairPreBuiltMsg: Uint8Array
   private pingTimeout: number
 
   constructor(wc: WebChannel) {
     super(ChannelBuilder.SERVICE_ID, proto.Message)
     this.wc = wc
     this.allStreams = super.useAllStreams(wc, wc.signaling)
-
-    // Subscribe to streams
-    this.allStreams.message.subscribe(({ streamId, senderId, msg }) => {
-      this.handleMessage(streamId, senderId, msg as proto.Message)
-    })
-
-    this.webChannelReqs = new PendingRequests()
-    this.signalingReqs = new PendingRequests()
-    this.pingReqs = new PendingRequests()
+    this.pendingReqs = new PendingRequests(this.wc.STREAM_ID)
     this.channelsSubject = new Subject()
     this.webRTCBuilder = new WebRTCBuilder(this.wc, this.wc.rtcConfiguration)
     this.pingTimeout = PING_DEFAULT_TIMEOUT
@@ -63,49 +53,25 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
       dcSupported: isWebRTCSupported(),
     }
 
-    // Preconstruct messages for optimization
-    this.pairPreBuiltMsg = super.encode({ pair: { initiator: this.myInfo } })
-    if (!ChannelBuilder.pingPreBuiltMsg && !ChannelBuilder.pongPreBuiltMsg) {
-      ChannelBuilder.pingPreBuiltMsg = super.encode({ ping: true })
-      ChannelBuilder.pongPreBuiltMsg = super.encode({ pong: true })
-    }
+    // Encode messages beforehand for optimization
+    this.pairEncoded = super.encode({ pair: { initiator: this.myInfo } })
+    this.encodePingPong()
+
+    // Subscribe to WebChannel and Signalings streams
+    this.allStreams.message.subscribe(({ streamId, senderId, msg }) => {
+      this.handleMessage(streamId, senderId, msg as proto.Message)
+    })
 
     // Subscribe to channels from WebSocket and WebRTC builders
-    merge(this.webRTCBuilder.onChannel(), this.wc.webSocketBuilder.onChannel()).subscribe(
-      (channel) => {
-        log.channelBuilder('New CHANNEL: ', { id: channel.id, type: channel.type })
-        channel.init.then(() => {
-          let pendingReq
-          if (channel.type === ChannelType.INTERNAL) {
-            pendingReq = this.webChannelReqs.get(channel.id)
-          } else if (channel.type === ChannelType.INVITED) {
-            pendingReq = this.signalingReqs.get(channel.id)
-          } else if (channel.type === ChannelType.JOINING) {
-            pendingReq = this.signalingReqs.get(1)
-          }
-          if (pendingReq) {
-            pendingReq.resolve()
-          }
-          this.channelsSubject.next(channel)
-        })
-      }
-    )
+    this.subscribeToChannels()
 
     // Subscribe to WebSocket server listen url changes
-    WebSocketBuilder.listenUrl.subscribe((url) => {
-      if (url) {
-        this.myInfo.wss = url
-        this.myInfo.wcId = this.wc.id
-        this.pairPreBuiltMsg = super.encode({ pair: { initiator: this.myInfo } })
-      }
-    })
+    this.subscribeToListenURL()
   }
 
   clean() {
     this.webRTCBuilder.clean()
-    this.webChannelReqs.clean()
-    this.signalingReqs.clean()
-    this.pingReqs.clean()
+    this.pendingReqs.clean()
   }
 
   get onChannel(): Observable<Channel> {
@@ -113,57 +79,42 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
   }
 
   async connectOverWebChannel(id: number): Promise<void> {
-    let req = this.webChannelReqs.get(id)
+    let req = this.pendingReqs.get(this.wc.STREAM_ID, id)
     if (!req) {
       await this.ping(id)
-      req = this.webChannelReqs.add(id, CONNECT_TIMEOUT)
-      this.allStreams.sendOver(this.wc.STREAM_ID, this.pairPreBuiltMsg, id)
+      req = this.pendingReqs.add(this.wc.STREAM_ID, id, CONNECT_TIMEOUT)
+      this.allStreams.sendOver(this.wc.STREAM_ID, this.pairEncoded, id)
     }
     return req.promise
   }
 
   async connectOverSignaling(): Promise<void> {
-    await this.ping(1, this.wc.signaling.STREAM_ID)
-    let req = this.signalingReqs.get(1)
+    let req = this.pendingReqs.get(this.wc.signaling.STREAM_ID, 1)
     if (!req) {
-      req = this.signalingReqs.add(1, CONNECT_TIMEOUT)
-      this.allStreams.sendOver(this.wc.signaling.STREAM_ID, this.pairPreBuiltMsg, 1)
+      await this.ping(1, this.wc.signaling.STREAM_ID)
+      req = this.pendingReqs.add(this.wc.signaling.STREAM_ID, 1, CONNECT_TIMEOUT)
+      this.allStreams.sendOver(this.wc.signaling.STREAM_ID, this.pairEncoded, 1)
     }
     return req.promise
   }
 
   async ping(id: number, streamId = this.wc.STREAM_ID): Promise<void> {
-    let req = this.pingReqs.get(id)
+    let req = this.pendingReqs.getPing(streamId, id)
     if (!req) {
-      req = this.pingReqs.add(id, this.pingTimeout)
-      this.allStreams.sendOver(streamId, ChannelBuilder.pingPreBuiltMsg, id)
+      req = this.pendingReqs.addPing(streamId, id, this.pingTimeout)
+      this.allStreams.sendOver(streamId, ChannelBuilder.pingEncoded, id)
     }
     return req.promise
   }
 
   private handleMessage(streamId: number, senderId: number, msg: proto.Message): void {
     switch (msg.type) {
-      case 'ping': {
-        this.allStreams.sendOver(streamId, ChannelBuilder.pongPreBuiltMsg, senderId)
+      case 'ping':
+        this.allStreams.sendOver(streamId, ChannelBuilder.pongEncoded, senderId)
         break
-      }
-      case 'pong': {
-        const req = this.pingReqs.get(senderId)
-        if (req) {
-          req.resolve()
-        } else {
-          const created = this.pingReqs.getTimeoutDate(senderId)
-          if (created) {
-            log.channelBuilder('INCREASING Ping/Pong timeout up to: ' + this.pingTimeout)
-            this.pingTimeout = global.Math.min(global.Date.now() - created + 500, PING_MAX_TIMEOUT)
-          } else {
-            log.channelBuilder(
-              'Could not find timeout request date. This message should never be shown: something is wrong.'
-            )
-          }
-        }
+      case 'pong':
+        this.handlePong(streamId, senderId)
         break
-      }
       case 'pair': {
         let {
           pair: { initiator, passive } /* tslint:disable-line:prefer-const */,
@@ -171,13 +122,11 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
           pair: { initiator: proto.PeerInfo; passive: proto.PeerInfo | undefined }
         }
 
-        log.channelBuilder('Pair received: ', { initiator, passive })
         if (!passive) {
           // This is the first message sent by the initiator
-          const reqs = streamId === this.wc.STREAM_ID ? this.webChannelReqs : this.signalingReqs
-          const req = reqs.get(senderId)
+          const req = this.pendingReqs.get(streamId, senderId)
           if (!req) {
-            this.webChannelReqs.add(senderId, CONNECT_TIMEOUT)
+            this.pendingReqs.add(streamId, senderId, CONNECT_TIMEOUT)
           } else if (senderId < this.wc.myId) {
             return
           }
@@ -185,13 +134,11 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
           passive = Object.assign({}, this.myInfo) as proto.PeerInfo
           passive.id = streamId === this.wc.STREAM_ID ? this.wc.myId : 1
         }
-        log.channelBuilder('Pair initialized: ', { initiator, passive })
 
         this.proceedAlgo(streamId, initiator, passive).catch((err) => {
-          const reqs = streamId === this.wc.STREAM_ID ? this.webChannelReqs : this.signalingReqs
-          const pendingReq = reqs.get(senderId)
-          if (pendingReq) {
-            pendingReq.reject(err)
+          const req = this.pendingReqs.get(streamId, senderId)
+          if (req) {
+            req.reject(err)
           }
           this.allStreams.sendOver(streamId, { pair: { initiator, passive } }, senderId)
         })
@@ -206,7 +153,8 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
   ): Promise<void> {
     let me: proto.PeerInfo
     let other: proto.PeerInfo
-    if (initiator.id === this.wc.myId) {
+    const amIInitiator = initiator.id === this.wc.myId
+    if (amIInitiator) {
       me = initiator
       other = passive
     } else {
@@ -215,25 +163,8 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
     }
 
     // Try to connect over WebSocket
-    if (other.wss && !me.wsTried) {
-      try {
-        if (streamId === this.wc.STREAM_ID) {
-          await this.wc.webSocketBuilder.connectInternal(other.wss)
-        } else if (initiator.id === this.wc.myId) {
-          await this.wc.webSocketBuilder.connectToJoin(other.wss, other.wcId)
-        } else {
-          await this.wc.webSocketBuilder.connectToInvite(other.wss)
-        }
-        log.channelBuilder(`New WebSocket connection with ${other.id}`)
-        return
-      } catch (err) {
-        if (err.message !== 'clean') {
-          log.channelBuilder(`WebSocket failed with ${other.id}`, err)
-          me.wsTried = true
-        } else {
-          return
-        }
-      }
+    if (other.wss && !me.wsTried && this.tryWs(streamId, me, other, amIInitiator)) {
+      return
     }
 
     // Prompt other peer to connect over WebSocket as I was not able
@@ -245,25 +176,8 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
 
     // Try to connect over RTCDataChannel, because no luck with WebSocket
     if (me.dcSupported && other.dcSupported) {
-      if (!me.dcTried) {
-        try {
-          if (streamId === this.wc.STREAM_ID) {
-            await this.webRTCBuilder.connectInternal(other.id)
-          } else if (initiator.id === this.wc.myId) {
-            await this.webRTCBuilder.connectToJoin(other.id)
-          } else {
-            await this.webRTCBuilder.connectToInvite(other.id)
-          }
-          log.channelBuilder(`New RTCDataChannel with ${other.id}`)
-          return
-        } catch (err) {
-          if (err.message !== 'clean') {
-            log.channelBuilder(`RTCDataChannel failed with ${other.id}`, err)
-            me.dcTried = true
-          } else {
-            return
-          }
-        }
+      if (!me.dcTried && this.tryDc(streamId, me, other, amIInitiator)) {
+        return
       }
 
       // Prompt other peer to connect over RTCDataChannel as I was not able
@@ -277,5 +191,115 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
     log.channelBuilder(`ChannelBuilder FAILED`)
     // All connection possibilities have been tried and none of them worked
     throw new Error(`Failed to establish a connection between ${me.id} and ${other.id}`)
+  }
+
+  private async tryWs(
+    streamId: number,
+    me: proto.PeerInfo,
+    other: proto.PeerInfo,
+    amIInitiator: boolean
+  ): Promise<boolean> {
+    try {
+      if (streamId === this.wc.STREAM_ID) {
+        await this.wc.webSocketBuilder.connectInternal(other.wss)
+      } else if (amIInitiator) {
+        await this.wc.webSocketBuilder.connectToJoin(other.wss, other.wcId)
+      } else {
+        await this.wc.webSocketBuilder.connectToInvite(other.wss)
+      }
+      log.channelBuilder(`New WebSocket connection with ${other.id}`)
+      return true
+    } catch (err) {
+      if (err.message !== 'clean') {
+        log.channelBuilder(`WebSocket failed with ${other.id}`, err)
+        me.wsTried = true
+        return false
+      } else {
+        return true
+      }
+    }
+  }
+
+  private async tryDc(
+    streamId: number,
+    me: proto.PeerInfo,
+    other: proto.PeerInfo,
+    amIInitiator: boolean
+  ): Promise<boolean> {
+    try {
+      if (streamId === this.wc.STREAM_ID) {
+        await this.webRTCBuilder.connectInternal(other.id)
+      } else if (amIInitiator) {
+        await this.webRTCBuilder.connectToJoin(other.id)
+      } else {
+        await this.webRTCBuilder.connectToInvite(other.id)
+      }
+      log.channelBuilder(`New RTCDataChannel with ${other.id}`)
+      return true
+    } catch (err) {
+      if (err.message !== 'clean') {
+        log.channelBuilder(`RTCDataChannel failed with ${other.id}`, err)
+        me.dcTried = true
+        return false
+      } else {
+        return true
+      }
+    }
+  }
+
+  private handlePong(streamId: number, id: number) {
+    const req = this.pendingReqs.getPing(streamId, id)
+    if (req) {
+      req.resolve()
+    } else {
+      // Ping timeout has gone before receiving a pong, thus increase ping timeout value
+      const created = this.pendingReqs.getCreatedDate(streamId, id)
+      if (created) {
+        log.channelBuilder('INCREASING Ping/Pong timeout up to: ' + this.pingTimeout)
+        this.pingTimeout = global.Math.min(global.Date.now() - created + 500, PING_MAX_TIMEOUT)
+      } else {
+        log.channelBuilder(
+          'Could not find timeout request date. This message should never be shown: something is wrong.'
+        )
+      }
+    }
+  }
+
+  private encodePingPong() {
+    if (!ChannelBuilder.pingEncoded && !ChannelBuilder.pongEncoded) {
+      ChannelBuilder.pingEncoded = super.encode({ ping: true })
+      ChannelBuilder.pongEncoded = super.encode({ pong: true })
+    }
+  }
+
+  private subscribeToChannels() {
+    merge(this.webRTCBuilder.onChannel(), this.wc.webSocketBuilder.onChannel()).subscribe(
+      (channel) => {
+        channel.init.then(() => {
+          let pendingReq
+          if (channel.type === ChannelType.INTERNAL) {
+            pendingReq = this.pendingReqs.get(this.wc.STREAM_ID, channel.id)
+          } else if (channel.type === ChannelType.INVITED) {
+            pendingReq = this.pendingReqs.get(this.wc.signaling.STREAM_ID, channel.id)
+          } else if (channel.type === ChannelType.JOINING) {
+            pendingReq = this.pendingReqs.get(this.wc.signaling.STREAM_ID, 1)
+          }
+          if (pendingReq) {
+            pendingReq.resolve()
+          }
+          this.channelsSubject.next(channel)
+        })
+      }
+    )
+  }
+
+  private subscribeToListenURL() {
+    WebSocketBuilder.listenUrl.subscribe((url) => {
+      if (url) {
+        this.myInfo.wss = url
+        this.myInfo.wcId = this.wc.id
+        this.pairEncoded = super.encode({ pair: { initiator: this.myInfo } })
+      }
+    })
   }
 }

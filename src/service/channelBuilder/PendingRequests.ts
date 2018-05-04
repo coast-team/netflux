@@ -1,65 +1,100 @@
-import { log } from '../../misc/Util'
-
 export interface IPendingRequest {
-  date: number
-  promise: Promise<void>
+  created: number
+  promise: Promise<void> | undefined
   resolve: () => void
   reject: (err: Error) => void
 }
 
+interface IStreamRequests {
+  connectReqs: Map<number, IPendingRequest>
+  pingReqs: Map<number, IPendingRequest>
+}
+
 export class PendingRequests {
-  private requests: Map<number, IPendingRequest>
-  private timeoutDates: Map<number, number>
+  private wcReqs: IStreamRequests
+  private sigReqs: IStreamRequests
+  private wcStreamId: number
 
-  constructor() {
-    this.requests = new Map()
-    this.timeoutDates = new Map()
+  constructor(wcStreamId: number) {
+    this.wcStreamId = wcStreamId
+    this.wcReqs = {
+      connectReqs: new Map(),
+      pingReqs: new Map(),
+    }
+    this.sigReqs = {
+      connectReqs: new Map(),
+      pingReqs: new Map(),
+    }
   }
 
-  add(id: number, timeout: number): IPendingRequest {
-    const req = { date: global.Date.now() } as IPendingRequest
-
-    req.promise = new Promise((resolve, reject) => {
-      // Set request Timeout
-      const timer = setTimeout(() => {
-        this.requests.delete(id)
-        this.timeoutDates.set(id, req.date)
-        log.channelBuilder('Timer EXECUTED for ' + id, timer)
-        reject(new Error(`Request ${timeout}ms timeout`))
-      }, timeout)
-      log.channelBuilder('Timer SET for ' + id, timer)
-
-      const beforeFullfilled = () => {
-        clearTimeout(timer)
-        this.requests.delete(id)
-      }
-
-      // Add resolve and reject attrebutes
-      req.resolve = () => {
-        beforeFullfilled()
-        resolve()
-      }
-      req.reject = (err) => {
-        beforeFullfilled()
-        reject(err)
-      }
-      this.requests.set(id, req)
-    })
-    log.channelBuilder('Pending Request: ', req)
-    return req
+  add(streamId: number, id: number, timeout: number): IPendingRequest {
+    const reqs = this.getReqsByStreamId(streamId)
+    return this.addRequest(reqs.connectReqs, id, timeout)
   }
 
-  get(id: number): IPendingRequest | undefined {
-    return this.requests.get(id)
+  addPing(streamId: number, id: number, timeout: number): IPendingRequest {
+    const reqs = this.getReqsByStreamId(streamId)
+    return this.addRequest(reqs.pingReqs, id, timeout)
   }
 
-  getTimeoutDate(id: number) {
-    return this.timeoutDates.get(id)
+  get(streamId: number, id: number): IPendingRequest | undefined {
+    const req = this.getReqsByStreamId(streamId).connectReqs.get(id)
+    return req && req.promise ? req : undefined
+  }
+
+  getPing(streamId: number, id: number): IPendingRequest | undefined {
+    const req = this.getReqsByStreamId(streamId).pingReqs.get(id)
+    return req && req.promise ? req : undefined
+  }
+
+  getCreatedDate(streamId: number, id: number): number | undefined {
+    const req = this.getReqsByStreamId(streamId).pingReqs.get(id)
+    return req ? req.created : undefined
   }
 
   clean() {
-    this.requests.forEach((req) => req.reject(new Error('clean')))
-    this.requests.clear()
-    this.timeoutDates.clear()
+    this.cleanAll(this.wcReqs.connectReqs)
+    this.cleanAll(this.wcReqs.pingReqs)
+    this.cleanAll(this.sigReqs.connectReqs)
+    this.cleanAll(this.sigReqs.pingReqs)
+  }
+
+  private cleanAll(requests: Map<number, IPendingRequest>) {
+    requests.forEach((req) => {
+      if (req.promise) {
+        req.reject(new Error('clean'))
+      }
+    })
+    requests.clear()
+  }
+
+  private getReqsByStreamId(streamId: number): IStreamRequests {
+    return streamId === this.wcStreamId ? this.wcReqs : this.sigReqs
+  }
+
+  private addRequest(
+    requests: Map<number, IPendingRequest>,
+    id: number,
+    timeout: number
+  ): IPendingRequest {
+    const req = { created: global.Date.now() } as IPendingRequest
+    req.promise = new Promise((resolve, reject) => {
+      const timer = setTimeout(() => req.reject(new Error(`Request ${timeout}ms timeout`)), timeout)
+      const clean = () => {
+        clearTimeout(timer)
+        req.promise = undefined
+      }
+
+      req.resolve = () => {
+        clean()
+        resolve()
+      }
+      req.reject = (err) => {
+        clean()
+        reject(err)
+      }
+      requests.set(id, req)
+    })
+    return req
   }
 }
