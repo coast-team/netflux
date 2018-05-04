@@ -1,7 +1,7 @@
 import { Observable, Subject } from 'rxjs'
 
 import { Channel, ChannelType } from '../../Channel'
-import { log } from '../../misc/Util'
+import { log } from '../../misc/util'
 import { dataChannelBuilder as proto } from '../../proto'
 import { WebChannel } from '../../WebChannel'
 import { WebChannelState } from '../../WebChannelState'

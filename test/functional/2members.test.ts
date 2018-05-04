@@ -1,7 +1,6 @@
 /// <reference types='jasmine' />
 /* tslint:disable:one-variable-per-declaration */
 import { SignalingState, WebGroup, WebGroupState } from '../../src/index.browser'
-import {} from '../../src/misc/Util'
 import {
   areTheSame,
   BOT_URL,

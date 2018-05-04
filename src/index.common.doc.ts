@@ -1,4 +1,4 @@
-import { LogLevel as Logs, setLogLevel as setLogs } from './misc/Util'
+import { LogLevel as Logs, setLogLevel as setLogs } from './misc/util'
 import { TopologyEnum } from './service/topology/Topology'
 import { SignalingState as SigState } from './Signaling'
 import { WebChannelState } from './WebChannelState'

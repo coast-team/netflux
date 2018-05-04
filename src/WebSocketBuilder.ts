@@ -1,7 +1,7 @@
 import { BehaviorSubject, Observable, Subject } from 'rxjs'
 
 import { Channel, ChannelType } from './Channel'
-import { isURL } from './misc/Util'
+import { isURL } from './misc/util'
 import { WebChannel } from './WebChannel'
 
 export const CONNECT_TIMEOUT = 4000

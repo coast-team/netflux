@@ -1,4 +1,4 @@
-import { isBrowser, log } from './misc/Util'
+import { isBrowser, log } from './misc/util'
 import { channel as proto, IMessage, Message } from './proto'
 import { UserMessage } from './service/UserMessage'
 import { WebChannel } from './WebChannel'

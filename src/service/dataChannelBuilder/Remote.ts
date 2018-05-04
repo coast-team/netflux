@@ -1,6 +1,6 @@
 import { ReplaySubject } from 'rxjs'
 
-import { log } from '../../misc/Util'
+import { log } from '../../misc/util'
 import { dataChannelBuilder as proto } from '../../proto'
 
 export class Remote {

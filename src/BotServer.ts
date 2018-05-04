@@ -1,7 +1,7 @@
 import { Server as NodeJSHttpServer } from 'http'
 import { Server as NodeJSHttpsServer } from 'https'
 
-// import { log } from './misc/Util'
+// import { log } from './misc/util'
 import { defaultOptions, IWebChannelOptions, WebChannel } from './WebChannel'
 import { wcs, WebGroup } from './WebChannelFacade'
 import { Route, WebSocketBuilder } from './WebSocketBuilder'

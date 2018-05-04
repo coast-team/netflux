@@ -1,5 +1,5 @@
 import { SignalingState, WebGroup, WebGroupState } from '../../src/index.browser'
-import { LogLevel, setLogLevel } from '../../src/misc/Util'
+import { LogLevel, setLogLevel } from '../../src/misc/util'
 
 setLogLevel([
   LogLevel.DEBUG,

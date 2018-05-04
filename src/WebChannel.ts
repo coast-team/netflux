@@ -11,7 +11,7 @@ import {
   isVisible,
   log,
   validateKey,
-} from './misc/Util'
+} from './misc/util'
 import { IMessage, Message } from './proto'
 import { ChannelBuilder } from './service/channelBuilder/ChannelBuilder'
 import { FullMesh } from './service/topology/FullMesh'
