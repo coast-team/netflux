@@ -13,7 +13,6 @@ Documentation: <https://coast-team.github.io/netflux>
 [![version](https://img.shields.io/npm/v/netflux.svg?style=flat-square)](https://www.npmjs.com/package/netflux)
 [![travis](https://travis-ci.org/coast-team/netflux.svg?branch=master)](https://travis-ci.org/coast-team/netflux)
 
-[![bithound](https://www.bithound.io/github/coast-team/netflux/badges/score.svg)](https://www.bithound.io/github/coast-team/netflux)
 [![codeclimate](https://codeclimate.com/github/coast-team/netflux/badges/gpa.svg)](https://codeclimate.com/github/coast-team/netflux)
 [![documentation](https://coast-team.github.io/netflux/badge.svg)](https://coast-team.github.io/netflux)
 
@@ -129,8 +128,6 @@ Netflux is used by our team for Multi User Text Editor ([MUTE repo](https://gith
 [sigver]: https://github.com/coast-team/sigver
 [commitizen]: https://img.shields.io/badge/commitizen-friendly-brightgreen.svg?style=flat-square
 [commitizen-url]: http://commitizen.github.io/cz-cli
-[bithound]: https://www.bithound.io/github/coast-team/netflux/badges/score.svg
-[bithound-url]: https://www.bithound.io/github/coast-team/netflux
 [codeclimate]: https://codeclimate.com/github/coast-team/netflux/badges/gpa.svg
 [codeclimate-url]: https://codeclimate.com/github/coast-team/netflux
 [coverage]: https://codeclimate.com/github/coast-team/netflux/badges/coverage.svg
