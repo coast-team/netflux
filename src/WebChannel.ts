@@ -58,6 +58,7 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
   public members: number[]
   public topologyEnum: TopologyEnum
   public id: number
+  public myId: number
   public key: string
   public autoRejoin: boolean
   public rtcConfiguration: RTCConfiguration
@@ -76,7 +77,6 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
   public userMsg: UserMessage
   public streamSubject: Subject<InWcMsg>
 
-  private _myId: number
   private rejoinEnabled: boolean
   private joinRequested: boolean
   private rejoinTimer: NodeJS.Timer | undefined
@@ -94,7 +94,7 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
     this.members = []
     this.id = 0
     this.key = ''
-    this._myId = 0
+    this.myId = 0
     this.state = WebChannelState.LEFT
     this.rejoinEnabled = false
     this.joinRequested = false
@@ -126,15 +126,6 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
 
   sendOverStream(msg: OutWcMessage) {
     this.topology.sendTo(msg)
-  }
-
-  get myId(): number {
-    return this._myId
-  }
-
-  set myId(newId: number) {
-    this._myId = newId
-    this.channelBuilder.init(newId)
   }
 
   join(key: string = generateKey()): void {
@@ -175,7 +166,7 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
       this.userMsg.clean()
       this.members = []
       this.id = 0
-      this._myId = 0
+      this.myId = 0
     }
   }
 

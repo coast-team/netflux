@@ -55,11 +55,16 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
     this.pingReqs = new PendingRequests()
     this.channelsSubject = new Subject()
     this.webRTCBuilder = new WebRTCBuilder(this.wc, this.wc.rtcConfiguration)
-    this.pingTimeout = 0
-    this.myInfo = {}
-    this.pairPreBuiltMsg = new Uint8Array(0)
+    this.pingTimeout = PING_DEFAULT_TIMEOUT
+    this.myInfo = {
+      wsTried: false,
+      wsSupported: isWebSocketSupported(),
+      dcTried: false,
+      dcSupported: isWebRTCSupported(),
+    }
 
     // Preconstruct messages for optimization
+    this.pairPreBuiltMsg = super.encode({ pair: { initiator: this.myInfo } })
     if (!ChannelBuilder.pingPreBuiltMsg && !ChannelBuilder.pongPreBuiltMsg) {
       ChannelBuilder.pingPreBuiltMsg = super.encode({ ping: true })
       ChannelBuilder.pongPreBuiltMsg = super.encode({ pong: true })
@@ -86,7 +91,7 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
       }
     )
 
-    // WhenSubscribe to WebSocket server listen url changes
+    // Subscribe to WebSocket server listen url changes
     WebSocketBuilder.listenUrl.subscribe((url) => {
       if (url) {
         this.myInfo.wss = url
@@ -94,8 +99,6 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
         this.pairPreBuiltMsg = super.encode({ pair: { initiator: this.myInfo } })
       }
     })
-
-    this.init(wc.myId)
   }
 
   clean() {
@@ -105,26 +108,14 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
     this.pingReqs.clean()
   }
 
-  init(id: number) {
-    this.pingTimeout = PING_DEFAULT_TIMEOUT
-    this.myInfo = {
-      id,
-      wsTried: false,
-      wsSupported: isWebSocketSupported(),
-      dcTried: false,
-      dcSupported: isWebRTCSupported(),
-    }
-    this.pairPreBuiltMsg = super.encode({ pair: { initiator: this.myInfo } })
-  }
-
   get onChannel(): Observable<Channel> {
     return this.channelsSubject.asObservable()
   }
 
   async connectOverWebChannel(id: number): Promise<void> {
-    await this.ping(id)
     let req = this.webChannelReqs.get(id)
     if (!req) {
+      await this.ping(id)
       req = this.webChannelReqs.add(id, CONNECT_TIMEOUT)
       this.allStreams.sendOver(this.wc.STREAM_ID, this.pairPreBuiltMsg, id)
     }
@@ -136,16 +127,7 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
     let req = this.signalingReqs.get(1)
     if (!req) {
       req = this.signalingReqs.add(1, CONNECT_TIMEOUT)
-      this.allStreams.sendOver(
-        this.wc.signaling.STREAM_ID,
-        super.encode({
-          pair: {
-            initiator: Object.assign({}, this.myInfo, { id: undefined }),
-            passive: { id: 1 },
-          },
-        }),
-        1
-      )
+      this.allStreams.sendOver(this.wc.signaling.STREAM_ID, this.pairPreBuiltMsg, 1)
     }
     return req.promise
   }
@@ -183,35 +165,35 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
         break
       }
       case 'pair': {
-        const {
-          pair,
-          pair: { initiator },
+        let {
+          pair: { initiator, passive } /* tslint:disable-line:prefer-const */,
         } = msg as {
           pair: { initiator: proto.PeerInfo; passive: proto.PeerInfo | undefined }
         }
-        if (!initiator.id) {
-          initiator.id = senderId // When the initiator is a new peer and the message is received from a signaling server
+
+        log.channelBuilder('Pair received: ', { initiator, passive })
+        if (!passive) {
+          // This is the first message sent by the initiator
+          const reqs = streamId === this.wc.STREAM_ID ? this.webChannelReqs : this.signalingReqs
+          const req = reqs.get(senderId)
+          if (!req) {
+            this.webChannelReqs.add(senderId, CONNECT_TIMEOUT)
+          } else if (senderId < this.wc.myId) {
+            return
+          }
+          initiator.id = senderId
+          passive = Object.assign({}, this.myInfo) as proto.PeerInfo
+          passive.id = streamId === this.wc.STREAM_ID ? this.wc.myId : 1
         }
-        const passive = Object.assign({}, this.myInfo, pair.passive)
-        log.channelBuilder(`${this.wc.myId}: Pair received`, {
-          initiator: JSON.stringify(initiator),
-          passive: JSON.stringify(passive),
-        })
+        log.channelBuilder('Pair initialized: ', { initiator, passive })
 
         this.proceedAlgo(streamId, initiator, passive).catch((err) => {
-          if (initiator.id === this.wc.myId) {
-            const reqs = streamId === this.wc.STREAM_ID ? this.webChannelReqs : this.signalingReqs
-            const pendingReq = reqs.get(passive.id)
-            if (pendingReq !== undefined) {
-              pendingReq.reject(err)
-            } else {
-              log.channelBuilder(
-                'Could not find connection request. This message should never be shown: something is wrong.'
-              )
-            }
-          } else {
-            this.allStreams.sendOver(streamId, { pair: { initiator, passive } }, initiator.id)
+          const reqs = streamId === this.wc.STREAM_ID ? this.webChannelReqs : this.signalingReqs
+          const pendingReq = reqs.get(senderId)
+          if (pendingReq) {
+            pendingReq.reject(err)
           }
+          this.allStreams.sendOver(streamId, { pair: { initiator, passive } }, senderId)
         })
       }
     }
