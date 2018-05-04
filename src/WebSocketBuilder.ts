@@ -4,7 +4,7 @@ import { Channel, ChannelType } from './Channel'
 import { isURL } from './misc/Util'
 import { WebChannel } from './WebChannel'
 
-export const CONNECT_TIMEOUT = 6000
+export const CONNECT_TIMEOUT = 4000
 
 export enum Route {
   JOIN = 'join',

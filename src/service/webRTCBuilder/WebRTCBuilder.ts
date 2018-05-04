@@ -8,7 +8,7 @@ import { WebChannelState } from '../../WebChannelState'
 import { IAllStreams, Service } from '../Service'
 import { Remote } from './Remote'
 
-export const CONNECT_TIMEOUT = 20000
+export const CONNECT_TIMEOUT = 7000
 
 /**
  * Service class responsible to establish `RTCDataChannel` between two remotes via
