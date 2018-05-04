@@ -139,7 +139,7 @@ export class LogLevel {
   }
 
   /**
-   * Equals to `3`, logs for WebRTCBuilder module.
+   * Equals to `3`, logs for DataChannelBuilder module.
    * @type {number}
    */
   static get WEBRTC(): number {

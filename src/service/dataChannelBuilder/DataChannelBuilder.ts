@@ -2,7 +2,7 @@ import { Observable, Subject } from 'rxjs'
 
 import { Channel, ChannelType } from '../../Channel'
 import { log } from '../../misc/Util'
-import { webRTCBuilder as proto } from '../../proto'
+import { dataChannelBuilder as proto } from '../../proto'
 import { WebChannel } from '../../WebChannel'
 import { WebChannelState } from '../../WebChannelState'
 import { IAllStreams, Service } from '../Service'
@@ -14,7 +14,7 @@ export const CONNECT_TIMEOUT = 7000
  * Service class responsible to establish `RTCDataChannel` between two remotes via
  * signaling server or `WebChannel`.
  */
-export class WebRTCBuilder extends Service<proto.IMessage, proto.Message> {
+export class DataChannelBuilder extends Service<proto.IMessage, proto.Message> {
   public static readonly SERVICE_ID = 7431
 
   private readonly remotes: Map<number, Map<number, Remote>>
@@ -24,7 +24,7 @@ export class WebRTCBuilder extends Service<proto.IMessage, proto.Message> {
   private wc: WebChannel
 
   constructor(wc: WebChannel, rtcConfiguration: RTCConfiguration) {
-    super(WebRTCBuilder.SERVICE_ID, proto.Message)
+    super(DataChannelBuilder.SERVICE_ID, proto.Message)
     this.wc = wc
     this.allStreams = super.useAllStreams(wc, wc.signaling)
 

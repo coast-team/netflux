@@ -510,8 +510,8 @@ export namespace fullMesh {
     }
 }
 
-/** Namespace webRTCBuilder. */
-export namespace webRTCBuilder {
+/** Namespace dataChannelBuilder. */
+export namespace dataChannelBuilder {
 
     /** Properties of a Message. */
     interface IMessage {
@@ -523,7 +523,7 @@ export namespace webRTCBuilder {
         answer?: (string|null);
 
         /** Message candidate */
-        candidate?: (webRTCBuilder.IIceCandidate|null);
+        candidate?: (dataChannelBuilder.IIceCandidate|null);
     }
 
     /** Represents a Message. */
@@ -533,7 +533,7 @@ export namespace webRTCBuilder {
          * Constructs a new Message.
          * @param [properties] Properties to set
          */
-        constructor(properties?: webRTCBuilder.IMessage);
+        constructor(properties?: dataChannelBuilder.IMessage);
 
         /** Message offer. */
         public offer: string;
@@ -542,7 +542,7 @@ export namespace webRTCBuilder {
         public answer: string;
 
         /** Message candidate. */
-        public candidate?: (webRTCBuilder.IIceCandidate|null);
+        public candidate?: (dataChannelBuilder.IIceCandidate|null);
 
         /** Message type. */
         public type?: ("offer"|"answer"|"candidate");
@@ -552,15 +552,15 @@ export namespace webRTCBuilder {
          * @param [properties] Properties to set
          * @returns Message instance
          */
-        public static create(properties?: webRTCBuilder.IMessage): webRTCBuilder.Message;
+        public static create(properties?: dataChannelBuilder.IMessage): dataChannelBuilder.Message;
 
         /**
-         * Encodes the specified Message message. Does not implicitly {@link webRTCBuilder.Message.verify|verify} messages.
+         * Encodes the specified Message message. Does not implicitly {@link dataChannelBuilder.Message.verify|verify} messages.
          * @param message Message message or plain object to encode
          * @param [writer] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: webRTCBuilder.IMessage, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(message: dataChannelBuilder.IMessage, writer?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Decodes a Message message from the specified reader or buffer.
@@ -570,7 +570,7 @@ export namespace webRTCBuilder {
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): webRTCBuilder.Message;
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dataChannelBuilder.Message;
     }
 
     /** Properties of an IceCandidate. */
@@ -593,7 +593,7 @@ export namespace webRTCBuilder {
          * Constructs a new IceCandidate.
          * @param [properties] Properties to set
          */
-        constructor(properties?: webRTCBuilder.IIceCandidate);
+        constructor(properties?: dataChannelBuilder.IIceCandidate);
 
         /** IceCandidate candidate. */
         public candidate: string;
@@ -609,15 +609,15 @@ export namespace webRTCBuilder {
          * @param [properties] Properties to set
          * @returns IceCandidate instance
          */
-        public static create(properties?: webRTCBuilder.IIceCandidate): webRTCBuilder.IceCandidate;
+        public static create(properties?: dataChannelBuilder.IIceCandidate): dataChannelBuilder.IceCandidate;
 
         /**
-         * Encodes the specified IceCandidate message. Does not implicitly {@link webRTCBuilder.IceCandidate.verify|verify} messages.
+         * Encodes the specified IceCandidate message. Does not implicitly {@link dataChannelBuilder.IceCandidate.verify|verify} messages.
          * @param message IceCandidate message or plain object to encode
          * @param [writer] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: webRTCBuilder.IIceCandidate, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(message: dataChannelBuilder.IIceCandidate, writer?: $protobuf.Writer): $protobuf.Writer;
 
         /**
          * Decodes an IceCandidate message from the specified reader or buffer.
@@ -627,7 +627,7 @@ export namespace webRTCBuilder {
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): webRTCBuilder.IceCandidate;
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): dataChannelBuilder.IceCandidate;
     }
 }
 

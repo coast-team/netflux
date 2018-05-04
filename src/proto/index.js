@@ -3547,33 +3547,33 @@ var fullMesh = $root.fullMesh = function () {
     return fullMesh;
 }();
 
-var webRTCBuilder = $root.webRTCBuilder = function () {
+var dataChannelBuilder = $root.dataChannelBuilder = function () {
 
     /**
-     * Namespace webRTCBuilder.
-     * @exports webRTCBuilder
+     * Namespace dataChannelBuilder.
+     * @exports dataChannelBuilder
      * @namespace
      */
-    var webRTCBuilder = {};
+    var dataChannelBuilder = {};
 
-    webRTCBuilder.Message = function () {
+    dataChannelBuilder.Message = function () {
 
         /**
          * Properties of a Message.
-         * @memberof webRTCBuilder
+         * @memberof dataChannelBuilder
          * @interface IMessage
          * @property {string|null} [offer] Message offer
          * @property {string|null} [answer] Message answer
-         * @property {webRTCBuilder.IIceCandidate|null} [candidate] Message candidate
+         * @property {dataChannelBuilder.IIceCandidate|null} [candidate] Message candidate
          */
 
         /**
          * Constructs a new Message.
-         * @memberof webRTCBuilder
+         * @memberof dataChannelBuilder
          * @classdesc Represents a Message.
          * @implements IMessage
          * @constructor
-         * @param {webRTCBuilder.IMessage=} [properties] Properties to set
+         * @param {dataChannelBuilder.IMessage=} [properties] Properties to set
          */
         function Message(properties) {
             if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
@@ -3584,7 +3584,7 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
         /**
          * Message offer.
          * @member {string} offer
-         * @memberof webRTCBuilder.Message
+         * @memberof dataChannelBuilder.Message
          * @instance
          */
         Message.prototype.offer = "";
@@ -3592,15 +3592,15 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
         /**
          * Message answer.
          * @member {string} answer
-         * @memberof webRTCBuilder.Message
+         * @memberof dataChannelBuilder.Message
          * @instance
          */
         Message.prototype.answer = "";
 
         /**
          * Message candidate.
-         * @member {webRTCBuilder.IIceCandidate|null|undefined} candidate
-         * @memberof webRTCBuilder.Message
+         * @member {dataChannelBuilder.IIceCandidate|null|undefined} candidate
+         * @memberof dataChannelBuilder.Message
          * @instance
          */
         Message.prototype.candidate = null;
@@ -3611,7 +3611,7 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
         /**
          * Message type.
          * @member {"offer"|"answer"|"candidate"|undefined} type
-         * @memberof webRTCBuilder.Message
+         * @memberof dataChannelBuilder.Message
          * @instance
          */
         Object.defineProperty(Message.prototype, "type", {
@@ -3622,21 +3622,21 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
         /**
          * Creates a new Message instance using the specified properties.
          * @function create
-         * @memberof webRTCBuilder.Message
+         * @memberof dataChannelBuilder.Message
          * @static
-         * @param {webRTCBuilder.IMessage=} [properties] Properties to set
-         * @returns {webRTCBuilder.Message} Message instance
+         * @param {dataChannelBuilder.IMessage=} [properties] Properties to set
+         * @returns {dataChannelBuilder.Message} Message instance
          */
         Message.create = function create(properties) {
             return new Message(properties);
         };
 
         /**
-         * Encodes the specified Message message. Does not implicitly {@link webRTCBuilder.Message.verify|verify} messages.
+         * Encodes the specified Message message. Does not implicitly {@link dataChannelBuilder.Message.verify|verify} messages.
          * @function encode
-         * @memberof webRTCBuilder.Message
+         * @memberof dataChannelBuilder.Message
          * @static
-         * @param {webRTCBuilder.IMessage} message Message message or plain object to encode
+         * @param {dataChannelBuilder.IMessage} message Message message or plain object to encode
          * @param {$protobuf.Writer} [writer] Writer to encode to
          * @returns {$protobuf.Writer} Writer
          */
@@ -3644,25 +3644,25 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
             if (!writer) writer = $Writer.create();
             if (message.offer != null && message.hasOwnProperty("offer")) writer.uint32( /* id 1, wireType 2 =*/10).string(message.offer);
             if (message.answer != null && message.hasOwnProperty("answer")) writer.uint32( /* id 2, wireType 2 =*/18).string(message.answer);
-            if (message.candidate != null && message.hasOwnProperty("candidate")) $root.webRTCBuilder.IceCandidate.encode(message.candidate, writer.uint32( /* id 3, wireType 2 =*/26).fork()).ldelim();
+            if (message.candidate != null && message.hasOwnProperty("candidate")) $root.dataChannelBuilder.IceCandidate.encode(message.candidate, writer.uint32( /* id 3, wireType 2 =*/26).fork()).ldelim();
             return writer;
         };
 
         /**
          * Decodes a Message message from the specified reader or buffer.
          * @function decode
-         * @memberof webRTCBuilder.Message
+         * @memberof dataChannelBuilder.Message
          * @static
          * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
          * @param {number} [length] Message length if known beforehand
-         * @returns {webRTCBuilder.Message} Message
+         * @returns {dataChannelBuilder.Message} Message
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
         Message.decode = function decode(reader, length) {
             if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
             var end = length === undefined ? reader.len : reader.pos + length,
-                message = new $root.webRTCBuilder.Message();
+                message = new $root.dataChannelBuilder.Message();
             while (reader.pos < end) {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
@@ -3673,7 +3673,7 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
                         message.answer = reader.string();
                         break;
                     case 3:
-                        message.candidate = $root.webRTCBuilder.IceCandidate.decode(reader, reader.uint32());
+                        message.candidate = $root.dataChannelBuilder.IceCandidate.decode(reader, reader.uint32());
                         break;
                     default:
                         reader.skipType(tag & 7);
@@ -3686,11 +3686,11 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
         return Message;
     }();
 
-    webRTCBuilder.IceCandidate = function () {
+    dataChannelBuilder.IceCandidate = function () {
 
         /**
          * Properties of an IceCandidate.
-         * @memberof webRTCBuilder
+         * @memberof dataChannelBuilder
          * @interface IIceCandidate
          * @property {string|null} [candidate] IceCandidate candidate
          * @property {string|null} [sdpMid] IceCandidate sdpMid
@@ -3699,11 +3699,11 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
 
         /**
          * Constructs a new IceCandidate.
-         * @memberof webRTCBuilder
+         * @memberof dataChannelBuilder
          * @classdesc Represents an IceCandidate.
          * @implements IIceCandidate
          * @constructor
-         * @param {webRTCBuilder.IIceCandidate=} [properties] Properties to set
+         * @param {dataChannelBuilder.IIceCandidate=} [properties] Properties to set
          */
         function IceCandidate(properties) {
             if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
@@ -3714,7 +3714,7 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
         /**
          * IceCandidate candidate.
          * @member {string} candidate
-         * @memberof webRTCBuilder.IceCandidate
+         * @memberof dataChannelBuilder.IceCandidate
          * @instance
          */
         IceCandidate.prototype.candidate = "";
@@ -3722,7 +3722,7 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
         /**
          * IceCandidate sdpMid.
          * @member {string} sdpMid
-         * @memberof webRTCBuilder.IceCandidate
+         * @memberof dataChannelBuilder.IceCandidate
          * @instance
          */
         IceCandidate.prototype.sdpMid = "";
@@ -3730,7 +3730,7 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
         /**
          * IceCandidate sdpMLineIndex.
          * @member {number} sdpMLineIndex
-         * @memberof webRTCBuilder.IceCandidate
+         * @memberof dataChannelBuilder.IceCandidate
          * @instance
          */
         IceCandidate.prototype.sdpMLineIndex = 0;
@@ -3738,21 +3738,21 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
         /**
          * Creates a new IceCandidate instance using the specified properties.
          * @function create
-         * @memberof webRTCBuilder.IceCandidate
+         * @memberof dataChannelBuilder.IceCandidate
          * @static
-         * @param {webRTCBuilder.IIceCandidate=} [properties] Properties to set
-         * @returns {webRTCBuilder.IceCandidate} IceCandidate instance
+         * @param {dataChannelBuilder.IIceCandidate=} [properties] Properties to set
+         * @returns {dataChannelBuilder.IceCandidate} IceCandidate instance
          */
         IceCandidate.create = function create(properties) {
             return new IceCandidate(properties);
         };
 
         /**
-         * Encodes the specified IceCandidate message. Does not implicitly {@link webRTCBuilder.IceCandidate.verify|verify} messages.
+         * Encodes the specified IceCandidate message. Does not implicitly {@link dataChannelBuilder.IceCandidate.verify|verify} messages.
          * @function encode
-         * @memberof webRTCBuilder.IceCandidate
+         * @memberof dataChannelBuilder.IceCandidate
          * @static
-         * @param {webRTCBuilder.IIceCandidate} message IceCandidate message or plain object to encode
+         * @param {dataChannelBuilder.IIceCandidate} message IceCandidate message or plain object to encode
          * @param {$protobuf.Writer} [writer] Writer to encode to
          * @returns {$protobuf.Writer} Writer
          */
@@ -3767,18 +3767,18 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
         /**
          * Decodes an IceCandidate message from the specified reader or buffer.
          * @function decode
-         * @memberof webRTCBuilder.IceCandidate
+         * @memberof dataChannelBuilder.IceCandidate
          * @static
          * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
          * @param {number} [length] Message length if known beforehand
-         * @returns {webRTCBuilder.IceCandidate} IceCandidate
+         * @returns {dataChannelBuilder.IceCandidate} IceCandidate
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
         IceCandidate.decode = function decode(reader, length) {
             if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
             var end = length === undefined ? reader.len : reader.pos + length,
-                message = new $root.webRTCBuilder.IceCandidate();
+                message = new $root.dataChannelBuilder.IceCandidate();
             while (reader.pos < end) {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
@@ -3802,7 +3802,7 @@ var webRTCBuilder = $root.webRTCBuilder = function () {
         return IceCandidate;
     }();
 
-    return webRTCBuilder;
+    return dataChannelBuilder;
 }();
 
 var channel = $root.channel = function () {
@@ -4475,4 +4475,4 @@ var signaling = $root.signaling = function () {
 }();
 
 export default $root;
-export { Message, userMessage, channelBuilder, fullMesh, webRTCBuilder, channel, signaling };
+export { Message, userMessage, channelBuilder, fullMesh, dataChannelBuilder, channel, signaling };

@@ -1,5 +1,5 @@
 syntax = "proto3";
-package webRTCBuilder;
+package dataChannelBuilder;
 
 message Message {
   oneof type {

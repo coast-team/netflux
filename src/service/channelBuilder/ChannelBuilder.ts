@@ -5,17 +5,20 @@ import { isWebRTCSupported, isWebSocketSupported, log } from '../../misc/Util'
 import { channelBuilder as proto } from '../../proto'
 import { WebChannel } from '../../WebChannel'
 import { CONNECT_TIMEOUT as WEBSOCKET_TIMEOUT, WebSocketBuilder } from '../../WebSocketBuilder'
+import {
+  CONNECT_TIMEOUT as DATACHANNEL_TIMEOUT,
+  DataChannelBuilder,
+} from '../dataChannelBuilder/DataChannelBuilder'
 import { IAllStreams, Service } from '../Service'
-import { CONNECT_TIMEOUT as WEBRTC_TIMEOUT, WebRTCBuilder } from '../webRTCBuilder/WebRTCBuilder'
 import { PendingRequests } from './PendingRequests'
 
 // Timeout constants
-const CONNECT_TIMEOUT = Math.max(WEBRTC_TIMEOUT, WEBSOCKET_TIMEOUT) + 5000
+const CONNECT_TIMEOUT = Math.max(DATACHANNEL_TIMEOUT, WEBSOCKET_TIMEOUT) + 5000
 const PING_DEFAULT_TIMEOUT = 700
 const PING_MAX_TIMEOUT = 3000
 
 /**
- * It is responsible to build a channel between two peers with a help of `WebSocketBuilder` and `WebRTCBuilder`.
+ * It is responsible to build a channel between two peers with a help of `WebSocketBuilder` and `DataChannelBuilder`.
  * Its algorithm determine which channel (socket or dataChannel) should be created
  * based on the services availability and peers' preferences.
  */
@@ -30,7 +33,7 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
   private allStreams: IAllStreams<proto.IMessage, proto.Message>
   private wc: WebChannel
 
-  private webRTCBuilder: WebRTCBuilder
+  private dataChannelBuilder: DataChannelBuilder
   private channelsSubject: Subject<Channel>
   private pendingReqs: PendingRequests
 
@@ -44,7 +47,7 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
     this.allStreams = super.useAllStreams(wc, wc.signaling)
     this.pendingReqs = new PendingRequests(this.wc.STREAM_ID)
     this.channelsSubject = new Subject()
-    this.webRTCBuilder = new WebRTCBuilder(this.wc, this.wc.rtcConfiguration)
+    this.dataChannelBuilder = new DataChannelBuilder(this.wc, this.wc.rtcConfiguration)
     this.pingTimeout = PING_DEFAULT_TIMEOUT
     this.myInfo = {
       wsTried: false,
@@ -70,7 +73,7 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
   }
 
   clean() {
-    this.webRTCBuilder.clean()
+    this.dataChannelBuilder.clean()
     this.pendingReqs.clean()
   }
 
@@ -228,11 +231,11 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
   ): Promise<boolean> {
     try {
       if (streamId === this.wc.STREAM_ID) {
-        await this.webRTCBuilder.connectInternal(other.id)
+        await this.dataChannelBuilder.connectInternal(other.id)
       } else if (amIInitiator) {
-        await this.webRTCBuilder.connectToJoin(other.id)
+        await this.dataChannelBuilder.connectToJoin(other.id)
       } else {
-        await this.webRTCBuilder.connectToInvite(other.id)
+        await this.dataChannelBuilder.connectToInvite(other.id)
       }
       log.channelBuilder(`New RTCDataChannel with ${other.id}`)
       return true
@@ -273,7 +276,7 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
   }
 
   private subscribeToChannels() {
-    merge(this.webRTCBuilder.onChannel(), this.wc.webSocketBuilder.onChannel()).subscribe(
+    merge(this.dataChannelBuilder.onChannel(), this.wc.webSocketBuilder.onChannel()).subscribe(
       (channel) => {
         channel.init.then(() => {
           let pendingReq

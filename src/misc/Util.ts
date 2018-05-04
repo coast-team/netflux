@@ -182,7 +182,7 @@ export function setLogLevel(levels: LogLevel[]) {
     log.webGroupState = () => {}
   }
 
-  // WebRTCBuilder logs
+  // DataChannelBuilder logs
   if (logLevels.includes(LogLevel.WEBRTC)) {
     log.webrtc = (msg: string, ...rest: any[]) => {
       if (rest.length === 0) {

@@ -1,7 +1,7 @@
 import { ReplaySubject } from 'rxjs'
 
 import { log } from '../../misc/Util'
-import { webRTCBuilder as proto } from '../../proto'
+import { dataChannelBuilder as proto } from '../../proto'
 
 export class Remote {
   public readonly id: number
