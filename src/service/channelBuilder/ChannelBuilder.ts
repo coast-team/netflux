@@ -101,13 +101,17 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
     return req.promise
   }
 
-  async ping(id: number, streamId = this.wc.STREAM_ID): Promise<void> {
+  private async ping(id: number, streamId = this.wc.STREAM_ID): Promise<void> {
     let req = this.pendingReqs.getPing(streamId, id)
     if (!req) {
       req = this.pendingReqs.addPing(streamId, id, this.pingTimeout)
       this.allStreams.sendOver(streamId, ChannelBuilder.pingEncoded, id)
     }
-    return req.promise
+    try {
+      await req.promise
+    } catch (err) {
+      throw new Error('ping')
+    }
   }
 
   private handleMessage(streamId: number, senderId: number, msg: proto.Message): void {
