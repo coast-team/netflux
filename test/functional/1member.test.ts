@@ -82,28 +82,20 @@ describe('1 member', () => {
         wg1 = new WebGroup(WebGroupOptions)
       })
 
-      afterEach((done) => {
+      afterEach(() => {
         cleanWebGroup(wg1)
-        if (wg1.state !== WebGroupState.LEFT) {
-          wg1.onStateChange = (state: WebGroupState) => {
-            if (state === WebGroupState.LEFT) {
-              done()
-            }
-          }
-          wg1.leave()
-        } else {
-          cleanWebGroup(wg1)
-          done()
-        }
+        wg1.leave()
       })
 
       /** @test {WebGroup#onSignalingStateChange} */
       it('should change the Signaling state', (done) => {
         let called = 0
         const states: SignalingState[] = []
-        const expectedStates = [
+        const expected = [
           SignalingState.CONNECTING,
           SignalingState.OPEN,
+          SignalingState.CHECKING,
+          SignalingState.CHECKED,
           SignalingState.CHECKING,
           SignalingState.CHECKED,
         ]
@@ -111,10 +103,10 @@ describe('1 member', () => {
         wg1.onSignalingStateChange = (state: SignalingState) => {
           called++
           states.push(state)
-          if (called === expectedStates.length) {
+          if (called === expected.length) {
             wait(1000).then(() => {
-              expect(states).toEqual(expectedStates)
-              expect(called).toEqual(expectedStates.length)
+              expect(states).toEqual(expected)
+              expect(called).toEqual(expected.length)
               expect(wg1.signalingState).toEqual(SignalingState.CHECKED)
               done()
             })
@@ -129,15 +121,15 @@ describe('1 member', () => {
       it('should change the WebGroup state', (done) => {
         let called = 0
         const states: WebGroupState[] = []
-        const expectedStates = [WebGroupState.JOINING, WebGroupState.JOINED]
+        const expected = [WebGroupState.JOINING, WebGroupState.JOINED]
 
         wg1.onStateChange = (state: WebGroupState) => {
           called++
           states.push(state)
-          if (called === expectedStates.length) {
+          if (called === expected.length) {
             wait(1000).then(() => {
-              expect(states).toEqual(expectedStates)
-              expect(called).toEqual(expectedStates.length)
+              expect(states).toEqual(expected)
+              expect(called).toEqual(expected.length)
               expect(wg1.state).toEqual(WebGroupState.JOINED)
               done()
             })
@@ -274,16 +266,15 @@ describe('1 member', () => {
       it('should change the WebGroup state', (done) => {
         let called1 = 0
         const states: WebGroupState[] = []
-        const expectedStates = [WebGroupState.LEAVING, WebGroupState.LEFT]
+        const expected = [WebGroupState.LEFT]
 
         wg1.onStateChange = (state: WebGroupState) => {
           states.push(state)
           called1++
           if (state === WebGroupState.LEFT) {
             wait(1000).then(() => {
-              expect(called1).toEqual(2)
-              expect(states).toEqual(expectedStates)
-              expect(state).toEqual(WebGroupState.LEFT)
+              expect(called1).toEqual(expected.length)
+              expect(states).toEqual(expected)
               done()
             })
           }
@@ -297,14 +288,14 @@ describe('1 member', () => {
       it('should change the Signaling state', (done) => {
         let called1 = 0
         const states: SignalingState[] = []
-        const expectedStates = [SignalingState.CLOSING, SignalingState.CLOSED]
+        const expected = [SignalingState.CLOSED]
 
         wg1.onSignalingStateChange = (state: SignalingState) => {
           states.push(state)
           called1++
           wait(1000).then(() => {
-            expect(called1).toEqual(2)
-            expect(states).toEqual(expectedStates)
+            expect(called1).toEqual(expected.length)
+            expect(states).toEqual(expected)
             done()
           })
         }

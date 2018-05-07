@@ -37,40 +37,17 @@ describe('2 members', () => {
         wg1.join()
       })
 
-      afterEach((done) => {
+      afterEach(() => {
         cleanWebGroup(wg1, wg2)
-        const queue = new Queue(2, () => {
-          cleanWebGroup(wg1, wg2)
-          done()
-        })
-        if (wg1.state !== WebGroupState.LEFT) {
-          wg1.onStateChange = (state: WebGroupState) => {
-            if (state === WebGroupState.LEFT) {
-              queue.done()
-            }
-          }
-          wg1.leave()
-        } else {
-          queue.done()
-        }
-        if (wg2.state !== WebGroupState.LEFT) {
-          wg2.onStateChange = (state: WebGroupState) => {
-            if (state === WebGroupState.LEFT) {
-              queue.done()
-            }
-          }
-          wg2.leave()
-        } else {
-          queue.done()
-        }
+        wg1.leave()
+        wg2.leave()
       })
 
       /** @test {WebGroup#onSignalingStateChange} */
       it('should change the Signaling state', (done) => {
-        let called1 = 0,
-          called2 = 0
+        let called2 = 0
         const states: SignalingState[] = []
-        const expectedStates = [
+        const expected = [
           SignalingState.CONNECTING,
           SignalingState.OPEN,
           SignalingState.CHECKING,
@@ -79,18 +56,14 @@ describe('2 members', () => {
           SignalingState.CHECKED,
         ]
 
-        // Code for peer 1
-        wg1.onSignalingStateChange = () => called1++
-
         // Code for peer 2
         wg2.onSignalingStateChange = (state: SignalingState) => {
           states.push(state)
           called2++
-          if (called2 === expectedStates.length) {
+          if (called2 === expected.length) {
             wait(1000).then(() => {
-              expect(called1).toEqual(0)
-              expect(called2).toEqual(expectedStates.length)
-              expect(states).toEqual(expectedStates)
+              expect(called2).toEqual(expected.length)
+              expect(states).toEqual(expected)
               expect(wg2.signalingState).toEqual(SignalingState.CHECKED)
               done()
             })
@@ -106,7 +79,7 @@ describe('2 members', () => {
         let called1 = 0,
           called2 = 0
         const states: WebGroupState[] = []
-        const expectedStates = [WebGroupState.JOINING, WebGroupState.JOINED]
+        const expected = [WebGroupState.JOINING, WebGroupState.JOINED]
 
         // Code for peer 1
         wg1.onStateChange = () => called1++
@@ -115,11 +88,11 @@ describe('2 members', () => {
         wg2.onStateChange = (state: WebGroupState) => {
           states.push(state)
           called2++
-          if (called2 === expectedStates.length) {
+          if (called2 === expected.length) {
             wait(1000).then(() => {
               expect(called1).toEqual(0)
               expect(called2).toEqual(2)
-              expect(states).toEqual(expectedStates)
+              expect(states).toEqual(expected)
               expect(wg2.state).toEqual(WebGroupState.JOINED)
               done()
             })
@@ -255,32 +228,10 @@ describe('2 members', () => {
         wg1.join()
       })
 
-      afterEach((done) => {
+      afterEach(() => {
         cleanWebGroup(wg1, wg2)
-        const queue = new Queue(2, () => {
-          cleanWebGroup(wg1, wg2)
-          done()
-        })
-        if (wg1.state !== WebGroupState.LEFT) {
-          wg1.onStateChange = (state: WebGroupState) => {
-            if (state === WebGroupState.LEFT) {
-              queue.done()
-            }
-          }
-          wg1.leave()
-        } else {
-          queue.done()
-        }
-        if (wg2.state !== WebGroupState.LEFT) {
-          wg2.onStateChange = (state: WebGroupState) => {
-            if (state === WebGroupState.LEFT) {
-              queue.done()
-            }
-          }
-          wg2.leave()
-        } else {
-          queue.done()
-        }
+        wg1.leave()
+        wg2.leave()
       })
 
       /** @test {WebGroup#send} */
@@ -431,32 +382,11 @@ describe('2 members', () => {
         wg1.join()
       })
 
-      afterEach((done) => {
+      afterEach(() => {
         cleanWebGroup(wg1, wg2)
-        const queue = new Queue(2, () => {
-          cleanWebGroup(wg1, wg2)
-          wait(1000).then(done)
-        })
-        if (wg1.state !== WebGroupState.LEFT) {
-          wg1.onStateChange = (state: WebGroupState) => {
-            if (state === WebGroupState.LEFT) {
-              queue.done()
-            }
-          }
-          wg1.leave()
-        } else {
-          queue.done()
-        }
-        if (wg2.state !== WebGroupState.LEFT) {
-          wg2.onStateChange = (state: WebGroupState) => {
-            if (state === WebGroupState.LEFT) {
-              queue.done()
-            }
-          }
-          wg2.leave()
-        } else {
-          queue.done()
-        }
+        cleanWebGroup(wg1, wg2)
+        wg1.leave()
+        wg2.leave()
       })
 
       /** @test {WebGroup#leave} */
@@ -536,15 +466,16 @@ describe('2 members', () => {
         'should change the WebGroup state',
         (done) => {
           const states: WebGroupState[] = []
-          const expectedStates = [WebGroupState.LEAVING, WebGroupState.LEFT]
+          const expected = [WebGroupState.LEFT]
+
           // Code for peer 2
           wg2.onStateChange = (state: WebGroupState) => {
             states.push(state)
             called2++
             if (state === WebGroupState.LEFT) {
               wait(1000).then(() => {
-                expect(called2).toEqual(2)
-                expect(states).toEqual(expectedStates)
+                expect(called2).toEqual(expected.length)
+                expect(states).toEqual(expected)
                 done()
               })
             }
@@ -561,15 +492,15 @@ describe('2 members', () => {
         'should change the Signaling state',
         (done) => {
           const states: SignalingState[] = []
-          const expectedStates = [SignalingState.CLOSING, SignalingState.CLOSED]
+          const expected = [SignalingState.CLOSED]
           // Code for peer 2
           wg2.onSignalingStateChange = (state: SignalingState) => {
             states.push(state)
             called2++
             if (state === SignalingState.CLOSED) {
               wait(1000).then(() => {
-                expect(called2).toEqual(2)
-                expect(states).toEqual(expectedStates)
+                expect(called2).toEqual(expected.length)
+                expect(states).toEqual(expected)
                 done()
               })
             }
@@ -590,19 +521,9 @@ describe('2 members', () => {
     describe('inviting', () => {
       beforeEach(() => (wg1 = new WebGroup(WebGroupOptions)))
 
-      afterEach((done) => {
+      afterEach(() => {
         cleanWebGroup(wg1)
-        if (wg1.state !== WebGroupState.LEFT) {
-          wg1.onStateChange = (state: WebGroupState) => {
-            if (state === WebGroupState.LEFT) {
-              cleanWebGroup(wg1)
-              done()
-            }
-          }
-          wg1.leave()
-        } else {
-          done()
-        }
+        wg1.leave()
       })
 
       /** @test {WebGroup#onSignalingStateChange} */
@@ -736,20 +657,9 @@ describe('2 members', () => {
         wg1.join()
       })
 
-      afterEach((done) => {
+      afterEach(() => {
         cleanWebGroup(wg1)
-        if (wg1.state !== WebGroupState.LEFT) {
-          wg1.onStateChange = (state: WebGroupState) => {
-            if (state === WebGroupState.LEFT) {
-              cleanWebGroup(wg1)
-              done()
-            }
-          }
-          wg1.leave()
-        } else {
-          cleanWebGroup(wg1)
-          done()
-        }
+        wg1.leave()
       })
 
       /** @test {WebGroup#send} */
