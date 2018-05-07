@@ -63,7 +63,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
       const member = this.adjacentMembers.get(ch.id)
       if (member) {
         log.topology('Replacing the same channel')
-        member.closeQuietly()
+        member.close()
       }
       this.adjacentMembers.set(ch.id, ch)
       this.wc.onMemberJoinProxy(ch.id)
@@ -72,11 +72,11 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
       }
 
       if (ch.type === ChannelType.JOINING) {
-        this.setState(TopologyState.JOINING)
+        super.setState(TopologyState.JOINING)
         const { members } = ch.initData as IChannelInitData
         this.connectToMany(members, ch.id).then(() => {
           this.membersRequest()
-          this.setState(TopologyState.JOINED)
+          super.setState(TopologyState.JOINED)
         })
       } else {
         this.notifyDistantMembers()
@@ -121,32 +121,26 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
   }
 
   leave(): void {
-    if (this.state !== TopologyState.DISCONNECTED && this.state !== TopologyState.DISCONNECTING) {
-      this.setState(TopologyState.DISCONNECTING)
-      this.adjacentMembers.forEach((ch) => {
-        this.wc.onMemberLeaveProxy(ch.id, true)
-        ch.close()
-      })
+    if (this.state !== TopologyState.LEFT) {
+      this.clean()
+      this.adjacentMembers.forEach((ch) => ch.close())
+      this.wc.onAdjacentMembersLeaveProxy(Array.from(this.adjacentMembers.keys()))
+      super.setState(TopologyState.LEFT)
     }
   }
 
-  onChannelClose(event: Event, channel: Channel): void {
+  onChannelClose(channel: Channel): void {
     this.adjacentMembers.delete(channel.id)
-    this.wc.onMemberLeaveProxy(channel.id, true)
     if (this.adjacentMembers.size === 0) {
       this.clean()
-      this.setState(TopologyState.DISCONNECTED)
     } else {
       this.notifyDistantMembers()
     }
-  }
-
-  onChannelError(evt: Event): void {
-    log.topology(`Channel error: ${evt.type}`)
+    this.wc.onAdjacentMembersLeaveProxy([channel.id])
   }
 
   private clean() {
-    this.distantMembers.forEach((member, id) => this.wc.onMemberLeaveProxy(id, false))
+    this.wc.onDistantMembersLeaveProxy(Array.from(this.distantMembers.keys()))
     this.distantMembers.clear()
     global.clearInterval(this.heartbeatInterval)
     this.heartbeatInterval = undefined
@@ -277,7 +271,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
         if (peer.missedHeartbeat >= MAXIMUM_MISSED_HEARTBEAT + 1) {
           log.topology(`Distant peer ${id} has left: too many missed heartbeats`)
           this.distantMembers.delete(id)
-          this.wc.onMemberLeaveProxy(id, false)
+          this.wc.onDistantMembersLeaveProxy([id])
         }
         this.wcStream.send(createHeartbeatMsg(this.wc.id, id))
       })

@@ -11,20 +11,15 @@ export type OutSigMsg = IMessage
 const MAXIMUM_MISSED_HEARTBEAT = 3
 const HEARTBEAT_INTERVAL = 5000
 
-/* WebSocket error codes */
-const HEARTBEAT_ERROR_CODE = 4002
-// const MESSAGE_ERROR_CODE = 4010
-
 /* Preconstructed messages */
 const heartbeatMsg = proto.Message.encode(proto.Message.create({ heartbeat: true })).finish()
 
 export enum SignalingState {
-  CONNECTING,
-  OPEN,
-  CLOSING,
-  CLOSED,
-  CHECKING,
-  CHECKED,
+  CONNECTING = 0,
+  OPEN = 1,
+  CHECKING = 2,
+  CHECKED = 4,
+  CLOSED = 3,
 }
 
 /**
@@ -78,7 +73,7 @@ export class Signaling implements IStream<OutSigMsg, InSigMsg> {
     return this.stateSubject.asObservable()
   }
 
-  sendConnectRequest(): void {
+  check(): void {
     this.setState(SignalingState.CHECKING)
     this.send({
       connect: { id: this.wc.myId, members: this.wc.members.filter((id) => id !== this.wc.myId) },
@@ -120,11 +115,15 @@ export class Signaling implements IStream<OutSigMsg, InSigMsg> {
    * Close the `WebSocket` with Signaling server.
    */
   close(): void {
-    if (this.state !== SignalingState.CLOSING && this.state !== SignalingState.CLOSED) {
-      this.setState(SignalingState.CLOSING)
+    if (this.state !== SignalingState.CLOSED) {
       if (this.ws) {
+        this.ws.onmessage = () => {}
+        this.ws.onclose = () => {}
+        this.ws.onerror = () => {}
         this.ws.close(1000)
       }
+      this.clean()
+      this.setState(SignalingState.CLOSED)
     }
   }
 
@@ -148,7 +147,7 @@ export class Signaling implements IStream<OutSigMsg, InSigMsg> {
         this.connected = msg.connected
         this.setState(SignalingState.CHECKED)
         if (!msg.connected) {
-          this.wc.channelBuilder.connectOverSignaling().catch(() => this.sendConnectRequest())
+          this.wc.channelBuilder.connectOverSignaling().catch(() => this.check())
         }
         break
       case 'content': {
@@ -179,16 +178,7 @@ export class Signaling implements IStream<OutSigMsg, InSigMsg> {
         }
         this.heartbeat()
       } catch (err) {
-        if (this.ws) {
-          if (this.state !== SignalingState.CLOSED) {
-            if (this.state !== SignalingState.CLOSING) {
-              this.clean()
-              log.signaling('Closing connection with Signaling. Reason: ' + err.message)
-              this.ws.close(HEARTBEAT_ERROR_CODE, 'Signaling is not responding')
-            }
-            this.setState(SignalingState.CLOSING)
-          }
-        }
+        this.close()
       }
     }, HEARTBEAT_INTERVAL)
   }

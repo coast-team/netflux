@@ -12,8 +12,7 @@ export enum TopologyEnum {
 export enum TopologyState {
   JOINING,
   JOINED,
-  DISCONNECTING,
-  DISCONNECTED,
+  LEFT,
 }
 
 /**
@@ -40,7 +39,7 @@ export abstract class Topology<OutMsg, InMsg extends OutMsg> extends Service<Out
     this.wc = wc
     this.wcStream = super.useWebChannelStream(wc)
     this.stateSubject = new Subject()
-    this._state = TopologyState.DISCONNECTED
+    this._state = TopologyState.LEFT
   }
 
   get onState(): Observable<TopologyState> {
@@ -49,6 +48,14 @@ export abstract class Topology<OutMsg, InMsg extends OutMsg> extends Service<Out
 
   get state(): TopologyState {
     return this._state
+  }
+
+  setJoinedState() {
+    this.setState(TopologyState.JOINED)
+  }
+
+  setLeftState() {
+    this.setState(TopologyState.LEFT)
   }
 
   protected setState(state: TopologyState) {
@@ -63,6 +70,9 @@ export interface ITopology {
   onState: Observable<TopologyState>
 
   state: TopologyState
+
+  setJoinedState(): void
+  setLeftState(): void
 
   /**
    * Broadcast a message to the network.
@@ -87,11 +97,5 @@ export interface ITopology {
   /**
    * This handler will be called when one of the network channel closed.
    */
-  onChannelClose(event: Event, channel: Channel): void
-
-  /**
-   * This handler will be called when an error occured on one of the network
-   * channel.
-   */
-  onChannelError(event: Event, channel: Channel): void
+  onChannelClose(channel: Channel): void
 }

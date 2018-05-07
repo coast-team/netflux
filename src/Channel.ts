@@ -36,7 +36,7 @@ export class Channel {
   /**
    * Id of the peer who is at the other end of this channel.
    */
-  private connection: any
+  private wsOrDc: any //  WebSocket or RTCDataChannel
   private rtcPeerConnection: RTCPeerConnection | undefined
   private wc: WebChannel
   private heartbeatMsg: Uint8Array
@@ -47,14 +47,14 @@ export class Channel {
    */
   constructor(
     wc: WebChannel,
-    connection: WebSocket | RTCDataChannel,
+    wsOrDc: WebSocket | RTCDataChannel,
     type: ChannelType,
     id = 1,
     rtcPeerConnection?: RTCPeerConnection
   ) {
     log.channel(`New Channel ${ChannelType[type]}: Me: ${wc.myId} with ${id}`)
     this.wc = wc
-    this.connection = connection
+    this.wsOrDc = wsOrDc
     this.type = type
     this.id = id
     this.rtcPeerConnection = rtcPeerConnection
@@ -64,12 +64,12 @@ export class Channel {
 
     // Configure `send` function
     if (isBrowser) {
-      connection.binaryType = 'arraybuffer'
+      wsOrDc.binaryType = 'arraybuffer'
       this.send = this.sendInBrowser
     } else if (!this.rtcPeerConnection) {
       this.send = this.sendInNodeOverWebSocket
     } else {
-      connection.binaryType = 'arraybuffer'
+      wsOrDc.binaryType = 'arraybuffer'
       this.send = this.sendInNodeOverDataChannel
     }
 
@@ -85,7 +85,7 @@ export class Channel {
             resolve()
           })
       )
-      this.connection.onmessage = ({ data }: { data: ArrayBuffer }) => {
+      this.wsOrDc.onmessage = ({ data }: { data: ArrayBuffer }) => {
         this.handleInitMessage(proto.Message.decode(new Uint8Array(data)))
       }
     }
@@ -114,31 +114,30 @@ export class Channel {
   }
 
   close(): void {
-    this.connection.close()
+    this.wsOrDc.onmessage = undefined
+    this.wsOrDc.onclose = undefined
+    this.wsOrDc.onerror = undefined
     if (this.rtcPeerConnection) {
       this.rtcPeerConnection.close()
+    } else {
+      this.wsOrDc.close()
     }
-  }
-
-  closeQuietly(): void {
-    this.connection.onmessage = undefined
-    this.connection.onclose = undefined
-    this.connection.onerror = undefined
-    this.close()
   }
 
   sendHeartbeat() {
     this.missedHeartbeat++
     if (this.missedHeartbeat >= MAXIMUM_MISSED_HEARTBEAT) {
       log.channel(`${this.id} channel closed: too many missed heartbeats`)
+      this.wc.topology.onChannelClose(this)
       this.close()
+    } else {
+      this.send(this.heartbeatMsg)
     }
-    this.send(this.heartbeatMsg)
   }
 
   private sendInBrowser(data: Uint8Array): void {
     try {
-      this.connection.send(data)
+      this.wsOrDc.send(data)
     } catch (err) {
       log.channel('Channel sendInBrowser ERROR', err)
     }
@@ -146,7 +145,7 @@ export class Channel {
 
   private sendInNodeOverWebSocket(data: Uint8Array): void {
     try {
-      this.connection.send(data, { binary: true })
+      this.wsOrDc.send(data, { binary: true })
     } catch (err) {
       log.channel('Channel sendInNodeOverWebSocket ERROR', err)
     }
@@ -200,7 +199,7 @@ export class Channel {
 
   private initHandlers() {
     // Configure handlers
-    this.connection.onmessage = ({ data }: { data: ArrayBuffer }) => {
+    this.wsOrDc.onmessage = ({ data }: { data: ArrayBuffer }) => {
       const msg = Message.decode(new Uint8Array(data))
 
       // 0: broadcast message
@@ -224,14 +223,10 @@ export class Channel {
         this.wc.topology.forward(msg)
       }
     }
-    this.connection.onclose = (evt: Event) => {
-      log.channel(`Connection with ${this.id} has closed`)
-      this.wc.topology.onChannelClose(evt, this)
+    this.wsOrDc.onclose = (evt: Event) => {
+      log.channel(`Connection with ${this.id} has closed`, evt)
+      this.wc.topology.onChannelClose(this)
     }
-    this.connection.onerror = (evt: Event) => {
-      log.channel('Channel error: ', evt)
-      this.wc.topology.onChannelError(evt, this)
-      this.close()
-    }
+    this.wsOrDc.onerror = (evt: Event) => log.channel('Channel error: ', evt)
   }
 }

@@ -34,14 +34,6 @@ export class SignalingState {
   }
 
   /**
-   * `2`: the connection is in the process of closing (equivalent to `WebSocket.CLOSING`).
-   * @type {number}
-   */
-  static get CLOSING(): number {
-    return SigState.CLOSING
-  }
-
-  /**
    * `3`: the connection is closed or couldn't be opened (equivalent to `WebSocket.CLOSED`).
    * @type {number}
    */
@@ -50,7 +42,7 @@ export class SignalingState {
   }
 
   /**
-   * `4`: signaling server is checking wether you are still connected to the group. If it is not the case, then
+   * `2`: signaling server is checking wether you are still connected to the group. If it is not the case, then
    * subscribs you to one of the group member in order to create a connection with him.
    * @type {number}
    */
@@ -59,7 +51,7 @@ export class SignalingState {
   }
 
   /**
-   * `5`: a connection has been established with one of the group member or you are the only member of the group.
+   * `4`: a connection has been established with one of the group member or you are the only member of the group.
    * From now the signaling is no longer needed, because the joining process will continue with a help of this member.
    * @type {number}
    */
@@ -86,14 +78,6 @@ export class WebGroupState {
    */
   static get JOINED(): number {
     return WebChannelState.JOINED
-  }
-
-  /**
-   * `2`: you are about to leave the group.
-   * @type {number}
-   */
-  static get LEAVING(): number {
-    return WebChannelState.LEAVING
   }
 
   /**
