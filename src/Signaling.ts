@@ -1,7 +1,7 @@
 import { Observable, Subject } from 'rxjs'
 
 import { IStream } from './IStream'
-import { isWebSocketSupported, log } from './misc/util'
+import { isBrowser, isWebSocketSupported, log } from './misc/util'
 import { IMessage, Message, signaling as proto } from './proto'
 import { WebChannel } from './WebChannel'
 
@@ -83,7 +83,7 @@ export class Signaling implements IStream<OutSigMsg, InSigMsg> {
   connect(key: string): void {
     if (isWebSocketSupported()) {
       this.setState(SignalingState.CONNECTING)
-      this.ws = new global.WebSocket(this.url.endsWith('/') ? this.url + key : this.url + '/' + key)
+      this.ws = new global.WebSocket(this.fullUrl(key))
       this.ws.binaryType = 'arraybuffer'
       this.connectionTimeout = setTimeout(() => {
         if (this.ws && this.ws.readyState !== this.ws.OPEN) {
@@ -200,6 +200,15 @@ export class Signaling implements IStream<OutSigMsg, InSigMsg> {
       } catch (err) {
         log.signaling('Failed send to Signaling: ' + err.message)
       }
+    }
+  }
+
+  private fullUrl(key: string): string {
+    const urlWithKey = this.url.endsWith('/') ? this.url + key : this.url + '/' + key
+    if (isBrowser) {
+      return urlWithKey
+    } else {
+      return urlWithKey + '?favored'
     }
   }
 }
