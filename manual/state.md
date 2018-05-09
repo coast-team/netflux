@@ -42,6 +42,7 @@ Possible values for `WebChannel`, `Signaling` and `Topology` states are:
 | Topology | Singaling  | Result                               |
 | -------- | ---------- | ------------------------------------ |
 | JOINING  |            | WebChannel.JOINING                   |
+| JOINING  | CLOSED     | $connectToSignaling                  |
 | JOINED   |            | WebChannel.JOINED                    |
 | JOINED   | OPEN       | WebChannel.JOINED & $signalingCheck  |
 | JOINED   | CHECKED    | WebChannel.JOINED & $signalingCheck  |
