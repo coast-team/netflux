@@ -527,7 +527,7 @@ describe('2 members', () => {
       })
 
       /** @test {WebGroup#onSignalingStateChange} */
-      it('should not change the Signaling state', (done) => {
+      it('should change the Signaling state', (done) => {
         // Code for peer 1
         wg1.onStateChange = (state: WebGroupState) => {
           if (state === WebGroupState.JOINED) {
@@ -539,8 +539,8 @@ describe('2 members', () => {
               .then(() => wait(1000))
               .then(() => getBotData(wg1.id))
               .then((data) => {
-                expect(data.onSignalingStateCalled).toEqual(0)
-                expect(data.signalingState).toEqual(SignalingState.CLOSED)
+                expect(data.onSignalingStateCalled).toEqual(4)
+                expect(data.signalingState).toEqual(SignalingState.CHECKED)
                 done()
               })
           }

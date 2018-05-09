@@ -256,6 +256,10 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
       switch (state) {
         case TopologyState.JOINING:
           this.setState(WebChannelState.JOINING)
+          if (this.signaling.state === SignalingState.CLOSED) {
+            // This is for a bot who was invited to the group
+            this.signaling.connect(this.key)
+          }
           break
         case TopologyState.JOINED:
           this.setState(WebChannelState.JOINED)

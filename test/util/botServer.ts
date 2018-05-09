@@ -2,9 +2,9 @@ import { ReplaySubject } from 'rxjs'
 
 import { SignalingState, WebGroup, WebGroupBotServer, WebGroupState } from '../../src/index.node'
 import { LogLevel, setLogLevel } from '../../src/misc/util'
-import { BOT_HOST, BOT_PORT } from './helper'
+import { BOT_HOST, BOT_PORT, SIGNALING_URL } from './helper'
 
-setLogLevel([LogLevel.DEBUG])
+setLogLevel([LogLevel.DEBUG, LogLevel.SIGNALING])
 
 // Require dependencies
 const http = require('http')
@@ -37,7 +37,7 @@ try {
   const app = new Koa()
   const router = new Router()
   const server = http.createServer(app.callback())
-  const bot = new WebGroupBotServer({ server })
+  const bot = new WebGroupBotServer({ server, webGroupOptions: { signalingServer: SIGNALING_URL } })
   const webGroups: ReplaySubject<WebGroup> = new ReplaySubject()
 
   // Configure router
@@ -173,7 +173,7 @@ try {
     )
     .process.on('SIGINT', () => bot.webGroups.forEach((wg) => wg.leave()))
 } catch (err) {
-  console.error('WebGroupBotServer script error: ', err)
+  // console.error('Bot server error: ', err)
 }
 
 function fullData(wg: any): IData {
