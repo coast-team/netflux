@@ -4,10 +4,10 @@
 export const isBrowser = typeof global.window === 'undefined' ? false : true
 
 export function isOnline() {
-  return isBrowser ? global.window.navigator.onLine : true
+  return isBrowser ? global.navigator.onLine : true
 }
 export function isVisible() {
-  return isBrowser ? global.window.document.visibilityState === 'visible' : true
+  return isBrowser ? global.document.visibilityState === 'visible' : true
 }
 
 /**
@@ -71,7 +71,7 @@ function randNumbers(length: number = 1): number[] | Uint32Array {
     global.crypto.getRandomValues(res)
   } else {
     res = []
-    const bytes = (global.crypto as any).randomBytes(4 * length)
+    const bytes = global.cryptoNode.randomBytes(4 * length)
     for (let i = 0; i < bytes.length; i += 4) {
       res[res.length] = bytes.readUInt32BE(i, true)
     }

@@ -83,8 +83,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
       }
     })
 
-    const globalAny = global as any
-    globalAny.fullmesh = () => {
+    global.fullmesh = () => {
       log.topology('Fullmesh info:', {
         myId: this.wc.myId,
         signalingState: this.wc.signaling.state,

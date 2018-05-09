@@ -1,27 +1,22 @@
 /* tslint:disable */
-/// <reference types="text-encoding" />
 
-/**
- * Extends "global" variable
- */
-declare namespace NodeJS {
-  interface Global {
-    RTCPeerConnection: typeof RTCPeerConnection
-    RTCDataChannel: RTCDataChannel
-    RTCIceCandidate: typeof RTCIceCandidate
-    TextEncoder: typeof TextEncoding.TextEncoder
-    TextDecoder: typeof TextEncoding.TextDecoder
-    WebSocket: typeof WebSocket
-    crypto: Crypto
-    Event: typeof Event
-    window: Window
-  }
+declare var global: Window & {
+  RTCPeerConnection: typeof RTCPeerConnection
+  RTCDataChannel: RTCDataChannel
+  RTCIceCandidate: typeof RTCIceCandidate
+  TextEncoder: typeof TextEncoder
+  TextDecoder: typeof TextDecoder
+  WebSocket: typeof WebSocket
+  crypto: Crypto
+  cryptoNode: any
+  fullmesh: any // for debuging
 }
 
-/**
- * Extends lib.d.ts with WebRTC missing declarations.
- */
+declare var require: (id: string) => any
+declare type NodeJSHttpServer = any // NodeJS http.Server
+declare type NodeJSHttpsServer = any // NodeJS https.Server
 
+// Extends lib.d.ts with WebRTC missing declarations.
 interface RTCPeerConnection {
   iceCandidateState: RTCIceConnectionState
   ondatachannel: (event: RTCDataChannelEvent) => void

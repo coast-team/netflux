@@ -1,8 +1,3 @@
-// tslint:disable:max-line-length
-import { Server as NodeJSHttpServer } from 'http'
-
-import { Server as NodeJSHttpsServer } from 'https'
-
 import { BotServer, IBotServerOptions as WebGroupBotServerOptions } from './BotServer'
 import { WebGroup } from './WebChannelFacade'
 

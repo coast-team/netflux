@@ -263,7 +263,7 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
       const created = this.pendingReqs.getCreatedDate(streamId, id)
       if (created) {
         log.channelBuilder('INCREASING Ping/Pong timeout up to: ' + this.pingTimeout)
-        this.pingTimeout = global.Math.min(global.Date.now() - created + 500, PING_MAX_TIMEOUT)
+        this.pingTimeout = Math.min(Date.now() - created + 500, PING_MAX_TIMEOUT)
       } else {
         log.channelBuilder(
           'Could not find timeout request date. This message should never be shown: something is wrong.'

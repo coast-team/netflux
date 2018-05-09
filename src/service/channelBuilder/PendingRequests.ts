@@ -77,7 +77,7 @@ export class PendingRequests {
     id: number,
     timeout: number
   ): IPendingRequest {
-    const req = { created: global.Date.now() } as IPendingRequest
+    const req = { created: Date.now() } as IPendingRequest
     req.promise = new Promise((resolve, reject) => {
       const timer = setTimeout(() => req.reject(new Error(`Request ${timeout}ms timeout`)), timeout)
       const clean = () => {

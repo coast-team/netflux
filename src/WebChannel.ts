@@ -28,7 +28,14 @@ export interface IWebChannelOptions {
   autoRejoin?: boolean
 }
 
-export const defaultOptions: IWebChannelOptions = {
+export interface IWebChannelFullOptions {
+  topology: TopologyEnum
+  signalingServer: string
+  rtcConfiguration: RTCConfiguration
+  autoRejoin: boolean
+}
+
+export const defaultOptions: IWebChannelFullOptions = {
   topology: TopologyEnum.FULL_MESH,
   signalingServer: 'wss://signaling.netflux.coedit.re',
   rtcConfiguration: {
@@ -78,18 +85,14 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
   public streamSubject: Subject<InWcMsg>
 
   private rejoinEnabled: boolean
-  private rejoinTimer: NodeJS.Timer | undefined
+  private rejoinTimer: number | undefined
 
-  constructor({
-    topology = defaultOptions.topology,
-    signalingServer = defaultOptions.signalingServer,
-    rtcConfiguration = defaultOptions.rtcConfiguration,
-    autoRejoin = defaultOptions.autoRejoin,
-  }: IWebChannelOptions = {}) {
+  constructor(options: IWebChannelOptions) {
+    const fullOptions = Object.assign({}, defaultOptions, options)
     this.streamSubject = new Subject()
-    this.topologyEnum = topology
-    this.autoRejoin = autoRejoin
-    this.rtcConfiguration = rtcConfiguration
+    this.topologyEnum = fullOptions.topology
+    this.autoRejoin = fullOptions.autoRejoin
+    this.rtcConfiguration = fullOptions.rtcConfiguration
     this.members = []
     this.id = 0
     this.key = ''
@@ -106,11 +109,11 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
 
     // Initialize services
     this.userMsg = new UserMessage()
-    this.signaling = new Signaling(this, signalingServer)
+    this.signaling = new Signaling(this, fullOptions.signalingServer)
     this.subscribeToSignalingState()
     this.webSocketBuilder = new WebSocketBuilder(this)
     this.channelBuilder = new ChannelBuilder(this)
-    this.setTopology(topology)
+    this.setTopology(fullOptions.topology)
 
     // Listen to browser events
     if (isBrowser) {
@@ -319,7 +322,7 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
   }
 
   private subscribeToBrowserEvents() {
-    global.window.addEventListener('online', () => {
+    global.addEventListener('online', () => {
       if (
         this.state === WebChannelState.LEFT &&
         isVisible() &&
@@ -329,7 +332,7 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
         this.startJoin()
       }
     })
-    global.window.addEventListener('visibilitychange', () => {
+    global.addEventListener('visibilitychange', () => {
       if (
         isVisible() &&
         this.state === WebChannelState.LEFT &&
@@ -340,7 +343,7 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
         this.startJoin()
       }
     })
-    global.window.addEventListener('beforeunload', () => this.leave())
+    global.addEventListener('beforeunload', () => this.leave())
   }
 
   private startJoin(key = this.key) {

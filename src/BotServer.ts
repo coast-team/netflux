@@ -1,6 +1,3 @@
-import { Server as NodeJSHttpServer } from 'http'
-import { Server as NodeJSHttpsServer } from 'https'
-
 // import { log } from './misc/util'
 import { defaultOptions, IWebChannelOptions, WebChannel } from './WebChannel'
 import { wcs, WebGroup } from './WebChannelFacade'

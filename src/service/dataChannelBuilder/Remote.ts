@@ -99,7 +99,7 @@ export class Remote {
         case 'offer':
           this.log('REMOTE OFFER', { offer: msg.offer })
           this.pc
-            .setRemoteDescription({ type: 'offer', sdp: msg.offer } as RTCSessionDescription)
+            .setRemoteDescription({ type: 'offer', sdp: msg.offer })
             .then(() =>
               this.candidates.subscribe((ic) =>
                 this.pc

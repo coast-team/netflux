@@ -10,6 +10,7 @@ const MAX_USER_MSG_SIZE = 15000
  * Maximum message id number.
  */
 const MAX_MSG_ID_SIZE = 65535
+
 const textEncoder = new global.TextEncoder()
 const textDecoder = new global.TextDecoder()
 

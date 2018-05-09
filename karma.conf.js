@@ -36,7 +36,7 @@ module.exports = (config) => {
         lib: ['es2017', 'dom'],
         moduleResolution: 'node',
         downlevelIteration: true,
-        types: ['node', 'text-encoding'],
+        typeRoots: ['src/misc/typings'],
         allowJs: true,
       },
       bundlerOptions: {
@@ -46,7 +46,6 @@ module.exports = (config) => {
       },
       include: ['src/**/*', 'test/**/*'],
       coverageOptions: { exclude: [/src\/proto\/index\.js/i, /test\/.*/i, /.*polyfills*/i] },
-      exclude: ['**/*adapter_factory.js'],
       reports: { html: {}, 'text-summary': '' },
     },
     // test results reporter to use
