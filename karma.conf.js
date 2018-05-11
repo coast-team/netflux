@@ -18,9 +18,7 @@ module.exports = (config) => {
       'src/**/*.ts',
       'src/proto/index.js',
       'test/util/helper.ts',
-      'test/functional/1member.test.ts',
-      'test/functional/2members.test.ts',
-      'test/functional/3members.test.ts',
+      'test/functional/*.test.ts',
     ],
     // 'test/functional/manyMembers.test.ts'
     // list of files to exclude

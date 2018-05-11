@@ -121,6 +121,8 @@ export interface IBotData {
   topology: number
   members: number[]
   myId: number
+  autoRejoin: boolean
+  signalingServer: string
 }
 
 export interface IBotMessage {

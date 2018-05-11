@@ -1,6 +1,6 @@
-import { SignalingState, WebGroup, WebGroupBotServer, WebGroupState } from '../../src/index.node'
+import { WebGroup, WebGroupBotServer, WebGroupState } from '../../src/index.node'
 import { LogLevel, setLogLevel } from '../../src/misc/util'
-import { BOT_HOST, BOT_PORT, SIGNALING_URL } from './helper'
+import { BOT_HOST, BOT_PORT, IBotData, SIGNALING_URL } from './helper'
 
 setLogLevel([LogLevel.DEBUG])
 
@@ -9,26 +9,6 @@ const http = require('http')
 const Koa = require('koa')
 const Router = require('koa-router')
 const cors = require('kcors')
-
-interface IData {
-  onMemberJoinCalled: number
-  joinedMembers: number[]
-  onMemberLeaveCalled: number
-  leftMembers: number
-  onStateCalled: number
-  states: WebGroupState[]
-  onSignalingStateCalled: number
-  signalingStates: SignalingState[]
-  messages: any[]
-  onMessageToBeCalled: number
-  state: WebGroupState
-  signalingState: SignalingState
-  key: string
-  topology: number
-  members: number[]
-  myId: number
-  id: number
-}
 
 const webGroupOptions = { signalingServer: SIGNALING_URL }
 try {
@@ -135,6 +115,7 @@ function addWebGroup(bot: WebGroupBotServer): WebGroup {
 
 function configWebGroup(wg: WebGroup) {
   const data: any = {
+    autoRejoin: false,
     onMemberJoinCalled: 0,
     joinedMembers: [],
     onMemberLeaveCalled: 0,
@@ -145,6 +126,7 @@ function configWebGroup(wg: WebGroup) {
     signalingStates: [],
     messages: [],
     onMessageToBeCalled: 0,
+    signalingServer: '',
   }
   const anyWg = wg as any
   anyWg.waitJoin = new Promise((resolve) => {
@@ -194,7 +176,7 @@ function configWebGroup(wg: WebGroup) {
   anyWg.data = data
 }
 
-function fullData(wg: any): IData {
+function fullData(wg: any): IBotData {
   wg.data.state = wg.state
   wg.data.signalingState = wg.signalingState
   wg.data.key = wg.key
@@ -202,5 +184,7 @@ function fullData(wg: any): IData {
   wg.data.members = wg.members
   wg.data.myId = wg.myId
   wg.data.id = wg.id
+  wg.data.autoRejoin = wg.autoRejoin
+  wg.data.signalingServer = wg.signalingServer
   return wg.data
 }
