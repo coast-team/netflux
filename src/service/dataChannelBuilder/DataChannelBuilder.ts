@@ -45,19 +45,19 @@ export class DataChannelBuilder extends Service<proto.IMessage, proto.Message> {
   }
 
   async connectInternal(id: number): Promise<void> {
-    log.webrtc('connectInternal')
+    log.webrtc(this.wc.myId + 'connectInternal')
     this.channelsSubject.next(await this.connect(this.wc.STREAM_ID, ChannelType.INTERNAL, id))
   }
 
   async connectToJoin(id: number): Promise<void> {
-    log.webrtc('connectToJoin')
+    log.webrtc(this.wc.myId + ' connectToJoin')
     this.channelsSubject.next(
       await this.connect(this.wc.signaling.STREAM_ID, ChannelType.JOINING, id)
     )
   }
 
   async connectToInvite(id: number): Promise<void> {
-    log.webrtc('connectToInvite')
+    log.webrtc(this.wc.myId + 'connectToInvite')
     this.channelsSubject.next(
       await this.connect(this.wc.signaling.STREAM_ID, ChannelType.INVITED, id)
     )
@@ -135,19 +135,23 @@ export class DataChannelBuilder extends Service<proto.IMessage, proto.Message> {
           if (dc !== undefined) {
             dc.close()
           }
-          log.webrtc('Timer EXECUTED for ' + id, timer)
           remote.onError(new Error(`${CONNECT_TIMEOUT}ms connection timeout`))
         }
       }, CONNECT_TIMEOUT)
-      log.webrtc('Timer SET for ' + id, timer)
+
       remote.onDataChannel = (dataChannel: RTCDataChannel) => {
         dc = dataChannel
         const peerId = Number.parseInt(dc.label, 10)
-        const type =
-          this.wc.state === WebChannelState.JOINED ? ChannelType.INVITED : ChannelType.JOINING
+        let type: ChannelType
+        if (streamId === this.wc.STREAM_ID) {
+          type = ChannelType.INTERNAL
+        } else if (this.wc.state === WebChannelState.JOINED) {
+          type = ChannelType.INVITED
+        } else {
+          type = ChannelType.JOINING
+        }
         const channel = new Channel(this.wc, dc, type, peerId, remote.pc)
         dc.onopen = () => {
-          log.webrtc('Timer CLREAD for ' + id, timer)
           clearTimeout(timer)
           log.webrtc(`${remote.peerToLog}: RTCDataChannel with ${channel.id} has opened`)
           this.channelsSubject.next(channel)
