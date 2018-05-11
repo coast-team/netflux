@@ -54,7 +54,7 @@
     "protobufjs": "^6.8.6",
     "rxjs": "^6.1.0",
     "text-encoding": "^0.6.4",
-    "uws": "^9.148.0",
+    "uws": "^10.148.0",
     "webrtc-adapter": "^6.1.5"
   },
   "peerDependencies": {
@@ -63,7 +63,7 @@
   "devDependencies": {
     "@types/jasmine": "^2.8.7",
     "babel-core": "^6.26.3",
-    "babel-preset-env": "^1.6.1",
+    "babel-preset-env": "^1.7.0",
     "commitizen": "^2.9.6",
     "cz-conventional-changelog": "^2.1.0",
     "esdoc": "^1.1.0",
@@ -95,7 +95,7 @@
     "rollup-plugin-node-resolve": "^3.0.3",
     "rollup-plugin-re": "^1.0.7",
     "rollup-plugin-strip": "^1.1.1",
-    "rollup-plugin-typescript2": "^0.13.0",
+    "rollup-plugin-typescript2": "^0.14.0",
     "rxjs-compat": "^6.1.0",
     "semantic-release": "^15.3.1",
     "sigver": "^19.0.0",
