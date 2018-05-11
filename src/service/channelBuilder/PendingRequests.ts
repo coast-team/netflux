@@ -62,6 +62,7 @@ export class PendingRequests {
   private cleanAll(requests: Map<number, IPendingRequest>) {
     requests.forEach((req) => {
       if (req.promise) {
+        req.promise.catch(() => {})
         req.reject(new Error('clean'))
       }
     })
