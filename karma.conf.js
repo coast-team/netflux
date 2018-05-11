@@ -20,7 +20,7 @@ module.exports = (config) => {
       'test/util/helper.ts',
       'test/functional/1member.test.ts',
       'test/functional/2members.test.ts',
-      // 'test/functional/3members.test.ts',
+      'test/functional/3members.test.ts',
     ],
     // 'test/functional/manyMembers.test.ts'
     // list of files to exclude
@@ -99,7 +99,7 @@ module.exports = (config) => {
       ],
     }
   } else if (TYPE === 'precommit') {
-    config.browsers = ['FirefoxHeadless']
+    config.browsers = ['ChromeHeadless']
     config.autoWatch = false
     config.singleRun = true
     config.karmaTypescriptConfig.reports = { 'text-summary': '' }
