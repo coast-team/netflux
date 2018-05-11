@@ -17,7 +17,20 @@ export const SIGNALING_URL = 'ws://localhost:8010'
 export const BOT_HOST = 'localhost'
 export const BOT_PORT = 10001
 export const BOT_URL = `ws://${BOT_HOST}:${BOT_PORT}`
+
 const BOT_FETCH_URL = `http://${BOT_HOST}:${BOT_PORT}`
+
+export function randomKey(): string {
+  const mask = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  const length = 42 // Should be less then MAX_KEY_LENGTH value
+  const values = new Uint32Array(length)
+  global.crypto.getRandomValues(values)
+  let result = ''
+  for (let i = 0; i < length; i++) {
+    result += mask[values[i] % mask.length]
+  }
+  return result
+}
 
 export function areTheSame(
   array1: Array<number | string | boolean | Uint8Array>,
@@ -115,8 +128,8 @@ export interface IBotMessage {
   msg: string | Uint8Array
 }
 
-export function getBotData(wgId: number): Promise<IBotData> {
-  return fetch(`${BOT_FETCH_URL}/data/${wgId}`).then(async (res) => {
+export function getBotData(key: string): Promise<IBotData> {
+  return fetch(`${BOT_FETCH_URL}/data/${key}`).then(async (res) => {
     if (res.status !== 200) {
       throw new Error(await res.text())
     } else {
@@ -125,10 +138,10 @@ export function getBotData(wgId: number): Promise<IBotData> {
   })
 }
 
-export function waitBotJoin(wgId: number) {
+export function waitBotJoin(key: string): Promise<void> {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
-      fetch(`${BOT_FETCH_URL}/waitJoin/${wgId}`)
+      fetch(`${BOT_FETCH_URL}/waitJoin/${key}`)
         .then(async (res) => {
           if (res.status !== 200) {
             throw new Error(await res.text())
@@ -137,6 +150,24 @@ export function waitBotJoin(wgId: number) {
         .then(() => resolve())
         .catch((err) => reject(err))
     }, 500)
+  })
+}
+
+export function newBotGroup(key: string): Promise<void> {
+  return fetch(`${BOT_FETCH_URL}/new/${key}`).then(async (res) => {
+    if (res.status !== 200) {
+      throw new Error(await res.text())
+    }
+  })
+}
+
+export function leaveBotGroup(key: string): Promise<IBotData> {
+  return fetch(`${BOT_FETCH_URL}/leave/${key}`).then(async (res) => {
+    if (res.status !== 200) {
+      throw new Error(await res.text())
+    } else {
+      return res.json()
+    }
   })
 }
 

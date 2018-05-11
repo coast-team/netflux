@@ -1,6 +1,15 @@
 /// <reference types='jasmine' />
 import { SignalingState, Topology, WebGroup, WebGroupState } from '../../src/index.browser'
-import { cleanWebGroup, SIGNALING_URL, wait } from '../util/helper'
+import {
+  cleanWebGroup,
+  getBotData,
+  leaveBotGroup,
+  newBotGroup,
+  randomKey,
+  SIGNALING_URL,
+  wait,
+  waitBotJoin,
+} from '../util/helper'
 
 const WebGroupOptions = {
   signalingServer: SIGNALING_URL,
@@ -158,6 +167,7 @@ describe('1 member', () => {
         wg1.join()
       })
 
+      /** @test {WebGroup} */
       it('should have the same members, WebGroup id, topology and NOT empty key once joined', (done) => {
         const topology = wg1.topology
 
@@ -302,6 +312,133 @@ describe('1 member', () => {
 
         // Start leaving
         wg1.leave()
+      })
+    })
+  })
+
+  describe('🤖', () => {
+    describe('joining', () => {
+      let key: string
+      beforeEach((done) => {
+        key = randomKey()
+        newBotGroup(key).then(() => done())
+      })
+
+      afterEach((done) => {
+        leaveBotGroup(key).then(() => done())
+      })
+
+      /** @test {WebGroup#onSignalingStateChange} */
+      it('should change the Signaling state', (done) => {
+        const expected = [
+          SignalingState.CONNECTING,
+          SignalingState.OPEN,
+          SignalingState.CHECKING,
+          SignalingState.CHECKED,
+          SignalingState.CHECKING,
+          SignalingState.CHECKED,
+        ]
+        waitBotJoin(key)
+          .then(() => getBotData(key))
+          .then((data) => {
+            expect(data.onSignalingStateCalled).toEqual(expected.length)
+            expect(data.signalingStates).toEqual(expected)
+            expect(data.signalingState).toEqual(SignalingState.CHECKED)
+            done()
+          })
+      })
+
+      /** @test {WebGroup#onStateChange} */
+      it('should change the WebGroup state', (done) => {
+        const expected = [WebGroupState.JOINING, WebGroupState.JOINED]
+        waitBotJoin(key)
+          .then(() => getBotData(key))
+          .then((data) => {
+            expect(data.state).toEqual(WebGroupState.JOINED)
+            expect(data.states).toEqual(expected)
+            expect(data.onStateCalled).toEqual(expected.length)
+            done()
+          })
+      })
+
+      /** @test {WebGroup#onMemberJoin} */
+      it('should NOT be notified about new member', (done) => {
+        waitBotJoin(key)
+          .then(() => getBotData(key))
+          .then((data) => {
+            expect(data.onMemberJoinCalled).toEqual(0)
+            expect(data.joinedMembers.length).toEqual(0)
+            done()
+          })
+      })
+
+      /** @test {WebGroup#onSignalingStateChange} */
+      it('should have the same members, WebGroup id, topology and NOT empty key once joined', (done) => {
+        waitBotJoin(key)
+          .then(() => getBotData(key))
+          .then((data) => {
+            expect(data.members).toEqual([data.myId])
+            expect(data.myId).not.toEqual(0)
+            expect(data.id).not.toEqual(0)
+            expect(data.key).toEqual(key)
+            done()
+          })
+      })
+    })
+
+    describe('leaving', () => {
+      let key: string
+      beforeEach((done) => {
+        key = randomKey()
+        newBotGroup(key).then(() => done())
+      })
+
+      /** @test {WebGroup#leave} */
+      it('should have the same members, WebGroup id, topology and an empty key', (done) => {
+        leaveBotGroup(key).then((data) => {
+          expect(data.members).toEqual([])
+          expect(data.myId).toBe(0)
+          expect(data.id).toBe(0)
+          expect(data.key).toEqual('')
+          done()
+        })
+      })
+
+      /** @test {WebGroup#onMemberLeave} */
+      it('should be NOT notified about left member', (done) => {
+        leaveBotGroup(key).then((data) => {
+          expect(data.leftMembers).toEqual([])
+          expect(data.onMemberLeaveCalled).toEqual(0)
+          done()
+        })
+      })
+
+      /** @test {WebGroup#onStateChange} */
+      it('should change the WebGroup state', (done) => {
+        const expected = [WebGroupState.JOINING, WebGroupState.JOINED, WebGroupState.LEFT]
+        leaveBotGroup(key).then((data) => {
+          expect(data.states).toEqual(expected)
+          expect(data.onStateCalled).toEqual(expected.length)
+          done()
+        })
+      })
+
+      /** @test {WebGroup#onSignalingStateChange} */
+      it('should change the Signaling state', (done) => {
+        const expected = [
+          SignalingState.CONNECTING,
+          SignalingState.OPEN,
+          SignalingState.CHECKING,
+          SignalingState.CHECKED,
+          SignalingState.CHECKING,
+          SignalingState.CHECKED,
+          SignalingState.CLOSED,
+        ]
+        leaveBotGroup(key).then((data) => {
+          expect(data.signalingStates).toEqual(expected)
+          expect(data.onSignalingStateCalled).toEqual(expected.length)
+          done()
+        })
       })
     })
   })

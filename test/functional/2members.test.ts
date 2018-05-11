@@ -535,9 +535,9 @@ describe('2 members', () => {
             wg1.invite(BOT_URL)
 
             // Check bot data
-            waitBotJoin(wg1.id)
+            waitBotJoin(wg1.key)
               .then(() => wait(1000))
-              .then(() => getBotData(wg1.id))
+              .then(() => getBotData(wg1.key))
               .then((data) => {
                 expect(data.onSignalingStateCalled).toEqual(4)
                 expect(data.signalingState).toEqual(SignalingState.CHECKED)
@@ -559,9 +559,9 @@ describe('2 members', () => {
             wg1.invite(BOT_URL)
 
             // Check bot data
-            waitBotJoin(wg1.id)
+            waitBotJoin(wg1.key)
               .then(() => wait(1000))
-              .then(() => getBotData(wg1.id))
+              .then(() => getBotData(wg1.key))
               .then((data) => {
                 expect(data.state).toEqual(WebGroupState.JOINED)
                 done()
@@ -589,9 +589,9 @@ describe('2 members', () => {
         wg1.onMemberJoin = (id: number) => {
           called1++
           // Check bot data
-          waitBotJoin(wg1.id)
+          waitBotJoin(wg1.key)
             .then(() => wait(1000))
-            .then(() => getBotData(wg1.id))
+            .then(() => getBotData(wg1.key))
             .then((bot: IBotData) => {
               expect(id).toEqual(bot.myId)
               expect(bot.onMemberJoinCalled).toEqual(1)
@@ -618,9 +618,9 @@ describe('2 members', () => {
 
         wg1.onMemberJoin = () => {
           // Check bot data
-          waitBotJoin(wg1.id)
+          waitBotJoin(wg1.key)
             .then(() => wait(1000))
-            .then(() => getBotData(wg1.id))
+            .then(() => getBotData(wg1.key))
             .then((bot: IBotData) => {
               expect(areTheSame(bot.members, wg1.members)).toBeTruthy()
               expect(bot.key).toEqual(wg1.key)
@@ -650,7 +650,7 @@ describe('2 members', () => {
         wg1.onStateChange = (state: WebGroupState) => {
           if (state === WebGroupState.JOINED) {
             wg1.invite(BOT_URL)
-            waitBotJoin(wg1.id).then(() => queue.done())
+            waitBotJoin(wg1.key).then(() => queue.done())
           }
         }
 
@@ -674,7 +674,7 @@ describe('2 members', () => {
 
           // Check bot data
           wait(1000)
-            .then(() => getBotData(wg1.id))
+            .then(() => getBotData(wg1.key))
             .then((bot: IBotData) => {
               expect(called1).toEqual(1)
               expect(id).toEqual(bot.myId)
@@ -702,7 +702,7 @@ describe('2 members', () => {
 
           // Check bot data
           wait(1000)
-            .then(() => getBotData(wg1.id))
+            .then(() => getBotData(wg1.key))
             .then((bot: IBotData) => {
               expect(called1).toEqual(1)
               expect(id).toEqual(bot.myId)
@@ -730,7 +730,7 @@ describe('2 members', () => {
 
           // Check bot data
           wait(1000)
-            .then(() => getBotData(wg1.id))
+            .then(() => getBotData(wg1.key))
             .then((bot: IBotData) => {
               expect(called1).toEqual(1)
               expect(id).toEqual(bot.myId)
@@ -758,7 +758,7 @@ describe('2 members', () => {
 
           // Check bot data
           wait(1000)
-            .then(() => getBotData(wg1.id))
+            .then(() => getBotData(wg1.key))
             .then((bot: IBotData) => {
               expect(called1).toEqual(1)
               expect(id).toEqual(bot.myId)
