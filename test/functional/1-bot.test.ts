@@ -1,12 +1,12 @@
 /// <reference types='jasmine' />
 import { SignalingState, Topology, WebGroupState } from '../../src/index.browser'
 import {
-  getBotData,
-  leaveBotGroup,
-  newBotGroup,
+  botGetData,
+  botJoin,
+  botLeave,
+  botWaitJoin,
   randomKey,
   SIGNALING_URL,
-  waitBotJoin,
 } from '../util/helper'
 
 /** @test {WebGroup} */
@@ -16,11 +16,11 @@ describe('🤖 - 1 bot', () => {
     let key: string
     beforeEach((done) => {
       key = randomKey()
-      newBotGroup(key).then(() => done())
+      botJoin(key).then(() => done())
     })
 
     afterEach((done) => {
-      leaveBotGroup(key).then(() => done())
+      botLeave(key).then(() => done())
     })
 
     /** @test {WebGroup#onSignalingStateChange} */
@@ -33,8 +33,8 @@ describe('🤖 - 1 bot', () => {
         SignalingState.CHECKING,
         SignalingState.CHECKED,
       ]
-      waitBotJoin(key)
-        .then(() => getBotData(key))
+      botWaitJoin(key)
+        .then(() => botGetData(key))
         .then((data) => {
           expect(data.onSignalingStateCalled).toEqual(expected.length)
           expect(data.signalingStates).toEqual(expected)
@@ -46,8 +46,8 @@ describe('🤖 - 1 bot', () => {
     /** @test {WebGroup#onStateChange} */
     it('should change the WebGroup state', (done) => {
       const expected = [WebGroupState.JOINING, WebGroupState.JOINED]
-      waitBotJoin(key)
-        .then(() => getBotData(key))
+      botWaitJoin(key)
+        .then(() => botGetData(key))
         .then((data) => {
           expect(data.state).toEqual(WebGroupState.JOINED)
           expect(data.states).toEqual(expected)
@@ -58,8 +58,8 @@ describe('🤖 - 1 bot', () => {
 
     /** @test {WebGroup#onMemberJoin} */
     it('should NOT be notified about new member', (done) => {
-      waitBotJoin(key)
-        .then(() => getBotData(key))
+      botWaitJoin(key)
+        .then(() => botGetData(key))
         .then((data) => {
           expect(data.onMemberJoinCalled).toEqual(0)
           expect(data.joinedMembers.length).toEqual(0)
@@ -69,8 +69,8 @@ describe('🤖 - 1 bot', () => {
 
     /** @test {WebGroup#onMemberLeave} */
     it('should NOT be notified about left member', (done) => {
-      waitBotJoin(key)
-        .then(() => getBotData(key))
+      botWaitJoin(key)
+        .then(() => botGetData(key))
         .then((data) => {
           expect(data.onMemberLeaveCalled).toEqual(0)
           expect(data.leftMembers.length).toEqual(0)
@@ -80,8 +80,8 @@ describe('🤖 - 1 bot', () => {
 
     /** @test {WebGroup#onMessage} */
     it('should NOT receive any message', (done) => {
-      waitBotJoin(key)
-        .then(() => getBotData(key))
+      botWaitJoin(key)
+        .then(() => botGetData(key))
         .then((data) => {
           expect(data.onMessageToBeCalled).toEqual(0)
           expect(data.messages).toEqual([])
@@ -91,8 +91,8 @@ describe('🤖 - 1 bot', () => {
 
     /** @test {WebGroup#autoRejoin} */
     it('autoRejoin should be disabled', (done) => {
-      waitBotJoin(key)
-        .then(() => getBotData(key))
+      botWaitJoin(key)
+        .then(() => botGetData(key))
         .then((data) => {
           expect(data.autoRejoin).toBeFalsy()
           done()
@@ -101,8 +101,8 @@ describe('🤖 - 1 bot', () => {
 
     /** @test {WebGroup#signalinServer} */
     it('signalinServer should not change', (done) => {
-      waitBotJoin(key)
-        .then(() => getBotData(key))
+      botWaitJoin(key)
+        .then(() => botGetData(key))
         .then((data) => {
           expect(data.signalingServer).toEqual(SIGNALING_URL)
           done()
@@ -111,8 +111,8 @@ describe('🤖 - 1 bot', () => {
 
     /** @test {WebGroup#topology} */
     it('topology should not change', (done) => {
-      waitBotJoin(key)
-        .then(() => getBotData(key))
+      botWaitJoin(key)
+        .then(() => botGetData(key))
         .then((data) => {
           expect(data.topology).toEqual(Topology.FULL_MESH)
           done()
@@ -121,8 +121,8 @@ describe('🤖 - 1 bot', () => {
 
     /** @test {WebGroup#members} */
     it('should have only me as a member', (done) => {
-      waitBotJoin(key)
-        .then(() => getBotData(key))
+      botWaitJoin(key)
+        .then(() => botGetData(key))
         .then((data) => {
           expect(data.members).toEqual([data.myId])
           done()
@@ -131,8 +131,8 @@ describe('🤖 - 1 bot', () => {
 
     /** @test {WebGroup#myId} */
     it('my id should not be 0', (done) => {
-      waitBotJoin(key)
-        .then(() => getBotData(key))
+      botWaitJoin(key)
+        .then(() => botGetData(key))
         .then((data) => {
           expect(data.myId).not.toEqual(0)
           done()
@@ -141,8 +141,8 @@ describe('🤖 - 1 bot', () => {
 
     /** @test {WebGroup#id} */
     it('WebGroup id should not be 0', (done) => {
-      waitBotJoin(key)
-        .then(() => getBotData(key))
+      botWaitJoin(key)
+        .then(() => botGetData(key))
         .then((data) => {
           expect(data.id).not.toEqual(0)
           done()
@@ -151,8 +151,8 @@ describe('🤖 - 1 bot', () => {
 
     /** @test {WebGroup#key} */
     it('key should be the one provided to the join method', (done) => {
-      waitBotJoin(key)
-        .then(() => getBotData(key))
+      botWaitJoin(key)
+        .then(() => botGetData(key))
         .then((data) => {
           expect(data.key).toEqual(key)
           done()
@@ -161,8 +161,8 @@ describe('🤖 - 1 bot', () => {
 
     /** @test {WebGroup#state} */
     it('WebGroup state should be JOINED', (done) => {
-      waitBotJoin(key)
-        .then(() => getBotData(key))
+      botWaitJoin(key)
+        .then(() => botGetData(key))
         .then((data) => {
           expect(data.state).toEqual(WebGroupState.JOINED)
           done()
@@ -171,8 +171,8 @@ describe('🤖 - 1 bot', () => {
 
     /** @test {WebGroup#signalingState} */
     it('Signaling state should be CHECKED', (done) => {
-      waitBotJoin(key)
-        .then(() => getBotData(key))
+      botWaitJoin(key)
+        .then(() => botGetData(key))
         .then((data) => {
           expect(data.signalingState).toEqual(SignalingState.CHECKED)
           done()
@@ -185,13 +185,13 @@ describe('🤖 - 1 bot', () => {
     let key: string
     beforeEach((done) => {
       key = randomKey()
-      newBotGroup(key).then(() => done())
+      botJoin(key).then(() => done())
     })
 
     /** @test {WebGroup#onStateChange} */
     it('should change the WebGroup state', (done) => {
       const expected = [WebGroupState.JOINING, WebGroupState.JOINED, WebGroupState.LEFT]
-      leaveBotGroup(key).then((data) => {
+      botLeave(key).then((data) => {
         expect(data.states).toEqual(expected)
         expect(data.onStateCalled).toEqual(expected.length)
         done()
@@ -209,7 +209,7 @@ describe('🤖 - 1 bot', () => {
         SignalingState.CHECKED,
         SignalingState.CLOSED,
       ]
-      leaveBotGroup(key).then((data) => {
+      botLeave(key).then((data) => {
         expect(data.signalingStates).toEqual(expected)
         expect(data.onSignalingStateCalled).toEqual(expected.length)
         done()
@@ -218,7 +218,7 @@ describe('🤖 - 1 bot', () => {
 
     /** @test {WebGroup#onMemberJoin} */
     it('should NOT be notified about new member', (done) => {
-      leaveBotGroup(key).then((data) => {
+      botLeave(key).then((data) => {
         expect(data.onMemberJoinCalled).toEqual(0)
         expect(data.joinedMembers.length).toEqual(0)
         done()
@@ -227,7 +227,7 @@ describe('🤖 - 1 bot', () => {
 
     /** @test {WebGroup#onMemberLeave} */
     it('should NOT be notified about left member', (done) => {
-      leaveBotGroup(key).then((data) => {
+      botLeave(key).then((data) => {
         expect(data.onMemberLeaveCalled).toEqual(0)
         expect(data.leftMembers.length).toEqual(0)
         done()
@@ -236,7 +236,7 @@ describe('🤖 - 1 bot', () => {
 
     /** @test {WebGroup#onMessage} */
     it('should NOT receive any message', (done) => {
-      leaveBotGroup(key).then((data) => {
+      botLeave(key).then((data) => {
         expect(data.onMessageToBeCalled).toEqual(0)
         expect(data.messages).toEqual([])
         done()
@@ -245,7 +245,7 @@ describe('🤖 - 1 bot', () => {
 
     /** @test {WebGroup#autoRejoin} */
     it('autoRejoin should be disabled', (done) => {
-      leaveBotGroup(key).then((data) => {
+      botLeave(key).then((data) => {
         expect(data.autoRejoin).toBeFalsy()
         done()
       })
@@ -253,7 +253,7 @@ describe('🤖 - 1 bot', () => {
 
     /** @test {WebGroup#signalinServer} */
     it('signalinServer should not change', (done) => {
-      leaveBotGroup(key).then((data) => {
+      botLeave(key).then((data) => {
         expect(data.signalingServer).toEqual(SIGNALING_URL)
         done()
       })
@@ -261,7 +261,7 @@ describe('🤖 - 1 bot', () => {
 
     /** @test {WebGroup#topology} */
     it('topology should not change', (done) => {
-      leaveBotGroup(key).then((data) => {
+      botLeave(key).then((data) => {
         expect(data.topology).toEqual(Topology.FULL_MESH)
         done()
       })
@@ -269,7 +269,7 @@ describe('🤖 - 1 bot', () => {
 
     /** @test {WebGroup#members} */
     it('should have no members', (done) => {
-      leaveBotGroup(key).then((data) => {
+      botLeave(key).then((data) => {
         expect(data.members).toEqual([])
         done()
       })
@@ -277,7 +277,7 @@ describe('🤖 - 1 bot', () => {
 
     /** @test {WebGroup#myId} */
     it('my id should be 0', (done) => {
-      leaveBotGroup(key).then((data) => {
+      botLeave(key).then((data) => {
         expect(data.myId).toEqual(0)
         done()
       })
@@ -285,7 +285,7 @@ describe('🤖 - 1 bot', () => {
 
     /** @test {WebGroup#id} */
     it('WebGroup id should be 0', (done) => {
-      leaveBotGroup(key).then((data) => {
+      botLeave(key).then((data) => {
         expect(data.id).toEqual(0)
         done()
       })
@@ -293,7 +293,7 @@ describe('🤖 - 1 bot', () => {
 
     /** @test {WebGroup#key} */
     it('key should be empty', (done) => {
-      leaveBotGroup(key).then((data) => {
+      botLeave(key).then((data) => {
         expect(data.key).toEqual('')
         done()
       })
@@ -301,7 +301,7 @@ describe('🤖 - 1 bot', () => {
 
     /** @test {WebGroup#state} */
     it('WebGroup state should be LEFT', (done) => {
-      leaveBotGroup(key).then((data) => {
+      botLeave(key).then((data) => {
         expect(data.state).toEqual(WebGroupState.LEFT)
         done()
       })
@@ -309,7 +309,7 @@ describe('🤖 - 1 bot', () => {
 
     /** @test {WebGroup#signalingState} */
     it('Signaling state should be CLOSED', (done) => {
-      leaveBotGroup(key).then((data) => {
+      botLeave(key).then((data) => {
         expect(data.signalingState).toEqual(SignalingState.CLOSED)
         done()
       })

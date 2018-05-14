@@ -130,7 +130,7 @@ export interface IBotMessage {
   msg: string | Uint8Array
 }
 
-export function getBotData(key: string): Promise<IBotData> {
+export function botGetData(key: string): Promise<IBotData> {
   return fetch(`${BOT_FETCH_URL}/data/${key}`).then(async (res) => {
     if (res.status !== 200) {
       throw new Error(await res.text())
@@ -140,7 +140,7 @@ export function getBotData(key: string): Promise<IBotData> {
   })
 }
 
-export function waitBotJoin(key: string): Promise<void> {
+export function botWaitJoin(key: string): Promise<void> {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
       fetch(`${BOT_FETCH_URL}/waitJoin/${key}`)
@@ -155,7 +155,7 @@ export function waitBotJoin(key: string): Promise<void> {
   })
 }
 
-export function newBotGroup(key: string): Promise<void> {
+export function botJoin(key: string): Promise<void> {
   return fetch(`${BOT_FETCH_URL}/new/${key}`).then(async (res) => {
     if (res.status !== 200) {
       throw new Error(await res.text())
@@ -163,7 +163,7 @@ export function newBotGroup(key: string): Promise<void> {
   })
 }
 
-export function leaveBotGroup(key: string): Promise<IBotData> {
+export function botLeave(key: string): Promise<IBotData> {
   return fetch(`${BOT_FETCH_URL}/leave/${key}`).then(async (res) => {
     if (res.status !== 200) {
       throw new Error(await res.text())

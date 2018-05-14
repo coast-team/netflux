@@ -5,13 +5,13 @@ import { Topology } from '../../src/index.common.doc'
 import {
   areTheSame,
   BOT_URL,
+  botGetData,
+  botWaitJoin,
   cleanWebGroup,
-  getBotData,
   IBotData,
   Queue,
   SIGNALING_URL,
   wait,
-  waitBotJoin,
 } from '../util/helper'
 
 const WebGroupOptions = {
@@ -45,8 +45,8 @@ describe('🙂 🤖 - 2 members: client invites bot', () => {
     it('should change the Signaling state', (done) => {
       client.invite(BOT_URL)
 
-      waitBotJoin(client.key)
-        .then(() => getBotData(client.key))
+      botWaitJoin(client.key)
+        .then(() => botGetData(client.key))
         .then((bot) => {
           expect(bot.onSignalingStateCalled).toEqual(4)
           done()
@@ -57,8 +57,8 @@ describe('🙂 🤖 - 2 members: client invites bot', () => {
     it('Signaling state should be CHECKED', (done) => {
       client.invite(BOT_URL)
 
-      waitBotJoin(client.key)
-        .then(() => getBotData(client.key))
+      botWaitJoin(client.key)
+        .then(() => botGetData(client.key))
         .then((bot) => {
           expect(client.signalingState).toEqual(SignalingState.CHECKED)
           expect(bot.signalingState).toEqual(SignalingState.CHECKED)
@@ -74,8 +74,8 @@ describe('🙂 🤖 - 2 members: client invites bot', () => {
       client.invite(BOT_URL)
 
       // Check bot bot
-      waitBotJoin(client.key)
-        .then(() => getBotData(client.key))
+      botWaitJoin(client.key)
+        .then(() => botGetData(client.key))
         .then((bot) => {
           expect(called).toEqual(0)
           expect(bot.onStateCalled).toEqual(1)
@@ -89,8 +89,8 @@ describe('🙂 🤖 - 2 members: client invites bot', () => {
       client.invite(BOT_URL)
 
       // Check bot bot
-      waitBotJoin(client.key)
-        .then(() => getBotData(client.key))
+      botWaitJoin(client.key)
+        .then(() => botGetData(client.key))
         .then((bot) => {
           expect(client.state).toEqual(WebGroupState.JOINED)
           expect(bot.state).toEqual(WebGroupState.JOINED)
@@ -112,8 +112,8 @@ describe('🙂 🤖 - 2 members: client invites bot', () => {
       client.invite(BOT_URL)
 
       // Check bot bot
-      waitBotJoin(client.key)
-        .then(() => getBotData(client.key))
+      botWaitJoin(client.key)
+        .then(() => botGetData(client.key))
         .then((bot: IBotData) => {
           expect(bot.onMemberJoinCalled).toEqual(1)
           expect(bot.joinedMembers).toEqual([client.myId])
@@ -137,8 +137,8 @@ describe('🙂 🤖 - 2 members: client invites bot', () => {
       client.invite(BOT_URL)
 
       // Check bot bot
-      waitBotJoin(client.key)
-        .then(() => getBotData(client.key))
+      botWaitJoin(client.key)
+        .then(() => botGetData(client.key))
         .then((bot: IBotData) => {
           expect(bot.onMemberLeaveCalled).toEqual(0)
           expect(bot.leftMembers).toEqual([])
@@ -158,8 +158,8 @@ describe('🙂 🤖 - 2 members: client invites bot', () => {
       client.invite(BOT_URL)
 
       // Check bot bot
-      waitBotJoin(client.key)
-        .then(() => getBotData(client.key))
+      botWaitJoin(client.key)
+        .then(() => botGetData(client.key))
         .then((bot: IBotData) => {
           expect(bot.onMessageToBeCalled).toEqual(0)
           expect(called1).toEqual(0)
@@ -188,8 +188,8 @@ describe('🙂 🤖 - 2 members: client invites bot', () => {
       client.invite(BOT_URL)
 
       // Check bot bot
-      waitBotJoin(client.key)
-        .then(() => getBotData(client.key))
+      botWaitJoin(client.key)
+        .then(() => botGetData(client.key))
         .then((bot: IBotData) => {
           _bot = bot
           expect(areTheSame(bot.members, [client.myId, bot.myId])).toBeTruthy()
@@ -205,8 +205,8 @@ describe('🙂 🤖 - 2 members: client invites bot', () => {
       client.invite(BOT_URL)
 
       // Check bot bot
-      waitBotJoin(client.key)
-        .then(() => getBotData(client.key))
+      botWaitJoin(client.key)
+        .then(() => botGetData(client.key))
         .then((bot: IBotData) => {
           expect(client.myId).toEqual(clientMyId)
           expect(bot.myId).not.toEqual(0)
@@ -222,8 +222,8 @@ describe('🙂 🤖 - 2 members: client invites bot', () => {
       client.invite(BOT_URL)
 
       // Check bot bot
-      waitBotJoin(client.key)
-        .then(() => getBotData(client.key))
+      botWaitJoin(client.key)
+        .then(() => botGetData(client.key))
         .then((bot: IBotData) => {
           expect(client.id).toEqual(wgId)
           expect(bot.id).toEqual(client.id)
@@ -240,8 +240,8 @@ describe('🙂 🤖 - 2 members: client invites bot', () => {
       client.invite(BOT_URL)
 
       // Check bot bot
-      waitBotJoin(client.key)
-        .then(() => getBotData(client.key))
+      botWaitJoin(client.key)
+        .then(() => botGetData(client.key))
         .then((bot: IBotData) => {
           expect(client.key).toEqual(key)
           expect(bot.key).toEqual(client.key)
@@ -256,8 +256,8 @@ describe('🙂 🤖 - 2 members: client invites bot', () => {
       client.invite(BOT_URL)
 
       // Check bot bot
-      waitBotJoin(client.key)
-        .then(() => getBotData(client.key))
+      botWaitJoin(client.key)
+        .then(() => botGetData(client.key))
         .then((bot: IBotData) => {
           expect(client.topology).toEqual(Topology.FULL_MESH)
           expect(bot.topology).toEqual(Topology.FULL_MESH)
@@ -271,8 +271,8 @@ describe('🙂 🤖 - 2 members: client invites bot', () => {
       client.invite(BOT_URL)
 
       // Check bot bot
-      waitBotJoin(client.key)
-        .then(() => getBotData(client.key))
+      botWaitJoin(client.key)
+        .then(() => botGetData(client.key))
         .then((bot: IBotData) => {
           expect(client.signalingServer).toEqual(SIGNALING_URL)
           expect(bot.signalingServer).toEqual(SIGNALING_URL)
@@ -286,8 +286,8 @@ describe('🙂 🤖 - 2 members: client invites bot', () => {
       client.invite(BOT_URL)
 
       // Check bot bot
-      waitBotJoin(client.key)
-        .then(() => getBotData(client.key))
+      botWaitJoin(client.key)
+        .then(() => botGetData(client.key))
         .then((bot: IBotData) => {
           expect(client.autoRejoin).toBeFalsy()
           expect(bot.autoRejoin).toBeFalsy()
@@ -310,7 +310,7 @@ describe('🙂 🤖 - 2 members: client invites bot', () => {
         client.onStateChange = (state: WebGroupState) => {
           if (state === WebGroupState.JOINED) {
             client.invite(BOT_URL)
-            waitBotJoin(client.key).then(() => queue.done())
+            botWaitJoin(client.key).then(() => queue.done())
           }
         }
 
@@ -334,8 +334,8 @@ describe('🙂 🤖 - 2 members: client invites bot', () => {
 
           // Check bot bot
           wait(1000)
-            .then(() => getBotData(client.key))
-            .then((bot: IBotData) => {
+            .then(() => botGetData(client.key))
+            .then((bot) => {
               expect(called1).toEqual(1)
               expect(id).toEqual(bot.myId)
               expect(bot.onMessageToBeCalled).toEqual(1)
@@ -362,8 +362,8 @@ describe('🙂 🤖 - 2 members: client invites bot', () => {
 
           // Check bot bot
           wait(1000)
-            .then(() => getBotData(client.key))
-            .then((bot: IBotData) => {
+            .then(() => botGetData(client.key))
+            .then((bot) => {
               expect(called1).toEqual(1)
               expect(id).toEqual(bot.myId)
               expect(bot.onMessageToBeCalled).toEqual(1)
@@ -390,8 +390,8 @@ describe('🙂 🤖 - 2 members: client invites bot', () => {
 
           // Check bot bot
           wait(1000)
-            .then(() => getBotData(client.key))
-            .then((bot: IBotData) => {
+            .then(() => botGetData(client.key))
+            .then((bot) => {
               expect(called1).toEqual(1)
               expect(id).toEqual(bot.myId)
               expect(bot.onMessageToBeCalled).toEqual(1)
@@ -418,8 +418,8 @@ describe('🙂 🤖 - 2 members: client invites bot', () => {
 
           // Check bot bot
           wait(1000)
-            .then(() => getBotData(client.key))
-            .then((bot: IBotData) => {
+            .then(() => botGetData(client.key))
+            .then((bot) => {
               expect(called1).toEqual(1)
               expect(id).toEqual(bot.myId)
               expect(bot.onMessageToBeCalled).toEqual(1)

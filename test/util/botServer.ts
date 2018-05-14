@@ -138,7 +138,7 @@ function configWebGroup(wg: WebGroup) {
       data.states.push(state)
     }
   })
-  wg.onMessage = (id, msg: string | Uint8Array) => {
+  wg.onMessage = (id, msg) => {
     data.onMessageToBeCalled++
     data.messages.push({
       id,
