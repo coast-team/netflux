@@ -1,4 +1,5 @@
 // import { log } from './misc/util'
+import { WebGroupState } from './index.common.doc'
 import { defaultOptions, IWebChannelOptions, WebChannel } from './WebChannel'
 import { wcs, WebGroup } from './WebChannelFacade'
 import { Route, WebSocketBuilder } from './WebSocketBuilder'
@@ -10,6 +11,7 @@ export interface IBotServerOptions {
   url?: string
   server: NodeJSHttpServer | NodeJSHttpsServer
   perMessageDeflate?: boolean
+  leaveOnceAlone?: boolean
   webGroupOptions?: IWebChannelOptions
 }
 
@@ -19,6 +21,7 @@ export class BotServer {
   public webGroups: Map<number, WebGroup>
   public onWebGroup: (wg: WebGroup) => void
   public onError: (err: Error) => void
+  public leaveOnceAlone: boolean
 
   private listenUrl: string
   private webSocketServer: any
@@ -27,15 +30,17 @@ export class BotServer {
   constructor({
     url = '',
     perMessageDeflate = false,
+    leaveOnceAlone = true,
     server,
     webGroupOptions = {
       topology: defaultOptions.topology,
       signalingServer: defaultOptions.signalingServer,
       rtcConfiguration: defaultOptions.rtcConfiguration,
-      autoRejoin: false,
+      autoRejoin: defaultOptions.rtcConfiguration,
     },
   }: IBotServerOptions) {
-    this.wcOptions = Object.assign({}, defaultOptions, { autoRejoin: false }, webGroupOptions)
+    this.wcOptions = Object.assign({}, defaultOptions, webGroupOptions)
+    this.leaveOnceAlone = leaveOnceAlone
     this.server = server
     this.listenUrl = url
     this.perMessageDeflate = perMessageDeflate
@@ -94,6 +99,12 @@ export class BotServer {
           const wg = new WebGroup(this.wcOptions)
           this.webGroups.set(wcId, wg)
           const wc = wcs.get(wg) as WebChannel
+          if (this.leaveOnceAlone) {
+            wc.onAlone = () => {
+              wc.leave()
+              this.webGroups.delete(wcId)
+            }
+          }
           wc.init(key as string, wcId)
           this.onWebGroup(wg)
           wc.webSocketBuilder.newInviteWebSocket(ws, senderId as number)
@@ -113,11 +124,11 @@ export class BotServer {
         return this.webGroups.has(wcId) && !!senderId
       case Route.INVITE: {
         const wg = this.webGroups.get(wcId)
-        return (wg === undefined || wg.members.length === 1) && !!key
+        return !!key && (wg === undefined || wg.state === WebGroupState.LEFT)
       }
       case Route.JOIN: {
         const wg = this.webGroups.get(wcId)
-        return wg !== undefined && wg.members.length > 0 && !!key && wg.key === key
+        return !!key && wg !== undefined && wg.key === key && wg.state !== WebGroupState.LEFT
       }
       default:
         return false

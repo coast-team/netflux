@@ -84,6 +84,7 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
   public userMsg: UserMessage
   public streamSubject: Subject<InWcMsg>
 
+  private _onAlone: () => void
   private rejoinEnabled: boolean
   private rejoinTimer: number | undefined
 
@@ -101,6 +102,7 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
     this.rejoinEnabled = false
     this.rejoinTimer = undefined
     this.topology = {} as ITopology
+    this._onAlone = () => {}
     this.onMemberJoin = function none() {}
     this.onMemberLeave = function none() {}
     this.onMessage = function none() {}
@@ -123,6 +125,10 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
 
   get messageFromStream(): Observable<InWcMsg> {
     return this.streamSubject.asObservable()
+  }
+
+  set onAlone(handler: () => void) {
+    this._onAlone = handler
   }
 
   sendOverStream(msg: OutWcMessage) {
@@ -191,19 +197,22 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
   }
 
   onAdjacentMembersLeaveProxy(ids: number[]): void {
-    ids.forEach((id) => {
-      if (this.members.includes(id)) {
-        this.members.splice(this.members.indexOf(id), 1)
-        this.onMemberLeave(id)
+    if (ids.length !== 0) {
+      ids.forEach((id) => {
+        if (this.members.includes(id)) {
+          this.members.splice(this.members.indexOf(id), 1)
+          this.onMemberLeave(id)
+        }
+      })
+      if (this.members.length === 1) {
+        this._onAlone()
+        this.topology.setLeftState()
+      } else if (
+        this.signaling.state === SignalingState.CHECKED &&
+        this.topology.state === TopologyState.JOINED
+      ) {
+        this.signaling.check()
       }
-    })
-    if (this.members.length === 1) {
-      this.topology.setLeftState()
-    } else if (
-      this.signaling.state === SignalingState.CHECKED &&
-      this.topology.state === TopologyState.JOINED
-    ) {
-      this.signaling.check()
     }
   }
 

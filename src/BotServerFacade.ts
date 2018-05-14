@@ -50,6 +50,7 @@ export class WebGroupBotServer {
   public perMessageDeflate: boolean
   public webGroups: Map<number, WebGroup>
   public url: string
+  public leaveOnceAlone: boolean
   public onWebGroup: (((wg: WebGroup) => void)) | undefined | null
   public onError: (((err: Error) => void)) | undefined | null
 
@@ -58,11 +59,12 @@ export class WebGroupBotServer {
    * @param {NodeJSHttpServer|NodeJSHttpsServer} options.server NodeJS http(s) server.
    * @param {string} [options.url] Bot server URL.
    * @param {boolean} [options.perMessageDeflate=false] Enable/disable permessage-deflate.
+   * @param {boolean} [options.leaveOnceAlone=false] Enable/disable permessage-deflate.
    * @param {WebGroupOptions} options.webGroupOptions Options for each {@link WebGroup} the bot is member of.
    * @param {Topology} [options.webGroupOptions.topology=Topology.FULL_MESH]
    * @param {string} [options.webGroupOptions.signalingServer='wss://signaling.netflux.coedit.re']
    * @param {RTCConfiguration} [options.webGroupOptions.rtcConfiguration={iceServers: [{urls: 'stun:stun3.l.google.com:19302'}]}]
-   * @param {boolean} [options.webGroupOptions.autoRejoin=false]
+   * @param {boolean} [options.webGroupOptions.autoRejoin=true]
    */
   constructor(options: WebGroupBotServerOptions) {
     botServer = new BotServer(options)
@@ -77,6 +79,7 @@ export class WebGroupBotServer {
       enumerable: true,
       get: () => botServer.server,
     })
+
     /**
      * Read-only property of WebSocket server: permessage-deflate.
      * @type {NodeJSHttpServer|NodeJSHttpsServer}
@@ -87,6 +90,18 @@ export class WebGroupBotServer {
       enumerable: true,
       get: () => botServer.perMessageDeflate,
     })
+
+    /**
+     * Read-only property leaveOnceAlone.
+     * @type {NodeJSHttpServer|NodeJSHttpsServer}
+     */
+    this.leaveOnceAlone = undefined as any
+    Reflect.defineProperty(this, 'leaveOnceAlone', {
+      configurable: false,
+      enumerable: true,
+      get: () => botServer.leaveOnceAlone,
+    })
+
     /**
      * Read-only set of web groups the bot is member of.
      * @type {Set<WebGroup>}
@@ -97,6 +112,7 @@ export class WebGroupBotServer {
       enumerable: true,
       get: () => botServer.webGroups,
     })
+
     /**
      * Bot server url. Used to invite the bot in a web group via {@link WebGroup#invite} method.
      * @type {string}
