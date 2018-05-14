@@ -62,6 +62,12 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
 
     // Subscribe to WebChannel and Signalings streams
     this.allStreams.message.subscribe(({ streamId, senderId, msg }) => {
+      if (streamId === this.wc.signaling.STREAM_ID) {
+        log.channelBuilder(
+          this.wc.myId + ' - sender id = ' + senderId + ' Message from THE SIGNALING: ',
+          msg
+        )
+      }
       this.handleMessage(streamId, senderId, msg as proto.Message)
     })
 
@@ -88,7 +94,10 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
       req = this.pendingReqs.add(this.wc.STREAM_ID, id, CONNECT_TIMEOUT)
       this.allStreams.sendOver(this.wc.STREAM_ID, this.pairEncoded, id)
     }
-    return req.promise
+    return (req.promise as Promise<void>).catch((err) => {
+      console.log('ERROR connectOverWebChannel_____________: ', err)
+      throw err
+    })
   }
 
   async connectOverSignaling(): Promise<void> {
@@ -98,7 +107,10 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
       req = this.pendingReqs.add(this.wc.signaling.STREAM_ID, 1, CONNECT_TIMEOUT)
       this.allStreams.sendOver(this.wc.signaling.STREAM_ID, this.pairEncoded, 1)
     }
-    return req.promise
+    return (req.promise as Promise<void>).catch((err) => {
+      console.log('ERROR connectOverSignaling_____________: ', err)
+      throw err
+    })
   }
 
   private async ping(id: number, streamId = this.wc.STREAM_ID): Promise<void> {
@@ -142,7 +154,7 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
           passive.id = streamId === this.wc.STREAM_ID ? this.wc.myId : 1
         }
 
-        this.proceedAlgo(streamId, initiator, passive).catch((err) => {
+        this.proceedAlgo(streamId, initiator, passive, passive.id === senderId).catch((err) => {
           const req = this.pendingReqs.get(streamId, senderId)
           if (req) {
             req.reject(err)
@@ -156,69 +168,69 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
   private async proceedAlgo(
     streamId: number,
     initiator: proto.PeerInfo,
-    passive: proto.PeerInfo
+    passive: proto.PeerInfo,
+    amIInitiator: boolean
   ): Promise<void> {
     let me: proto.PeerInfo
-    let other: proto.PeerInfo
-    const amIInitiator = initiator.id === this.wc.myId
+    let theOther: proto.PeerInfo
     if (amIInitiator) {
       me = initiator
-      other = passive
+      theOther = passive
     } else {
       me = passive
-      other = initiator
+      theOther = initiator
     }
 
     // Try to connect over WebSocket
-    if (other.wss && !me.wsTried && this.tryWs(streamId, me, other, amIInitiator)) {
+    if (theOther.wss && !me.wsTried && this.tryWs(streamId, me, theOther, amIInitiator)) {
       return
     }
 
-    // Prompt other peer to connect over WebSocket as I was not able
-    if (me.wss && !other.wsTried) {
-      log.channelBuilder(`Prompt other to connect over WebSocket`)
-      this.allStreams.sendOver(streamId, { pair: { initiator, passive } }, other.id)
+    // Prompt the other peer to connect over WebSocket as I was not able
+    if (me.wss && !theOther.wsTried) {
+      log.channelBuilder(`Prompt the other to connect over WebSocket`)
+      this.allStreams.sendOver(streamId, { pair: { initiator, passive } }, theOther.id)
       return
     }
 
     // Try to connect over RTCDataChannel, because no luck with WebSocket
-    if (me.dcSupported && other.dcSupported) {
-      if (!me.dcTried && this.tryDc(streamId, me, other, amIInitiator)) {
+    if (me.dcSupported && theOther.dcSupported) {
+      if (!me.dcTried && this.tryDc(streamId, me, theOther, amIInitiator)) {
         return
       }
 
-      // Prompt other peer to connect over RTCDataChannel as I was not able
-      if (!other.dcTried) {
-        log.channelBuilder(`Prompt other to connect over RTCDataChannel`)
-        this.allStreams.sendOver(streamId, { pair: { initiator, passive } }, other.id)
+      // Prompt the other peer to connect over RTCDataChannel as I was not able
+      if (!theOther.dcTried) {
+        log.channelBuilder(`Prompt the other to connect over RTCDataChannel`)
+        this.allStreams.sendOver(streamId, { pair: { initiator, passive } }, theOther.id)
         return
       }
     }
 
     log.channelBuilder(`ChannelBuilder FAILED`)
     // All connection possibilities have been tried and none of them worked
-    throw new Error(`Failed to establish a connection between ${me.id} and ${other.id}`)
+    throw new Error(`Failed to establish a connection between ${me.id} and ${theOther.id}`)
   }
 
   private async tryWs(
     streamId: number,
     me: proto.PeerInfo,
-    other: proto.PeerInfo,
+    theOther: proto.PeerInfo,
     amIInitiator: boolean
   ): Promise<boolean> {
     try {
       if (streamId === this.wc.STREAM_ID) {
-        await this.wc.webSocketBuilder.connectInternal(other.wss)
+        await this.wc.webSocketBuilder.connectInternal(theOther.wss)
       } else if (amIInitiator) {
-        await this.wc.webSocketBuilder.connectToJoin(other.wss, other.wcId)
+        await this.wc.webSocketBuilder.connectToJoin(theOther.wss, theOther.wcId)
       } else {
-        await this.wc.webSocketBuilder.connectToInvite(other.wss)
+        await this.wc.webSocketBuilder.connectToInvite(theOther.wss)
       }
-      log.channelBuilder(`New WebSocket connection with ${other.id}`)
+      log.channelBuilder(`New WebSocket connection with ${theOther.id}`)
       return true
     } catch (err) {
       if (err.message !== 'clean') {
-        log.channelBuilder(`WebSocket failed with ${other.id}`, err)
+        log.channelBuilder(`WebSocket failed with ${theOther.id}`, err)
         me.wsTried = true
         return false
       } else {
@@ -230,22 +242,22 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
   private async tryDc(
     streamId: number,
     me: proto.PeerInfo,
-    other: proto.PeerInfo,
+    theOther: proto.PeerInfo,
     amIInitiator: boolean
   ): Promise<boolean> {
     try {
       if (streamId === this.wc.STREAM_ID) {
-        await this.dataChannelBuilder.connectInternal(other.id)
+        await this.dataChannelBuilder.connectInternal(theOther.id)
       } else if (amIInitiator) {
-        await this.dataChannelBuilder.connectToJoin(other.id)
+        await this.dataChannelBuilder.connectToJoin(theOther.id)
       } else {
-        await this.dataChannelBuilder.connectToInvite(other.id)
+        await this.dataChannelBuilder.connectToInvite(theOther.id)
       }
-      log.channelBuilder(`New RTCDataChannel with ${other.id}`)
+      log.channelBuilder(`New RTCDataChannel with ${theOther.id}`)
       return true
     } catch (err) {
       if (err.message !== 'clean') {
-        log.channelBuilder(`RTCDataChannel failed with ${other.id}`, err)
+        log.channelBuilder(`RTCDataChannel failed with ${theOther.id}`, err)
         me.dcTried = true
         return false
       } else {
