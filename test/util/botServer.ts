@@ -10,7 +10,7 @@ const Koa = require('koa')
 const Router = require('koa-router')
 const cors = require('kcors')
 
-const webGroupOptions = { signalingServer: SIGNALING_URL }
+const webGroupOptions = { signalingServer: SIGNALING_URL, autoRejoin: false }
 try {
   // Instantiate main objects
   const app = new Koa()

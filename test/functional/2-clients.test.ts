@@ -9,14 +9,14 @@ const WebGroupOptions = {
 }
 
 /** @test {WebGroup} */
-fdescribe('🙂 🙂 - 2 clients', () => {
+describe('🙂 🙂 - 2 clients', () => {
   let wg1: WebGroup
   let wg2: WebGroup
   let called1: number
   let called2: number
 
   /** @test {WebGroup#join} */
-  describe('joining', () => {
+  describe('join', () => {
     beforeEach((done) => {
       called1 = 0
       called2 = 0
@@ -318,7 +318,7 @@ fdescribe('🙂 🙂 - 2 clients', () => {
     })
 
     /** @test {WebGroup#autoRejoin} */
-    it('autoRejoin should be enabled', (done) => {
+    it('autoRejoin should be disabled', (done) => {
       wg2.onStateChange = (state: WebGroupState) => {
         if (state === WebGroupState.JOINED) {
           expect(wg1.autoRejoin).toBeFalsy()
@@ -362,7 +362,6 @@ fdescribe('🙂 🙂 - 2 clients', () => {
       }
       wg2.onMemberJoin = () => queue.done()
 
-      // Start joining
       wg.join(key)
     })
   })
@@ -373,7 +372,7 @@ fdescribe('🙂 🙂 - 2 clients', () => {
       called2 = 0
       const queue = new Queue(3, () => {
         cleanWebGroup(wg1, wg2)
-        done()
+        wait(500).then(() => done())
       })
       wg1 = new WebGroup(WebGroupOptions)
       wg2 = new WebGroup(WebGroupOptions)
@@ -516,13 +515,14 @@ fdescribe('🙂 🙂 - 2 clients', () => {
     })
   })
 
-  describe('leaving', () => {
+  /** @test {WebGroup#leave} */
+  describe('leave', () => {
     beforeEach((done) => {
       called1 = 0
       called2 = 0
       const queue = new Queue(3, () => {
         cleanWebGroup(wg1, wg2)
-        done()
+        wait(500).then(() => done())
       })
       wg1 = new WebGroup(WebGroupOptions)
       wg2 = new WebGroup(WebGroupOptions)
@@ -812,7 +812,7 @@ fdescribe('🙂 🙂 - 2 clients', () => {
     })
 
     /** @test {WebGroup#autoRejoin} */
-    it('autoRejoin should be enabled', (done) => {
+    it('autoRejoin should be disabled', (done) => {
       wg1.onStateChange = (state: WebGroupState) => {
         if (state === WebGroupState.JOINED) {
           expect(wg1.autoRejoin).toBeFalsy()

@@ -4,10 +4,11 @@ import { cleanWebGroup, SIGNALING_URL, wait } from '../util/helper'
 
 const WebGroupOptions = {
   signalingServer: SIGNALING_URL,
+  autoRejoin: false,
 }
 
 /** @test {WebGroup} */
-describe('🙂 - 1 member', () => {
+describe('🙂 - 1 client', () => {
   let wg1: WebGroup
 
   /** @test {WebGroup#constructor} */
@@ -312,13 +313,13 @@ describe('🙂 - 1 member', () => {
     })
 
     /** @test {WebGroup#autoRejoin} */
-    it('autoRejoin should be enabled', (done) => {
+    it('autoRejoin should be disabled', (done) => {
       wg1.onStateChange = (state: WebGroupState) => {
         if (state === WebGroupState.JOINED) {
-          expect(wg1.autoRejoin).toBeTruthy()
+          expect(wg1.autoRejoin).toBeFalsy()
 
           wait(1000).then(() => {
-            expect(wg1.autoRejoin).toBeTruthy()
+            expect(wg1.autoRejoin).toBeFalsy()
             done()
           })
         }
@@ -579,13 +580,13 @@ describe('🙂 - 1 member', () => {
     })
 
     /** @test {WebGroup#autoRejoin} */
-    it('autoRejoin should be enabled', (done) => {
+    it('autoRejoin should be disabled', (done) => {
       wg1.onStateChange = (state: WebGroupState) => {
         if (state === WebGroupState.LEFT) {
-          expect(wg1.autoRejoin).toBeTruthy()
+          expect(wg1.autoRejoin).toBeFalsy()
 
           wait(1000).then(() => {
-            expect(wg1.autoRejoin).toBeTruthy()
+            expect(wg1.autoRejoin).toBeFalsy()
             done()
           })
         }

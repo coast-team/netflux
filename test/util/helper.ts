@@ -151,7 +151,7 @@ export function waitBotJoin(key: string): Promise<void> {
         })
         .then(() => resolve())
         .catch((err) => reject(err))
-    }, 500)
+    }, 1000)
   })
 }
 

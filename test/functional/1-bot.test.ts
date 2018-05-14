@@ -10,7 +10,7 @@ import {
 } from '../util/helper'
 
 /** @test {WebGroup} */
-describe('🤖 - 1 member', () => {
+describe('🤖 - 1 bot', () => {
   /** @test {WebGroup#join} */
   describe('join', () => {
     let key: string
@@ -90,11 +90,11 @@ describe('🤖 - 1 member', () => {
     })
 
     /** @test {WebGroup#autoRejoin} */
-    it('autoRejoin should be enabled', (done) => {
+    it('autoRejoin should be disabled', (done) => {
       waitBotJoin(key)
         .then(() => getBotData(key))
         .then((data) => {
-          expect(data.autoRejoin).toBeTruthy()
+          expect(data.autoRejoin).toBeFalsy()
           done()
         })
     })
@@ -244,9 +244,9 @@ describe('🤖 - 1 member', () => {
     })
 
     /** @test {WebGroup#autoRejoin} */
-    it('autoRejoin should be enabled', (done) => {
+    it('autoRejoin should be disabled', (done) => {
       leaveBotGroup(key).then((data) => {
-        expect(data.autoRejoin).toBeTruthy()
+        expect(data.autoRejoin).toBeFalsy()
         done()
       })
     })
