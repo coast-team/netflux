@@ -94,10 +94,7 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
       req = this.pendingReqs.add(this.wc.STREAM_ID, id, CONNECT_TIMEOUT)
       this.allStreams.sendOver(this.wc.STREAM_ID, this.pairEncoded, id)
     }
-    return (req.promise as Promise<void>).catch((err) => {
-      console.log('ERROR connectOverWebChannel_____________: ', err)
-      throw err
-    })
+    return req.promise
   }
 
   async connectOverSignaling(): Promise<void> {
@@ -107,10 +104,7 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
       req = this.pendingReqs.add(this.wc.signaling.STREAM_ID, 1, CONNECT_TIMEOUT)
       this.allStreams.sendOver(this.wc.signaling.STREAM_ID, this.pairEncoded, 1)
     }
-    return (req.promise as Promise<void>).catch((err) => {
-      console.log('ERROR connectOverSignaling_____________: ', err)
-      throw err
-    })
+    return req.promise
   }
 
   private async ping(id: number, streamId = this.wc.STREAM_ID): Promise<void> {

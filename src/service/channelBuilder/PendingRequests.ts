@@ -60,12 +60,7 @@ export class PendingRequests {
   }
 
   private cleanAll(requests: Map<number, IPendingRequest>) {
-    requests.forEach((req) => {
-      if (req.promise) {
-        req.promise.catch(() => {})
-        req.reject(new Error('clean'))
-      }
-    })
+    requests.forEach((req) => req.reject(new Error('clean')))
     requests.clear()
   }
 
@@ -91,6 +86,10 @@ export class PendingRequests {
         resolve()
       }
       req.reject = (err) => {
+        if (req.promise) {
+          // This is necessary for some scenarios in order rid of UnhandledPromiseRejectionWarning errors in NodeJS and similar errors/warnings in browsers
+          req.promise.catch(() => {})
+        }
         clean()
         reject(err)
       }
