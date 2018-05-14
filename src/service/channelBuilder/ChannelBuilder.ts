@@ -62,12 +62,6 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
 
     // Subscribe to WebChannel and Signalings streams
     this.allStreams.message.subscribe(({ streamId, senderId, msg }) => {
-      if (streamId === this.wc.signaling.STREAM_ID) {
-        log.channelBuilder(
-          this.wc.myId + ' - sender id = ' + senderId + ' Message from THE SIGNALING: ',
-          msg
-        )
-      }
       this.handleMessage(streamId, senderId, msg as proto.Message)
     })
 
@@ -214,7 +208,7 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
   ): Promise<boolean> {
     try {
       if (streamId === this.wc.STREAM_ID) {
-        await this.wc.webSocketBuilder.connectInternal(theOther.wss)
+        await this.wc.webSocketBuilder.connectInternal(theOther.wss, theOther.id)
       } else if (amIInitiator) {
         await this.wc.webSocketBuilder.connectToJoin(theOther.wss, theOther.wcId)
       } else {

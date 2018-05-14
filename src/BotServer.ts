@@ -107,7 +107,7 @@ export class BotServer {
           }
           wc.init(key as string, wcId)
           this.onWebGroup(wg)
-          wc.webSocketBuilder.newInviteWebSocket(ws, senderId as number)
+          wc.webSocketBuilder.newInviteWebSocket(ws)
           break
         }
       }
