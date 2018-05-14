@@ -92,6 +92,7 @@ export class Channel {
   }
 
   initialize() {
+    log.channel('initialize...')
     this.send(
       proto.Message.encode(
         proto.Message.create({
@@ -120,7 +121,7 @@ export class Channel {
     if (this.rtcPeerConnection) {
       this.rtcPeerConnection.close()
     } else {
-      this.wsOrDc.close()
+      this.wsOrDc.close(1000)
     }
   }
 

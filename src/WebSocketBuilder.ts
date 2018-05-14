@@ -54,7 +54,9 @@ export class WebSocketBuilder {
   }
 
   newJoinWebSocket(ws: WebSocket) {
-    this.channelsSubject.next(new Channel(this.wc, ws, ChannelType.INVITED))
+    const ch = new Channel(this.wc, ws, ChannelType.INVITED)
+    ch.initialize()
+    this.channelsSubject.next(ch)
   }
 
   async connectInternal(url: string): Promise<void> {
