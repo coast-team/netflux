@@ -102,8 +102,8 @@
 </ul>
 <p><strong>For NodeJS environment</strong> exported members are the same as for browser plus:</p>
 <ul>
-<li><code>WebGroupBotServer</code> class</li>
-<li><code>WebGroupBotServerOptions</code> type.</li>
+<li><code>Bot</code> class</li>
+<li><code>BotOptions</code> type.</li>
 </ul>
 <h2 id="commonjs">CommonJS</h2><p><code>dist/netflux.cjs.js</code> - CommonJS format, built for NodeJS.</p>
 <pre><code class="lang-Javascript"><code class="source-code prettyprint">// NodeJS
@@ -113,7 +113,7 @@ var wg = new netflux.WebGroup()</code>
 <h2 id="es-module">ES module</h2><p><code>esm/index.node.js</code> and <code>esm/index.browser.js</code> are suitable for Webpack, Browserify or any alike, which also undersands <code>package.json#module</code> and <code>package.json#module</code> properties respectively and can parse ES modules.</p>
 <p><code>esm/index.node.js</code> is build for NodeJS: contains all exported API members and all necessary polyfills for NodeJS environment.</p>
 <p><code>esm/index.browser.js</code> is build for browsers.</p>
-<pre><code class="lang-javascript"><code class="source-code prettyprint">export {WebGroup, WebGroupState, WebGroupBotServer, WebGroupBotServerOptions} from &apos;netflux&apos;
+<pre><code class="lang-javascript"><code class="source-code prettyprint">export { WebGroup, WebGroupState, Bot, BotOptions } from &apos;netflux&apos;
 const wg = new WebGroup()</code>
 </code></pre>
 <h2 id="umd">UMD</h2><p><code>dist/netflux.umd.js</code> - Universal Module Definition format is compatible with AMD, CommonJS and &quot;global&quot; modules. Built for browser and suitable for Webpack, Browserify and any other who also understands <code>package.json#browser</code> property.</p>
@@ -133,31 +133,31 @@ const wg = new WebGroup({
       {
         urls: [&apos;turn:myturn.org?transport=udp&apos;, &apos;turn:myturn.org?transport=tcp&apos;],
         username: &apos;user&apos;,
-        password: &apos;password&apos;
-      }
-    ]
-  }
+        password: &apos;password&apos;,
+      },
+    ],
+  },
 })</code>
 </code></pre>
-<p>For <code>WebGroupBotServer</code> the server option is mandatory.</p>
+<p>For <code>Bot</code> the server option is mandatory.</p>
 <pre><code class="lang-javascript"><code class="source-code prettyprint">// Example:
 const http = require(&apos;http&apos;)
 const myServer = http.createServer()
-const wg = new WebGroupBotServer({
+const wg = new Bot({
   server: myServer,
   signalingServer: &apos;MY_SIGNALING_URL&apos;,
   webGroupOptions: {
     rtcConfiguration: {
-    iceServers: [
-      { urls: &apos;stun:mystun.org&apos; },
-      {
-        urls: [&apos;turn:myturn.org?transport=udp&apos;, &apos;turn:myturn.org?transport=tcp&apos;],
-        username: &apos;user&apos;,
-        password: &apos;password&apos;
-      }
-    ]
-  }
-  }
+      iceServers: [
+        { urls: &apos;stun:mystun.org&apos; },
+        {
+          urls: [&apos;turn:myturn.org?transport=udp&apos;, &apos;turn:myturn.org?transport=tcp&apos;],
+          username: &apos;user&apos;,
+          password: &apos;password&apos;,
+        },
+      ],
+    },
+  },
 })</code>
 </code></pre>
 </div>

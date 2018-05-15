@@ -2,10 +2,10 @@
 
 There are 4 builds (all ES5 code):
 
-- `dist/netflux.cjs.js` CommonJS format for NodeJS.
-- `dist/esm/netflux.node.js` ECMAScript 6 module format for NodeJS.
-- `dist/esm/netflux.browser.js` ECMAScript 6 module format for browsers.
-- `dist/netflux.umd.js` UMD format for browsers.
+* `dist/netflux.cjs.js` CommonJS format for NodeJS.
+* `dist/esm/netflux.node.js` ECMAScript 6 module format for NodeJS.
+* `dist/esm/netflux.browser.js` ECMAScript 6 module format for browsers.
+* `dist/netflux.umd.js` UMD format for browsers.
 
 The `package.json` contains the following fields:
 
@@ -21,17 +21,17 @@ All builds are either for NodeJS or for Browser environment.
 
 **For browser environment** exported members are:
 
-- `WebGroup` class
-- `WebGroupState` enum
-- `SignalingState` enum
-- `Topology` enum
-- `DataType` type
-- `WebGroupOption` type
+* `WebGroup` class
+* `WebGroupState` enum
+* `SignalingState` enum
+* `Topology` enum
+* `DataType` type
+* `WebGroupOption` type
 
 **For NodeJS environment** exported members are the same as for browser plus:
 
-- `WebGroupBotServer` class
-- `WebGroupBotServerOptions` type.
+* `Bot` class
+* `BotOptions` type.
 
 ## CommonJS
 
@@ -52,7 +52,7 @@ var wg = new netflux.WebGroup()
 `esm/index.browser.js` is build for browsers.
 
 ```javascript
-export {WebGroup, WebGroupState, WebGroupBotServer, WebGroupBotServerOptions} from 'netflux'
+export { WebGroup, WebGroupState, Bot, BotOptions } from 'netflux'
 const wg = new WebGroup()
 ```
 
@@ -82,33 +82,33 @@ const wg = new WebGroup({
       {
         urls: ['turn:myturn.org?transport=udp', 'turn:myturn.org?transport=tcp'],
         username: 'user',
-        password: 'password'
-      }
-    ]
-  }
+        password: 'password',
+      },
+    ],
+  },
 })
 ```
 
-For `WebGroupBotServer` the server option is mandatory.
+For `Bot` the server option is mandatory.
 
 ```javascript
 // Example:
 const http = require('http')
 const myServer = http.createServer()
-const wg = new WebGroupBotServer({
+const wg = new Bot({
   server: myServer,
   signalingServer: 'MY_SIGNALING_URL',
   webGroupOptions: {
     rtcConfiguration: {
-    iceServers: [
-      { urls: 'stun:mystun.org' },
-      {
-        urls: ['turn:myturn.org?transport=udp', 'turn:myturn.org?transport=tcp'],
-        username: 'user',
-        password: 'password'
-      }
-    ]
-  }
-  }
+      iceServers: [
+        { urls: 'stun:mystun.org' },
+        {
+          urls: ['turn:myturn.org?transport=udp', 'turn:myturn.org?transport=tcp'],
+          username: 'user',
+          password: 'password',
+        },
+      ],
+    },
+  },
 })
 ```
