@@ -1,4 +1,4 @@
-import { WebGroup, WebGroupBotServer, WebGroupState } from '../../src/index.node'
+import { Bot, WebGroup, WebGroupState } from '../../src/index.node'
 import { LogLevel, setLogLevel } from '../../src/misc/util'
 import { BOT_HOST, BOT_PORT, IBotData, SIGNALING_URL } from './helper'
 
@@ -16,7 +16,7 @@ try {
   const app = new Koa()
   const router = new Router()
   const server = http.createServer(app.callback())
-  const bot = new WebGroupBotServer({ server, webGroupOptions })
+  const bot = new Bot({ server, webGroupOptions })
 
   // Configure router
   router
@@ -106,7 +106,7 @@ try {
   // console.error('Bot server error: ', err)
 }
 
-function addWebGroup(bot: WebGroupBotServer): WebGroup {
+function addWebGroup(bot: Bot): WebGroup {
   const wg = new WebGroup(webGroupOptions)
   configWebGroup(wg)
   bot.webGroups.set(wg.id, wg)

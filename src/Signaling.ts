@@ -1,7 +1,6 @@
 import { Observable, Subject } from 'rxjs'
 
-import { IStream } from './IStream'
-import { isBrowser, isWebSocketSupported, log } from './misc/util'
+import { isBrowser, IStream, isWebSocketSupported, log } from './misc/util'
 import { IMessage, Message, signaling as proto } from './proto'
 import { WebChannel } from './WebChannel'
 

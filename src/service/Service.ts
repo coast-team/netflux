@@ -2,7 +2,7 @@ import { merge, Observable } from 'rxjs'
 import { filter, map } from 'rxjs/operators'
 
 import { Channel } from '../Channel'
-import { IStream } from '../IStream'
+import { IStream } from '../misc/util'
 import { InSigMsg, OutSigMsg } from '../Signaling'
 import { InWcMsg, OutWcMessage, WebChannel } from '../WebChannel'
 

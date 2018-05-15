@@ -22,12 +22,12 @@ module.exports = (config) => {
     ],
     // 'test/functional/manyMembers.test.ts'
     // list of files to exclude
-    exclude: ['**/*.node.ts', '**/*BotServer*'],
+    exclude: ['**/*.node.ts', '**/*Bot*', '*doc*'],
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
     preprocessors: {
-      'test/**/*.ts': ['karma-typescript', 'regex'],
-      'src/**/*.+(js|ts)': ['karma-typescript', 'regex'],
+      'test/**/*.ts': ['karma-typescript'],
+      'src/**/*.+(js|ts)': ['karma-typescript'],
     },
     karmaTypescriptConfig: {
       compilerOptions: {
@@ -88,14 +88,6 @@ module.exports = (config) => {
   } else if (TYPE === 'debug') {
     config.autoWatch = true
     config.singleRun = false
-    config.regexPreprocessor = {
-      rules: [
-        {
-          fileName: 'Util.ts',
-          replacement: [{ replace: /enableLog\(false\)/g, with: 'enableLog(true)' }],
-        },
-      ],
-    }
   } else if (TYPE === 'precommit') {
     config.browsers = ['ChromeHeadless']
     config.autoWatch = false

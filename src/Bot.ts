@@ -1,13 +1,13 @@
 // import { log } from './misc/util'
 import { WebGroupState } from './index.common.doc'
-import { defaultOptions, IWebChannelOptions, WebChannel } from './WebChannel'
+import { IWebChannelOptions, WebChannel, webChannelDefaultOptions } from './WebChannel'
 import { wcs, WebGroup } from './WebChannelFacade'
 import { Route, WebSocketBuilder } from './WebSocketBuilder'
 
 const urlLib = require('url')
 const uws = require('uws')
 
-export interface IBotServerOptions {
+export interface IBotOptions {
   url?: string
   server: NodeJSHttpServer | NodeJSHttpsServer
   perMessageDeflate?: boolean
@@ -15,7 +15,23 @@ export interface IBotServerOptions {
   webGroupOptions?: IWebChannelOptions
 }
 
-export class BotServer {
+interface IBotFullOptions {
+  url: string
+  server: NodeJSHttpServer | NodeJSHttpsServer
+  perMessageDeflate: boolean
+  leaveOnceAlone: boolean
+  webGroupOptions: IWebChannelOptions
+}
+
+const botDefaultOptions: IBotFullOptions = {
+  url: '',
+  perMessageDeflate: false,
+  leaveOnceAlone: true,
+  server: undefined,
+  webGroupOptions: webChannelDefaultOptions,
+}
+
+export class Bot {
   public server: NodeJSHttpServer | NodeJSHttpsServer
   public perMessageDeflate: boolean
   public webGroups: Map<number, WebGroup>
@@ -27,23 +43,15 @@ export class BotServer {
   private webSocketServer: any
   private wcOptions: IWebChannelOptions
 
-  constructor({
-    url = '',
-    perMessageDeflate = false,
-    leaveOnceAlone = true,
-    server,
-    webGroupOptions = {
-      topology: defaultOptions.topology,
-      signalingServer: defaultOptions.signalingServer,
-      rtcConfiguration: defaultOptions.rtcConfiguration,
-      autoRejoin: defaultOptions.rtcConfiguration,
-    },
-  }: IBotServerOptions) {
-    this.wcOptions = Object.assign({}, defaultOptions, webGroupOptions)
-    this.leaveOnceAlone = leaveOnceAlone
-    this.server = server
-    this.listenUrl = url
-    this.perMessageDeflate = perMessageDeflate
+  constructor(options: IBotOptions) {
+    this.wcOptions = Object.assign({}, webChannelDefaultOptions, options.webGroupOptions)
+    const fullOptions = Object.assign({}, botDefaultOptions, options)
+    fullOptions.webGroupOptions = this.wcOptions
+    console.log('full options: ', fullOptions)
+    this.leaveOnceAlone = fullOptions.leaveOnceAlone
+    this.server = fullOptions.server
+    this.listenUrl = fullOptions.url
+    this.perMessageDeflate = fullOptions.perMessageDeflate
     this.webGroups = new Map()
     this.onWebGroup = function none() {}
     this.onError = function none() {}

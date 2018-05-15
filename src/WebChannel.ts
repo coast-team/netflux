@@ -1,13 +1,13 @@
 import { Observable, Subject } from 'rxjs'
 
 import { Channel } from './Channel'
-import { IStream } from './IStream'
 import {
   extractHostnameAndPort,
   generateId,
   generateKey,
   isBrowser,
   isOnline,
+  IStream,
   isURL,
   isVisible,
   log,
@@ -36,7 +36,7 @@ export interface IWebChannelFullOptions {
   autoRejoin: boolean
 }
 
-export const defaultOptions: IWebChannelFullOptions = {
+export const webChannelDefaultOptions: IWebChannelFullOptions = {
   topology: TopologyEnum.FULL_MESH,
   signalingServer: 'wss://signaling.netflux.coedit.re',
   rtcConfiguration: {
@@ -90,7 +90,7 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
   private rejoinTimer: number | undefined
 
   constructor(options: IWebChannelOptions) {
-    const fullOptions = Object.assign({}, defaultOptions, options)
+    const fullOptions = Object.assign({}, webChannelDefaultOptions, options)
     this.streamSubject = new Subject()
     this.topologyEnum = fullOptions.topology
     this.autoRejoin = fullOptions.autoRejoin

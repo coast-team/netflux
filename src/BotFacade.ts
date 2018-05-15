@@ -1,9 +1,9 @@
-import { BotServer, IBotServerOptions as WebGroupBotServerOptions } from './BotServer'
+import { Bot as BotServer, IBotOptions as BotOptions } from './Bot'
 import { WebGroup } from './WebChannelFacade'
 
 let botServer: BotServer
 
-export { WebGroupBotServerOptions }
+export { BotOptions }
 
 /**
  * Bot server may be a member of severals groups. Each group is isolated.
@@ -45,7 +45,7 @@ export { WebGroupBotServerOptions }
  *
  * server.listen(BOT_PORT, BOT_HOST)
  */
-export class WebGroupBotServer {
+export class Bot {
   public server: NodeJSHttpServer | NodeJSHttpsServer
   public perMessageDeflate: boolean
   public webGroups: Map<number, WebGroup>
@@ -66,7 +66,7 @@ export class WebGroupBotServer {
    * @param {RTCConfiguration} [options.webGroupOptions.rtcConfiguration={iceServers: [{urls: 'stun:stun3.l.google.com:19302'}]}]
    * @param {boolean} [options.webGroupOptions.autoRejoin=true]
    */
-  constructor(options: WebGroupBotServerOptions) {
+  constructor(options: BotOptions) {
     botServer = new BotServer(options)
 
     /**
