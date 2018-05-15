@@ -91,6 +91,13 @@ export class Channel {
     }
   }
 
+  get url(): string {
+    if (!this.rtcPeerConnection) {
+      return (this.wsOrDc as WebSocket).url
+    }
+    return ''
+  }
+
   initialize() {
     log.channel('initialize...')
     this.send(

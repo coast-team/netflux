@@ -3,6 +3,7 @@ import { Observable, Subject } from 'rxjs'
 import { Channel } from './Channel'
 import { IStream } from './IStream'
 import {
+  extractHostnameAndPort,
   generateId,
   generateKey,
   isBrowser,
@@ -144,6 +145,12 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
 
   invite(url: string): void {
     if (isURL(url)) {
+      const hostnamePort = extractHostnameAndPort(url)
+      for (const ch of this.topology.neighbors) {
+        if (hostnamePort === extractHostnameAndPort(ch.url)) {
+          return
+        }
+      }
       this.webSocketBuilder
         .connectToInvite(url)
         .catch((err) => log.webgroup(`Failed to invite the bot ${url}: ${err.message}`))

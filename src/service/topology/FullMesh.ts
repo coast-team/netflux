@@ -138,6 +138,10 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
     this.wc.onAdjacentMembersLeaveProxy([channel.id])
   }
 
+  get neighbors(): Channel[] {
+    return Array.from(this.adjacentMembers.values())
+  }
+
   private clean() {
     this.wc.onDistantMembersLeaveProxy(Array.from(this.distantMembers.keys()))
     this.distantMembers.clear()

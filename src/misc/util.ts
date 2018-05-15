@@ -64,6 +64,10 @@ export function validateKey(key: string): boolean {
   return true
 }
 
+export function extractHostnameAndPort(url: string) {
+  return url.split('/')[2]
+}
+
 function randNumbers(length: number = 1): number[] | Uint32Array {
   let res
   if (isBrowser) {

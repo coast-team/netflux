@@ -64,12 +64,16 @@ export abstract class Topology<OutMsg, InMsg extends OutMsg> extends Service<Out
       this.stateSubject.next(state)
     }
   }
+
+  abstract get neighbors(): Channel[]
 }
 
 export interface ITopology {
   onState: Observable<TopologyState>
 
   state: TopologyState
+
+  neighbors: Channel[]
 
   setJoinedState(): void
   setLeftState(): void
