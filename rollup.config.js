@@ -2,8 +2,18 @@ import filesize from 'rollup-plugin-filesize'
 import commonjs from 'rollup-plugin-commonjs'
 import resolve from 'rollup-plugin-node-resolve'
 import typescript from 'rollup-plugin-typescript2'
+import cleanup from 'rollup-plugin-cleanup'
 
-const tsConfig = { include: ['src/**/*.ts'] }
+const tsConfig = {
+  tsconfig: 'tsconfig.dist.json',
+  tsconfigOverride: {
+    compilerOptions: {
+      declaration: false,
+      sourceMap: false,
+    },
+  },
+  include: ['src/**/*.ts'],
+}
 const commonjsConfig = {
   namedExports: {
     'node_modules/protobufjs/minimal.js': ['Reader', 'Writer', 'util', 'roots'],
@@ -14,12 +24,42 @@ const filesizeConfig = { format: { round: 0 } }
 export default [
   {
     input: 'src/index.node.ts',
-    output: [{ file: 'dist/netflux.cjs.js', format: 'cjs', sourcemap: true }],
-    plugins: [typescript(tsConfig), resolve(), commonjs(commonjsConfig), filesize(filesizeConfig)],
+    output: [
+      {
+        file: 'dist/netflux.cjs.js',
+        format: 'cjs',
+        sourcemap: true,
+      },
+    ],
+    plugins: [
+      typescript(tsConfig),
+      resolve({
+        jsnext: true,
+        module: true,
+      }),
+      commonjs(commonjsConfig),
+      filesize(filesizeConfig),
+      cleanup(),
+    ],
   },
   {
     input: 'src/index.browser.ts',
-    output: { file: 'dist/netflux.umd.js', format: 'umd', name: 'netflux', sourcemap: true },
-    plugins: [typescript(tsConfig), resolve(), commonjs(commonjsConfig), filesize(filesizeConfig)],
+    output: {
+      file: 'dist/netflux.umd.js',
+      format: 'umd',
+      name: 'netflux',
+      sourcemap: true,
+    },
+    plugins: [
+      typescript(tsConfig),
+      resolve({
+        browser: true,
+        jsnext: true,
+        module: true,
+      }),
+      commonjs(commonjsConfig),
+      filesize(filesizeConfig),
+      cleanup(),
+    ],
   },
 ]
