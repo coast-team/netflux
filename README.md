@@ -81,9 +81,6 @@ wg.onStateChange = (state) => {
       // For example inviting a bot...
       wg.invite('BOT_SERVER_WEB_SOCKET_URL')
       break
-    case WebGroupState.LEAVING:
-      // Do something
-      break
     case WebGroupState.LEFT:
       // Do something
       break
