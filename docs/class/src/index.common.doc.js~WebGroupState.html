@@ -12,7 +12,7 @@
 <body class="layout-container" data-ice="rootContainer">
 
 <header>
-  <a href="./" style="display: flex; align-items: center;"><img src="./image/brand_logo.png" style="width:34px;"></a>
+  <a href="./" style="display: flex; align-items: center;"><img src="./image/brand_logo.jpg" style="width:34px;"></a>
   <a href="./manual/index.html" data-ice="manualHeaderLink">Manual</a>
   <a href="identifiers.html">Reference</a>
   <a href="source.html">Source</a>
@@ -29,7 +29,7 @@
 <nav class="navigation" data-ice="nav"><div>
   <ul>
     
-  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/BotServerFacade.js~WebGroupBotServer.html">WebGroupBotServer</a></span></span></li>
+  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/BotFacade.js~Bot.html">Bot</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~LogLevel.html">LogLevel</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~SignalingState.html">SignalingState</a></span></span></li>
@@ -37,7 +37,7 @@
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~WebGroupState.html">WebGroupState</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-setLogLevel">setLogLevel</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-DataType">DataType</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupBotServerOptions">WebGroupBotServerOptions</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-BotOptions">BotOptions</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupOptions">WebGroupOptions</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/http.html#http_class_http_server">NodeJSHttpServer</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/https.html#https_class_https_server">NodeJSHttpsServer</a></span></span></li>
@@ -48,13 +48,13 @@
 </nav>
 
 <div class="content" data-ice="content"><div class="header-notice">
-  <div data-ice="importPath" class="import-path"><pre class="prettyprint"><code data-ice="importPathCode">import {WebGroupState} from &apos;<span><a href="file/src/index.common.doc.js.html#lineNumber65">netflux/src/index.common.doc.js</a></span>&apos;</code></pre></div>
+  <div data-ice="importPath" class="import-path"><pre class="prettyprint"><code data-ice="importPathCode">import {WebGroupState} from &apos;<span><a href="file/src/index.common.doc.js.html#lineNumber58">netflux/src/index.common.doc.js</a></span>&apos;</code></pre></div>
   <span data-ice="access">public</span>
   <span data-ice="kind">class</span>
   
   
   
-  <span data-ice="source">| <span><a href="file/src/index.common.doc.js.html#lineNumber65">source</a></span></span>
+  <span data-ice="source">| <span><a href="file/src/index.common.doc.js.html#lineNumber58">source</a></span></span>
 </div>
 
 <div class="self-detail detail">
@@ -163,35 +163,6 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/src/index.common.doc.js~WebGroupState.html#static-get-LEAVING">LEAVING</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
-        </p>
-      </div>
-      <div>
-        
-        
-        <div data-ice="description"><p><code>2</code>: you are about to leave the group.</p>
-</div>
-      </div>
-    </td>
-    <td>
-      
-      
-    </td>
-  </tr>
-<tr data-ice="target">
-    <td>
-      <span class="access" data-ice="access">public</span>
-      <span data-ice="static">static</span>
-      <span class="kind" data-ice="kind">get</span>
-      
-      <span class="override" data-ice="override"></span>
-    </td>
-    <td>
-      <div>
-        <p>
-          
-          
-          
           <span class="code" data-ice="name"><span><a href="class/src/index.common.doc.js~WebGroupState.html#static-get-LEFT">LEFT</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
         </p>
       </div>
@@ -231,7 +202,7 @@
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/index.common.doc.js.html#lineNumber77">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/index.common.doc.js.html#lineNumber70">source</a></span></span>
     </span>
   </h3>
 
@@ -275,7 +246,7 @@
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/index.common.doc.js.html#lineNumber70">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/index.common.doc.js.html#lineNumber63">source</a></span></span>
     </span>
   </h3>
 
@@ -283,50 +254,6 @@
   
   
   <div data-ice="description"><p><code>0</code>: you haven&apos;t joined the group yet.</p>
-</div>
-
-  
-
-  <div data-ice="properties">
-</div>
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-  
-</div>
-<div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="static-get-LEAVING">
-    <span class="access" data-ice="access">public</span>
-    <span data-ice="static">static</span>
-    <span class="kind" data-ice="kind">get</span>
-    
-    
-    
-    <span class="code" data-ice="name">LEAVING</span><span class="code" data-ice="signature">: <span>number</span></span>
-    <span class="right-info">
-      
-      
-      <span data-ice="source"><span><a href="file/src/index.common.doc.js.html#lineNumber84">source</a></span></span>
-    </span>
-  </h3>
-
-  
-  
-  
-  <div data-ice="description"><p><code>2</code>: you are about to leave the group.</p>
 </div>
 
   
@@ -363,7 +290,7 @@
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/index.common.doc.js.html#lineNumber91">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/index.common.doc.js.html#lineNumber77">source</a></span></span>
     </span>
   </h3>
 

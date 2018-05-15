@@ -1,43 +1,70 @@
-import { log } from '../../misc/Util';
 export class PendingRequests {
-    constructor() {
-        this.requests = new Map();
-        this.timeoutDates = new Map();
+    constructor(wcStreamId) {
+        this.wcStreamId = wcStreamId;
+        this.wcReqs = {
+            connectReqs: new Map(),
+            pingReqs: new Map(),
+        };
+        this.sigReqs = {
+            connectReqs: new Map(),
+            pingReqs: new Map(),
+        };
     }
-    add(id, timeout) {
-        const req = { date: global.Date.now() };
+    add(streamId, id, timeout) {
+        const reqs = this.getReqsByStreamId(streamId);
+        return this.addRequest(reqs.connectReqs, id, timeout);
+    }
+    addPing(streamId, id, timeout) {
+        const reqs = this.getReqsByStreamId(streamId);
+        return this.addRequest(reqs.pingReqs, id, timeout);
+    }
+    get(streamId, id) {
+        const req = this.getReqsByStreamId(streamId).connectReqs.get(id);
+        return req && req.promise ? req : undefined;
+    }
+    getPing(streamId, id) {
+        const req = this.getReqsByStreamId(streamId).pingReqs.get(id);
+        return req && req.promise ? req : undefined;
+    }
+    getCreatedDate(streamId, id) {
+        const req = this.getReqsByStreamId(streamId).pingReqs.get(id);
+        return req ? req.created : undefined;
+    }
+    clean() {
+        this.cleanAll(this.wcReqs.connectReqs);
+        this.cleanAll(this.wcReqs.pingReqs);
+        this.cleanAll(this.sigReqs.connectReqs);
+        this.cleanAll(this.sigReqs.pingReqs);
+    }
+    cleanAll(requests) {
+        requests.forEach((req) => req.reject(new Error('clean')));
+        requests.clear();
+    }
+    getReqsByStreamId(streamId) {
+        return streamId === this.wcStreamId ? this.wcReqs : this.sigReqs;
+    }
+    addRequest(requests, id, timeout) {
+        const req = { created: Date.now() };
         req.promise = new Promise((resolve, reject) => {
-            // Set request Timeout
-            const timer = setTimeout(() => {
-                this.requests.delete(id);
-                this.timeoutDates.set(id, req.date);
-                log.channelBuilder('Timer EXECUTED for ' + id, timer);
-                reject(new Error(`Request ${timeout}ms timeout`));
-            }, timeout);
-            log.channelBuilder('Timer SET for ' + id, timer);
-            const beforeFullfilled = () => {
-                log.channelBuilder('Timer CLEARED for ' + id, timer);
+            const timer = setTimeout(() => req.reject(new Error(`Request ${timeout}ms timeout`)), timeout);
+            const clean = () => {
                 clearTimeout(timer);
-                this.requests.delete(id);
+                req.promise = undefined;
             };
-            // Add resolve and reject attrebutes
             req.resolve = () => {
-                beforeFullfilled();
+                clean();
                 resolve();
             };
             req.reject = (err) => {
-                beforeFullfilled();
+                if (req.promise) {
+                    // This is necessary for some scenarios in order rid of UnhandledPromiseRejectionWarning errors in NodeJS and similar errors/warnings in browsers
+                    req.promise.catch(() => { });
+                }
+                clean();
                 reject(err);
             };
-            this.requests.set(id, req);
+            requests.set(id, req);
         });
-        log.channelBuilder('Pending Request: ', req);
         return req;
-    }
-    get(id) {
-        return this.requests.get(id);
-    }
-    getTimeoutDate(id) {
-        return this.timeoutDates.get(id);
     }
 }

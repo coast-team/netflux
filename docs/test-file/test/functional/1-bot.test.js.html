@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl" href="../../../">
+  <title data-ice="title">test/functional/1-bot.test.js | Netflux</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  <script src="script/manual.js"></script>
+<link rel="stylesheet" href="./inject/css/0-style.css"><meta name="description" content="Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done."><meta property="twitter:card" content="summary"><meta property="twitter:title" content="Netflux"><meta property="twitter:description" content="Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done."></head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./" style="display: flex; align-items: center;"><img src="./image/brand_logo.jpg" style="width:34px;"></a>
+  <a href="./manual/index.html" data-ice="manualHeaderLink">Manual</a>
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  <a href="test.html" data-ice="testLink">Test</a>
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+<a style="position:relative; top:3px;" href="https://github.com/coast-team/netflux"><img width="20px" src="./image/github.png"></a></header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/BotFacade.js~Bot.html">Bot</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~LogLevel.html">LogLevel</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~SignalingState.html">SignalingState</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~Topology.html">Topology</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~WebGroupState.html">WebGroupState</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-setLogLevel">setLogLevel</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-DataType">DataType</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-BotOptions">BotOptions</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupOptions">WebGroupOptions</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/http.html#http_class_http_server">NodeJSHttpServer</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/https.html#https_class_https_server">NodeJSHttpsServer</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://developer.mozilla.org/en/docs/Web/API/RTCConfiguration">RTCConfiguration</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array">Uint8Array</a></span></span></li>
+</ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><h1 data-ice="title">test/functional/1-bot.test.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">/// &lt;reference types=&apos;jasmine&apos; /&gt;
+import { SignalingState, Topology, WebGroupState } from &apos;../../src/index.browser&apos;;
+import { botGetData, botJoin, botLeave, botWaitJoin, randomKey, SIGNALING_URL, } from &apos;../util/helper&apos;;
+/** @test {WebGroup} */
+describe(&apos;&#x1F916; - 1 bot&apos;, () =&gt; {
+    /** @test {WebGroup#join} */
+    describe(&apos;join&apos;, () =&gt; {
+        let key;
+        beforeEach((done) =&gt; {
+            key = randomKey();
+            botJoin(key).then(() =&gt; done());
+        });
+        afterEach((done) =&gt; {
+            botLeave(key).then(() =&gt; done());
+        });
+        /** @test {WebGroup#onSignalingStateChange} */
+        it(&apos;should change the Signaling state&apos;, (done) =&gt; {
+            const expected = [
+                SignalingState.CONNECTING,
+                SignalingState.OPEN,
+                SignalingState.CHECKING,
+                SignalingState.CHECKED,
+                SignalingState.CHECKING,
+                SignalingState.CHECKED,
+            ];
+            botWaitJoin(key)
+                .then(() =&gt; botGetData(key))
+                .then((data) =&gt; {
+                expect(data.onSignalingStateCalled).toEqual(expected.length);
+                expect(data.signalingStates).toEqual(expected);
+                expect(data.signalingState).toEqual(SignalingState.CHECKED);
+                done();
+            });
+        });
+        /** @test {WebGroup#onStateChange} */
+        it(&apos;should change the WebGroup state&apos;, (done) =&gt; {
+            const expected = [WebGroupState.JOINING, WebGroupState.JOINED];
+            botWaitJoin(key)
+                .then(() =&gt; botGetData(key))
+                .then((data) =&gt; {
+                expect(data.state).toEqual(WebGroupState.JOINED);
+                expect(data.states).toEqual(expected);
+                expect(data.onStateCalled).toEqual(expected.length);
+                done();
+            });
+        });
+        /** @test {WebGroup#onMemberJoin} */
+        it(&apos;should NOT be notified about new member&apos;, (done) =&gt; {
+            botWaitJoin(key)
+                .then(() =&gt; botGetData(key))
+                .then((data) =&gt; {
+                expect(data.onMemberJoinCalled).toEqual(0);
+                expect(data.joinedMembers.length).toEqual(0);
+                done();
+            });
+        });
+        /** @test {WebGroup#onMemberLeave} */
+        it(&apos;should NOT be notified about left member&apos;, (done) =&gt; {
+            botWaitJoin(key)
+                .then(() =&gt; botGetData(key))
+                .then((data) =&gt; {
+                expect(data.onMemberLeaveCalled).toEqual(0);
+                expect(data.leftMembers.length).toEqual(0);
+                done();
+            });
+        });
+        /** @test {WebGroup#onMessage} */
+        it(&apos;should NOT receive any message&apos;, (done) =&gt; {
+            botWaitJoin(key)
+                .then(() =&gt; botGetData(key))
+                .then((data) =&gt; {
+                expect(data.onMessageToBeCalled).toEqual(0);
+                expect(data.messages).toEqual([]);
+                done();
+            });
+        });
+        /** @test {WebGroup#autoRejoin} */
+        it(&apos;autoRejoin should be disabled&apos;, (done) =&gt; {
+            botWaitJoin(key)
+                .then(() =&gt; botGetData(key))
+                .then((data) =&gt; {
+                expect(data.autoRejoin).toBeFalsy();
+                done();
+            });
+        });
+        /** @test {WebGroup#signalinServer} */
+        it(&apos;signalinServer should not change&apos;, (done) =&gt; {
+            botWaitJoin(key)
+                .then(() =&gt; botGetData(key))
+                .then((data) =&gt; {
+                expect(data.signalingServer).toEqual(SIGNALING_URL);
+                done();
+            });
+        });
+        /** @test {WebGroup#topology} */
+        it(&apos;topology should not change&apos;, (done) =&gt; {
+            botWaitJoin(key)
+                .then(() =&gt; botGetData(key))
+                .then((data) =&gt; {
+                expect(data.topology).toEqual(Topology.FULL_MESH);
+                done();
+            });
+        });
+        /** @test {WebGroup#members} */
+        it(&apos;should have only me as a member&apos;, (done) =&gt; {
+            botWaitJoin(key)
+                .then(() =&gt; botGetData(key))
+                .then((data) =&gt; {
+                expect(data.members).toEqual([data.myId]);
+                done();
+            });
+        });
+        /** @test {WebGroup#myId} */
+        it(&apos;my id should not be 0&apos;, (done) =&gt; {
+            botWaitJoin(key)
+                .then(() =&gt; botGetData(key))
+                .then((data) =&gt; {
+                expect(data.myId).not.toEqual(0);
+                done();
+            });
+        });
+        /** @test {WebGroup#id} */
+        it(&apos;WebGroup id should not be 0&apos;, (done) =&gt; {
+            botWaitJoin(key)
+                .then(() =&gt; botGetData(key))
+                .then((data) =&gt; {
+                expect(data.id).not.toEqual(0);
+                done();
+            });
+        });
+        /** @test {WebGroup#key} */
+        it(&apos;key should be the one provided to the join method&apos;, (done) =&gt; {
+            botWaitJoin(key)
+                .then(() =&gt; botGetData(key))
+                .then((data) =&gt; {
+                expect(data.key).toEqual(key);
+                done();
+            });
+        });
+        /** @test {WebGroup#state} */
+        it(&apos;WebGroup state should be JOINED&apos;, (done) =&gt; {
+            botWaitJoin(key)
+                .then(() =&gt; botGetData(key))
+                .then((data) =&gt; {
+                expect(data.state).toEqual(WebGroupState.JOINED);
+                done();
+            });
+        });
+        /** @test {WebGroup#signalingState} */
+        it(&apos;Signaling state should be CHECKED&apos;, (done) =&gt; {
+            botWaitJoin(key)
+                .then(() =&gt; botGetData(key))
+                .then((data) =&gt; {
+                expect(data.signalingState).toEqual(SignalingState.CHECKED);
+                done();
+            });
+        });
+    });
+    /** @test {WebGroup#leave} */
+    describe(&apos;leave&apos;, () =&gt; {
+        let key;
+        beforeEach((done) =&gt; {
+            key = randomKey();
+            botJoin(key).then(() =&gt; done());
+        });
+        /** @test {WebGroup#onStateChange} */
+        it(&apos;should change the WebGroup state&apos;, (done) =&gt; {
+            const expected = [WebGroupState.JOINING, WebGroupState.JOINED, WebGroupState.LEFT];
+            botLeave(key).then((data) =&gt; {
+                expect(data.states).toEqual(expected);
+                expect(data.onStateCalled).toEqual(expected.length);
+                done();
+            });
+        });
+        /** @test {WebGroup#onSignalingStateChange} */
+        it(&apos;should change the Signaling state&apos;, (done) =&gt; {
+            const expected = [
+                SignalingState.CONNECTING,
+                SignalingState.OPEN,
+                SignalingState.CHECKING,
+                SignalingState.CHECKED,
+                SignalingState.CHECKING,
+                SignalingState.CHECKED,
+                SignalingState.CLOSED,
+            ];
+            botLeave(key).then((data) =&gt; {
+                expect(data.signalingStates).toEqual(expected);
+                expect(data.onSignalingStateCalled).toEqual(expected.length);
+                done();
+            });
+        });
+        /** @test {WebGroup#onMemberJoin} */
+        it(&apos;should NOT be notified about new member&apos;, (done) =&gt; {
+            botLeave(key).then((data) =&gt; {
+                expect(data.onMemberJoinCalled).toEqual(0);
+                expect(data.joinedMembers.length).toEqual(0);
+                done();
+            });
+        });
+        /** @test {WebGroup#onMemberLeave} */
+        it(&apos;should NOT be notified about left member&apos;, (done) =&gt; {
+            botLeave(key).then((data) =&gt; {
+                expect(data.onMemberLeaveCalled).toEqual(0);
+                expect(data.leftMembers.length).toEqual(0);
+                done();
+            });
+        });
+        /** @test {WebGroup#onMessage} */
+        it(&apos;should NOT receive any message&apos;, (done) =&gt; {
+            botLeave(key).then((data) =&gt; {
+                expect(data.onMessageToBeCalled).toEqual(0);
+                expect(data.messages).toEqual([]);
+                done();
+            });
+        });
+        /** @test {WebGroup#autoRejoin} */
+        it(&apos;autoRejoin should be disabled&apos;, (done) =&gt; {
+            botLeave(key).then((data) =&gt; {
+                expect(data.autoRejoin).toBeFalsy();
+                done();
+            });
+        });
+        /** @test {WebGroup#signalinServer} */
+        it(&apos;signalinServer should not change&apos;, (done) =&gt; {
+            botLeave(key).then((data) =&gt; {
+                expect(data.signalingServer).toEqual(SIGNALING_URL);
+                done();
+            });
+        });
+        /** @test {WebGroup#topology} */
+        it(&apos;topology should not change&apos;, (done) =&gt; {
+            botLeave(key).then((data) =&gt; {
+                expect(data.topology).toEqual(Topology.FULL_MESH);
+                done();
+            });
+        });
+        /** @test {WebGroup#members} */
+        it(&apos;should have no members&apos;, (done) =&gt; {
+            botLeave(key).then((data) =&gt; {
+                expect(data.members).toEqual([]);
+                done();
+            });
+        });
+        /** @test {WebGroup#myId} */
+        it(&apos;my id should be 0&apos;, (done) =&gt; {
+            botLeave(key).then((data) =&gt; {
+                expect(data.myId).toEqual(0);
+                done();
+            });
+        });
+        /** @test {WebGroup#id} */
+        it(&apos;WebGroup id should be 0&apos;, (done) =&gt; {
+            botLeave(key).then((data) =&gt; {
+                expect(data.id).toEqual(0);
+                done();
+            });
+        });
+        /** @test {WebGroup#key} */
+        it(&apos;key should be empty&apos;, (done) =&gt; {
+            botLeave(key).then((data) =&gt; {
+                expect(data.key).toEqual(&apos;&apos;);
+                done();
+            });
+        });
+        /** @test {WebGroup#state} */
+        it(&apos;WebGroup state should be LEFT&apos;, (done) =&gt; {
+            botLeave(key).then((data) =&gt; {
+                expect(data.state).toEqual(WebGroupState.LEFT);
+                done();
+            });
+        });
+        /** @test {WebGroup#signalingState} */
+        it(&apos;Signaling state should be CLOSED&apos;, (done) =&gt; {
+            botLeave(key).then((data) =&gt; {
+                expect(data.signalingState).toEqual(SignalingState.CLOSED);
+                done();
+            });
+        });
+    });
+});
+</code></pre>
+
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(1.1.0)</span><img src="./image/esdoc-logo-mini-black.png"></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>

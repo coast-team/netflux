@@ -1,21 +1,17 @@
-import { Subject } from 'rxjs/Subject';
-import { isWebSocketSupported, log } from './misc/Util';
+import { Subject } from 'rxjs';
+import { isBrowser, isWebSocketSupported, log } from './misc/util';
 import { Message, signaling as proto } from './proto';
 const MAXIMUM_MISSED_HEARTBEAT = 3;
 const HEARTBEAT_INTERVAL = 5000;
-/* WebSocket error codes */
-const HEARTBEAT_ERROR_CODE = 4002;
-// const MESSAGE_ERROR_CODE = 4010
 /* Preconstructed messages */
 const heartbeatMsg = proto.Message.encode(proto.Message.create({ heartbeat: true })).finish();
 export var SignalingState;
 (function (SignalingState) {
     SignalingState[SignalingState["CONNECTING"] = 0] = "CONNECTING";
     SignalingState[SignalingState["OPEN"] = 1] = "OPEN";
-    SignalingState[SignalingState["CLOSING"] = 2] = "CLOSING";
+    SignalingState[SignalingState["CHECKING"] = 2] = "CHECKING";
+    SignalingState[SignalingState["CHECKED"] = 4] = "CHECKED";
     SignalingState[SignalingState["CLOSED"] = 3] = "CLOSED";
-    SignalingState[SignalingState["CHECKING"] = 4] = "CHECKING";
-    SignalingState[SignalingState["CHECKED"] = 5] = "CHECKED";
 })(SignalingState || (SignalingState = {}));
 /**
  * This class represents a door of the `WebChannel` for the current peer. If the door
@@ -28,6 +24,8 @@ export class Signaling {
         this.wc = wc;
         this.url = url;
         this.state = SignalingState.CLOSED;
+        this.connected = false;
+        this.missedHeartbeat = 0;
         this.streamSubject = new Subject();
         this.stateSubject = new Subject();
     }
@@ -47,7 +45,7 @@ export class Signaling {
     get onState() {
         return this.stateSubject.asObservable();
     }
-    sendConnectRequest() {
+    check() {
         this.setState(SignalingState.CHECKING);
         this.send({
             connect: { id: this.wc.myId, members: this.wc.members.filter((id) => id !== this.wc.myId) },
@@ -56,23 +54,24 @@ export class Signaling {
     connect(key) {
         if (isWebSocketSupported()) {
             this.setState(SignalingState.CONNECTING);
-            this.ws = new global.WebSocket(this.url.endsWith('/') ? this.url + key : this.url + '/' + key);
+            this.ws = new global.WebSocket(this.fullUrl(key));
             this.ws.binaryType = 'arraybuffer';
-            this.timeout = setTimeout(() => {
-                if (this.ws.readyState !== this.ws.OPEN) {
+            this.connectionTimeout = setTimeout(() => {
+                if (this.ws && this.ws.readyState !== this.ws.OPEN) {
                     log.signaling(`Failed to connect to Signaling server ${this.url}: connection timeout`);
                     this.close();
                 }
             }, 10000);
             this.ws.onopen = () => {
                 this.setState(SignalingState.OPEN);
-                clearTimeout(this.timeout);
+                if (this.connectionTimeout) {
+                    clearTimeout(this.connectionTimeout);
+                }
                 this.startHeartbeat();
             };
             this.ws.onerror = (err) => log.signaling(`WebSocket ERROR`, err);
             this.ws.onclose = (closeEvt) => {
-                clearTimeout(this.timeout);
-                global.clearInterval(this.heartbeatInterval);
+                this.clean();
                 this.setState(SignalingState.CLOSED);
             };
             this.ws.onmessage = ({ data }) => this.handleMessage(data);
@@ -85,12 +84,25 @@ export class Signaling {
      * Close the `WebSocket` with Signaling server.
      */
     close() {
-        if (this.state !== SignalingState.CLOSING && this.state !== SignalingState.CLOSED) {
-            this.setState(SignalingState.CLOSING);
+        if (this.state !== SignalingState.CLOSED) {
             if (this.ws) {
+                this.ws.onmessage = () => { };
+                this.ws.onclose = () => { };
+                this.ws.onerror = () => { };
                 this.ws.close(1000);
             }
+            this.clean();
+            this.setState(SignalingState.CLOSED);
         }
+    }
+    clean() {
+        if (this.connectionTimeout) {
+            global.clearTimeout(this.connectionTimeout);
+        }
+        if (this.heartbeatInterval) {
+            global.clearInterval(this.heartbeatInterval);
+        }
+        this.ws = undefined;
     }
     handleMessage(bytes) {
         const msg = proto.Message.decode(new Uint8Array(bytes));
@@ -102,7 +114,7 @@ export class Signaling {
                 this.connected = msg.connected;
                 this.setState(SignalingState.CHECKED);
                 if (!msg.connected) {
-                    this.wc.channelBuilder.connectOverSignaling().catch(() => this.sendConnectRequest());
+                    this.wc.channelBuilder.connectOverSignaling().catch(() => this.check());
                 }
                 break;
             case 'content': {
@@ -132,29 +144,37 @@ export class Signaling {
                 this.heartbeat();
             }
             catch (err) {
-                global.clearInterval(this.heartbeatInterval);
-                log.signaling('Closing connection with Signaling. Reason: ' + err.message);
-                this.setState(SignalingState.CLOSING);
-                this.ws.close(HEARTBEAT_ERROR_CODE, 'Signaling is not responding');
+                this.close();
             }
         }, HEARTBEAT_INTERVAL);
     }
     send(msg) {
-        try {
-            this.ws.send(proto.Message.encode(proto.Message.create(msg)).finish());
-        }
-        catch (err) {
-            log.signaling('Failed send to Signaling', err);
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            try {
+                this.ws.send(proto.Message.encode(proto.Message.create(msg)).finish());
+            }
+            catch (err) {
+                log.signaling('Failed send to Signaling', err);
+            }
         }
     }
     heartbeat() {
-        if (this.ws.readyState === WebSocket.OPEN) {
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
             try {
                 this.ws.send(heartbeatMsg);
             }
             catch (err) {
                 log.signaling('Failed send to Signaling: ' + err.message);
             }
+        }
+    }
+    fullUrl(key) {
+        const urlWithKey = this.url.endsWith('/') ? this.url + key : this.url + '/' + key;
+        if (isBrowser) {
+            return urlWithKey;
+        }
+        else {
+            return urlWithKey + '?favored';
         }
     }
 }

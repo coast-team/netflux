@@ -1,5 +1,5 @@
-import { ReplaySubject } from 'rxjs/ReplaySubject';
-import { log } from '../../misc/Util';
+import { ReplaySubject } from 'rxjs';
+import { log } from '../../misc/util';
 export class Remote {
     constructor(id, pc, send, remotes) {
         this.peerToLog = 'INITIATOR';
@@ -38,7 +38,7 @@ export class Remote {
     get onError() {
         return this._onError;
     }
-    set onerror(handler) {
+    set onError(handler) {
         this._onError = handler;
     }
     // Mandatory for the passive peer (who listens on the connection)

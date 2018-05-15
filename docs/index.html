@@ -12,7 +12,7 @@
 <body class="layout-container" data-ice="rootContainer">
 
 <header>
-  <a href="./" style="display: flex; align-items: center;"><img src="./image/brand_logo.png" style="width:34px;"></a>
+  <a href="./" style="display: flex; align-items: center;"><img src="./image/brand_logo.jpg" style="width:34px;"></a>
   <a href="./manual/index.html" data-ice="manualHeaderLink">Manual</a>
   <a href="identifiers.html">Reference</a>
   <a href="source.html">Source</a>
@@ -29,7 +29,7 @@
 <nav class="navigation" data-ice="nav"><div>
   <ul>
     
-  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/BotServerFacade.js~WebGroupBotServer.html">WebGroupBotServer</a></span></span></li>
+  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/BotFacade.js~Bot.html">Bot</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~LogLevel.html">LogLevel</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~SignalingState.html">SignalingState</a></span></span></li>
@@ -37,7 +37,7 @@
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~WebGroupState.html">WebGroupState</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-setLogLevel">setLogLevel</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-DataType">DataType</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupBotServerOptions">WebGroupBotServerOptions</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-BotOptions">BotOptions</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupOptions">WebGroupOptions</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/http.html#http_class_http_server">NodeJSHttpServer</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/https.html#https_class_https_server">NodeJSHttpsServer</a></span></span></li>
@@ -54,8 +54,7 @@
 <p>Documentation: <a href="https://coast-team.github.io/netflux">https://coast-team.github.io/netflux</a></p>
 <p><a href="https://www.npmjs.com/package/netflux"><img src="https://img.shields.io/npm/v/netflux.svg?style=flat-square" alt="version"></a>
 <a href="https://travis-ci.org/coast-team/netflux"><img src="https://travis-ci.org/coast-team/netflux.svg?branch=master" alt="travis"></a></p>
-<p><a href="https://www.bithound.io/github/coast-team/netflux"><img src="https://www.bithound.io/github/coast-team/netflux/badges/score.svg" alt="bithound"></a>
-<a href="https://codeclimate.com/github/coast-team/netflux"><img src="https://codeclimate.com/github/coast-team/netflux/badges/gpa.svg" alt="codeclimate"></a>
+<p><a href="https://codeclimate.com/github/coast-team/netflux"><img src="https://codeclimate.com/github/coast-team/netflux/badges/gpa.svg" alt="codeclimate"></a>
 <a href="https://coast-team.github.io/netflux"><img src="https://coast-team.github.io/netflux/badge.svg" alt="documentation"></a></p>
 <p><a href="http://commitizen.github.io/cz-cli"><img src="https://img.shields.io/badge/commitizen-friendly-brightgreen.svg?style=flat-square" alt="commitizen"></a>
 <a href="https://github.com/semantic-release/semantic-release"><img src="https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg?style=flat-square" alt="semantic-release"></a>
@@ -92,7 +91,7 @@
 <blockquote>
 <p>It is possible to have only clients without any bot server as his is not a mandatory member, but like any other group member.</p>
 </blockquote>
-<h3 id="client">Client</h3><pre><code class="lang-javascript"><code class="source-code prettyprint">import { WebGroup, WebGroupState } from &apos;netflux&apos;
+<h3 id="client-example">Client example</h3><pre><code class="lang-javascript"><code class="source-code prettyprint">import { WebGroup, WebGroupState } from &apos;netflux&apos;
 
 // Create instance and set callbacks
 const wg = new WebGroup()
@@ -130,7 +129,7 @@ wg.onStateChange = (state) =&gt; {
 // Join the group
 wg.join(&apos;MY_UNIQUE_KEY_FOR_THE_GROUP&apos;)</code>
 </code></pre>
-<h3 id="bot-server">Bot Server</h3><pre><code class="lang-javascript"><code class="source-code prettyprint">import { WebGroupBotServer } from &apos;netflux&apos;
+<h3 id="bot-example">Bot example</h3><pre><code class="lang-javascript"><code class="source-code prettyprint">import { Bot } from &apos;netflux&apos;
 const http = require(&apos;http&apos;) // https is also possible
 const server = http.createServer()
 

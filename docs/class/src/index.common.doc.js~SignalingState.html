@@ -12,7 +12,7 @@
 <body class="layout-container" data-ice="rootContainer">
 
 <header>
-  <a href="./" style="display: flex; align-items: center;"><img src="./image/brand_logo.png" style="width:34px;"></a>
+  <a href="./" style="display: flex; align-items: center;"><img src="./image/brand_logo.jpg" style="width:34px;"></a>
   <a href="./manual/index.html" data-ice="manualHeaderLink">Manual</a>
   <a href="identifiers.html">Reference</a>
   <a href="source.html">Source</a>
@@ -29,7 +29,7 @@
 <nav class="navigation" data-ice="nav"><div>
   <ul>
     
-  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/BotServerFacade.js~WebGroupBotServer.html">WebGroupBotServer</a></span></span></li>
+  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/BotFacade.js~Bot.html">Bot</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~LogLevel.html">LogLevel</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~SignalingState.html">SignalingState</a></span></span></li>
@@ -37,7 +37,7 @@
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~WebGroupState.html">WebGroupState</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-setLogLevel">setLogLevel</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-DataType">DataType</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupBotServerOptions">WebGroupBotServerOptions</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-BotOptions">BotOptions</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupOptions">WebGroupOptions</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/http.html#http_class_http_server">NodeJSHttpServer</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/https.html#https_class_https_server">NodeJSHttpsServer</a></span></span></li>
@@ -111,7 +111,7 @@
       <div>
         
         
-        <div data-ice="description"><p><code>5</code>: a connection has been established with one of the group member or you are the only member of the group.</p>
+        <div data-ice="description"><p><code>4</code>: a connection has been established with one of the group member or you are the only member of the group.</p>
 </div>
       </div>
     </td>
@@ -140,7 +140,7 @@
       <div>
         
         
-        <div data-ice="description"><p><code>4</code>: signaling server is checking wether you are still connected to the group.</p>
+        <div data-ice="description"><p><code>2</code>: signaling server is checking wether you are still connected to the group.</p>
 </div>
       </div>
     </td>
@@ -170,35 +170,6 @@
         
         
         <div data-ice="description"><p><code>3</code>: the connection is closed or couldn&apos;t be opened (equivalent to <code>WebSocket.CLOSED</code>).</p>
-</div>
-      </div>
-    </td>
-    <td>
-      
-      
-    </td>
-  </tr>
-<tr data-ice="target">
-    <td>
-      <span class="access" data-ice="access">public</span>
-      <span data-ice="static">static</span>
-      <span class="kind" data-ice="kind">get</span>
-      
-      <span class="override" data-ice="override"></span>
-    </td>
-    <td>
-      <div>
-        <p>
-          
-          
-          
-          <span class="code" data-ice="name"><span><a href="class/src/index.common.doc.js~SignalingState.html#static-get-CLOSING">CLOSING</a></span></span><span class="code" data-ice="signature">: <span>number</span></span>
-        </p>
-      </div>
-      <div>
-        
-        
-        <div data-ice="description"><p><code>2</code>: the connection is in the process of closing (equivalent to <code>WebSocket.CLOSING</code>).</p>
 </div>
       </div>
     </td>
@@ -289,14 +260,14 @@
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/index.common.doc.js.html#lineNumber58">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/index.common.doc.js.html#lineNumber51">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  <div data-ice="description"><p><code>5</code>: a connection has been established with one of the group member or you are the only member of the group.
+  <div data-ice="description"><p><code>4</code>: a connection has been established with one of the group member or you are the only member of the group.
 From now the signaling is no longer needed, because the joining process will continue with a help of this member.</p>
 </div>
 
@@ -334,14 +305,14 @@ From now the signaling is no longer needed, because the joining process will con
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/index.common.doc.js.html#lineNumber50">source</a></span></span>
+      <span data-ice="source"><span><a href="file/src/index.common.doc.js.html#lineNumber43">source</a></span></span>
     </span>
   </h3>
 
   
   
   
-  <div data-ice="description"><p><code>4</code>: signaling server is checking wether you are still connected to the group. If it is not the case, then
+  <div data-ice="description"><p><code>2</code>: signaling server is checking wether you are still connected to the group. If it is not the case, then
 subscribs you to one of the group member in order to create a connection with him.</p>
 </div>
 
@@ -379,50 +350,6 @@ subscribs you to one of the group member in order to create a connection with hi
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/src/index.common.doc.js.html#lineNumber42">source</a></span></span>
-    </span>
-  </h3>
-
-  
-  
-  
-  <div data-ice="description"><p><code>3</code>: the connection is closed or couldn&apos;t be opened (equivalent to <code>WebSocket.CLOSED</code>).</p>
-</div>
-
-  
-
-  <div data-ice="properties">
-</div>
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-  
-</div>
-<div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="static-get-CLOSING">
-    <span class="access" data-ice="access">public</span>
-    <span data-ice="static">static</span>
-    <span class="kind" data-ice="kind">get</span>
-    
-    
-    
-    <span class="code" data-ice="name">CLOSING</span><span class="code" data-ice="signature">: <span>number</span></span>
-    <span class="right-info">
-      
-      
       <span data-ice="source"><span><a href="file/src/index.common.doc.js.html#lineNumber35">source</a></span></span>
     </span>
   </h3>
@@ -430,7 +357,7 @@ subscribs you to one of the group member in order to create a connection with hi
   
   
   
-  <div data-ice="description"><p><code>2</code>: the connection is in the process of closing (equivalent to <code>WebSocket.CLOSING</code>).</p>
+  <div data-ice="description"><p><code>3</code>: the connection is closed or couldn&apos;t be opened (equivalent to <code>WebSocket.CLOSED</code>).</p>
 </div>
 
   

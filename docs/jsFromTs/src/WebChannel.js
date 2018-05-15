@@ -1,5 +1,5 @@
-import { Subject } from 'rxjs/Subject';
-import { generateId, generateKey, isBrowser, isOnline, isURL, isVisible, log, MAX_KEY_LENGTH, } from './misc/Util';
+import { Subject } from 'rxjs';
+import { extractHostnameAndPort, generateId, generateKey, isBrowser, isOnline, isURL, isVisible, log, validateKey, } from './misc/util';
 import { ChannelBuilder } from './service/channelBuilder/ChannelBuilder';
 import { FullMesh } from './service/topology/FullMesh';
 import { TopologyEnum, TopologyState } from './service/topology/Topology';
@@ -7,7 +7,7 @@ import { UserMessage } from './service/UserMessage';
 import { Signaling, SignalingState } from './Signaling';
 import { WebChannelState } from './WebChannelState';
 import { WebSocketBuilder } from './WebSocketBuilder';
-export const defaultOptions = {
+export const webChannelDefaultOptions = {
     topology: TopologyEnum.FULL_MESH,
     signalingServer: 'wss://signaling.netflux.coedit.re',
     rtcConfiguration: {
@@ -25,117 +25,62 @@ const REJOIN_TIMEOUT = 3000;
  * [[include:installation.md]]
  */
 export class WebChannel {
-    constructor({ topology = defaultOptions.topology, signalingServer = defaultOptions.signalingServer, rtcConfiguration = defaultOptions.rtcConfiguration, autoRejoin = defaultOptions.autoRejoin, } = {}) {
+    constructor(options) {
         this.STREAM_ID = 2;
+        const fullOptions = Object.assign({}, webChannelDefaultOptions, options);
         this.streamSubject = new Subject();
-        // PUBLIC MEMBERS
-        this.topology = topology;
-        this.id = generateId();
-        this.myId = generateId();
-        this.members = [this.myId];
+        this.topologyEnum = fullOptions.topology;
+        this.autoRejoin = fullOptions.autoRejoin;
+        this.rtcConfiguration = fullOptions.rtcConfiguration;
+        this.members = [];
+        this.id = 0;
         this.key = '';
-        this.autoRejoin = autoRejoin;
-        this.rtcConfiguration = rtcConfiguration;
-        // PUBLIC EVENT HANDLERS
+        this.myId = 0;
+        this.state = WebChannelState.LEFT;
+        this.rejoinEnabled = false;
+        this.rejoinTimer = undefined;
+        this.topology = {};
+        this._onAlone = () => { };
         this.onMemberJoin = function none() { };
         this.onMemberLeave = function none() { };
         this.onMessage = function none() { };
         this.onStateChange = function none() { };
         this.onSignalingStateChange = function none() { };
-        // PRIVATE
-        this.isJoinRequested = false;
-        this.state = WebChannelState.LEFT;
-        this.rejoinTimer = undefined;
-        this.userMsg = new UserMessage(this);
-        // Signaling init
-        this.signaling = new Signaling(this, signalingServer);
-        this.signaling.onState.subscribe((state) => {
-            log.signalingState(SignalingState[state], this.myId);
-            this.onSignalingStateChange(state);
-            switch (state) {
-                case SignalingState.CLOSED:
-                    if (this.topologyService.state === TopologyState.DISCONNECTED) {
-                        if (isVisible() &&
-                            isOnline() &&
-                            !this.rejoinTimer &&
-                            (this.isJoinRequested || !this.isRejoinDisabled)) {
-                            this.startJoin();
-                        }
-                        else {
-                            this.setState(WebChannelState.LEFT);
-                        }
-                    }
-                    else if (this.state !== WebChannelState.LEAVING) {
-                        this.signaling.connect(this.key);
-                    }
-                    break;
-                case SignalingState.OPEN:
-                    if (this.topologyService.state === TopologyState.DISCONNECTED ||
-                        this.topologyService.state === TopologyState.JOINED) {
-                        this.signaling.sendConnectRequest();
-                    }
-                    break;
-                case SignalingState.CHECKED:
-                    if (this.state === WebChannelState.JOINING &&
-                        this.topologyService.state === TopologyState.DISCONNECTED &&
-                        this.signaling.connected) {
-                        this.setJoined();
-                    }
-                    break;
-            }
-        });
-        // Services init
+        // Initialize services
+        this.userMsg = new UserMessage();
+        this.signaling = new Signaling(this, fullOptions.signalingServer);
+        this.subscribeToSignalingState();
         this.webSocketBuilder = new WebSocketBuilder(this);
         this.channelBuilder = new ChannelBuilder(this);
-        // Topology init
-        this.setTopology(topology);
-        // Listen to browser events only
+        this.setTopology(fullOptions.topology);
+        // Listen to browser events
         if (isBrowser) {
-            global.window.addEventListener('online', () => {
-                if (this.state === WebChannelState.LEFT && isVisible() && !this.rejoinTimer) {
-                    if (this.isJoinRequested || !this.isRejoinDisabled) {
-                        this.startJoin();
-                    }
-                }
-            });
-            global.window.addEventListener('visibilitychange', () => {
-                if (isVisible() && this.state === WebChannelState.LEFT && isOnline() && !this.rejoinTimer) {
-                    if (this.isJoinRequested || !this.isRejoinDisabled) {
-                        this.startJoin();
-                    }
-                }
-            });
-            global.window.addEventListener('beforeunload', () => this.leave());
+            this.subscribeToBrowserEvents();
         }
     }
     get messageFromStream() {
         return this.streamSubject.asObservable();
     }
+    set onAlone(handler) {
+        this._onAlone = handler;
+    }
     sendOverStream(msg) {
-        this.topologyService.sendTo(msg);
+        this.topology.sendTo(msg);
     }
     join(key = generateKey()) {
-        if (typeof key !== 'string') {
-            throw new Error(`Failed to join: the key type "${typeof key}" is not a "string"`);
-        }
-        else if (key === '') {
-            throw new Error('Failed to join: the key is an empty string');
-        }
-        else if (key.length > MAX_KEY_LENGTH) {
-            throw new Error(`Failed to join : the key length of ${key.length} exceeds the maximum of ${MAX_KEY_LENGTH} characters`);
-        }
-        this.key = key;
-        if (this.state === WebChannelState.LEAVING ||
-            (this.state === WebChannelState.LEFT && (!isOnline() || !isVisible()))) {
-            this.isRejoinDisabled = !this.autoRejoin;
-            this.isJoinRequested = true;
-        }
-        else {
-            this.startJoin();
+        validateKey(key);
+        if (this.state === WebChannelState.LEFT) {
+            this.startJoin(key);
         }
     }
     invite(url) {
         if (isURL(url)) {
+            const hostnamePort = extractHostnameAndPort(url);
+            for (const ch of this.topology.neighbors) {
+                if (hostnamePort === extractHostnameAndPort(ch.url)) {
+                    return;
+                }
+            }
             this.webSocketBuilder
                 .connectToInvite(url)
                 .catch((err) => log.webgroup(`Failed to invite the bot ${url}: ${err.message}`));
@@ -145,18 +90,19 @@ export class WebChannel {
         }
     }
     leave() {
-        if (this.state === WebChannelState.JOINING || this.state === WebChannelState.JOINED) {
-            this.setState(WebChannelState.LEAVING);
+        if (this.state !== WebChannelState.LEFT) {
+            this.rejoinEnabled = false;
             this.key = '';
-            this.isRejoinDisabled = true;
             this.signaling.close();
-            this.topologyService.leave();
+            this.topology.leave();
+            this.clean();
+            this.setState(WebChannelState.LEFT);
         }
     }
     send(data) {
         if (this.members.length !== 1) {
             for (const chunk of this.userMsg.encodeUserMessage(data)) {
-                this.topologyService.send({
+                this.topology.send({
                     senderId: this.myId,
                     recipientId: 0,
                     serviceId: UserMessage.SERVICE_ID,
@@ -168,7 +114,7 @@ export class WebChannel {
     sendTo(id, data) {
         if (this.members.length !== 1) {
             for (const chunk of this.userMsg.encodeUserMessage(data)) {
-                this.topologyService.sendTo({
+                this.topology.sendTo({
                     senderId: this.myId,
                     recipientId: id,
                     serviceId: UserMessage.SERVICE_ID,
@@ -183,16 +129,54 @@ export class WebChannel {
             this.onMemberJoin(id);
         }
     }
-    onMemberLeaveProxy(id, isAdjacent) {
-        if (this.members.includes(id)) {
-            this.members.splice(this.members.indexOf(id), 1);
-            this.onMemberLeave(id);
+    onAdjacentMembersLeaveProxy(ids) {
+        if (ids.length !== 0) {
+            ids.forEach((id) => {
+                if (this.members.includes(id)) {
+                    this.members.splice(this.members.indexOf(id), 1);
+                    this.onMemberLeave(id);
+                }
+            });
+            if (this.members.length === 1) {
+                this._onAlone();
+                this.topology.setLeftState();
+            }
+            else if (this.signaling.state === SignalingState.CHECKED &&
+                this.topology.state === TopologyState.JOINED) {
+                this.signaling.check();
+            }
         }
-        if (isAdjacent &&
-            this.signaling.state === SignalingState.CHECKED &&
-            this.topologyService.state === TopologyState.JOINED) {
-            this.signaling.sendConnectRequest();
+    }
+    onDistantMembersLeaveProxy(ids) {
+        ids.forEach((id) => {
+            if (this.members.includes(id)) {
+                this.members.splice(this.members.indexOf(id), 1);
+                this.onMemberLeave(id);
+            }
+        });
+    }
+    init(key, id = generateId()) {
+        this.id = id;
+        this.myId = generateId();
+        this.members = [this.myId];
+        this.key = key;
+        this.rejoinEnabled = this.autoRejoin;
+        if (this.rejoinTimer) {
+            global.clearTimeout(this.rejoinTimer);
+            this.rejoinTimer = undefined;
         }
+        this.setState(WebChannelState.JOINING);
+    }
+    clean() {
+        if (this.rejoinTimer) {
+            global.clearTimeout(this.rejoinTimer);
+            this.rejoinTimer = undefined;
+        }
+        this.channelBuilder.clean();
+        this.userMsg.clean();
+        this.members = [];
+        this.id = 0;
+        this.myId = 0;
     }
     setState(state) {
         if (this.state !== state) {
@@ -201,71 +185,115 @@ export class WebChannel {
             this.onStateChange(state);
         }
     }
-    setTopology(topology) {
-        if (this.topologyService !== undefined) {
-            if (this.topology !== topology) {
-                this.topology = topology;
-                this.topologyService.leave();
-                this.topologyService = new FullMesh(this);
-                this.subscribeToTopology();
-            }
-        }
-        else {
-            this.topology = topology;
-            this.topologyService = new FullMesh(this);
-            this.subscribeToTopology();
-        }
-    }
-    subscribeToTopology() {
-        if (this.topologySub) {
-            this.topologySub.unsubscribe();
-        }
-        this.topologySub = this.topologyService.onState.subscribe((state) => {
+    setTopology(topologyEnum) {
+        this.topologyEnum = topologyEnum;
+        this.topology = new FullMesh(this);
+        this.topology.onState.subscribe((state) => {
             switch (state) {
                 case TopologyState.JOINING:
                     this.setState(WebChannelState.JOINING);
+                    if (this.signaling.state === SignalingState.CLOSED) {
+                        // This is for a bot who was invited to the group
+                        this.signaling.connect(this.key);
+                    }
                     break;
                 case TopologyState.JOINED:
-                    this.setJoined();
+                    this.setState(WebChannelState.JOINED);
                     if (this.signaling.state === SignalingState.OPEN ||
                         this.signaling.state === SignalingState.CHECKED) {
-                        this.signaling.sendConnectRequest();
+                        this.signaling.check();
                     }
                     break;
-                case TopologyState.DISCONNECTED:
-                    if (this.signaling.state === SignalingState.CLOSED &&
-                        isVisible() &&
-                        isOnline() &&
-                        !this.rejoinTimer &&
-                        (this.isJoinRequested || !this.isRejoinDisabled)) {
-                        this.startJoin();
-                    }
-                    else {
-                        this.setState(WebChannelState.LEFT);
+                case TopologyState.LEFT:
+                    switch (this.signaling.state) {
+                        case SignalingState.CLOSED:
+                            this.rejoinOrLeave();
+                            break;
+                        case SignalingState.CONNECTING:
+                            this.setState(WebChannelState.JOINING);
+                            break;
+                        case SignalingState.OPEN:
+                            this.setState(WebChannelState.JOINING);
+                            this.signaling.check();
+                            break;
+                        case SignalingState.CHECKING:
+                            this.setState(WebChannelState.JOINING);
+                            break;
+                        case SignalingState.CHECKED:
+                            this.signaling.check();
+                            break;
                     }
                     break;
             }
         });
     }
-    startJoin() {
-        this.setState(WebChannelState.JOINING);
-        this.signaling.connect(this.key);
-        this.isJoinRequested = false;
-        this.rejoinTimer = global.setTimeout(() => {
+    subscribeToSignalingState() {
+        this.signaling.onState.subscribe((state) => {
+            log.signalingState(SignalingState[state], this.myId);
+            this.onSignalingStateChange(state);
+            switch (state) {
+                case SignalingState.CLOSED:
+                    if (this.topology.state === TopologyState.LEFT) {
+                        this.rejoinOrLeave();
+                    }
+                    else if (this.topology.state === TopologyState.JOINED && this.rejoinEnabled) {
+                        this.signaling.connect(this.key);
+                    }
+                    break;
+                case SignalingState.OPEN:
+                    if (this.topology.state !== TopologyState.JOINING) {
+                        this.signaling.check();
+                    }
+                    break;
+                case SignalingState.CHECKED:
+                    if (this.state === WebChannelState.JOINING &&
+                        this.topology.state === TopologyState.LEFT &&
+                        this.signaling.connected) {
+                        this.topology.setJoinedState();
+                    }
+                    break;
+            }
+        });
+    }
+    subscribeToBrowserEvents() {
+        global.addEventListener('online', () => {
             if (this.state === WebChannelState.LEFT &&
                 isVisible() &&
-                isOnline() &&
-                !this.isRejoinDisabled) {
+                !this.rejoinTimer &&
+                this.rejoinEnabled) {
                 this.startJoin();
             }
-            else {
-                this.rejoinTimer = undefined;
+        });
+        global.addEventListener('visibilitychange', () => {
+            if (isVisible() &&
+                this.state === WebChannelState.LEFT &&
+                isOnline() &&
+                !this.rejoinTimer &&
+                this.rejoinEnabled) {
+                this.startJoin();
             }
-        }, REJOIN_TIMEOUT);
+        });
+        global.addEventListener('beforeunload', () => this.leave());
     }
-    setJoined() {
-        this.setState(WebChannelState.JOINED);
-        global.clearTimeout(this.rejoinTimer);
-        this.rejoinTimer = undefined;
+    startJoin(key = this.key) {
+        this.init(key);
+        this.signaling.connect(key);
+    }
+    rejoinOrLeave() {
+        this.clean();
+        if (this.rejoinEnabled) {
+            this.init(this.key);
+            this.rejoinTimer = global.setTimeout(() => {
+                if (this.state === WebChannelState.LEFT &&
+                    isVisible() &&
+                    isOnline() &&
+                    this.rejoinEnabled) {
+                    this.startJoin();
+                }
+            }, REJOIN_TIMEOUT);
+        }
+        else {
+            this.setState(WebChannelState.LEFT);
+        }
     }
 }

@@ -17,10 +17,12 @@ const textDecoder = new global.TextDecoder();
  * 16ko.
  */
 export class UserMessage extends Service {
-    constructor(wc) {
+    constructor() {
         super(UserMessage.SERVICE_ID, proto.Message);
-        this.wc = wc;
         this.buffers = new Map();
+    }
+    clean() {
+        this.buffers.clear();
     }
     /**
      * Encode user message for sending over the network.

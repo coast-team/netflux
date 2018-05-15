@@ -12,7 +12,7 @@
 <body class="layout-container" data-ice="rootContainer">
 
 <header>
-  <a href="./" style="display: flex; align-items: center;"><img src="./image/brand_logo.png" style="width:34px;"></a>
+  <a href="./" style="display: flex; align-items: center;"><img src="./image/brand_logo.jpg" style="width:34px;"></a>
   <a href="./manual/index.html" data-ice="manualHeaderLink">Manual</a>
   <a href="identifiers.html">Reference</a>
   <a href="source.html">Source</a>
@@ -29,7 +29,7 @@
 <nav class="navigation" data-ice="nav"><div>
   <ul>
     
-  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/BotServerFacade.js~WebGroupBotServer.html">WebGroupBotServer</a></span></span></li>
+  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/BotFacade.js~Bot.html">Bot</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~LogLevel.html">LogLevel</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~SignalingState.html">SignalingState</a></span></span></li>
@@ -37,7 +37,7 @@
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~WebGroupState.html">WebGroupState</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-setLogLevel">setLogLevel</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-DataType">DataType</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupBotServerOptions">WebGroupBotServerOptions</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-BotOptions">BotOptions</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupOptions">WebGroupOptions</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/http.html#http_class_http_server">NodeJSHttpServer</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/https.html#https_class_https_server">NodeJSHttpsServer</a></span></span></li>
@@ -76,7 +76,7 @@
   
   <div class="description" data-ice="description"><p>This class is an API starting point. It represents a peer to peer network,
 simply called a group. Each group member can send/receive broadcast
-as well as personal messages, invite other persons or bots (see <span><a href="class/src/BotServerFacade.js~WebGroupBotServer.html">WebGroupBotServer</a></span>).</p>
+as well as personal messages, invite other persons or bots (see <span><a href="class/src/BotFacade.js~Bot.html">Bot</a></span>).</p>
 </div>
   
 
@@ -128,8 +128,15 @@ wg.onSignalingStateChange = (state) =&gt; {
     <h4>Test:</h4>
     <ul>
       
-    <li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber9">1 member</a></span></li>
-<li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber10">2 members</a></span></li>
+    <li data-ice="test"><span><a href="test-file/test/functional/1-bot.test.js.html#lineNumber5">&#x1F916; - 1 bot</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-clients.test.js.html#lineNumber9">&#x1F642; &#x1F642; - 2 clients</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/3-bot_client_client.test.js.html#lineNumber10">&#x1F916; &#x1F642; &#x1F642; - 3 members: 1 bot and 2 clients</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/3-client_bot_client.test.js.html#lineNumber10">&#x1F642; &#x1F916; &#x1F642; - 3 members: 1 client, 1 bot and 1 client</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/3-client_client_bot.test.js.html#lineNumber10">&#x1F642; &#x1F642; &#x1F916; - 3 members: 2 clients and 1 bot</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/3-clients.test.js.html#lineNumber10">&#x1F642; &#x1F642; &#x1F642; - 3 clients</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-client.test.js.html#lineNumber9">&#x1F642; - 1 client</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-bot_client.test.js.html#lineNumber11">&#x1F916; &#x1F642; - 2 members: bot first, then client</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-client_bot.test.js.html#lineNumber11">&#x1F642; &#x1F916; - 2 members: client invites bot</a></span></li>
 </ul>
   </div>
 
@@ -833,7 +840,7 @@ with the Signaling server.</p>
     <h4>Test:</h4>
     <ul>
       
-    <li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber13">1 member &#x1F642; constructor</a></span></li>
+    <li data-ice="test"><span><a href="test-file/test/functional/1-client.test.js.html#lineNumber12">&#x1F642; - 1 client constructor</a></span></li>
 </ul>
   </div>
 
@@ -882,7 +889,20 @@ with the Signaling server.</p>
 
   
 
-  
+  <div data-ice="tests">
+    <h4>Test:</h4>
+    <ul>
+      
+    <li data-ice="test"><span><a href="test-file/test/functional/2-client_bot.test.js.html#lineNumber232">&#x1F642; &#x1F916; - 2 members: client invites bot invite autoRejoin should be disabled</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-clients.test.js.html#lineNumber275">&#x1F642; &#x1F642; - 2 clients join autoRejoin should be disabled</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-clients.test.js.html#lineNumber693">&#x1F642; &#x1F642; - 2 clients leave autoRejoin should be disabled</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-bot.test.js.html#lineNumber217">&#x1F916; - 1 bot leave autoRejoin should be disabled</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-client.test.js.html#lineNumber262">&#x1F642; - 1 client join autoRejoin should be disabled</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-client.test.js.html#lineNumber484">&#x1F642; - 1 client leave autoRejoin should be disabled</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-bot.test.js.html#lineNumber78">&#x1F916; - 1 bot join autoRejoin should be disabled</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-bot_client.test.js.html#lineNumber231">&#x1F916; &#x1F642; - 2 members: bot first, then client join autoRejoin should be disabled</a></span></li>
+</ul>
+  </div>
 
   
   
@@ -926,7 +946,20 @@ with the Signaling server.</p>
 
   
 
-  
+  <div data-ice="tests">
+    <h4>Test:</h4>
+    <ul>
+      
+    <li data-ice="test"><span><a href="test-file/test/functional/2-clients.test.js.html#lineNumber209">&#x1F642; &#x1F642; - 2 clients join WebGroup id should not change, should be the same and not 0</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-bot.test.js.html#lineNumber123">&#x1F916; - 1 bot join WebGroup id should not be 0</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-clients.test.js.html#lineNumber633">&#x1F642; &#x1F642; - 2 clients leave WebGroup id of the first client should NOT be 0 and of second should be 0</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-bot.test.js.html#lineNumber252">&#x1F916; - 1 bot leave WebGroup id should be 0</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-client.test.js.html#lineNumber210">&#x1F642; - 1 client join WebGroup id should not be 0</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-client.test.js.html#lineNumber432">&#x1F642; - 1 client leave WebGroup id should be 0</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-bot_client.test.js.html#lineNumber175">&#x1F916; &#x1F642; - 2 members: bot first, then client join WebGroup id should not change, should be the same and not 0</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-client_bot.test.js.html#lineNumber176">&#x1F642; &#x1F916; - 2 members: client invites bot invite WebGroup id should not change, should be the same and not 0</a></span></li>
+</ul>
+  </div>
 
   
   
@@ -972,7 +1005,20 @@ in order to join new members, on the other hand Signaling does not know <span><a
 
   
 
-  
+  <div data-ice="tests">
+    <h4>Test:</h4>
+    <ul>
+      
+    <li data-ice="test"><span><a href="test-file/test/functional/2-clients.test.js.html#lineNumber227">&#x1F642; &#x1F642; - 2 clients join key should not change, should be the same and not empty</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-bot.test.js.html#lineNumber132">&#x1F916; - 1 bot join key should be the one provided to the join method</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-clients.test.js.html#lineNumber648">&#x1F642; &#x1F642; - 2 clients leave key of the first client should NOT be empty and of second should be empty</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-bot.test.js.html#lineNumber259">&#x1F916; - 1 bot leave key should be empty</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-client.test.js.html#lineNumber223">&#x1F642; - 1 client join key should not be empty</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-client.test.js.html#lineNumber445">&#x1F642; - 1 client leave key should be empty</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-bot_client.test.js.html#lineNumber192">&#x1F916; &#x1F642; - 2 members: bot first, then client join key should not change, should be the same and not empty</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-client_bot.test.js.html#lineNumber191">&#x1F642; &#x1F916; - 2 members: client invites bot invite key should not change, should be the same and not empty</a></span></li>
+</ul>
+  </div>
 
   
   
@@ -1016,7 +1062,20 @@ in order to join new members, on the other hand Signaling does not know <span><a
 
   
 
-  
+  <div data-ice="tests">
+    <h4>Test:</h4>
+    <ul>
+      
+    <li data-ice="test"><span><a href="test-file/test/functional/1-bot.test.js.html#lineNumber105">&#x1F916; - 1 bot join should have only me as a member</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-clients.test.js.html#lineNumber165">&#x1F642; &#x1F642; - 2 clients join should have 2 members</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-clients.test.js.html#lineNumber595">&#x1F642; &#x1F642; - 2 clients leave first client should have only him as a member and second client should have no members</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-bot.test.js.html#lineNumber238">&#x1F916; - 1 bot leave should have no members</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-client.test.js.html#lineNumber184">&#x1F642; - 1 client join should have only me as a member</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-client.test.js.html#lineNumber406">&#x1F642; - 1 client leave should have no members</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-bot_client.test.js.html#lineNumber145">&#x1F916; &#x1F642; - 2 members: bot first, then client join should have 2 members</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-client_bot.test.js.html#lineNumber136">&#x1F642; &#x1F916; - 2 members: client invites bot invite should have 2 members</a></span></li>
+</ul>
+  </div>
 
   
   
@@ -1060,7 +1119,20 @@ in order to join new members, on the other hand Signaling does not know <span><a
 
   
 
-  
+  <div data-ice="tests">
+    <h4>Test:</h4>
+    <ul>
+      
+    <li data-ice="test"><span><a href="test-file/test/functional/1-bot.test.js.html#lineNumber114">&#x1F916; - 1 bot join my id should not be 0</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-clients.test.js.html#lineNumber193">&#x1F642; &#x1F642; - 2 clients join first client&apos;s id should not change and second client&apos;s id should not be 0</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-clients.test.js.html#lineNumber618">&#x1F642; &#x1F642; - 2 clients leave the id of the first client should NOT be 0 and of second should be 0</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-bot.test.js.html#lineNumber245">&#x1F916; - 1 bot leave my id should be 0</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-client.test.js.html#lineNumber197">&#x1F642; - 1 client join my id should not be 0</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-client.test.js.html#lineNumber419">&#x1F642; - 1 client leave my id should be 0</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-bot_client.test.js.html#lineNumber159">&#x1F916; &#x1F642; - 2 members: bot first, then client join bot&apos;s id should not change and the client&apos;s id should not be 0</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-client_bot.test.js.html#lineNumber162">&#x1F642; &#x1F916; - 2 members: client invites bot invite client&apos;s id should not change and bot&apos;s id should not be 0</a></span></li>
+</ul>
+  </div>
 
   
   
@@ -1108,9 +1180,14 @@ in order to join new members, on the other hand Signaling does not know <span><a
     <h4>Test:</h4>
     <ul>
       
-    <li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber111">2 members &#x1F642; &#x1F642; joining should be notified about new member</a></span></li>
-<li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber568">2 members &#x1F642; &#x1F916; inviting should be notified about new member</a></span></li>
-<li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber130">1 member &#x1F642; joining should NOT be notified about new member</a></span></li>
+    <li data-ice="test"><span><a href="test-file/test/functional/2-clients.test.js.html#lineNumber108">&#x1F642; &#x1F642; - 2 clients join should be notified about new member</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/3-clients.test.js.html#lineNumber102">&#x1F642; &#x1F642; &#x1F642; - 3 clients join should be notified about new member</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-bot.test.js.html#lineNumber193">&#x1F916; - 1 bot leave should NOT be notified about new member</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-client.test.js.html#lineNumber142">&#x1F642; - 1 client join should NOT be notified about new member</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-bot.test.js.html#lineNumber48">&#x1F916; - 1 bot join should NOT be notified about new member</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-client.test.js.html#lineNumber364">&#x1F642; - 1 client leave should NOT be notified about new member</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-bot_client.test.js.html#lineNumber103">&#x1F916; &#x1F642; - 2 members: bot first, then client join should be notified about new member</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-client_bot.test.js.html#lineNumber79">&#x1F642; &#x1F916; - 2 members: client invites bot invite should be notified about new member</a></span></li>
 </ul>
   </div>
 
@@ -1160,8 +1237,15 @@ in order to join new members, on the other hand Signaling does not know <span><a
     <h4>Test:</h4>
     <ul>
       
-    <li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber223">1 member &#x1F642; leaving should be NOT notified about left member</a></span></li>
-<li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber442">2 members &#x1F642; &#x1F642; leaving should be notified about left member</a></span></li>
+    <li data-ice="test"><span><a href="test-file/test/functional/2-clients.test.js.html#lineNumber131">&#x1F642; &#x1F642; - 2 clients join should NOT be notified about left member</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-clients.test.js.html#lineNumber478">&#x1F642; &#x1F642; - 2 clients leave should be notified about left member</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-clients.test.js.html#lineNumber561">&#x1F642; &#x1F642; - 2 clients leave should NOT be notified about joined member</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-bot.test.js.html#lineNumber201">&#x1F916; - 1 bot leave should NOT be notified about left member</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-client.test.js.html#lineNumber156">&#x1F642; - 1 client join should NOT be notified about left member</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-bot.test.js.html#lineNumber58">&#x1F916; - 1 bot join should NOT be notified about left member</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-client.test.js.html#lineNumber378">&#x1F642; - 1 client leave should NOT be notified about left member</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-bot_client.test.js.html#lineNumber116">&#x1F916; &#x1F642; - 2 members: bot first, then client join should NOT be notified about left member</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-client_bot.test.js.html#lineNumber100">&#x1F642; &#x1F916; - 2 members: client invites bot invite should NOT be notified about left member</a></span></li>
 </ul>
   </div>
 
@@ -1209,7 +1293,20 @@ and false if sent via <span><a href="class/src/WebChannelFacade.js~WebGroup.html
 
   
 
-  
+  <div data-ice="tests">
+    <h4>Test:</h4>
+    <ul>
+      
+    <li data-ice="test"><span><a href="test-file/test/functional/2-clients.test.js.html#lineNumber148">&#x1F642; &#x1F642; - 2 clients join should NOT receive any message</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-clients.test.js.html#lineNumber578">&#x1F642; &#x1F642; - 2 clients leave should NOT receive any message</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-bot.test.js.html#lineNumber209">&#x1F916; - 1 bot leave should NOT receive any message</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-client.test.js.html#lineNumber170">&#x1F642; - 1 client join should NOT receive any message</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-client.test.js.html#lineNumber392">&#x1F642; - 1 client leave should NOT receive any message</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-bot.test.js.html#lineNumber68">&#x1F916; - 1 bot join should NOT receive any message</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-bot_client.test.js.html#lineNumber131">&#x1F916; &#x1F642; - 2 members: bot first, then client join should NOT receive any message</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-client_bot.test.js.html#lineNumber121">&#x1F642; &#x1F916; - 2 members: client invites bot invite should NOT receive any message</a></span></li>
+</ul>
+  </div>
 
   
   
@@ -1257,11 +1354,15 @@ and false if sent via <span><a href="class/src/WebChannelFacade.js~WebGroup.html
     <h4>Test:</h4>
     <ul>
       
-    <li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber258">1 member &#x1F642; leaving should change the Signaling state</a></span></li>
-<li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber56">2 members &#x1F642; &#x1F642; joining should change the Signaling state</a></span></li>
-<li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber485">2 members &#x1F642; &#x1F642; leaving should change the Signaling state</a></span></li>
-<li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber526">2 members &#x1F642; &#x1F916; inviting should not change the Signaling state</a></span></li>
-<li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber85">1 member &#x1F642; joining should change the Signaling state</a></span></li>
+    <li data-ice="test"><span><a href="test-file/test/functional/2-clients.test.js.html#lineNumber35">&#x1F642; &#x1F642; - 2 clients join should change the Signaling state</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-clients.test.js.html#lineNumber533">&#x1F642; &#x1F642; - 2 clients leave should change the Signaling state</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/3-clients.test.js.html#lineNumber51">&#x1F642; &#x1F642; &#x1F642; - 3 clients join should change the Signaling state</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-bot.test.js.html#lineNumber176">&#x1F916; - 1 bot leave should change the Signaling state</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-bot.test.js.html#lineNumber17">&#x1F916; - 1 bot join should change the Signaling state</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-client.test.js.html#lineNumber73">&#x1F642; - 1 client join should change the Signaling state</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-client.test.js.html#lineNumber318">&#x1F642; - 1 client leave should change the Signaling state</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-bot_client.test.js.html#lineNumber29">&#x1F916; &#x1F642; - 2 members: bot first, then client join should change the Signaling state</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-client_bot.test.js.html#lineNumber30">&#x1F642; &#x1F916; - 2 members: client invites bot invite should change the Signaling state</a></span></li>
 </ul>
   </div>
 
@@ -1311,11 +1412,15 @@ and false if sent via <span><a href="class/src/WebChannelFacade.js~WebGroup.html
     <h4>Test:</h4>
     <ul>
       
-    <li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber238">1 member &#x1F642; leaving should change the WebGroup state</a></span></li>
-<li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber87">2 members &#x1F642; &#x1F642; joining should change the WebGroup state</a></span></li>
-<li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber466">2 members &#x1F642; &#x1F642; leaving should change the WebGroup state</a></span></li>
-<li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber547">2 members &#x1F642; &#x1F916; inviting should change the WebGroup state</a></span></li>
-<li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber110">1 member &#x1F642; joining should change the WebGroup state</a></span></li>
+    <li data-ice="test"><span><a href="test-file/test/functional/2-clients.test.js.html#lineNumber74">&#x1F642; &#x1F642; - 2 clients join should change the WebGroup state</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-clients.test.js.html#lineNumber502">&#x1F642; &#x1F642; - 2 clients leave should change the WebGroup state of the second client only</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/3-clients.test.js.html#lineNumber77">&#x1F642; &#x1F642; &#x1F642; - 3 clients join should change the WebGroup state</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-bot.test.js.html#lineNumber167">&#x1F916; - 1 bot leave should change the WebGroup state</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-bot.test.js.html#lineNumber36">&#x1F916; - 1 bot join should change the WebGroup state</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-client.test.js.html#lineNumber112">&#x1F642; - 1 client join should change the WebGroup state</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-client.test.js.html#lineNumber300">&#x1F642; - 1 client leave should change the WebGroup state</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-bot_client.test.js.html#lineNumber70">&#x1F916; &#x1F642; - 2 members: bot first, then client join should change the WebGroup state</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-client_bot.test.js.html#lineNumber51">&#x1F642; &#x1F916; - 2 members: client invites bot invite should change the WebGroup state of the bot only</a></span></li>
 </ul>
   </div>
 
@@ -1361,7 +1466,18 @@ and false if sent via <span><a href="class/src/WebChannelFacade.js~WebGroup.html
 
   
 
-  
+  <div data-ice="tests">
+    <h4>Test:</h4>
+    <ul>
+      
+    <li data-ice="test"><span><a href="test-file/test/functional/2-client_bot.test.js.html#lineNumber219">&#x1F642; &#x1F916; - 2 members: client invites bot invite Signaling server should not change</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-clients.test.js.html#lineNumber260">&#x1F642; &#x1F642; - 2 clients join Signaling server should not change</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-clients.test.js.html#lineNumber678">&#x1F642; &#x1F642; - 2 clients leave Signaling server should not change</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-client.test.js.html#lineNumber249">&#x1F642; - 1 client join Signaling server should not change</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-client.test.js.html#lineNumber471">&#x1F642; - 1 client leave Signaling server should not change</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-bot_client.test.js.html#lineNumber218">&#x1F916; &#x1F642; - 2 members: bot first, then client join Signaling server should not change</a></span></li>
+</ul>
+  </div>
 
   
   
@@ -1405,7 +1521,20 @@ and false if sent via <span><a href="class/src/WebChannelFacade.js~WebGroup.html
 
   
 
-  
+  <div data-ice="tests">
+    <h4>Test:</h4>
+    <ul>
+      
+    <li data-ice="test"><span><a href="test-file/test/functional/2-clients.test.js.html#lineNumber60">&#x1F642; &#x1F642; - 2 clients join Signaling state should be CHECKED</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-clients.test.js.html#lineNumber548">&#x1F642; &#x1F642; - 2 clients leave Signaling state of the first client should not be CLOSED and of the second should be CLOSED</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-bot.test.js.html#lineNumber150">&#x1F916; - 1 bot join Signaling state should be CHECKED</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-bot.test.js.html#lineNumber273">&#x1F916; - 1 bot leave Signaling state should be CLOSED</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-client.test.js.html#lineNumber98">&#x1F642; - 1 client join Signaling state should be CHECKED</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-client.test.js.html#lineNumber334">&#x1F642; - 1 client leave Signaling state should be CLOSED</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-bot_client.test.js.html#lineNumber55">&#x1F916; &#x1F642; - 2 members: bot first, then client join Signaling state should be CHECKED</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-client_bot.test.js.html#lineNumber40">&#x1F642; &#x1F916; - 2 members: client invites bot invite Signaling state should be CHECKED</a></span></li>
+</ul>
+  </div>
 
   
   
@@ -1449,7 +1578,20 @@ and false if sent via <span><a href="class/src/WebChannelFacade.js~WebGroup.html
 
   
 
-  
+  <div data-ice="tests">
+    <h4>Test:</h4>
+    <ul>
+      
+    <li data-ice="test"><span><a href="test-file/test/functional/2-clients.test.js.html#lineNumber95">&#x1F642; &#x1F642; - 2 clients join WebGroup state should be JOINED</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-clients.test.js.html#lineNumber520">&#x1F642; &#x1F642; - 2 clients leave WebGroup state of the first client should be JOINED and of the second should be LEFT</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-bot.test.js.html#lineNumber141">&#x1F916; - 1 bot join WebGroup state should be JOINED</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-bot.test.js.html#lineNumber266">&#x1F916; - 1 bot leave WebGroup state should be LEFT</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-client.test.js.html#lineNumber130">&#x1F642; - 1 client join WebGroup state should be JOINED</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-client.test.js.html#lineNumber349">&#x1F642; - 1 client leave WebGroup state should be LEFT</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-bot_client.test.js.html#lineNumber89">&#x1F916; &#x1F642; - 2 members: bot first, then client join WebGroup state should be JOINED</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-client_bot.test.js.html#lineNumber66">&#x1F642; &#x1F916; - 2 members: client invites bot invite WebGroup state should be JOINED for both</a></span></li>
+</ul>
+  </div>
 
   
   
@@ -1494,7 +1636,20 @@ indicating the topology used for this <span><a href="class/src/WebChannelFacade.
 
   
 
-  
+  <div data-ice="tests">
+    <h4>Test:</h4>
+    <ul>
+      
+    <li data-ice="test"><span><a href="test-file/test/functional/2-client_bot.test.js.html#lineNumber206">&#x1F642; &#x1F916; - 2 members: client invites bot invite topology should not change</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-clients.test.js.html#lineNumber245">&#x1F642; &#x1F642; - 2 clients join topology should not change</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-clients.test.js.html#lineNumber663">&#x1F642; &#x1F642; - 2 clients leave topology should not change</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-bot.test.js.html#lineNumber231">&#x1F916; - 1 bot leave topology should not change</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-client.test.js.html#lineNumber236">&#x1F642; - 1 client join topology should not change</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-client.test.js.html#lineNumber458">&#x1F642; - 1 client leave topology should not change</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-bot_client.test.js.html#lineNumber205">&#x1F916; &#x1F642; - 2 members: bot first, then client join topology should not change</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-bot.test.js.html#lineNumber96">&#x1F916; - 1 bot join topology should not change</a></span></li>
+</ul>
+  </div>
 
   
   
@@ -1538,7 +1693,7 @@ indicating the topology used for this <span><a href="class/src/WebChannelFacade.
       <td data-ice="name" class="code" data-depth="0">url</td>
       <td data-ice="type" class="code"><span>string</span></td>
       <td data-ice="appendix"></td>
-      <td data-ice="description"><p>Bot server URL (See <span><a href="typedef/index.html#static-typedef-WebGroupBotServerOptions">WebGroupBotServerOptions</a></span>)</p>
+      <td data-ice="description"><p>Bot server URL (See <span><a href="typedef/index.html#static-typedef-BotOptions">BotOptions</a></span>)</p>
 </td>
     </tr>
 </tbody>
@@ -1562,7 +1717,8 @@ indicating the topology used for this <span><a href="class/src/WebChannelFacade.
     <h4>Test:</h4>
     <ul>
       
-    <li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber508">2 members &#x1F642; &#x1F916; inviting</a></span></li>
+    <li data-ice="test"><span><a href="test-file/test/functional/2-client_bot.test.js.html#lineNumber14">&#x1F642; &#x1F916; - 2 members: client invites bot invite</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/3-client_client_bot.test.js.html#lineNumber12">&#x1F642; &#x1F642; &#x1F916; - 3 members: 2 clients and 1 bot join</a></span></li>
 </ul>
   </div>
 
@@ -1632,10 +1788,15 @@ then do nothing.</p>
     <h4>Test:</h4>
     <ul>
       
-    <li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber14">2 members &#x1F642; &#x1F642; joining</a></span></li>
-<li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber65">1 member &#x1F642; joining</a></span></li>
-<li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber168">2 members &#x1F642; &#x1F642; joining should join with the specified key</a></span></li>
-<li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber170">1 member &#x1F642; joining should join with the specified key</a></span></li>
+    <li data-ice="test"><span><a href="test-file/test/functional/1-bot.test.js.html#lineNumber7">&#x1F916; - 1 bot join</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-clients.test.js.html#lineNumber15">&#x1F642; &#x1F642; - 2 clients join</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/3-clients.test.js.html#lineNumber14">&#x1F642; &#x1F642; &#x1F642; - 3 clients join</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-client.test.js.html#lineNumber64">&#x1F642; - 1 client join</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-bot_client.test.js.html#lineNumber21">&#x1F916; &#x1F642; - 2 members: bot first, then client join</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-clients.test.js.html#lineNumber290">&#x1F642; &#x1F642; - 2 clients join should join with a specified key</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/3-bot_client_client.test.js.html#lineNumber12">&#x1F916; &#x1F642; &#x1F642; - 3 members: 1 bot and 2 clients join</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/3-client_bot_client.test.js.html#lineNumber12">&#x1F642; &#x1F916; &#x1F642; - 3 members: 1 client, 1 bot and 1 client join</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-client.test.js.html#lineNumber275">&#x1F642; - 1 client join should join with a specified key</a></span></li>
 </ul>
   </div>
 
@@ -1686,8 +1847,9 @@ with the Signaling server.</p>
     <h4>Test:</h4>
     <ul>
       
-    <li data-ice="test"><span><a href="test-file/test/functional/1member.test.js.html#lineNumber197">1 member &#x1F642; leaving should have the same members, WebGroup id, topology and an empty key</a></span></li>
-<li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber409">2 members &#x1F642; &#x1F642; leaving should have no members &amp; an empty key</a></span></li>
+    <li data-ice="test"><span><a href="test-file/test/functional/2-clients.test.js.html#lineNumber448">&#x1F642; &#x1F642; - 2 clients leave</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-bot.test.js.html#lineNumber160">&#x1F916; - 1 bot leave</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/1-client.test.js.html#lineNumber287">&#x1F642; - 1 client leave</a></span></li>
 </ul>
   </div>
 
@@ -1753,10 +1915,14 @@ with the Signaling server.</p>
     <h4>Test:</h4>
     <ul>
       
-    <li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber250">2 members &#x1F642; &#x1F642; should send/receive broadcast String</a></span></li>
-<li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber275">2 members &#x1F642; &#x1F642; should send/receive broadcast ArrayBuffer</a></span></li>
-<li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber657">2 members &#x1F642; &#x1F916; should send/receive broadcast String</a></span></li>
-<li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber681">2 members &#x1F642; &#x1F916; should send/receive broadcast ArrayBuffer</a></span></li>
+    <li data-ice="test"><span><a href="test-file/test/functional/2-client_bot.test.js.html#lineNumber267">&#x1F642; &#x1F916; - 2 members: client invites bot invite should send/receive broadcast String</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-client_bot.test.js.html#lineNumber291">&#x1F642; &#x1F916; - 2 members: client invites bot invite should send/receive broadcast ArrayBuffer</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-clients.test.js.html#lineNumber346">&#x1F642; &#x1F642; - 2 clients should send/receive broadcast String</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-clients.test.js.html#lineNumber370">&#x1F642; &#x1F642; - 2 clients should send/receive broadcast ArrayBuffer</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/3-clients.test.js.html#lineNumber212">&#x1F642; &#x1F642; &#x1F642; - 3 clients should send/receive broadcast String</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/3-clients.test.js.html#lineNumber260">&#x1F642; &#x1F642; &#x1F642; - 3 clients should send/receive broadcast ArrayBuffer</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-bot_client.test.js.html#lineNumber259">&#x1F916; &#x1F642; - 2 members: bot first, then client should send/receive broadcast String</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-bot_client.test.js.html#lineNumber282">&#x1F916; &#x1F642; - 2 members: bot first, then client should send/receive broadcast ArrayBuffer</a></span></li>
 </ul>
   </div>
 
@@ -1830,10 +1996,14 @@ with the Signaling server.</p>
     <h4>Test:</h4>
     <ul>
       
-    <li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber302">2 members &#x1F642; &#x1F642; should send/receive private String</a></span></li>
-<li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber327">2 members &#x1F642; &#x1F642; should send/receive private ArrayBuffer</a></span></li>
-<li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber705">2 members &#x1F642; &#x1F916; should send/receive private String</a></span></li>
-<li data-ice="test"><span><a href="test-file/test/functional/2members.test.js.html#lineNumber729">2 members &#x1F642; &#x1F916; should send/receive private ArrayBuffer</a></span></li>
+    <li data-ice="test"><span><a href="test-file/test/functional/2-client_bot.test.js.html#lineNumber315">&#x1F642; &#x1F916; - 2 members: client invites bot invite should send/receive private String</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-client_bot.test.js.html#lineNumber339">&#x1F642; &#x1F916; - 2 members: client invites bot invite should send/receive private ArrayBuffer</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-clients.test.js.html#lineNumber396">&#x1F642; &#x1F642; - 2 clients should send/receive private String</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-clients.test.js.html#lineNumber420">&#x1F642; &#x1F642; - 2 clients should send/receive private ArrayBuffer</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/3-clients.test.js.html#lineNumber311">&#x1F642; &#x1F642; &#x1F642; - 3 clients should send/receive private String</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/3-clients.test.js.html#lineNumber365">&#x1F642; &#x1F642; &#x1F642; - 3 clients should send/receive private ArrayBuffer</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-bot_client.test.js.html#lineNumber306">&#x1F916; &#x1F642; - 2 members: bot first, then client should send/receive private String</a></span></li>
+<li data-ice="test"><span><a href="test-file/test/functional/2-bot_client.test.js.html#lineNumber330">&#x1F916; &#x1F642; - 2 members: bot first, then client should send/receive private ArrayBuffer</a></span></li>
 </ul>
   </div>
 

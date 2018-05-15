@@ -1,21 +1,13 @@
-import { BehaviorSubject } from 'rxjs/BehaviorSubject';
-import { Subject } from 'rxjs/Subject';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { Channel, ChannelType } from './Channel';
-import { isURL } from './misc/Util';
-export const CONNECT_TIMEOUT = 6000;
+import { isURL } from './misc/util';
+export const CONNECT_TIMEOUT = 4000;
 export var Route;
 (function (Route) {
     Route["JOIN"] = "join";
     Route["INVITE"] = "invite";
     Route["INTERNAL"] = "internal";
 })(Route || (Route = {}));
-export function composeUrl(url, route, wcId, senderId) {
-    let fullUrl = `${url}/${route}?wcId=${wcId}`;
-    if (senderId) {
-        fullUrl += `&senderId=${senderId}`;
-    }
-    return fullUrl;
-}
 /**
  * Service class responsible to establish connections between peers via
  * `WebSocket`.
@@ -30,20 +22,20 @@ export class WebSocketBuilder {
     }
     async connectToInvite(url) {
         if (isURL(url) && url.search(/^wss?/) !== -1) {
-            const fullUrl = composeUrl(url, Route.INVITE, this.wc.id, this.wc.myId);
+            const fullUrl = this.composeUrl(url, Route.INVITE);
             this.channelsSubject.next(await this.connect(fullUrl, ChannelType.INVITED));
         }
         else {
             throw new Error(`Invalid URL format: ${url}`);
         }
     }
-    newInviteWebSocket(ws, id) {
+    newInviteWebSocket(ws) {
         this.channelsSubject.next(new Channel(this.wc, ws, ChannelType.JOINING));
     }
-    async connectToJoin(url) {
+    async connectToJoin(url, wcId) {
         if (isURL(url) && url.search(/^wss?/) !== -1) {
             // FIXME: wcId should be the one received via signaling server
-            const fullUrl = composeUrl(url, Route.JOIN, this.wc.id);
+            const fullUrl = this.composeUrl(url, Route.JOIN, wcId);
             this.channelsSubject.next(await this.connect(fullUrl, ChannelType.JOINING));
         }
         else {
@@ -51,12 +43,14 @@ export class WebSocketBuilder {
         }
     }
     newJoinWebSocket(ws) {
-        this.channelsSubject.next(new Channel(this.wc, ws, ChannelType.INVITED));
+        const ch = new Channel(this.wc, ws, ChannelType.INVITED);
+        ch.initialize();
+        this.channelsSubject.next(ch);
     }
-    async connectInternal(url) {
+    async connectInternal(url, id) {
         if (isURL(url) && url.search(/^wss?/) !== -1) {
-            const fullUrl = composeUrl(url, Route.INTERNAL, this.wc.id, this.wc.myId);
-            this.channelsSubject.next(await this.connect(fullUrl, ChannelType.INTERNAL));
+            const fullUrl = this.composeUrl(url, Route.INTERNAL);
+            this.channelsSubject.next(await this.connect(fullUrl, ChannelType.INTERNAL, id));
         }
         else {
             throw new Error(`Invalid URL format: ${url}`);
@@ -100,6 +94,14 @@ export class WebSocketBuilder {
                 reject(new Error(`WebSocket connection to '${url}' failed with code ${closeEvt.code}: ${closeEvt.reason}`));
             };
         });
+    }
+    composeUrl(url, route, wcId = this.wc.id) {
+        if (route === Route.INTERNAL) {
+            return `${url}/${route}?wcId=${wcId}&senderId=${this.wc.myId}`;
+        }
+        else {
+            return `${url}/${route}?wcId=${wcId}&key=${this.wc.key}`;
+        }
     }
 }
 WebSocketBuilder.listenUrl = new BehaviorSubject('');

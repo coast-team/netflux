@@ -12,9 +12,4 @@ global.WebSocket = require('uws');
 const textEncoding = require('text-encoding');
 global.TextEncoder = textEncoding.TextEncoder;
 global.TextDecoder = textEncoding.TextDecoder;
-global.crypto = require('crypto');
-global.Event = class Event {
-    constructor(name) {
-        this.name = name;
-    }
-};
+global.cryptoNode = require('crypto');

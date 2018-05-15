@@ -1,4 +1,4 @@
-import { LogLevel as Logs, setLogLevel as setLogs } from './misc/Util';
+import { LogLevel as Logs, setLogLevel as setLogs } from './misc/util';
 import { TopologyEnum } from './service/topology/Topology';
 import { SignalingState as SigState } from './Signaling';
 import { WebChannelState } from './WebChannelState';
@@ -29,13 +29,6 @@ export class SignalingState {
         return SigState.OPEN;
     }
     /**
-     * `2`: the connection is in the process of closing (equivalent to `WebSocket.CLOSING`).
-     * @type {number}
-     */
-    static get CLOSING() {
-        return SigState.CLOSING;
-    }
-    /**
      * `3`: the connection is closed or couldn't be opened (equivalent to `WebSocket.CLOSED`).
      * @type {number}
      */
@@ -43,7 +36,7 @@ export class SignalingState {
         return SigState.CLOSED;
     }
     /**
-     * `4`: signaling server is checking wether you are still connected to the group. If it is not the case, then
+     * `2`: signaling server is checking wether you are still connected to the group. If it is not the case, then
      * subscribs you to one of the group member in order to create a connection with him.
      * @type {number}
      */
@@ -51,7 +44,7 @@ export class SignalingState {
         return SigState.CHECKING;
     }
     /**
-     * `5`: a connection has been established with one of the group member or you are the only member of the group.
+     * `4`: a connection has been established with one of the group member or you are the only member of the group.
      * From now the signaling is no longer needed, because the joining process will continue with a help of this member.
      * @type {number}
      */
@@ -76,13 +69,6 @@ export class WebGroupState {
      */
     static get JOINED() {
         return WebChannelState.JOINED;
-    }
-    /**
-     * `2`: you are about to leave the group.
-     * @type {number}
-     */
-    static get LEAVING() {
-        return WebChannelState.LEAVING;
     }
     /**
      * `3`: you have sussessfully left the group.
@@ -123,7 +109,7 @@ export class LogLevel {
         return Logs.WEB_GROUP;
     }
     /**
-     * Equals to `3`, logs for WebRTCBuilder module.
+     * Equals to `3`, logs for DataChannelBuilder module.
      * @type {number}
      */
     static get WEBRTC() {
@@ -170,8 +156,8 @@ export class LogLevel {
  * instantiation at any time.
  */
 /**
- * The options to be passed into {@link WebGroupBotServer} constructor.
- * @typedef {Object} WebGroupBotServerOptions
+ * The options to be passed into {@link Bot} constructor.
+ * @typedef {Object} BotOptions
  * @property {Topology} [topology] See WebGroupOptions.topology
  * @property {string} [signalingServer] See WebGroupOptions.signalingServer
  * @property {RTCConfiguration} [rtcConfiguration] See WebGroupOptions.rtcConfiguration
@@ -180,6 +166,7 @@ export class LogLevel {
  * @property {NodeJSHttpServer|NodeJSHttpsServer} bot.server NodeJS http(s) server.
  * @property {string} [bot.url] Bot server URL.
  * @property {boolean} [bot.perMessageDeflate] Enable/disable permessage-deflate.
+ * @property {boolean} [bot.leaveOnceAlone] If true, bot will live (disconnect from the signaling server) if no other peers left in the group.
  */
 /**
  * @external {RTCConfiguration} https://developer.mozilla.org/en/docs/Web/API/RTCConfiguration

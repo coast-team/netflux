@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl" href="../../../">
+  <title data-ice="title">test/functional/2-client_bot.test.js | Netflux</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  <script src="script/manual.js"></script>
+<link rel="stylesheet" href="./inject/css/0-style.css"><meta name="description" content="Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done."><meta property="twitter:card" content="summary"><meta property="twitter:title" content="Netflux"><meta property="twitter:description" content="Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done."></head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./" style="display: flex; align-items: center;"><img src="./image/brand_logo.jpg" style="width:34px;"></a>
+  <a href="./manual/index.html" data-ice="manualHeaderLink">Manual</a>
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  <a href="test.html" data-ice="testLink">Test</a>
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+<a style="position:relative; top:3px;" href="https://github.com/coast-team/netflux"><img width="20px" src="./image/github.png"></a></header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/BotFacade.js~Bot.html">Bot</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~LogLevel.html">LogLevel</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~SignalingState.html">SignalingState</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~Topology.html">Topology</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~WebGroupState.html">WebGroupState</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-setLogLevel">setLogLevel</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-DataType">DataType</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-BotOptions">BotOptions</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupOptions">WebGroupOptions</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/http.html#http_class_http_server">NodeJSHttpServer</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/https.html#https_class_https_server">NodeJSHttpsServer</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://developer.mozilla.org/en/docs/Web/API/RTCConfiguration">RTCConfiguration</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array">Uint8Array</a></span></span></li>
+</ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><h1 data-ice="title">test/functional/2-client_bot.test.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">/// &lt;reference types=&apos;jasmine&apos; /&gt;
+/* tslint:disable:one-variable-per-declaration */
+import { SignalingState, WebGroup, WebGroupState } from &apos;../../src/index.browser&apos;;
+import { Topology } from &apos;../../src/index.common.doc&apos;;
+import { areTheSame, BOT_URL, botGetData, botWaitJoin, cleanWebGroup, Queue, SIGNALING_URL, wait, } from &apos;../util/helper&apos;;
+const WebGroupOptions = {
+    signalingServer: SIGNALING_URL,
+    autoRejoin: false,
+};
+/** @test {WebGroup} */
+describe(&apos;&#x1F642; &#x1F916; - 2 members: client invites bot&apos;, () =&gt; {
+    let client;
+    /** @test {WebGroup#invite} */
+    describe(&apos;invite&apos;, () =&gt; {
+        beforeEach((done) =&gt; {
+            client = new WebGroup(WebGroupOptions);
+            client.onStateChange = (state) =&gt; {
+                if (state === WebGroupState.JOINED) {
+                    cleanWebGroup(client);
+                    wait(500).then(() =&gt; done());
+                }
+            };
+            client.join();
+        });
+        afterEach(() =&gt; {
+            cleanWebGroup(client);
+            client.leave();
+        });
+        /** @test {WebGroup#onSignalingStateChange} */
+        it(&apos;should change the Signaling state&apos;, (done) =&gt; {
+            client.invite(BOT_URL);
+            botWaitJoin(client.key)
+                .then(() =&gt; botGetData(client.key))
+                .then((bot) =&gt; {
+                expect(bot.onSignalingStateCalled).toEqual(4);
+                done();
+            });
+        });
+        /** @test {WebGroup#signalingState} */
+        it(&apos;Signaling state should be CHECKED&apos;, (done) =&gt; {
+            client.invite(BOT_URL);
+            botWaitJoin(client.key)
+                .then(() =&gt; botGetData(client.key))
+                .then((bot) =&gt; {
+                expect(client.signalingState).toEqual(SignalingState.CHECKED);
+                expect(bot.signalingState).toEqual(SignalingState.CHECKED);
+                done();
+            });
+        });
+        /** @test {WebGroup#onStateChange} */
+        it(&apos;should change the WebGroup state of the bot only&apos;, (done) =&gt; {
+            let called = 0;
+            client.onStateChange = () =&gt; called++;
+            client.invite(BOT_URL);
+            // Check bot bot
+            botWaitJoin(client.key)
+                .then(() =&gt; botGetData(client.key))
+                .then((bot) =&gt; {
+                expect(called).toEqual(0);
+                expect(bot.onStateCalled).toEqual(1);
+                done();
+            })
+                .catch(fail);
+        });
+        /** @test {WebGroup#state} */
+        it(&apos;WebGroup state should be JOINED for both&apos;, (done) =&gt; {
+            client.invite(BOT_URL);
+            // Check bot bot
+            botWaitJoin(client.key)
+                .then(() =&gt; botGetData(client.key))
+                .then((bot) =&gt; {
+                expect(client.state).toEqual(WebGroupState.JOINED);
+                expect(bot.state).toEqual(WebGroupState.JOINED);
+                done();
+            })
+                .catch(fail);
+        });
+        /** @test {WebGroup#onMemberJoin} */
+        it(&apos;should be notified about new member&apos;, (done) =&gt; {
+            let called1 = 0;
+            const clientJoinedMembers = [];
+            client.onMemberJoin = (id) =&gt; {
+                clientJoinedMembers.push(id);
+                called1++;
+            };
+            client.invite(BOT_URL);
+            // Check bot bot
+            botWaitJoin(client.key)
+                .then(() =&gt; botGetData(client.key))
+                .then((bot) =&gt; {
+                expect(bot.onMemberJoinCalled).toEqual(1);
+                expect(bot.joinedMembers).toEqual([client.myId]);
+                expect(called1).toEqual(1);
+                expect(clientJoinedMembers).toEqual([bot.myId]);
+                done();
+            })
+                .catch(fail);
+        });
+        /** @test {WebGroup#onMemberLeave} */
+        it(&apos;should NOT be notified about left member&apos;, (done) =&gt; {
+            let called1 = 0;
+            const clientLeftMembers = [];
+            client.onMemberLeave = (id) =&gt; {
+                clientLeftMembers.push(id);
+                called1++;
+            };
+            client.invite(BOT_URL);
+            // Check bot bot
+            botWaitJoin(client.key)
+                .then(() =&gt; botGetData(client.key))
+                .then((bot) =&gt; {
+                expect(bot.onMemberLeaveCalled).toEqual(0);
+                expect(bot.leftMembers).toEqual([]);
+                expect(called1).toEqual(0);
+                expect(clientLeftMembers).toEqual([]);
+                done();
+            })
+                .catch(fail);
+        });
+        /** @test {WebGroup#onMessage} */
+        it(&apos;should NOT receive any message&apos;, (done) =&gt; {
+            let called1 = 0;
+            client.onMessage = (id) =&gt; called1++;
+            client.invite(BOT_URL);
+            // Check bot bot
+            botWaitJoin(client.key)
+                .then(() =&gt; botGetData(client.key))
+                .then((bot) =&gt; {
+                expect(bot.onMessageToBeCalled).toEqual(0);
+                expect(called1).toEqual(0);
+                done();
+            })
+                .catch(fail);
+        });
+        /** @test {WebGroup#members} */
+        it(&apos;should have 2 members&apos;, (done) =&gt; {
+            let _bot;
+            const queue = new Queue(2, () =&gt; {
+                wait(1000).then(() =&gt; {
+                    const expected = [client.myId, _bot.myId];
+                    expect(areTheSame(client.members, expected)).toBeTruthy();
+                    expect(areTheSame(_bot.members, expected)).toBeTruthy();
+                    done();
+                });
+            });
+            client.onMemberJoin = (id) =&gt; {
+                expect(areTheSame(client.members, [client.myId, id])).toBeTruthy();
+                queue.done();
+            };
+            client.invite(BOT_URL);
+            // Check bot bot
+            botWaitJoin(client.key)
+                .then(() =&gt; botGetData(client.key))
+                .then((bot) =&gt; {
+                _bot = bot;
+                expect(areTheSame(bot.members, [client.myId, bot.myId])).toBeTruthy();
+                queue.done();
+            })
+                .catch(fail);
+        });
+        /** @test {WebGroup#myId} */
+        it(&quot;client&apos;s id should not change and bot&apos;s id should not be 0&quot;, (done) =&gt; {
+            const clientMyId = client.myId;
+            client.invite(BOT_URL);
+            // Check bot bot
+            botWaitJoin(client.key)
+                .then(() =&gt; botGetData(client.key))
+                .then((bot) =&gt; {
+                expect(client.myId).toEqual(clientMyId);
+                expect(bot.myId).not.toEqual(0);
+                done();
+            })
+                .catch(fail);
+        });
+        /** @test {WebGroup#id} */
+        it(&apos;WebGroup id should not change, should be the same and not 0&apos;, (done) =&gt; {
+            const wgId = client.id;
+            client.invite(BOT_URL);
+            // Check bot bot
+            botWaitJoin(client.key)
+                .then(() =&gt; botGetData(client.key))
+                .then((bot) =&gt; {
+                expect(client.id).toEqual(wgId);
+                expect(bot.id).toEqual(client.id);
+                expect(bot.id).not.toEqual(0);
+                done();
+            })
+                .catch(fail);
+        });
+        /** @test {WebGroup#key} */
+        it(&apos;key should not change, should be the same and not empty&apos;, (done) =&gt; {
+            const key = client.key;
+            client.invite(BOT_URL);
+            // Check bot bot
+            botWaitJoin(client.key)
+                .then(() =&gt; botGetData(client.key))
+                .then((bot) =&gt; {
+                expect(client.key).toEqual(key);
+                expect(bot.key).toEqual(client.key);
+                expect(bot.key).not.toEqual(&apos;&apos;);
+                done();
+            })
+                .catch(fail);
+        });
+        /** @test {WebGroup#topology} */
+        it(&apos;topology should not change&apos;, (done) =&gt; {
+            client.invite(BOT_URL);
+            // Check bot bot
+            botWaitJoin(client.key)
+                .then(() =&gt; botGetData(client.key))
+                .then((bot) =&gt; {
+                expect(client.topology).toEqual(Topology.FULL_MESH);
+                expect(bot.topology).toEqual(Topology.FULL_MESH);
+                done();
+            })
+                .catch(fail);
+        });
+        /** @test {WebGroup#signalingServer} */
+        it(&apos;Signaling server should not change&apos;, (done) =&gt; {
+            client.invite(BOT_URL);
+            // Check bot bot
+            botWaitJoin(client.key)
+                .then(() =&gt; botGetData(client.key))
+                .then((bot) =&gt; {
+                expect(client.signalingServer).toEqual(SIGNALING_URL);
+                expect(bot.signalingServer).toEqual(SIGNALING_URL);
+                done();
+            })
+                .catch(fail);
+        });
+        /** @test {WebGroup#autoRejoin} */
+        it(&apos;autoRejoin should be disabled&apos;, (done) =&gt; {
+            client.invite(BOT_URL);
+            // Check bot bot
+            botWaitJoin(client.key)
+                .then(() =&gt; botGetData(client.key))
+                .then((bot) =&gt; {
+                expect(client.autoRejoin).toBeFalsy();
+                expect(bot.autoRejoin).toBeFalsy();
+                done();
+            })
+                .catch(fail);
+        });
+        describe(&apos;should send/receive&apos;, () =&gt; {
+            let called1;
+            beforeEach((done) =&gt; {
+                called1 = 0;
+                const queue = new Queue(2, () =&gt; {
+                    cleanWebGroup(client);
+                    wait(500).then(() =&gt; done());
+                });
+                client = new WebGroup(WebGroupOptions);
+                client.onMemberJoin = () =&gt; queue.done();
+                client.onStateChange = (state) =&gt; {
+                    if (state === WebGroupState.JOINED) {
+                        client.invite(BOT_URL);
+                        botWaitJoin(client.key).then(() =&gt; queue.done());
+                    }
+                };
+                client.join();
+            });
+            afterEach(() =&gt; {
+                cleanWebGroup(client);
+                client.leave();
+            });
+            /** @test {WebGroup#send} */
+            it(&apos;broadcast String&apos;, (done) =&gt; {
+                const msg1 = &apos;sendArt is long, life is short&apos;;
+                const msgBot = &apos;bot: &apos; + msg1;
+                // Code for peer 1
+                client.onMessage = (id, msg) =&gt; {
+                    called1++;
+                    expect(msg).toEqual(msgBot);
+                    // Check bot bot
+                    wait(1000)
+                        .then(() =&gt; botGetData(client.key))
+                        .then((bot) =&gt; {
+                        expect(called1).toEqual(1);
+                        expect(id).toEqual(bot.myId);
+                        expect(bot.onMessageToBeCalled).toEqual(1);
+                        expect(bot.messages[0].msg).toEqual(msg1);
+                        expect(bot.messages[0].id).toEqual(client.myId);
+                        done();
+                    })
+                        .catch(fail);
+                };
+                // Start sending message
+                client.send(msg1);
+            });
+            /** @test {WebGroup#send} */
+            it(&apos;broadcast ArrayBuffer&apos;, (done) =&gt; {
+                const msg1 = new Uint8Array([10, 34, 248, 157, 10, 8, 220]);
+                const msgBot = new Uint8Array([42, 34, 248, 157, 10, 8, 220]);
+                // Code for peer 1
+                client.onMessage = (id, msg) =&gt; {
+                    called1++;
+                    expect(msg).toEqual(msgBot);
+                    // Check bot bot
+                    wait(1000)
+                        .then(() =&gt; botGetData(client.key))
+                        .then((bot) =&gt; {
+                        expect(called1).toEqual(1);
+                        expect(id).toEqual(bot.myId);
+                        expect(bot.onMessageToBeCalled).toEqual(1);
+                        expect(bot.messages[0].msg).toEqual(Array.from(msg1));
+                        expect(bot.messages[0].id).toEqual(client.myId);
+                        done();
+                    })
+                        .catch(fail);
+                };
+                // Start sending message
+                client.send(msg1);
+            });
+            /** @test {WebGroup#sendTo} */
+            it(&apos;private String&apos;, (done) =&gt; {
+                const msg1 = &apos;Art is long, life is short&apos;;
+                const msgBot = &apos;bot: &apos; + msg1;
+                // Code for peer 1
+                client.onMessage = (id, msg) =&gt; {
+                    called1++;
+                    expect(msg).toEqual(msgBot);
+                    // Check bot bot
+                    wait(1000)
+                        .then(() =&gt; botGetData(client.key))
+                        .then((bot) =&gt; {
+                        expect(called1).toEqual(1);
+                        expect(id).toEqual(bot.myId);
+                        expect(bot.onMessageToBeCalled).toEqual(1);
+                        expect(bot.messages[0].msg).toEqual(msg1);
+                        expect(bot.messages[0].id).toEqual(client.myId);
+                        done();
+                    })
+                        .catch(fail);
+                };
+                // Start sending message
+                client.sendTo(client.members[1], msg1);
+            });
+            /** @test {WebGroup#sendTo} */
+            it(&apos;private ArrayBuffer&apos;, (done) =&gt; {
+                const msg1 = new Uint8Array([45, 34, 248, 157, 10, 8, 220]);
+                const msgBot = new Uint8Array([42, 34, 248, 157, 10, 8, 220]);
+                // Code for peer 1
+                client.onMessage = (id, msg) =&gt; {
+                    called1++;
+                    expect(msg).toEqual(msgBot);
+                    // Check bot bot
+                    wait(1000)
+                        .then(() =&gt; botGetData(client.key))
+                        .then((bot) =&gt; {
+                        expect(called1).toEqual(1);
+                        expect(id).toEqual(bot.myId);
+                        expect(bot.onMessageToBeCalled).toEqual(1);
+                        expect(bot.messages[0].msg).toEqual(Array.from(msg1));
+                        expect(bot.messages[0].id).toEqual(client.myId);
+                        done();
+                    })
+                        .catch(fail);
+                };
+                // Start sending message
+                client.sendTo(client.members[1], msg1);
+            });
+        });
+    });
+});
+</code></pre>
+
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(1.1.0)</span><img src="./image/esdoc-logo-mini-black.png"></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>

@@ -12,7 +12,7 @@
 <body class="layout-container" data-ice="rootContainer">
 
 <header>
-  <a href="./" style="display: flex; align-items: center;"><img src="./image/brand_logo.png" style="width:34px;"></a>
+  <a href="./" style="display: flex; align-items: center;"><img src="./image/brand_logo.jpg" style="width:34px;"></a>
   <a href="./manual/index.html" data-ice="manualHeaderLink">Manual</a>
   <a href="identifiers.html">Reference</a>
   <a href="source.html">Source</a>
@@ -29,7 +29,7 @@
 <nav class="navigation" data-ice="nav"><div>
   <ul>
     
-  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/BotServerFacade.js~WebGroupBotServer.html">WebGroupBotServer</a></span></span></li>
+  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/BotFacade.js~Bot.html">Bot</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~LogLevel.html">LogLevel</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~SignalingState.html">SignalingState</a></span></span></li>
@@ -37,7 +37,7 @@
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~WebGroupState.html">WebGroupState</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-setLogLevel">setLogLevel</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-DataType">DataType</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupBotServerOptions">WebGroupBotServerOptions</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-BotOptions">BotOptions</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupOptions">WebGroupOptions</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/http.html#http_class_http_server">NodeJSHttpServer</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/https.html#https_class_https_server">NodeJSHttpsServer</a></span></span></li>
@@ -66,13 +66,13 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="typedef/index.html#static-typedef-DataType">DataType</a></span></span><span class="code" data-ice="signature">: <span>string</span> | <span><a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array">Uint8Array</a></span></span>
+          <span class="code" data-ice="name"><span><a href="typedef/index.html#static-typedef-BotOptions">BotOptions</a></span></span><span class="code" data-ice="signature">: <span>Object</span></span>
         </p>
       </div>
       <div>
         
         
-        <div data-ice="description"><p>Is a helper type representing types that can be sent/received over a web group.</p>
+        <div data-ice="description"><p>The options to be passed into <span><a href="class/src/BotFacade.js~Bot.html">Bot</a></span> constructor.</p>
 </div>
       </div>
     </td>
@@ -95,13 +95,13 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupBotServerOptions">WebGroupBotServerOptions</a></span></span><span class="code" data-ice="signature">: <span>Object</span></span>
+          <span class="code" data-ice="name"><span><a href="typedef/index.html#static-typedef-DataType">DataType</a></span></span><span class="code" data-ice="signature">: <span>string</span> | <span><a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array">Uint8Array</a></span></span>
         </p>
       </div>
       <div>
         
         
-        <div data-ice="description"><p>The options to be passed into <span><a href="class/src/BotServerFacade.js~WebGroupBotServer.html">WebGroupBotServer</a></span> constructor.</p>
+        <div data-ice="description"><p>Is a helper type representing types that can be sent/received over a web group.</p>
 </div>
       </div>
     </td>
@@ -145,58 +145,14 @@
 <div data-ice="details"><h2 data-ice="title">Static Public </h2>
 
 <div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="static-typedef-DataType">
+  <h3 data-ice="anchor" id="static-typedef-BotOptions">
     <span class="access" data-ice="access">public</span>
     
     
     
     
     
-    <span class="code" data-ice="name">DataType</span><span class="code" data-ice="signature">: <span>string</span> | <span><a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array">Uint8Array</a></span></span>
-    <span class="right-info">
-      
-      
-      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumberundefined">source</a></span></span>
-    </span>
-  </h3>
-
-  
-  
-  
-  <div data-ice="description"><p>Is a helper type representing types that can be sent/received over a web group.</p>
-</div>
-
-  
-
-  <div data-ice="properties">
-</div>
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-  
-</div>
-<div class="detail" data-ice="detail">
-  <h3 data-ice="anchor" id="static-typedef-WebGroupBotServerOptions">
-    <span class="access" data-ice="access">public</span>
-    
-    
-    
-    
-    
-    <span class="code" data-ice="name">WebGroupBotServerOptions</span><span class="code" data-ice="signature">: <span>Object</span></span>
+    <span class="code" data-ice="name">BotOptions</span><span class="code" data-ice="signature">: <span>Object</span></span>
     <span class="right-info">
       
       
@@ -207,7 +163,7 @@
   
   
   
-  <div data-ice="description"><p>The options to be passed into <span><a href="class/src/BotServerFacade.js~WebGroupBotServer.html">WebGroupBotServer</a></span> constructor.</p>
+  <div data-ice="description"><p>The options to be passed into <span><a href="class/src/BotFacade.js~Bot.html">Bot</a></span> constructor.</p>
 </div>
 
   
@@ -276,9 +232,60 @@
       <td data-ice="description"><p>Enable/disable permessage-deflate.</p>
 </td>
     </tr>
+<tr data-ice="property" data-depth="1">
+      <td data-ice="name" class="code" data-depth="1">bot.leaveOnceAlone</td>
+      <td data-ice="type" class="code"><span>boolean</span></td>
+      <td data-ice="appendix"><ul><li>optional</li></ul></td>
+      <td data-ice="description"><p>If true, bot will live (disconnect from the signaling server) if no other peers left in the group.</p>
+</td>
+    </tr>
 </tbody>
   </table>
 </div>
+</div>
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+</div>
+<div class="detail" data-ice="detail">
+  <h3 data-ice="anchor" id="static-typedef-DataType">
+    <span class="access" data-ice="access">public</span>
+    
+    
+    
+    
+    
+    <span class="code" data-ice="name">DataType</span><span class="code" data-ice="signature">: <span>string</span> | <span><a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array">Uint8Array</a></span></span>
+    <span class="right-info">
+      
+      
+      <span data-ice="source"><span><a href="file/src/WebChannelFacade.js.html#lineNumberundefined">source</a></span></span>
+    </span>
+  </h3>
+
+  
+  
+  
+  <div data-ice="description"><p>Is a helper type representing types that can be sent/received over a web group.</p>
+</div>
+
+  
+
+  <div data-ice="properties">
 </div>
 
   

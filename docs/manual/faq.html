@@ -12,7 +12,7 @@
 <body class="layout-container manual-root" data-ice="rootContainer">
 
 <header>
-  <a href="./" style="display: flex; align-items: center;"><img src="./image/brand_logo.png" style="width:34px;"></a>
+  <a href="./" style="display: flex; align-items: center;"><img src="./image/brand_logo.jpg" style="width:34px;"></a>
   <a href="./manual/index.html" data-ice="manualHeaderLink">Manual</a>
   <a href="identifiers.html">Reference</a>
   <a href="source.html">Source</a>
@@ -62,6 +62,15 @@
       
     <li data-ice="manualNav" class="indent-h1" data-link="manual/faq.html"><a href="manual/faq.html" data-ice="link">FAQ</a></li>
 <li data-ice="manualNav" class="indent-h2" data-link="manual/faq.html"><a href="manual/faq.html#how-netflux-chooses-between--code-rtcdatachannel--code--and--code-websocket--code-" data-ice="link">How Netflux chooses between RTCDataChannel and WebSocket</a></li>
+<li data-ice="manualNav" class="indent-h2" data-link="manual/faq.html"><a href="manual/faq.html#state-description" data-ice="link">State description</a></li>
+<li data-ice="manualNav" class="indent-h3" data-link="manual/faq.html"><a href="manual/faq.html#events" data-ice="link">Events</a></li>
+<li data-ice="manualNav" class="indent-h4" data-link="manual/faq.html"><a href="manual/faq.html#signaling-state-event" data-ice="link">Signaling state event</a></li>
+<li data-ice="manualNav" class="indent-h4" data-link="manual/faq.html"><a href="manual/faq.html#topology-state-event" data-ice="link">Topology state event</a></li>
+<li data-ice="manualNav" class="indent-h4" data-link="manual/faq.html"><a href="manual/faq.html#join-method-call" data-ice="link">Join method call</a></li>
+<li data-ice="manualNav" class="indent-h4" data-link="manual/faq.html"><a href="manual/faq.html#leave-method-call" data-ice="link">Leave method call</a></li>
+<li data-ice="manualNav" class="indent-h4" data-link="manual/faq.html"><a href="manual/faq.html#member-left-event" data-ice="link">Member left event</a></li>
+<li data-ice="manualNav" class="indent-h4" data-link="manual/faq.html"><a href="manual/faq.html#online---event--online-offline-events--navigator-online-" data-ice="link">onLine() event (online/offline events, navigator.onLine)</a></li>
+<li data-ice="manualNav" class="indent-h4" data-link="manual/faq.html"><a href="manual/faq.html#isvisible---event--page-visibility-api-" data-ice="link">isVisible() event (Page Visibility API)</a></li>
 </ul>
   </div>
 </div>
@@ -85,8 +94,8 @@
 <li>Servers may or may not listen on <code>WebSocket</code> or connect over <code>WebSocket</code> and may or may not support <code>RTCDataChannel</code>.</li>
 </ul>
 <p>This technical diversity pushes us to try all possibilities in order to create a connection between two peers based on their capabilities.</p>
-<p>Between two peers, there is always one who initiates the connection, while the other is in a passive state. Lets say peer <em>A</em> wants to connect to peer <em>B</em> (i.e. <em>A</em> is the initiator).</p>
-<p>The following algorithm is the same for <em>A</em> and <em>B</em> and is executed each time a <code>message</code> is received. It runs through all possiblities in order to establish a connection between these peers (i.e. <code>return SUCCESS</code> if the connection succeed and <code>return FAILED</code> otherwise). It is important that the initiator peer (i.e. A) must be notified about the algorithm&apos;s result, while for the second peer (who is in the passive state) this information has no importance.</p>
+<p>Between two peers, there is always one who initiates the connection, while the other is in a passive state. Lets say peer _A_ wants to connect to peer _B_ (i.e. _A_ is the initiator).</p>
+<p>The following algorithm is the same for _A_ and _B_ and is executed each time a <code>message</code> is received. It runs through all possiblities in order to establish a connection between these peers (i.e. <code>return SUCCESS</code> if the connection succeed and <code>return FAILED</code> otherwise). It is important that the initiator peer (i.e. A) must be notified about the algorithm&apos;s result, while for the second peer (who is in the passive state) this information has no importance.</p>
 <p><code>message</code> variable below persistes the state of the actions for both peers. It is updated by both and is exchanged between them.</p>
 <pre><code class="lang-pseudocode"><code class="source-code prettyprint">// Pseudocode:
 // I received a `message` from another peer
@@ -116,6 +125,316 @@ if iAmTheInitiator(message)
 else
   send(message)</code>
 </code></pre>
+<h2 id="state-description">State description</h2><p>This section describes what trigger the <code>WebChannel</code> (i.e. <code>WebGroup</code>) state to change.</p>
+<p>Possible values for <code>WebChannel</code>, <code>Signaling</code> and <code>Topology</code> states are:</p>
+<table>
+<thead>
+<tr>
+<th>WebChannel</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>JOINING</code></td>
+<td>You are about to join the group.</td>
+</tr>
+<tr>
+<td><code>JOINED</code></td>
+<td>You have successfully joined the group.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>LEFT</code></td>
+<td>You have successfully left the group or couldn&apos;t join. This is also the initial value (i.e. after <code>new WebChannel()</code> and before calling <code>join()</code>).</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Signaling state</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CONNECTING</code></td>
+<td>The connection with Signaling server is not yet open (equivalent to <code>WebSocket.CONNECTING</code>).</td>
+</tr>
+<tr>
+<td><code>OPEN</code></td>
+<td>The connection with Signaling server is open (equivalent to <code>WebSocket.OPEN</code>).</td>
+</tr>
+<tr>
+<td><code>CHECKING</code></td>
+<td>Signaling server is about to vefiry that you are connected to at least one group member. If so, then the state becomes <code>CHECKED</code> and nothing to do, otherwise it prompt you to connect to the group member. After that the state becomes <code>CHECKED</code> and the <code>TopologyService</code> should rejoin the group.</td>
+</tr>
+<tr>
+<td><code>CHECKED</code></td>
+<td>You are connected to at least one group member or you are the only group member.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>CLOSED</code></td>
+<td>The connection with Signaling server is closed or couldn&apos;t be opened (equivalent to <code>WebSocket.CLOSED</code>).</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Topology state</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>JOINING</code></td>
+<td>Thanks to the Signaling server you are connected to one of the group memberf. From now the topology service is about to create the rest of connections, if necessary, in order to keep the topology structure and assure messages delivery.</td>
+</tr>
+<tr>
+<td><code>JOINED</code></td>
+<td>The topology is considerated as constructed.</td>
+</tr>
+<tr>
+<td><code>LEFT</code></td>
+<td>All connections with group members were closed or topology failed to construct the peer to peer network.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="events">Events</h3><h4 id="signaling-state-event">Signaling state event</h4><table>
+<thead>
+<tr>
+<th>Singaling</th>
+<th>WebChannel</th>
+<th>Topology</th>
+<th>connected</th>
+<th>rejoinEnabled</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CLOSED</td>
+<td></td>
+<td>LEFT</td>
+<td></td>
+<td></td>
+<td>$rejoinOrLeave</td>
+</tr>
+<tr>
+<td>CLOSED</td>
+<td></td>
+<td>JOINED</td>
+<td></td>
+<td>true</td>
+<td>$connectToSignaling</td>
+</tr>
+<tr>
+<td>OPEN</td>
+<td></td>
+<td>!JOINING</td>
+<td></td>
+<td></td>
+<td>$signalingCheck</td>
+</tr>
+<tr>
+<td>CHECKED</td>
+<td>JOINING</td>
+<td>LEFT</td>
+<td>true</td>
+<td></td>
+<td>Topology.JOINED</td>
+</tr>
+</tbody>
+</table>
+<h4 id="topology-state-event">Topology state event</h4><table>
+<thead>
+<tr>
+<th>Topology</th>
+<th>Singaling</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>JOINING</td>
+<td></td>
+<td>WebChannel.JOINING</td>
+</tr>
+<tr>
+<td>JOINING</td>
+<td>CLOSED</td>
+<td>$connectToSignaling</td>
+</tr>
+<tr>
+<td>JOINED</td>
+<td></td>
+<td>WebChannel.JOINED</td>
+</tr>
+<tr>
+<td>JOINED</td>
+<td>OPEN</td>
+<td>WebChannel.JOINED &amp; $signalingCheck</td>
+</tr>
+<tr>
+<td>JOINED</td>
+<td>CHECKED</td>
+<td>WebChannel.JOINED &amp; $signalingCheck</td>
+</tr>
+<tr>
+<td>LEFT</td>
+<td>CLOSED</td>
+<td>$rejoinOrLeave</td>
+</tr>
+<tr>
+<td>LEFT</td>
+<td>CONNECTING</td>
+<td>WebChannel.JOINING</td>
+</tr>
+<tr>
+<td>LEFT</td>
+<td>OPEN</td>
+<td>WebChannel.JOINING &amp; $signalingCheck</td>
+</tr>
+<tr>
+<td>LEFT</td>
+<td>CHECKING</td>
+<td>WebChannel.JOINING</td>
+</tr>
+<tr>
+<td>LEFT</td>
+<td>CHECKED</td>
+<td>$signalingCheck</td>
+</tr>
+</tbody>
+</table>
+<p>Otherwiser $leave</p>
+<h4 id="join-method-call">Join method call</h4><table>
+<thead>
+<tr>
+<th>WebChannel</th>
+<th>onLine</th>
+<th>Visibility</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LEFT</td>
+<td>true</td>
+<td>visible</td>
+<td>$join</td>
+</tr>
+</tbody>
+</table>
+<h4 id="leave-method-call">Leave method call</h4><table>
+<thead>
+<tr>
+<th>WebChannel</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>!LEFT</td>
+<td>$leave</td>
+</tr>
+</tbody>
+</table>
+<h4 id="member-left-event">Member left event</h4><table>
+<thead>
+<tr>
+<th>Singaling</th>
+<th>Topology</th>
+<th>adjacent member</th>
+<th>not only you left in the group</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CHECKED</td>
+<td>JOINED</td>
+<td>true</td>
+<td>true</td>
+<td>$signalingCheck</td>
+</tr>
+</tbody>
+</table>
+<h4 id="online---event--online-offline-events--navigator-online-">onLine() event (online/offline events, navigator.onLine)</h4><table>
+<thead>
+<tr>
+<th>WebChannel</th>
+<th>Visibility</th>
+<th>rejoinTimer</th>
+<th>rejoinEnabled</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LEFT</td>
+<td>visible</td>
+<td>undefined</td>
+<td>true</td>
+<td>$join</td>
+</tr>
+</tbody>
+</table>
+<h4 id="isvisible---event--page-visibility-api-">isVisible() event (Page Visibility API)</h4><table>
+<thead>
+<tr>
+<th>WebChannel</th>
+<th>onLine</th>
+<th>rejoinTimer</th>
+<th>rejoinEnabled</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LEFT</td>
+<td>true</td>
+<td>undefined</td>
+<td>true</td>
+<td>$join</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>$join -&gt; consists of three steps:</p>
+</blockquote>
+<ol>
+<li>Initialize WebChannel properties (ids, members etc.), then</li>
+<li>Set WebChannel state to JOINING and finally</li>
+<li>Connect to Signaling server to start joining process</li>
+</ol>
+<blockquote>
+<p>$leave -&gt; consists of two steps</p>
+</blockquote>
+<ol>
+<li>Clean WebChannel properties (ids, members, clean servicies) as if we were doing <code>new WebChannel()</code>, then</li>
+<li>Set WebChannel state to LEFT</li>
+</ol>
+<blockquote>
+<p>$rejoinOrLeave -&gt; consists of executing the following algorithm:</p>
+</blockquote>
+<pre><code class="lang-pseudocode"><code class="source-code prettyprint">  Execute $leave.1
+  if (rejoinEnabled) then
+    Execute $join.1
+    Execute $join.2
+    setTimeout
+      if (WebChannel.LEFT &amp;&amp; visible &amp;&amp; onLine &amp;&amp; rejoinEnabled) then
+        $connectToSignaling
+  else
+    $leave.2</code>
+</code></pre>
+<blockquote>
+<p>$connectToSignaling -&gt; the third step of the $join process</p>
+<p>$signalingCheck -&gt; check with Signaling if still connected with the rest of the group</p>
+</blockquote>
 </div>
 </div>
 

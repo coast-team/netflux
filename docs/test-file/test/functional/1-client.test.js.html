@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl" href="../../../">
+  <title data-ice="title">test/functional/1-client.test.js | Netflux</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  <script src="script/manual.js"></script>
+<link rel="stylesheet" href="./inject/css/0-style.css"><meta name="description" content="Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done."><meta property="twitter:card" content="summary"><meta property="twitter:title" content="Netflux"><meta property="twitter:description" content="Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done."></head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./" style="display: flex; align-items: center;"><img src="./image/brand_logo.jpg" style="width:34px;"></a>
+  <a href="./manual/index.html" data-ice="manualHeaderLink">Manual</a>
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  <a href="test.html" data-ice="testLink">Test</a>
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+<a style="position:relative; top:3px;" href="https://github.com/coast-team/netflux"><img width="20px" src="./image/github.png"></a></header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/BotFacade.js~Bot.html">Bot</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/WebChannelFacade.js~WebGroup.html">WebGroup</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~LogLevel.html">LogLevel</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~SignalingState.html">SignalingState</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~Topology.html">Topology</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.common.doc.js~WebGroupState.html">WebGroupState</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-setLogLevel">setLogLevel</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-DataType">DataType</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-BotOptions">BotOptions</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-WebGroupOptions">WebGroupOptions</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/http.html#http_class_http_server">NodeJSHttpServer</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://nodejs.org/api/https.html#https_class_https_server">NodeJSHttpsServer</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://developer.mozilla.org/en/docs/Web/API/RTCConfiguration">RTCConfiguration</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-external">E</span><span data-ice="name"><span><a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array">Uint8Array</a></span></span></li>
+</ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><h1 data-ice="title">test/functional/1-client.test.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">/// &lt;reference types=&apos;jasmine&apos; /&gt;
+import { SignalingState, Topology, WebGroup, WebGroupState } from &apos;../../src/index.browser&apos;;
+import { cleanWebGroup, SIGNALING_URL, wait } from &apos;../util/helper&apos;;
+const WebGroupOptions = {
+    signalingServer: SIGNALING_URL,
+    autoRejoin: false,
+};
+/** @test {WebGroup} */
+describe(&apos;&#x1F642; - 1 client&apos;, () =&gt; {
+    let wg1;
+    /** @test {WebGroup#constructor} */
+    it(&apos;constructor&apos;, () =&gt; {
+        const wg = new WebGroup({ signalingServer: SIGNALING_URL });
+        // Check members
+        const id = Reflect.getOwnPropertyDescriptor(wg, &apos;id&apos;);
+        expect(id).toBeDefined();
+        expect(wg.id).toBe(0);
+        expect(id.set).toBeUndefined();
+        const myId = Reflect.getOwnPropertyDescriptor(wg, &apos;myId&apos;);
+        expect(myId).toBeDefined();
+        expect(wg.myId).toBe(0);
+        expect(myId.set).toBeUndefined();
+        const key = Reflect.getOwnPropertyDescriptor(wg, &apos;key&apos;);
+        expect(key).toBeDefined();
+        expect(wg.key).toBe(&apos;&apos;);
+        expect(key.set).toBeUndefined();
+        const members = Reflect.getOwnPropertyDescriptor(wg, &apos;members&apos;);
+        expect(members).toBeDefined();
+        expect(wg.members).toEqual([]);
+        expect(members.set).toBeUndefined();
+        const topology = Reflect.getOwnPropertyDescriptor(wg, &apos;topology&apos;);
+        expect(topology).toBeDefined();
+        expect(wg.topology).toBe(Topology.FULL_MESH);
+        expect(topology.set).toBeUndefined();
+        const state = Reflect.getOwnPropertyDescriptor(wg, &apos;state&apos;);
+        expect(state).toBeDefined();
+        expect(wg.state).toBe(WebGroupState.LEFT);
+        expect(state.set).toBeUndefined();
+        const signalingState = Reflect.getOwnPropertyDescriptor(wg, &apos;signalingState&apos;);
+        expect(signalingState).toBeDefined();
+        expect(wg.signalingState).toBe(SignalingState.CLOSED);
+        expect(signalingState.set).toBeUndefined();
+        const signalingServer = Reflect.getOwnPropertyDescriptor(wg, &apos;signalingServer&apos;);
+        expect(signalingServer).toBeDefined();
+        expect(wg.signalingServer).toBe(SIGNALING_URL);
+        expect(signalingServer.set).toBeUndefined();
+        expect(wg.autoRejoin).toBeTruthy();
+        wg.autoRejoin = false;
+        expect(wg.autoRejoin).toBeFalsy();
+        // Check event handlers
+        expect(wg.onMemberJoin).toBeUndefined();
+        expect(wg.onMemberLeave).toBeUndefined();
+        expect(wg.onMessage).toBeUndefined();
+        expect(wg.onStateChange).toBeUndefined();
+        expect(wg.onSignalingStateChange).toBeUndefined();
+        // Check methods
+        expect(typeof wg.join).toBe(&apos;function&apos;);
+        expect(typeof wg.invite).toBe(&apos;function&apos;);
+        expect(typeof wg.leave).toBe(&apos;function&apos;);
+        expect(typeof wg.send).toBe(&apos;function&apos;);
+        expect(typeof wg.sendTo).toBe(&apos;function&apos;);
+    });
+    /** @test {WebGroup#join} */
+    describe(&apos;join&apos;, () =&gt; {
+        beforeEach(() =&gt; {
+            wg1 = new WebGroup(WebGroupOptions);
+        });
+        afterEach(() =&gt; {
+            cleanWebGroup(wg1);
+            wg1.leave();
+        });
+        /** @test {WebGroup#onSignalingStateChange} */
+        it(&apos;should change the Signaling state&apos;, (done) =&gt; {
+            let called = 0;
+            const states = [];
+            const expected = [
+                SignalingState.CONNECTING,
+                SignalingState.OPEN,
+                SignalingState.CHECKING,
+                SignalingState.CHECKED,
+                SignalingState.CHECKING,
+                SignalingState.CHECKED,
+            ];
+            wg1.onSignalingStateChange = (state) =&gt; {
+                called++;
+                states.push(state);
+                if (called === expected.length) {
+                    wait(1000).then(() =&gt; {
+                        expect(states).toEqual(expected);
+                        expect(called).toEqual(expected.length);
+                        done();
+                    });
+                }
+            };
+            wg1.join();
+        });
+        /** @test {WebGroup#signalingState} */
+        it(&apos;Signaling state should be CHECKED&apos;, (done) =&gt; {
+            let called = 0;
+            wg1.onSignalingStateChange = (state) =&gt; {
+                called++;
+                if (called === 6) {
+                    wait(1000).then(() =&gt; {
+                        expect(wg1.signalingState).toEqual(SignalingState.CHECKED);
+                        done();
+                    });
+                }
+            };
+            wg1.join();
+        });
+        /** @test {WebGroup#onStateChange} */
+        it(&apos;should change the WebGroup state&apos;, (done) =&gt; {
+            let called = 0;
+            const states = [];
+            const expected = [WebGroupState.JOINING, WebGroupState.JOINED];
+            wg1.onStateChange = (state) =&gt; {
+                called++;
+                states.push(state);
+                if (called === expected.length) {
+                    wait(1000).then(() =&gt; {
+                        expect(states).toEqual(expected);
+                        expect(called).toEqual(expected.length);
+                        done();
+                    });
+                }
+            };
+            wg1.join();
+        });
+        /** @test {WebGroup#state} */
+        it(&apos;WebGroup state should be JOINED&apos;, (done) =&gt; {
+            wg1.onStateChange = (state) =&gt; {
+                if (state === WebGroupState.JOINED) {
+                    wait(1000).then(() =&gt; {
+                        expect(wg1.state).toEqual(WebGroupState.JOINED);
+                        done();
+                    });
+                }
+            };
+            wg1.join();
+        });
+        /** @test {WebGroup#onMemberJoin} */
+        it(&apos;should NOT be notified about new member&apos;, (done) =&gt; {
+            let called1 = 0;
+            wg1.onMemberJoin = () =&gt; called1++;
+            wg1.onStateChange = (state) =&gt; {
+                if (state === WebGroupState.JOINED) {
+                    wait(1000).then(() =&gt; {
+                        expect(called1).toEqual(0);
+                        done();
+                    });
+                }
+            };
+            wg1.join();
+        });
+        /** @test {WebGroup#onMemberLeave} */
+        it(&apos;should NOT be notified about left member&apos;, (done) =&gt; {
+            let called1 = 0;
+            wg1.onMemberLeave = () =&gt; called1++;
+            wg1.onStateChange = (state) =&gt; {
+                if (state === WebGroupState.JOINED) {
+                    wait(1000).then(() =&gt; {
+                        expect(called1).toEqual(0);
+                        done();
+                    });
+                }
+            };
+            wg1.join();
+        });
+        /** @test {WebGroup#onMessage} */
+        it(&apos;should NOT receive any message&apos;, (done) =&gt; {
+            let called1 = 0;
+            wg1.onMessage = () =&gt; called1++;
+            wg1.onStateChange = (state) =&gt; {
+                if (state === WebGroupState.JOINED) {
+                    wait(1000).then(() =&gt; {
+                        expect(called1).toEqual(0);
+                        done();
+                    });
+                }
+            };
+            wg1.join();
+        });
+        /** @test {WebGroup#members} */
+        it(&apos;should have only me as a member&apos;, (done) =&gt; {
+            wg1.onStateChange = (state) =&gt; {
+                if (state === WebGroupState.JOINED) {
+                    expect(wg1.members).toEqual([wg1.myId]);
+                    wait(1000).then(() =&gt; {
+                        expect(wg1.members).toEqual([wg1.myId]);
+                        done();
+                    });
+                }
+            };
+            wg1.join();
+        });
+        /** @test {WebGroup#myId} */
+        it(&apos;my id should not be 0&apos;, (done) =&gt; {
+            wg1.onStateChange = (state) =&gt; {
+                if (state === WebGroupState.JOINED) {
+                    expect(wg1.myId).not.toEqual(0);
+                    wait(1000).then(() =&gt; {
+                        expect(wg1.myId).not.toEqual(0);
+                        done();
+                    });
+                }
+            };
+            wg1.join();
+        });
+        /** @test {WebGroup#id} */
+        it(&apos;WebGroup id should not be 0&apos;, (done) =&gt; {
+            wg1.onStateChange = (state) =&gt; {
+                if (state === WebGroupState.JOINED) {
+                    expect(wg1.id).not.toEqual(0);
+                    wait(1000).then(() =&gt; {
+                        expect(wg1.id).not.toEqual(0);
+                        done();
+                    });
+                }
+            };
+            wg1.join();
+        });
+        /** @test {WebGroup#key} */
+        it(&apos;key should not be empty&apos;, (done) =&gt; {
+            wg1.onStateChange = (state) =&gt; {
+                if (state === WebGroupState.JOINED) {
+                    expect(wg1.key).not.toEqual(&apos;&apos;);
+                    wait(1000).then(() =&gt; {
+                        expect(wg1.key).not.toEqual(&apos;&apos;);
+                        done();
+                    });
+                }
+            };
+            wg1.join();
+        });
+        /** @test {WebGroup#topology} */
+        it(&apos;topology should not change&apos;, (done) =&gt; {
+            wg1.onStateChange = (state) =&gt; {
+                if (state === WebGroupState.JOINED) {
+                    expect(wg1.topology).toEqual(Topology.FULL_MESH);
+                    wait(1000).then(() =&gt; {
+                        expect(wg1.topology).toEqual(Topology.FULL_MESH);
+                        done();
+                    });
+                }
+            };
+            wg1.join();
+        });
+        /** @test {WebGroup#signalingServer} */
+        it(&apos;Signaling server should not change&apos;, (done) =&gt; {
+            wg1.onStateChange = (state) =&gt; {
+                if (state === WebGroupState.JOINED) {
+                    expect(wg1.signalingServer).toEqual(SIGNALING_URL);
+                    wait(1000).then(() =&gt; {
+                        expect(wg1.signalingServer).toEqual(SIGNALING_URL);
+                        done();
+                    });
+                }
+            };
+            wg1.join();
+        });
+        /** @test {WebGroup#autoRejoin} */
+        it(&apos;autoRejoin should be disabled&apos;, (done) =&gt; {
+            wg1.onStateChange = (state) =&gt; {
+                if (state === WebGroupState.JOINED) {
+                    expect(wg1.autoRejoin).toBeFalsy();
+                    wait(1000).then(() =&gt; {
+                        expect(wg1.autoRejoin).toBeFalsy();
+                        done();
+                    });
+                }
+            };
+            wg1.join();
+        });
+        /** @test {WebGroup#join} */
+        it(&apos;should join with a specified key&apos;, (done) =&gt; {
+            const key = &apos;ArtIsLongLifeIsShort&apos;;
+            wg1.onStateChange = (state) =&gt; {
+                if (state === WebGroupState.JOINED) {
+                    expect(wg1.key).toEqual(key);
+                    done();
+                }
+            };
+            wg1.join(key);
+        });
+    });
+    /** @test {WebGroup#leave} */
+    describe(&apos;leave&apos;, () =&gt; {
+        beforeEach((done) =&gt; {
+            wg1 = new WebGroup(WebGroupOptions);
+            wg1.onStateChange = (state) =&gt; {
+                if (state === WebGroupState.JOINED) {
+                    cleanWebGroup(wg1);
+                    done();
+                }
+            };
+            wg1.join();
+        });
+        afterEach(() =&gt; cleanWebGroup(wg1));
+        /** @test {WebGroup#onStateChange} */
+        it(&apos;should change the WebGroup state&apos;, (done) =&gt; {
+            let called1 = 0;
+            const states = [];
+            const expected = [WebGroupState.LEFT];
+            wg1.onStateChange = (state) =&gt; {
+                states.push(state);
+                called1++;
+                if (state === WebGroupState.LEFT) {
+                    wait(1000).then(() =&gt; {
+                        expect(called1).toEqual(expected.length);
+                        expect(states).toEqual(expected);
+                        done();
+                    });
+                }
+            };
+            wg1.leave();
+        });
+        /** @test {WebGroup#onSignalingStateChange} */
+        it(&apos;should change the Signaling state&apos;, (done) =&gt; {
+            let called1 = 0;
+            const states = [];
+            const expected = [SignalingState.CLOSED];
+            wg1.onSignalingStateChange = (state) =&gt; {
+                states.push(state);
+                called1++;
+                wait(1000).then(() =&gt; {
+                    expect(called1).toEqual(expected.length);
+                    expect(states).toEqual(expected);
+                    done();
+                });
+            };
+            wg1.leave();
+        });
+        /** @test {WebGroup#signalingState} */
+        it(&apos;Signaling state should be CLOSED&apos;, (done) =&gt; {
+            let called = 0;
+            wg1.onSignalingStateChange = (state) =&gt; {
+                called++;
+                if (state === SignalingState.CLOSED) {
+                    wait(1000).then(() =&gt; {
+                        expect(called).toEqual(1);
+                        expect(wg1.signalingState).toEqual(SignalingState.CLOSED);
+                        done();
+                    });
+                }
+            };
+            wg1.leave();
+        });
+        /** @test {WebGroup#state} */
+        it(&apos;WebGroup state should be LEFT&apos;, (done) =&gt; {
+            let called = 0;
+            wg1.onStateChange = (state) =&gt; {
+                called++;
+                if (state === WebGroupState.LEFT) {
+                    wait(1000).then(() =&gt; {
+                        expect(called).toEqual(1);
+                        expect(wg1.state).toEqual(WebGroupState.LEFT);
+                        done();
+                    });
+                }
+            };
+            wg1.leave();
+        });
+        /** @test {WebGroup#onMemberJoin} */
+        it(&apos;should NOT be notified about new member&apos;, (done) =&gt; {
+            let called1 = 0;
+            wg1.onMemberJoin = () =&gt; called1++;
+            wg1.onStateChange = (state) =&gt; {
+                if (state === WebGroupState.LEFT) {
+                    wait(1000).then(() =&gt; {
+                        expect(called1).toEqual(0);
+                        done();
+                    });
+                }
+            };
+            wg1.leave();
+        });
+        /** @test {WebGroup#onMemberLeave} */
+        it(&apos;should NOT be notified about left member&apos;, (done) =&gt; {
+            let called1 = 0;
+            wg1.onMemberLeave = () =&gt; called1++;
+            wg1.onStateChange = (state) =&gt; {
+                if (state === WebGroupState.LEFT) {
+                    wait(1000).then(() =&gt; {
+                        expect(called1).toEqual(0);
+                        done();
+                    });
+                }
+            };
+            wg1.leave();
+        });
+        /** @test {WebGroup#onMessage} */
+        it(&apos;should NOT receive any message&apos;, (done) =&gt; {
+            let called1 = 0;
+            wg1.onMessage = () =&gt; called1++;
+            wg1.onStateChange = (state) =&gt; {
+                if (state === WebGroupState.LEFT) {
+                    wait(1000).then(() =&gt; {
+                        expect(called1).toEqual(0);
+                        done();
+                    });
+                }
+            };
+            wg1.leave();
+        });
+        /** @test {WebGroup#members} */
+        it(&apos;should have no members&apos;, (done) =&gt; {
+            wg1.onStateChange = (state) =&gt; {
+                if (state === WebGroupState.LEFT) {
+                    expect(wg1.members).toEqual([]);
+                    wait(1000).then(() =&gt; {
+                        expect(wg1.members).toEqual([]);
+                        done();
+                    });
+                }
+            };
+            wg1.leave();
+        });
+        /** @test {WebGroup#myId} */
+        it(&apos;my id should be 0&apos;, (done) =&gt; {
+            wg1.onStateChange = (state) =&gt; {
+                if (state === WebGroupState.LEFT) {
+                    expect(wg1.myId).toEqual(0);
+                    wait(1000).then(() =&gt; {
+                        expect(wg1.myId).toEqual(0);
+                        done();
+                    });
+                }
+            };
+            wg1.leave();
+        });
+        /** @test {WebGroup#id} */
+        it(&apos;WebGroup id should be 0&apos;, (done) =&gt; {
+            wg1.onStateChange = (state) =&gt; {
+                if (state === WebGroupState.LEFT) {
+                    expect(wg1.id).toEqual(0);
+                    wait(1000).then(() =&gt; {
+                        expect(wg1.id).toEqual(0);
+                        done();
+                    });
+                }
+            };
+            wg1.leave();
+        });
+        /** @test {WebGroup#key} */
+        it(&apos;key should be empty&apos;, (done) =&gt; {
+            wg1.onStateChange = (state) =&gt; {
+                if (state === WebGroupState.LEFT) {
+                    expect(wg1.key).toEqual(&apos;&apos;);
+                    wait(1000).then(() =&gt; {
+                        expect(wg1.key).toEqual(&apos;&apos;);
+                        done();
+                    });
+                }
+            };
+            wg1.leave();
+        });
+        /** @test {WebGroup#topology} */
+        it(&apos;topology should not change&apos;, (done) =&gt; {
+            wg1.onStateChange = (state) =&gt; {
+                if (state === WebGroupState.LEFT) {
+                    expect(wg1.topology).toEqual(Topology.FULL_MESH);
+                    wait(1000).then(() =&gt; {
+                        expect(wg1.topology).toEqual(Topology.FULL_MESH);
+                        done();
+                    });
+                }
+            };
+            wg1.leave();
+        });
+        /** @test {WebGroup#signalingServer} */
+        it(&apos;Signaling server should not change&apos;, (done) =&gt; {
+            wg1.onStateChange = (state) =&gt; {
+                if (state === WebGroupState.LEFT) {
+                    expect(wg1.signalingServer).toEqual(SIGNALING_URL);
+                    wait(1000).then(() =&gt; {
+                        expect(wg1.signalingServer).toEqual(SIGNALING_URL);
+                        done();
+                    });
+                }
+            };
+            wg1.leave();
+        });
+        /** @test {WebGroup#autoRejoin} */
+        it(&apos;autoRejoin should be disabled&apos;, (done) =&gt; {
+            wg1.onStateChange = (state) =&gt; {
+                if (state === WebGroupState.LEFT) {
+                    expect(wg1.autoRejoin).toBeFalsy();
+                    wait(1000).then(() =&gt; {
+                        expect(wg1.autoRejoin).toBeFalsy();
+                        done();
+                    });
+                }
+            };
+            wg1.leave();
+        });
+    });
+});
+</code></pre>
+
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(1.1.0)</span><img src="./image/esdoc-logo-mini-black.png"></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>

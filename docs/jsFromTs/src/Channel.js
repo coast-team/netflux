@@ -1,4 +1,4 @@
-import { isBrowser, log } from './misc/Util';
+import { isBrowser, log } from './misc/util';
 import { channel as proto, Message } from './proto';
 import { UserMessage } from './service/UserMessage';
 export var ChannelType;
@@ -9,60 +9,70 @@ export var ChannelType;
 })(ChannelType || (ChannelType = {}));
 const heartbeat = Message.create({ serviceId: 0 });
 export const MAXIMUM_MISSED_HEARTBEAT = 3;
+export function createHeartbeatMsg(senderId, recipientId) {
+    heartbeat.senderId = senderId;
+    heartbeat.recipientId = recipientId;
+    return Message.encode(heartbeat).finish();
+}
 /**
  * Wrapper class for `RTCDataChannel` and `WebSocket`.
  */
 export class Channel {
-    static heartbeatMsg(senderId, recipientId) {
-        heartbeat.senderId = senderId;
-        heartbeat.recipientId = recipientId;
-        return Message.encode(heartbeat).finish();
-    }
     /**
      * Creates a channel from existing `RTCDataChannel` or `WebSocket`.
      */
-    constructor(wc, connection, type, id = 1, rtcPeerConnection) {
+    constructor(wc, wsOrDc, type, id = 1, rtcPeerConnection) {
         log.channel(`New Channel ${ChannelType[type]}: Me: ${wc.myId} with ${id}`);
         this.wc = wc;
-        this.connection = connection;
+        this.wsOrDc = wsOrDc;
         this.type = type;
         this.id = id;
         this.rtcPeerConnection = rtcPeerConnection;
         this.missedHeartbeat = 0;
+        this.heartbeatMsg = new Uint8Array(0);
+        this.resolveInit = () => { };
         // Configure `send` function
         if (isBrowser) {
-            connection.binaryType = 'arraybuffer';
+            wsOrDc.binaryType = 'arraybuffer';
             this.send = this.sendInBrowser;
         }
         else if (!this.rtcPeerConnection) {
             this.send = this.sendInNodeOverWebSocket;
         }
         else {
-            connection.binaryType = 'arraybuffer';
+            wsOrDc.binaryType = 'arraybuffer';
             this.send = this.sendInNodeOverDataChannel;
         }
         if (type === ChannelType.INTERNAL) {
-            this.heartbeatMsg = Channel.heartbeatMsg(this.wc.myId, this.id);
+            this.heartbeatMsg = createHeartbeatMsg(this.wc.myId, this.id);
             this.init = Promise.resolve();
             this.initHandlers();
         }
         else {
             this.init = new Promise((resolve, reject) => (this.resolveInit = () => {
-                this.heartbeatMsg = Channel.heartbeatMsg(this.wc.myId, this.id);
+                this.heartbeatMsg = createHeartbeatMsg(this.wc.myId, this.id);
                 resolve();
             }));
-            this.connection.onmessage = ({ data }) => {
+            this.wsOrDc.onmessage = ({ data }) => {
                 this.handleInitMessage(proto.Message.decode(new Uint8Array(data)));
             };
         }
     }
+    get url() {
+        if (!this.rtcPeerConnection) {
+            return this.wsOrDc.url;
+        }
+        return '';
+    }
     initialize() {
+        log.channel('initialize...');
         this.send(proto.Message.encode(proto.Message.create({
             initPing: {
-                topology: this.wc.topology,
+                topology: this.wc.topologyEnum,
                 wcId: this.wc.id,
                 senderId: this.wc.myId,
                 members: this.wc.members,
+                key: this.wc.key,
             },
         })).finish());
     }
@@ -70,28 +80,30 @@ export class Channel {
         this.send(Message.encode(Message.create({ senderId, recipientId, serviceId, content })).finish());
     }
     close() {
-        this.connection.close();
+        this.wsOrDc.onmessage = undefined;
+        this.wsOrDc.onclose = undefined;
+        this.wsOrDc.onerror = undefined;
         if (this.rtcPeerConnection) {
             this.rtcPeerConnection.close();
         }
-    }
-    closeQuietly() {
-        this.connection.onmessage = undefined;
-        this.connection.onclose = undefined;
-        this.connection.onerror = undefined;
-        this.close();
+        else {
+            this.wsOrDc.close(1000);
+        }
     }
     sendHeartbeat() {
         this.missedHeartbeat++;
         if (this.missedHeartbeat >= MAXIMUM_MISSED_HEARTBEAT) {
             log.channel(`${this.id} channel closed: too many missed heartbeats`);
+            this.wc.topology.onChannelClose(this);
             this.close();
         }
-        this.send(this.heartbeatMsg);
+        else {
+            this.send(this.heartbeatMsg);
+        }
     }
     sendInBrowser(data) {
         try {
-            this.connection.send(data);
+            this.wsOrDc.send(data);
         }
         catch (err) {
             log.channel('Channel sendInBrowser ERROR', err);
@@ -99,7 +111,7 @@ export class Channel {
     }
     sendInNodeOverWebSocket(data) {
         try {
-            this.connection.send(data, { binary: true });
+            this.wsOrDc.send(data, { binary: true });
         }
         catch (err) {
             log.channel('Channel sendInNodeOverWebSocket ERROR', err);
@@ -112,8 +124,8 @@ export class Channel {
         switch (msg.type) {
             case 'initPing': {
                 log.channel(`${this.wc.myId} received InitPing`);
-                const { topology, wcId, senderId, members } = msg.initPing;
-                if (this.wc.topology !== topology) {
+                const { topology, wcId, senderId, members, key } = msg.initPing;
+                if (this.wc.topologyEnum !== topology) {
                     // TODO: implement when there are more than one topology implementation
                     // Reinitialize WebChannel: clean/leave etc.
                     // change topology
@@ -127,6 +139,7 @@ export class Channel {
                     // generate new Id (this.wc.myId) which is not in members
                 }
                 this.wc.id = wcId;
+                this.wc.key = key;
                 this.id = senderId;
                 log.channel(`${this.wc.myId} send InitPong`);
                 this.send(proto.Message.encode(proto.Message.create({ initPong: this.wc.myId })).finish());
@@ -147,7 +160,7 @@ export class Channel {
     }
     initHandlers() {
         // Configure handlers
-        this.connection.onmessage = ({ data }) => {
+        this.wsOrDc.onmessage = ({ data }) => {
             const msg = Message.decode(new Uint8Array(data));
             // 0: broadcast message
             if (msg.recipientId === 0 || msg.recipientId === this.wc.myId) {
@@ -168,17 +181,13 @@ export class Channel {
                 }
             }
             if (msg.recipientId !== this.wc.myId) {
-                this.wc.topologyService.forward(msg);
+                this.wc.topology.forward(msg);
             }
         };
-        this.connection.onclose = (evt) => {
-            log.channel(`Connection with ${this.id} has closed`);
-            this.wc.topologyService.onChannelClose(evt, this);
+        this.wsOrDc.onclose = (evt) => {
+            log.channel(`Connection with ${this.id} has closed`, evt);
+            this.wc.topology.onChannelClose(this);
         };
-        this.connection.onerror = (evt) => {
-            log.channel('Channel error: ', evt);
-            this.wc.topologyService.onChannelError(evt, this);
-            this.close();
-        };
+        this.wsOrDc.onerror = (evt) => log.channel('Channel error: ', evt);
     }
 }

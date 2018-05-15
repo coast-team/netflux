@@ -1,27 +1,26 @@
-import { Subject } from 'rxjs/Subject';
+import { Subject } from 'rxjs';
 import { Channel, ChannelType } from '../../Channel';
-import { log } from '../../misc/Util';
-import { webRTCBuilder as proto } from '../../proto';
+import { log } from '../../misc/util';
+import { dataChannelBuilder as proto } from '../../proto';
 import { WebChannelState } from '../../WebChannelState';
 import { Service } from '../Service';
 import { Remote } from './Remote';
-export const CONNECT_TIMEOUT = 20000;
+export const CONNECT_TIMEOUT = 7000;
 /**
  * Service class responsible to establish `RTCDataChannel` between two remotes via
  * signaling server or `WebChannel`.
- *
  */
-export class WebRTCBuilder extends Service {
+export class DataChannelBuilder extends Service {
     constructor(wc, rtcConfiguration) {
-        super(WebRTCBuilder.SERVICE_ID, proto.Message);
-        super.useWebChannelStream(wc);
-        super.useSignalingStream(wc.signaling);
+        super(DataChannelBuilder.SERVICE_ID, proto.Message);
+        this.wc = wc;
+        this.allStreams = super.useAllStreams(wc, wc.signaling);
         this.rtcConfiguration = rtcConfiguration;
         this.channelsSubject = new Subject();
         this.remotes = new Map();
-        this.remotes.set(this.wcStream.id, new Map());
-        this.remotes.set(this.sigStream.id, new Map());
-        this.streams.message.subscribe(({ streamId, senderId, msg }) => {
+        this.remotes.set(this.wc.STREAM_ID, new Map());
+        this.remotes.set(this.wc.signaling.STREAM_ID, new Map());
+        this.allStreams.message.subscribe(({ streamId, senderId, msg }) => {
             const remote = this.getRemotes(streamId).get(senderId) || this.createRemote(streamId, senderId, true);
             remote.handleMessage(msg);
         });
@@ -30,16 +29,22 @@ export class WebRTCBuilder extends Service {
         return this.channelsSubject.asObservable();
     }
     async connectInternal(id) {
-        log.webrtc('connectInternal');
-        this.channelsSubject.next(await this.connect(this.wcStream.id, ChannelType.INTERNAL, id));
+        log.webrtc(this.wc.myId + 'connectInternal');
+        this.channelsSubject.next(await this.connect(this.wc.STREAM_ID, ChannelType.INTERNAL, id));
     }
     async connectToJoin(id) {
-        log.webrtc('connectToJoin');
-        this.channelsSubject.next(await this.connect(this.sigStream.id, ChannelType.JOINING, id));
+        log.webrtc(this.wc.myId + ' connectToJoin');
+        this.channelsSubject.next(await this.connect(this.wc.signaling.STREAM_ID, ChannelType.JOINING, id));
     }
     async connectToInvite(id) {
-        log.webrtc('connectToInvite');
-        this.channelsSubject.next(await this.connect(this.sigStream.id, ChannelType.INVITED, id));
+        log.webrtc(this.wc.myId + 'connectToInvite');
+        this.channelsSubject.next(await this.connect(this.wc.signaling.STREAM_ID, ChannelType.INVITED, id));
+    }
+    clean() {
+        this.remotes.forEach((remotes) => remotes.forEach((remote) => {
+            remote.onError(new Error('clean'));
+            remote.clean();
+        }));
     }
     /**
      * Establish an `RTCDataChannel`. Starts by sending an **SDP offer**.
@@ -50,10 +55,10 @@ export class WebRTCBuilder extends Service {
             const dc = remote.pc.createDataChannel(this.wc.myId.toString());
             const offer = await remote.pc.createOffer();
             await remote.pc.setLocalDescription(offer);
-            this.streams.sendOver(streamId, { offer: remote.pc.localDescription.sdp }, id);
+            this.allStreams.sendOver(streamId, { offer: remote.pc.localDescription.sdp }, id);
             remote.sdpIsSent();
-            return (await new Promise((resolve, reject) => {
-                remote.onerror = (err) => reject(err);
+            const channel = (await new Promise((resolve, reject) => {
+                remote.onError = (err) => reject(err);
                 const timeout = setTimeout(() => {
                     if (dc.readyState !== 'open') {
                         reject(new Error(`RTCDataChannel ${CONNECT_TIMEOUT}ms connection timeout with '${id}'`));
@@ -70,6 +75,7 @@ export class WebRTCBuilder extends Service {
                     resolve(ch);
                 };
             }));
+            return channel;
         }
         catch (err) {
             log.webrtc('Error on initiator: ', err);
@@ -79,10 +85,10 @@ export class WebRTCBuilder extends Service {
     }
     createRemote(streamId, id, passive = false) {
         log.webrtc(this.wc.myId + ` New Remote object: `, id);
-        const remote = new Remote(id, new global.RTCPeerConnection(this.rtcConfiguration), (msg) => this.streams.sendOver(streamId, msg, id), this.getRemotes(streamId));
+        const remote = new Remote(id, new global.RTCPeerConnection(this.rtcConfiguration), (msg) => this.allStreams.sendOver(streamId, msg, id), this.getRemotes(streamId));
         if (passive) {
             remote.peerToLog = '----------- PASSIVE';
-            remote.onerror = (err) => {
+            remote.onError = (err) => {
                 log.webrtc('Error on passive: ', err);
                 remote.clean();
             };
@@ -92,18 +98,24 @@ export class WebRTCBuilder extends Service {
                     if (dc !== undefined) {
                         dc.close();
                     }
-                    log.webrtc('Timer EXECUTED for ' + id, timer);
-                    remote.onerror(new Error(`${CONNECT_TIMEOUT}ms connection timeout`));
+                    remote.onError(new Error(`${CONNECT_TIMEOUT}ms connection timeout`));
                 }
             }, CONNECT_TIMEOUT);
-            log.webrtc('Timer SET for ' + id, timer);
             remote.onDataChannel = (dataChannel) => {
                 dc = dataChannel;
                 const peerId = Number.parseInt(dc.label, 10);
-                const type = this.wc.state === WebChannelState.JOINED ? ChannelType.INVITED : ChannelType.JOINING;
+                let type;
+                if (streamId === this.wc.STREAM_ID) {
+                    type = ChannelType.INTERNAL;
+                }
+                else if (this.wc.state === WebChannelState.JOINED) {
+                    type = ChannelType.INVITED;
+                }
+                else {
+                    type = ChannelType.JOINING;
+                }
                 const channel = new Channel(this.wc, dc, type, peerId, remote.pc);
                 dc.onopen = () => {
-                    log.webrtc('Timer CLREAD for ' + id, timer);
                     clearTimeout(timer);
                     log.webrtc(`${remote.peerToLog}: RTCDataChannel with ${channel.id} has opened`);
                     this.channelsSubject.next(channel);
@@ -116,4 +128,4 @@ export class WebRTCBuilder extends Service {
         return this.remotes.get(streamId);
     }
 }
-WebRTCBuilder.SERVICE_ID = 7431;
+DataChannelBuilder.SERVICE_ID = 7431;

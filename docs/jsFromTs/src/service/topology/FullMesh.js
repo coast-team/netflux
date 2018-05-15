@@ -1,9 +1,7 @@
-import { Subject } from 'rxjs/Subject';
-import { Channel, ChannelType, MAXIMUM_MISSED_HEARTBEAT } from '../../Channel';
-import { log } from '../../misc/Util';
+import { ChannelType, createHeartbeatMsg, MAXIMUM_MISSED_HEARTBEAT, } from '../../Channel';
+import { log } from '../../misc/util';
 import { fullMesh as proto } from '../../proto';
-import { Service } from '../Service';
-import { TopologyState } from './Topology';
+import { Topology, TopologyState } from './Topology';
 const REQUEST_MEMBERS_INTERVAL = 6000;
 const MAX_ROUTE_DISTANCE = 3;
 const HEARTBEAT_INTERVAL = 3000;
@@ -12,56 +10,49 @@ const HEARTBEAT_INTERVAL = 3000;
  * network, when each peer is connected to each other.
  *
  */
-export class FullMesh extends Service {
+export class FullMesh extends Topology {
     constructor(wc) {
-        super(FullMesh.SERVICE_ID, proto.Message);
-        super.useWebChannelStream(wc);
-        this.wcStream.message.subscribe(({ channel, senderId, msg }) => this.handleServiceMessage(channel, senderId, msg));
+        super(wc, FullMesh.SERVICE_ID, proto.Message);
         this.adjacentMembers = new Map();
         this.distantMembers = new Map();
-        this.connectingMembers = new Set();
-        this.stateSubject = new Subject();
-        this._state = TopologyState.DISCONNECTED;
+        // Encode message beforehand for optimization
+        this.membersRequestEncoded = super.encode({ membersRequest: true });
+        // Subscribe to WebChannel stream
+        this.wcStream.message.subscribe(({ channel, senderId, msg }) => this.handleServiceMessage(channel, senderId, msg));
+        // Subscribe to channels from ChannelBuilder
         this.wc.channelBuilder.onChannel.subscribe((ch) => {
-            // if (
-            //   (ch.type === ChannelType.INTERNAL && this._state === TopologyState.DISCONNECTED) ||
-            //   this._state !== TopologyState.DISCONNECTING
-            // ) {
-            //   ch.closeQuietly()
-            // } else {
             log.topology('Adding new adjacent member: ', ch.id);
             this.distantMembers.delete(ch.id);
             const member = this.adjacentMembers.get(ch.id);
             if (member) {
                 log.topology('Replacing the same channel');
-                member.closeQuietly();
+                member.close();
             }
             this.adjacentMembers.set(ch.id, ch);
-            this.notifyDistantPeers();
             this.wc.onMemberJoinProxy(ch.id);
             if (this.adjacentMembers.size === 1 && this.membersRequestInterval === undefined) {
                 this.startIntervals();
             }
             if (ch.type === ChannelType.JOINING) {
-                this.setState(TopologyState.JOINING);
+                super.setState(TopologyState.JOINING);
                 const { members } = ch.initData;
                 this.connectToMany(members, ch.id).then(() => {
                     this.membersRequest();
-                    this.setState(TopologyState.JOINED);
+                    super.setState(TopologyState.JOINED);
                 });
             }
-            // }
+            else {
+                this.notifyDistantMembers();
+            }
         });
-        const globalAny = global;
-        globalAny.fullmesh = () => {
+        global.fullmesh = () => {
             log.topology('Fullmesh info:', {
                 myId: this.wc.myId,
                 signalingState: this.wc.signaling.state,
                 webGroupState: this.wc.state,
-                topologyState: TopologyState[this._state],
+                topologyState: TopologyState[this.state],
                 adjacentMembers: Array.from(this.adjacentMembers.keys()).toString(),
                 distantMembers: Array.from(this.distantMembers.keys()).toString(),
-                connectingMembers: Array.from(this.connectingMembers.values()).toString(),
                 distantMembersDETAILS: Array.from(this.distantMembers.keys()).map((id) => {
                     const adjacentMembers = this.distantMembers.get(id);
                     return { id, adjacentMembers: adjacentMembers ? adjacentMembers.adjacentIds : [] };
@@ -69,16 +60,10 @@ export class FullMesh extends Service {
             });
         };
     }
-    get onState() {
-        return this.stateSubject.asObservable();
-    }
-    get state() {
-        return this._state;
-    }
     send(msg) {
         this.adjacentMembers.forEach((ch) => ch.encodeAndSend(msg));
-        this.distantMembers.forEach((distantPeer, id) => {
-            this.sendToDistantPeer(distantPeer, Object.assign(msg, { recipientId: id }));
+        this.distantMembers.forEach((distantMember, id) => {
+            this.sendToDistantPeer(distantMember, Object.assign(msg, { recipientId: id }));
         });
     }
     sendTo(msg) {
@@ -94,42 +79,38 @@ export class FullMesh extends Service {
         this.sendTo(msg);
     }
     leave() {
-        if (this._state !== TopologyState.DISCONNECTED && this._state !== TopologyState.DISCONNECTING) {
-            this.setState(TopologyState.DISCONNECTING);
-            this.adjacentMembers.forEach((ch) => {
-                this.wc.onMemberLeaveProxy(ch.id, true);
-                ch.close();
-            });
+        if (this.state !== TopologyState.LEFT) {
+            this.clean();
+            this.adjacentMembers.forEach((ch) => ch.close());
+            this.wc.onAdjacentMembersLeaveProxy(Array.from(this.adjacentMembers.keys()));
+            super.setState(TopologyState.LEFT);
         }
     }
-    onChannelClose(event, channel) {
+    onChannelClose(channel) {
         this.adjacentMembers.delete(channel.id);
-        this.wc.onMemberLeaveProxy(channel.id, true);
         if (this.adjacentMembers.size === 0) {
             this.clean();
-            this.setState(TopologyState.DISCONNECTED);
         }
         else {
-            this.notifyDistantPeers();
+            this.notifyDistantMembers();
         }
+        this.wc.onAdjacentMembersLeaveProxy([channel.id]);
     }
-    onChannelError(evt) {
-        log.topology(`Channel error: ${evt.type}`);
+    get neighbors() {
+        return Array.from(this.adjacentMembers.values());
     }
     clean() {
-        this.distantMembers.forEach((member, id) => this.wc.onMemberLeaveProxy(id, false));
+        this.wc.onDistantMembersLeaveProxy(Array.from(this.distantMembers.keys()));
         this.distantMembers.clear();
-        this.connectingMembers.clear();
-        clearInterval(this.heartbeatInterval);
+        global.clearInterval(this.heartbeatInterval);
         this.heartbeatInterval = undefined;
-        clearInterval(this.membersRequestInterval);
+        global.clearInterval(this.membersRequestInterval);
         this.membersRequestInterval = undefined;
     }
     handleServiceMessage(channel, senderId, msg) {
         switch (msg.type) {
             case 'membersResponse': {
-                const { membersResponse } = msg;
-                this.connectToMany(membersResponse.ids, senderId);
+                this.connectToMany(msg.membersResponse.ids, senderId);
                 break;
             }
             case 'membersRequest': {
@@ -141,86 +122,59 @@ export class FullMesh extends Service {
                 break;
             }
             case 'adjacentMembers': {
-                const { adjacentMembers } = msg;
-                if (!this.adjacentMembers.has(senderId) && senderId !== this.wc.myId) {
-                    const distantPeer = this.distantMembers.get(senderId);
+                const { adjacentMembers: { ids }, } = msg;
+                if (!this.adjacentMembers.has(senderId)) {
+                    const distantMember = this.distantMembers.get(senderId);
                     // If it the first time you have met this ID, then send him your neighbours' ids.
                     // Otherwise just update the list of distant peer's neighbours
-                    if (distantPeer) {
-                        distantPeer.adjacentIds = adjacentMembers.ids;
+                    if (distantMember) {
+                        distantMember.adjacentIds = ids;
                     }
                     else {
                         this.distantMembers.set(senderId, {
-                            adjacentIds: adjacentMembers.ids,
+                            adjacentIds: ids,
                             missedHeartbeat: 0,
                         });
                         this.wcStream.send({ adjacentMembers: { ids: Array.from(this.adjacentMembers.keys()) } }, senderId);
-                        this.connectTo(senderId);
                     }
                 }
                 break;
             }
             case 'heartbeat': {
-                const distantPeer = this.distantMembers.get(senderId);
-                if (distantPeer) {
-                    distantPeer.missedHeartbeat = 0;
+                const distantMember = this.distantMembers.get(senderId);
+                if (distantMember) {
+                    distantMember.missedHeartbeat = 0;
                 }
                 break;
             }
         }
     }
     connectToMany(ids, adjacentId) {
-        if (this._state !== TopologyState.DISCONNECTED) {
-            const missingIds = ids.filter((id) => {
-                return (!this.adjacentMembers.has(id) && !this.connectingMembers.has(id) && id !== this.wc.myId);
+        const missingIds = ids.filter((id) => !this.adjacentMembers.has(id) && id !== this.wc.myId);
+        if (missingIds.length !== 0) {
+            const msg = super.encode({
+                adjacentMembers: { ids: Array.from(this.adjacentMembers.keys()) },
             });
-            if (missingIds.length !== 0) {
-                const adjacentMembers = super.encode({
-                    adjacentMembers: { ids: Array.from(this.adjacentMembers.keys()) },
-                });
-                const connectingAttempts = [];
-                missingIds.forEach((id) => {
-                    if (!this.distantMembers.has(id)) {
-                        this.distantMembers.set(id, { adjacentIds: [adjacentId], missedHeartbeat: 0 });
+            const attempts = [];
+            missingIds.forEach((id) => {
+                if (!this.distantMembers.has(id)) {
+                    this.distantMembers.set(id, { adjacentIds: [adjacentId], missedHeartbeat: 0 });
+                }
+                // It's important to notify all peers about my adjacentIds first
+                // for some specific case such when you should connect to a peer with
+                // distance more than 1
+                this.wcStream.send(msg, id);
+                attempts[attempts.length] = this.wc.channelBuilder
+                    .connectOverWebChannel(id)
+                    .catch((err) => {
+                    if (err.message !== 'ping') {
+                        this.wc.onMemberJoinProxy(id);
                     }
-                    // It's important to notify all peers about my adjacentIds first
-                    // for some specific case such when you should connect to a peer with
-                    // distance more than 1
-                    this.wcStream.send(adjacentMembers, id);
-                    // Connect only to the peers whose ids are less than my id. Thus it avoids a
-                    // problematic situation when both peers are trying to connect to each other
-                    // at the same time.
-                    connectingAttempts[connectingAttempts.length] = this.connectTo(id);
                 });
-                return Promise.all(connectingAttempts);
-            }
+            });
+            return Promise.all(attempts);
         }
         return Promise.resolve();
-    }
-    connectTo(id) {
-        this.connectingMembers.add(id);
-        let result;
-        if (id < this.wc.myId) {
-            result = this.wc.channelBuilder
-                .connectOverWebChannel(id)
-                .catch((err) => {
-                if (err.message !== 'pingpong') {
-                    return this.wc.channelBuilder.ping(id).then(() => this.wc.onMemberJoinProxy(id));
-                }
-                log.topology(`${this.wc.myId} failed to connect to ${id}: ${err.message}`);
-                return;
-            })
-                .catch(() => { });
-        }
-        else {
-            result = this.wc.channelBuilder
-                .ping(id)
-                .then(() => this.wc.onMemberJoinProxy(id))
-                .catch(() => { });
-        }
-        return result.then(() => {
-            this.connectingMembers.delete(id);
-        });
     }
     membersRequest() {
         if (this.adjacentMembers.size !== 0) {
@@ -234,50 +188,16 @@ export class FullMesh extends Service {
             channel.encodeAndSend({
                 recipientId: channel.id,
                 serviceId: FullMesh.SERVICE_ID,
-                content: super.encode({ membersRequest: true }),
+                content: this.membersRequestEncoded,
             });
         }
     }
-    sendToDistantPeer(distantPeer, msg) {
-        // NO LUCK: recepient is not directly connected to me, thus check distant peers
-        // First those who are at distance 1, then 2 etc. up to MAX_ROUTE_DISTANCE
-        // (Peer X has a distance equals to 1 if I am not directly connected to X and
-        // there is a peer Y which is directly connected to X and to me)
-        for (let d = 1; d <= MAX_ROUTE_DISTANCE; d++) {
-            const ch = this.findRoutedChannel(distantPeer, d);
-            if (ch) {
-                ch.encodeAndSend(msg);
-                return;
-            }
-        }
-    }
-    findRoutedChannel(distantPeer, distance) {
-        if (distantPeer) {
-            for (const [neighbourId, ch] of this.adjacentMembers) {
-                if (distantPeer.adjacentIds.includes(neighbourId)) {
-                    return ch;
-                }
-            }
-            if (distance !== 0) {
-                for (const id of distantPeer.adjacentIds) {
-                    const ch = this.findRoutedChannel(this.distantMembers.get(id), distance - 1);
-                    if (ch) {
-                        return ch;
-                    }
-                }
-            }
-        }
-        return undefined;
-    }
-    notifyDistantPeers() {
-        if (this._state !== TopologyState.DISCONNECTED) {
-            this.distantMembers.forEach((peer, id) => this.wcStream.send({ adjacentMembers: { ids: Array.from(this.adjacentMembers.keys()) } }, id));
-        }
-    }
-    setState(state) {
-        if (this._state !== state) {
-            this._state = state;
-            this.stateSubject.next(state);
+    notifyDistantMembers() {
+        if (this.distantMembers.size !== 0) {
+            const msg = super.encode({
+                adjacentMembers: { ids: Array.from(this.adjacentMembers.keys()) },
+            });
+            this.distantMembers.forEach((dm, id) => this.wcStream.send(msg, id));
         }
     }
     startIntervals() {
@@ -291,11 +211,42 @@ export class FullMesh extends Service {
                 if (peer.missedHeartbeat >= MAXIMUM_MISSED_HEARTBEAT + 1) {
                     log.topology(`Distant peer ${id} has left: too many missed heartbeats`);
                     this.distantMembers.delete(id);
-                    this.wc.onMemberLeaveProxy(id, false);
+                    this.wc.onDistantMembersLeaveProxy([id]);
                 }
-                this.wcStream.send(Channel.heartbeatMsg(this.wc.id, id));
+                this.wcStream.send(createHeartbeatMsg(this.wc.id, id));
             });
         }, HEARTBEAT_INTERVAL);
+    }
+    sendToDistantPeer(distantMember, msg) {
+        // NO LUCK: recepient is not directly connected to me, thus check distant peers
+        // First those who are at distance 1, then 2 etc. up to MAX_ROUTE_DISTANCE
+        // (Peer X has a distance equals to 1 if I am not directly connected to X and
+        // there is a peer Y which is directly connected to X and to me)
+        for (let d = 1; d <= MAX_ROUTE_DISTANCE; d++) {
+            const ch = this.findRoutedChannel(distantMember, d);
+            if (ch) {
+                ch.encodeAndSend(msg);
+                return;
+            }
+        }
+    }
+    findRoutedChannel(distantMember, distance) {
+        if (distantMember) {
+            for (const [neighbourId, ch] of this.adjacentMembers) {
+                if (distantMember.adjacentIds.includes(neighbourId)) {
+                    return ch;
+                }
+            }
+            if (distance !== 0) {
+                for (const id of distantMember.adjacentIds) {
+                    const ch = this.findRoutedChannel(this.distantMembers.get(id), distance - 1);
+                    if (ch) {
+                        return ch;
+                    }
+                }
+            }
+        }
+        return undefined;
     }
 }
 FullMesh.SERVICE_ID = 74315;
