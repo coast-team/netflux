@@ -5,7 +5,6 @@ import {
   areTheSame,
   BOT_URL,
   botGetData,
-  botJoin,
   botWaitJoin,
   randomKey,
   SIGNALING_URL,
