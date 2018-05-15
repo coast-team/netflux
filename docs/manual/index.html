@@ -158,17 +158,16 @@ no-stdout-log</code>
 </ul><h2>CommonJS</h2><p><code>dist/netflux.cjs.js</code> - CommonJS format, built for NodeJS.</p><pre><code class="lang-Javascript"><code class="source-code prettyprint">// NodeJS
 const netflux = require(&apos;netflux&apos;)
 var wg = new netflux.WebGroup()</code>
-</code></pre><h2>ES module</h2><p><code>esm/index.node.js</code> and <code>esm/index.browser.js</code> are suitable for Webpack, Browserify or any alike, which also undersands <code>package.json#module</code> and <code>package.json#module</code> properties respectively and can parse ES modules.</p><p><code>esm/index.node.js</code> is build for NodeJS: contains all exported API members and all necessary polyfills for NodeJS environment.</p><p><code>esm/index.browser.js</code>  si build for browsers.</p><pre><code class="lang-javascript"><code class="source-code prettyprint">export {WebGroup, WebGroupState, WebGroupBotServer, WebGroupBotServerOptions} from &apos;netflux&apos;
+</code></pre><h2>ES module</h2><p><code>esm/index.node.js</code> and <code>esm/index.browser.js</code> are suitable for Webpack, Browserify or any alike, which also undersands <code>package.json#module</code> and <code>package.json#module</code> properties respectively and can parse ES modules.</p><p><code>esm/index.node.js</code> is build for NodeJS: contains all exported API members and all necessary polyfills for NodeJS environment.</p><p><code>esm/index.browser.js</code> is build for browsers.</p><pre><code class="lang-javascript"><code class="source-code prettyprint">export {WebGroup, WebGroupState, WebGroupBotServer, WebGroupBotServerOptions} from &apos;netflux&apos;
 const wg = new WebGroup()</code>
-</code></pre><h2>UMD</h2><p><code>dist/netflux.umd.js</code> - Universal Module Definition format is compatible with AMD, CommonJS and &quot;global&quot; modules. Built for browser and suitable for Webpack, Browserify and any other who
-also understands <code>package.json#browser</code> property.</p><pre><code class="lang-html"><code class="source-code prettyprint">&lt;!-- Browser global usage example --&gt;
+</code></pre><h2>UMD</h2><p><code>dist/netflux.umd.js</code> - Universal Module Definition format is compatible with AMD, CommonJS and &quot;global&quot; modules. Built for browser and suitable for Webpack, Browserify and any other who also understands <code>package.json#browser</code> property.</p><pre><code class="lang-html"><code class="source-code prettyprint">&lt;!-- Browser global usage example --&gt;
 &lt;script src=&quot;netflux.es5.umd.js&quot;&gt;
   window.netflux !== undefined // true
   var wg = new window.netflux.WebGroup()
 &lt;/script&gt;</code>
 </code></pre><h2>Configuration</h2><p>For a <code>WebGroup</code> object all options are optional.</p><pre><code class="lang-javascript"><code class="source-code prettyprint">// Example:
 const wg = new WebGroup({
-  signalingURL: &apos;MY_SIGNALING_URL&apos;,
+  signalingServer: &apos;MY_SIGNALING_URL&apos;,
   rtcConfiguration: {
     iceServers: [
       { urls: &apos;stun:mystun.org&apos; },
