@@ -20,7 +20,7 @@ export type DataType = string | Uint8Array
 /**
  * This class is an API starting point. It represents a peer to peer network,
  * simply called a group. Each group member can send/receive broadcast
- * as well as personal messages, invite other persons or bots (see {@link WebGroupBotServer}).
+ * as well as personal messages, invite other persons or bots (see {@link Bot}).
  * @example
  * // Create a WebGroup with full mesh topology, autorejoin feature and
  * // specified Signaling and ICE servers for WebRTC.
@@ -281,7 +281,7 @@ export class WebGroup {
 
   /**
    * Invite a bot server to join this group.
-   * @param {string} url - Bot server URL (See {@link WebGroupBotServerOptions})
+   * @param {string} url - Bot server URL (See {@link BotOptions})
    */
   invite(url: string): void {
     const wc = wcs.get(this)

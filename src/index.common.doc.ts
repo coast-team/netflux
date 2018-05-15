@@ -176,8 +176,8 @@ export class LogLevel {
  */
 
 /**
- * The options to be passed into {@link WebGroupBotServer} constructor.
- * @typedef {Object} WebGroupBotServerOptions
+ * The options to be passed into {@link Bot} constructor.
+ * @typedef {Object} BotOptions
  * @property {Topology} [topology] See WebGroupOptions.topology
  * @property {string} [signalingServer] See WebGroupOptions.signalingServer
  * @property {RTCConfiguration} [rtcConfiguration] See WebGroupOptions.rtcConfiguration
@@ -186,6 +186,7 @@ export class LogLevel {
  * @property {NodeJSHttpServer|NodeJSHttpsServer} bot.server NodeJS http(s) server.
  * @property {string} [bot.url] Bot server URL.
  * @property {boolean} [bot.perMessageDeflate] Enable/disable permessage-deflate.
+ * @property {boolean} [bot.leaveOnceAlone] If true, bot will live (disconnect from the signaling server) if no other peers left in the group.
  */
 
 /**

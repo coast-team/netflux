@@ -16,7 +16,7 @@ export { BotOptions }
  *
  * const http = require('http')
  * const server = http.createServer()
- * const bot = new WebGroupBotServer({
+ * const bot = new Bot({
  *   server,
  *   webGroupOptions: {
  *     signalingServer: 'wss://mysignaling.com',
@@ -55,11 +55,11 @@ export class Bot {
   public onError: (((err: Error) => void)) | undefined | null
 
   /**
-   * @param {WebGroupBotServerOptions} options
+   * @param {BotOptions} options
    * @param {NodeJSHttpServer|NodeJSHttpsServer} options.server NodeJS http(s) server.
    * @param {string} [options.url] Bot server URL.
    * @param {boolean} [options.perMessageDeflate=false] Enable/disable permessage-deflate.
-   * @param {boolean} [options.leaveOnceAlone=false] Enable/disable permessage-deflate.
+   * @param {boolean} [options.leaveOnceAlone=false] If true, bot will live (disconnect from the signaling server) if no other peers left in the group.
    * @param {WebGroupOptions} options.webGroupOptions Options for each {@link WebGroup} the bot is member of.
    * @param {Topology} [options.webGroupOptions.topology=Topology.FULL_MESH]
    * @param {string} [options.webGroupOptions.signalingServer='wss://signaling.netflux.coedit.re']

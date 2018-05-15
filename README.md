@@ -52,7 +52,7 @@ Here is a basic usage example for client and server (checkout the [documenation]
 
 > It is possible to have only clients without any bot server as his is not a mandatory member, but like any other group member.
 
-### Client
+### Client example
 
 ```javascript
 import { WebGroup, WebGroupState } from 'netflux'
@@ -94,10 +94,10 @@ wg.onStateChange = (state) => {
 wg.join('MY_UNIQUE_KEY_FOR_THE_GROUP')
 ```
 
-### Bot Server
+### Bot example
 
 ```javascript
-import { WebGroupBotServer } from 'netflux'
+import { Bot } from 'netflux'
 const http = require('http') // https is also possible
 const server = http.createServer()
 
