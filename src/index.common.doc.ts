@@ -10,7 +10,7 @@ export { WebGroup, WebGroupOptions, DataType } from './WebChannelFacade'
  * @param {...LogLevel} levels
  */
 export function setLogLevel(...levels: Logs[]) {
-  setLogs(levels)
+  setLogs(...levels)
 }
 
 /**

@@ -2,7 +2,7 @@ import { Bot, WebGroup, WebGroupState } from '../../src/index.node'
 import { LogLevel, setLogLevel } from '../../src/misc/util'
 import { BOT_HOST, BOT_PORT, IBotData, SIGNALING_URL } from './helper'
 
-setLogLevel([LogLevel.DEBUG])
+setLogLevel(LogLevel.DEBUG)
 
 // Require dependencies
 const http = require('http')

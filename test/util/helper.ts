@@ -1,14 +1,14 @@
 import { SignalingState, WebGroup, WebGroupState } from '../../src/index.browser'
 import { LogLevel, setLogLevel } from '../../src/misc/util'
 
-setLogLevel([
-  LogLevel.DEBUG,
+setLogLevel(
+  LogLevel.DEBUG
   // LogLevel.SIGNALING,
   // LogLevel.CHANNEL,
   // LogLevel.CHANNEL_BUILDER,
   // LogLevel.WEBRTC,
   // LogLevel.TOPOLOGY,
-])
+)
 
 // Main signaling server for all tests
 export const SIGNALING_URL = 'ws://localhost:8010'

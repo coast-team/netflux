@@ -44,7 +44,7 @@ export enum LogLevel {
 
 export let logLevels: LogLevel[] = []
 
-export function setLogLevel(levels: LogLevel[]) {
+export function setLogLevel(...levels: LogLevel[]) {
   logLevels = levels
   if (logLevels.includes(LogLevel.WEB_GROUP)) {
     log.webgroup = (msg: string, ...rest: any[]): void => {
