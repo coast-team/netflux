@@ -57,9 +57,6 @@
     "uws": "^10.148.0",
     "webrtc-adapter": "^6.1.5"
   },
-  "peerDependencies": {
-    "wrtc": "0.0.x"
-  },
   "devDependencies": {
     "@types/jasmine": "^2.8.7",
     "babel-core": "^6.26.3",
