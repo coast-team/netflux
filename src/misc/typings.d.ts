@@ -13,6 +13,16 @@ declare var global: Window & {
 }
 
 // The following Text Encoding declaration are added because they exist only started from TypeScript v2.8.x
+
+interface TextDecodeOptions {
+  stream?: boolean
+}
+
+interface TextDecoderOptions {
+  fatal?: boolean
+  ignoreBOM?: boolean
+}
+
 interface TextDecoder {
   readonly encoding: string
   readonly fatal: boolean
