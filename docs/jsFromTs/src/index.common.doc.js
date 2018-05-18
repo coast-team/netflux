@@ -8,7 +8,7 @@ export { WebGroup } from './WebChannelFacade';
  * @param {...LogLevel} levels
  */
 export function setLogLevel(...levels) {
-    setLogs(levels);
+    setLogs(...levels);
 }
 /**
  * The state enum of the signaling server.

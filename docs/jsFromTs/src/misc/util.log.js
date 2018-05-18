@@ -29,7 +29,7 @@ export var LogLevel;
     LogLevel[LogLevel["CHANNEL_BUILDER"] = 6] = "CHANNEL_BUILDER";
 })(LogLevel || (LogLevel = {}));
 export let logLevels = [];
-export function setLogLevel(levels) {
+export function setLogLevel(...levels) {
     logLevels = levels;
     if (logLevels.includes(LogLevel.WEB_GROUP)) {
         log.webgroup = (msg, ...rest) => {

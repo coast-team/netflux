@@ -1,9 +1,13 @@
 import { LogLevel, setLogLevel } from '../../src/misc/util';
-setLogLevel([
-    LogLevel.DEBUG,
-]);
+setLogLevel(LogLevel.DEBUG
+// LogLevel.SIGNALING,
+// LogLevel.CHANNEL,
+// LogLevel.CHANNEL_BUILDER,
+// LogLevel.WEBRTC,
+// LogLevel.TOPOLOGY,
+);
 // Main signaling server for all tests
-export const SIGNALING_URL = 'ws://localhost:8010';
+export const SIGNALING_URL = 'ws://localhost:13477';
 // Configuration for bot server
 export const BOT_HOST = 'localhost';
 export const BOT_PORT = 10001;

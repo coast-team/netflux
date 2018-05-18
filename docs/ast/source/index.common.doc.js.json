@@ -1,7 +1,7 @@
 {
   "type": "File",
   "start": 0,
-  "end": 5544,
+  "end": 5547,
   "loc": {
     "start": {
       "line": 1,
@@ -15,7 +15,7 @@
   "program": {
     "type": "Program",
     "start": 0,
-    "end": 5544,
+    "end": 5547,
     "loc": {
       "start": {
         "line": 1,
@@ -529,7 +529,7 @@
       {
         "type": "ExportNamedDeclaration",
         "start": 403,
-        "end": 466,
+        "end": 469,
         "loc": {
           "start": {
             "line": 10,
@@ -545,7 +545,7 @@
         "declaration": {
           "type": "FunctionDeclaration",
           "start": 410,
-          "end": 466,
+          "end": 469,
           "loc": {
             "start": {
               "line": 10,
@@ -614,7 +614,7 @@
           "body": {
             "type": "BlockStatement",
             "start": 442,
-            "end": 466,
+            "end": 469,
             "loc": {
               "start": {
                 "line": 10,
@@ -629,7 +629,7 @@
               {
                 "type": "ExpressionStatement",
                 "start": 448,
-                "end": 464,
+                "end": 467,
                 "loc": {
                   "start": {
                     "line": 11,
@@ -637,13 +637,13 @@
                   },
                   "end": {
                     "line": 11,
-                    "column": 20
+                    "column": 23
                   }
                 },
                 "expression": {
                   "type": "CallExpression",
                   "start": 448,
-                  "end": 463,
+                  "end": 466,
                   "loc": {
                     "start": {
                       "line": 11,
@@ -651,7 +651,7 @@
                     },
                     "end": {
                       "line": 11,
-                      "column": 19
+                      "column": 22
                     }
                   },
                   "callee": {
@@ -673,9 +673,9 @@
                   },
                   "arguments": [
                     {
-                      "type": "Identifier",
+                      "type": "SpreadElement",
                       "start": 456,
-                      "end": 462,
+                      "end": 465,
                       "loc": {
                         "start": {
                           "line": 11,
@@ -683,11 +683,26 @@
                         },
                         "end": {
                           "line": 11,
-                          "column": 18
-                        },
-                        "identifierName": "levels"
+                          "column": 21
+                        }
                       },
-                      "name": "levels"
+                      "argument": {
+                        "type": "Identifier",
+                        "start": 459,
+                        "end": 465,
+                        "loc": {
+                          "start": {
+                            "line": 11,
+                            "column": 15
+                          },
+                          "end": {
+                            "line": 11,
+                            "column": 21
+                          },
+                          "identifierName": "levels"
+                        },
+                        "name": "levels"
+                      }
                     }
                   ]
                 }
@@ -718,8 +733,8 @@
             {
               "type": "CommentBlock",
               "value": "*\n * The state enum of the signaling server.\n ",
-              "start": 467,
-              "end": 517,
+              "start": 470,
+              "end": 520,
               "loc": {
                 "start": {
                   "line": 13,
@@ -755,8 +770,8 @@
           {
             "type": "CommentBlock",
             "value": "*\n * The state enum of the signaling server.\n ",
-            "start": 467,
-            "end": 517,
+            "start": 470,
+            "end": 520,
             "loc": {
               "start": {
                 "line": 13,
@@ -772,8 +787,8 @@
       },
       {
         "type": "ExportNamedDeclaration",
-        "start": 518,
-        "end": 1782,
+        "start": 521,
+        "end": 1785,
         "loc": {
           "start": {
             "line": 16,
@@ -788,8 +803,8 @@
         "source": null,
         "declaration": {
           "type": "ClassDeclaration",
-          "start": 525,
-          "end": 1782,
+          "start": 528,
+          "end": 1785,
           "loc": {
             "start": {
               "line": 16,
@@ -802,8 +817,8 @@
           },
           "id": {
             "type": "Identifier",
-            "start": 531,
-            "end": 545,
+            "start": 534,
+            "end": 548,
             "loc": {
               "start": {
                 "line": 16,
@@ -821,8 +836,8 @@
           "superClass": null,
           "body": {
             "type": "ClassBody",
-            "start": 546,
-            "end": 1782,
+            "start": 549,
+            "end": 1785,
             "loc": {
               "start": {
                 "line": 16,
@@ -836,8 +851,8 @@
             "body": [
               {
                 "type": "ClassMethod",
-                "start": 673,
-                "end": 740,
+                "start": 676,
+                "end": 743,
                 "loc": {
                   "start": {
                     "line": 21,
@@ -852,8 +867,8 @@
                 "computed": false,
                 "key": {
                   "type": "Identifier",
-                  "start": 684,
-                  "end": 694,
+                  "start": 687,
+                  "end": 697,
                   "loc": {
                     "start": {
                       "line": 21,
@@ -875,8 +890,8 @@
                 "params": [],
                 "body": {
                   "type": "BlockStatement",
-                  "start": 697,
-                  "end": 740,
+                  "start": 700,
+                  "end": 743,
                   "loc": {
                     "start": {
                       "line": 21,
@@ -890,8 +905,8 @@
                   "body": [
                     {
                       "type": "ReturnStatement",
-                      "start": 707,
-                      "end": 734,
+                      "start": 710,
+                      "end": 737,
                       "loc": {
                         "start": {
                           "line": 22,
@@ -904,8 +919,8 @@
                       },
                       "argument": {
                         "type": "MemberExpression",
-                        "start": 714,
-                        "end": 733,
+                        "start": 717,
+                        "end": 736,
                         "loc": {
                           "start": {
                             "line": 22,
@@ -918,8 +933,8 @@
                         },
                         "object": {
                           "type": "Identifier",
-                          "start": 714,
-                          "end": 722,
+                          "start": 717,
+                          "end": 725,
                           "loc": {
                             "start": {
                               "line": 22,
@@ -935,8 +950,8 @@
                         },
                         "property": {
                           "type": "Identifier",
-                          "start": 723,
-                          "end": 733,
+                          "start": 726,
+                          "end": 736,
                           "loc": {
                             "start": {
                               "line": 22,
@@ -961,8 +976,8 @@
                   {
                     "type": "CommentBlock",
                     "value": "*\n     * `0`: the connection is not yet open (equivalent to `WebSocket.CONNECTING`).\n     * @type {number}\n     ",
-                    "start": 552,
-                    "end": 668,
+                    "start": 555,
+                    "end": 671,
                     "loc": {
                       "start": {
                         "line": 17,
@@ -979,8 +994,8 @@
                   {
                     "type": "CommentBlock",
                     "value": "*\n     * `1`: the connection is open and ready to communicate (equivalent to `WebSocket.OPEN`).\n     * @type {number}\n     ",
-                    "start": 745,
-                    "end": 872,
+                    "start": 748,
+                    "end": 875,
                     "loc": {
                       "start": {
                         "line": 24,
@@ -996,8 +1011,8 @@
               },
               {
                 "type": "ClassMethod",
-                "start": 877,
-                "end": 932,
+                "start": 880,
+                "end": 935,
                 "loc": {
                   "start": {
                     "line": 28,
@@ -1012,8 +1027,8 @@
                 "computed": false,
                 "key": {
                   "type": "Identifier",
-                  "start": 888,
-                  "end": 892,
+                  "start": 891,
+                  "end": 895,
                   "loc": {
                     "start": {
                       "line": 28,
@@ -1035,8 +1050,8 @@
                 "params": [],
                 "body": {
                   "type": "BlockStatement",
-                  "start": 895,
-                  "end": 932,
+                  "start": 898,
+                  "end": 935,
                   "loc": {
                     "start": {
                       "line": 28,
@@ -1050,8 +1065,8 @@
                   "body": [
                     {
                       "type": "ReturnStatement",
-                      "start": 905,
-                      "end": 926,
+                      "start": 908,
+                      "end": 929,
                       "loc": {
                         "start": {
                           "line": 29,
@@ -1064,8 +1079,8 @@
                       },
                       "argument": {
                         "type": "MemberExpression",
-                        "start": 912,
-                        "end": 925,
+                        "start": 915,
+                        "end": 928,
                         "loc": {
                           "start": {
                             "line": 29,
@@ -1078,8 +1093,8 @@
                         },
                         "object": {
                           "type": "Identifier",
-                          "start": 912,
-                          "end": 920,
+                          "start": 915,
+                          "end": 923,
                           "loc": {
                             "start": {
                               "line": 29,
@@ -1095,8 +1110,8 @@
                         },
                         "property": {
                           "type": "Identifier",
-                          "start": 921,
-                          "end": 925,
+                          "start": 924,
+                          "end": 928,
                           "loc": {
                             "start": {
                               "line": 29,
@@ -1121,8 +1136,8 @@
                   {
                     "type": "CommentBlock",
                     "value": "*\n     * `1`: the connection is open and ready to communicate (equivalent to `WebSocket.OPEN`).\n     * @type {number}\n     ",
-                    "start": 745,
-                    "end": 872,
+                    "start": 748,
+                    "end": 875,
                     "loc": {
                       "start": {
                         "line": 24,
@@ -1139,8 +1154,8 @@
                   {
                     "type": "CommentBlock",
                     "value": "*\n     * `3`: the connection is closed or couldn't be opened (equivalent to `WebSocket.CLOSED`).\n     * @type {number}\n     ",
-                    "start": 937,
-                    "end": 1065,
+                    "start": 940,
+                    "end": 1068,
                     "loc": {
                       "start": {
                         "line": 31,
@@ -1156,8 +1171,8 @@
               },
               {
                 "type": "ClassMethod",
-                "start": 1070,
-                "end": 1129,
+                "start": 1073,
+                "end": 1132,
                 "loc": {
                   "start": {
                     "line": 35,
@@ -1172,8 +1187,8 @@
                 "computed": false,
                 "key": {
                   "type": "Identifier",
-                  "start": 1081,
-                  "end": 1087,
+                  "start": 1084,
+                  "end": 1090,
                   "loc": {
                     "start": {
                       "line": 35,
@@ -1195,8 +1210,8 @@
                 "params": [],
                 "body": {
                   "type": "BlockStatement",
-                  "start": 1090,
-                  "end": 1129,
+                  "start": 1093,
+                  "end": 1132,
                   "loc": {
                     "start": {
                       "line": 35,
@@ -1210,8 +1225,8 @@
                   "body": [
                     {
                       "type": "ReturnStatement",
-                      "start": 1100,
-                      "end": 1123,
+                      "start": 1103,
+                      "end": 1126,
                       "loc": {
                         "start": {
                           "line": 36,
@@ -1224,8 +1239,8 @@
                       },
                       "argument": {
                         "type": "MemberExpression",
-                        "start": 1107,
-                        "end": 1122,
+                        "start": 1110,
+                        "end": 1125,
                         "loc": {
                           "start": {
                             "line": 36,
@@ -1238,8 +1253,8 @@
                         },
                         "object": {
                           "type": "Identifier",
-                          "start": 1107,
-                          "end": 1115,
+                          "start": 1110,
+                          "end": 1118,
                           "loc": {
                             "start": {
                               "line": 36,
@@ -1255,8 +1270,8 @@
                         },
                         "property": {
                           "type": "Identifier",
-                          "start": 1116,
-                          "end": 1122,
+                          "start": 1119,
+                          "end": 1125,
                           "loc": {
                             "start": {
                               "line": 36,
@@ -1281,8 +1296,8 @@
                   {
                     "type": "CommentBlock",
                     "value": "*\n     * `3`: the connection is closed or couldn't be opened (equivalent to `WebSocket.CLOSED`).\n     * @type {number}\n     ",
-                    "start": 937,
-                    "end": 1065,
+                    "start": 940,
+                    "end": 1068,
                     "loc": {
                       "start": {
                         "line": 31,
@@ -1299,8 +1314,8 @@
                   {
                     "type": "CommentBlock",
                     "value": "*\n     * `2`: signaling server is checking wether you are still connected to the group. If it is not the case, then\n     * subscribs you to one of the group member in order to create a connection with him.\n     * @type {number}\n     ",
-                    "start": 1134,
-                    "end": 1371,
+                    "start": 1137,
+                    "end": 1374,
                     "loc": {
                       "start": {
                         "line": 38,
@@ -1316,8 +1331,8 @@
               },
               {
                 "type": "ClassMethod",
-                "start": 1376,
-                "end": 1439,
+                "start": 1379,
+                "end": 1442,
                 "loc": {
                   "start": {
                     "line": 43,
@@ -1332,8 +1347,8 @@
                 "computed": false,
                 "key": {
                   "type": "Identifier",
-                  "start": 1387,
-                  "end": 1395,
+                  "start": 1390,
+                  "end": 1398,
                   "loc": {
                     "start": {
                       "line": 43,
@@ -1355,8 +1370,8 @@
                 "params": [],
                 "body": {
                   "type": "BlockStatement",
-                  "start": 1398,
-                  "end": 1439,
+                  "start": 1401,
+                  "end": 1442,
                   "loc": {
                     "start": {
                       "line": 43,
@@ -1370,8 +1385,8 @@
                   "body": [
                     {
                       "type": "ReturnStatement",
-                      "start": 1408,
-                      "end": 1433,
+                      "start": 1411,
+                      "end": 1436,
                       "loc": {
                         "start": {
                           "line": 44,
@@ -1384,8 +1399,8 @@
                       },
                       "argument": {
                         "type": "MemberExpression",
-                        "start": 1415,
-                        "end": 1432,
+                        "start": 1418,
+                        "end": 1435,
                         "loc": {
                           "start": {
                             "line": 44,
@@ -1398,8 +1413,8 @@
                         },
                         "object": {
                           "type": "Identifier",
-                          "start": 1415,
-                          "end": 1423,
+                          "start": 1418,
+                          "end": 1426,
                           "loc": {
                             "start": {
                               "line": 44,
@@ -1415,8 +1430,8 @@
                         },
                         "property": {
                           "type": "Identifier",
-                          "start": 1424,
-                          "end": 1432,
+                          "start": 1427,
+                          "end": 1435,
                           "loc": {
                             "start": {
                               "line": 44,
@@ -1441,8 +1456,8 @@
                   {
                     "type": "CommentBlock",
                     "value": "*\n     * `2`: signaling server is checking wether you are still connected to the group. If it is not the case, then\n     * subscribs you to one of the group member in order to create a connection with him.\n     * @type {number}\n     ",
-                    "start": 1134,
-                    "end": 1371,
+                    "start": 1137,
+                    "end": 1374,
                     "loc": {
                       "start": {
                         "line": 38,
@@ -1459,8 +1474,8 @@
                   {
                     "type": "CommentBlock",
                     "value": "*\n     * `4`: a connection has been established with one of the group member or you are the only member of the group.\n     * From now the signaling is no longer needed, because the joining process will continue with a help of this member.\n     * @type {number}\n     ",
-                    "start": 1444,
-                    "end": 1714,
+                    "start": 1447,
+                    "end": 1717,
                     "loc": {
                       "start": {
                         "line": 46,
@@ -1476,8 +1491,8 @@
               },
               {
                 "type": "ClassMethod",
-                "start": 1719,
-                "end": 1780,
+                "start": 1722,
+                "end": 1783,
                 "loc": {
                   "start": {
                     "line": 51,
@@ -1492,8 +1507,8 @@
                 "computed": false,
                 "key": {
                   "type": "Identifier",
-                  "start": 1730,
-                  "end": 1737,
+                  "start": 1733,
+                  "end": 1740,
                   "loc": {
                     "start": {
                       "line": 51,
@@ -1515,8 +1530,8 @@
                 "params": [],
                 "body": {
                   "type": "BlockStatement",
-                  "start": 1740,
-                  "end": 1780,
+                  "start": 1743,
+                  "end": 1783,
                   "loc": {
                     "start": {
                       "line": 51,
@@ -1530,8 +1545,8 @@
                   "body": [
                     {
                       "type": "ReturnStatement",
-                      "start": 1750,
-                      "end": 1774,
+                      "start": 1753,
+                      "end": 1777,
                       "loc": {
                         "start": {
                           "line": 52,
@@ -1544,8 +1559,8 @@
                       },
                       "argument": {
                         "type": "MemberExpression",
-                        "start": 1757,
-                        "end": 1773,
+                        "start": 1760,
+                        "end": 1776,
                         "loc": {
                           "start": {
                             "line": 52,
@@ -1558,8 +1573,8 @@
                         },
                         "object": {
                           "type": "Identifier",
-                          "start": 1757,
-                          "end": 1765,
+                          "start": 1760,
+                          "end": 1768,
                           "loc": {
                             "start": {
                               "line": 52,
@@ -1575,8 +1590,8 @@
                         },
                         "property": {
                           "type": "Identifier",
-                          "start": 1766,
-                          "end": 1773,
+                          "start": 1769,
+                          "end": 1776,
                           "loc": {
                             "start": {
                               "line": 52,
@@ -1600,8 +1615,8 @@
                   {
                     "type": "CommentBlock",
                     "value": "*\n     * `4`: a connection has been established with one of the group member or you are the only member of the group.\n     * From now the signaling is no longer needed, because the joining process will continue with a help of this member.\n     * @type {number}\n     ",
-                    "start": 1444,
-                    "end": 1714,
+                    "start": 1447,
+                    "end": 1717,
                     "loc": {
                       "start": {
                         "line": 46,
@@ -1622,8 +1637,8 @@
             {
               "type": "CommentBlock",
               "value": "*\n * The state enum of the signaling server.\n ",
-              "start": 467,
-              "end": 517,
+              "start": 470,
+              "end": 520,
               "loc": {
                 "start": {
                   "line": 13,
@@ -1640,8 +1655,8 @@
             {
               "type": "CommentBlock",
               "value": "*\n * The state enum of {@link WebGroup}.\n ",
-              "start": 1783,
-              "end": 1829,
+              "start": 1786,
+              "end": 1832,
               "loc": {
                 "start": {
                   "line": 55,
@@ -1659,8 +1674,8 @@
           {
             "type": "CommentBlock",
             "value": "*\n * The state enum of the signaling server.\n ",
-            "start": 467,
-            "end": 517,
+            "start": 470,
+            "end": 520,
             "loc": {
               "start": {
                 "line": 13,
@@ -1677,8 +1692,8 @@
           {
             "type": "CommentBlock",
             "value": "*\n * The state enum of {@link WebGroup}.\n ",
-            "start": 1783,
-            "end": 1829,
+            "start": 1786,
+            "end": 1832,
             "loc": {
               "start": {
                 "line": 55,
@@ -1694,8 +1709,8 @@
       },
       {
         "type": "ExportNamedDeclaration",
-        "start": 1830,
-        "end": 2358,
+        "start": 1833,
+        "end": 2361,
         "loc": {
           "start": {
             "line": 58,
@@ -1710,8 +1725,8 @@
         "source": null,
         "declaration": {
           "type": "ClassDeclaration",
-          "start": 1837,
-          "end": 2358,
+          "start": 1840,
+          "end": 2361,
           "loc": {
             "start": {
               "line": 58,
@@ -1724,8 +1739,8 @@
           },
           "id": {
             "type": "Identifier",
-            "start": 1843,
-            "end": 1856,
+            "start": 1846,
+            "end": 1859,
             "loc": {
               "start": {
                 "line": 58,
@@ -1743,8 +1758,8 @@
           "superClass": null,
           "body": {
             "type": "ClassBody",
-            "start": 1857,
-            "end": 2358,
+            "start": 1860,
+            "end": 2361,
             "loc": {
               "start": {
                 "line": 58,
@@ -1758,8 +1773,8 @@
             "body": [
               {
                 "type": "ClassMethod",
-                "start": 1947,
-                "end": 2015,
+                "start": 1950,
+                "end": 2018,
                 "loc": {
                   "start": {
                     "line": 63,
@@ -1774,8 +1789,8 @@
                 "computed": false,
                 "key": {
                   "type": "Identifier",
-                  "start": 1958,
-                  "end": 1965,
+                  "start": 1961,
+                  "end": 1968,
                   "loc": {
                     "start": {
                       "line": 63,
@@ -1797,8 +1812,8 @@
                 "params": [],
                 "body": {
                   "type": "BlockStatement",
-                  "start": 1968,
-                  "end": 2015,
+                  "start": 1971,
+                  "end": 2018,
                   "loc": {
                     "start": {
                       "line": 63,
@@ -1812,8 +1827,8 @@
                   "body": [
                     {
                       "type": "ReturnStatement",
-                      "start": 1978,
-                      "end": 2009,
+                      "start": 1981,
+                      "end": 2012,
                       "loc": {
                         "start": {
                           "line": 64,
@@ -1826,8 +1841,8 @@
                       },
                       "argument": {
                         "type": "MemberExpression",
-                        "start": 1985,
-                        "end": 2008,
+                        "start": 1988,
+                        "end": 2011,
                         "loc": {
                           "start": {
                             "line": 64,
@@ -1840,8 +1855,8 @@
                         },
                         "object": {
                           "type": "Identifier",
-                          "start": 1985,
-                          "end": 2000,
+                          "start": 1988,
+                          "end": 2003,
                           "loc": {
                             "start": {
                               "line": 64,
@@ -1857,8 +1872,8 @@
                         },
                         "property": {
                           "type": "Identifier",
-                          "start": 2001,
-                          "end": 2008,
+                          "start": 2004,
+                          "end": 2011,
                           "loc": {
                             "start": {
                               "line": 64,
@@ -1883,8 +1898,8 @@
                   {
                     "type": "CommentBlock",
                     "value": "*\n     * `0`: you haven't joined the group yet.\n     * @type {number}\n     ",
-                    "start": 1863,
-                    "end": 1942,
+                    "start": 1866,
+                    "end": 1945,
                     "loc": {
                       "start": {
                         "line": 59,
@@ -1901,8 +1916,8 @@
                   {
                     "type": "CommentBlock",
                     "value": "*\n     * `1`: you have sussessfully joined the group and ready to communicate.\n     * @type {number}\n     ",
-                    "start": 2020,
-                    "end": 2130,
+                    "start": 2023,
+                    "end": 2133,
                     "loc": {
                       "start": {
                         "line": 66,
@@ -1918,8 +1933,8 @@
               },
               {
                 "type": "ClassMethod",
-                "start": 2135,
-                "end": 2201,
+                "start": 2138,
+                "end": 2204,
                 "loc": {
                   "start": {
                     "line": 70,
@@ -1934,8 +1949,8 @@
                 "computed": false,
                 "key": {
                   "type": "Identifier",
-                  "start": 2146,
-                  "end": 2152,
+                  "start": 2149,
+                  "end": 2155,
                   "loc": {
                     "start": {
                       "line": 70,
@@ -1957,8 +1972,8 @@
                 "params": [],
                 "body": {
                   "type": "BlockStatement",
-                  "start": 2155,
-                  "end": 2201,
+                  "start": 2158,
+                  "end": 2204,
                   "loc": {
                     "start": {
                       "line": 70,
@@ -1972,8 +1987,8 @@
                   "body": [
                     {
                       "type": "ReturnStatement",
-                      "start": 2165,
-                      "end": 2195,
+                      "start": 2168,
+                      "end": 2198,
                       "loc": {
                         "start": {
                           "line": 71,
@@ -1986,8 +2001,8 @@
                       },
                       "argument": {
                         "type": "MemberExpression",
-                        "start": 2172,
-                        "end": 2194,
+                        "start": 2175,
+                        "end": 2197,
                         "loc": {
                           "start": {
                             "line": 71,
@@ -2000,8 +2015,8 @@
                         },
                         "object": {
                           "type": "Identifier",
-                          "start": 2172,
-                          "end": 2187,
+                          "start": 2175,
+                          "end": 2190,
                           "loc": {
                             "start": {
                               "line": 71,
@@ -2017,8 +2032,8 @@
                         },
                         "property": {
                           "type": "Identifier",
-                          "start": 2188,
-                          "end": 2194,
+                          "start": 2191,
+                          "end": 2197,
                           "loc": {
                             "start": {
                               "line": 71,
@@ -2043,8 +2058,8 @@
                   {
                     "type": "CommentBlock",
                     "value": "*\n     * `1`: you have sussessfully joined the group and ready to communicate.\n     * @type {number}\n     ",
-                    "start": 2020,
-                    "end": 2130,
+                    "start": 2023,
+                    "end": 2133,
                     "loc": {
                       "start": {
                         "line": 66,
@@ -2061,8 +2076,8 @@
                   {
                     "type": "CommentBlock",
                     "value": "*\n     * `3`: you have sussessfully left the group.\n     * @type {number}\n     ",
-                    "start": 2206,
-                    "end": 2289,
+                    "start": 2209,
+                    "end": 2292,
                     "loc": {
                       "start": {
                         "line": 73,
@@ -2078,8 +2093,8 @@
               },
               {
                 "type": "ClassMethod",
-                "start": 2294,
-                "end": 2356,
+                "start": 2297,
+                "end": 2359,
                 "loc": {
                   "start": {
                     "line": 77,
@@ -2094,8 +2109,8 @@
                 "computed": false,
                 "key": {
                   "type": "Identifier",
-                  "start": 2305,
-                  "end": 2309,
+                  "start": 2308,
+                  "end": 2312,
                   "loc": {
                     "start": {
                       "line": 77,
@@ -2117,8 +2132,8 @@
                 "params": [],
                 "body": {
                   "type": "BlockStatement",
-                  "start": 2312,
-                  "end": 2356,
+                  "start": 2315,
+                  "end": 2359,
                   "loc": {
                     "start": {
                       "line": 77,
@@ -2132,8 +2147,8 @@
                   "body": [
                     {
                       "type": "ReturnStatement",
-                      "start": 2322,
-                      "end": 2350,
+                      "start": 2325,
+                      "end": 2353,
                       "loc": {
                         "start": {
                           "line": 78,
@@ -2146,8 +2161,8 @@
                       },
                       "argument": {
                         "type": "MemberExpression",
-                        "start": 2329,
-                        "end": 2349,
+                        "start": 2332,
+                        "end": 2352,
                         "loc": {
                           "start": {
                             "line": 78,
@@ -2160,8 +2175,8 @@
                         },
                         "object": {
                           "type": "Identifier",
-                          "start": 2329,
-                          "end": 2344,
+                          "start": 2332,
+                          "end": 2347,
                           "loc": {
                             "start": {
                               "line": 78,
@@ -2177,8 +2192,8 @@
                         },
                         "property": {
                           "type": "Identifier",
-                          "start": 2345,
-                          "end": 2349,
+                          "start": 2348,
+                          "end": 2352,
                           "loc": {
                             "start": {
                               "line": 78,
@@ -2202,8 +2217,8 @@
                   {
                     "type": "CommentBlock",
                     "value": "*\n     * `3`: you have sussessfully left the group.\n     * @type {number}\n     ",
-                    "start": 2206,
-                    "end": 2289,
+                    "start": 2209,
+                    "end": 2292,
                     "loc": {
                       "start": {
                         "line": 73,
@@ -2224,8 +2239,8 @@
             {
               "type": "CommentBlock",
               "value": "*\n * The state enum of {@link WebGroup}.\n ",
-              "start": 1783,
-              "end": 1829,
+              "start": 1786,
+              "end": 1832,
               "loc": {
                 "start": {
                   "line": 55,
@@ -2242,8 +2257,8 @@
             {
               "type": "CommentBlock",
               "value": "*\n * The topology enum. More topologies will be added in the future\n ",
-              "start": 2359,
-              "end": 2432,
+              "start": 2362,
+              "end": 2435,
               "loc": {
                 "start": {
                   "line": 81,
@@ -2261,8 +2276,8 @@
           {
             "type": "CommentBlock",
             "value": "*\n * The state enum of {@link WebGroup}.\n ",
-            "start": 1783,
-            "end": 1829,
+            "start": 1786,
+            "end": 1832,
             "loc": {
               "start": {
                 "line": 55,
@@ -2279,8 +2294,8 @@
           {
             "type": "CommentBlock",
             "value": "*\n * The topology enum. More topologies will be added in the future\n ",
-            "start": 2359,
-            "end": 2432,
+            "start": 2362,
+            "end": 2435,
             "loc": {
               "start": {
                 "line": 81,
@@ -2296,8 +2311,8 @@
       },
       {
         "type": "ExportNamedDeclaration",
-        "start": 2433,
-        "end": 2608,
+        "start": 2436,
+        "end": 2611,
         "loc": {
           "start": {
             "line": 84,
@@ -2312,8 +2327,8 @@
         "source": null,
         "declaration": {
           "type": "ClassDeclaration",
-          "start": 2440,
-          "end": 2608,
+          "start": 2443,
+          "end": 2611,
           "loc": {
             "start": {
               "line": 84,
@@ -2326,8 +2341,8 @@
           },
           "id": {
             "type": "Identifier",
-            "start": 2446,
-            "end": 2454,
+            "start": 2449,
+            "end": 2457,
             "loc": {
               "start": {
                 "line": 84,
@@ -2345,8 +2360,8 @@
           "superClass": null,
           "body": {
             "type": "ClassBody",
-            "start": 2455,
-            "end": 2608,
+            "start": 2458,
+            "end": 2611,
             "loc": {
               "start": {
                 "line": 84,
@@ -2360,8 +2375,8 @@
             "body": [
               {
                 "type": "ClassMethod",
-                "start": 2537,
-                "end": 2606,
+                "start": 2540,
+                "end": 2609,
                 "loc": {
                   "start": {
                     "line": 89,
@@ -2376,8 +2391,8 @@
                 "computed": false,
                 "key": {
                   "type": "Identifier",
-                  "start": 2548,
-                  "end": 2557,
+                  "start": 2551,
+                  "end": 2560,
                   "loc": {
                     "start": {
                       "line": 89,
@@ -2399,8 +2414,8 @@
                 "params": [],
                 "body": {
                   "type": "BlockStatement",
-                  "start": 2560,
-                  "end": 2606,
+                  "start": 2563,
+                  "end": 2609,
                   "loc": {
                     "start": {
                       "line": 89,
@@ -2414,8 +2429,8 @@
                   "body": [
                     {
                       "type": "ReturnStatement",
-                      "start": 2570,
-                      "end": 2600,
+                      "start": 2573,
+                      "end": 2603,
                       "loc": {
                         "start": {
                           "line": 90,
@@ -2428,8 +2443,8 @@
                       },
                       "argument": {
                         "type": "MemberExpression",
-                        "start": 2577,
-                        "end": 2599,
+                        "start": 2580,
+                        "end": 2602,
                         "loc": {
                           "start": {
                             "line": 90,
@@ -2442,8 +2457,8 @@
                         },
                         "object": {
                           "type": "Identifier",
-                          "start": 2577,
-                          "end": 2589,
+                          "start": 2580,
+                          "end": 2592,
                           "loc": {
                             "start": {
                               "line": 90,
@@ -2459,8 +2474,8 @@
                         },
                         "property": {
                           "type": "Identifier",
-                          "start": 2590,
-                          "end": 2599,
+                          "start": 2593,
+                          "end": 2602,
                           "loc": {
                             "start": {
                               "line": 90,
@@ -2484,8 +2499,8 @@
                   {
                     "type": "CommentBlock",
                     "value": "*\n     * Full mesh topology identifier.\n     * @type {number}\n     ",
-                    "start": 2461,
-                    "end": 2532,
+                    "start": 2464,
+                    "end": 2535,
                     "loc": {
                       "start": {
                         "line": 85,
@@ -2506,8 +2521,8 @@
             {
               "type": "CommentBlock",
               "value": "*\n * The topology enum. More topologies will be added in the future\n ",
-              "start": 2359,
-              "end": 2432,
+              "start": 2362,
+              "end": 2435,
               "loc": {
                 "start": {
                   "line": 81,
@@ -2524,8 +2539,8 @@
             {
               "type": "CommentBlock",
               "value": "*\n * The log level enum for debugging purposes.\n ",
-              "start": 2609,
-              "end": 2662,
+              "start": 2612,
+              "end": 2665,
               "loc": {
                 "start": {
                   "line": 93,
@@ -2543,8 +2558,8 @@
           {
             "type": "CommentBlock",
             "value": "*\n * The topology enum. More topologies will be added in the future\n ",
-            "start": 2359,
-            "end": 2432,
+            "start": 2362,
+            "end": 2435,
             "loc": {
               "start": {
                 "line": 81,
@@ -2561,8 +2576,8 @@
           {
             "type": "CommentBlock",
             "value": "*\n * The log level enum for debugging purposes.\n ",
-            "start": 2609,
-            "end": 2662,
+            "start": 2612,
+            "end": 2665,
             "loc": {
               "start": {
                 "line": 93,
@@ -2578,8 +2593,8 @@
       },
       {
         "type": "ExportNamedDeclaration",
-        "start": 2663,
-        "end": 3757,
+        "start": 2666,
+        "end": 3760,
         "loc": {
           "start": {
             "line": 96,
@@ -2594,8 +2609,8 @@
         "source": null,
         "declaration": {
           "type": "ClassDeclaration",
-          "start": 2670,
-          "end": 3757,
+          "start": 2673,
+          "end": 3760,
           "loc": {
             "start": {
               "line": 96,
@@ -2608,8 +2623,8 @@
           },
           "id": {
             "type": "Identifier",
-            "start": 2676,
-            "end": 2684,
+            "start": 2679,
+            "end": 2687,
             "loc": {
               "start": {
                 "line": 96,
@@ -2627,8 +2642,8 @@
           "superClass": null,
           "body": {
             "type": "ClassBody",
-            "start": 2685,
-            "end": 3757,
+            "start": 2688,
+            "end": 3760,
             "loc": {
               "start": {
                 "line": 96,
@@ -2642,8 +2657,8 @@
             "body": [
               {
                 "type": "ClassMethod",
-                "start": 2774,
-                "end": 2827,
+                "start": 2777,
+                "end": 2830,
                 "loc": {
                   "start": {
                     "line": 101,
@@ -2658,8 +2673,8 @@
                 "computed": false,
                 "key": {
                   "type": "Identifier",
-                  "start": 2785,
-                  "end": 2790,
+                  "start": 2788,
+                  "end": 2793,
                   "loc": {
                     "start": {
                       "line": 101,
@@ -2681,8 +2696,8 @@
                 "params": [],
                 "body": {
                   "type": "BlockStatement",
-                  "start": 2793,
-                  "end": 2827,
+                  "start": 2796,
+                  "end": 2830,
                   "loc": {
                     "start": {
                       "line": 101,
@@ -2696,8 +2711,8 @@
                   "body": [
                     {
                       "type": "ReturnStatement",
-                      "start": 2803,
-                      "end": 2821,
+                      "start": 2806,
+                      "end": 2824,
                       "loc": {
                         "start": {
                           "line": 102,
@@ -2710,8 +2725,8 @@
                       },
                       "argument": {
                         "type": "MemberExpression",
-                        "start": 2810,
-                        "end": 2820,
+                        "start": 2813,
+                        "end": 2823,
                         "loc": {
                           "start": {
                             "line": 102,
@@ -2724,8 +2739,8 @@
                         },
                         "object": {
                           "type": "Identifier",
-                          "start": 2810,
-                          "end": 2814,
+                          "start": 2813,
+                          "end": 2817,
                           "loc": {
                             "start": {
                               "line": 102,
@@ -2741,8 +2756,8 @@
                         },
                         "property": {
                           "type": "Identifier",
-                          "start": 2815,
-                          "end": 2820,
+                          "start": 2818,
+                          "end": 2823,
                           "loc": {
                             "start": {
                               "line": 102,
@@ -2767,8 +2782,8 @@
                   {
                     "type": "CommentBlock",
                     "value": "*\n     * Equals to `1`, allows logs for debug.\n     * @type {number}\n     ",
-                    "start": 2691,
-                    "end": 2769,
+                    "start": 2694,
+                    "end": 2772,
                     "loc": {
                       "start": {
                         "line": 97,
@@ -2785,8 +2800,8 @@
                   {
                     "type": "CommentBlock",
                     "value": "*\n     * Equals to `2`, logs for WebGroup module.\n     * @type {number}\n     ",
-                    "start": 2832,
-                    "end": 2913,
+                    "start": 2835,
+                    "end": 2916,
                     "loc": {
                       "start": {
                         "line": 104,
@@ -2802,8 +2817,8 @@
               },
               {
                 "type": "ClassMethod",
-                "start": 2918,
-                "end": 2979,
+                "start": 2921,
+                "end": 2982,
                 "loc": {
                   "start": {
                     "line": 108,
@@ -2818,8 +2833,8 @@
                 "computed": false,
                 "key": {
                   "type": "Identifier",
-                  "start": 2929,
-                  "end": 2938,
+                  "start": 2932,
+                  "end": 2941,
                   "loc": {
                     "start": {
                       "line": 108,
@@ -2841,8 +2856,8 @@
                 "params": [],
                 "body": {
                   "type": "BlockStatement",
-                  "start": 2941,
-                  "end": 2979,
+                  "start": 2944,
+                  "end": 2982,
                   "loc": {
                     "start": {
                       "line": 108,
@@ -2856,8 +2871,8 @@
                   "body": [
                     {
                       "type": "ReturnStatement",
-                      "start": 2951,
-                      "end": 2973,
+                      "start": 2954,
+                      "end": 2976,
                       "loc": {
                         "start": {
                           "line": 109,
@@ -2870,8 +2885,8 @@
                       },
                       "argument": {
                         "type": "MemberExpression",
-                        "start": 2958,
-                        "end": 2972,
+                        "start": 2961,
+                        "end": 2975,
                         "loc": {
                           "start": {
                             "line": 109,
@@ -2884,8 +2899,8 @@
                         },
                         "object": {
                           "type": "Identifier",
-                          "start": 2958,
-                          "end": 2962,
+                          "start": 2961,
+                          "end": 2965,
                           "loc": {
                             "start": {
                               "line": 109,
@@ -2901,8 +2916,8 @@
                         },
                         "property": {
                           "type": "Identifier",
-                          "start": 2963,
-                          "end": 2972,
+                          "start": 2966,
+                          "end": 2975,
                           "loc": {
                             "start": {
                               "line": 109,
@@ -2927,8 +2942,8 @@
                   {
                     "type": "CommentBlock",
                     "value": "*\n     * Equals to `2`, logs for WebGroup module.\n     * @type {number}\n     ",
-                    "start": 2832,
-                    "end": 2913,
+                    "start": 2835,
+                    "end": 2916,
                     "loc": {
                       "start": {
                         "line": 104,
@@ -2945,8 +2960,8 @@
                   {
                     "type": "CommentBlock",
                     "value": "*\n     * Equals to `3`, logs for DataChannelBuilder module.\n     * @type {number}\n     ",
-                    "start": 2984,
-                    "end": 3075,
+                    "start": 2987,
+                    "end": 3078,
                     "loc": {
                       "start": {
                         "line": 111,
@@ -2962,8 +2977,8 @@
               },
               {
                 "type": "ClassMethod",
-                "start": 3080,
-                "end": 3135,
+                "start": 3083,
+                "end": 3138,
                 "loc": {
                   "start": {
                     "line": 115,
@@ -2978,8 +2993,8 @@
                 "computed": false,
                 "key": {
                   "type": "Identifier",
-                  "start": 3091,
-                  "end": 3097,
+                  "start": 3094,
+                  "end": 3100,
                   "loc": {
                     "start": {
                       "line": 115,
@@ -3001,8 +3016,8 @@
                 "params": [],
                 "body": {
                   "type": "BlockStatement",
-                  "start": 3100,
-                  "end": 3135,
+                  "start": 3103,
+                  "end": 3138,
                   "loc": {
                     "start": {
                       "line": 115,
@@ -3016,8 +3031,8 @@
                   "body": [
                     {
                       "type": "ReturnStatement",
-                      "start": 3110,
-                      "end": 3129,
+                      "start": 3113,
+                      "end": 3132,
                       "loc": {
                         "start": {
                           "line": 116,
@@ -3030,8 +3045,8 @@
                       },
                       "argument": {
                         "type": "MemberExpression",
-                        "start": 3117,
-                        "end": 3128,
+                        "start": 3120,
+                        "end": 3131,
                         "loc": {
                           "start": {
                             "line": 116,
@@ -3044,8 +3059,8 @@
                         },
                         "object": {
                           "type": "Identifier",
-                          "start": 3117,
-                          "end": 3121,
+                          "start": 3120,
+                          "end": 3124,
                           "loc": {
                             "start": {
                               "line": 116,
@@ -3061,8 +3076,8 @@
                         },
                         "property": {
                           "type": "Identifier",
-                          "start": 3122,
-                          "end": 3128,
+                          "start": 3125,
+                          "end": 3131,
                           "loc": {
                             "start": {
                               "line": 116,
@@ -3087,8 +3102,8 @@
                   {
                     "type": "CommentBlock",
                     "value": "*\n     * Equals to `3`, logs for DataChannelBuilder module.\n     * @type {number}\n     ",
-                    "start": 2984,
-                    "end": 3075,
+                    "start": 2987,
+                    "end": 3078,
                     "loc": {
                       "start": {
                         "line": 111,
@@ -3105,8 +3120,8 @@
                   {
                     "type": "CommentBlock",
                     "value": "*\n     * Equals to `4`, logs for Channel module.\n     * @type {number}\n     ",
-                    "start": 3140,
-                    "end": 3220,
+                    "start": 3143,
+                    "end": 3223,
                     "loc": {
                       "start": {
                         "line": 118,
@@ -3122,8 +3137,8 @@
               },
               {
                 "type": "ClassMethod",
-                "start": 3225,
-                "end": 3282,
+                "start": 3228,
+                "end": 3285,
                 "loc": {
                   "start": {
                     "line": 122,
@@ -3138,8 +3153,8 @@
                 "computed": false,
                 "key": {
                   "type": "Identifier",
-                  "start": 3236,
-                  "end": 3243,
+                  "start": 3239,
+                  "end": 3246,
                   "loc": {
                     "start": {
                       "line": 122,
@@ -3161,8 +3176,8 @@
                 "params": [],
                 "body": {
                   "type": "BlockStatement",
-                  "start": 3246,
-                  "end": 3282,
+                  "start": 3249,
+                  "end": 3285,
                   "loc": {
                     "start": {
                       "line": 122,
@@ -3176,8 +3191,8 @@
                   "body": [
                     {
                       "type": "ReturnStatement",
-                      "start": 3256,
-                      "end": 3276,
+                      "start": 3259,
+                      "end": 3279,
                       "loc": {
                         "start": {
                           "line": 123,
@@ -3190,8 +3205,8 @@
                       },
                       "argument": {
                         "type": "MemberExpression",
-                        "start": 3263,
-                        "end": 3275,
+                        "start": 3266,
+                        "end": 3278,
                         "loc": {
                           "start": {
                             "line": 123,
@@ -3204,8 +3219,8 @@
                         },
                         "object": {
                           "type": "Identifier",
-                          "start": 3263,
-                          "end": 3267,
+                          "start": 3266,
+                          "end": 3270,
                           "loc": {
                             "start": {
                               "line": 123,
@@ -3221,8 +3236,8 @@
                         },
                         "property": {
                           "type": "Identifier",
-                          "start": 3268,
-                          "end": 3275,
+                          "start": 3271,
+                          "end": 3278,
                           "loc": {
                             "start": {
                               "line": 123,
@@ -3247,8 +3262,8 @@
                   {
                     "type": "CommentBlock",
                     "value": "*\n     * Equals to `4`, logs for Channel module.\n     * @type {number}\n     ",
-                    "start": 3140,
-                    "end": 3220,
+                    "start": 3143,
+                    "end": 3223,
                     "loc": {
                       "start": {
                         "line": 118,
@@ -3265,8 +3280,8 @@
                   {
                     "type": "CommentBlock",
                     "value": "*\n     * Equals to `5`, logs for Topology module.\n     * @type {number}\n     ",
-                    "start": 3287,
-                    "end": 3368,
+                    "start": 3290,
+                    "end": 3371,
                     "loc": {
                       "start": {
                         "line": 125,
@@ -3282,8 +3297,8 @@
               },
               {
                 "type": "ClassMethod",
-                "start": 3373,
-                "end": 3432,
+                "start": 3376,
+                "end": 3435,
                 "loc": {
                   "start": {
                     "line": 129,
@@ -3298,8 +3313,8 @@
                 "computed": false,
                 "key": {
                   "type": "Identifier",
-                  "start": 3384,
-                  "end": 3392,
+                  "start": 3387,
+                  "end": 3395,
                   "loc": {
                     "start": {
                       "line": 129,
@@ -3321,8 +3336,8 @@
                 "params": [],
                 "body": {
                   "type": "BlockStatement",
-                  "start": 3395,
-                  "end": 3432,
+                  "start": 3398,
+                  "end": 3435,
                   "loc": {
                     "start": {
                       "line": 129,
@@ -3336,8 +3351,8 @@
                   "body": [
                     {
                       "type": "ReturnStatement",
-                      "start": 3405,
-                      "end": 3426,
+                      "start": 3408,
+                      "end": 3429,
                       "loc": {
                         "start": {
                           "line": 130,
@@ -3350,8 +3365,8 @@
                       },
                       "argument": {
                         "type": "MemberExpression",
-                        "start": 3412,
-                        "end": 3425,
+                        "start": 3415,
+                        "end": 3428,
                         "loc": {
                           "start": {
                             "line": 130,
@@ -3364,8 +3379,8 @@
                         },
                         "object": {
                           "type": "Identifier",
-                          "start": 3412,
-                          "end": 3416,
+                          "start": 3415,
+                          "end": 3419,
                           "loc": {
                             "start": {
                               "line": 130,
@@ -3381,8 +3396,8 @@
                         },
                         "property": {
                           "type": "Identifier",
-                          "start": 3417,
-                          "end": 3425,
+                          "start": 3420,
+                          "end": 3428,
                           "loc": {
                             "start": {
                               "line": 130,
@@ -3407,8 +3422,8 @@
                   {
                     "type": "CommentBlock",
                     "value": "*\n     * Equals to `5`, logs for Topology module.\n     * @type {number}\n     ",
-                    "start": 3287,
-                    "end": 3368,
+                    "start": 3290,
+                    "end": 3371,
                     "loc": {
                       "start": {
                         "line": 125,
@@ -3425,8 +3440,8 @@
                   {
                     "type": "CommentBlock",
                     "value": "*\n     * Equals to `6`, logs for Signaling module.\n     * @type {number}\n     ",
-                    "start": 3437,
-                    "end": 3519,
+                    "start": 3440,
+                    "end": 3522,
                     "loc": {
                       "start": {
                         "line": 132,
@@ -3442,8 +3457,8 @@
               },
               {
                 "type": "ClassMethod",
-                "start": 3524,
-                "end": 3585,
+                "start": 3527,
+                "end": 3588,
                 "loc": {
                   "start": {
                     "line": 136,
@@ -3458,8 +3473,8 @@
                 "computed": false,
                 "key": {
                   "type": "Identifier",
-                  "start": 3535,
-                  "end": 3544,
+                  "start": 3538,
+                  "end": 3547,
                   "loc": {
                     "start": {
                       "line": 136,
@@ -3481,8 +3496,8 @@
                 "params": [],
                 "body": {
                   "type": "BlockStatement",
-                  "start": 3547,
-                  "end": 3585,
+                  "start": 3550,
+                  "end": 3588,
                   "loc": {
                     "start": {
                       "line": 136,
@@ -3496,8 +3511,8 @@
                   "body": [
                     {
                       "type": "ReturnStatement",
-                      "start": 3557,
-                      "end": 3579,
+                      "start": 3560,
+                      "end": 3582,
                       "loc": {
                         "start": {
                           "line": 137,
@@ -3510,8 +3525,8 @@
                       },
                       "argument": {
                         "type": "MemberExpression",
-                        "start": 3564,
-                        "end": 3578,
+                        "start": 3567,
+                        "end": 3581,
                         "loc": {
                           "start": {
                             "line": 137,
@@ -3524,8 +3539,8 @@
                         },
                         "object": {
                           "type": "Identifier",
-                          "start": 3564,
-                          "end": 3568,
+                          "start": 3567,
+                          "end": 3571,
                           "loc": {
                             "start": {
                               "line": 137,
@@ -3541,8 +3556,8 @@
                         },
                         "property": {
                           "type": "Identifier",
-                          "start": 3569,
-                          "end": 3578,
+                          "start": 3572,
+                          "end": 3581,
                           "loc": {
                             "start": {
                               "line": 137,
@@ -3567,8 +3582,8 @@
                   {
                     "type": "CommentBlock",
                     "value": "*\n     * Equals to `6`, logs for Signaling module.\n     * @type {number}\n     ",
-                    "start": 3437,
-                    "end": 3519,
+                    "start": 3440,
+                    "end": 3522,
                     "loc": {
                       "start": {
                         "line": 132,
@@ -3585,8 +3600,8 @@
                   {
                     "type": "CommentBlock",
                     "value": "*\n     * Equals to `7`, logs for ChannelBuilder module.\n     * @type {number}\n     ",
-                    "start": 3590,
-                    "end": 3677,
+                    "start": 3593,
+                    "end": 3680,
                     "loc": {
                       "start": {
                         "line": 139,
@@ -3602,8 +3617,8 @@
               },
               {
                 "type": "ClassMethod",
-                "start": 3682,
-                "end": 3755,
+                "start": 3685,
+                "end": 3758,
                 "loc": {
                   "start": {
                     "line": 143,
@@ -3618,8 +3633,8 @@
                 "computed": false,
                 "key": {
                   "type": "Identifier",
-                  "start": 3693,
-                  "end": 3708,
+                  "start": 3696,
+                  "end": 3711,
                   "loc": {
                     "start": {
                       "line": 143,
@@ -3641,8 +3656,8 @@
                 "params": [],
                 "body": {
                   "type": "BlockStatement",
-                  "start": 3711,
-                  "end": 3755,
+                  "start": 3714,
+                  "end": 3758,
                   "loc": {
                     "start": {
                       "line": 143,
@@ -3656,8 +3671,8 @@
                   "body": [
                     {
                       "type": "ReturnStatement",
-                      "start": 3721,
-                      "end": 3749,
+                      "start": 3724,
+                      "end": 3752,
                       "loc": {
                         "start": {
                           "line": 144,
@@ -3670,8 +3685,8 @@
                       },
                       "argument": {
                         "type": "MemberExpression",
-                        "start": 3728,
-                        "end": 3748,
+                        "start": 3731,
+                        "end": 3751,
                         "loc": {
                           "start": {
                             "line": 144,
@@ -3684,8 +3699,8 @@
                         },
                         "object": {
                           "type": "Identifier",
-                          "start": 3728,
-                          "end": 3732,
+                          "start": 3731,
+                          "end": 3735,
                           "loc": {
                             "start": {
                               "line": 144,
@@ -3701,8 +3716,8 @@
                         },
                         "property": {
                           "type": "Identifier",
-                          "start": 3733,
-                          "end": 3748,
+                          "start": 3736,
+                          "end": 3751,
                           "loc": {
                             "start": {
                               "line": 144,
@@ -3726,8 +3741,8 @@
                   {
                     "type": "CommentBlock",
                     "value": "*\n     * Equals to `7`, logs for ChannelBuilder module.\n     * @type {number}\n     ",
-                    "start": 3590,
-                    "end": 3677,
+                    "start": 3593,
+                    "end": 3680,
                     "loc": {
                       "start": {
                         "line": 139,
@@ -3748,8 +3763,8 @@
             {
               "type": "CommentBlock",
               "value": "*\n * The log level enum for debugging purposes.\n ",
-              "start": 2609,
-              "end": 2662,
+              "start": 2612,
+              "end": 2665,
               "loc": {
                 "start": {
                   "line": 93,
@@ -3766,8 +3781,8 @@
             {
               "type": "CommentBlock",
               "value": "*\n * The options to be passed into {@link WebGroup} constructor.\n * @typedef {Object} WebGroupOptions\n * @property {Topology} [topology] Topology identifier\n * (Full mesh is the only one supported by Netflux for now).\n * @property {string} [signalingServer] Signaling URL for WebRTC.\n * @property {RTCConfiguration} [rtcConfiguration] Configuration for WebRTC.\n * @property {boolean} [autoRejoin] Whether to automatically rejoin the web group\n * on disconnect or not. Its value may be modified after {@link WebGroup}\n * instantiation at any time.\n ",
-              "start": 3758,
-              "end": 4310,
+              "start": 3761,
+              "end": 4313,
               "loc": {
                 "start": {
                   "line": 147,
@@ -3782,8 +3797,8 @@
             {
               "type": "CommentBlock",
               "value": "*\n * The options to be passed into {@link Bot} constructor.\n * @typedef {Object} BotOptions\n * @property {Topology} [topology] See WebGroupOptions.topology\n * @property {string} [signalingServer] See WebGroupOptions.signalingServer\n * @property {RTCConfiguration} [rtcConfiguration] See WebGroupOptions.rtcConfiguration\n * @property {boolean} [autoRejoin] See WebGroupOptions.autoRejoin\n * @property {Object} bot Server related options of the bot.\n * @property {NodeJSHttpServer|NodeJSHttpsServer} bot.server NodeJS http(s) server.\n * @property {string} [bot.url] Bot server URL.\n * @property {boolean} [bot.perMessageDeflate] Enable/disable permessage-deflate.\n * @property {boolean} [bot.leaveOnceAlone] If true, bot will live (disconnect from the signaling server) if no other peers left in the group.\n ",
-              "start": 4311,
-              "end": 5121,
+              "start": 4314,
+              "end": 5124,
               "loc": {
                 "start": {
                   "line": 158,
@@ -3798,8 +3813,8 @@
             {
               "type": "CommentBlock",
               "value": "*\n * @external {RTCConfiguration} https://developer.mozilla.org/en/docs/Web/API/RTCConfiguration\n ",
-              "start": 5122,
-              "end": 5224,
+              "start": 5125,
+              "end": 5227,
               "loc": {
                 "start": {
                   "line": 171,
@@ -3814,8 +3829,8 @@
             {
               "type": "CommentBlock",
               "value": "*\n * @external {Uint8Array} https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array\n ",
-              "start": 5225,
-              "end": 5347,
+              "start": 5228,
+              "end": 5350,
               "loc": {
                 "start": {
                   "line": 174,
@@ -3830,8 +3845,8 @@
             {
               "type": "CommentBlock",
               "value": "*\n * @external {NodeJSHttpServer} https://nodejs.org/api/http.html#http_class_http_server\n ",
-              "start": 5348,
-              "end": 5443,
+              "start": 5351,
+              "end": 5446,
               "loc": {
                 "start": {
                   "line": 177,
@@ -3846,8 +3861,8 @@
             {
               "type": "CommentBlock",
               "value": "*\n * @external {NodeJSHttpsServer} https://nodejs.org/api/https.html#https_class_https_server\n ",
-              "start": 5444,
-              "end": 5543,
+              "start": 5447,
+              "end": 5546,
               "loc": {
                 "start": {
                   "line": 180,
@@ -3865,8 +3880,8 @@
           {
             "type": "CommentBlock",
             "value": "*\n * The log level enum for debugging purposes.\n ",
-            "start": 2609,
-            "end": 2662,
+            "start": 2612,
+            "end": 2665,
             "loc": {
               "start": {
                 "line": 93,
@@ -3883,8 +3898,8 @@
           {
             "type": "CommentBlock",
             "value": "*\n * The options to be passed into {@link WebGroup} constructor.\n * @typedef {Object} WebGroupOptions\n * @property {Topology} [topology] Topology identifier\n * (Full mesh is the only one supported by Netflux for now).\n * @property {string} [signalingServer] Signaling URL for WebRTC.\n * @property {RTCConfiguration} [rtcConfiguration] Configuration for WebRTC.\n * @property {boolean} [autoRejoin] Whether to automatically rejoin the web group\n * on disconnect or not. Its value may be modified after {@link WebGroup}\n * instantiation at any time.\n ",
-            "start": 3758,
-            "end": 4310,
+            "start": 3761,
+            "end": 4313,
             "loc": {
               "start": {
                 "line": 147,
@@ -3899,8 +3914,8 @@
           {
             "type": "CommentBlock",
             "value": "*\n * The options to be passed into {@link Bot} constructor.\n * @typedef {Object} BotOptions\n * @property {Topology} [topology] See WebGroupOptions.topology\n * @property {string} [signalingServer] See WebGroupOptions.signalingServer\n * @property {RTCConfiguration} [rtcConfiguration] See WebGroupOptions.rtcConfiguration\n * @property {boolean} [autoRejoin] See WebGroupOptions.autoRejoin\n * @property {Object} bot Server related options of the bot.\n * @property {NodeJSHttpServer|NodeJSHttpsServer} bot.server NodeJS http(s) server.\n * @property {string} [bot.url] Bot server URL.\n * @property {boolean} [bot.perMessageDeflate] Enable/disable permessage-deflate.\n * @property {boolean} [bot.leaveOnceAlone] If true, bot will live (disconnect from the signaling server) if no other peers left in the group.\n ",
-            "start": 4311,
-            "end": 5121,
+            "start": 4314,
+            "end": 5124,
             "loc": {
               "start": {
                 "line": 158,
@@ -3915,8 +3930,8 @@
           {
             "type": "CommentBlock",
             "value": "*\n * @external {RTCConfiguration} https://developer.mozilla.org/en/docs/Web/API/RTCConfiguration\n ",
-            "start": 5122,
-            "end": 5224,
+            "start": 5125,
+            "end": 5227,
             "loc": {
               "start": {
                 "line": 171,
@@ -3931,8 +3946,8 @@
           {
             "type": "CommentBlock",
             "value": "*\n * @external {Uint8Array} https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array\n ",
-            "start": 5225,
-            "end": 5347,
+            "start": 5228,
+            "end": 5350,
             "loc": {
               "start": {
                 "line": 174,
@@ -3947,8 +3962,8 @@
           {
             "type": "CommentBlock",
             "value": "*\n * @external {NodeJSHttpServer} https://nodejs.org/api/http.html#http_class_http_server\n ",
-            "start": 5348,
-            "end": 5443,
+            "start": 5351,
+            "end": 5446,
             "loc": {
               "start": {
                 "line": 177,
@@ -3963,8 +3978,8 @@
           {
             "type": "CommentBlock",
             "value": "*\n * @external {NodeJSHttpsServer} https://nodejs.org/api/https.html#https_class_https_server\n ",
-            "start": 5444,
-            "end": 5543,
+            "start": 5447,
+            "end": 5546,
             "loc": {
               "start": {
                 "line": 180,
@@ -4001,8 +4016,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n * The state enum of the signaling server.\n ",
-      "start": 467,
-      "end": 517,
+      "start": 470,
+      "end": 520,
       "loc": {
         "start": {
           "line": 13,
@@ -4017,8 +4032,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n     * `0`: the connection is not yet open (equivalent to `WebSocket.CONNECTING`).\n     * @type {number}\n     ",
-      "start": 552,
-      "end": 668,
+      "start": 555,
+      "end": 671,
       "loc": {
         "start": {
           "line": 17,
@@ -4033,8 +4048,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n     * `1`: the connection is open and ready to communicate (equivalent to `WebSocket.OPEN`).\n     * @type {number}\n     ",
-      "start": 745,
-      "end": 872,
+      "start": 748,
+      "end": 875,
       "loc": {
         "start": {
           "line": 24,
@@ -4049,8 +4064,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n     * `3`: the connection is closed or couldn't be opened (equivalent to `WebSocket.CLOSED`).\n     * @type {number}\n     ",
-      "start": 937,
-      "end": 1065,
+      "start": 940,
+      "end": 1068,
       "loc": {
         "start": {
           "line": 31,
@@ -4065,8 +4080,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n     * `2`: signaling server is checking wether you are still connected to the group. If it is not the case, then\n     * subscribs you to one of the group member in order to create a connection with him.\n     * @type {number}\n     ",
-      "start": 1134,
-      "end": 1371,
+      "start": 1137,
+      "end": 1374,
       "loc": {
         "start": {
           "line": 38,
@@ -4081,8 +4096,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n     * `4`: a connection has been established with one of the group member or you are the only member of the group.\n     * From now the signaling is no longer needed, because the joining process will continue with a help of this member.\n     * @type {number}\n     ",
-      "start": 1444,
-      "end": 1714,
+      "start": 1447,
+      "end": 1717,
       "loc": {
         "start": {
           "line": 46,
@@ -4097,8 +4112,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n * The state enum of {@link WebGroup}.\n ",
-      "start": 1783,
-      "end": 1829,
+      "start": 1786,
+      "end": 1832,
       "loc": {
         "start": {
           "line": 55,
@@ -4113,8 +4128,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n     * `0`: you haven't joined the group yet.\n     * @type {number}\n     ",
-      "start": 1863,
-      "end": 1942,
+      "start": 1866,
+      "end": 1945,
       "loc": {
         "start": {
           "line": 59,
@@ -4129,8 +4144,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n     * `1`: you have sussessfully joined the group and ready to communicate.\n     * @type {number}\n     ",
-      "start": 2020,
-      "end": 2130,
+      "start": 2023,
+      "end": 2133,
       "loc": {
         "start": {
           "line": 66,
@@ -4145,8 +4160,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n     * `3`: you have sussessfully left the group.\n     * @type {number}\n     ",
-      "start": 2206,
-      "end": 2289,
+      "start": 2209,
+      "end": 2292,
       "loc": {
         "start": {
           "line": 73,
@@ -4161,8 +4176,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n * The topology enum. More topologies will be added in the future\n ",
-      "start": 2359,
-      "end": 2432,
+      "start": 2362,
+      "end": 2435,
       "loc": {
         "start": {
           "line": 81,
@@ -4177,8 +4192,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n     * Full mesh topology identifier.\n     * @type {number}\n     ",
-      "start": 2461,
-      "end": 2532,
+      "start": 2464,
+      "end": 2535,
       "loc": {
         "start": {
           "line": 85,
@@ -4193,8 +4208,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n * The log level enum for debugging purposes.\n ",
-      "start": 2609,
-      "end": 2662,
+      "start": 2612,
+      "end": 2665,
       "loc": {
         "start": {
           "line": 93,
@@ -4209,8 +4224,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n     * Equals to `1`, allows logs for debug.\n     * @type {number}\n     ",
-      "start": 2691,
-      "end": 2769,
+      "start": 2694,
+      "end": 2772,
       "loc": {
         "start": {
           "line": 97,
@@ -4225,8 +4240,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n     * Equals to `2`, logs for WebGroup module.\n     * @type {number}\n     ",
-      "start": 2832,
-      "end": 2913,
+      "start": 2835,
+      "end": 2916,
       "loc": {
         "start": {
           "line": 104,
@@ -4241,8 +4256,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n     * Equals to `3`, logs for DataChannelBuilder module.\n     * @type {number}\n     ",
-      "start": 2984,
-      "end": 3075,
+      "start": 2987,
+      "end": 3078,
       "loc": {
         "start": {
           "line": 111,
@@ -4257,8 +4272,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n     * Equals to `4`, logs for Channel module.\n     * @type {number}\n     ",
-      "start": 3140,
-      "end": 3220,
+      "start": 3143,
+      "end": 3223,
       "loc": {
         "start": {
           "line": 118,
@@ -4273,8 +4288,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n     * Equals to `5`, logs for Topology module.\n     * @type {number}\n     ",
-      "start": 3287,
-      "end": 3368,
+      "start": 3290,
+      "end": 3371,
       "loc": {
         "start": {
           "line": 125,
@@ -4289,8 +4304,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n     * Equals to `6`, logs for Signaling module.\n     * @type {number}\n     ",
-      "start": 3437,
-      "end": 3519,
+      "start": 3440,
+      "end": 3522,
       "loc": {
         "start": {
           "line": 132,
@@ -4305,8 +4320,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n     * Equals to `7`, logs for ChannelBuilder module.\n     * @type {number}\n     ",
-      "start": 3590,
-      "end": 3677,
+      "start": 3593,
+      "end": 3680,
       "loc": {
         "start": {
           "line": 139,
@@ -4321,8 +4336,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n * The options to be passed into {@link WebGroup} constructor.\n * @typedef {Object} WebGroupOptions\n * @property {Topology} [topology] Topology identifier\n * (Full mesh is the only one supported by Netflux for now).\n * @property {string} [signalingServer] Signaling URL for WebRTC.\n * @property {RTCConfiguration} [rtcConfiguration] Configuration for WebRTC.\n * @property {boolean} [autoRejoin] Whether to automatically rejoin the web group\n * on disconnect or not. Its value may be modified after {@link WebGroup}\n * instantiation at any time.\n ",
-      "start": 3758,
-      "end": 4310,
+      "start": 3761,
+      "end": 4313,
       "loc": {
         "start": {
           "line": 147,
@@ -4337,8 +4352,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n * The options to be passed into {@link Bot} constructor.\n * @typedef {Object} BotOptions\n * @property {Topology} [topology] See WebGroupOptions.topology\n * @property {string} [signalingServer] See WebGroupOptions.signalingServer\n * @property {RTCConfiguration} [rtcConfiguration] See WebGroupOptions.rtcConfiguration\n * @property {boolean} [autoRejoin] See WebGroupOptions.autoRejoin\n * @property {Object} bot Server related options of the bot.\n * @property {NodeJSHttpServer|NodeJSHttpsServer} bot.server NodeJS http(s) server.\n * @property {string} [bot.url] Bot server URL.\n * @property {boolean} [bot.perMessageDeflate] Enable/disable permessage-deflate.\n * @property {boolean} [bot.leaveOnceAlone] If true, bot will live (disconnect from the signaling server) if no other peers left in the group.\n ",
-      "start": 4311,
-      "end": 5121,
+      "start": 4314,
+      "end": 5124,
       "loc": {
         "start": {
           "line": 158,
@@ -4353,8 +4368,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n * @external {RTCConfiguration} https://developer.mozilla.org/en/docs/Web/API/RTCConfiguration\n ",
-      "start": 5122,
-      "end": 5224,
+      "start": 5125,
+      "end": 5227,
       "loc": {
         "start": {
           "line": 171,
@@ -4369,8 +4384,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n * @external {Uint8Array} https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array\n ",
-      "start": 5225,
-      "end": 5347,
+      "start": 5228,
+      "end": 5350,
       "loc": {
         "start": {
           "line": 174,
@@ -4385,8 +4400,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n * @external {NodeJSHttpServer} https://nodejs.org/api/http.html#http_class_http_server\n ",
-      "start": 5348,
-      "end": 5443,
+      "start": 5351,
+      "end": 5446,
       "loc": {
         "start": {
           "line": 177,
@@ -4401,8 +4416,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n * @external {NodeJSHttpsServer} https://nodejs.org/api/https.html#https_class_https_server\n ",
-      "start": 5444,
-      "end": 5543,
+      "start": 5447,
+      "end": 5546,
       "loc": {
         "start": {
           "line": 180,
@@ -5816,6 +5831,32 @@
     },
     {
       "type": {
+        "label": "...",
+        "beforeExpr": true,
+        "startsExpr": false,
+        "rightAssociative": false,
+        "isLoop": false,
+        "isAssign": false,
+        "prefix": false,
+        "postfix": false,
+        "binop": null,
+        "updateContext": null
+      },
+      "start": 456,
+      "end": 459,
+      "loc": {
+        "start": {
+          "line": 11,
+          "column": 12
+        },
+        "end": {
+          "line": 11,
+          "column": 15
+        }
+      }
+    },
+    {
+      "type": {
         "label": "name",
         "beforeExpr": false,
         "startsExpr": true,
@@ -5827,16 +5868,16 @@
         "binop": null
       },
       "value": "levels",
-      "start": 456,
-      "end": 462,
+      "start": 459,
+      "end": 465,
       "loc": {
         "start": {
           "line": 11,
-          "column": 12
+          "column": 15
         },
         "end": {
           "line": 11,
-          "column": 18
+          "column": 21
         }
       }
     },
@@ -5852,16 +5893,16 @@
         "postfix": false,
         "binop": null
       },
-      "start": 462,
-      "end": 463,
+      "start": 465,
+      "end": 466,
       "loc": {
         "start": {
           "line": 11,
-          "column": 18
+          "column": 21
         },
         "end": {
           "line": 11,
-          "column": 19
+          "column": 22
         }
       }
     },
@@ -5878,16 +5919,16 @@
         "binop": null,
         "updateContext": null
       },
-      "start": 463,
-      "end": 464,
+      "start": 466,
+      "end": 467,
       "loc": {
         "start": {
           "line": 11,
-          "column": 19
+          "column": 22
         },
         "end": {
           "line": 11,
-          "column": 20
+          "column": 23
         }
       }
     },
@@ -5903,8 +5944,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 465,
-      "end": 466,
+      "start": 468,
+      "end": 469,
       "loc": {
         "start": {
           "line": 12,
@@ -5919,8 +5960,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n * The state enum of the signaling server.\n ",
-      "start": 467,
-      "end": 517,
+      "start": 470,
+      "end": 520,
       "loc": {
         "start": {
           "line": 13,
@@ -5947,8 +5988,8 @@
         "updateContext": null
       },
       "value": "export",
-      "start": 518,
-      "end": 524,
+      "start": 521,
+      "end": 527,
       "loc": {
         "start": {
           "line": 16,
@@ -5975,8 +6016,8 @@
         "updateContext": null
       },
       "value": "class",
-      "start": 525,
-      "end": 530,
+      "start": 528,
+      "end": 533,
       "loc": {
         "start": {
           "line": 16,
@@ -6001,8 +6042,8 @@
         "binop": null
       },
       "value": "SignalingState",
-      "start": 531,
-      "end": 545,
+      "start": 534,
+      "end": 548,
       "loc": {
         "start": {
           "line": 16,
@@ -6026,8 +6067,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 546,
-      "end": 547,
+      "start": 549,
+      "end": 550,
       "loc": {
         "start": {
           "line": 16,
@@ -6042,8 +6083,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n     * `0`: the connection is not yet open (equivalent to `WebSocket.CONNECTING`).\n     * @type {number}\n     ",
-      "start": 552,
-      "end": 668,
+      "start": 555,
+      "end": 671,
       "loc": {
         "start": {
           "line": 17,
@@ -6068,8 +6109,8 @@
         "binop": null
       },
       "value": "static",
-      "start": 673,
-      "end": 679,
+      "start": 676,
+      "end": 682,
       "loc": {
         "start": {
           "line": 21,
@@ -6094,8 +6135,8 @@
         "binop": null
       },
       "value": "get",
-      "start": 680,
-      "end": 683,
+      "start": 683,
+      "end": 686,
       "loc": {
         "start": {
           "line": 21,
@@ -6120,8 +6161,8 @@
         "binop": null
       },
       "value": "CONNECTING",
-      "start": 684,
-      "end": 694,
+      "start": 687,
+      "end": 697,
       "loc": {
         "start": {
           "line": 21,
@@ -6145,8 +6186,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 694,
-      "end": 695,
+      "start": 697,
+      "end": 698,
       "loc": {
         "start": {
           "line": 21,
@@ -6170,8 +6211,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 695,
-      "end": 696,
+      "start": 698,
+      "end": 699,
       "loc": {
         "start": {
           "line": 21,
@@ -6195,8 +6236,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 697,
-      "end": 698,
+      "start": 700,
+      "end": 701,
       "loc": {
         "start": {
           "line": 21,
@@ -6223,8 +6264,8 @@
         "updateContext": null
       },
       "value": "return",
-      "start": 707,
-      "end": 713,
+      "start": 710,
+      "end": 716,
       "loc": {
         "start": {
           "line": 22,
@@ -6249,8 +6290,8 @@
         "binop": null
       },
       "value": "SigState",
-      "start": 714,
-      "end": 722,
+      "start": 717,
+      "end": 725,
       "loc": {
         "start": {
           "line": 22,
@@ -6275,8 +6316,8 @@
         "binop": null,
         "updateContext": null
       },
-      "start": 722,
-      "end": 723,
+      "start": 725,
+      "end": 726,
       "loc": {
         "start": {
           "line": 22,
@@ -6301,8 +6342,8 @@
         "binop": null
       },
       "value": "CONNECTING",
-      "start": 723,
-      "end": 733,
+      "start": 726,
+      "end": 736,
       "loc": {
         "start": {
           "line": 22,
@@ -6327,8 +6368,8 @@
         "binop": null,
         "updateContext": null
       },
-      "start": 733,
-      "end": 734,
+      "start": 736,
+      "end": 737,
       "loc": {
         "start": {
           "line": 22,
@@ -6352,8 +6393,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 739,
-      "end": 740,
+      "start": 742,
+      "end": 743,
       "loc": {
         "start": {
           "line": 23,
@@ -6368,8 +6409,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n     * `1`: the connection is open and ready to communicate (equivalent to `WebSocket.OPEN`).\n     * @type {number}\n     ",
-      "start": 745,
-      "end": 872,
+      "start": 748,
+      "end": 875,
       "loc": {
         "start": {
           "line": 24,
@@ -6394,8 +6435,8 @@
         "binop": null
       },
       "value": "static",
-      "start": 877,
-      "end": 883,
+      "start": 880,
+      "end": 886,
       "loc": {
         "start": {
           "line": 28,
@@ -6420,8 +6461,8 @@
         "binop": null
       },
       "value": "get",
-      "start": 884,
-      "end": 887,
+      "start": 887,
+      "end": 890,
       "loc": {
         "start": {
           "line": 28,
@@ -6446,8 +6487,8 @@
         "binop": null
       },
       "value": "OPEN",
-      "start": 888,
-      "end": 892,
+      "start": 891,
+      "end": 895,
       "loc": {
         "start": {
           "line": 28,
@@ -6471,8 +6512,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 892,
-      "end": 893,
+      "start": 895,
+      "end": 896,
       "loc": {
         "start": {
           "line": 28,
@@ -6496,8 +6537,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 893,
-      "end": 894,
+      "start": 896,
+      "end": 897,
       "loc": {
         "start": {
           "line": 28,
@@ -6521,8 +6562,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 895,
-      "end": 896,
+      "start": 898,
+      "end": 899,
       "loc": {
         "start": {
           "line": 28,
@@ -6549,8 +6590,8 @@
         "updateContext": null
       },
       "value": "return",
-      "start": 905,
-      "end": 911,
+      "start": 908,
+      "end": 914,
       "loc": {
         "start": {
           "line": 29,
@@ -6575,8 +6616,8 @@
         "binop": null
       },
       "value": "SigState",
-      "start": 912,
-      "end": 920,
+      "start": 915,
+      "end": 923,
       "loc": {
         "start": {
           "line": 29,
@@ -6601,8 +6642,8 @@
         "binop": null,
         "updateContext": null
       },
-      "start": 920,
-      "end": 921,
+      "start": 923,
+      "end": 924,
       "loc": {
         "start": {
           "line": 29,
@@ -6627,8 +6668,8 @@
         "binop": null
       },
       "value": "OPEN",
-      "start": 921,
-      "end": 925,
+      "start": 924,
+      "end": 928,
       "loc": {
         "start": {
           "line": 29,
@@ -6653,8 +6694,8 @@
         "binop": null,
         "updateContext": null
       },
-      "start": 925,
-      "end": 926,
+      "start": 928,
+      "end": 929,
       "loc": {
         "start": {
           "line": 29,
@@ -6678,8 +6719,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 931,
-      "end": 932,
+      "start": 934,
+      "end": 935,
       "loc": {
         "start": {
           "line": 30,
@@ -6694,8 +6735,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n     * `3`: the connection is closed or couldn't be opened (equivalent to `WebSocket.CLOSED`).\n     * @type {number}\n     ",
-      "start": 937,
-      "end": 1065,
+      "start": 940,
+      "end": 1068,
       "loc": {
         "start": {
           "line": 31,
@@ -6720,8 +6761,8 @@
         "binop": null
       },
       "value": "static",
-      "start": 1070,
-      "end": 1076,
+      "start": 1073,
+      "end": 1079,
       "loc": {
         "start": {
           "line": 35,
@@ -6746,8 +6787,8 @@
         "binop": null
       },
       "value": "get",
-      "start": 1077,
-      "end": 1080,
+      "start": 1080,
+      "end": 1083,
       "loc": {
         "start": {
           "line": 35,
@@ -6772,8 +6813,8 @@
         "binop": null
       },
       "value": "CLOSED",
-      "start": 1081,
-      "end": 1087,
+      "start": 1084,
+      "end": 1090,
       "loc": {
         "start": {
           "line": 35,
@@ -6797,8 +6838,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 1087,
-      "end": 1088,
+      "start": 1090,
+      "end": 1091,
       "loc": {
         "start": {
           "line": 35,
@@ -6822,8 +6863,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 1088,
-      "end": 1089,
+      "start": 1091,
+      "end": 1092,
       "loc": {
         "start": {
           "line": 35,
@@ -6847,8 +6888,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 1090,
-      "end": 1091,
+      "start": 1093,
+      "end": 1094,
       "loc": {
         "start": {
           "line": 35,
@@ -6875,8 +6916,8 @@
         "updateContext": null
       },
       "value": "return",
-      "start": 1100,
-      "end": 1106,
+      "start": 1103,
+      "end": 1109,
       "loc": {
         "start": {
           "line": 36,
@@ -6901,8 +6942,8 @@
         "binop": null
       },
       "value": "SigState",
-      "start": 1107,
-      "end": 1115,
+      "start": 1110,
+      "end": 1118,
       "loc": {
         "start": {
           "line": 36,
@@ -6927,8 +6968,8 @@
         "binop": null,
         "updateContext": null
       },
-      "start": 1115,
-      "end": 1116,
+      "start": 1118,
+      "end": 1119,
       "loc": {
         "start": {
           "line": 36,
@@ -6953,8 +6994,8 @@
         "binop": null
       },
       "value": "CLOSED",
-      "start": 1116,
-      "end": 1122,
+      "start": 1119,
+      "end": 1125,
       "loc": {
         "start": {
           "line": 36,
@@ -6979,8 +7020,8 @@
         "binop": null,
         "updateContext": null
       },
-      "start": 1122,
-      "end": 1123,
+      "start": 1125,
+      "end": 1126,
       "loc": {
         "start": {
           "line": 36,
@@ -7004,8 +7045,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 1128,
-      "end": 1129,
+      "start": 1131,
+      "end": 1132,
       "loc": {
         "start": {
           "line": 37,
@@ -7020,8 +7061,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n     * `2`: signaling server is checking wether you are still connected to the group. If it is not the case, then\n     * subscribs you to one of the group member in order to create a connection with him.\n     * @type {number}\n     ",
-      "start": 1134,
-      "end": 1371,
+      "start": 1137,
+      "end": 1374,
       "loc": {
         "start": {
           "line": 38,
@@ -7046,8 +7087,8 @@
         "binop": null
       },
       "value": "static",
-      "start": 1376,
-      "end": 1382,
+      "start": 1379,
+      "end": 1385,
       "loc": {
         "start": {
           "line": 43,
@@ -7072,8 +7113,8 @@
         "binop": null
       },
       "value": "get",
-      "start": 1383,
-      "end": 1386,
+      "start": 1386,
+      "end": 1389,
       "loc": {
         "start": {
           "line": 43,
@@ -7098,8 +7139,8 @@
         "binop": null
       },
       "value": "CHECKING",
-      "start": 1387,
-      "end": 1395,
+      "start": 1390,
+      "end": 1398,
       "loc": {
         "start": {
           "line": 43,
@@ -7123,8 +7164,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 1395,
-      "end": 1396,
+      "start": 1398,
+      "end": 1399,
       "loc": {
         "start": {
           "line": 43,
@@ -7148,8 +7189,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 1396,
-      "end": 1397,
+      "start": 1399,
+      "end": 1400,
       "loc": {
         "start": {
           "line": 43,
@@ -7173,8 +7214,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 1398,
-      "end": 1399,
+      "start": 1401,
+      "end": 1402,
       "loc": {
         "start": {
           "line": 43,
@@ -7201,8 +7242,8 @@
         "updateContext": null
       },
       "value": "return",
-      "start": 1408,
-      "end": 1414,
+      "start": 1411,
+      "end": 1417,
       "loc": {
         "start": {
           "line": 44,
@@ -7227,8 +7268,8 @@
         "binop": null
       },
       "value": "SigState",
-      "start": 1415,
-      "end": 1423,
+      "start": 1418,
+      "end": 1426,
       "loc": {
         "start": {
           "line": 44,
@@ -7253,8 +7294,8 @@
         "binop": null,
         "updateContext": null
       },
-      "start": 1423,
-      "end": 1424,
+      "start": 1426,
+      "end": 1427,
       "loc": {
         "start": {
           "line": 44,
@@ -7279,8 +7320,8 @@
         "binop": null
       },
       "value": "CHECKING",
-      "start": 1424,
-      "end": 1432,
+      "start": 1427,
+      "end": 1435,
       "loc": {
         "start": {
           "line": 44,
@@ -7305,8 +7346,8 @@
         "binop": null,
         "updateContext": null
       },
-      "start": 1432,
-      "end": 1433,
+      "start": 1435,
+      "end": 1436,
       "loc": {
         "start": {
           "line": 44,
@@ -7330,8 +7371,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 1438,
-      "end": 1439,
+      "start": 1441,
+      "end": 1442,
       "loc": {
         "start": {
           "line": 45,
@@ -7346,8 +7387,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n     * `4`: a connection has been established with one of the group member or you are the only member of the group.\n     * From now the signaling is no longer needed, because the joining process will continue with a help of this member.\n     * @type {number}\n     ",
-      "start": 1444,
-      "end": 1714,
+      "start": 1447,
+      "end": 1717,
       "loc": {
         "start": {
           "line": 46,
@@ -7372,8 +7413,8 @@
         "binop": null
       },
       "value": "static",
-      "start": 1719,
-      "end": 1725,
+      "start": 1722,
+      "end": 1728,
       "loc": {
         "start": {
           "line": 51,
@@ -7398,8 +7439,8 @@
         "binop": null
       },
       "value": "get",
-      "start": 1726,
-      "end": 1729,
+      "start": 1729,
+      "end": 1732,
       "loc": {
         "start": {
           "line": 51,
@@ -7424,8 +7465,8 @@
         "binop": null
       },
       "value": "CHECKED",
-      "start": 1730,
-      "end": 1737,
+      "start": 1733,
+      "end": 1740,
       "loc": {
         "start": {
           "line": 51,
@@ -7449,8 +7490,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 1737,
-      "end": 1738,
+      "start": 1740,
+      "end": 1741,
       "loc": {
         "start": {
           "line": 51,
@@ -7474,8 +7515,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 1738,
-      "end": 1739,
+      "start": 1741,
+      "end": 1742,
       "loc": {
         "start": {
           "line": 51,
@@ -7499,8 +7540,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 1740,
-      "end": 1741,
+      "start": 1743,
+      "end": 1744,
       "loc": {
         "start": {
           "line": 51,
@@ -7527,8 +7568,8 @@
         "updateContext": null
       },
       "value": "return",
-      "start": 1750,
-      "end": 1756,
+      "start": 1753,
+      "end": 1759,
       "loc": {
         "start": {
           "line": 52,
@@ -7553,8 +7594,8 @@
         "binop": null
       },
       "value": "SigState",
-      "start": 1757,
-      "end": 1765,
+      "start": 1760,
+      "end": 1768,
       "loc": {
         "start": {
           "line": 52,
@@ -7579,8 +7620,8 @@
         "binop": null,
         "updateContext": null
       },
-      "start": 1765,
-      "end": 1766,
+      "start": 1768,
+      "end": 1769,
       "loc": {
         "start": {
           "line": 52,
@@ -7605,8 +7646,8 @@
         "binop": null
       },
       "value": "CHECKED",
-      "start": 1766,
-      "end": 1773,
+      "start": 1769,
+      "end": 1776,
       "loc": {
         "start": {
           "line": 52,
@@ -7631,8 +7672,8 @@
         "binop": null,
         "updateContext": null
       },
-      "start": 1773,
-      "end": 1774,
+      "start": 1776,
+      "end": 1777,
       "loc": {
         "start": {
           "line": 52,
@@ -7656,8 +7697,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 1779,
-      "end": 1780,
+      "start": 1782,
+      "end": 1783,
       "loc": {
         "start": {
           "line": 53,
@@ -7681,8 +7722,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 1781,
-      "end": 1782,
+      "start": 1784,
+      "end": 1785,
       "loc": {
         "start": {
           "line": 54,
@@ -7697,8 +7738,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n * The state enum of {@link WebGroup}.\n ",
-      "start": 1783,
-      "end": 1829,
+      "start": 1786,
+      "end": 1832,
       "loc": {
         "start": {
           "line": 55,
@@ -7725,8 +7766,8 @@
         "updateContext": null
       },
       "value": "export",
-      "start": 1830,
-      "end": 1836,
+      "start": 1833,
+      "end": 1839,
       "loc": {
         "start": {
           "line": 58,
@@ -7753,8 +7794,8 @@
         "updateContext": null
       },
       "value": "class",
-      "start": 1837,
-      "end": 1842,
+      "start": 1840,
+      "end": 1845,
       "loc": {
         "start": {
           "line": 58,
@@ -7779,8 +7820,8 @@
         "binop": null
       },
       "value": "WebGroupState",
-      "start": 1843,
-      "end": 1856,
+      "start": 1846,
+      "end": 1859,
       "loc": {
         "start": {
           "line": 58,
@@ -7804,8 +7845,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 1857,
-      "end": 1858,
+      "start": 1860,
+      "end": 1861,
       "loc": {
         "start": {
           "line": 58,
@@ -7820,8 +7861,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n     * `0`: you haven't joined the group yet.\n     * @type {number}\n     ",
-      "start": 1863,
-      "end": 1942,
+      "start": 1866,
+      "end": 1945,
       "loc": {
         "start": {
           "line": 59,
@@ -7846,8 +7887,8 @@
         "binop": null
       },
       "value": "static",
-      "start": 1947,
-      "end": 1953,
+      "start": 1950,
+      "end": 1956,
       "loc": {
         "start": {
           "line": 63,
@@ -7872,8 +7913,8 @@
         "binop": null
       },
       "value": "get",
-      "start": 1954,
-      "end": 1957,
+      "start": 1957,
+      "end": 1960,
       "loc": {
         "start": {
           "line": 63,
@@ -7898,8 +7939,8 @@
         "binop": null
       },
       "value": "JOINING",
-      "start": 1958,
-      "end": 1965,
+      "start": 1961,
+      "end": 1968,
       "loc": {
         "start": {
           "line": 63,
@@ -7923,8 +7964,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 1965,
-      "end": 1966,
+      "start": 1968,
+      "end": 1969,
       "loc": {
         "start": {
           "line": 63,
@@ -7948,8 +7989,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 1966,
-      "end": 1967,
+      "start": 1969,
+      "end": 1970,
       "loc": {
         "start": {
           "line": 63,
@@ -7973,8 +8014,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 1968,
-      "end": 1969,
+      "start": 1971,
+      "end": 1972,
       "loc": {
         "start": {
           "line": 63,
@@ -8001,8 +8042,8 @@
         "updateContext": null
       },
       "value": "return",
-      "start": 1978,
-      "end": 1984,
+      "start": 1981,
+      "end": 1987,
       "loc": {
         "start": {
           "line": 64,
@@ -8027,8 +8068,8 @@
         "binop": null
       },
       "value": "WebChannelState",
-      "start": 1985,
-      "end": 2000,
+      "start": 1988,
+      "end": 2003,
       "loc": {
         "start": {
           "line": 64,
@@ -8053,8 +8094,8 @@
         "binop": null,
         "updateContext": null
       },
-      "start": 2000,
-      "end": 2001,
+      "start": 2003,
+      "end": 2004,
       "loc": {
         "start": {
           "line": 64,
@@ -8079,8 +8120,8 @@
         "binop": null
       },
       "value": "JOINING",
-      "start": 2001,
-      "end": 2008,
+      "start": 2004,
+      "end": 2011,
       "loc": {
         "start": {
           "line": 64,
@@ -8105,8 +8146,8 @@
         "binop": null,
         "updateContext": null
       },
-      "start": 2008,
-      "end": 2009,
+      "start": 2011,
+      "end": 2012,
       "loc": {
         "start": {
           "line": 64,
@@ -8130,8 +8171,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 2014,
-      "end": 2015,
+      "start": 2017,
+      "end": 2018,
       "loc": {
         "start": {
           "line": 65,
@@ -8146,8 +8187,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n     * `1`: you have sussessfully joined the group and ready to communicate.\n     * @type {number}\n     ",
-      "start": 2020,
-      "end": 2130,
+      "start": 2023,
+      "end": 2133,
       "loc": {
         "start": {
           "line": 66,
@@ -8172,8 +8213,8 @@
         "binop": null
       },
       "value": "static",
-      "start": 2135,
-      "end": 2141,
+      "start": 2138,
+      "end": 2144,
       "loc": {
         "start": {
           "line": 70,
@@ -8198,8 +8239,8 @@
         "binop": null
       },
       "value": "get",
-      "start": 2142,
-      "end": 2145,
+      "start": 2145,
+      "end": 2148,
       "loc": {
         "start": {
           "line": 70,
@@ -8224,8 +8265,8 @@
         "binop": null
       },
       "value": "JOINED",
-      "start": 2146,
-      "end": 2152,
+      "start": 2149,
+      "end": 2155,
       "loc": {
         "start": {
           "line": 70,
@@ -8249,8 +8290,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 2152,
-      "end": 2153,
+      "start": 2155,
+      "end": 2156,
       "loc": {
         "start": {
           "line": 70,
@@ -8274,8 +8315,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 2153,
-      "end": 2154,
+      "start": 2156,
+      "end": 2157,
       "loc": {
         "start": {
           "line": 70,
@@ -8299,8 +8340,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 2155,
-      "end": 2156,
+      "start": 2158,
+      "end": 2159,
       "loc": {
         "start": {
           "line": 70,
@@ -8327,8 +8368,8 @@
         "updateContext": null
       },
       "value": "return",
-      "start": 2165,
-      "end": 2171,
+      "start": 2168,
+      "end": 2174,
       "loc": {
         "start": {
           "line": 71,
@@ -8353,8 +8394,8 @@
         "binop": null
       },
       "value": "WebChannelState",
-      "start": 2172,
-      "end": 2187,
+      "start": 2175,
+      "end": 2190,
       "loc": {
         "start": {
           "line": 71,
@@ -8379,8 +8420,8 @@
         "binop": null,
         "updateContext": null
       },
-      "start": 2187,
-      "end": 2188,
+      "start": 2190,
+      "end": 2191,
       "loc": {
         "start": {
           "line": 71,
@@ -8405,8 +8446,8 @@
         "binop": null
       },
       "value": "JOINED",
-      "start": 2188,
-      "end": 2194,
+      "start": 2191,
+      "end": 2197,
       "loc": {
         "start": {
           "line": 71,
@@ -8431,8 +8472,8 @@
         "binop": null,
         "updateContext": null
       },
-      "start": 2194,
-      "end": 2195,
+      "start": 2197,
+      "end": 2198,
       "loc": {
         "start": {
           "line": 71,
@@ -8456,8 +8497,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 2200,
-      "end": 2201,
+      "start": 2203,
+      "end": 2204,
       "loc": {
         "start": {
           "line": 72,
@@ -8472,8 +8513,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n     * `3`: you have sussessfully left the group.\n     * @type {number}\n     ",
-      "start": 2206,
-      "end": 2289,
+      "start": 2209,
+      "end": 2292,
       "loc": {
         "start": {
           "line": 73,
@@ -8498,8 +8539,8 @@
         "binop": null
       },
       "value": "static",
-      "start": 2294,
-      "end": 2300,
+      "start": 2297,
+      "end": 2303,
       "loc": {
         "start": {
           "line": 77,
@@ -8524,8 +8565,8 @@
         "binop": null
       },
       "value": "get",
-      "start": 2301,
-      "end": 2304,
+      "start": 2304,
+      "end": 2307,
       "loc": {
         "start": {
           "line": 77,
@@ -8550,8 +8591,8 @@
         "binop": null
       },
       "value": "LEFT",
-      "start": 2305,
-      "end": 2309,
+      "start": 2308,
+      "end": 2312,
       "loc": {
         "start": {
           "line": 77,
@@ -8575,8 +8616,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 2309,
-      "end": 2310,
+      "start": 2312,
+      "end": 2313,
       "loc": {
         "start": {
           "line": 77,
@@ -8600,8 +8641,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 2310,
-      "end": 2311,
+      "start": 2313,
+      "end": 2314,
       "loc": {
         "start": {
           "line": 77,
@@ -8625,8 +8666,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 2312,
-      "end": 2313,
+      "start": 2315,
+      "end": 2316,
       "loc": {
         "start": {
           "line": 77,
@@ -8653,8 +8694,8 @@
         "updateContext": null
       },
       "value": "return",
-      "start": 2322,
-      "end": 2328,
+      "start": 2325,
+      "end": 2331,
       "loc": {
         "start": {
           "line": 78,
@@ -8679,8 +8720,8 @@
         "binop": null
       },
       "value": "WebChannelState",
-      "start": 2329,
-      "end": 2344,
+      "start": 2332,
+      "end": 2347,
       "loc": {
         "start": {
           "line": 78,
@@ -8705,8 +8746,8 @@
         "binop": null,
         "updateContext": null
       },
-      "start": 2344,
-      "end": 2345,
+      "start": 2347,
+      "end": 2348,
       "loc": {
         "start": {
           "line": 78,
@@ -8731,8 +8772,8 @@
         "binop": null
       },
       "value": "LEFT",
-      "start": 2345,
-      "end": 2349,
+      "start": 2348,
+      "end": 2352,
       "loc": {
         "start": {
           "line": 78,
@@ -8757,8 +8798,8 @@
         "binop": null,
         "updateContext": null
       },
-      "start": 2349,
-      "end": 2350,
+      "start": 2352,
+      "end": 2353,
       "loc": {
         "start": {
           "line": 78,
@@ -8782,8 +8823,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 2355,
-      "end": 2356,
+      "start": 2358,
+      "end": 2359,
       "loc": {
         "start": {
           "line": 79,
@@ -8807,8 +8848,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 2357,
-      "end": 2358,
+      "start": 2360,
+      "end": 2361,
       "loc": {
         "start": {
           "line": 80,
@@ -8823,8 +8864,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n * The topology enum. More topologies will be added in the future\n ",
-      "start": 2359,
-      "end": 2432,
+      "start": 2362,
+      "end": 2435,
       "loc": {
         "start": {
           "line": 81,
@@ -8851,8 +8892,8 @@
         "updateContext": null
       },
       "value": "export",
-      "start": 2433,
-      "end": 2439,
+      "start": 2436,
+      "end": 2442,
       "loc": {
         "start": {
           "line": 84,
@@ -8879,8 +8920,8 @@
         "updateContext": null
       },
       "value": "class",
-      "start": 2440,
-      "end": 2445,
+      "start": 2443,
+      "end": 2448,
       "loc": {
         "start": {
           "line": 84,
@@ -8905,8 +8946,8 @@
         "binop": null
       },
       "value": "Topology",
-      "start": 2446,
-      "end": 2454,
+      "start": 2449,
+      "end": 2457,
       "loc": {
         "start": {
           "line": 84,
@@ -8930,8 +8971,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 2455,
-      "end": 2456,
+      "start": 2458,
+      "end": 2459,
       "loc": {
         "start": {
           "line": 84,
@@ -8946,8 +8987,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n     * Full mesh topology identifier.\n     * @type {number}\n     ",
-      "start": 2461,
-      "end": 2532,
+      "start": 2464,
+      "end": 2535,
       "loc": {
         "start": {
           "line": 85,
@@ -8972,8 +9013,8 @@
         "binop": null
       },
       "value": "static",
-      "start": 2537,
-      "end": 2543,
+      "start": 2540,
+      "end": 2546,
       "loc": {
         "start": {
           "line": 89,
@@ -8998,8 +9039,8 @@
         "binop": null
       },
       "value": "get",
-      "start": 2544,
-      "end": 2547,
+      "start": 2547,
+      "end": 2550,
       "loc": {
         "start": {
           "line": 89,
@@ -9024,8 +9065,8 @@
         "binop": null
       },
       "value": "FULL_MESH",
-      "start": 2548,
-      "end": 2557,
+      "start": 2551,
+      "end": 2560,
       "loc": {
         "start": {
           "line": 89,
@@ -9049,8 +9090,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 2557,
-      "end": 2558,
+      "start": 2560,
+      "end": 2561,
       "loc": {
         "start": {
           "line": 89,
@@ -9074,8 +9115,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 2558,
-      "end": 2559,
+      "start": 2561,
+      "end": 2562,
       "loc": {
         "start": {
           "line": 89,
@@ -9099,8 +9140,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 2560,
-      "end": 2561,
+      "start": 2563,
+      "end": 2564,
       "loc": {
         "start": {
           "line": 89,
@@ -9127,8 +9168,8 @@
         "updateContext": null
       },
       "value": "return",
-      "start": 2570,
-      "end": 2576,
+      "start": 2573,
+      "end": 2579,
       "loc": {
         "start": {
           "line": 90,
@@ -9153,8 +9194,8 @@
         "binop": null
       },
       "value": "TopologyEnum",
-      "start": 2577,
-      "end": 2589,
+      "start": 2580,
+      "end": 2592,
       "loc": {
         "start": {
           "line": 90,
@@ -9179,8 +9220,8 @@
         "binop": null,
         "updateContext": null
       },
-      "start": 2589,
-      "end": 2590,
+      "start": 2592,
+      "end": 2593,
       "loc": {
         "start": {
           "line": 90,
@@ -9205,8 +9246,8 @@
         "binop": null
       },
       "value": "FULL_MESH",
-      "start": 2590,
-      "end": 2599,
+      "start": 2593,
+      "end": 2602,
       "loc": {
         "start": {
           "line": 90,
@@ -9231,8 +9272,8 @@
         "binop": null,
         "updateContext": null
       },
-      "start": 2599,
-      "end": 2600,
+      "start": 2602,
+      "end": 2603,
       "loc": {
         "start": {
           "line": 90,
@@ -9256,8 +9297,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 2605,
-      "end": 2606,
+      "start": 2608,
+      "end": 2609,
       "loc": {
         "start": {
           "line": 91,
@@ -9281,8 +9322,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 2607,
-      "end": 2608,
+      "start": 2610,
+      "end": 2611,
       "loc": {
         "start": {
           "line": 92,
@@ -9297,8 +9338,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n * The log level enum for debugging purposes.\n ",
-      "start": 2609,
-      "end": 2662,
+      "start": 2612,
+      "end": 2665,
       "loc": {
         "start": {
           "line": 93,
@@ -9325,8 +9366,8 @@
         "updateContext": null
       },
       "value": "export",
-      "start": 2663,
-      "end": 2669,
+      "start": 2666,
+      "end": 2672,
       "loc": {
         "start": {
           "line": 96,
@@ -9353,8 +9394,8 @@
         "updateContext": null
       },
       "value": "class",
-      "start": 2670,
-      "end": 2675,
+      "start": 2673,
+      "end": 2678,
       "loc": {
         "start": {
           "line": 96,
@@ -9379,8 +9420,8 @@
         "binop": null
       },
       "value": "LogLevel",
-      "start": 2676,
-      "end": 2684,
+      "start": 2679,
+      "end": 2687,
       "loc": {
         "start": {
           "line": 96,
@@ -9404,8 +9445,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 2685,
-      "end": 2686,
+      "start": 2688,
+      "end": 2689,
       "loc": {
         "start": {
           "line": 96,
@@ -9420,8 +9461,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n     * Equals to `1`, allows logs for debug.\n     * @type {number}\n     ",
-      "start": 2691,
-      "end": 2769,
+      "start": 2694,
+      "end": 2772,
       "loc": {
         "start": {
           "line": 97,
@@ -9446,8 +9487,8 @@
         "binop": null
       },
       "value": "static",
-      "start": 2774,
-      "end": 2780,
+      "start": 2777,
+      "end": 2783,
       "loc": {
         "start": {
           "line": 101,
@@ -9472,8 +9513,8 @@
         "binop": null
       },
       "value": "get",
-      "start": 2781,
-      "end": 2784,
+      "start": 2784,
+      "end": 2787,
       "loc": {
         "start": {
           "line": 101,
@@ -9498,8 +9539,8 @@
         "binop": null
       },
       "value": "DEBUG",
-      "start": 2785,
-      "end": 2790,
+      "start": 2788,
+      "end": 2793,
       "loc": {
         "start": {
           "line": 101,
@@ -9523,8 +9564,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 2790,
-      "end": 2791,
+      "start": 2793,
+      "end": 2794,
       "loc": {
         "start": {
           "line": 101,
@@ -9548,8 +9589,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 2791,
-      "end": 2792,
+      "start": 2794,
+      "end": 2795,
       "loc": {
         "start": {
           "line": 101,
@@ -9573,8 +9614,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 2793,
-      "end": 2794,
+      "start": 2796,
+      "end": 2797,
       "loc": {
         "start": {
           "line": 101,
@@ -9601,8 +9642,8 @@
         "updateContext": null
       },
       "value": "return",
-      "start": 2803,
-      "end": 2809,
+      "start": 2806,
+      "end": 2812,
       "loc": {
         "start": {
           "line": 102,
@@ -9627,8 +9668,8 @@
         "binop": null
       },
       "value": "Logs",
-      "start": 2810,
-      "end": 2814,
+      "start": 2813,
+      "end": 2817,
       "loc": {
         "start": {
           "line": 102,
@@ -9653,8 +9694,8 @@
         "binop": null,
         "updateContext": null
       },
-      "start": 2814,
-      "end": 2815,
+      "start": 2817,
+      "end": 2818,
       "loc": {
         "start": {
           "line": 102,
@@ -9679,8 +9720,8 @@
         "binop": null
       },
       "value": "DEBUG",
-      "start": 2815,
-      "end": 2820,
+      "start": 2818,
+      "end": 2823,
       "loc": {
         "start": {
           "line": 102,
@@ -9705,8 +9746,8 @@
         "binop": null,
         "updateContext": null
       },
-      "start": 2820,
-      "end": 2821,
+      "start": 2823,
+      "end": 2824,
       "loc": {
         "start": {
           "line": 102,
@@ -9730,8 +9771,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 2826,
-      "end": 2827,
+      "start": 2829,
+      "end": 2830,
       "loc": {
         "start": {
           "line": 103,
@@ -9746,8 +9787,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n     * Equals to `2`, logs for WebGroup module.\n     * @type {number}\n     ",
-      "start": 2832,
-      "end": 2913,
+      "start": 2835,
+      "end": 2916,
       "loc": {
         "start": {
           "line": 104,
@@ -9772,8 +9813,8 @@
         "binop": null
       },
       "value": "static",
-      "start": 2918,
-      "end": 2924,
+      "start": 2921,
+      "end": 2927,
       "loc": {
         "start": {
           "line": 108,
@@ -9798,8 +9839,8 @@
         "binop": null
       },
       "value": "get",
-      "start": 2925,
-      "end": 2928,
+      "start": 2928,
+      "end": 2931,
       "loc": {
         "start": {
           "line": 108,
@@ -9824,8 +9865,8 @@
         "binop": null
       },
       "value": "WEB_GROUP",
-      "start": 2929,
-      "end": 2938,
+      "start": 2932,
+      "end": 2941,
       "loc": {
         "start": {
           "line": 108,
@@ -9849,8 +9890,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 2938,
-      "end": 2939,
+      "start": 2941,
+      "end": 2942,
       "loc": {
         "start": {
           "line": 108,
@@ -9874,8 +9915,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 2939,
-      "end": 2940,
+      "start": 2942,
+      "end": 2943,
       "loc": {
         "start": {
           "line": 108,
@@ -9899,8 +9940,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 2941,
-      "end": 2942,
+      "start": 2944,
+      "end": 2945,
       "loc": {
         "start": {
           "line": 108,
@@ -9927,8 +9968,8 @@
         "updateContext": null
       },
       "value": "return",
-      "start": 2951,
-      "end": 2957,
+      "start": 2954,
+      "end": 2960,
       "loc": {
         "start": {
           "line": 109,
@@ -9953,8 +9994,8 @@
         "binop": null
       },
       "value": "Logs",
-      "start": 2958,
-      "end": 2962,
+      "start": 2961,
+      "end": 2965,
       "loc": {
         "start": {
           "line": 109,
@@ -9979,8 +10020,8 @@
         "binop": null,
         "updateContext": null
       },
-      "start": 2962,
-      "end": 2963,
+      "start": 2965,
+      "end": 2966,
       "loc": {
         "start": {
           "line": 109,
@@ -10005,8 +10046,8 @@
         "binop": null
       },
       "value": "WEB_GROUP",
-      "start": 2963,
-      "end": 2972,
+      "start": 2966,
+      "end": 2975,
       "loc": {
         "start": {
           "line": 109,
@@ -10031,8 +10072,8 @@
         "binop": null,
         "updateContext": null
       },
-      "start": 2972,
-      "end": 2973,
+      "start": 2975,
+      "end": 2976,
       "loc": {
         "start": {
           "line": 109,
@@ -10056,8 +10097,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 2978,
-      "end": 2979,
+      "start": 2981,
+      "end": 2982,
       "loc": {
         "start": {
           "line": 110,
@@ -10072,8 +10113,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n     * Equals to `3`, logs for DataChannelBuilder module.\n     * @type {number}\n     ",
-      "start": 2984,
-      "end": 3075,
+      "start": 2987,
+      "end": 3078,
       "loc": {
         "start": {
           "line": 111,
@@ -10098,8 +10139,8 @@
         "binop": null
       },
       "value": "static",
-      "start": 3080,
-      "end": 3086,
+      "start": 3083,
+      "end": 3089,
       "loc": {
         "start": {
           "line": 115,
@@ -10124,8 +10165,8 @@
         "binop": null
       },
       "value": "get",
-      "start": 3087,
-      "end": 3090,
+      "start": 3090,
+      "end": 3093,
       "loc": {
         "start": {
           "line": 115,
@@ -10150,8 +10191,8 @@
         "binop": null
       },
       "value": "WEBRTC",
-      "start": 3091,
-      "end": 3097,
+      "start": 3094,
+      "end": 3100,
       "loc": {
         "start": {
           "line": 115,
@@ -10175,8 +10216,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 3097,
-      "end": 3098,
+      "start": 3100,
+      "end": 3101,
       "loc": {
         "start": {
           "line": 115,
@@ -10200,8 +10241,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 3098,
-      "end": 3099,
+      "start": 3101,
+      "end": 3102,
       "loc": {
         "start": {
           "line": 115,
@@ -10225,8 +10266,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 3100,
-      "end": 3101,
+      "start": 3103,
+      "end": 3104,
       "loc": {
         "start": {
           "line": 115,
@@ -10253,8 +10294,8 @@
         "updateContext": null
       },
       "value": "return",
-      "start": 3110,
-      "end": 3116,
+      "start": 3113,
+      "end": 3119,
       "loc": {
         "start": {
           "line": 116,
@@ -10279,8 +10320,8 @@
         "binop": null
       },
       "value": "Logs",
-      "start": 3117,
-      "end": 3121,
+      "start": 3120,
+      "end": 3124,
       "loc": {
         "start": {
           "line": 116,
@@ -10305,8 +10346,8 @@
         "binop": null,
         "updateContext": null
       },
-      "start": 3121,
-      "end": 3122,
+      "start": 3124,
+      "end": 3125,
       "loc": {
         "start": {
           "line": 116,
@@ -10331,8 +10372,8 @@
         "binop": null
       },
       "value": "WEBRTC",
-      "start": 3122,
-      "end": 3128,
+      "start": 3125,
+      "end": 3131,
       "loc": {
         "start": {
           "line": 116,
@@ -10357,8 +10398,8 @@
         "binop": null,
         "updateContext": null
       },
-      "start": 3128,
-      "end": 3129,
+      "start": 3131,
+      "end": 3132,
       "loc": {
         "start": {
           "line": 116,
@@ -10382,8 +10423,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 3134,
-      "end": 3135,
+      "start": 3137,
+      "end": 3138,
       "loc": {
         "start": {
           "line": 117,
@@ -10398,8 +10439,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n     * Equals to `4`, logs for Channel module.\n     * @type {number}\n     ",
-      "start": 3140,
-      "end": 3220,
+      "start": 3143,
+      "end": 3223,
       "loc": {
         "start": {
           "line": 118,
@@ -10424,8 +10465,8 @@
         "binop": null
       },
       "value": "static",
-      "start": 3225,
-      "end": 3231,
+      "start": 3228,
+      "end": 3234,
       "loc": {
         "start": {
           "line": 122,
@@ -10450,8 +10491,8 @@
         "binop": null
       },
       "value": "get",
-      "start": 3232,
-      "end": 3235,
+      "start": 3235,
+      "end": 3238,
       "loc": {
         "start": {
           "line": 122,
@@ -10476,8 +10517,8 @@
         "binop": null
       },
       "value": "CHANNEL",
-      "start": 3236,
-      "end": 3243,
+      "start": 3239,
+      "end": 3246,
       "loc": {
         "start": {
           "line": 122,
@@ -10501,8 +10542,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 3243,
-      "end": 3244,
+      "start": 3246,
+      "end": 3247,
       "loc": {
         "start": {
           "line": 122,
@@ -10526,8 +10567,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 3244,
-      "end": 3245,
+      "start": 3247,
+      "end": 3248,
       "loc": {
         "start": {
           "line": 122,
@@ -10551,8 +10592,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 3246,
-      "end": 3247,
+      "start": 3249,
+      "end": 3250,
       "loc": {
         "start": {
           "line": 122,
@@ -10579,8 +10620,8 @@
         "updateContext": null
       },
       "value": "return",
-      "start": 3256,
-      "end": 3262,
+      "start": 3259,
+      "end": 3265,
       "loc": {
         "start": {
           "line": 123,
@@ -10605,8 +10646,8 @@
         "binop": null
       },
       "value": "Logs",
-      "start": 3263,
-      "end": 3267,
+      "start": 3266,
+      "end": 3270,
       "loc": {
         "start": {
           "line": 123,
@@ -10631,8 +10672,8 @@
         "binop": null,
         "updateContext": null
       },
-      "start": 3267,
-      "end": 3268,
+      "start": 3270,
+      "end": 3271,
       "loc": {
         "start": {
           "line": 123,
@@ -10657,8 +10698,8 @@
         "binop": null
       },
       "value": "CHANNEL",
-      "start": 3268,
-      "end": 3275,
+      "start": 3271,
+      "end": 3278,
       "loc": {
         "start": {
           "line": 123,
@@ -10683,8 +10724,8 @@
         "binop": null,
         "updateContext": null
       },
-      "start": 3275,
-      "end": 3276,
+      "start": 3278,
+      "end": 3279,
       "loc": {
         "start": {
           "line": 123,
@@ -10708,8 +10749,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 3281,
-      "end": 3282,
+      "start": 3284,
+      "end": 3285,
       "loc": {
         "start": {
           "line": 124,
@@ -10724,8 +10765,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n     * Equals to `5`, logs for Topology module.\n     * @type {number}\n     ",
-      "start": 3287,
-      "end": 3368,
+      "start": 3290,
+      "end": 3371,
       "loc": {
         "start": {
           "line": 125,
@@ -10750,8 +10791,8 @@
         "binop": null
       },
       "value": "static",
-      "start": 3373,
-      "end": 3379,
+      "start": 3376,
+      "end": 3382,
       "loc": {
         "start": {
           "line": 129,
@@ -10776,8 +10817,8 @@
         "binop": null
       },
       "value": "get",
-      "start": 3380,
-      "end": 3383,
+      "start": 3383,
+      "end": 3386,
       "loc": {
         "start": {
           "line": 129,
@@ -10802,8 +10843,8 @@
         "binop": null
       },
       "value": "TOPOLOGY",
-      "start": 3384,
-      "end": 3392,
+      "start": 3387,
+      "end": 3395,
       "loc": {
         "start": {
           "line": 129,
@@ -10827,8 +10868,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 3392,
-      "end": 3393,
+      "start": 3395,
+      "end": 3396,
       "loc": {
         "start": {
           "line": 129,
@@ -10852,8 +10893,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 3393,
-      "end": 3394,
+      "start": 3396,
+      "end": 3397,
       "loc": {
         "start": {
           "line": 129,
@@ -10877,8 +10918,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 3395,
-      "end": 3396,
+      "start": 3398,
+      "end": 3399,
       "loc": {
         "start": {
           "line": 129,
@@ -10905,8 +10946,8 @@
         "updateContext": null
       },
       "value": "return",
-      "start": 3405,
-      "end": 3411,
+      "start": 3408,
+      "end": 3414,
       "loc": {
         "start": {
           "line": 130,
@@ -10931,8 +10972,8 @@
         "binop": null
       },
       "value": "Logs",
-      "start": 3412,
-      "end": 3416,
+      "start": 3415,
+      "end": 3419,
       "loc": {
         "start": {
           "line": 130,
@@ -10957,8 +10998,8 @@
         "binop": null,
         "updateContext": null
       },
-      "start": 3416,
-      "end": 3417,
+      "start": 3419,
+      "end": 3420,
       "loc": {
         "start": {
           "line": 130,
@@ -10983,8 +11024,8 @@
         "binop": null
       },
       "value": "TOPOLOGY",
-      "start": 3417,
-      "end": 3425,
+      "start": 3420,
+      "end": 3428,
       "loc": {
         "start": {
           "line": 130,
@@ -11009,8 +11050,8 @@
         "binop": null,
         "updateContext": null
       },
-      "start": 3425,
-      "end": 3426,
+      "start": 3428,
+      "end": 3429,
       "loc": {
         "start": {
           "line": 130,
@@ -11034,8 +11075,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 3431,
-      "end": 3432,
+      "start": 3434,
+      "end": 3435,
       "loc": {
         "start": {
           "line": 131,
@@ -11050,8 +11091,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n     * Equals to `6`, logs for Signaling module.\n     * @type {number}\n     ",
-      "start": 3437,
-      "end": 3519,
+      "start": 3440,
+      "end": 3522,
       "loc": {
         "start": {
           "line": 132,
@@ -11076,8 +11117,8 @@
         "binop": null
       },
       "value": "static",
-      "start": 3524,
-      "end": 3530,
+      "start": 3527,
+      "end": 3533,
       "loc": {
         "start": {
           "line": 136,
@@ -11102,8 +11143,8 @@
         "binop": null
       },
       "value": "get",
-      "start": 3531,
-      "end": 3534,
+      "start": 3534,
+      "end": 3537,
       "loc": {
         "start": {
           "line": 136,
@@ -11128,8 +11169,8 @@
         "binop": null
       },
       "value": "SIGNALING",
-      "start": 3535,
-      "end": 3544,
+      "start": 3538,
+      "end": 3547,
       "loc": {
         "start": {
           "line": 136,
@@ -11153,8 +11194,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 3544,
-      "end": 3545,
+      "start": 3547,
+      "end": 3548,
       "loc": {
         "start": {
           "line": 136,
@@ -11178,8 +11219,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 3545,
-      "end": 3546,
+      "start": 3548,
+      "end": 3549,
       "loc": {
         "start": {
           "line": 136,
@@ -11203,8 +11244,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 3547,
-      "end": 3548,
+      "start": 3550,
+      "end": 3551,
       "loc": {
         "start": {
           "line": 136,
@@ -11231,8 +11272,8 @@
         "updateContext": null
       },
       "value": "return",
-      "start": 3557,
-      "end": 3563,
+      "start": 3560,
+      "end": 3566,
       "loc": {
         "start": {
           "line": 137,
@@ -11257,8 +11298,8 @@
         "binop": null
       },
       "value": "Logs",
-      "start": 3564,
-      "end": 3568,
+      "start": 3567,
+      "end": 3571,
       "loc": {
         "start": {
           "line": 137,
@@ -11283,8 +11324,8 @@
         "binop": null,
         "updateContext": null
       },
-      "start": 3568,
-      "end": 3569,
+      "start": 3571,
+      "end": 3572,
       "loc": {
         "start": {
           "line": 137,
@@ -11309,8 +11350,8 @@
         "binop": null
       },
       "value": "SIGNALING",
-      "start": 3569,
-      "end": 3578,
+      "start": 3572,
+      "end": 3581,
       "loc": {
         "start": {
           "line": 137,
@@ -11335,8 +11376,8 @@
         "binop": null,
         "updateContext": null
       },
-      "start": 3578,
-      "end": 3579,
+      "start": 3581,
+      "end": 3582,
       "loc": {
         "start": {
           "line": 137,
@@ -11360,8 +11401,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 3584,
-      "end": 3585,
+      "start": 3587,
+      "end": 3588,
       "loc": {
         "start": {
           "line": 138,
@@ -11376,8 +11417,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n     * Equals to `7`, logs for ChannelBuilder module.\n     * @type {number}\n     ",
-      "start": 3590,
-      "end": 3677,
+      "start": 3593,
+      "end": 3680,
       "loc": {
         "start": {
           "line": 139,
@@ -11402,8 +11443,8 @@
         "binop": null
       },
       "value": "static",
-      "start": 3682,
-      "end": 3688,
+      "start": 3685,
+      "end": 3691,
       "loc": {
         "start": {
           "line": 143,
@@ -11428,8 +11469,8 @@
         "binop": null
       },
       "value": "get",
-      "start": 3689,
-      "end": 3692,
+      "start": 3692,
+      "end": 3695,
       "loc": {
         "start": {
           "line": 143,
@@ -11454,8 +11495,8 @@
         "binop": null
       },
       "value": "CHANNEL_BUILDER",
-      "start": 3693,
-      "end": 3708,
+      "start": 3696,
+      "end": 3711,
       "loc": {
         "start": {
           "line": 143,
@@ -11479,8 +11520,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 3708,
-      "end": 3709,
+      "start": 3711,
+      "end": 3712,
       "loc": {
         "start": {
           "line": 143,
@@ -11504,8 +11545,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 3709,
-      "end": 3710,
+      "start": 3712,
+      "end": 3713,
       "loc": {
         "start": {
           "line": 143,
@@ -11529,8 +11570,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 3711,
-      "end": 3712,
+      "start": 3714,
+      "end": 3715,
       "loc": {
         "start": {
           "line": 143,
@@ -11557,8 +11598,8 @@
         "updateContext": null
       },
       "value": "return",
-      "start": 3721,
-      "end": 3727,
+      "start": 3724,
+      "end": 3730,
       "loc": {
         "start": {
           "line": 144,
@@ -11583,8 +11624,8 @@
         "binop": null
       },
       "value": "Logs",
-      "start": 3728,
-      "end": 3732,
+      "start": 3731,
+      "end": 3735,
       "loc": {
         "start": {
           "line": 144,
@@ -11609,8 +11650,8 @@
         "binop": null,
         "updateContext": null
       },
-      "start": 3732,
-      "end": 3733,
+      "start": 3735,
+      "end": 3736,
       "loc": {
         "start": {
           "line": 144,
@@ -11635,8 +11676,8 @@
         "binop": null
       },
       "value": "CHANNEL_BUILDER",
-      "start": 3733,
-      "end": 3748,
+      "start": 3736,
+      "end": 3751,
       "loc": {
         "start": {
           "line": 144,
@@ -11661,8 +11702,8 @@
         "binop": null,
         "updateContext": null
       },
-      "start": 3748,
-      "end": 3749,
+      "start": 3751,
+      "end": 3752,
       "loc": {
         "start": {
           "line": 144,
@@ -11686,8 +11727,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 3754,
-      "end": 3755,
+      "start": 3757,
+      "end": 3758,
       "loc": {
         "start": {
           "line": 145,
@@ -11711,8 +11752,8 @@
         "postfix": false,
         "binop": null
       },
-      "start": 3756,
-      "end": 3757,
+      "start": 3759,
+      "end": 3760,
       "loc": {
         "start": {
           "line": 146,
@@ -11727,8 +11768,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n * The options to be passed into {@link WebGroup} constructor.\n * @typedef {Object} WebGroupOptions\n * @property {Topology} [topology] Topology identifier\n * (Full mesh is the only one supported by Netflux for now).\n * @property {string} [signalingServer] Signaling URL for WebRTC.\n * @property {RTCConfiguration} [rtcConfiguration] Configuration for WebRTC.\n * @property {boolean} [autoRejoin] Whether to automatically rejoin the web group\n * on disconnect or not. Its value may be modified after {@link WebGroup}\n * instantiation at any time.\n ",
-      "start": 3758,
-      "end": 4310,
+      "start": 3761,
+      "end": 4313,
       "loc": {
         "start": {
           "line": 147,
@@ -11743,8 +11784,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n * The options to be passed into {@link Bot} constructor.\n * @typedef {Object} BotOptions\n * @property {Topology} [topology] See WebGroupOptions.topology\n * @property {string} [signalingServer] See WebGroupOptions.signalingServer\n * @property {RTCConfiguration} [rtcConfiguration] See WebGroupOptions.rtcConfiguration\n * @property {boolean} [autoRejoin] See WebGroupOptions.autoRejoin\n * @property {Object} bot Server related options of the bot.\n * @property {NodeJSHttpServer|NodeJSHttpsServer} bot.server NodeJS http(s) server.\n * @property {string} [bot.url] Bot server URL.\n * @property {boolean} [bot.perMessageDeflate] Enable/disable permessage-deflate.\n * @property {boolean} [bot.leaveOnceAlone] If true, bot will live (disconnect from the signaling server) if no other peers left in the group.\n ",
-      "start": 4311,
-      "end": 5121,
+      "start": 4314,
+      "end": 5124,
       "loc": {
         "start": {
           "line": 158,
@@ -11759,8 +11800,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n * @external {RTCConfiguration} https://developer.mozilla.org/en/docs/Web/API/RTCConfiguration\n ",
-      "start": 5122,
-      "end": 5224,
+      "start": 5125,
+      "end": 5227,
       "loc": {
         "start": {
           "line": 171,
@@ -11775,8 +11816,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n * @external {Uint8Array} https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array\n ",
-      "start": 5225,
-      "end": 5347,
+      "start": 5228,
+      "end": 5350,
       "loc": {
         "start": {
           "line": 174,
@@ -11791,8 +11832,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n * @external {NodeJSHttpServer} https://nodejs.org/api/http.html#http_class_http_server\n ",
-      "start": 5348,
-      "end": 5443,
+      "start": 5351,
+      "end": 5446,
       "loc": {
         "start": {
           "line": 177,
@@ -11807,8 +11848,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n * @external {NodeJSHttpsServer} https://nodejs.org/api/https.html#https_class_https_server\n ",
-      "start": 5444,
-      "end": 5543,
+      "start": 5447,
+      "end": 5546,
       "loc": {
         "start": {
           "line": 180,
@@ -11833,8 +11874,8 @@
         "binop": null,
         "updateContext": null
       },
-      "start": 5544,
-      "end": 5544,
+      "start": 5547,
+      "end": 5547,
       "loc": {
         "start": {
           "line": 183,
