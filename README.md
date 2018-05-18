@@ -16,7 +16,7 @@ Documentation: <https://coast-team.github.io/netflux>
 [![codeclimate](https://codeclimate.com/github/coast-team/netflux/badges/gpa.svg)](https://codeclimate.com/github/coast-team/netflux)
 [![documentation](https://coast-team.github.io/netflux/badge.svg)](https://coast-team.github.io/netflux)
 
-[![commitizen](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg?style=flat-square)](http://commitizen.github.io/cz-cli)
+[![Conventional Changelog](https://img.shields.io/badge/changelog-conventional-brightgreen.svg?)](http://conventional-changelog.github.io)
 [![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg?style=flat-square)](https://github.com/semantic-release/semantic-release)
 [![gitter](https://img.shields.io/badge/GITTER-join%20chat-green.svg?style=flat-square)](https://gitter.im/coast-team/netflux?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
@@ -123,13 +123,5 @@ Netflux is used by our team for Multi User Text Editor ([MUTE repo](https://gith
 [string]: https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/String
 [uint8array]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array
 [sigver]: https://github.com/coast-team/sigver
-[commitizen]: https://img.shields.io/badge/commitizen-friendly-brightgreen.svg?style=flat-square
-[commitizen-url]: http://commitizen.github.io/cz-cli
-[codeclimate]: https://codeclimate.com/github/coast-team/netflux/badges/gpa.svg
-[codeclimate-url]: https://codeclimate.com/github/coast-team/netflux
-[coverage]: https://codeclimate.com/github/coast-team/netflux/badges/coverage.svg
-[coverage-url]: https://codeclimate.com/github/coast-team/netflux/coverage
-[doc]: https://coast-team.github.io/netflux/badge.svg
-[doc-url]: https://coast-team.github.io/netflux/netflux
 [logo]: manual/asset/logo_760px.png
 [netflux_example]: manual/asset/example.png
