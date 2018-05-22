@@ -47,7 +47,6 @@ export class Bot {
     this.wcOptions = Object.assign({}, webChannelDefaultOptions, options.webGroupOptions)
     const fullOptions = Object.assign({}, botDefaultOptions, options)
     fullOptions.webGroupOptions = this.wcOptions
-    console.log('full options: ', fullOptions)
     this.leaveOnceAlone = fullOptions.leaveOnceAlone
     this.server = fullOptions.server
     this.listenUrl = fullOptions.url
