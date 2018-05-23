@@ -42,6 +42,7 @@
     "proto": "pbjs -t static-module -w es6 --no-verify --no-delimited --no-convert src/proto/index.proto -o src/proto/index.es6.js && pbts src/proto/index.es6.js -o src/proto/index.d.ts",
     "postproto": "rollup -c rollup.config.proto.js && rm src/proto/index.es6.js",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
+    "travis-deploy-once": "travis-deploy-once",
     "predoc": "rm -rf ./docs; tsc -p tsconfig.docs.json",
     "doc": "esdoc -c esdoc.json",
     "lint": "tslint --fix -p tsconfig.json && prettier --write --list-different src/**/*.ts test/**/*.{ts,config.js} ./*.{ts,js,json,md} docs/**/*.md && markdownlint ./*.md manual/*.md manual/**/*.md",
