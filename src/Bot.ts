@@ -125,8 +125,8 @@ export class Bot {
     if (wcId === undefined) {
       return false
     }
-    const lastRoute = route.split('/').pop()
-    switch (lastRoute) {
+
+    switch (route) {
       case Route.INTERNAL:
         return this.webGroups.has(wcId) && !!senderId
       case Route.INVITE: {
@@ -157,8 +157,13 @@ export class Bot {
       pathname: string
       query: { senderId: string | undefined; wcId: string; key: string | undefined }
     } = urlLib.parse(url, true)
+    let lastRoute = pathname
+    if (pathname.endsWith('/')) {
+      lastRoute = pathname.substr(0, pathname.length - 1)
+    }
+    lastRoute = lastRoute.split('/').pop() as string
     return {
-      route: pathname.replace('/', ''),
+      route: lastRoute,
       wcId: wcId ? Number(wcId) : undefined,
       senderId: senderId ? Number(senderId) : undefined,
       key,
