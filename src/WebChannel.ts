@@ -65,7 +65,6 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
   public readonly STREAM_ID = 2
   public members: number[]
   public topologyEnum: TopologyEnum
-  public id: number
   public myId: number
   public key: string
   public autoRejoin: boolean
@@ -85,6 +84,8 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
   public userMsg: UserMessage
   public streamSubject: Subject<InWcMsg>
 
+  private _id: number
+  private idSubject: Subject<number>
   private _onAlone: () => void
   private rejoinEnabled: boolean
   private rejoinTimer: number | undefined
@@ -92,11 +93,12 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
   constructor(options: IWebChannelOptions) {
     const fullOptions = Object.assign({}, webChannelDefaultOptions, options)
     this.streamSubject = new Subject()
+    this.idSubject = new Subject()
     this.topologyEnum = fullOptions.topology
     this.autoRejoin = fullOptions.autoRejoin
     this.rtcConfiguration = fullOptions.rtcConfiguration
     this.members = []
-    this.id = 0
+    this._id = 0
     this.key = ''
     this.myId = 0
     this.state = WebChannelState.LEFT
@@ -122,6 +124,19 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
     if (isBrowser) {
       this.subscribeToBrowserEvents()
     }
+  }
+
+  get onIdChange(): Observable<number> {
+    return this.idSubject.asObservable()
+  }
+
+  get id(): number {
+    return this._id
+  }
+
+  set id(value: number) {
+    this._id = value
+    this.idSubject.next(value)
   }
 
   get messageFromStream(): Observable<InWcMsg> {

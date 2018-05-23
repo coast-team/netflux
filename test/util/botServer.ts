@@ -24,6 +24,7 @@ try {
       const key = ctx.params.key
       const wg = addWebGroup(bot)
       wg.join(key)
+      bot.webGroups.set(wg.id, wg)
       await (wg as any).waitJoin
       ctx.body = { id: wg.id }
     })
@@ -109,7 +110,6 @@ try {
 function addWebGroup(bot: Bot): WebGroup {
   const wg = new WebGroup(webGroupOptions)
   configWebGroup(wg)
-  bot.webGroups.set(wg.id, wg)
   return wg
 }
 

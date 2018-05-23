@@ -1,4 +1,3 @@
-// import { log } from './misc/util'
 import { WebGroupState } from './index.common.doc'
 import { IWebChannelOptions, WebChannel, webChannelDefaultOptions } from './WebChannel'
 import { wcs, WebGroup } from './WebChannelFacade'

@@ -52,10 +52,10 @@
   "dependencies": {
     "core-js": "^2.5.6",
     "protobufjs": "^6.8.6",
-    "rxjs": "^6.1.0",
+    "rxjs": "^6.2.0",
     "text-encoding": "^0.6.4",
     "uws": "^10.148.0",
-    "webrtc-adapter": "^6.1.5"
+    "webrtc-adapter": "^6.2.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^6.2.0",
@@ -83,7 +83,7 @@
     "koa": "^2.5.1",
     "koa-router": "^7.4.0",
     "lint-staged": "^7.1.0",
-    "markdownlint-cli": "^0.8.2",
+    "markdownlint-cli": "^0.9.0",
     "pm2": "^2.10.3",
     "prettier": "^1.12.1",
     "rollup": "^0.59.1",
@@ -102,10 +102,12 @@
     "tslint": "^5.10.0",
     "tslint-config-prettier": "^1.12.0",
     "typescript": "~2.8.3",
-    "uglify-js": "^3.3.25"
+    "uglify-js": "^3.3.27"
   },
   "commitlint": {
-    "extends": ["@commitlint/config-conventional"]
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
   },
   "config": {
     "commitizen": {
