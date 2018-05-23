@@ -16,17 +16,15 @@ addons:
 language: node_js
 node_js:
   - "8"
-before_install:
-  - npm install uws
-  - npm install -g codeclimate-test-reporter
+rvm:
+  - 2.2.0
 before_script:
-  - npm prune
   - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
   - chmod +x ./cc-test-reporter
   - ./cc-test-reporter before-build
 script:
   - npm run test:travis
 after_success:
-  - ./cc-test-reporter format-coverage -t lcov ./coverage/lcov/lcov
+  - ./cc-test-reporter format-coverage -t lcov ./coverage/lcov/lcov.info
   - ./cc-test-reporter upload-coverage
   - npm run travis-deploy-once "npm run semantic-release"
