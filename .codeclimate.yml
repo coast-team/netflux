@@ -1,7 +1,7 @@
 version: "2"
 plugins:
   tslint:
-    enabled: true
+    enabled: false
     config: tslint.json
   fixme:
     enabled: true
