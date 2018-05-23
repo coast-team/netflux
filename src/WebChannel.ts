@@ -220,12 +220,7 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
 
   onAdjacentMembersLeaveProxy(ids: number[]): void {
     if (ids.length !== 0) {
-      ids.forEach((id) => {
-        if (this.members.includes(id)) {
-          this.members.splice(this.members.indexOf(id), 1)
-          this.onMemberLeave(id)
-        }
-      })
+      this.onMemberLeaveProxy(ids)
       if (this.members.length === 1) {
         this._onAlone()
         this.topology.setLeftState()
@@ -239,12 +234,7 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
   }
 
   onDistantMembersLeaveProxy(ids: number[]) {
-    ids.forEach((id) => {
-      if (this.members.includes(id)) {
-        this.members.splice(this.members.indexOf(id), 1)
-        this.onMemberLeave(id)
-      }
-    })
+    this.onMemberLeaveProxy(ids)
   }
 
   init(key: string, id: number = generateId()) {
@@ -403,5 +393,14 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
     } else {
       this.setState(WebChannelState.LEFT)
     }
+  }
+
+  private onMemberLeaveProxy(ids: number[]) {
+    ids.forEach((id) => {
+      if (this.members.includes(id)) {
+        this.members.splice(this.members.indexOf(id), 1)
+        this.onMemberLeave(id)
+      }
+    })
   }
 }
