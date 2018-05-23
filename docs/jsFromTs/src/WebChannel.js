@@ -29,11 +29,12 @@ export class WebChannel {
         this.STREAM_ID = 2;
         const fullOptions = Object.assign({}, webChannelDefaultOptions, options);
         this.streamSubject = new Subject();
+        this.idSubject = new Subject();
         this.topologyEnum = fullOptions.topology;
         this.autoRejoin = fullOptions.autoRejoin;
         this.rtcConfiguration = fullOptions.rtcConfiguration;
         this.members = [];
-        this.id = 0;
+        this._id = 0;
         this.key = '';
         this.myId = 0;
         this.state = WebChannelState.LEFT;
@@ -57,6 +58,16 @@ export class WebChannel {
         if (isBrowser) {
             this.subscribeToBrowserEvents();
         }
+    }
+    get onIdChange() {
+        return this.idSubject.asObservable();
+    }
+    get id() {
+        return this._id;
+    }
+    set id(value) {
+        this._id = value;
+        this.idSubject.next(value);
     }
     get messageFromStream() {
         return this.streamSubject.asObservable();
@@ -131,12 +142,7 @@ export class WebChannel {
     }
     onAdjacentMembersLeaveProxy(ids) {
         if (ids.length !== 0) {
-            ids.forEach((id) => {
-                if (this.members.includes(id)) {
-                    this.members.splice(this.members.indexOf(id), 1);
-                    this.onMemberLeave(id);
-                }
-            });
+            this.onMemberLeaveProxy(ids);
             if (this.members.length === 1) {
                 this._onAlone();
                 this.topology.setLeftState();
@@ -148,12 +154,7 @@ export class WebChannel {
         }
     }
     onDistantMembersLeaveProxy(ids) {
-        ids.forEach((id) => {
-            if (this.members.includes(id)) {
-                this.members.splice(this.members.indexOf(id), 1);
-                this.onMemberLeave(id);
-            }
-        });
+        this.onMemberLeaveProxy(ids);
     }
     init(key, id = generateId()) {
         this.id = id;
@@ -295,5 +296,13 @@ export class WebChannel {
         else {
             this.setState(WebChannelState.LEFT);
         }
+    }
+    onMemberLeaveProxy(ids) {
+        ids.forEach((id) => {
+            if (this.members.includes(id)) {
+                this.members.splice(this.members.indexOf(id), 1);
+                this.onMemberLeave(id);
+            }
+        });
     }
 }

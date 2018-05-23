@@ -663,7 +663,7 @@ describe(&apos;&#x1F642; &#x1F642; - 2 clients&apos;, () =&gt; {
                 }
             };
             wg2.leave();
-        });
+        }, 10000);
         /** @test {WebGroup#myId} */
         it(&apos;the id of the first client should NOT be 0 and of second should be 0&apos;, (done) =&gt; {
             wg2.onStateChange = (state) =&gt; {

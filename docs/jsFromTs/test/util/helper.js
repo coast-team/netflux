@@ -2,7 +2,7 @@ import { LogLevel, setLogLevel } from '../../src/misc/util';
 setLogLevel(LogLevel.DEBUG
 // LogLevel.SIGNALING,
 // LogLevel.CHANNEL,
-// LogLevel.CHANNEL_BUILDER,
+// LogLevel.CHANNEL_BUILDER
 // LogLevel.WEBRTC,
 // LogLevel.TOPOLOGY,
 );

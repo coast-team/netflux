@@ -20,6 +20,7 @@ try {
         const key = ctx.params.key;
         const wg = addWebGroup(bot);
         wg.join(key);
+        bot.webGroups.set(wg.id, wg);
         await wg.waitJoin;
         ctx.body = { id: wg.id };
     })
@@ -99,7 +100,6 @@ catch (err) {
 function addWebGroup(bot) {
     const wg = new WebGroup(webGroupOptions);
     configWebGroup(wg);
-    bot.webGroups.set(wg.id, wg);
     return wg;
 }
 function configWebGroup(wg) {

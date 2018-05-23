@@ -39,8 +39,8 @@ export class ChannelBuilder extends Service {
         });
         // Subscribe to channels from WebSocket and WebRTC builders
         this.subscribeToChannels();
-        // Subscribe to WebSocket server listen url changes
-        this.subscribeToListenURL();
+        // Subscribe to WebSocket server listen url changes and WebChannel id change
+        this.subscribeToURLandIDChange();
     }
     clean() {
         this.dataChannelBuilder.clean();
@@ -243,13 +243,17 @@ export class ChannelBuilder extends Service {
             });
         });
     }
-    subscribeToListenURL() {
+    subscribeToURLandIDChange() {
         WebSocketBuilder.listenUrl.subscribe((url) => {
             if (url) {
                 this.myInfo.wss = url;
-                this.myInfo.wcId = this.wc.id;
                 this.pairEncoded = super.encode({ pair: { initiator: this.myInfo } });
             }
+        });
+        this.wc.onIdChange.subscribe((id) => {
+            log.channelBuilder('Web CHANNEL ID CHANGED TO ', this.wc.id);
+            this.myInfo.wcId = this.wc.id;
+            this.pairEncoded = super.encode({ pair: { initiator: this.myInfo } });
         });
     }
 }

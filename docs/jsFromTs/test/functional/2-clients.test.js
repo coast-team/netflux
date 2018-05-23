@@ -613,7 +613,7 @@ describe('🙂 🙂 - 2 clients', () => {
                 }
             };
             wg2.leave();
-        });
+        }, 10000);
         /** @test {WebGroup#myId} */
         it('the id of the first client should NOT be 0 and of second should be 0', (done) => {
             wg2.onStateChange = (state) => {
