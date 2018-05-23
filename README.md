@@ -14,6 +14,7 @@ Documentation: <https://coast-team.github.io/netflux>
 [![travis](https://travis-ci.org/coast-team/netflux.svg?branch=master)](https://travis-ci.org/coast-team/netflux)
 
 [![codeclimate](https://codeclimate.com/github/coast-team/netflux/badges/gpa.svg)](https://codeclimate.com/github/coast-team/netflux)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/65c5d6308e7e58edd7b0/test_coverage)](https://codeclimate.com/github/coast-team/netflux/test_coverage)
 [![documentation](https://coast-team.github.io/netflux/badge.svg)](https://coast-team.github.io/netflux)
 
 [![Conventional Changelog](https://img.shields.io/badge/changelog-conventional-brightgreen.svg?)](http://conventional-changelog.github.io)
