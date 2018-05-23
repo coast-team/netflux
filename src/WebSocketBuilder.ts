@@ -45,7 +45,6 @@ export class WebSocketBuilder {
 
   async connectToJoin(url: string, wcId: number): Promise<void> {
     if (isURL(url) && url.search(/^wss?/) !== -1) {
-      // FIXME: wcId should be the one received via signaling server
       const fullUrl = this.composeUrl(url, Route.JOIN, wcId)
       this.channelsSubject.next(await this.connect(fullUrl, ChannelType.JOINING))
     } else {
