@@ -60,17 +60,21 @@ import { WebGroup, WebGroupState } from 'netflux'
 
 // Create instance and set callbacks
 const wg = new WebGroup()
+
 wg.onMemberJoin = (id) => {
-  console.log('Member ' + id + ' has joined')
-  console.log('All members are: ', wg.members)
+  console.log(`Member ${id} has joined. Current members list is: `, wg.members)
+  // Say hello to the new peer
+  wg.sendTo(id, 'Hello, my name is Bob')
 }
+
 wg.onMemberLeave = (id) => {
-  console.log('Member ' + id + ' has left')
-  console.log('All members are: ', wg.members)
+  console.log(`Member ${id} has left. Remained members are: `, wg.members)
 }
+
 wg.onMessage = (id, data) => {
   console.log(`Message from ${id} group member`, data)
 }
+
 wg.onStateChange = (state) => {
   console.log('The new Group state is ', state)
   switch (state) {
@@ -78,12 +82,19 @@ wg.onStateChange = (state) => {
       // Do something
       break
     case WebGroupState.JOINED:
-      // Do something
-      // For example inviting a bot...
+      // Do something... for example invite a bot...
       wg.invite('BOT_SERVER_WEB_SOCKET_URL')
+      // Or send message to all peers
+      wg.send('Hello everybody. I have just joined the group.')
       break
     case WebGroupState.LEFT:
-      // Do something
+      // wg.key === ''
+      // wg.id === 0
+      // wg.myId === 0
+      // wg.members === []
+      // the current wg object is at the same state as if it was instantiated via new WebGroup(...), hence
+      // it can be reused to join another group for example.
+      // Do something...
       break
   }
 }
@@ -95,7 +106,7 @@ wg.join('MY_UNIQUE_KEY_FOR_THE_GROUP')
 ### Bot example
 
 ```javascript
-import { Bot } from 'netflux'
+import { Bot, WebGroupState } from 'netflux'
 const http = require('http') // https is also possible
 const server = http.createServer()
 
@@ -107,6 +118,7 @@ const bot = new WebGroupBotServer({
 })
 
 bot.onWebGroup = (wg) => {
+  console.log('The current state is JOINING: ', wg.state === WebGroupState.JOINING)
   // New instance of a WebGroup (Someone has invited this bot).
   // See example above for client as it is the same API.
 }
