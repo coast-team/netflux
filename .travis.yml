@@ -29,4 +29,4 @@ script:
 after_success:
   - ./cc-test-reporter format-coverage -t lcov ./coverage/lcov/lcov
   - ./cc-test-reporter upload-coverage
-  - ./node_modules/.bin/semantic-release
+  - npm run travis-deploy-once "npm run semantic-release"
