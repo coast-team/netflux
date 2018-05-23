@@ -125,7 +125,8 @@ export class Bot {
     if (wcId === undefined) {
       return false
     }
-    switch (route) {
+    const lastRoute = route.split('/').pop()
+    switch (lastRoute) {
       case Route.INTERNAL:
         return this.webGroups.has(wcId) && !!senderId
       case Route.INVITE: {
