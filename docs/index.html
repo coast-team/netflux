@@ -96,17 +96,21 @@
 
 // Create instance and set callbacks
 const wg = new WebGroup()
+
 wg.onMemberJoin = (id) =&gt; {
-  console.log(&apos;Member &apos; + id + &apos; has joined&apos;)
-  console.log(&apos;All members are: &apos;, wg.members)
+  console.log(`Member ${id} has joined. Current members list is: `, wg.members)
+  // Say hello to the new peer
+  wg.sendTo(id, &apos;Hello, my name is Bob&apos;)
 }
+
 wg.onMemberLeave = (id) =&gt; {
-  console.log(&apos;Member &apos; + id + &apos; has left&apos;)
-  console.log(&apos;All members are: &apos;, wg.members)
+  console.log(`Member ${id} has left. Remained members are: `, wg.members)
 }
+
 wg.onMessage = (id, data) =&gt; {
   console.log(`Message from ${id} group member`, data)
 }
+
 wg.onStateChange = (state) =&gt; {
   console.log(&apos;The new Group state is &apos;, state)
   switch (state) {
@@ -114,12 +118,19 @@ wg.onStateChange = (state) =&gt; {
       // Do something
       break
     case WebGroupState.JOINED:
-      // Do something
-      // For example inviting a bot...
+      // Do something... for example invite a bot...
       wg.invite(&apos;BOT_SERVER_WEB_SOCKET_URL&apos;)
+      // Or send message to all peers
+      wg.send(&apos;Hello everybody. I have just joined the group.&apos;)
       break
     case WebGroupState.LEFT:
-      // Do something
+      // wg.key === &apos;&apos;
+      // wg.id === 0
+      // wg.myId === 0
+      // wg.members === []
+      // the current wg object is at the same state as if it was instantiated via new WebGroup(...), hence
+      // it can be reused to join another group for example.
+      // Do something...
       break
   }
 }
@@ -127,7 +138,7 @@ wg.onStateChange = (state) =&gt; {
 // Join the group
 wg.join(&apos;MY_UNIQUE_KEY_FOR_THE_GROUP&apos;)</code>
 </code></pre>
-<h3 id="bot-example">Bot example</h3><pre><code class="lang-javascript"><code class="source-code prettyprint">import { Bot } from &apos;netflux&apos;
+<h3 id="bot-example">Bot example</h3><pre><code class="lang-javascript"><code class="source-code prettyprint">import { Bot, WebGroupState } from &apos;netflux&apos;
 const http = require(&apos;http&apos;) // https is also possible
 const server = http.createServer()
 
@@ -139,6 +150,7 @@ const bot = new WebGroupBotServer({
 })
 
 bot.onWebGroup = (wg) =&gt; {
+  console.log(&apos;The current state is JOINING: &apos;, wg.state === WebGroupState.JOINING)
   // New instance of a WebGroup (Someone has invited this bot).
   // See example above for client as it is the same API.
 }
