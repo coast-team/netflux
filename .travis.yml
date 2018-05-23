@@ -1,13 +1,16 @@
-sudo: false
+sudo: required
 dist: trusty
+notifications:
+  email: false
 branches:
   only:
     - master
     - /^greenkeeper-.*$/
   except:
     - "/^v\\d+\\.\\d+\\.\\d+$/"
-addons:
-  chrome: stable
+apt:
+  packages:
+    - google-chrome-stable
 language: node_js
 node_js:
   - "8"
