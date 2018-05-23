@@ -47,6 +47,12 @@ Documentation: <https://coast-team.github.io/netflux>
   * `dist/esm/index.browser.js` ES module format for browsers (see _package.json#browser_).
   * `dist/netflux.umd.js` UMD format for browsers.
 
+## Install
+
+```shell
+npm install netflux
+```
+
 ## Usage
 
 Here is a basic usage example for client and server (checkout the [documenation](https://coast-team.github.io/netflux) for more details).
