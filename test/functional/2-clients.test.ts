@@ -696,30 +696,34 @@ describe('🙂 🙂 - 2 clients', () => {
     })
 
     /** @test {WebGroup#members} */
-    it('first client should have only him as a member and second client should have no members', (done) => {
-      const queue = new Queue(2, () => {
-        wait(1000).then(() => {
-          expect(wg1.members).toEqual([wg1.myId])
-          expect(wg2.members).toEqual([])
-          done()
+    it(
+      'first client should have only him as a member and second client should have no members',
+      (done) => {
+        const queue = new Queue(2, () => {
+          wait(1000).then(() => {
+            expect(wg1.members).toEqual([wg1.myId])
+            expect(wg2.members).toEqual([])
+            done()
+          })
         })
-      })
-      // Code for peer 1
-      wg1.onMemberLeave = () => {
-        expect(wg1.members).toEqual([wg1.myId])
-        queue.done()
-      }
-
-      // Code for peer 2
-      wg2.onStateChange = (state: WebGroupState) => {
-        if (state === WebGroupState.LEFT) {
-          expect(wg2.members).toEqual([])
+        // Code for peer 1
+        wg1.onMemberLeave = () => {
+          expect(wg1.members).toEqual([wg1.myId])
           queue.done()
         }
-      }
 
-      wg2.leave()
-    })
+        // Code for peer 2
+        wg2.onStateChange = (state: WebGroupState) => {
+          if (state === WebGroupState.LEFT) {
+            expect(wg2.members).toEqual([])
+            queue.done()
+          }
+        }
+
+        wg2.leave()
+      },
+      10000
+    )
 
     /** @test {WebGroup#myId} */
     it('the id of the first client should NOT be 0 and of second should be 0', (done) => {
