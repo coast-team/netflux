@@ -81,7 +81,7 @@ module.exports = (config) => {
     config.karmaTypescriptConfig.reports = {
       lcovonly: {
         subdirectory: 'lcov',
-        filename: 'lcov',
+        filename: 'lcov.info',
       },
       'text-summary': '',
     }
