@@ -1,10 +1,4 @@
-import {
-  Channel,
-  ChannelType,
-  createHeartbeatMsg,
-  IChannelInitData,
-  MAXIMUM_MISSED_HEARTBEAT,
-} from '../../Channel'
+import { Channel, ChannelType, IChannelInitData, MAXIMUM_MISSED_HEARTBEAT } from '../../Channel'
 import { log } from '../../misc/util'
 import { fullMesh as proto } from '../../proto'
 import { InWcMsg, WebChannel } from '../../WebChannel'
@@ -43,6 +37,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
   private membersRequestEncoded: Uint8Array
   private heartbeatInterval: any
   private membersRequestInterval: any
+  private heartbeatMsg: Uint8Array
 
   constructor(wc: WebChannel) {
     super(wc, FullMesh.SERVICE_ID, proto.Message)
@@ -50,6 +45,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
     this.distantMembers = new Map()
     // Encode message beforehand for optimization
     this.membersRequestEncoded = super.encode({ membersRequest: true })
+    this.heartbeatMsg = super.encode({ heartbeat: true })
 
     // Subscribe to WebChannel stream
     this.wcStream.message.subscribe(({ channel, senderId, msg }) =>
@@ -123,6 +119,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
     if (this.state !== TopologyState.LEFT) {
       this.clean()
       this.adjacentMembers.forEach((ch) => ch.close())
+      log.topology('onAdjacentMembersLeaveProxy: leave ')
       this.wc.onAdjacentMembersLeaveProxy(Array.from(this.adjacentMembers.keys()))
       super.setState(TopologyState.LEFT)
     }
@@ -135,6 +132,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
     } else {
       this.notifyDistantMembers()
     }
+    log.topology('onAdjacentMembersLeaveProxy: onChannelClose ')
     this.wc.onAdjacentMembersLeaveProxy([channel.id])
   }
 
@@ -143,6 +141,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
   }
 
   private clean() {
+    log.topology('onAdjacentMembersLeaveProxy: clean ')
     this.wc.onDistantMembersLeaveProxy(Array.from(this.distantMembers.keys()))
     this.distantMembers.clear()
     global.clearInterval(this.heartbeatInterval)
@@ -211,7 +210,10 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
 
       missingIds.forEach((id) => {
         if (!this.distantMembers.has(id)) {
-          this.distantMembers.set(id, { adjacentIds: [adjacentId], missedHeartbeat: 0 })
+          this.distantMembers.set(id, {
+            adjacentIds: [adjacentId],
+            missedHeartbeat: 0,
+          })
         }
 
         // It's important to notify all peers about my adjacentIds first
@@ -276,7 +278,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
           this.distantMembers.delete(id)
           this.wc.onDistantMembersLeaveProxy([id])
         }
-        this.wcStream.send(createHeartbeatMsg(this.wc.id, id))
+        this.wcStream.send(this.heartbeatMsg, id)
       })
     }, HEARTBEAT_INTERVAL)
   }
