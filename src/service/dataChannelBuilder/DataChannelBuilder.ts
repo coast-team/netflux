@@ -96,14 +96,12 @@ export class DataChannelBuilder extends Service<proto.IMessage, proto.Message> {
             reject(new Error(`RTCDataChannel ${CONNECT_TIMEOUT}ms connection timeout with '${id}'`))
           }
         }, CONNECT_TIMEOUT)
-        const ch = new Channel(this.wc, dc, type, id, remote.pc)
         dc.onopen = () => {
+          const ch = new Channel(this.wc, dc, type, id, remote.pc)
           remote.pc.oniceconnectionstatechange = () => {}
           clearTimeout(timeout)
           log.webrtc(`${remote.peerToLog}: RTCDataChannel with ${id} has opened`)
-          if (type === ChannelType.INVITED) {
-            ch.initialize()
-          }
+          dc.onopen = () => {}
           resolve(ch)
         }
       })) as Channel
@@ -150,11 +148,12 @@ export class DataChannelBuilder extends Service<proto.IMessage, proto.Message> {
         } else {
           type = ChannelType.JOINING
         }
-        const channel = new Channel(this.wc, dc, type, peerId, remote.pc)
         dc.onopen = () => {
+          const channel = new Channel(this.wc, dc, type, peerId, remote.pc)
           clearTimeout(timer)
           log.webrtc(`${remote.peerToLog}: RTCDataChannel with ${channel.id} has opened`)
           this.channelsSubject.next(channel)
+          dc.onopen = () => {}
         }
       }
     }

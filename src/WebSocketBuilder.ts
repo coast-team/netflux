@@ -53,9 +53,7 @@ export class WebSocketBuilder {
   }
 
   newJoinWebSocket(ws: WebSocket) {
-    const ch = new Channel(this.wc, ws, ChannelType.INVITED)
-    ch.initialize()
-    this.channelsSubject.next(ch)
+    this.channelsSubject.next(new Channel(this.wc, ws, ChannelType.INVITED))
   }
 
   async connectInternal(url: string, id: number): Promise<void> {
@@ -92,12 +90,9 @@ export class WebSocketBuilder {
           reject(new Error(`WebSocket ${CONNECT_TIMEOUT}ms connection timeout with '${url}'`))
         }
       }, CONNECT_TIMEOUT)
-      const channel = new Channel(this.wc, ws, type, id)
       ws.onopen = () => {
+        const channel = new Channel(this.wc, ws, type, id)
         clearTimeout(timeout)
-        if (type === ChannelType.INVITED) {
-          channel.initialize()
-        }
         resolve(channel)
       }
       ws.onerror = (err) => reject(err)

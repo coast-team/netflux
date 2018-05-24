@@ -13,14 +13,7 @@ export interface IChannelInitData {
   members: number[]
 }
 
-const heartbeat = Message.create({ serviceId: 0 })
 export const MAXIMUM_MISSED_HEARTBEAT = 3
-
-export function createHeartbeatMsg(senderId: number, recipientId: number): Uint8Array {
-  heartbeat.senderId = senderId
-  heartbeat.recipientId = recipientId
-  return Message.encode(heartbeat).finish()
-}
 
 /**
  * Wrapper class for `RTCDataChannel` and `WebSocket`.
@@ -74,14 +67,17 @@ export class Channel {
     }
 
     if (type === ChannelType.INTERNAL) {
-      this.heartbeatMsg = createHeartbeatMsg(this.wc.myId, this.id)
+      this.heartbeatMsg = this.createHeartbeatMsg()
       this.init = Promise.resolve()
       this.initHandlers()
     } else {
+      if (type === ChannelType.INVITED) {
+        this.sendInitPing()
+      }
       this.init = new Promise(
         (resolve, reject) =>
           (this.resolveInit = () => {
-            this.heartbeatMsg = createHeartbeatMsg(this.wc.myId, this.id)
+            this.heartbeatMsg = this.createHeartbeatMsg()
             resolve()
           })
       )
@@ -96,23 +92,6 @@ export class Channel {
       return (this.wsOrDc as WebSocket).url
     }
     return ''
-  }
-
-  initialize() {
-    log.channel('initialize...')
-    this.send(
-      proto.Message.encode(
-        proto.Message.create({
-          initPing: {
-            topology: this.wc.topologyEnum,
-            wcId: this.wc.id,
-            senderId: this.wc.myId,
-            members: this.wc.members,
-            key: this.wc.key,
-          },
-        })
-      ).finish()
-    )
   }
 
   encodeAndSend({ senderId = this.wc.myId, recipientId = 0, serviceId, content }: IMessage = {}) {
@@ -236,5 +215,28 @@ export class Channel {
       this.wc.topology.onChannelClose(this)
     }
     this.wsOrDc.onerror = (evt: Event) => log.channel('Channel error: ', evt)
+  }
+
+  private createHeartbeatMsg() {
+    return Message.encode(
+      Message.create({ serviceId: 0, senderId: this.wc.myId, recipientId: this.id })
+    ).finish()
+  }
+
+  private sendInitPing() {
+    log.channel('initialize...')
+    this.send(
+      proto.Message.encode(
+        proto.Message.create({
+          initPing: {
+            topology: this.wc.topologyEnum,
+            wcId: this.wc.id,
+            senderId: this.wc.myId,
+            members: this.wc.members,
+            key: this.wc.key,
+          },
+        })
+      ).finish()
+    )
   }
 }
