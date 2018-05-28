@@ -1,0 +1,9 @@
+{
+  "_comment": "Atom version",
+  "default": true,
+  "MD013": false,
+  "MD030": {
+    "ol_single": 2,
+    "ol_multi": 2
+  }
+}
