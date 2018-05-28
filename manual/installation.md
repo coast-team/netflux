@@ -32,8 +32,8 @@ There are many other free STUN servers available in the Web.
 
 There are no free TURN servers available in the Web. Two solutions exist:
 
-* Rent one. Checkout [Xirsys](https://xirsys.com/) for example.
-* Deploy your own instance. The paragraphe below provides a guide on how to deploy and configure [`coturn`](https://github.com/coturn/coturn) open source TURN server. Also checkout [_Choosing a TURN server_](https://rtcquickstart.org/guide/multi/turn-server-choice.html) for a list of open source TURN servers.
+- Rent one. Checkout [Xirsys](https://xirsys.com/) for example.
+- Deploy your own instance. The paragraphe below provides a guide on how to deploy and configure [`coturn`](https://github.com/coturn/coturn) open source TURN server. Also checkout [_Choosing a TURN server_](https://rtcquickstart.org/guide/multi/turn-server-choice.html) for a list of open source TURN servers.
 
 ## How to deploy STUN/TURN servers
 

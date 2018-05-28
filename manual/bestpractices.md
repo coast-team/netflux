@@ -11,12 +11,11 @@ Clean leave is always preferable. Other members will be notified immediately.
 window.addEventListener('beforeunload', () => {
     webGroup.leave()
 })
-
 ```
 
 ## Listen on Online/Offline events
 
-Maybe useful to not rejoin a web group if the client is offline anyway. Checkout [Online/Offline API doc](https://developer.mozilla.org/en/docs/Online_and_offline_events) for more details and to understand what *Online* actually means.
+Maybe useful to not rejoin a web group if the client is offline anyway. Checkout [Online/Offline API doc](https://developer.mozilla.org/en/docs/Online_and_offline_events) for more details and to understand what _Online_ actually means.
 
 ```Javascript
 // "webGroup" variable has been defined earlier.
@@ -31,7 +30,7 @@ window.addEventListener('online', () => {
 })
 ```
 
-**Remark**: It was noticed for Chrome browser on some operating systems that when the OS resumes from a sleep mode, the *Offline*/*Online* events fired twice in a very short period of time, this may cause a problem for Netflux to rejoin, so consider to do something like:
+**Remark**: It was noticed for Chrome browser on some operating systems that when the OS resumes from a sleep mode, the _Offline_/_Online_ events fired twice in a very short period of time, this may cause a problem for Netflux to rejoin, so consider to do something like:
 
 ```Javascript
 // "webGroup" variable has been defined earlier.

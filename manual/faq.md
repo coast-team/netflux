@@ -6,19 +6,19 @@ Netflux operates with `RTCDataChannel` (WebRTC) and `WebSocket` connection techn
 
 Technically `RTCDataChannel` may be established between:
 
-* Browser and Browser.
-* Browser and Server.
-* Server and Server.
+- Browser and Browser.
+- Browser and Server.
+- Server and Server.
 
 On the other hand, a `WebSocket` may be created only between:
 
-* Browser and Server.
-* Server and Server.
+- Browser and Server.
+- Server and Server.
 
 But in practice:
 
-* All modern browsers support `WebSocket` (Chrome, Firefox, Edge, Safary etc.), but only some of them support `RTCDataChannel` (Chrome, Firefox, Safari soon and Edge one day maybe).
-* Servers may or may not listen on `WebSocket` or connect over `WebSocket` and may or may not support `RTCDataChannel`.
+- All modern browsers support `WebSocket` (Chrome, Firefox, Edge, Safary etc.), but only some of them support `RTCDataChannel` (Chrome, Firefox, Safari soon and Edge one day maybe).
+- Servers may or may not listen on `WebSocket` or connect over `WebSocket` and may or may not support `RTCDataChannel`.
 
 This technical diversity pushes us to try all possibilities in order to create a connection between two peers based on their capabilities.
 

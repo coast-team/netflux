@@ -33,7 +33,12 @@ export class WebSocketBuilder {
   async connectToInvite(url: string): Promise<void> {
     if (isURL(url) && url.search(/^wss?/) !== -1) {
       const fullUrl = this.composeUrl(url, Route.INVITE)
-      this.channelsSubject.next(await this.connect(fullUrl, ChannelType.INVITED))
+      this.channelsSubject.next(
+        await this.connect(
+          fullUrl,
+          ChannelType.INVITED
+        )
+      )
     } else {
       throw new Error(`Invalid URL format: ${url}`)
     }
@@ -46,7 +51,12 @@ export class WebSocketBuilder {
   async connectToJoin(url: string, wcId: number): Promise<void> {
     if (isURL(url) && url.search(/^wss?/) !== -1) {
       const fullUrl = this.composeUrl(url, Route.JOIN, wcId)
-      this.channelsSubject.next(await this.connect(fullUrl, ChannelType.JOINING))
+      this.channelsSubject.next(
+        await this.connect(
+          fullUrl,
+          ChannelType.JOINING
+        )
+      )
     } else {
       throw new Error(`Invalid URL format: ${url}`)
     }
@@ -59,7 +69,13 @@ export class WebSocketBuilder {
   async connectInternal(url: string, id: number): Promise<void> {
     if (isURL(url) && url.search(/^wss?/) !== -1) {
       const fullUrl = this.composeUrl(url, Route.INTERNAL)
-      this.channelsSubject.next(await this.connect(fullUrl, ChannelType.INTERNAL, id))
+      this.channelsSubject.next(
+        await this.connect(
+          fullUrl,
+          ChannelType.INTERNAL,
+          id
+        )
+      )
     } else {
       throw new Error(`Invalid URL format: ${url}`)
     }

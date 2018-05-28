@@ -46,20 +46,34 @@ export class DataChannelBuilder extends Service<proto.IMessage, proto.Message> {
 
   async connectInternal(id: number): Promise<void> {
     log.webrtc(this.wc.myId + 'connectInternal')
-    this.channelsSubject.next(await this.connect(this.wc.STREAM_ID, ChannelType.INTERNAL, id))
+    this.channelsSubject.next(
+      await this.connect(
+        this.wc.STREAM_ID,
+        ChannelType.INTERNAL,
+        id
+      )
+    )
   }
 
   async connectToJoin(id: number): Promise<void> {
     log.webrtc(this.wc.myId + ' connectToJoin')
     this.channelsSubject.next(
-      await this.connect(this.wc.signaling.STREAM_ID, ChannelType.JOINING, id)
+      await this.connect(
+        this.wc.signaling.STREAM_ID,
+        ChannelType.JOINING,
+        id
+      )
     )
   }
 
   async connectToInvite(id: number): Promise<void> {
     log.webrtc(this.wc.myId + 'connectToInvite')
     this.channelsSubject.next(
-      await this.connect(this.wc.signaling.STREAM_ID, ChannelType.INVITED, id)
+      await this.connect(
+        this.wc.signaling.STREAM_ID,
+        ChannelType.INVITED,
+        id
+      )
     )
   }
 

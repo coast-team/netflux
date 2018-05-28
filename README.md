@@ -25,27 +25,27 @@ Documentation: <https://coast-team.github.io/netflux>
 
 ## Features
 
-* Peer to peer full mesh network which accepts connection failures between some peers.
-* If connection between two members failed, other members will retransmit messages for them.
-* Automatic rejoin the group if connection lost.
-* Automatic selection between [WebSocket][websocket] & [RTCDataChannel][rtcdatachannel].
-* Possible to have mixed members: clients (Chrome, Firefox) and servers (NodeJS bot).
-* Send private or broadcast [String][string], [Uint8Array][uint8array] data types.
-* Possible to send data > 1MB.
-* All connections are encrypted.
-* Full control over WebRTC servers: Signaling, STUN and TURN.
-  * Deploy your own Signaling server ([Sigver][sigver]) or use one provided by default.
-  * Configure STUN and TURN servers.
-* Small Signaling server payload.
-* Signaling server is used only to establish connection between two peers, no user data is passing through it.
-* Universal API (works in Chrome/Firefox and NodeJS).
-* TypeScript declaration files are included.
-* Simple and familiar API usage.
-* 4 builds (ES5 code):
-  * `dist/netflux.cjs.js` CommonJS format for NodeJS (see _package.json#main_).
-  * `dist/esm/index.node.js` ES module format for NodeJS (see _package.json#module_).
-  * `dist/esm/index.browser.js` ES module format for browsers (see _package.json#browser_).
-  * `dist/netflux.umd.js` UMD format for browsers.
+- Peer to peer full mesh network which accepts connection failures between some peers.
+- If connection between two members failed, other members will retransmit messages for them.
+- Automatic rejoin the group if connection lost.
+- Automatic selection between [WebSocket][websocket] & [RTCDataChannel][rtcdatachannel].
+- Possible to have mixed members: clients (Chrome, Firefox) and servers (NodeJS bot).
+- Send private or broadcast [String][string], [Uint8Array][uint8array] data types.
+- Possible to send data > 1MB.
+- All connections are encrypted.
+- Full control over WebRTC servers: Signaling, STUN and TURN.
+  - Deploy your own Signaling server ([Sigver][sigver]) or use one provided by default.
+  - Configure STUN and TURN servers.
+- Small Signaling server payload.
+- Signaling server is used only to establish connection between two peers, no user data is passing through it.
+- Universal API (works in Chrome/Firefox and NodeJS).
+- TypeScript declaration files are included.
+- Simple and familiar API usage.
+- 4 builds (ES5 code):
+  - `dist/netflux.cjs.js` CommonJS format for NodeJS (see _package.json#main_).
+  - `dist/esm/index.node.js` ES module format for NodeJS (see _package.json#module_).
+  - `dist/esm/index.browser.js` ES module format for browsers (see _package.json#browser_).
+  - `dist/netflux.umd.js` UMD format for browsers.
 
 ## Install
 

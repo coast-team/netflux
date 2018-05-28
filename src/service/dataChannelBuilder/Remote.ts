@@ -98,8 +98,7 @@ export class Remote {
       switch (msg.type) {
         case 'offer':
           this.log('REMOTE OFFER', { offer: msg.offer })
-          this.pc
-            .setRemoteDescription({ type: 'offer', sdp: msg.offer })
+          this.pc.setRemoteDescription({ type: 'offer', sdp: msg.offer })
             .then(() =>
               this.candidates.subscribe((ic) =>
                 this.pc
@@ -119,8 +118,7 @@ export class Remote {
           break
         case 'answer':
           this.log('REMOTE ANSWER is received', { answer: msg.answer })
-          this.pc
-            .setRemoteDescription({ type: 'answer', sdp: msg.answer } as any)
+          this.pc.setRemoteDescription({ type: 'answer', sdp: msg.answer } as any)
             .then(() => {
               this.candidates.subscribe((ic) =>
                 this.pc
