@@ -8,6 +8,8 @@ branches:
     - /^greenkeeper-.*$/
   except:
     - "/^v\\d+\\.\\d+\\.\\d+$/"
+addons:
+  firefox: "latest"
 apt:
   packages:
     - google-chrome-stable
