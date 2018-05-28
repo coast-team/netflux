@@ -9,7 +9,7 @@ export class Remote {
   public peerToLog = 'INITIATOR'
 
   private readonly candidates: ReplaySubject<RTCIceCandidate>
-  private readonly send: (msg: proto.IMessage | undefined) => void
+  private readonly send: (msg: proto.IMessage) => void
   private readonly remotes: Map<number, Remote>
   private isSDPSent: boolean
   private _onError: (err: Error) => void
@@ -17,7 +17,7 @@ export class Remote {
   constructor(
     id: number,
     pc: RTCPeerConnection,
-    send: (msg: proto.IMessage | undefined) => void,
+    send: (msg: proto.IMessage) => void,
     remotes: Map<number, Remote>
   ) {
     this.id = id
@@ -49,7 +49,7 @@ export class Remote {
       } else if (this.isSDPSent) {
         this.pc.onicecandidate = () => {}
         this.log(`FINISHED (onicecandidate) with: ${this.id}`)
-        this.send(undefined)
+        this.send({})
       }
     }
   }
@@ -75,7 +75,7 @@ export class Remote {
     if (this.pc.iceGatheringState === 'complete') {
       this.pc.onicecandidate = () => {}
       this.log(`FINISHED (sdpIsSent) with: ${this.id}`)
-      this.send(undefined)
+      this.send({})
     }
   }
 
@@ -89,7 +89,7 @@ export class Remote {
       this.log('Failed to establish RTCDataChannel')
       this.pc.close()
       this.log(`FINISHED (clean) with: ${this.id}`)
-      this.send(undefined)
+      this.send({})
     }
   }
 
