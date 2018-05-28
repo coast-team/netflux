@@ -74,7 +74,7 @@ module.exports = (config) => {
   })
 
   if (process.env.TRAVIS || TYPE === 'travis') {
-    config.browsers = ['ChromeHeadless']
+    config.browsers = ['ChromeHeadless', 'FirefoxHeadless']
     config.autoWatch = false
     config.singleRun = true
     config.browserNoActivityTimeout = 120000
@@ -88,8 +88,8 @@ module.exports = (config) => {
   } else if (TYPE === 'debug') {
     config.autoWatch = true
     config.singleRun = false
-  } else if (TYPE === 'precommit') {
-    config.browsers = ['ChromeHeadless']
+  } else if (TYPE === 'precommit-githook') {
+    config.browsers = ['ChromeHeadless', 'FirefoxHeadless']
     config.autoWatch = false
     config.singleRun = true
     config.karmaTypescriptConfig.reports = { 'text-summary': '' }
