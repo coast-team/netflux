@@ -401,11 +401,8 @@ export namespace fullMesh {
     /** Properties of a Message. */
     interface IMessage {
 
-        /** Message membersResponse */
-        membersResponse?: (fullMesh.IPeers|null);
-
-        /** Message membersRequest */
-        membersRequest?: (boolean|null);
+        /** Message members */
+        members?: (fullMesh.IPeers|null);
 
         /** Message adjacentMembers */
         adjacentMembers?: (fullMesh.IPeers|null);
@@ -423,11 +420,8 @@ export namespace fullMesh {
          */
         constructor(properties?: fullMesh.IMessage);
 
-        /** Message membersResponse. */
-        public membersResponse?: (fullMesh.IPeers|null);
-
-        /** Message membersRequest. */
-        public membersRequest: boolean;
+        /** Message members. */
+        public members?: (fullMesh.IPeers|null);
 
         /** Message adjacentMembers. */
         public adjacentMembers?: (fullMesh.IPeers|null);
@@ -436,7 +430,7 @@ export namespace fullMesh {
         public heartbeat: boolean;
 
         /** Message type. */
-        public type?: ("membersResponse"|"membersRequest"|"adjacentMembers"|"heartbeat");
+        public type?: ("members"|"adjacentMembers"|"heartbeat");
 
         /**
          * Creates a new Message instance using the specified properties.

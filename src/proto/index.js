@@ -3305,8 +3305,7 @@ var fullMesh = $root.fullMesh = function () {
          * Properties of a Message.
          * @memberof fullMesh
          * @interface IMessage
-         * @property {fullMesh.IPeers|null} [membersResponse] Message membersResponse
-         * @property {boolean|null} [membersRequest] Message membersRequest
+         * @property {fullMesh.IPeers|null} [members] Message members
          * @property {fullMesh.IPeers|null} [adjacentMembers] Message adjacentMembers
          * @property {boolean|null} [heartbeat] Message heartbeat
          */
@@ -3326,20 +3325,12 @@ var fullMesh = $root.fullMesh = function () {
         }
 
         /**
-         * Message membersResponse.
-         * @member {fullMesh.IPeers|null|undefined} membersResponse
+         * Message members.
+         * @member {fullMesh.IPeers|null|undefined} members
          * @memberof fullMesh.Message
          * @instance
          */
-        Message.prototype.membersResponse = null;
-
-        /**
-         * Message membersRequest.
-         * @member {boolean} membersRequest
-         * @memberof fullMesh.Message
-         * @instance
-         */
-        Message.prototype.membersRequest = false;
+        Message.prototype.members = null;
 
         /**
          * Message adjacentMembers.
@@ -3362,12 +3353,12 @@ var fullMesh = $root.fullMesh = function () {
 
         /**
          * Message type.
-         * @member {"membersResponse"|"membersRequest"|"adjacentMembers"|"heartbeat"|undefined} type
+         * @member {"members"|"adjacentMembers"|"heartbeat"|undefined} type
          * @memberof fullMesh.Message
          * @instance
          */
         Object.defineProperty(Message.prototype, "type", {
-            get: $util.oneOfGetter($oneOfFields = ["membersResponse", "membersRequest", "adjacentMembers", "heartbeat"]),
+            get: $util.oneOfGetter($oneOfFields = ["members", "adjacentMembers", "heartbeat"]),
             set: $util.oneOfSetter($oneOfFields)
         });
 
@@ -3394,8 +3385,7 @@ var fullMesh = $root.fullMesh = function () {
          */
         Message.encode = function encode(message, writer) {
             if (!writer) writer = $Writer.create();
-            if (message.membersResponse != null && message.hasOwnProperty("membersResponse")) $root.fullMesh.Peers.encode(message.membersResponse, writer.uint32( /* id 1, wireType 2 =*/10).fork()).ldelim();
-            if (message.membersRequest != null && message.hasOwnProperty("membersRequest")) writer.uint32( /* id 2, wireType 0 =*/16).bool(message.membersRequest);
+            if (message.members != null && message.hasOwnProperty("members")) $root.fullMesh.Peers.encode(message.members, writer.uint32( /* id 1, wireType 2 =*/10).fork()).ldelim();
             if (message.adjacentMembers != null && message.hasOwnProperty("adjacentMembers")) $root.fullMesh.Peers.encode(message.adjacentMembers, writer.uint32( /* id 3, wireType 2 =*/26).fork()).ldelim();
             if (message.heartbeat != null && message.hasOwnProperty("heartbeat")) writer.uint32( /* id 4, wireType 0 =*/32).bool(message.heartbeat);
             return writer;
@@ -3420,10 +3410,7 @@ var fullMesh = $root.fullMesh = function () {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
                     case 1:
-                        message.membersResponse = $root.fullMesh.Peers.decode(reader, reader.uint32());
-                        break;
-                    case 2:
-                        message.membersRequest = reader.bool();
+                        message.members = $root.fullMesh.Peers.decode(reader, reader.uint32());
                         break;
                     case 3:
                         message.adjacentMembers = $root.fullMesh.Peers.decode(reader, reader.uint32());
