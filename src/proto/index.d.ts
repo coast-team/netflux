@@ -208,11 +208,11 @@ export namespace channelBuilder {
         /** Message pair */
         pair?: (channelBuilder.IPeerPair|null);
 
-        /** Message ping */
-        ping?: (boolean|null);
+        /** Message connectionRequest */
+        connectionRequest?: (Uint8Array|null);
 
-        /** Message pong */
-        pong?: (boolean|null);
+        /** Message connectionResponse */
+        connectionResponse?: (boolean|null);
     }
 
     /** Represents a Message. */
@@ -227,14 +227,14 @@ export namespace channelBuilder {
         /** Message pair. */
         public pair?: (channelBuilder.IPeerPair|null);
 
-        /** Message ping. */
-        public ping: boolean;
+        /** Message connectionRequest. */
+        public connectionRequest: Uint8Array;
 
-        /** Message pong. */
-        public pong: boolean;
+        /** Message connectionResponse. */
+        public connectionResponse: boolean;
 
         /** Message type. */
-        public type?: ("pair"|"ping"|"pong");
+        public type?: ("pair"|"connectionRequest"|"connectionResponse");
 
         /**
          * Creates a new Message instance using the specified properties.

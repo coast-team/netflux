@@ -2893,8 +2893,8 @@ var channelBuilder = $root.channelBuilder = function () {
          * @memberof channelBuilder
          * @interface IMessage
          * @property {channelBuilder.IPeerPair|null} [pair] Message pair
-         * @property {boolean|null} [ping] Message ping
-         * @property {boolean|null} [pong] Message pong
+         * @property {Uint8Array|null} [connectionRequest] Message connectionRequest
+         * @property {boolean|null} [connectionResponse] Message connectionResponse
          */
 
         /**
@@ -2920,32 +2920,32 @@ var channelBuilder = $root.channelBuilder = function () {
         Message.prototype.pair = null;
 
         /**
-         * Message ping.
-         * @member {boolean} ping
+         * Message connectionRequest.
+         * @member {Uint8Array} connectionRequest
          * @memberof channelBuilder.Message
          * @instance
          */
-        Message.prototype.ping = false;
+        Message.prototype.connectionRequest = $util.newBuffer([]);
 
         /**
-         * Message pong.
-         * @member {boolean} pong
+         * Message connectionResponse.
+         * @member {boolean} connectionResponse
          * @memberof channelBuilder.Message
          * @instance
          */
-        Message.prototype.pong = false;
+        Message.prototype.connectionResponse = false;
 
         // OneOf field names bound to virtual getters and setters
         var $oneOfFields = void 0;
 
         /**
          * Message type.
-         * @member {"pair"|"ping"|"pong"|undefined} type
+         * @member {"pair"|"connectionRequest"|"connectionResponse"|undefined} type
          * @memberof channelBuilder.Message
          * @instance
          */
         Object.defineProperty(Message.prototype, "type", {
-            get: $util.oneOfGetter($oneOfFields = ["pair", "ping", "pong"]),
+            get: $util.oneOfGetter($oneOfFields = ["pair", "connectionRequest", "connectionResponse"]),
             set: $util.oneOfSetter($oneOfFields)
         });
 
@@ -2973,8 +2973,8 @@ var channelBuilder = $root.channelBuilder = function () {
         Message.encode = function encode(message, writer) {
             if (!writer) writer = $Writer.create();
             if (message.pair != null && message.hasOwnProperty("pair")) $root.channelBuilder.PeerPair.encode(message.pair, writer.uint32( /* id 1, wireType 2 =*/10).fork()).ldelim();
-            if (message.ping != null && message.hasOwnProperty("ping")) writer.uint32( /* id 2, wireType 0 =*/16).bool(message.ping);
-            if (message.pong != null && message.hasOwnProperty("pong")) writer.uint32( /* id 3, wireType 0 =*/24).bool(message.pong);
+            if (message.connectionRequest != null && message.hasOwnProperty("connectionRequest")) writer.uint32( /* id 2, wireType 2 =*/18).bytes(message.connectionRequest);
+            if (message.connectionResponse != null && message.hasOwnProperty("connectionResponse")) writer.uint32( /* id 3, wireType 0 =*/24).bool(message.connectionResponse);
             return writer;
         };
 
@@ -3000,10 +3000,10 @@ var channelBuilder = $root.channelBuilder = function () {
                         message.pair = $root.channelBuilder.PeerPair.decode(reader, reader.uint32());
                         break;
                     case 2:
-                        message.ping = reader.bool();
+                        message.connectionRequest = reader.bytes();
                         break;
                     case 3:
-                        message.pong = reader.bool();
+                        message.connectionResponse = reader.bool();
                         break;
                     default:
                         reader.skipType(tag & 7);

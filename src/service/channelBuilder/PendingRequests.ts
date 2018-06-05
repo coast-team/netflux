@@ -1,62 +1,41 @@
 export interface IPendingRequest {
-  created: number
-  promise: Promise<void> | undefined
+  promise: Promise<void>
   resolve: () => void
   reject: (err: Error) => void
 }
 
-interface IStreamRequests {
-  connectReqs: Map<number, IPendingRequest>
-  pingReqs: Map<number, IPendingRequest>
-}
-
 export class PendingRequests {
-  private wcReqs: IStreamRequests
-  private sigReqs: IStreamRequests
+  private wcReqs: Map<number, IPendingRequest>
+  private sigReqs: Map<number, IPendingRequest>
   private wcStreamId: number
 
   constructor(wcStreamId: number) {
     this.wcStreamId = wcStreamId
-    this.wcReqs = {
-      connectReqs: new Map(),
-      pingReqs: new Map(),
-    }
-    this.sigReqs = {
-      connectReqs: new Map(),
-      pingReqs: new Map(),
-    }
+    this.wcReqs = new Map()
+    this.sigReqs = new Map()
   }
 
-  add(streamId: number, id: number, timeout: number): IPendingRequest {
+  create(
+    streamId: number,
+    id: number,
+    connectionTimeout: number,
+    responseTimeout: number
+  ): IPendingRequest {
     const reqs = this.getReqsByStreamId(streamId)
-    return this.addRequest(reqs.connectReqs, id, timeout)
-  }
-
-  addPing(streamId: number, id: number, timeout: number): IPendingRequest {
-    const reqs = this.getReqsByStreamId(streamId)
-    return this.addRequest(reqs.pingReqs, id, timeout)
+    return this.addRequest(reqs, id, connectionTimeout, responseTimeout)
   }
 
   get(streamId: number, id: number): IPendingRequest | undefined {
-    const req = this.getReqsByStreamId(streamId).connectReqs.get(id)
-    return req && req.promise ? req : undefined
+    return this.getReqsByStreamId(streamId).get(id)
   }
 
-  getPing(streamId: number, id: number): IPendingRequest | undefined {
-    const req = this.getReqsByStreamId(streamId).pingReqs.get(id)
-    return req && req.promise ? req : undefined
-  }
-
-  getCreatedDate(streamId: number, id: number): number | undefined {
-    const req = this.getReqsByStreamId(streamId).pingReqs.get(id)
-    return req ? req.created : undefined
+  has(streamId: number, id: number) {
+    return this.getReqsByStreamId(streamId).has(id)
   }
 
   clean() {
-    this.cleanAll(this.wcReqs.connectReqs)
-    this.cleanAll(this.wcReqs.pingReqs)
-    this.cleanAll(this.sigReqs.connectReqs)
-    this.cleanAll(this.sigReqs.pingReqs)
+    this.cleanAll(this.wcReqs)
+    this.cleanAll(this.sigReqs)
   }
 
   private cleanAll(requests: Map<number, IPendingRequest>) {
@@ -64,34 +43,52 @@ export class PendingRequests {
     requests.clear()
   }
 
-  private getReqsByStreamId(streamId: number): IStreamRequests {
+  private getReqsByStreamId(streamId: number): Map<number, IPendingRequest> {
     return streamId === this.wcStreamId ? this.wcReqs : this.sigReqs
   }
 
   private addRequest(
     requests: Map<number, IPendingRequest>,
     id: number,
-    timeout: number
+    connectionTimeout: number,
+    responseTimeout: number
   ): IPendingRequest {
-    const req = { created: Date.now() } as IPendingRequest
-    req.promise = new Promise((resolve, reject) => {
-      const timer = setTimeout(() => req.reject(new Error(`Request ${timeout}ms timeout`)), timeout)
-      const clean = () => {
-        clearTimeout(timer)
-        req.promise = undefined
-      }
+    const req = {} as IPendingRequest
+    req.promise = new Promise((resolveResponse, rejectResponse) => {
+      const responseTimer = setTimeout(
+        () => req.reject(new Error('response_timeout')),
+        responseTimeout
+      )
 
       req.resolve = () => {
-        clean()
-        resolve()
+        clearTimeout(responseTimer)
+        resolveResponse()
+        req.promise = new Promise((resolveConnection, rejectConnection) => {
+          const connectionTimer = setTimeout(
+            () => req.reject(new Error('connection_timeout')),
+            connectionTimeout
+          )
+
+          req.resolve = () => {
+            clearTimeout(connectionTimer)
+            requests.delete(id)
+            resolveConnection()
+          }
+          req.reject = (err) => {
+            // This is necessary for some scenarios in order to rid of UnhandledPromiseRejectionWarning errors in NodeJS and similar errors/warnings in browsers
+            req.promise.catch(() => {})
+            clearTimeout(connectionTimer)
+            requests.delete(id)
+            rejectConnection(err)
+          }
+        })
       }
       req.reject = (err) => {
-        if (req.promise) {
-          // This is necessary for some scenarios in order rid of UnhandledPromiseRejectionWarning errors in NodeJS and similar errors/warnings in browsers
-          req.promise.catch(() => {})
-        }
-        clean()
-        reject(err)
+        // This is necessary for some scenarios in order to rid of UnhandledPromiseRejectionWarning errors in NodeJS and similar errors/warnings in browsers
+        req.promise.catch(() => {})
+        clearTimeout(responseTimer)
+        requests.delete(id)
+        rejectResponse(err)
       }
       requests.set(id, req)
     })

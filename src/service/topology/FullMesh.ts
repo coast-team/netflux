@@ -218,11 +218,13 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
         this.wcStream.send(msg, id)
 
         attempts[attempts.length] = this.wc.channelBuilder
-          .connectOverWebChannel(id)
+          .connectOverWebChannel(id, () => {
+            this.wc.onMemberJoinProxy(id)
+            this.updateAntecedentMember()
+          })
           .catch((err) => {
-            if (err.message !== 'ping') {
-              this.wc.onMemberJoinProxy(id)
-              this.updateAntecedentMember()
+            if (err.message !== 'connection_timeout') {
+              // delay reconnect
             }
           })
       })
