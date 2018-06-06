@@ -3,18 +3,18 @@ package channelBuilder;
 
 message Message {
   oneof type {
-    PeerPair pair = 1;
+    Negotiation negotiation = 1;
     bytes connectionRequest = 2;
     bool connectionResponse = 3;
   }
 }
 
-message PeerPair {
-  PeerInfo initiator = 1;
-  PeerInfo passive = 2;
+message Negotiation {
+  Info initiator = 1;
+  Info passive = 2;
 }
 
-message PeerInfo {
+message Info {
   uint32 id = 1;
   string wss = 2;
   uint32 wcId = 3;
@@ -23,4 +23,3 @@ message PeerInfo {
   bool dcSupported = 6;
   bool dcTried = 7;
 }
-

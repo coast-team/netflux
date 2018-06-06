@@ -10,7 +10,8 @@ import {
   DataChannelBuilder,
 } from '../dataChannelBuilder/DataChannelBuilder'
 import { IAllStreams, Service } from '../Service'
-import { PendingRequests } from './PendingRequests'
+import { ConnectionError } from './ConnectionError'
+import { ConnectionsInProgress } from './ConnectionsInProgress'
 
 // Timeout constants
 const CONNECT_TIMEOUT = Math.max(DATACHANNEL_TIMEOUT, WEBSOCKET_TIMEOUT) + 5000
@@ -24,29 +25,26 @@ const RESPONSE_TIMEOUT = 2000
 export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
   public static readonly SERVICE_ID = 74
 
-  // Pre-built messages for optimization
   private static connectResTrueEncoded: Uint8Array
   private static connectResFalseEncoded: Uint8Array
-  private pairEncoded: Uint8Array
 
+  public onConnectionRequest: (data: Uint8Array) => boolean
+
+  private negotiationEncoded: Uint8Array
   private allStreams: IAllStreams<proto.IMessage, proto.Message>
   private wc: WebChannel
-
   private dataChannelBuilder: DataChannelBuilder
   private channelsSubject: Subject<Channel>
-  private connectsInProgress: PendingRequests
-  private isConnectionAllowed: (data: Uint8Array) => boolean
-
-  // Parameters to be initialized after leave
-  private myInfo: proto.IPeerInfo
+  private connectsInProgress: ConnectionsInProgress
+  private myInfo: proto.IInfo
 
   constructor(wc: WebChannel) {
     super(ChannelBuilder.SERVICE_ID, proto.Message)
     this.wc = wc
     this.allStreams = super.useAllStreams(wc, wc.signaling)
-    this.connectsInProgress = new PendingRequests(this.wc.STREAM_ID)
+    this.connectsInProgress = new ConnectionsInProgress(this.wc.STREAM_ID)
     this.channelsSubject = new Subject()
-    this.isConnectionAllowed = () => true
+    this.onConnectionRequest = () => true
     this.dataChannelBuilder = new DataChannelBuilder(this.wc, this.wc.rtcConfiguration)
     this.myInfo = {
       wsTried: false,
@@ -56,7 +54,7 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
     }
 
     // Encode messages beforehand for optimization
-    this.pairEncoded = super.encode({ pair: { initiator: this.myInfo } })
+    this.negotiationEncoded = super.encode({ negotiation: { initiator: this.myInfo } })
     if (!ChannelBuilder.connectResTrueEncoded && !ChannelBuilder.connectResFalseEncoded) {
       ChannelBuilder.connectResTrueEncoded = super.encode({ connectionResponse: true })
       ChannelBuilder.connectResFalseEncoded = super.encode({ connectionResponse: false })
@@ -83,10 +81,6 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
     return this.channelsSubject.asObservable()
   }
 
-  setConnectionAllowedCallback(callback: (data: Uint8Array) => boolean) {
-    this.isConnectionAllowed = callback
-  }
-
   async connectOverWebChannel(id: number, cb = () => {}, data = new Uint8Array()): Promise<void> {
     return this.connectOver(this.wc.STREAM_ID, id, cb, data)
   }
@@ -109,7 +103,7 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
       cb()
       return connection.promise
     } else {
-      throw new Error('connection_in_progress')
+      throw new Error(ConnectionError.IN_PROGRESS)
     }
   }
 
@@ -120,13 +114,13 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
         let connection = this.connectsInProgress.get(streamId, senderId)
         if (connection) {
           if (senderId < this.wc.myId) {
-            connection.reject(new Error('connection_in_progress'))
+            connection.reject(new Error(ConnectionError.IN_PROGRESS))
           } else {
             return
           }
         }
 
-        if (this.isConnectionAllowed(msg.connectionRequest)) {
+        if (this.onConnectionRequest(msg.connectionRequest)) {
           connection = this.connectsInProgress.create(
             streamId,
             senderId,
@@ -145,56 +139,48 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
         if (connection) {
           if (msg.connectionResponse) {
             connection.resolve()
-            this.allStreams.sendOver(streamId, this.pairEncoded, senderId)
+            this.allStreams.sendOver(streamId, this.negotiationEncoded, senderId)
           } else {
-            connection.reject(new Error('denied'))
+            connection.reject(new Error(ConnectionError.DENIED))
           }
         }
         break
       }
-      case 'pair': {
+      case 'negotiation': {
         if (this.connectsInProgress.has(streamId, senderId)) {
-          let {
-            pair: { initiator, passive } /* tslint:disable-line:prefer-const */,
-          } = msg as {
-            pair: { initiator: proto.PeerInfo; passive: proto.PeerInfo | undefined }
-          }
+          const neg = msg.negotiation as proto.Negotiation
+          const initiator = neg.initiator as proto.Info
+          let passive = neg.passive as proto.Info | undefined
 
           if (!passive) {
             // This is the first message sent by the initiator
             initiator.id = senderId
-            passive = Object.assign({}, this.myInfo) as proto.PeerInfo
+            passive = Object.assign({}, this.myInfo) as proto.Info
             passive.id = streamId === this.wc.STREAM_ID ? this.wc.myId : 1
           }
 
-          this.proceedAlgo(streamId, initiator, passive, passive.id === senderId).catch((err) => {
-            const connection = this.connectsInProgress.get(streamId, senderId)
-            if (connection) {
-              connection.reject(err)
+          this.proceedNegotiation(streamId, initiator, passive, passive.id === senderId).catch(
+            (err) => {
+              const connection = this.connectsInProgress.get(streamId, senderId)
+              if (connection) {
+                connection.reject(err)
+              }
+              this.allStreams.sendOver(streamId, { negotiation: { initiator, passive } }, senderId)
             }
-            this.allStreams.sendOver(streamId, { pair: { initiator, passive } }, senderId)
-          })
+          )
         }
         break
       }
     }
   }
 
-  private async proceedAlgo(
+  private async proceedNegotiation(
     streamId: number,
-    initiator: proto.PeerInfo,
-    passive: proto.PeerInfo,
+    initiator: proto.Info,
+    passive: proto.Info,
     amIInitiator: boolean
   ): Promise<void> {
-    let me: proto.PeerInfo
-    let theOther: proto.PeerInfo
-    if (amIInitiator) {
-      me = initiator
-      theOther = passive
-    } else {
-      me = passive
-      theOther = initiator
-    }
+    const [me, theOther] = amIInitiator ? [initiator, passive] : [passive, initiator]
 
     // Try to connect over WebSocket
     if (theOther.wss && !me.wsTried && (await this.tryWs(streamId, me, theOther, amIInitiator))) {
@@ -204,7 +190,7 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
     // Prompt the other peer to connect over WebSocket as I was not able
     if (me.wss && !theOther.wsTried) {
       log.channelBuilder(`Prompt the other to connect over WebSocket`)
-      this.allStreams.sendOver(streamId, { pair: { initiator, passive } }, theOther.id)
+      this.allStreams.sendOver(streamId, { negotiation: { initiator, passive } }, theOther.id)
       return
     }
 
@@ -217,20 +203,19 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
       // Prompt the other peer to connect over RTCDataChannel as I was not able
       if (!theOther.dcTried) {
         log.channelBuilder(`Prompt the other to connect over RTCDataChannel`)
-        this.allStreams.sendOver(streamId, { pair: { initiator, passive } }, theOther.id)
+        this.allStreams.sendOver(streamId, { negotiation: { initiator, passive } }, theOther.id)
         return
       }
     }
 
-    log.channelBuilder(`ChannelBuilder FAILED`)
     // All connection possibilities have been tried and none of them worked
-    throw new Error(`Failed to establish a connection between ${me.id} and ${theOther.id}`)
+    throw new Error(ConnectionError.NEGOTIATION_ERROR)
   }
 
   private async tryWs(
     streamId: number,
-    me: proto.PeerInfo,
-    theOther: proto.PeerInfo,
+    me: proto.Info,
+    theOther: proto.Info,
     amIInitiator: boolean
   ): Promise<boolean> {
     try {
@@ -256,8 +241,8 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
 
   private async tryDc(
     streamId: number,
-    me: proto.PeerInfo,
-    theOther: proto.PeerInfo,
+    me: proto.Info,
+    theOther: proto.Info,
     amIInitiator: boolean
   ): Promise<boolean> {
     try {
@@ -285,16 +270,16 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
     merge(this.dataChannelBuilder.onChannel(), this.wc.webSocketBuilder.onChannel()).subscribe(
       (channel) => {
         channel.init.then(() => {
-          let pendingReq
+          let connection
           if (channel.type === ChannelType.INTERNAL) {
-            pendingReq = this.connectsInProgress.get(this.wc.STREAM_ID, channel.id)
+            connection = this.connectsInProgress.get(this.wc.STREAM_ID, channel.id)
           } else if (channel.type === ChannelType.INVITED) {
-            pendingReq = this.connectsInProgress.get(this.wc.signaling.STREAM_ID, channel.id)
+            connection = this.connectsInProgress.get(this.wc.signaling.STREAM_ID, channel.id)
           } else if (channel.type === ChannelType.JOINING) {
-            pendingReq = this.connectsInProgress.get(this.wc.signaling.STREAM_ID, 1)
+            connection = this.connectsInProgress.get(this.wc.signaling.STREAM_ID, 1)
           }
-          if (pendingReq) {
-            pendingReq.resolve()
+          if (connection) {
+            connection.resolve()
           }
           this.channelsSubject.next(channel)
         })
@@ -306,13 +291,12 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
     WebSocketBuilder.listenUrl.subscribe((url) => {
       if (url) {
         this.myInfo.wss = url
-        this.pairEncoded = super.encode({ pair: { initiator: this.myInfo } })
+        this.negotiationEncoded = super.encode({ negotiation: { initiator: this.myInfo } })
       }
     })
     this.wc.onIdChange.subscribe((id: number) => {
-      log.channelBuilder('Web CHANNEL ID CHANGED TO ', this.wc.id)
       this.myInfo.wcId = this.wc.id
-      this.pairEncoded = super.encode({ pair: { initiator: this.myInfo } })
+      this.negotiationEncoded = super.encode({ negotiation: { initiator: this.myInfo } })
     })
   }
 }

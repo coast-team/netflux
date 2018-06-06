@@ -2,6 +2,7 @@ import { Channel, ChannelType, IChannelInitData, MAXIMUM_MISSED_HEARTBEAT } from
 import { log } from '../../misc/util'
 import { fullMesh as proto } from '../../proto'
 import { InWcMsg, WebChannel } from '../../WebChannel'
+import { ConnectionError } from '../channelBuilder/ConnectionError'
 import { ITopology, Topology, TopologyState } from './Topology'
 
 interface IDistantMember {
@@ -223,7 +224,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
             this.updateAntecedentMember()
           })
           .catch((err) => {
-            if (err.message !== 'connection_timeout') {
+            if (err.message !== ConnectionError.CONNECTION_TIMEOUT) {
               // delay reconnect
             }
           })

@@ -205,8 +205,8 @@ export namespace channelBuilder {
     /** Properties of a Message. */
     interface IMessage {
 
-        /** Message pair */
-        pair?: (channelBuilder.IPeerPair|null);
+        /** Message negotiation */
+        negotiation?: (channelBuilder.INegotiation|null);
 
         /** Message connectionRequest */
         connectionRequest?: (Uint8Array|null);
@@ -224,8 +224,8 @@ export namespace channelBuilder {
          */
         constructor(properties?: channelBuilder.IMessage);
 
-        /** Message pair. */
-        public pair?: (channelBuilder.IPeerPair|null);
+        /** Message negotiation. */
+        public negotiation?: (channelBuilder.INegotiation|null);
 
         /** Message connectionRequest. */
         public connectionRequest: Uint8Array;
@@ -234,7 +234,7 @@ export namespace channelBuilder {
         public connectionResponse: boolean;
 
         /** Message type. */
-        public type?: ("pair"|"connectionRequest"|"connectionResponse");
+        public type?: ("negotiation"|"connectionRequest"|"connectionResponse");
 
         /**
          * Creates a new Message instance using the specified properties.
@@ -262,136 +262,136 @@ export namespace channelBuilder {
         public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): channelBuilder.Message;
     }
 
-    /** Properties of a PeerPair. */
-    interface IPeerPair {
+    /** Properties of a Negotiation. */
+    interface INegotiation {
 
-        /** PeerPair initiator */
-        initiator?: (channelBuilder.IPeerInfo|null);
+        /** Negotiation initiator */
+        initiator?: (channelBuilder.IInfo|null);
 
-        /** PeerPair passive */
-        passive?: (channelBuilder.IPeerInfo|null);
+        /** Negotiation passive */
+        passive?: (channelBuilder.IInfo|null);
     }
 
-    /** Represents a PeerPair. */
-    class PeerPair implements IPeerPair {
+    /** Represents a Negotiation. */
+    class Negotiation implements INegotiation {
 
         /**
-         * Constructs a new PeerPair.
+         * Constructs a new Negotiation.
          * @param [properties] Properties to set
          */
-        constructor(properties?: channelBuilder.IPeerPair);
+        constructor(properties?: channelBuilder.INegotiation);
 
-        /** PeerPair initiator. */
-        public initiator?: (channelBuilder.IPeerInfo|null);
+        /** Negotiation initiator. */
+        public initiator?: (channelBuilder.IInfo|null);
 
-        /** PeerPair passive. */
-        public passive?: (channelBuilder.IPeerInfo|null);
+        /** Negotiation passive. */
+        public passive?: (channelBuilder.IInfo|null);
 
         /**
-         * Creates a new PeerPair instance using the specified properties.
+         * Creates a new Negotiation instance using the specified properties.
          * @param [properties] Properties to set
-         * @returns PeerPair instance
+         * @returns Negotiation instance
          */
-        public static create(properties?: channelBuilder.IPeerPair): channelBuilder.PeerPair;
+        public static create(properties?: channelBuilder.INegotiation): channelBuilder.Negotiation;
 
         /**
-         * Encodes the specified PeerPair message. Does not implicitly {@link channelBuilder.PeerPair.verify|verify} messages.
-         * @param message PeerPair message or plain object to encode
+         * Encodes the specified Negotiation message. Does not implicitly {@link channelBuilder.Negotiation.verify|verify} messages.
+         * @param message Negotiation message or plain object to encode
          * @param [writer] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: channelBuilder.IPeerPair, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(message: channelBuilder.INegotiation, writer?: $protobuf.Writer): $protobuf.Writer;
 
         /**
-         * Decodes a PeerPair message from the specified reader or buffer.
+         * Decodes a Negotiation message from the specified reader or buffer.
          * @param reader Reader or buffer to decode from
          * @param [length] Message length if known beforehand
-         * @returns PeerPair
+         * @returns Negotiation
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): channelBuilder.PeerPair;
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): channelBuilder.Negotiation;
     }
 
-    /** Properties of a PeerInfo. */
-    interface IPeerInfo {
+    /** Properties of an Info. */
+    interface IInfo {
 
-        /** PeerInfo id */
+        /** Info id */
         id?: (number|null);
 
-        /** PeerInfo wss */
+        /** Info wss */
         wss?: (string|null);
 
-        /** PeerInfo wcId */
+        /** Info wcId */
         wcId?: (number|null);
 
-        /** PeerInfo wsSupported */
+        /** Info wsSupported */
         wsSupported?: (boolean|null);
 
-        /** PeerInfo wsTried */
+        /** Info wsTried */
         wsTried?: (boolean|null);
 
-        /** PeerInfo dcSupported */
+        /** Info dcSupported */
         dcSupported?: (boolean|null);
 
-        /** PeerInfo dcTried */
+        /** Info dcTried */
         dcTried?: (boolean|null);
     }
 
-    /** Represents a PeerInfo. */
-    class PeerInfo implements IPeerInfo {
+    /** Represents an Info. */
+    class Info implements IInfo {
 
         /**
-         * Constructs a new PeerInfo.
+         * Constructs a new Info.
          * @param [properties] Properties to set
          */
-        constructor(properties?: channelBuilder.IPeerInfo);
+        constructor(properties?: channelBuilder.IInfo);
 
-        /** PeerInfo id. */
+        /** Info id. */
         public id: number;
 
-        /** PeerInfo wss. */
+        /** Info wss. */
         public wss: string;
 
-        /** PeerInfo wcId. */
+        /** Info wcId. */
         public wcId: number;
 
-        /** PeerInfo wsSupported. */
+        /** Info wsSupported. */
         public wsSupported: boolean;
 
-        /** PeerInfo wsTried. */
+        /** Info wsTried. */
         public wsTried: boolean;
 
-        /** PeerInfo dcSupported. */
+        /** Info dcSupported. */
         public dcSupported: boolean;
 
-        /** PeerInfo dcTried. */
+        /** Info dcTried. */
         public dcTried: boolean;
 
         /**
-         * Creates a new PeerInfo instance using the specified properties.
+         * Creates a new Info instance using the specified properties.
          * @param [properties] Properties to set
-         * @returns PeerInfo instance
+         * @returns Info instance
          */
-        public static create(properties?: channelBuilder.IPeerInfo): channelBuilder.PeerInfo;
+        public static create(properties?: channelBuilder.IInfo): channelBuilder.Info;
 
         /**
-         * Encodes the specified PeerInfo message. Does not implicitly {@link channelBuilder.PeerInfo.verify|verify} messages.
-         * @param message PeerInfo message or plain object to encode
+         * Encodes the specified Info message. Does not implicitly {@link channelBuilder.Info.verify|verify} messages.
+         * @param message Info message or plain object to encode
          * @param [writer] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: channelBuilder.IPeerInfo, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(message: channelBuilder.IInfo, writer?: $protobuf.Writer): $protobuf.Writer;
 
         /**
-         * Decodes a PeerInfo message from the specified reader or buffer.
+         * Decodes an Info message from the specified reader or buffer.
          * @param reader Reader or buffer to decode from
          * @param [length] Message length if known beforehand
-         * @returns PeerInfo
+         * @returns Info
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): channelBuilder.PeerInfo;
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): channelBuilder.Info;
     }
 }
 

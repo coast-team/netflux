@@ -2892,7 +2892,7 @@ var channelBuilder = $root.channelBuilder = function () {
          * Properties of a Message.
          * @memberof channelBuilder
          * @interface IMessage
-         * @property {channelBuilder.IPeerPair|null} [pair] Message pair
+         * @property {channelBuilder.INegotiation|null} [negotiation] Message negotiation
          * @property {Uint8Array|null} [connectionRequest] Message connectionRequest
          * @property {boolean|null} [connectionResponse] Message connectionResponse
          */
@@ -2912,12 +2912,12 @@ var channelBuilder = $root.channelBuilder = function () {
         }
 
         /**
-         * Message pair.
-         * @member {channelBuilder.IPeerPair|null|undefined} pair
+         * Message negotiation.
+         * @member {channelBuilder.INegotiation|null|undefined} negotiation
          * @memberof channelBuilder.Message
          * @instance
          */
-        Message.prototype.pair = null;
+        Message.prototype.negotiation = null;
 
         /**
          * Message connectionRequest.
@@ -2940,12 +2940,12 @@ var channelBuilder = $root.channelBuilder = function () {
 
         /**
          * Message type.
-         * @member {"pair"|"connectionRequest"|"connectionResponse"|undefined} type
+         * @member {"negotiation"|"connectionRequest"|"connectionResponse"|undefined} type
          * @memberof channelBuilder.Message
          * @instance
          */
         Object.defineProperty(Message.prototype, "type", {
-            get: $util.oneOfGetter($oneOfFields = ["pair", "connectionRequest", "connectionResponse"]),
+            get: $util.oneOfGetter($oneOfFields = ["negotiation", "connectionRequest", "connectionResponse"]),
             set: $util.oneOfSetter($oneOfFields)
         });
 
@@ -2972,7 +2972,7 @@ var channelBuilder = $root.channelBuilder = function () {
          */
         Message.encode = function encode(message, writer) {
             if (!writer) writer = $Writer.create();
-            if (message.pair != null && message.hasOwnProperty("pair")) $root.channelBuilder.PeerPair.encode(message.pair, writer.uint32( /* id 1, wireType 2 =*/10).fork()).ldelim();
+            if (message.negotiation != null && message.hasOwnProperty("negotiation")) $root.channelBuilder.Negotiation.encode(message.negotiation, writer.uint32( /* id 1, wireType 2 =*/10).fork()).ldelim();
             if (message.connectionRequest != null && message.hasOwnProperty("connectionRequest")) writer.uint32( /* id 2, wireType 2 =*/18).bytes(message.connectionRequest);
             if (message.connectionResponse != null && message.hasOwnProperty("connectionResponse")) writer.uint32( /* id 3, wireType 0 =*/24).bool(message.connectionResponse);
             return writer;
@@ -2997,7 +2997,7 @@ var channelBuilder = $root.channelBuilder = function () {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
                     case 1:
-                        message.pair = $root.channelBuilder.PeerPair.decode(reader, reader.uint32());
+                        message.negotiation = $root.channelBuilder.Negotiation.decode(reader, reader.uint32());
                         break;
                     case 2:
                         message.connectionRequest = reader.bytes();
@@ -3016,97 +3016,97 @@ var channelBuilder = $root.channelBuilder = function () {
         return Message;
     }();
 
-    channelBuilder.PeerPair = function () {
+    channelBuilder.Negotiation = function () {
 
         /**
-         * Properties of a PeerPair.
+         * Properties of a Negotiation.
          * @memberof channelBuilder
-         * @interface IPeerPair
-         * @property {channelBuilder.IPeerInfo|null} [initiator] PeerPair initiator
-         * @property {channelBuilder.IPeerInfo|null} [passive] PeerPair passive
+         * @interface INegotiation
+         * @property {channelBuilder.IInfo|null} [initiator] Negotiation initiator
+         * @property {channelBuilder.IInfo|null} [passive] Negotiation passive
          */
 
         /**
-         * Constructs a new PeerPair.
+         * Constructs a new Negotiation.
          * @memberof channelBuilder
-         * @classdesc Represents a PeerPair.
-         * @implements IPeerPair
+         * @classdesc Represents a Negotiation.
+         * @implements INegotiation
          * @constructor
-         * @param {channelBuilder.IPeerPair=} [properties] Properties to set
+         * @param {channelBuilder.INegotiation=} [properties] Properties to set
          */
-        function PeerPair(properties) {
+        function Negotiation(properties) {
             if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
                 if (properties[keys[i]] != null) this[keys[i]] = properties[keys[i]];
             }
         }
 
         /**
-         * PeerPair initiator.
-         * @member {channelBuilder.IPeerInfo|null|undefined} initiator
-         * @memberof channelBuilder.PeerPair
+         * Negotiation initiator.
+         * @member {channelBuilder.IInfo|null|undefined} initiator
+         * @memberof channelBuilder.Negotiation
          * @instance
          */
-        PeerPair.prototype.initiator = null;
+        Negotiation.prototype.initiator = null;
 
         /**
-         * PeerPair passive.
-         * @member {channelBuilder.IPeerInfo|null|undefined} passive
-         * @memberof channelBuilder.PeerPair
+         * Negotiation passive.
+         * @member {channelBuilder.IInfo|null|undefined} passive
+         * @memberof channelBuilder.Negotiation
          * @instance
          */
-        PeerPair.prototype.passive = null;
+        Negotiation.prototype.passive = null;
 
         /**
-         * Creates a new PeerPair instance using the specified properties.
+         * Creates a new Negotiation instance using the specified properties.
          * @function create
-         * @memberof channelBuilder.PeerPair
+         * @memberof channelBuilder.Negotiation
          * @static
-         * @param {channelBuilder.IPeerPair=} [properties] Properties to set
-         * @returns {channelBuilder.PeerPair} PeerPair instance
+         * @param {channelBuilder.INegotiation=} [properties] Properties to set
+         * @returns {channelBuilder.Negotiation} Negotiation instance
          */
-        PeerPair.create = function create(properties) {
-            return new PeerPair(properties);
+        Negotiation.create = function create(properties) {
+            return new Negotiation(properties);
         };
 
         /**
-         * Encodes the specified PeerPair message. Does not implicitly {@link channelBuilder.PeerPair.verify|verify} messages.
+         * Encodes the specified Negotiation message. Does not implicitly {@link channelBuilder.Negotiation.verify|verify} messages.
          * @function encode
-         * @memberof channelBuilder.PeerPair
+         * @memberof channelBuilder.Negotiation
          * @static
-         * @param {channelBuilder.IPeerPair} message PeerPair message or plain object to encode
+         * @param {channelBuilder.INegotiation} message Negotiation message or plain object to encode
          * @param {$protobuf.Writer} [writer] Writer to encode to
          * @returns {$protobuf.Writer} Writer
          */
-        PeerPair.encode = function encode(message, writer) {
+        Negotiation.encode = function encode(message, writer) {
             if (!writer) writer = $Writer.create();
-            if (message.initiator != null && message.hasOwnProperty("initiator")) $root.channelBuilder.PeerInfo.encode(message.initiator, writer.uint32( /* id 1, wireType 2 =*/10).fork()).ldelim();
-            if (message.passive != null && message.hasOwnProperty("passive")) $root.channelBuilder.PeerInfo.encode(message.passive, writer.uint32( /* id 2, wireType 2 =*/18).fork()).ldelim();
+            if (message.initiator != null && message.hasOwnProperty("initiator")) $root.channelBuilder.Info.encode(message.initiator, writer.uint32( /* id 1, wireType 2 =*/10).fork()).ldelim();
+            if (message.passive != null && message.hasOwnProperty("passive")) $root.channelBuilder.Info.encode(message.passive, writer.uint32( /* id 2, wireType 2 =*/18).fork()).ldelim();
             return writer;
         };
 
         /**
-         * Decodes a PeerPair message from the specified reader or buffer.
+         * Decodes a Negotiation message from the specified reader or buffer.
          * @function decode
-         * @memberof channelBuilder.PeerPair
+         * @memberof channelBuilder.Negotiation
          * @static
          * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
          * @param {number} [length] Message length if known beforehand
-         * @returns {channelBuilder.PeerPair} PeerPair
+         * @returns {channelBuilder.Negotiation} Negotiation
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        PeerPair.decode = function decode(reader, length) {
+        Negotiation.decode = function decode(reader, length) {
             if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
             var end = length === undefined ? reader.len : reader.pos + length,
-                message = new $root.channelBuilder.PeerPair();
+                message = new $root.channelBuilder.Negotiation();
             while (reader.pos < end) {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
                     case 1:
-                        message.initiator = $root.channelBuilder.PeerInfo.decode(reader, reader.uint32());
+                        message.initiator = $root.channelBuilder.Info.decode(reader, reader.uint32());
                         break;
                     case 2:
-                        message.passive = $root.channelBuilder.PeerInfo.decode(reader, reader.uint32());
+                        message.passive = $root.channelBuilder.Info.decode(reader, reader.uint32());
                         break;
                     default:
                         reader.skipType(tag & 7);
@@ -3116,116 +3116,116 @@ var channelBuilder = $root.channelBuilder = function () {
             return message;
         };
 
-        return PeerPair;
+        return Negotiation;
     }();
 
-    channelBuilder.PeerInfo = function () {
+    channelBuilder.Info = function () {
 
         /**
-         * Properties of a PeerInfo.
+         * Properties of an Info.
          * @memberof channelBuilder
-         * @interface IPeerInfo
-         * @property {number|null} [id] PeerInfo id
-         * @property {string|null} [wss] PeerInfo wss
-         * @property {number|null} [wcId] PeerInfo wcId
-         * @property {boolean|null} [wsSupported] PeerInfo wsSupported
-         * @property {boolean|null} [wsTried] PeerInfo wsTried
-         * @property {boolean|null} [dcSupported] PeerInfo dcSupported
-         * @property {boolean|null} [dcTried] PeerInfo dcTried
+         * @interface IInfo
+         * @property {number|null} [id] Info id
+         * @property {string|null} [wss] Info wss
+         * @property {number|null} [wcId] Info wcId
+         * @property {boolean|null} [wsSupported] Info wsSupported
+         * @property {boolean|null} [wsTried] Info wsTried
+         * @property {boolean|null} [dcSupported] Info dcSupported
+         * @property {boolean|null} [dcTried] Info dcTried
          */
 
         /**
-         * Constructs a new PeerInfo.
+         * Constructs a new Info.
          * @memberof channelBuilder
-         * @classdesc Represents a PeerInfo.
-         * @implements IPeerInfo
+         * @classdesc Represents an Info.
+         * @implements IInfo
          * @constructor
-         * @param {channelBuilder.IPeerInfo=} [properties] Properties to set
+         * @param {channelBuilder.IInfo=} [properties] Properties to set
          */
-        function PeerInfo(properties) {
+        function Info(properties) {
             if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
                 if (properties[keys[i]] != null) this[keys[i]] = properties[keys[i]];
             }
         }
 
         /**
-         * PeerInfo id.
+         * Info id.
          * @member {number} id
-         * @memberof channelBuilder.PeerInfo
+         * @memberof channelBuilder.Info
          * @instance
          */
-        PeerInfo.prototype.id = 0;
+        Info.prototype.id = 0;
 
         /**
-         * PeerInfo wss.
+         * Info wss.
          * @member {string} wss
-         * @memberof channelBuilder.PeerInfo
+         * @memberof channelBuilder.Info
          * @instance
          */
-        PeerInfo.prototype.wss = "";
+        Info.prototype.wss = "";
 
         /**
-         * PeerInfo wcId.
+         * Info wcId.
          * @member {number} wcId
-         * @memberof channelBuilder.PeerInfo
+         * @memberof channelBuilder.Info
          * @instance
          */
-        PeerInfo.prototype.wcId = 0;
+        Info.prototype.wcId = 0;
 
         /**
-         * PeerInfo wsSupported.
+         * Info wsSupported.
          * @member {boolean} wsSupported
-         * @memberof channelBuilder.PeerInfo
+         * @memberof channelBuilder.Info
          * @instance
          */
-        PeerInfo.prototype.wsSupported = false;
+        Info.prototype.wsSupported = false;
 
         /**
-         * PeerInfo wsTried.
+         * Info wsTried.
          * @member {boolean} wsTried
-         * @memberof channelBuilder.PeerInfo
+         * @memberof channelBuilder.Info
          * @instance
          */
-        PeerInfo.prototype.wsTried = false;
+        Info.prototype.wsTried = false;
 
         /**
-         * PeerInfo dcSupported.
+         * Info dcSupported.
          * @member {boolean} dcSupported
-         * @memberof channelBuilder.PeerInfo
+         * @memberof channelBuilder.Info
          * @instance
          */
-        PeerInfo.prototype.dcSupported = false;
+        Info.prototype.dcSupported = false;
 
         /**
-         * PeerInfo dcTried.
+         * Info dcTried.
          * @member {boolean} dcTried
-         * @memberof channelBuilder.PeerInfo
+         * @memberof channelBuilder.Info
          * @instance
          */
-        PeerInfo.prototype.dcTried = false;
+        Info.prototype.dcTried = false;
 
         /**
-         * Creates a new PeerInfo instance using the specified properties.
+         * Creates a new Info instance using the specified properties.
          * @function create
-         * @memberof channelBuilder.PeerInfo
+         * @memberof channelBuilder.Info
          * @static
-         * @param {channelBuilder.IPeerInfo=} [properties] Properties to set
-         * @returns {channelBuilder.PeerInfo} PeerInfo instance
+         * @param {channelBuilder.IInfo=} [properties] Properties to set
+         * @returns {channelBuilder.Info} Info instance
          */
-        PeerInfo.create = function create(properties) {
-            return new PeerInfo(properties);
+        Info.create = function create(properties) {
+            return new Info(properties);
         };
 
         /**
-         * Encodes the specified PeerInfo message. Does not implicitly {@link channelBuilder.PeerInfo.verify|verify} messages.
+         * Encodes the specified Info message. Does not implicitly {@link channelBuilder.Info.verify|verify} messages.
          * @function encode
-         * @memberof channelBuilder.PeerInfo
+         * @memberof channelBuilder.Info
          * @static
-         * @param {channelBuilder.IPeerInfo} message PeerInfo message or plain object to encode
+         * @param {channelBuilder.IInfo} message Info message or plain object to encode
          * @param {$protobuf.Writer} [writer] Writer to encode to
          * @returns {$protobuf.Writer} Writer
          */
-        PeerInfo.encode = function encode(message, writer) {
+        Info.encode = function encode(message, writer) {
             if (!writer) writer = $Writer.create();
             if (message.id != null && message.hasOwnProperty("id")) writer.uint32( /* id 1, wireType 0 =*/8).uint32(message.id);
             if (message.wss != null && message.hasOwnProperty("wss")) writer.uint32( /* id 2, wireType 2 =*/18).string(message.wss);
@@ -3238,20 +3238,20 @@ var channelBuilder = $root.channelBuilder = function () {
         };
 
         /**
-         * Decodes a PeerInfo message from the specified reader or buffer.
+         * Decodes an Info message from the specified reader or buffer.
          * @function decode
-         * @memberof channelBuilder.PeerInfo
+         * @memberof channelBuilder.Info
          * @static
          * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
          * @param {number} [length] Message length if known beforehand
-         * @returns {channelBuilder.PeerInfo} PeerInfo
+         * @returns {channelBuilder.Info} Info
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        PeerInfo.decode = function decode(reader, length) {
+        Info.decode = function decode(reader, length) {
             if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
             var end = length === undefined ? reader.len : reader.pos + length,
-                message = new $root.channelBuilder.PeerInfo();
+                message = new $root.channelBuilder.Info();
             while (reader.pos < end) {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
@@ -3284,7 +3284,7 @@ var channelBuilder = $root.channelBuilder = function () {
             return message;
         };
 
-        return PeerInfo;
+        return Info;
     }();
 
     return channelBuilder;
