@@ -3531,6 +3531,121 @@ var fullMesh = $root.fullMesh = function () {
         return Peers;
     }();
 
+    fullMesh.ConnectionRequest = function () {
+
+        /**
+         * Properties of a ConnectionRequest.
+         * @memberof fullMesh
+         * @interface IConnectionRequest
+         * @property {number|null} [id] ConnectionRequest id
+         * @property {Array.<number>|null} [adjacentIds] ConnectionRequest adjacentIds
+         */
+
+        /**
+         * Constructs a new ConnectionRequest.
+         * @memberof fullMesh
+         * @classdesc Represents a ConnectionRequest.
+         * @implements IConnectionRequest
+         * @constructor
+         * @param {fullMesh.IConnectionRequest=} [properties] Properties to set
+         */
+        function ConnectionRequest(properties) {
+            this.adjacentIds = [];
+            if (properties) for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i) {
+                if (properties[keys[i]] != null) this[keys[i]] = properties[keys[i]];
+            }
+        }
+
+        /**
+         * ConnectionRequest id.
+         * @member {number} id
+         * @memberof fullMesh.ConnectionRequest
+         * @instance
+         */
+        ConnectionRequest.prototype.id = 0;
+
+        /**
+         * ConnectionRequest adjacentIds.
+         * @member {Array.<number>} adjacentIds
+         * @memberof fullMesh.ConnectionRequest
+         * @instance
+         */
+        ConnectionRequest.prototype.adjacentIds = $util.emptyArray;
+
+        /**
+         * Creates a new ConnectionRequest instance using the specified properties.
+         * @function create
+         * @memberof fullMesh.ConnectionRequest
+         * @static
+         * @param {fullMesh.IConnectionRequest=} [properties] Properties to set
+         * @returns {fullMesh.ConnectionRequest} ConnectionRequest instance
+         */
+        ConnectionRequest.create = function create(properties) {
+            return new ConnectionRequest(properties);
+        };
+
+        /**
+         * Encodes the specified ConnectionRequest message. Does not implicitly {@link fullMesh.ConnectionRequest.verify|verify} messages.
+         * @function encode
+         * @memberof fullMesh.ConnectionRequest
+         * @static
+         * @param {fullMesh.IConnectionRequest} message ConnectionRequest message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        ConnectionRequest.encode = function encode(message, writer) {
+            if (!writer) writer = $Writer.create();
+            if (message.id != null && message.hasOwnProperty("id")) writer.uint32( /* id 1, wireType 0 =*/8).uint32(message.id);
+            if (message.adjacentIds != null && message.adjacentIds.length) {
+                writer.uint32( /* id 2, wireType 2 =*/18).fork();
+                for (var i = 0; i < message.adjacentIds.length; ++i) {
+                    writer.uint32(message.adjacentIds[i]);
+                }writer.ldelim();
+            }
+            return writer;
+        };
+
+        /**
+         * Decodes a ConnectionRequest message from the specified reader or buffer.
+         * @function decode
+         * @memberof fullMesh.ConnectionRequest
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {fullMesh.ConnectionRequest} ConnectionRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        ConnectionRequest.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length,
+                message = new $root.fullMesh.ConnectionRequest();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                    case 1:
+                        message.id = reader.uint32();
+                        break;
+                    case 2:
+                        if (!(message.adjacentIds && message.adjacentIds.length)) message.adjacentIds = [];
+                        if ((tag & 7) === 2) {
+                            var end2 = reader.uint32() + reader.pos;
+                            while (reader.pos < end2) {
+                                message.adjacentIds.push(reader.uint32());
+                            }
+                        } else message.adjacentIds.push(reader.uint32());
+                        break;
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                }
+            }
+            return message;
+        };
+
+        return ConnectionRequest;
+    }();
+
     return fullMesh;
 }();
 

@@ -55,18 +55,24 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
       this.handleServiceMessage(channel, senderId, msg as proto.Message)
     )
 
+    // Set onConnectionRequest callback for ChannelBuilder
+    this.wc.channelBuilder.onConnectionRequest = (data: Uint8Array) => {
+      const { id, adjacentIds } = proto.ConnectionRequest.decode(data)
+      return this.createOrUpdateDistantMember(id, adjacentIds)
+    }
+
     // Subscribe to channels from ChannelBuilder
     this.wc.channelBuilder.onChannel.subscribe((ch) => {
       log.topology('Adding new adjacent member: ', ch.id)
       this.distantMembers.delete(ch.id)
-      const member = this.adjacentMembers.get(ch.id)
-      if (member) {
+      const am = this.adjacentMembers.get(ch.id)
+      if (am) {
         log.topology('Replacing the same channel')
-        member.close()
+        am.close()
       }
       this.adjacentMembers.set(ch.id, ch)
-      this.wc.onMemberJoinProxy(ch.id)
       this.updateAntecedentMember()
+      this.notifyDistantMembers()
       if (this.adjacentMembers.size === 1 && this.membersRequestInterval === undefined) {
         this.startIntervals()
       }
@@ -74,12 +80,9 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
       if (ch.type === ChannelType.JOINING) {
         super.setState(TopologyState.JOINING)
         const { members } = ch.initData as IChannelInitData
-        this.connectToMany(members, ch.id).then(() => {
-          super.setState(TopologyState.JOINED)
-        })
-      } else {
-        this.notifyDistantMembers()
+        this.connectToMembers(members, ch.id).then(() => super.setState(TopologyState.JOINED))
       }
+      this.wc.onMemberJoinProxy(ch.id)
     })
 
     global.fullmesh = () => {
@@ -134,10 +137,10 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
       this.clean()
     } else {
       this.notifyDistantMembers()
+      this.updateAntecedentMember()
     }
     log.topology('onAdjacentMembersLeaveProxy: onChannelClose ')
     this.wc.onAdjacentMembersLeaveProxy([channel.id])
-    this.updateAntecedentMember()
   }
 
   get neighbors(): Channel[] {
@@ -158,33 +161,12 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
   private handleServiceMessage(channel: Channel, senderId: number, msg: proto.Message): void {
     switch (msg.type) {
       case 'members': {
-        this.connectToMany((msg.members as proto.Peers).ids, senderId)
+        this.connectToMembers((msg.members as proto.Peers).ids, senderId)
         break
       }
       case 'adjacentMembers': {
-        const {
-          adjacentMembers: { ids },
-        } = msg as { adjacentMembers: proto.Peers }
-
-        if (!this.adjacentMembers.has(senderId)) {
-          const distantMember = this.distantMembers.get(senderId)
-
-          // If it the first time you have met this ID, then send him your neighbours' ids.
-          // Otherwise just update the list of distant peer's neighbours
-
-          if (distantMember) {
-            distantMember.adjacentIds = ids
-          } else {
-            this.distantMembers.set(senderId, {
-              adjacentIds: ids,
-              missedHeartbeat: 0,
-            })
-            this.wcStream.send(
-              { adjacentMembers: { ids: Array.from(this.adjacentMembers.keys()) } },
-              senderId
-            )
-          }
-        }
+        const ids = (msg.adjacentMembers as proto.Peers).ids
+        this.createOrUpdateDistantMember(senderId, ids)
         break
       }
       case 'heartbeat': {
@@ -197,15 +179,18 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
     }
   }
 
-  private connectToMany(ids: number[], adjacentId: number): Promise<void | void[]> {
+  private connectToMembers(ids: number[], adjacentId: number): Promise<void | void[]> {
     const missingIds = ids.filter((id) => !this.adjacentMembers.has(id) && id !== this.wc.myId)
     if (missingIds.length !== 0) {
-      const msg = super.encode({
-        adjacentMembers: { ids: Array.from(this.adjacentMembers.keys()) },
-      })
       const attempts: Array<Promise<void>> = []
+      const msg = proto.ConnectionRequest.encode(
+        proto.ConnectionRequest.create({
+          id: this.wc.myId,
+          adjacentIds: Array.from(this.adjacentMembers.keys()),
+        })
+      ).finish()
 
-      missingIds.forEach((id) => {
+      for (const id of missingIds) {
         if (!this.distantMembers.has(id)) {
           this.distantMembers.set(id, {
             adjacentIds: [adjacentId],
@@ -213,22 +198,21 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
           })
         }
 
-        // It's important to notify all peers about my adjacentIds first
-        // for some specific case such when you should connect to a peer with
-        // distance more than 1
-        this.wcStream.send(msg, id)
-
         attempts[attempts.length] = this.wc.channelBuilder
-          .connectOverWebChannel(id, () => {
-            this.wc.onMemberJoinProxy(id)
-            this.updateAntecedentMember()
-          })
+          .connectOverWebChannel(
+            id,
+            () => {
+              this.wc.onMemberJoinProxy(id)
+              this.updateAntecedentMember()
+            },
+            msg
+          )
           .catch((err) => {
             if (err.message !== ConnectionError.CONNECTION_TIMEOUT) {
               // delay reconnect
             }
           })
-      })
+      }
 
       return Promise.all(attempts)
     }
@@ -302,6 +286,22 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
       }
     }
     return undefined
+  }
+
+  private createOrUpdateDistantMember(id: number, ids: number[]): boolean {
+    if (!this.adjacentMembers.has(id)) {
+      const distantMember = this.distantMembers.get(id)
+      if (distantMember) {
+        distantMember.adjacentIds = ids
+      } else {
+        this.distantMembers.set(id, {
+          adjacentIds: ids,
+          missedHeartbeat: 0,
+        })
+      }
+      return true
+    }
+    return false
   }
 
   private updateAntecedentMember() {

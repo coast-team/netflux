@@ -502,6 +502,57 @@ export namespace fullMesh {
          */
         public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): fullMesh.Peers;
     }
+
+    /** Properties of a ConnectionRequest. */
+    interface IConnectionRequest {
+
+        /** ConnectionRequest id */
+        id?: (number|null);
+
+        /** ConnectionRequest adjacentIds */
+        adjacentIds?: (number[]|null);
+    }
+
+    /** Represents a ConnectionRequest. */
+    class ConnectionRequest implements IConnectionRequest {
+
+        /**
+         * Constructs a new ConnectionRequest.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: fullMesh.IConnectionRequest);
+
+        /** ConnectionRequest id. */
+        public id: number;
+
+        /** ConnectionRequest adjacentIds. */
+        public adjacentIds: number[];
+
+        /**
+         * Creates a new ConnectionRequest instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns ConnectionRequest instance
+         */
+        public static create(properties?: fullMesh.IConnectionRequest): fullMesh.ConnectionRequest;
+
+        /**
+         * Encodes the specified ConnectionRequest message. Does not implicitly {@link fullMesh.ConnectionRequest.verify|verify} messages.
+         * @param message ConnectionRequest message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: fullMesh.IConnectionRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a ConnectionRequest message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns ConnectionRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): fullMesh.ConnectionRequest;
+    }
 }
 
 /** Namespace dataChannelBuilder. */

@@ -12,3 +12,9 @@ message Message {
 message Peers {
   repeated uint32 ids = 1;
 }
+
+
+message ConnectionRequest {
+  uint32 id = 1;
+  repeated uint32 adjacentIds = 2;
+}
