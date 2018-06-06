@@ -38,7 +38,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
   private antecedentId: number
 
   private heartbeatInterval: any
-  private membersRequestInterval: any
+  private membersCheckInterval: any
   private heartbeatMsg: Uint8Array
 
   constructor(wc: WebChannel) {
@@ -73,14 +73,19 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
       this.adjacentMembers.set(ch.id, ch)
       this.updateAntecedentMember()
       this.notifyDistantMembers()
-      if (this.adjacentMembers.size === 1 && this.membersRequestInterval === undefined) {
-        this.startIntervals()
+      if (!this.heartbeatInterval) {
+        this.startHeartbeatInterval()
       }
 
       if (ch.type === ChannelType.JOINING) {
         super.setState(TopologyState.JOINING)
         const { members } = ch.initData as IChannelInitData
-        this.connectToMembers(members, ch.id).then(() => super.setState(TopologyState.JOINED))
+        this.connectToMembers(members, ch.id).then(() => {
+          super.setState(TopologyState.JOINED)
+          if (!this.membersCheckInterval) {
+            this.startMembersCheckIntervals()
+          }
+        })
       }
       this.wc.onMemberJoinProxy(ch.id)
     })
@@ -154,8 +159,8 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
     this.antecedentId = 0
     global.clearInterval(this.heartbeatInterval)
     this.heartbeatInterval = undefined
-    global.clearInterval(this.membersRequestInterval)
-    this.membersRequestInterval = undefined
+    global.clearInterval(this.membersCheckInterval)
+    this.membersCheckInterval = undefined
   }
 
   private handleServiceMessage(channel: Channel, senderId: number, msg: proto.Message): void {
@@ -228,15 +233,16 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
     }
   }
 
-  private startIntervals() {
+  private startMembersCheckIntervals() {
     // Members check interval
-    this.membersRequestInterval = global.setInterval(() => {
+    this.membersCheckInterval = global.setInterval(() => {
       if (this.antecedentId) {
         this.wcStream.send({ members: { ids: this.wc.members } }, this.antecedentId)
       }
     }, REQUEST_MEMBERS_INTERVAL)
+  }
 
-    // Heartbeat interval
+  private startHeartbeatInterval() {
     this.heartbeatInterval = global.setInterval(() => {
       this.adjacentMembers.forEach((ch) => ch.sendHeartbeat())
       this.distantMembers.forEach((peer, id) => {
