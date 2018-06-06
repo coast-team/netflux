@@ -132,20 +132,22 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
       this.adjacentMembers.forEach((ch) => ch.close())
       log.topology('onAdjacentMembersLeaveProxy: leave ')
       this.wc.onAdjacentMembersLeaveProxy(Array.from(this.adjacentMembers.keys()))
+      this.adjacentMembers.clear()
       super.setState(TopologyState.LEFT)
     }
   }
 
   onChannelClose(channel: Channel): void {
-    this.adjacentMembers.delete(channel.id)
-    if (this.adjacentMembers.size === 0) {
-      this.clean()
-    } else {
-      this.notifyDistantMembers()
-      this.updateAntecedentMember()
+    if (this.adjacentMembers.delete(channel.id)) {
+      if (this.adjacentMembers.size === 0) {
+        this.clean()
+      } else {
+        this.notifyDistantMembers()
+        this.updateAntecedentMember()
+      }
+      log.topology('onAdjacentMembersLeaveProxy: onChannelClose ')
+      this.wc.onAdjacentMembersLeaveProxy([channel.id])
     }
-    log.topology('onAdjacentMembersLeaveProxy: onChannelClose ')
-    this.wc.onAdjacentMembersLeaveProxy([channel.id])
   }
 
   get neighbors(): Channel[] {
@@ -156,6 +158,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
     log.topology('onDistantMembersLeaveProxy: clean ')
     this.wc.onDistantMembersLeaveProxy(Array.from(this.distantMembers.keys()))
     this.distantMembers.clear()
+
     this.antecedentId = 0
     global.clearInterval(this.heartbeatInterval)
     this.heartbeatInterval = undefined
@@ -249,9 +252,10 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
         peer.missedHeartbeat++
         if (peer.missedHeartbeat >= MAXIMUM_MISSED_HEARTBEAT + 1) {
           log.topology(`Distant peer ${id} has left: too many missed heartbeats`)
-          this.distantMembers.delete(id)
-          this.wc.onDistantMembersLeaveProxy([id])
-          this.updateAntecedentMember()
+          if (this.distantMembers.delete(id)) {
+            this.wc.onDistantMembersLeaveProxy([id])
+            this.updateAntecedentMember()
+          }
         }
         this.wcStream.send(this.heartbeatMsg, id)
       })
