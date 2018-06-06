@@ -251,7 +251,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
   }
 
   private startMembersCheckIntervals() {
-    // Members check interval
+    this.updateAntecedentId()
     this.membersCheckInterval = global.setInterval(() => {
       if (this.antecedentId) {
         this.wcStream.send({ members: { ids: this.wc.members } }, this.antecedentId)
@@ -329,7 +329,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
   }
 
   private updateAntecedentId() {
-    if (this.wc.members.length > 1) {
+    if (this.adjacentMembers.size > 0 && this.state === TopologyState.JOINED) {
       let maxId = this.wc.members[0]
       let found = false
       for (const id of this.wc.members) {
