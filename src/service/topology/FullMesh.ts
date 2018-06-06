@@ -11,10 +11,9 @@ interface IDistantMember {
 }
 
 const REQUEST_MEMBERS_INTERVAL = 6000
-
 const MAX_ROUTE_DISTANCE = 3
-
 const HEARTBEAT_INTERVAL = 3000
+const DELAYED_TIMEOUT = 60000
 
 /**
  * Fully connected web channel manager. Implements fully connected topology
@@ -34,10 +33,10 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
    * his id is removed from this map a new entry is added to the `adjacentMembers` property.
    */
   private distantMembers: Map<number, IDistantMember>
-
   private antecedentId: number
-
   private heartbeatInterval: any
+  private delayedMembers: Set<number>
+  private delayedMembersTimers: Set<number>
   private membersCheckInterval: any
   private heartbeatMsg: Uint8Array
 
@@ -46,6 +45,8 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
     this.adjacentMembers = new Map()
     this.distantMembers = new Map()
     this.antecedentId = 0
+    this.delayedMembers = new Set()
+    this.delayedMembersTimers = new Set()
 
     // Encode message beforehand for optimization
     this.heartbeatMsg = super.encode({ heartbeat: true })
@@ -71,7 +72,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
         am.close()
       }
       this.adjacentMembers.set(ch.id, ch)
-      this.updateAntecedentMember()
+      this.updateAntecedentId()
       this.notifyDistantMembers()
       if (!this.heartbeatInterval) {
         this.startHeartbeatInterval()
@@ -143,7 +144,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
         this.clean()
       } else {
         this.notifyDistantMembers()
-        this.updateAntecedentMember()
+        this.updateAntecedentId()
       }
       log.topology('onAdjacentMembersLeaveProxy: onChannelClose ')
       this.wc.onAdjacentMembersLeaveProxy([channel.id])
@@ -164,6 +165,9 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
     this.heartbeatInterval = undefined
     global.clearInterval(this.membersCheckInterval)
     this.membersCheckInterval = undefined
+    this.delayedMembers.clear()
+    this.delayedMembersTimers.forEach((t) => clearTimeout(t))
+    this.delayedMembersTimers.clear()
   }
 
   private handleServiceMessage(channel: Channel, senderId: number, msg: proto.Message): void {
@@ -188,7 +192,9 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
   }
 
   private connectToMembers(ids: number[], adjacentId: number): Promise<void | void[]> {
-    const missingIds = ids.filter((id) => !this.adjacentMembers.has(id) && id !== this.wc.myId)
+    const missingIds = ids.filter(
+      (id) => !this.adjacentMembers.has(id) && !this.delayedMembers.has(id) && id !== this.wc.myId
+    )
     if (missingIds.length !== 0) {
       const attempts: Array<Promise<void>> = []
       const msg = proto.ConnectionRequest.encode(
@@ -211,13 +217,21 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
             id,
             () => {
               this.wc.onMemberJoinProxy(id)
-              this.updateAntecedentMember()
+              this.updateAntecedentId()
             },
             msg
           )
           .catch((err) => {
-            if (err.message !== ConnectionError.CONNECTION_TIMEOUT) {
-              // delay reconnect
+            if (
+              err.message === ConnectionError.CONNECTION_TIMEOUT ||
+              err.message === ConnectionError.NEGOTIATION_ERROR
+            ) {
+              this.delayedMembers.add(id)
+              const timer = setTimeout(() => {
+                this.delayedMembers.delete(id)
+                this.delayedMembersTimers.delete(timer)
+              }, DELAYED_TIMEOUT)
+              this.delayedMembersTimers.add(timer)
             }
           })
       }
@@ -254,7 +268,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
           log.topology(`Distant peer ${id} has left: too many missed heartbeats`)
           if (this.distantMembers.delete(id)) {
             this.wc.onDistantMembersLeaveProxy([id])
-            this.updateAntecedentMember()
+            this.updateAntecedentId()
           }
         }
         this.wcStream.send(this.heartbeatMsg, id)
@@ -314,7 +328,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
     return false
   }
 
-  private updateAntecedentMember() {
+  private updateAntecedentId() {
     if (this.wc.members.length > 1) {
       let maxId = this.wc.members[0]
       let found = false
