@@ -10,9 +10,9 @@ export enum TopologyEnum {
 }
 
 export enum TopologyState {
-  JOINING,
-  JOINED,
-  LEFT,
+  CONSTRUCTING,
+  CONSTRUCTED,
+  IDLE,
 }
 
 /**
@@ -39,7 +39,7 @@ export abstract class Topology<OutMsg, InMsg extends OutMsg> extends Service<Out
     this.wc = wc
     this.wcStream = super.useWebChannelStream(wc)
     this.stateSubject = new Subject()
-    this._state = TopologyState.LEFT
+    this._state = TopologyState.IDLE
   }
 
   get onState(): Observable<TopologyState> {
@@ -51,11 +51,7 @@ export abstract class Topology<OutMsg, InMsg extends OutMsg> extends Service<Out
   }
 
   setJoinedState() {
-    this.setState(TopologyState.JOINED)
-  }
-
-  setLeftState() {
-    this.setState(TopologyState.LEFT)
+    this.setState(TopologyState.CONSTRUCTED)
   }
 
   protected setState(state: TopologyState) {
@@ -76,7 +72,6 @@ export interface ITopology {
   neighbors: Channel[]
 
   setJoinedState(): void
-  setLeftState(): void
 
   /**
    * Broadcast a message to the network.

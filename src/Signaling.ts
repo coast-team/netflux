@@ -74,10 +74,13 @@ export class Signaling implements IStream<OutSigMsg, InSigMsg> {
   }
 
   check(): void {
-    this.setState(SignalingState.CHECKING)
-    this.send({
-      connect: { id: this.wc.myId, members: this.wc.members.filter((id) => id !== this.wc.myId) },
-    })
+    if (this.state === SignalingState.CHECKED || this.state === SignalingState.OPEN) {
+      // console.log('Signaling check: ', new Error().stack)
+      this.setState(SignalingState.CHECKING)
+      this.send({
+        connect: { id: this.wc.myId, members: this.wc.members.filter((id) => id !== this.wc.myId) },
+      })
+    }
   }
 
   connect(key: string): void {

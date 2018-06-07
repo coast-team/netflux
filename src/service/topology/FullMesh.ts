@@ -79,10 +79,10 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
       }
 
       if (ch.type === ChannelType.JOINING) {
-        super.setState(TopologyState.JOINING)
+        super.setState(TopologyState.CONSTRUCTING)
         const { members } = ch.initData as IChannelInitData
         this.connectToMembers(members, ch.id).then(() => {
-          super.setState(TopologyState.JOINED)
+          super.setState(TopologyState.CONSTRUCTED)
           if (!this.membersCheckInterval) {
             this.startMembersCheckIntervals()
           }
@@ -130,13 +130,13 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
   }
 
   leave(): void {
-    if (this.state !== TopologyState.LEFT) {
+    if (this.state !== TopologyState.IDLE) {
       this.clean()
       this.adjacentMembers.forEach((ch) => ch.close())
       log.topology('onAdjacentMembersLeaveProxy: leave ')
       this.wc.onAdjacentMembersLeaveProxy(Array.from(this.adjacentMembers.keys()))
       this.adjacentMembers.clear()
-      super.setState(TopologyState.LEFT)
+      super.setState(TopologyState.IDLE)
     }
   }
 
@@ -331,7 +331,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
   }
 
   private updateAntecedentId() {
-    if (this.adjacentMembers.size > 0 && this.state === TopologyState.JOINED) {
+    if (this.adjacentMembers.size > 0 && this.state === TopologyState.CONSTRUCTED) {
       let maxId = this.wc.members[0]
       let found = false
       for (const id of this.wc.members) {

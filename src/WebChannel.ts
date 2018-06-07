@@ -218,14 +218,13 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
   }
 
   onAdjacentMembersLeaveProxy(ids: number[]): void {
-    if (ids.length !== 0) {
-      this.onMemberLeaveProxy(ids)
+    if (this.onMemberLeaveProxy(ids)) {
       if (this.members.length === 1) {
         this._onAlone()
-        this.topology.setLeftState()
+        this.topology.leave()
       } else if (
         this.signaling.state === SignalingState.CHECKED &&
-        this.topology.state === TopologyState.JOINED
+        this.topology.state === TopologyState.CONSTRUCTED
       ) {
         this.signaling.check()
       }
@@ -256,8 +255,6 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
       clearTimeout(this.rejoinTimer)
       this.rejoinTimer = undefined
     }
-    this.channelBuilder.clean()
-    this.userMsg.clean()
     this.members = []
     this.id = 0
     this.myId = 0
@@ -276,24 +273,26 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
     this.topologyEnum = topologyEnum
     this.topology = new FullMesh(this)
     this.topology.onState.subscribe((state: TopologyState) => {
+      log.webgroup('Topology state changed to ', TopologyState[state])
       switch (state) {
-        case TopologyState.JOINING:
+        case TopologyState.CONSTRUCTING:
           this.setState(WebChannelState.JOINING)
           if (this.signaling.state === SignalingState.CLOSED) {
             // This is for a bot who was invited to the group
             this.signaling.connect(this.key)
           }
           break
-        case TopologyState.JOINED:
-          this.setState(WebChannelState.JOINED)
-          if (
-            this.signaling.state === SignalingState.OPEN ||
-            this.signaling.state === SignalingState.CHECKED
-          ) {
+        case TopologyState.CONSTRUCTED:
+          if (this.signaling.state === SignalingState.OPEN) {
             this.signaling.check()
+          } else if (this.signaling.state === SignalingState.CHECKED) {
+            this.signaling.check()
+            this.setState(WebChannelState.JOINED)
           }
           break
-        case TopologyState.LEFT:
+        case TopologyState.IDLE:
+          this.channelBuilder.clean()
+          this.userMsg.clean()
           switch (this.signaling.state) {
             case SignalingState.CLOSED:
               this.rejoin()
@@ -324,24 +323,24 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
       this.onSignalingStateChange(state)
       switch (state) {
         case SignalingState.CLOSED:
-          if (this.topology.state === TopologyState.LEFT) {
+          if (this.topology.state === TopologyState.IDLE) {
             this.rejoin()
           } else {
             this.reconnectToSignaling()
           }
           break
         case SignalingState.OPEN:
-          if (this.topology.state !== TopologyState.JOINING) {
+          if (this.topology.state !== TopologyState.CONSTRUCTING) {
             this.signaling.check()
           }
           break
         case SignalingState.CHECKED:
-          if (
-            this.state === WebChannelState.JOINING &&
-            this.topology.state === TopologyState.LEFT &&
-            this.signaling.connected
-          ) {
-            this.topology.setJoinedState()
+          if (this.topology.state === TopologyState.IDLE) {
+            if (this.signaling.connected) {
+              this.topology.setJoinedState()
+            }
+          } else if (this.topology.state === TopologyState.CONSTRUCTED) {
+            this.setState(WebChannelState.JOINED)
           }
           break
       }
@@ -350,23 +349,14 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
 
   private subscribeToBrowserEvents() {
     window.addEventListener('online', () => {
-      if (
-        this.state === WebChannelState.LEFT &&
-        isVisible() &&
-        !this.rejoinTimer &&
-        this.rejoinEnabled
-      ) {
+      if (this.state === WebChannelState.LEFT && isVisible() && this.rejoinEnabled) {
+        this.clean()
         this.startJoin()
       }
     })
     window.addEventListener('visibilitychange', () => {
-      if (
-        isVisible() &&
-        this.state === WebChannelState.LEFT &&
-        isOnline() &&
-        !this.rejoinTimer &&
-        this.rejoinEnabled
-      ) {
+      if (isVisible() && this.state === WebChannelState.LEFT && isOnline() && this.rejoinEnabled) {
+        this.clean()
         this.startJoin()
       }
     })
@@ -379,8 +369,8 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
   }
 
   private rejoin() {
-    log.webgroup('rejoinOrLeave')
     if (this.rejoinEnabled) {
+      log.webgroup('rejoin in ' + REJOIN_TIMEOUT + 'ms')
       this.clean()
       // this.init(this.key)
       log.webgroup('rejoinOrLeave: set rejoinTimer ')
@@ -402,8 +392,8 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
   }
 
   private reconnectToSignaling() {
-    log.webgroup('reconnect: ')
     if (this.rejoinEnabled && !this.rejoinTimer) {
+      log.webgroup('reconnect to Signaling server: ')
       this.rejoinTimer = setTimeout(() => {
         if (isVisible() && isOnline() && this.rejoinEnabled) {
           this.signaling.connect(this.key)
@@ -414,11 +404,14 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
   }
 
   private onMemberLeaveProxy(ids: number[]) {
+    let atLeastOneFound = false
     ids.forEach((id) => {
       if (this.members.includes(id)) {
         this.members.splice(this.members.indexOf(id), 1)
+        atLeastOneFound = true
         this.onMemberLeave(id)
       }
     })
+    return atLeastOneFound
   }
 }

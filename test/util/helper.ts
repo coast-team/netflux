@@ -8,6 +8,7 @@ setLogLevel(
   // LogLevel.CHANNEL_BUILDER
   // LogLevel.WEBRTC,
   // LogLevel.TOPOLOGY,
+  // LogLevel.WEB_GROUP
 )
 
 // Main signaling server for all tests
