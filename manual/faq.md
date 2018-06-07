@@ -78,37 +78,45 @@ Possible values for `WebChannel`, `Signaling` and `Topology` states are:
 | `CHECKED`       | You are connected to at least one group member or you are the only group member.                                                                                                                                                                                                                      |  |
 | `CLOSED`        | The connection with Signaling server is closed or couldn't be opened (equivalent to `WebSocket.CLOSED`).                                                                                                                                                                                              |
 
-| Topology state | description                                                                                                                                                                                                                                 |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `JOINING`      | Thanks to the Signaling server you are connected to one of the group memberf. From now the topology service is about to create the rest of connections, if necessary, in order to keep the topology structure and assure messages delivery. |
-| `JOINED`       | The topology is considerated as constructed.                                                                                                                                                                                                |
-| `LEFT`         | All connections with group members were closed or topology failed to construct the peer to peer network.                                                                                                                                    |
+| Topology state | description                                                                                                                                                                                                                                |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `CONSTRUCTING` | Thanks to the Signaling server you are connected to one of the group member. From now the topology service is about to create the rest of connections, if necessary, in order to keep the topology structure and assure messages delivery. |
+| `CONSTRUCTED`  | The topology is considerated as constructed.                                                                                                                                                                                               |
+| `IDLE`         | All connections with group members were closed or topology failed to construct the peer to peer network.                                                                                                                                   |
 
 ### Events
 
+#### Member left event
+
+| Singaling | Topology    | adjacent member | not only you left in the group | Result          |
+| --------- | ----------- | --------------- | ------------------------------ | --------------- |
+| CHECKED   | CONSTRUCTED | true            | true                           | $signalingCheck |
+
 #### Signaling state event
 
-| Singaling | WebChannel | Topology | connected | rejoinEnabled | Result              |
-| --------- | ---------- | -------- | --------- | ------------- | ------------------- |
-| CLOSED    |            | LEFT     |           |               | $rejoinOrLeave      |
-| CLOSED    |            | JOINED   |           | true          | $connectToSignaling |
-| OPEN      |            | !JOINING |           |               | $signalingCheck     |
-| CHECKED   | JOINING    | LEFT     | true      |               | Topology.JOINED     |
+| Singaling | WebChannel | Topology      | connected | rejoinEnabled | Result               |
+| --------- | ---------- | ------------- | --------- | ------------- | -------------------- |
+| CLOSED    |            | IDLE          |           | true          | $rejoin              |
+| CLOSED    |            | IDLE          |           | false         | $leave               |
+| CLOSED    |            | CONSTRUCTED   |           | true          | $connectToSignaling  |
+| CLOSED    |            | CONSTRUCTING  |           |               | $connectToSignaling  |
+| OPEN      |            | !CONSTRUCTING |           |               | $signalingCheck      |
+| CHECKED   | JOINING    | IDLE          | true      |               | Topology.CONSTRUCTED |
 
 #### Topology state event
 
-| Topology | Singaling  | Result                               |
-| -------- | ---------- | ------------------------------------ |
-| JOINING  |            | WebChannel.JOINING                   |
-| JOINING  | CLOSED     | $connectToSignaling                  |
-| JOINED   |            | WebChannel.JOINED                    |
-| JOINED   | OPEN       | WebChannel.JOINED & $signalingCheck  |
-| JOINED   | CHECKED    | WebChannel.JOINED & $signalingCheck  |
-| LEFT     | CLOSED     | $rejoinOrLeave                       |
-| LEFT     | CONNECTING | WebChannel.JOINING                   |
-| LEFT     | OPEN       | WebChannel.JOINING & $signalingCheck |
-| LEFT     | CHECKING   | WebChannel.JOINING                   |
-| LEFT     | CHECKED    | $signalingCheck                      |
+| Topology     | Singaling  | rejoinEnabled | Result                                   |
+| ------------ | ---------- | ------------- | ---------------------------------------- |
+| CONSTRUCTING |            |               | WebChannel.JOINING                       |
+| CONSTRUCTING | CLOSED     |               | WebChannel.JOINING & $connectToSignaling |
+| CONSTRUCTED  | OPEN       |               | $signalingCheck                          |
+| CONSTRUCTED  | CHECKED    |               | WebChannel.JOINED & $signalingCheck      |
+| IDLE         | CLOSED     | true          | $rejoin                                  |
+| IDLE         | CLOSED     | false         | $leave                                   |
+| IDLE         | CONNECTING |               | WebChannel.JOINING                       |
+| IDLE         | OPEN       |               | WebChannel.JOINING & $signalingCheck     |
+| IDLE         | CHECKING   |               | WebChannel.JOINING                       |
+| IDLE         | CHECKED    |               | $signalingCheck                          |
 
 Otherwiser $leave
 
@@ -124,23 +132,17 @@ Otherwiser $leave
 | ---------- | ------ |
 | !LEFT      | $leave |
 
-#### Member left event
-
-| Singaling | Topology | adjacent member | not only you left in the group | Result          |
-| --------- | -------- | --------------- | ------------------------------ | --------------- |
-| CHECKED   | JOINED   | true            | true                           | $signalingCheck |
-
 #### onLine() event (online/offline events, navigator.onLine)
 
-| WebChannel | Visibility | rejoinTimer | rejoinEnabled | Result |
-| ---------- | ---------- | ----------- | ------------- | ------ |
-| LEFT       | visible    | undefined   | true          | $join  |
+| WebChannel | Visibility | rejoinEnabled | Result           |
+| ---------- | ---------- | ------------- | ---------------- |
+| LEFT       | visible    | true          | $leave.1 & $join |
 
 #### isVisible() event (Page Visibility API)
 
-| WebChannel | onLine | rejoinTimer | rejoinEnabled | Result |
-| ---------- | ------ | ----------- | ------------- | ------ |
-| LEFT       | true   | undefined   | true          | $join  |
+| WebChannel | onLine | rejoinEnabled | Result           |
+| ---------- | ------ | ------------- | ---------------- |
+| LEFT       | true   | true          | $leave.1 & $join |
 
 > $join -> consists of three steps:
 
@@ -153,18 +155,15 @@ Otherwiser $leave
 1.  Clean WebChannel properties (ids, members, clean servicies) as if we were doing `new WebChannel()`, then
 2.  Set WebChannel state to LEFT
 
-> $rejoinOrLeave -> consists of executing the following algorithm:
+> $rejoin -> consists of executing the following algorithm:
 
 ```pseudocode
   Execute $leave.1
-  if (rejoinEnabled) then
     Execute $join.1
     Execute $join.2
     setTimeout
       if (WebChannel.LEFT && visible && onLine && rejoinEnabled) then
         $connectToSignaling
-  else
-    $leave.2
 ```
 
 > $connectToSignaling -> the third step of the $join process
