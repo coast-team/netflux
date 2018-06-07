@@ -1,13 +1,16 @@
+import { env } from './env'
+
+declare const require: any
+
 try {
   const wrtc = require('wrtc')
-  global.RTCPeerConnection = wrtc.RTCPeerConnection
-  global.RTCDataChannel = wrtc.RTCDataChannel
-  global.RTCIceCandidate = wrtc.RTCIceCandidate
+  env.RTCPeerConnection = wrtc.RTCPeerConnection
+  env.RTCIceCandidate = wrtc.RTCIceCandidate
 } catch (err) {
   console.warn(err.message)
 }
-global.WebSocket = require('uws')
+env.WebSocket = require('uws')
 const textEncoding = require('text-encoding')
-global.TextEncoder = textEncoding.TextEncoder
-global.TextDecoder = textEncoding.TextDecoder
-global.cryptoNode = require('crypto')
+env.TextEncoder = textEncoding.TextEncoder
+env.TextDecoder = textEncoding.TextDecoder
+env.cryptoNode = require('crypto')

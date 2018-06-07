@@ -1,6 +1,8 @@
 import { Observable, Subject } from 'rxjs'
 
 import { Channel, ChannelType } from '../../Channel'
+import '../../misc/env'
+import { env } from '../../misc/env'
 import { log } from '../../misc/util'
 import { dataChannelBuilder as proto } from '../../proto'
 import { WebChannel } from '../../WebChannel'
@@ -131,7 +133,7 @@ export class DataChannelBuilder extends Service<proto.IMessage, proto.Message> {
     log.webrtc(this.wc.myId + ` New Remote object: `, id)
     const remote = new Remote(
       id,
-      new global.RTCPeerConnection(this.rtcConfiguration),
+      new env.RTCPeerConnection(this.rtcConfiguration),
       (msg) => this.allStreams.sendOver(streamId, msg, id),
       this.getRemotes(streamId)
     )

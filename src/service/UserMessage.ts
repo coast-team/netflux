@@ -1,3 +1,4 @@
+import { env } from '../misc/env'
 import { userMessage as proto } from '../proto'
 import { Service } from '../service/Service'
 
@@ -11,8 +12,8 @@ const MAX_USER_MSG_SIZE = 15000
  */
 const MAX_MSG_ID_SIZE = 65535
 
-const textEncoder = new global.TextEncoder()
-const textDecoder = new global.TextDecoder()
+const textEncoder = new env.TextEncoder()
+const textDecoder = new env.TextDecoder()
 
 export type UserDataType = Uint8Array | string
 

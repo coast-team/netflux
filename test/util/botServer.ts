@@ -4,6 +4,9 @@ import { BOT_HOST, BOT_PORT, IBotData, SIGNALING_URL } from './helper'
 
 setLogLevel(LogLevel.DEBUG)
 
+declare const process: any
+declare const require: any
+
 // Require dependencies
 const http = require('http')
 const Koa = require('koa')
@@ -93,16 +96,12 @@ try {
   bot.onError = (err) => console.error('Bot ERROR: ', err)
 
   // Start the server
-  server
-    .listen(BOT_PORT, BOT_HOST, () => {
-      const host = server.address().address
-      const port = server.address().port
-      console.info('Netflux bot is listening on ' + host + ':' + port)
-    })(
-      // Leave all web channels before process death
-      global as any
-    )
-    .process.on('SIGINT', () => bot.webGroups.forEach((wg) => wg.leave()))
+  server.listen(BOT_PORT, BOT_HOST, () => {
+    const host = server.address().address
+    const port = server.address().port
+    console.info('Netflux bot is listening on ' + host + ':' + port)
+  })
+  process.on('SIGINT', () => bot.webGroups.forEach((wg) => wg.leave()))
 } catch (err) {
   // console.error('Bot server error: ', err)
 }

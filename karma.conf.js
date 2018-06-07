@@ -15,6 +15,7 @@ module.exports = (config) => {
     frameworks: ['jasmine', 'karma-typescript'],
     // list of files / patterns to load in the browser
     files: [
+      'src/misc/polyfills.browser.ts',
       'src/**/*.ts',
       'src/proto/index.js',
       'test/util/helper.ts',

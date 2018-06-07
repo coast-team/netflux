@@ -31,7 +31,7 @@
   ],
   "scripts": {
     "build": "rm -rf dist && tsc -p tsconfig.dist.json && rollup --config",
-    "postbuild": "cp src/misc/typings.d.ts dist/esm && mkdir dist/esm/proto && cp src/proto/index.js src/proto/index.d.ts dist/esm/proto && sed -i '1s/^/\\/\\/\\/ <reference path=\\\".\\/typings.d.ts\\\"\\/>\\n/' dist/esm/index.node.d.ts && uglifyjs -o dist/netflux.umd.min.js dist/netflux.umd.js",
+    "postbuild": "mkdir dist/esm/proto && cp src/proto/index.js src/proto/index.d.ts dist/esm/proto && uglifyjs -o dist/netflux.umd.min.js dist/netflux.umd.js",
     "pretest": "rollup -c test/util/rollup.config.js && pm2 --silent restart test/util/process.yml --only netflux-test-signaling && pm2 restart test/util/process.yml --only netflux-test-bot ",
     "test": "karma start",
     "posttest": "pm2 --silent delete test/util/process.yml",
@@ -51,7 +51,6 @@
     "cz": "git-cz"
   },
   "dependencies": {
-    "core-js": "^2.5.7",
     "protobufjs": "^6.8.6",
     "rxjs": "^6.2.0",
     "text-encoding": "^0.6.4",

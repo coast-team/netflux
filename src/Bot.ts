@@ -3,6 +3,8 @@ import { IWebChannelOptions, WebChannel, webChannelDefaultOptions } from './WebC
 import { wcs, WebGroup } from './WebChannelFacade'
 import { Route, WebSocketBuilder } from './WebSocketBuilder'
 
+declare const require: any
+
 const urlLib = require('url')
 const uws = require('uws')
 

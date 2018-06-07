@@ -1,15 +1,16 @@
 import { Observable } from 'rxjs'
+import { env } from './env'
 
 /**
  * Equals to true in any browser.
  */
-export const isBrowser = typeof global.window === 'undefined' ? false : true
+export const isBrowser = typeof window === 'undefined' ? false : true
 
 export function isOnline() {
-  return isBrowser ? global.navigator.onLine : true
+  return isBrowser ? navigator.onLine : true
 }
 export function isVisible() {
-  return isBrowser ? global.document.visibilityState === 'visible' : true
+  return isBrowser ? document.visibilityState === 'visible' : true
 }
 
 /**
@@ -74,10 +75,10 @@ function randNumbers(length: number = 1): number[] | Uint32Array {
   let res
   if (isBrowser) {
     res = new Uint32Array(length)
-    global.crypto.getRandomValues(res)
+    env.crypto.getRandomValues(res)
   } else {
     res = []
-    const bytes = global.cryptoNode.randomBytes(4 * length)
+    const bytes = env.cryptoNode.randomBytes(4 * length)
     for (let i = 0; i < bytes.length; i += 4) {
       res[res.length] = bytes.readUInt32BE(i, true)
     }
@@ -98,14 +99,14 @@ export function equal(array1: number[], array2: number[]) {
  * Indicates whether WebSocket is supported by the environment.
  */
 export function isWebSocketSupported() {
-  return !!global.WebSocket
+  return !!env.WebSocket
 }
 
 /**
  * Indicates whether WebRTC & RTCDataChannel is supported by the environment.
  */
 export function isWebRTCSupported() {
-  return !!global.RTCPeerConnection && 'createDataChannel' in global.RTCPeerConnection.prototype
+  return !!env.RTCPeerConnection && 'createDataChannel' in env.RTCPeerConnection.prototype
 }
 
 export * from './util.log'

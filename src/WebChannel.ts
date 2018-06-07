@@ -244,7 +244,7 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
     this.key = key
     this.rejoinEnabled = this.autoRejoin
     if (this.rejoinTimer) {
-      global.clearTimeout(this.rejoinTimer)
+      clearTimeout(this.rejoinTimer)
       this.rejoinTimer = undefined
     }
     this.setState(WebChannelState.JOINING)
@@ -253,7 +253,7 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
   private clean() {
     log.webgroup('CLEAN')
     if (this.rejoinTimer) {
-      global.clearTimeout(this.rejoinTimer)
+      clearTimeout(this.rejoinTimer)
       this.rejoinTimer = undefined
     }
     this.channelBuilder.clean()
@@ -349,7 +349,7 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
   }
 
   private subscribeToBrowserEvents() {
-    global.addEventListener('online', () => {
+    window.addEventListener('online', () => {
       if (
         this.state === WebChannelState.LEFT &&
         isVisible() &&
@@ -359,7 +359,7 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
         this.startJoin()
       }
     })
-    global.addEventListener('visibilitychange', () => {
+    window.addEventListener('visibilitychange', () => {
       if (
         isVisible() &&
         this.state === WebChannelState.LEFT &&
@@ -370,7 +370,7 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
         this.startJoin()
       }
     })
-    global.addEventListener('beforeunload', () => this.leave())
+    window.addEventListener('beforeunload', () => this.leave())
   }
 
   private startJoin(key = this.key) {
@@ -384,7 +384,7 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
       this.clean()
       // this.init(this.key)
       log.webgroup('rejoinOrLeave: set rejoinTimer ')
-      this.rejoinTimer = global.setTimeout(() => {
+      this.rejoinTimer = setTimeout(() => {
         if (
           this.state === WebChannelState.LEFT &&
           isVisible() &&
@@ -404,7 +404,7 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
   private reconnectToSignaling() {
     log.webgroup('reconnect: ')
     if (this.rejoinEnabled && !this.rejoinTimer) {
-      this.rejoinTimer = global.setTimeout(() => {
+      this.rejoinTimer = setTimeout(() => {
         if (isVisible() && isOnline() && this.rejoinEnabled) {
           this.signaling.connect(this.key)
         }

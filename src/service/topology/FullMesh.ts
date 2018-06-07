@@ -1,5 +1,5 @@
 import { Channel, ChannelType, IChannelInitData, MAXIMUM_MISSED_HEARTBEAT } from '../../Channel'
-import { log } from '../../misc/util'
+import { isBrowser, log } from '../../misc/util'
 import { fullMesh as proto } from '../../proto'
 import { InWcMsg, WebChannel } from '../../WebChannel'
 import { ConnectionError } from '../channelBuilder/ConnectionError'
@@ -91,19 +91,21 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
       this.wc.onMemberJoinProxy(ch.id)
     })
 
-    global.fullmesh = () => {
-      log.topology('Fullmesh info:', {
-        myId: this.wc.myId,
-        signalingState: this.wc.signaling.state,
-        webGroupState: this.wc.state,
-        topologyState: TopologyState[this.state],
-        adjacentMembers: Array.from(this.adjacentMembers.keys()).toString(),
-        distantMembers: Array.from(this.distantMembers.keys()).toString(),
-        distantMembersDETAILS: Array.from(this.distantMembers.keys()).map((id: number) => {
-          const adjacentMembers = this.distantMembers.get(id)
-          return { id, adjacentMembers: adjacentMembers ? adjacentMembers.adjacentIds : [] }
-        }),
-      })
+    if (isBrowser) {
+      ;(window as any).fullmesh = () => {
+        log.topology('Fullmesh info:', {
+          myId: this.wc.myId,
+          signalingState: this.wc.signaling.state,
+          webGroupState: this.wc.state,
+          topologyState: TopologyState[this.state],
+          adjacentMembers: Array.from(this.adjacentMembers.keys()).toString(),
+          distantMembers: Array.from(this.distantMembers.keys()).toString(),
+          distantMembersDETAILS: Array.from(this.distantMembers.keys()).map((id: number) => {
+            const adjacentMembers = this.distantMembers.get(id)
+            return { id, adjacentMembers: adjacentMembers ? adjacentMembers.adjacentIds : [] }
+          }),
+        })
+      }
     }
   }
 
@@ -161,9 +163,9 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
     this.distantMembers.clear()
 
     this.antecedentId = 0
-    global.clearInterval(this.heartbeatInterval)
+    clearInterval(this.heartbeatInterval)
     this.heartbeatInterval = undefined
-    global.clearInterval(this.membersCheckInterval)
+    clearInterval(this.membersCheckInterval)
     this.membersCheckInterval = undefined
     this.delayedMembers.clear()
     this.delayedMembersTimers.forEach((t) => clearTimeout(t))
@@ -252,7 +254,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
 
   private startMembersCheckIntervals() {
     this.updateAntecedentId()
-    this.membersCheckInterval = global.setInterval(() => {
+    this.membersCheckInterval = setInterval(() => {
       if (this.antecedentId) {
         this.wcStream.send({ members: { ids: this.wc.members } }, this.antecedentId)
       }
@@ -260,7 +262,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
   }
 
   private startHeartbeatInterval() {
-    this.heartbeatInterval = global.setInterval(() => {
+    this.heartbeatInterval = setInterval(() => {
       this.adjacentMembers.forEach((ch) => ch.sendHeartbeat())
       this.distantMembers.forEach((peer, id) => {
         peer.missedHeartbeat++

@@ -1,5 +1,6 @@
 import { ReplaySubject } from 'rxjs'
 
+import { env } from '../../misc/env'
 import { log } from '../../misc/util'
 import { dataChannelBuilder as proto } from '../../proto'
 
@@ -130,7 +131,7 @@ export class Remote {
           break
         case 'candidate':
           this.log('REMOTE ICE CANDIDATE is received', msg.candidate)
-          this.candidates.next(new global.RTCIceCandidate(msg.candidate as proto.IceCandidate))
+          this.candidates.next(new env.RTCIceCandidate(msg.candidate as proto.IceCandidate))
           break
         default:
           this._onError(new Error('Buffer Protocol unknown message from the remote peer'))

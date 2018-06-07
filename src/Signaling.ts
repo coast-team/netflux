@@ -1,5 +1,6 @@
 import { Observable, Subject } from 'rxjs'
 
+import { env } from './misc/env'
 import { isBrowser, IStream, isWebSocketSupported, log } from './misc/util'
 import { IMessage, Message, signaling as proto } from './proto'
 import { WebChannel } from './WebChannel'
@@ -82,7 +83,7 @@ export class Signaling implements IStream<OutSigMsg, InSigMsg> {
   connect(key: string): void {
     if (isWebSocketSupported()) {
       this.setState(SignalingState.CONNECTING)
-      this.ws = new global.WebSocket(this.fullUrl(key))
+      this.ws = new env.WebSocket(this.fullUrl(key))
       this.ws.binaryType = 'arraybuffer'
       this.connectionTimeout = setTimeout(() => {
         if (this.ws && this.ws.readyState !== this.ws.OPEN) {
@@ -128,10 +129,10 @@ export class Signaling implements IStream<OutSigMsg, InSigMsg> {
 
   private clean() {
     if (this.connectionTimeout) {
-      global.clearTimeout(this.connectionTimeout)
+      clearTimeout(this.connectionTimeout)
     }
     if (this.heartbeatInterval) {
-      global.clearInterval(this.heartbeatInterval)
+      clearInterval(this.heartbeatInterval)
     }
     this.ws = undefined
   }
@@ -169,7 +170,7 @@ export class Signaling implements IStream<OutSigMsg, InSigMsg> {
 
   private startHeartbeat() {
     this.missedHeartbeat = 0
-    this.heartbeatInterval = global.setInterval(() => {
+    this.heartbeatInterval = setInterval(() => {
       try {
         this.missedHeartbeat++
         if (this.missedHeartbeat >= MAXIMUM_MISSED_HEARTBEAT) {
@@ -183,7 +184,7 @@ export class Signaling implements IStream<OutSigMsg, InSigMsg> {
   }
 
   private send(msg: proto.IMessage) {
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+    if (this.ws && this.ws.readyState === env.WebSocket.OPEN) {
       try {
         this.ws.send(proto.Message.encode(proto.Message.create(msg)).finish())
       } catch (err) {
@@ -193,7 +194,7 @@ export class Signaling implements IStream<OutSigMsg, InSigMsg> {
   }
 
   private heartbeat() {
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+    if (this.ws && this.ws.readyState === env.WebSocket.OPEN) {
       try {
         this.ws.send(heartbeatMsg)
       } catch (err) {

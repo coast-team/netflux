@@ -1,6 +1,7 @@
 import { BehaviorSubject, Observable, Subject } from 'rxjs'
 
 import { Channel, ChannelType } from './Channel'
+import { env } from './misc/env'
 import { isURL } from './misc/util'
 import { WebChannel } from './WebChannel'
 
@@ -98,7 +99,7 @@ export class WebSocketBuilder {
     } else {
       throw new Error(`${url} is not a valid URL`)
     }
-    const ws = new global.WebSocket(url)
+    const ws = new env.WebSocket(url)
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         if (ws.readyState !== ws.OPEN) {

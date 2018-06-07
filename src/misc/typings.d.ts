@@ -1,19 +1,6 @@
-/* tslint:disable */
+/* tslint:disable:interface-name */
 
-declare var global: Window & {
-  RTCPeerConnection: typeof RTCPeerConnection
-  RTCDataChannel: RTCDataChannel
-  RTCIceCandidate: typeof RTCIceCandidate
-  TextEncoder: typeof TextEncoder
-  TextDecoder: typeof TextDecoder
-  WebSocket: typeof WebSocket
-  crypto: Crypto
-  cryptoNode: any
-  fullmesh: any // for debuging
-}
-
-// The following Text Encoding declaration are added because they exist only started from TypeScript v2.8.x
-
+// The following Text Encoding declarations are added because they exist only since TypeScript v2.8.x
 interface TextDecodeOptions {
   stream?: boolean
 }
@@ -45,25 +32,10 @@ interface TextDecoder {
   ): string
 }
 
-declare var TextDecoder: {
-  prototype: TextDecoder
-  new (label?: string, options?: TextDecoderOptions): TextDecoder
-}
-
 interface TextEncoder {
   readonly encoding: string
   encode(input?: string): Uint8Array
 }
-
-declare var TextEncoder: {
-  prototype: TextEncoder
-  new (): TextEncoder
-}
-
-// Types for NodeJS environment
-declare var require: (id: string) => any
-declare type NodeJSHttpServer = any // NodeJS http.Server
-declare type NodeJSHttpsServer = any // NodeJS https.Server
 
 // Extends lib.d.ts with WebRTC missing declarations.
 interface RTCPeerConnection {
@@ -89,3 +61,7 @@ interface RTCDataChannel extends EventTarget {
   close(): void
   send(data: string | ArrayBuffer | Blob): void
 }
+
+// Types for NodeJS environment, just for visual understanding
+declare type NodeJSHttpServer = any // NodeJS http.Server
+declare type NodeJSHttpsServer = any // NodeJS https.Server
