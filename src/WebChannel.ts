@@ -176,11 +176,8 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
 
   leave() {
     if (this.state !== WebChannelState.LEFT) {
-      this.rejoinEnabled = false
       this.key = ''
-      this.signaling.close()
-      this.topology.leave()
-      this.clean()
+      this.internalLeave()
     }
   }
 
@@ -258,7 +255,6 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
     this.members = []
     this.id = 0
     this.myId = 0
-    this.setState(WebChannelState.LEFT)
   }
 
   private setState(state: WebChannelState): void {
@@ -282,8 +278,8 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
           if (this.signaling.state === SignalingState.OPEN) {
             this.signaling.check()
           } else if (this.signaling.state === SignalingState.CHECKED) {
-            this.signaling.check()
             this.setState(WebChannelState.JOINED)
+            this.signaling.check()
           } else if (this.signaling.state === SignalingState.CLOSED) {
             // This is for a bot who was invited to the group
             this.signaling.connect(this.key)
@@ -297,7 +293,7 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
               if (this.rejoinEnabled) {
                 this.rejoin()
               } else {
-                this.leave()
+                this.internalLeave()
               }
               break
             case SignalingState.CONNECTING:
@@ -330,25 +326,14 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
             if (this.rejoinEnabled) {
               this.rejoin()
             } else {
-              this.leave()
+              this.internalLeave()
             }
-          } else if (
-            this.topology.state === TopologyState.CONSTRUCTED &&
-            this.rejoinEnabled &&
-            !this.rejoinTimer
-          ) {
-            log.webgroup(`reconnect to Signaling server in ${REJOIN_TIMEOUT}ms`)
-            this.rejoinTimer = setTimeout(() => {
-              if (
-                this.signaling.state === SignalingState.CLOSED &&
-                isVisible() &&
-                isOnline() &&
-                this.rejoinEnabled
-              ) {
-                this.signaling.connect(this.key)
-              }
-              this.rejoinTimer = undefined
-            }, REJOIN_TIMEOUT)
+          } else if (this.topology.state === TopologyState.CONSTRUCTED) {
+            if (this.members.length === 1) {
+              this.topology.leave()
+            } else if (this.rejoinEnabled && !this.rejoinTimer) {
+              this.reconnectToSignaling()
+            }
           }
           break
         case SignalingState.OPEN:
@@ -371,37 +356,83 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
 
   private subscribeToBrowserEvents() {
     window.addEventListener('online', () => {
-      if (this.state === WebChannelState.LEFT && isVisible() && this.rejoinEnabled) {
-        log.webgroup('ONLINE')
-        this.clean()
-        this.startJoin()
-      }
+      log.webgroup('ONLINE')
+      this.onBrowserBack()
     })
     window.addEventListener('visibilitychange', () => {
-      if (isVisible() && this.state === WebChannelState.LEFT && isOnline() && this.rejoinEnabled) {
-        log.webgroup('VISIBLE')
-        this.clean()
-        this.startJoin()
-      }
+      log.webgroup('visibilitychange, is visible = ', isVisible())
+      this.onBrowserBack()
     })
     window.addEventListener('beforeunload', () => this.leave())
   }
 
   private startJoin(key = this.key) {
-    log.webgroup('startJoin...')
+    log.webgroup('start join...')
     this.init(key)
     this.signaling.connect(key)
   }
 
   private rejoin() {
-    log.webgroup(`rejoin in ${REJOIN_TIMEOUT}ms`)
-    this.clean()
-    this.rejoinTimer = setTimeout(() => {
-      if (this.state === WebChannelState.LEFT && isVisible() && isOnline() && this.rejoinEnabled) {
-        this.startJoin()
+    this.setState(WebChannelState.JOINING)
+    if (!isVisible() || !isOnline()) {
+      this.internalLeave()
+    } else {
+      this.clean()
+      log.webgroup(`rejoin in ${REJOIN_TIMEOUT}ms`)
+      this.rejoinTimer = setTimeout(() => {
+        if (
+          this.signaling.state === SignalingState.CLOSED &&
+          isVisible() &&
+          isOnline() &&
+          this.rejoinEnabled
+        ) {
+          this.startJoin()
+        } else {
+          log.webgroup('abandon rejoin because: ', {
+            isVisible: isVisible(),
+            isOnline: isOnline(),
+            signalingState: SignalingState[this.signaling.state],
+            rejoinEnabled: this.rejoinEnabled,
+          })
+          this.internalLeave()
+        }
+        this.rejoinTimer = undefined
+      }, REJOIN_TIMEOUT)
+    }
+  }
+
+  private reconnectToSignaling() {
+    if (this.members.length === 1 && (!isVisible() || !isOnline())) {
+      this.internalLeave()
+    } else {
+      log.webgroup(`reconnect to Signaling server in ${REJOIN_TIMEOUT}ms`)
+      this.setState(WebChannelState.JOINING)
+      this.rejoinTimer = setTimeout(() => {
+        if (this.signaling.state === SignalingState.CLOSED) {
+          if (isVisible() && isOnline()) {
+            if (this.rejoinEnabled) {
+              this.signaling.connect(this.key)
+            }
+          } else if (this.members.length === 1) {
+            this.internalLeave()
+          }
+        }
+        this.rejoinTimer = undefined
+      }, REJOIN_TIMEOUT)
+    }
+  }
+
+  private onBrowserBack() {
+    if (isVisible() && isOnline()) {
+      this.rejoinEnabled = this.autoRejoin
+      if (this.rejoinEnabled) {
+        if (this.state === WebChannelState.LEFT) {
+          this.startJoin()
+        } else if (this.signaling.state === SignalingState.CLOSED) {
+          this.signaling.connect(this.key)
+        }
       }
-      this.rejoinTimer = undefined
-    }, REJOIN_TIMEOUT)
+    }
   }
 
   private onMemberLeaveProxy(ids: number[]) {
@@ -414,5 +445,14 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
       }
     })
     return atLeastOneFound
+  }
+
+  private internalLeave() {
+    log.webgroup('internal leave')
+    this.rejoinEnabled = false
+    this.signaling.close()
+    this.topology.leave()
+    this.clean()
+    this.setState(WebChannelState.LEFT)
   }
 }
