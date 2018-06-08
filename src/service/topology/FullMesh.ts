@@ -77,7 +77,6 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
         am.close()
       }
       this.adjacentMembers.set(ch.id, ch)
-      this.updateAntecedentId()
       this.notifyDistantMembers()
       if (!this.heartbeatInterval) {
         this.startHeartbeatInterval()
@@ -94,6 +93,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
         })
       }
       this.wc.onMemberJoinProxy(ch.id)
+      this.updateAntecedentId()
     })
 
     if (isBrowser) {
@@ -147,6 +147,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
 
   onChannelClose(channel: Channel): void {
     if (this.adjacentMembers.delete(channel.id)) {
+      this.wc.onAdjacentMembersLeaveProxy([channel.id])
       if (this.adjacentMembers.size === 0) {
         this.clean()
       } else {
@@ -154,7 +155,6 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
         this.updateAntecedentId()
       }
       log.topology(`Channel closed with ${channel.id}`)
-      this.wc.onAdjacentMembersLeaveProxy([channel.id])
     }
   }
 
