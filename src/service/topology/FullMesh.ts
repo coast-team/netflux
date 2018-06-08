@@ -34,10 +34,10 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
    */
   private distantMembers: Map<number, IDistantMember>
   private antecedentId: number
-  private heartbeatInterval: any
+  private heartbeatInterval: number | undefined
   private delayedMembers: Set<number>
   private delayedMembersTimers: Set<number>
-  private membersCheckInterval: any
+  private membersCheckInterval: number | undefined
   private heartbeatMsg: Uint8Array
 
   constructor(wc: WebChannel) {
@@ -87,14 +87,10 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
         const { members } = ch.initData as IChannelInitData
         this.connectToMembers(members, ch.id).then(() => {
           super.setState(TopologyState.CONSTRUCTED)
-          if (!this.membersCheckInterval) {
-            this.startMembersCheckIntervals()
-          }
+          this.startMembersCheckIntervals()
         })
       } else {
-        if (!this.membersCheckInterval) {
-          this.startMembersCheckIntervals()
-        }
+        this.startMembersCheckIntervals()
       }
       this.wc.onMemberJoinProxy(ch.id)
       this.updateAntecedentId()
@@ -184,10 +180,10 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
   private handleServiceMessage(channel: Channel, senderId: number, msg: proto.Message): void {
     switch (msg.type) {
       case 'members': {
-        log.topology(
-          `INTERVAL: members received from ${senderId}`,
-          (msg.members as proto.Peers).ids
-        )
+        // log.topology(
+        //   `INTERVAL: members received from ${senderId}`,
+        //   (msg.members as proto.Peers).ids
+        // )
         this.connectToMembers((msg.members as proto.Peers).ids, senderId)
         break
       }
@@ -231,6 +227,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
             missedHeartbeat: 0,
           })
           log.topology(`NEW distant member = ${id}; BIS`, adjacentId)
+          this.updateAntecedentId()
         }
 
         attempts[attempts.length] = this.wc.channelBuilder
@@ -273,11 +270,13 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
   }
 
   private startMembersCheckIntervals() {
-    this.membersCheckInterval = setInterval(() => {
-      if (this.antecedentId) {
-        this.wcStream.send({ members: { ids: this.wc.members } }, this.antecedentId)
-      }
-    }, REQUEST_MEMBERS_INTERVAL)
+    if (!this.membersCheckInterval) {
+      this.membersCheckInterval = setInterval(() => {
+        if (this.antecedentId) {
+          this.wcStream.send({ members: { ids: this.wc.members } }, this.antecedentId)
+        }
+      }, REQUEST_MEMBERS_INTERVAL)
+    }
   }
 
   private startHeartbeatInterval() {
@@ -345,6 +344,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
           missedHeartbeat: 0,
         })
         log.topology(`NEW distant member = ${id}`, ids)
+        this.updateAntecedentId()
       }
       return true
     }
@@ -355,21 +355,20 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
   }
 
   private updateAntecedentId() {
-    if (this.adjacentMembers.size > 0 && this.state === TopologyState.CONSTRUCTED) {
-      let maxId = this.wc.members[0]
-      let found = false
+    if (this.adjacentMembers.size > 0) {
+      let maxId = -1
+      let desiredId = -1
       for (const id of this.wc.members) {
-        if (id < this.wc.myId && (!this.antecedentId || id > this.antecedentId)) {
-          this.antecedentId = id
-          found = true
-        }
-        if (maxId < id) {
-          maxId = id
+        if (id !== this.wc.myId) {
+          if (id < this.wc.myId && id > desiredId) {
+            desiredId = id
+          }
+          if (maxId < id) {
+            maxId = id
+          }
         }
       }
-      if (!found) {
-        this.antecedentId = maxId
-      }
+      this.antecedentId = desiredId !== -1 ? desiredId : maxId
     } else {
       this.antecedentId = 0
     }
