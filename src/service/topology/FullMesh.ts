@@ -13,7 +13,7 @@ interface IDistantMember {
 const REQUEST_MEMBERS_INTERVAL = 6000
 const MAX_ROUTE_DISTANCE = 3
 const HEARTBEAT_INTERVAL = 3000
-const DELAYED_TIMEOUT = 60000
+const DELAYED_TIMEOUT = 120000
 
 /**
  * Fully connected web channel manager. Implements fully connected topology
@@ -59,8 +59,8 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
     // Set onConnectionRequest callback for ChannelBuilder
     this.wc.channelBuilder.onConnectionRequest = (streamId: number, data: Uint8Array) => {
       const { id, adjacentIds } = proto.ConnectionRequest.decode(data)
-      log.topology(`CONNECTION REQUEST from ${id}, where adjacent members are: `, adjacentIds)
       if (streamId === this.wc.STREAM_ID) {
+        log.topology(`CONNECTION REQUEST from ${id}, where adjacent members are: `, adjacentIds)
         return this.createOrUpdateDistantMember(id, adjacentIds)
       } else {
         return true
@@ -234,6 +234,9 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
           .connectOverWebChannel(
             id,
             () => {
+              log.topology(
+                `distant member ${id} is responding but not yet connected##################`
+              )
               this.wc.onMemberJoinProxy(id)
               this.updateAntecedentId()
             },
@@ -243,7 +246,8 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
             log.topology(`FAILED to connect to ${id}, because: ${err.message}`)
             if (
               err.message === ConnectionError.CONNECTION_TIMEOUT ||
-              err.message === ConnectionError.NEGOTIATION_ERROR
+              err.message === ConnectionError.NEGOTIATION_ERROR ||
+              err.message === ConnectionError.IN_PROGRESS
             ) {
               this.delayedMembers.add(id)
               const timer = setTimeout(() => {
@@ -343,6 +347,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
           adjacentIds: ids,
           missedHeartbeat: 0,
         })
+        this.wc.onMemberJoinProxy(id)
         log.topology(`NEW distant member = ${id}`, ids)
         this.updateAntecedentId()
       }
