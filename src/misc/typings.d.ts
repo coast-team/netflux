@@ -63,5 +63,5 @@ interface RTCDataChannel extends EventTarget {
 }
 
 // Types for NodeJS environment, just for visual understanding
-declare type NodeJSHttpServer = any // NodeJS http.Server
-declare type NodeJSHttpsServer = any // NodeJS https.Server
+type NodeJSHttpServer = any // NodeJS http.Server
+type NodeJSHttpsServer = any // NodeJS https.Server
