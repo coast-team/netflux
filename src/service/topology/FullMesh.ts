@@ -91,6 +91,10 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
             this.startMembersCheckIntervals()
           }
         })
+      } else {
+        if (!this.membersCheckInterval) {
+          this.startMembersCheckIntervals()
+        }
       }
       this.wc.onMemberJoinProxy(ch.id)
       this.updateAntecedentId()
@@ -269,7 +273,6 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
   }
 
   private startMembersCheckIntervals() {
-    this.updateAntecedentId()
     this.membersCheckInterval = setInterval(() => {
       if (this.antecedentId) {
         this.wcStream.send({ members: { ids: this.wc.members } }, this.antecedentId)
