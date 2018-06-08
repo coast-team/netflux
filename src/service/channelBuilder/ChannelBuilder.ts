@@ -28,7 +28,7 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
   private static connectResTrueEncoded: Uint8Array
   private static connectResFalseEncoded: Uint8Array
 
-  public onConnectionRequest: (data: Uint8Array) => boolean
+  public onConnectionRequest: (streamId: number, data: Uint8Array) => boolean
 
   private negotiationEncoded: Uint8Array
   private allStreams: IAllStreams<proto.IMessage, proto.Message>
@@ -120,7 +120,7 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
           }
         }
 
-        if (this.onConnectionRequest(msg.connectionRequest)) {
+        if (this.onConnectionRequest(streamId, msg.connectionRequest)) {
           connection = this.connectsInProgress.create(
             streamId,
             senderId,

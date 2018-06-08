@@ -1,6 +1,7 @@
 import { Observable, Subject } from 'rxjs'
 
 import { Channel } from '../../Channel'
+import { log } from '../../misc/util'
 import { IMessage } from '../../proto'
 import { WebChannel } from '../../WebChannel'
 import { IMessageFactory, IWebChannelStream, Service } from '../Service'
@@ -56,6 +57,7 @@ export abstract class Topology<OutMsg, InMsg extends OutMsg> extends Service<Out
 
   protected setState(state: TopologyState) {
     if (this.state !== state) {
+      log.topology(`Topology state = ${TopologyState[state]}`)
       this._state = state
       this.stateSubject.next(state)
     }

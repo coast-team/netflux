@@ -57,14 +57,19 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
     )
 
     // Set onConnectionRequest callback for ChannelBuilder
-    this.wc.channelBuilder.onConnectionRequest = (data: Uint8Array) => {
+    this.wc.channelBuilder.onConnectionRequest = (streamId: number, data: Uint8Array) => {
       const { id, adjacentIds } = proto.ConnectionRequest.decode(data)
-      return this.createOrUpdateDistantMember(id, adjacentIds)
+      log.topology(`CONNECTION REQUEST from ${id}, where adjacent members are: `, adjacentIds)
+      if (streamId === this.wc.STREAM_ID) {
+        return this.createOrUpdateDistantMember(id, adjacentIds)
+      } else {
+        return true
+      }
     }
 
     // Subscribe to channels from ChannelBuilder
     this.wc.channelBuilder.onChannel.subscribe((ch) => {
-      log.topology('Adding new adjacent member: ', ch.id)
+      log.topology(`New adjacent member: ${ch.id}`)
       this.distantMembers.delete(ch.id)
       const am = this.adjacentMembers.get(ch.id)
       if (am) {
@@ -131,9 +136,9 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
 
   leave(): void {
     if (this.state !== TopologyState.IDLE) {
+      log.topology('LEAVE')
       this.clean()
       this.adjacentMembers.forEach((ch) => ch.close())
-      log.topology('onAdjacentMembersLeaveProxy: leave ')
       this.wc.onAdjacentMembersLeaveProxy(Array.from(this.adjacentMembers.keys()))
       this.adjacentMembers.clear()
       super.setState(TopologyState.IDLE)
@@ -148,7 +153,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
         this.notifyDistantMembers()
         this.updateAntecedentId()
       }
-      log.topology('onAdjacentMembersLeaveProxy: onChannelClose ')
+      log.topology(`Channel closed with ${channel.id}`)
       this.wc.onAdjacentMembersLeaveProxy([channel.id])
     }
   }
@@ -158,7 +163,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
   }
 
   private clean() {
-    log.topology('onDistantMembersLeaveProxy: clean ')
+    log.topology('CLEAN')
     this.wc.onDistantMembersLeaveProxy(Array.from(this.distantMembers.keys()))
     this.distantMembers.clear()
 
@@ -175,10 +180,18 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
   private handleServiceMessage(channel: Channel, senderId: number, msg: proto.Message): void {
     switch (msg.type) {
       case 'members': {
+        log.topology(
+          `INTERVAL: members received from ${senderId}`,
+          (msg.members as proto.Peers).ids
+        )
         this.connectToMembers((msg.members as proto.Peers).ids, senderId)
         break
       }
       case 'adjacentMembers': {
+        log.topology(
+          `adjacent members received from ${senderId}`,
+          (msg.adjacentMembers as proto.Peers).ids
+        )
         const ids = (msg.adjacentMembers as proto.Peers).ids
         this.createOrUpdateDistantMember(senderId, ids)
         break
@@ -198,6 +211,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
       (id) => !this.adjacentMembers.has(id) && !this.delayedMembers.has(id) && id !== this.wc.myId
     )
     if (missingIds.length !== 0) {
+      log.topology(`TRY TO CONNECT to members`, missingIds)
       const attempts: Array<Promise<void>> = []
       const msg = proto.ConnectionRequest.encode(
         proto.ConnectionRequest.create({
@@ -212,6 +226,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
             adjacentIds: [adjacentId],
             missedHeartbeat: 0,
           })
+          log.topology(`NEW distant member = ${id}; BIS`, adjacentId)
         }
 
         attempts[attempts.length] = this.wc.channelBuilder
@@ -224,6 +239,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
             msg
           )
           .catch((err) => {
+            log.topology(`FAILED to connect to ${id}, because: ${err.message}`)
             if (
               err.message === ConnectionError.CONNECTION_TIMEOUT ||
               err.message === ConnectionError.NEGOTIATION_ERROR
@@ -267,7 +283,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
       this.distantMembers.forEach((peer, id) => {
         peer.missedHeartbeat++
         if (peer.missedHeartbeat >= MAXIMUM_MISSED_HEARTBEAT + 1) {
-          log.topology(`Distant peer ${id} has left: too many missed heartbeats`)
+          log.topology(`Distant peer ${id} stopped to responding: too many missed heartbeats`)
           if (this.distantMembers.delete(id)) {
             this.wc.onDistantMembersLeaveProxy([id])
             this.updateAntecedentId()
@@ -319,14 +335,19 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
       const distantMember = this.distantMembers.get(id)
       if (distantMember) {
         distantMember.adjacentIds = ids
+        log.topology(`UPDATE distant member = ${id}`, distantMember.adjacentIds)
       } else {
         this.distantMembers.set(id, {
           adjacentIds: ids,
           missedHeartbeat: 0,
         })
+        log.topology(`NEW distant member = ${id}`, ids)
       }
       return true
     }
+    log.topology(
+      `ABNORMAL update or create a distant member ${id}, but he is also an adjacent member`
+    )
     return false
   }
 
@@ -349,5 +370,6 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
     } else {
       this.antecedentId = 0
     }
+    log.topology(`UPDATE, antecedentId = ${this.antecedentId}`)
   }
 }
