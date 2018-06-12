@@ -94,31 +94,29 @@ Possible values for `WebChannel`, `Signaling` and `Topology` states are:
 
 #### Signaling state event
 
-| Singaling | WebChannel | Topology      | connected | rejoinEnabled | Result               |
-| --------- | ---------- | ------------- | --------- | ------------- | -------------------- |
-| CLOSED    |            | IDLE          |           | true          | $rejoin              |
-| CLOSED    |            | IDLE          |           | false         | $leave               |
-| CLOSED    |            | CONSTRUCTED   |           | true          | $connectToSignaling  |
-| CLOSED    |            | CONSTRUCTING  |           |               | $connectToSignaling  |
-| OPEN      |            | !CONSTRUCTING |           |               | $signalingCheck      |
-| CHECKED   | JOINING    | IDLE          | true      |               | Topology.CONSTRUCTED |
+| Singaling | Topology      | connected | rejoinEnabled | Result               |
+| --------- | ------------- | --------- | ------------- | -------------------- |
+| CLOSED    | IDLE          |           | true          | $rejoin              |
+| CLOSED    | IDLE          |           | false         | $leave               |
+| CLOSED    | CONSTRUCTED   |           | true          | $connectToSignaling  |
+| OPEN      | !CONSTRUCTING |           |               | $signalingCheck      |
+| CHECKED   | IDLE          | true      |               | Topology.CONSTRUCTED |
+| CHECKED   | CONSTRUCTED   |           |               | WebChannel.JOINED    |
 
 #### Topology state event
 
-| Topology     | Singaling  | rejoinEnabled | Result                                   |
-| ------------ | ---------- | ------------- | ---------------------------------------- |
-| CONSTRUCTING |            |               | WebChannel.JOINING                       |
-| CONSTRUCTING | CLOSED     |               | WebChannel.JOINING & $connectToSignaling |
-| CONSTRUCTED  | OPEN       |               | $signalingCheck                          |
-| CONSTRUCTED  | CHECKED    |               | WebChannel.JOINED & $signalingCheck      |
-| IDLE         | CLOSED     | true          | $rejoin                                  |
-| IDLE         | CLOSED     | false         | $leave                                   |
-| IDLE         | CONNECTING |               | WebChannel.JOINING                       |
-| IDLE         | OPEN       |               | WebChannel.JOINING & $signalingCheck     |
-| IDLE         | CHECKING   |               | WebChannel.JOINING                       |
-| IDLE         | CHECKED    |               | $signalingCheck                          |
-
-Otherwiser $leave
+| Topology     | Singaling  | rejoinEnabled | Result                               |
+| ------------ | ---------- | ------------- | ------------------------------------ |
+| CONSTRUCTING |            |               | WebChannel.JOINING                   |
+| CONSTRUCTED  | OPEN       |               | $signalingCheck                      |
+| CONSTRUCTED  | CHECKED    |               | WebChannel.JOINED & $signalingCheck  |
+| CONSTRUCTED  | CLOSED     |               | $connectToSignaling                  |
+| IDLE         | CLOSED     | true          | $rejoin                              |
+| IDLE         | CLOSED     | false         | $leave                               |
+| IDLE         | CONNECTING |               | WebChannel.JOINING                   |
+| IDLE         | OPEN       |               | WebChannel.JOINING & $signalingCheck |
+| IDLE         | CHECKING   |               | WebChannel.JOINING                   |
+| IDLE         | CHECKED    |               | $signalingCheck                      |
 
 #### Join method call
 
@@ -148,7 +146,7 @@ Otherwiser $leave
 
 1.  Initialize WebChannel properties (ids, members etc.), then
 2.  Set WebChannel state to JOINING and finally
-3.  Connect to Signaling server to start joining process
+3.  Connect to Signaling server
 
 > $leave -> consists of two steps
 
