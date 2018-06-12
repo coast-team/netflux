@@ -7,6 +7,7 @@ const signalingCSS = 'background-color: #66BB6A; padding: 0 3px'
 const channelBuilderCSS = 'background-color: #F57C00; padding: 0 3px'
 const signalingStateCSS = 'background-color: #9FA8DA; padding: 0 2px'
 const webGroupStateCSS = 'background-color: #EF9A9A; padding: 0 2px'
+const warningeCSS = 'background-color: #FF5252; padding: 0 2px'
 
 export interface ILog {
   webgroup: (msg: string, ...rest: any[]) => void
@@ -18,6 +19,7 @@ export interface ILog {
   signaling: (msg: string, ...rest: any[]) => void
   channelBuilder: (msg: string, ...rest: any[]) => void
   debug: (msg: string, ...rest: any[]) => void
+  warn: (msg: string, ...rest: any[]) => void
 }
 
 const log: ILog = {
@@ -30,6 +32,7 @@ const log: ILog = {
   signaling: () => {},
   channelBuilder: () => {},
   debug: () => {},
+  warn: () => {},
 }
 
 export enum LogLevel {
@@ -154,6 +157,13 @@ export function setLogLevel(...levels: LogLevel[]) {
     }
   } else {
     log.debug = () => {}
+  }
+  log.warn = (msg: string, ...rest: any[]) => {
+    if (rest.length === 0) {
+      console.info(`%cNETFLUX WARNING%c: ${msg}`, warningeCSS, '')
+    } else {
+      console.info(`%cNETFLUX WARNING%c: ${msg}`, warningeCSS, '', ...rest)
+    }
   }
 }
 

@@ -2,7 +2,7 @@ import { merge, Observable } from 'rxjs'
 import { filter, map } from 'rxjs/operators'
 
 import { Channel } from '../Channel'
-import { IStream } from '../misc/util'
+import { IStream, log } from '../misc/util'
 import { InSigMsg, OutSigMsg } from '../Signaling'
 import { InWcMsg, OutWcMessage, WebChannel } from '../WebChannel'
 
@@ -139,6 +139,11 @@ export abstract class Service<OutMsg, InMsg extends OutMsg> {
    * @return  Service specific message object
    */
   protected decode(bytes: Uint8Array): InMsg {
-    return this.proto.decode(bytes)
+    try {
+      return this.proto.decode(bytes)
+    } catch (err) {
+      log.warn('Decode service message error: ', err)
+    }
+    return { type: undefined } as any
   }
 }
