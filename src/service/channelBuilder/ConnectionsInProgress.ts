@@ -21,7 +21,8 @@ export class ConnectionsInProgress {
     streamId: number,
     id: number,
     connectionTimeout: number,
-    responseTimeout: number
+    responseTimeout: number,
+    onConnectionTimeoutCallback: () => void
   ): IConnectionInProgress {
     const connections = this.getByStreamId(streamId)
     const connection = {} as IConnectionInProgress
@@ -35,10 +36,10 @@ export class ConnectionsInProgress {
         clearTimeout(responseTimer)
         resolveResponse()
         connection.promise = new Promise((resolveConnection, rejectConnection) => {
-          const connectionTimer = setTimeout(
-            () => connection.reject(new Error(ConnectionError.CONNECTION_TIMEOUT)),
-            connectionTimeout
-          )
+          const connectionTimer = setTimeout(() => {
+            onConnectionTimeoutCallback()
+            connection.reject(new Error(ConnectionError.CONNECTION_TIMEOUT))
+          }, connectionTimeout)
 
           connection.resolve = () => {
             clearTimeout(connectionTimer)

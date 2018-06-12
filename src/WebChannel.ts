@@ -355,14 +355,8 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
   }
 
   private subscribeToBrowserEvents() {
-    window.addEventListener('online', () => {
-      log.webgroup('ONLINE')
-      this.onBrowserBack()
-    })
-    window.addEventListener('visibilitychange', () => {
-      log.webgroup('visibilitychange, is visible = ', isVisible())
-      this.onBrowserBack()
-    })
+    window.addEventListener('online', () => this.onBrowserBack())
+    window.addEventListener('visibilitychange', () => this.onBrowserBack())
     window.addEventListener('beforeunload', () => this.leave())
   }
 
@@ -424,6 +418,7 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
 
   private onBrowserBack() {
     if (isVisible() && isOnline()) {
+      log.webgroup('onBrowserBack', { isVisible: isVisible(), isOnline: isOnline() })
       this.rejoinEnabled = this.autoRejoin
       if (this.rejoinEnabled) {
         if (this.state === WebChannelState.LEFT) {
@@ -436,15 +431,15 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
   }
 
   private onMemberLeaveProxy(ids: number[]) {
-    let atLeastOneFound = false
+    let atLeastOneLeft = false
     ids.forEach((id) => {
       if (this.members.includes(id)) {
         this.members.splice(this.members.indexOf(id), 1)
-        atLeastOneFound = true
+        atLeastOneLeft = true
         this.onMemberLeave(id)
       }
     })
-    return atLeastOneFound
+    return atLeastOneLeft
   }
 
   private internalLeave() {

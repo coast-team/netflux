@@ -98,7 +98,13 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
     let connection = this.connectsInProgress.get(streamId, id)
     if (!connection) {
       this.allStreams.sendOver(streamId, { connectionRequest: data }, id)
-      connection = this.connectsInProgress.create(streamId, id, CONNECT_TIMEOUT, RESPONSE_TIMEOUT)
+      connection = this.connectsInProgress.create(
+        streamId,
+        id,
+        CONNECT_TIMEOUT,
+        RESPONSE_TIMEOUT,
+        () => this.dataChannelBuilder.clean(id, streamId)
+      )
       await connection.promise
       cb()
       return connection.promise
@@ -108,9 +114,9 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
   }
 
   private handleMessage(streamId: number, senderId: number, msg: proto.Message): void {
-    log.channelBuilder('new message', msg.type)
     switch (msg.type) {
       case 'connectionRequest': {
+        log.channelBuilder('connection Request from ', senderId)
         let connection = this.connectsInProgress.get(streamId, senderId)
         if (connection) {
           if (senderId < this.wc.myId) {
@@ -125,20 +131,25 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
             streamId,
             senderId,
             CONNECT_TIMEOUT,
-            RESPONSE_TIMEOUT
+            RESPONSE_TIMEOUT,
+            () => this.dataChannelBuilder.clean(senderId, streamId)
           )
           connection.resolve()
+          log.channelBuilder('connection Response POSITIVE to ', senderId)
           this.allStreams.sendOver(streamId, ChannelBuilder.connectResTrueEncoded, senderId)
         } else {
+          log.channelBuilder('connection Response NEGATIVE to ', senderId)
           this.allStreams.sendOver(streamId, ChannelBuilder.connectResFalseEncoded, senderId)
         }
         break
       }
       case 'connectionResponse': {
+        log.channelBuilder('connection Response from ', senderId)
         const connection = this.connectsInProgress.get(streamId, senderId)
         if (connection) {
           if (msg.connectionResponse) {
             connection.resolve()
+            log.channelBuilder('Send first negotiation message to ', senderId)
             this.allStreams.sendOver(streamId, this.negotiationEncoded, senderId)
           } else {
             connection.reject(new Error(ConnectionError.DENIED))
@@ -147,28 +158,31 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
         break
       }
       case 'negotiation': {
-        if (this.connectsInProgress.has(streamId, senderId)) {
-          const neg = msg.negotiation as proto.Negotiation
-          const initiator = neg.initiator as proto.Info
-          let passive = neg.passive as proto.Info | undefined
+        const neg = msg.negotiation as proto.Negotiation
+        const initiator = neg.initiator as proto.Info
+        let passive = neg.passive as proto.Info | undefined
 
-          if (!passive) {
-            // This is the first message sent by the initiator
-            initiator.id = senderId
-            passive = Object.assign({}, this.myInfo) as proto.Info
-            passive.id = streamId === this.wc.STREAM_ID ? this.wc.myId : 1
-          }
-
-          this.proceedNegotiation(streamId, initiator, passive, passive.id === senderId).catch(
-            (err) => {
-              const connection = this.connectsInProgress.get(streamId, senderId)
-              if (connection) {
-                connection.reject(err)
-              }
-              this.allStreams.sendOver(streamId, { negotiation: { initiator, passive } }, senderId)
-            }
-          )
+        if (!passive) {
+          // This is the first message sent by the initiator
+          initiator.id = senderId
+          passive = Object.assign({}, this.myInfo) as proto.Info
+          passive.id = streamId === this.wc.STREAM_ID ? this.wc.myId : 1
         }
+
+        log.channelBuilder(`NEGOTIATION message to proceed from ${senderId}: `, {
+          passive,
+          initiator,
+        })
+        this.proceedNegotiation(streamId, initiator, passive, passive.id === senderId).catch(
+          (err) => {
+            const connection = this.connectsInProgress.get(streamId, senderId)
+            if (connection) {
+              connection.reject(err)
+            }
+            log.channelBuilder(`NEGOTIATION with ${senderId} FIALED: `, { passive, initiator })
+            this.allStreams.sendOver(streamId, { negotiation: { initiator, passive } }, senderId)
+          }
+        )
         break
       }
     }
