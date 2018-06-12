@@ -10,7 +10,7 @@ interface IDistantMember {
   missedHeartbeat: number
 }
 
-const REQUEST_MEMBERS_INTERVAL = 6000
+const REQUEST_MEMBERS_INTERVAL = 20000
 const MAX_ROUTE_DISTANCE = 3
 const HEARTBEAT_INTERVAL = 3000
 const DELAYED_TIMEOUT = 120000
@@ -180,10 +180,6 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
   private handleServiceMessage(channel: Channel, senderId: number, msg: proto.Message): void {
     switch (msg.type) {
       case 'members': {
-        // log.topology(
-        //   `INTERVAL: members received from ${senderId}`,
-        //   (msg.members as proto.Peers).ids
-        // )
         this.connectToMembers((msg.members as proto.Peers).ids, senderId)
         break
       }
