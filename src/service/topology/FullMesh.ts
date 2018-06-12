@@ -39,6 +39,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
   private delayedMembersTimers: Set<number>
   private membersCheckInterval: number | undefined
   private heartbeatMsg: Uint8Array
+  private adjacentBots: Set<Channel>
 
   constructor(wc: WebChannel) {
     super(wc, FullMesh.SERVICE_ID, proto.Message)
@@ -47,6 +48,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
     this.antecedentId = 0
     this.delayedMembers = new Set()
     this.delayedMembersTimers = new Set()
+    this.adjacentBots = new Set()
 
     // Encode message beforehand for optimization
     this.heartbeatMsg = super.encode({ heartbeat: true })
@@ -77,6 +79,9 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
         am.close()
       }
       this.adjacentMembers.set(ch.id, ch)
+      if (ch.url) {
+        this.adjacentBots.add(ch)
+      }
       this.notifyDistantMembers()
       if (!this.heartbeatInterval) {
         this.startHeartbeatInterval()
@@ -100,6 +105,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
       ;(window as any).fullmesh = () => {
         log.topology('Fullmesh info:', {
           myId: this.wc.myId,
+          antecedentId: this.antecedentId,
           signalingState: this.wc.signaling.state,
           webGroupState: this.wc.state,
           topologyState: TopologyState[this.state],
@@ -147,6 +153,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
 
   onChannelClose(channel: Channel): void {
     if (this.adjacentMembers.delete(channel.id)) {
+      this.adjacentBots.delete(channel)
       this.wc.onAdjacentMembersLeaveProxy([channel.id])
       if (this.adjacentMembers.size === 0) {
         this.clean()
@@ -175,6 +182,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
     this.delayedMembers.clear()
     this.delayedMembersTimers.forEach((t) => clearTimeout(t))
     this.delayedMembersTimers.clear()
+    this.adjacentBots.clear()
   }
 
   private handleServiceMessage(channel: Channel, senderId: number, msg: proto.Message): void {
@@ -315,6 +323,14 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
     distance: number
   ): Channel | undefined {
     if (distantMember) {
+      // Looking for bots first
+      for (const ch of this.adjacentBots) {
+        if (distantMember.adjacentIds.includes(ch.id)) {
+          return ch
+        }
+      }
+
+      // If not found, then look among all ajacentMembers
       for (const [neighbourId, ch] of this.adjacentMembers) {
         if (distantMember.adjacentIds.includes(neighbourId)) {
           return ch
