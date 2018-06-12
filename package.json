@@ -95,7 +95,7 @@
     "rollup-plugin-node-resolve": "^3.0.3",
     "rollup-plugin-re": "^1.0.7",
     "rollup-plugin-strip": "^1.1.1",
-    "rollup-plugin-typescript2": "^0.14.0",
+    "rollup-plugin-typescript2": "^0.15.0",
     "rxjs-compat": "^6.2.0",
     "semantic-release": "^15.4.1",
     "sigver": "^19.1.1",
