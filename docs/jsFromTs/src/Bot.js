@@ -102,8 +102,13 @@ export class Bot {
     }
     readUrl(url) {
         const { pathname, query: { senderId, wcId, key }, } = urlLib.parse(url, true);
+        let lastRoute = pathname;
+        if (pathname.endsWith('/')) {
+            lastRoute = pathname.substr(0, pathname.length - 1);
+        }
+        lastRoute = lastRoute.split('/').pop();
         return {
-            route: pathname.replace('/', ''),
+            route: lastRoute,
             wcId: wcId ? Number(wcId) : undefined,
             senderId: senderId ? Number(senderId) : undefined,
             key,

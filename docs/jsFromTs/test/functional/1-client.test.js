@@ -28,6 +28,10 @@ describe('🙂 - 1 client', () => {
         expect(members).toBeDefined();
         expect(wg.members).toEqual([]);
         expect(members.set).toBeUndefined();
+        const neighbors = Reflect.getOwnPropertyDescriptor(wg, 'neighbors');
+        expect(neighbors).toBeDefined();
+        expect(wg.neighbors).toEqual([]);
+        expect(neighbors.set).toBeUndefined();
         const topology = Reflect.getOwnPropertyDescriptor(wg, 'topology');
         expect(topology).toBeDefined();
         expect(wg.topology).toBe(Topology.FULL_MESH);

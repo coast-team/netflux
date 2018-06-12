@@ -1,5 +1,6 @@
 import { merge } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
+import { log } from '../misc/util';
 /**
  * Services are specific classes. Instance of such class communicates via
  * network with another instance of the same class. Indeed each peer in the
@@ -22,22 +23,12 @@ export class Service {
                 msg: this.decode(content),
             }))),
             send: (content, id) => {
-                if (content && !(content instanceof Uint8Array)) {
-                    wc.sendOverStream({
-                        senderId: wc.myId,
-                        recipientId: id,
-                        serviceId: this.serviceId,
-                        content: this.encode(content),
-                    });
-                }
-                else {
-                    wc.sendOverStream({
-                        senderId: wc.myId,
-                        recipientId: id,
-                        serviceId: this.serviceId,
-                        content: content,
-                    });
-                }
+                wc.sendOverStream({
+                    senderId: wc.myId,
+                    recipientId: id,
+                    serviceId: this.serviceId,
+                    content: content instanceof Uint8Array ? content : this.encode(content),
+                });
             },
         };
     }
@@ -46,20 +37,11 @@ export class Service {
             id: sig.STREAM_ID,
             message: sig.messageFromStream.pipe(filter(({ serviceId }) => serviceId === this.serviceId), map(({ senderId, content }) => ({ senderId, msg: this.decode(content) }))),
             send: (content, id) => {
-                if (content && !(content instanceof Uint8Array)) {
-                    sig.sendOverStream({
-                        recipientId: id,
-                        serviceId: this.serviceId,
-                        content: this.encode(content),
-                    });
-                }
-                else {
-                    sig.sendOverStream({
-                        recipientId: id,
-                        serviceId: this.serviceId,
-                        content: content,
-                    });
-                }
+                sig.sendOverStream({
+                    recipientId: id,
+                    serviceId: this.serviceId,
+                    content: content instanceof Uint8Array ? content : this.encode(content),
+                });
             },
         };
     }
@@ -92,6 +74,12 @@ export class Service {
      * @return  Service specific message object
      */
     decode(bytes) {
-        return this.proto.decode(bytes);
+        try {
+            return this.proto.decode(bytes);
+        }
+        catch (err) {
+            log.warn('Decode service message error: ', err);
+        }
+        return { type: undefined };
     }
 }

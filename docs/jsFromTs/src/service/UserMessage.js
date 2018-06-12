@@ -1,3 +1,4 @@
+import { env } from '../misc/env';
 import { userMessage as proto } from '../proto';
 import { Service } from '../service/Service';
 /**
@@ -8,8 +9,8 @@ const MAX_USER_MSG_SIZE = 15000;
  * Maximum message id number.
  */
 const MAX_MSG_ID_SIZE = 65535;
-const textEncoder = new global.TextEncoder();
-const textDecoder = new global.TextDecoder();
+const textEncoder = new env.TextEncoder();
+const textDecoder = new env.TextDecoder();
 /**
  * Message builder service is responsible to build messages to send them over the
  * `WebChannel` and treat messages received by the `WebChannel`. It also manage

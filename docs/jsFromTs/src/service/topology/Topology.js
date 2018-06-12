@@ -1,4 +1,5 @@
 import { Subject } from 'rxjs';
+import { log } from '../../misc/util';
 import { Service } from '../Service';
 export var TopologyEnum;
 (function (TopologyEnum) {
@@ -6,9 +7,9 @@ export var TopologyEnum;
 })(TopologyEnum || (TopologyEnum = {}));
 export var TopologyState;
 (function (TopologyState) {
-    TopologyState[TopologyState["JOINING"] = 0] = "JOINING";
-    TopologyState[TopologyState["JOINED"] = 1] = "JOINED";
-    TopologyState[TopologyState["LEFT"] = 2] = "LEFT";
+    TopologyState[TopologyState["CONSTRUCTING"] = 0] = "CONSTRUCTING";
+    TopologyState[TopologyState["CONSTRUCTED"] = 1] = "CONSTRUCTED";
+    TopologyState[TopologyState["IDLE"] = 2] = "IDLE";
 })(TopologyState || (TopologyState = {}));
 /**
  * It is responsible to preserve Web Channel
@@ -28,7 +29,7 @@ export class Topology extends Service {
         this.wc = wc;
         this.wcStream = super.useWebChannelStream(wc);
         this.stateSubject = new Subject();
-        this._state = TopologyState.LEFT;
+        this._state = TopologyState.IDLE;
     }
     get onState() {
         return this.stateSubject.asObservable();
@@ -37,13 +38,11 @@ export class Topology extends Service {
         return this._state;
     }
     setJoinedState() {
-        this.setState(TopologyState.JOINED);
-    }
-    setLeftState() {
-        this.setState(TopologyState.LEFT);
+        this.setState(TopologyState.CONSTRUCTED);
     }
     setState(state) {
         if (this.state !== state) {
+            log.topology(`Topology state = ${TopologyState[state]}`);
             this._state = state;
             this.stateSubject.next(state);
         }

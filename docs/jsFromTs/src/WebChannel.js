@@ -102,12 +102,8 @@ export class WebChannel {
     }
     leave() {
         if (this.state !== WebChannelState.LEFT) {
-            this.rejoinEnabled = false;
             this.key = '';
-            this.signaling.close();
-            this.topology.leave();
-            this.clean();
-            this.setState(WebChannelState.LEFT);
+            this.internalLeave();
         }
     }
     send(data) {
@@ -141,14 +137,13 @@ export class WebChannel {
         }
     }
     onAdjacentMembersLeaveProxy(ids) {
-        if (ids.length !== 0) {
-            this.onMemberLeaveProxy(ids);
+        if (this.onMemberLeaveProxy(ids)) {
             if (this.members.length === 1) {
                 this._onAlone();
-                this.topology.setLeftState();
+                this.topology.leave();
             }
             else if (this.signaling.state === SignalingState.CHECKED &&
-                this.topology.state === TopologyState.JOINED) {
+                this.topology.state === TopologyState.CONSTRUCTED) {
                 this.signaling.check();
             }
         }
@@ -157,24 +152,24 @@ export class WebChannel {
         this.onMemberLeaveProxy(ids);
     }
     init(key, id = generateId()) {
+        log.webgroup('INIT');
         this.id = id;
         this.myId = generateId();
         this.members = [this.myId];
         this.key = key;
         this.rejoinEnabled = this.autoRejoin;
         if (this.rejoinTimer) {
-            global.clearTimeout(this.rejoinTimer);
+            clearTimeout(this.rejoinTimer);
             this.rejoinTimer = undefined;
         }
         this.setState(WebChannelState.JOINING);
     }
     clean() {
+        log.webgroup('CLEAN');
         if (this.rejoinTimer) {
-            global.clearTimeout(this.rejoinTimer);
+            clearTimeout(this.rejoinTimer);
             this.rejoinTimer = undefined;
         }
-        this.channelBuilder.clean();
-        this.userMsg.clean();
         this.members = [];
         this.id = 0;
         this.myId = 0;
@@ -190,25 +185,35 @@ export class WebChannel {
         this.topologyEnum = topologyEnum;
         this.topology = new FullMesh(this);
         this.topology.onState.subscribe((state) => {
+            log.webgroup('Topology state: ', TopologyState[state]);
             switch (state) {
-                case TopologyState.JOINING:
+                case TopologyState.CONSTRUCTING:
                     this.setState(WebChannelState.JOINING);
-                    if (this.signaling.state === SignalingState.CLOSED) {
+                    break;
+                case TopologyState.CONSTRUCTED:
+                    if (this.signaling.state === SignalingState.OPEN) {
+                        this.signaling.check();
+                    }
+                    else if (this.signaling.state === SignalingState.CHECKED) {
+                        this.setState(WebChannelState.JOINED);
+                        this.signaling.check();
+                    }
+                    else if (this.signaling.state === SignalingState.CLOSED) {
                         // This is for a bot who was invited to the group
                         this.signaling.connect(this.key);
                     }
                     break;
-                case TopologyState.JOINED:
-                    this.setState(WebChannelState.JOINED);
-                    if (this.signaling.state === SignalingState.OPEN ||
-                        this.signaling.state === SignalingState.CHECKED) {
-                        this.signaling.check();
-                    }
-                    break;
-                case TopologyState.LEFT:
+                case TopologyState.IDLE:
+                    this.channelBuilder.clean();
+                    this.userMsg.clean();
                     switch (this.signaling.state) {
                         case SignalingState.CLOSED:
-                            this.rejoinOrLeave();
+                            if (this.rejoinEnabled) {
+                                this.rejoin();
+                            }
+                            else {
+                                this.internalLeave();
+                            }
                             break;
                         case SignalingState.CONNECTING:
                             this.setState(WebChannelState.JOINING);
@@ -234,75 +239,132 @@ export class WebChannel {
             this.onSignalingStateChange(state);
             switch (state) {
                 case SignalingState.CLOSED:
-                    if (this.topology.state === TopologyState.LEFT) {
-                        this.rejoinOrLeave();
+                    if (this.topology.state === TopologyState.IDLE) {
+                        if (this.rejoinEnabled) {
+                            this.rejoin();
+                        }
+                        else {
+                            this.internalLeave();
+                        }
                     }
-                    else if (this.topology.state === TopologyState.JOINED && this.rejoinEnabled) {
-                        this.signaling.connect(this.key);
+                    else if (this.topology.state === TopologyState.CONSTRUCTED) {
+                        if (this.members.length === 1) {
+                            this.topology.leave();
+                        }
+                        else if (this.rejoinEnabled && !this.rejoinTimer) {
+                            this.reconnectToSignaling();
+                        }
                     }
                     break;
                 case SignalingState.OPEN:
-                    if (this.topology.state !== TopologyState.JOINING) {
+                    if (this.topology.state !== TopologyState.CONSTRUCTING) {
                         this.signaling.check();
                     }
                     break;
                 case SignalingState.CHECKED:
-                    if (this.state === WebChannelState.JOINING &&
-                        this.topology.state === TopologyState.LEFT &&
-                        this.signaling.connected) {
-                        this.topology.setJoinedState();
+                    if (this.topology.state === TopologyState.IDLE) {
+                        if (this.signaling.connected) {
+                            this.topology.setJoinedState();
+                        }
+                    }
+                    else if (this.topology.state === TopologyState.CONSTRUCTED) {
+                        this.setState(WebChannelState.JOINED);
                     }
                     break;
             }
         });
     }
     subscribeToBrowserEvents() {
-        global.addEventListener('online', () => {
-            if (this.state === WebChannelState.LEFT &&
-                isVisible() &&
-                !this.rejoinTimer &&
-                this.rejoinEnabled) {
-                this.startJoin();
-            }
-        });
-        global.addEventListener('visibilitychange', () => {
-            if (isVisible() &&
-                this.state === WebChannelState.LEFT &&
-                isOnline() &&
-                !this.rejoinTimer &&
-                this.rejoinEnabled) {
-                this.startJoin();
-            }
-        });
-        global.addEventListener('beforeunload', () => this.leave());
+        window.addEventListener('online', () => this.onBrowserBack());
+        window.addEventListener('visibilitychange', () => this.onBrowserBack());
+        window.addEventListener('beforeunload', () => this.leave());
     }
     startJoin(key = this.key) {
+        log.webgroup('start join...');
         this.init(key);
         this.signaling.connect(key);
     }
-    rejoinOrLeave() {
-        this.clean();
-        if (this.rejoinEnabled) {
-            this.init(this.key);
-            this.rejoinTimer = global.setTimeout(() => {
-                if (this.state === WebChannelState.LEFT &&
+    rejoin() {
+        this.setState(WebChannelState.JOINING);
+        if (!isVisible() || !isOnline()) {
+            this.internalLeave();
+        }
+        else {
+            this.clean();
+            log.webgroup(`rejoin in ${REJOIN_TIMEOUT}ms`);
+            this.rejoinTimer = setTimeout(() => {
+                if (this.signaling.state === SignalingState.CLOSED &&
                     isVisible() &&
                     isOnline() &&
                     this.rejoinEnabled) {
                     this.startJoin();
                 }
+                else {
+                    log.webgroup('abandon rejoin because: ', {
+                        isVisible: isVisible(),
+                        isOnline: isOnline(),
+                        signalingState: SignalingState[this.signaling.state],
+                        rejoinEnabled: this.rejoinEnabled,
+                    });
+                    this.internalLeave();
+                }
+                this.rejoinTimer = undefined;
             }, REJOIN_TIMEOUT);
         }
+    }
+    reconnectToSignaling() {
+        if (this.members.length === 1 && (!isVisible() || !isOnline())) {
+            this.internalLeave();
+        }
         else {
-            this.setState(WebChannelState.LEFT);
+            log.webgroup(`reconnect to Signaling server in ${REJOIN_TIMEOUT}ms`);
+            this.setState(WebChannelState.JOINING);
+            this.rejoinTimer = setTimeout(() => {
+                if (this.signaling.state === SignalingState.CLOSED) {
+                    if (isVisible() && isOnline()) {
+                        if (this.rejoinEnabled) {
+                            this.signaling.connect(this.key);
+                        }
+                    }
+                    else if (this.members.length === 1) {
+                        this.internalLeave();
+                    }
+                }
+                this.rejoinTimer = undefined;
+            }, REJOIN_TIMEOUT);
+        }
+    }
+    onBrowserBack() {
+        if (isVisible() && isOnline()) {
+            log.webgroup('onBrowserBack', { isVisible: isVisible(), isOnline: isOnline() });
+            this.rejoinEnabled = this.autoRejoin;
+            if (this.rejoinEnabled) {
+                if (this.state === WebChannelState.LEFT) {
+                    this.startJoin();
+                }
+                else if (this.signaling.state === SignalingState.CLOSED) {
+                    this.signaling.connect(this.key);
+                }
+            }
         }
     }
     onMemberLeaveProxy(ids) {
+        let atLeastOneLeft = false;
         ids.forEach((id) => {
             if (this.members.includes(id)) {
                 this.members.splice(this.members.indexOf(id), 1);
+                atLeastOneLeft = true;
                 this.onMemberLeave(id);
             }
         });
+        return atLeastOneLeft;
+    }
+    internalLeave() {
+        log.webgroup('internal leave');
+        this.rejoinEnabled = false;
+        this.signaling.close();
+        this.topology.leave();
+        this.clean();
+        this.setState(WebChannelState.LEFT);
     }
 }

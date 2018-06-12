@@ -64,11 +64,11 @@
 <li data-ice="manualNav" class="indent-h2" data-link="manual/faq.html"><a href="manual/faq.html#how-netflux-chooses-between--code-rtcdatachannel--code--and--code-websocket--code-" data-ice="link">How Netflux chooses between RTCDataChannel and WebSocket</a></li>
 <li data-ice="manualNav" class="indent-h2" data-link="manual/faq.html"><a href="manual/faq.html#state-description" data-ice="link">State description</a></li>
 <li data-ice="manualNav" class="indent-h3" data-link="manual/faq.html"><a href="manual/faq.html#events" data-ice="link">Events</a></li>
+<li data-ice="manualNav" class="indent-h4" data-link="manual/faq.html"><a href="manual/faq.html#member-left-event" data-ice="link">Member left event</a></li>
 <li data-ice="manualNav" class="indent-h4" data-link="manual/faq.html"><a href="manual/faq.html#signaling-state-event" data-ice="link">Signaling state event</a></li>
 <li data-ice="manualNav" class="indent-h4" data-link="manual/faq.html"><a href="manual/faq.html#topology-state-event" data-ice="link">Topology state event</a></li>
 <li data-ice="manualNav" class="indent-h4" data-link="manual/faq.html"><a href="manual/faq.html#join-method-call" data-ice="link">Join method call</a></li>
 <li data-ice="manualNav" class="indent-h4" data-link="manual/faq.html"><a href="manual/faq.html#leave-method-call" data-ice="link">Leave method call</a></li>
-<li data-ice="manualNav" class="indent-h4" data-link="manual/faq.html"><a href="manual/faq.html#member-left-event" data-ice="link">Member left event</a></li>
 <li data-ice="manualNav" class="indent-h4" data-link="manual/faq.html"><a href="manual/faq.html#online---event--online-offline-events--navigator-online-" data-ice="link">onLine() event (online/offline events, navigator.onLine)</a></li>
 <li data-ice="manualNav" class="indent-h4" data-link="manual/faq.html"><a href="manual/faq.html#isvisible---event--page-visibility-api-" data-ice="link">isVisible() event (Page Visibility API)</a></li>
 </ul>
@@ -308,23 +308,41 @@ else
 </thead>
 <tbody>
 <tr>
-<td><code>JOINING</code></td>
-<td>Thanks to the Signaling server you are connected to one of the group memberf. From now the topology service is about to create the rest of connections, if necessary, in order to keep the topology structure and assure messages delivery.</td>
+<td><code>CONSTRUCTING</code></td>
+<td>Thanks to the Signaling server you are connected to one of the group member. From now the topology service is about to create the rest of connections, if necessary, in order to keep the topology structure and assure messages delivery.</td>
 </tr>
 <tr>
-<td><code>JOINED</code></td>
+<td><code>CONSTRUCTED</code></td>
 <td>The topology is considerated as constructed.</td>
 </tr>
 <tr>
-<td><code>LEFT</code></td>
+<td><code>IDLE</code></td>
 <td>All connections with group members were closed or topology failed to construct the peer to peer network.</td>
 </tr>
 </tbody>
-</table><h3>Events</h3><h4>Signaling state event</h4><table>
+</table><h3>Events</h3><h4>Member left event</h4><table>
 <thead>
 <tr>
 <th>Singaling</th>
-<th>WebChannel</th>
+<th>Topology</th>
+<th>adjacent member</th>
+<th>not only you left in the group</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CHECKED</td>
+<td>CONSTRUCTED</td>
+<td>true</td>
+<td>true</td>
+<td>$signalingCheck</td>
+</tr>
+</tbody>
+</table><h4>Signaling state event</h4><table>
+<thead>
+<tr>
+<th>Singaling</th>
 <th>Topology</th>
 <th>connected</th>
 <th>rejoinEnabled</th>
@@ -334,35 +352,45 @@ else
 <tbody>
 <tr>
 <td>CLOSED</td>
+<td>IDLE</td>
 <td></td>
-<td>LEFT</td>
-<td></td>
-<td></td>
-<td>$rejoinOrLeave</td>
+<td>true</td>
+<td>$rejoin</td>
 </tr>
 <tr>
 <td>CLOSED</td>
+<td>IDLE</td>
 <td></td>
-<td>JOINED</td>
+<td>false</td>
+<td>$leave</td>
+</tr>
+<tr>
+<td>CLOSED</td>
+<td>CONSTRUCTED</td>
 <td></td>
 <td>true</td>
 <td>$connectToSignaling</td>
 </tr>
 <tr>
 <td>OPEN</td>
-<td></td>
-<td>!JOINING</td>
+<td>!CONSTRUCTING</td>
 <td></td>
 <td></td>
 <td>$signalingCheck</td>
 </tr>
 <tr>
 <td>CHECKED</td>
-<td>JOINING</td>
-<td>LEFT</td>
+<td>IDLE</td>
 <td>true</td>
 <td></td>
-<td>Topology.JOINED</td>
+<td>Topology.CONSTRUCTED</td>
+</tr>
+<tr>
+<td>CHECKED</td>
+<td>CONSTRUCTED</td>
+<td></td>
+<td></td>
+<td>WebChannel.JOINED</td>
 </tr>
 </tbody>
 </table><h4>Topology state event</h4><table>
@@ -370,62 +398,73 @@ else
 <tr>
 <th>Topology</th>
 <th>Singaling</th>
+<th>rejoinEnabled</th>
 <th>Result</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>JOINING</td>
+<td>CONSTRUCTING</td>
+<td></td>
 <td></td>
 <td>WebChannel.JOINING</td>
 </tr>
 <tr>
-<td>JOINING</td>
+<td>CONSTRUCTED</td>
+<td>OPEN</td>
+<td></td>
+<td>$signalingCheck</td>
+</tr>
+<tr>
+<td>CONSTRUCTED</td>
+<td>CHECKED</td>
+<td></td>
+<td>WebChannel.JOINED &amp; $signalingCheck</td>
+</tr>
+<tr>
+<td>CONSTRUCTED</td>
 <td>CLOSED</td>
+<td></td>
 <td>$connectToSignaling</td>
 </tr>
 <tr>
-<td>JOINED</td>
-<td></td>
-<td>WebChannel.JOINED</td>
-</tr>
-<tr>
-<td>JOINED</td>
-<td>OPEN</td>
-<td>WebChannel.JOINED &amp; $signalingCheck</td>
-</tr>
-<tr>
-<td>JOINED</td>
-<td>CHECKED</td>
-<td>WebChannel.JOINED &amp; $signalingCheck</td>
-</tr>
-<tr>
-<td>LEFT</td>
+<td>IDLE</td>
 <td>CLOSED</td>
-<td>$rejoinOrLeave</td>
+<td>true</td>
+<td>$rejoin</td>
 </tr>
 <tr>
-<td>LEFT</td>
+<td>IDLE</td>
+<td>CLOSED</td>
+<td>false</td>
+<td>$leave</td>
+</tr>
+<tr>
+<td>IDLE</td>
 <td>CONNECTING</td>
+<td></td>
 <td>WebChannel.JOINING</td>
 </tr>
 <tr>
-<td>LEFT</td>
+<td>IDLE</td>
 <td>OPEN</td>
+<td></td>
 <td>WebChannel.JOINING &amp; $signalingCheck</td>
 </tr>
 <tr>
-<td>LEFT</td>
+<td>IDLE</td>
 <td>CHECKING</td>
+<td></td>
 <td>WebChannel.JOINING</td>
 </tr>
 <tr>
-<td>LEFT</td>
+<td>IDLE</td>
 <td>CHECKED</td>
+<td></td>
 <td>$signalingCheck</td>
 </tr>
 </tbody>
-</table><p>Otherwiser $leave</p><h4>Join method call</h4><table>
+</table><h4>Join method call</h4><table>
 <thead>
 <tr>
 <th>WebChannel</th>
@@ -455,31 +494,11 @@ else
 <td>$leave</td>
 </tr>
 </tbody>
-</table><h4>Member left event</h4><table>
-<thead>
-<tr>
-<th>Singaling</th>
-<th>Topology</th>
-<th>adjacent member</th>
-<th>not only you left in the group</th>
-<th>Result</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>CHECKED</td>
-<td>JOINED</td>
-<td>true</td>
-<td>true</td>
-<td>$signalingCheck</td>
-</tr>
-</tbody>
 </table><h4>onLine() event (online/offline events, navigator.onLine)</h4><table>
 <thead>
 <tr>
 <th>WebChannel</th>
 <th>Visibility</th>
-<th>rejoinTimer</th>
 <th>rejoinEnabled</th>
 <th>Result</th>
 </tr>
@@ -488,9 +507,8 @@ else
 <tr>
 <td>LEFT</td>
 <td>visible</td>
-<td>undefined</td>
 <td>true</td>
-<td>$join</td>
+<td>$leave.1 &amp; $join</td>
 </tr>
 </tbody>
 </table><h4>isVisible() event (Page Visibility API)</h4><table>
@@ -498,7 +516,6 @@ else
 <tr>
 <th>WebChannel</th>
 <th>onLine</th>
-<th>rejoinTimer</th>
 <th>rejoinEnabled</th>
 <th>Result</th>
 </tr>
@@ -507,9 +524,8 @@ else
 <tr>
 <td>LEFT</td>
 <td>true</td>
-<td>undefined</td>
 <td>true</td>
-<td>$join</td>
+<td>$leave.1 &amp; $join</td>
 </tr>
 </tbody>
 </table><blockquote>
@@ -517,23 +533,20 @@ else
 </blockquote><ol>
 <li>Initialize WebChannel properties (ids, members etc.), then</li>
 <li>Set WebChannel state to JOINING and finally</li>
-<li>Connect to Signaling server to start joining process</li>
+<li>Connect to Signaling server</li>
 </ol><blockquote>
 <p>$leave -&gt; consists of two steps</p>
 </blockquote><ol>
 <li>Clean WebChannel properties (ids, members, clean servicies) as if we were doing <code>new WebChannel()</code>, then</li>
 <li>Set WebChannel state to LEFT</li>
 </ol><blockquote>
-<p>$rejoinOrLeave -&gt; consists of executing the following algorithm:</p>
+<p>$rejoin -&gt; consists of executing the following algorithm:</p>
 </blockquote><pre><code class="lang-pseudocode"><code class="source-code prettyprint">  Execute $leave.1
-  if (rejoinEnabled) then
     Execute $join.1
     Execute $join.2
     setTimeout
       if (WebChannel.LEFT &amp;&amp; visible &amp;&amp; onLine &amp;&amp; rejoinEnabled) then
-        $connectToSignaling
-  else
-    $leave.2</code>
+        $connectToSignaling</code>
 </code></pre><blockquote>
 <p>$connectToSignaling -&gt; the third step of the $join process</p>
 <p>$signalingCheck -&gt; check with Signaling if still connected with the rest of the group</p>

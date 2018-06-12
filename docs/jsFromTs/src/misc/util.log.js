@@ -7,6 +7,7 @@ const signalingCSS = 'background-color: #66BB6A; padding: 0 3px';
 const channelBuilderCSS = 'background-color: #F57C00; padding: 0 3px';
 const signalingStateCSS = 'background-color: #9FA8DA; padding: 0 2px';
 const webGroupStateCSS = 'background-color: #EF9A9A; padding: 0 2px';
+const warningeCSS = 'background-color: #FF5252; padding: 0 2px';
 const log = {
     webgroup: () => { },
     signalingState: () => { },
@@ -17,6 +18,7 @@ const log = {
     signaling: () => { },
     channelBuilder: () => { },
     debug: () => { },
+    warn: () => { },
 };
 export var LogLevel;
 (function (LogLevel) {
@@ -136,5 +138,13 @@ export function setLogLevel(...levels) {
     else {
         log.debug = () => { };
     }
+    log.warn = (msg, ...rest) => {
+        if (rest.length === 0) {
+            console.info(`%cNETFLUX WARNING%c: ${msg}`, warningeCSS, '');
+        }
+        else {
+            console.info(`%cNETFLUX WARNING%c: ${msg}`, warningeCSS, '', ...rest);
+        }
+    };
 }
 export { log };

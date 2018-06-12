@@ -84,15 +84,12 @@ try {
     bot.onWebGroup = (wg) => configWebGroup(wg);
     bot.onError = (err) => console.error('Bot ERROR: ', err);
     // Start the server
-    server
-        .listen(BOT_PORT, BOT_HOST, () => {
+    server.listen(BOT_PORT, BOT_HOST, () => {
         const host = server.address().address;
         const port = server.address().port;
         console.info('Netflux bot is listening on ' + host + ':' + port);
-    })(
-    // Leave all web channels before process death
-    global)
-        .process.on('SIGINT', () => bot.webGroups.forEach((wg) => wg.leave()));
+    });
+    process.on('SIGINT', () => bot.webGroups.forEach((wg) => wg.leave()));
 }
 catch (err) {
     // console.error('Bot server error: ', err)

@@ -147,6 +147,16 @@ export class WebGroup {
             get: () =&gt; wc.members,
         });
         /**
+         * The read-only array of neighbor members (i.e. members who are directly connected to you). Hence they are included in the {@link WebGroup#members} by definition.
+         * @type {number[]}
+         */
+        this.neighbors = undefined;
+        Reflect.defineProperty(this, &apos;neighbors&apos;, {
+            configurable: false,
+            enumerable: true,
+            get: () =&gt; wc.topology.neighbors.map((ch) =&gt; ch.id),
+        });
+        /**
          * The read-only property which is an enum of type {@link Topology}
          * indicating the topology used for this {@link WebGroup} instance.
          * @type {Topology}

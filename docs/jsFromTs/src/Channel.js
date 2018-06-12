@@ -7,13 +7,7 @@ export var ChannelType;
     ChannelType[ChannelType["INVITED"] = 1] = "INVITED";
     ChannelType[ChannelType["JOINING"] = 2] = "JOINING";
 })(ChannelType || (ChannelType = {}));
-const heartbeat = Message.create({ serviceId: 0 });
 export const MAXIMUM_MISSED_HEARTBEAT = 3;
-export function createHeartbeatMsg(senderId, recipientId) {
-    heartbeat.senderId = senderId;
-    heartbeat.recipientId = recipientId;
-    return Message.encode(heartbeat).finish();
-}
 /**
  * Wrapper class for `RTCDataChannel` and `WebSocket`.
  */
@@ -44,13 +38,16 @@ export class Channel {
             this.send = this.sendInNodeOverDataChannel;
         }
         if (type === ChannelType.INTERNAL) {
-            this.heartbeatMsg = createHeartbeatMsg(this.wc.myId, this.id);
+            this.heartbeatMsg = this.createHeartbeatMsg();
             this.init = Promise.resolve();
             this.initHandlers();
         }
         else {
+            if (type === ChannelType.INVITED) {
+                this.sendInitPing();
+            }
             this.init = new Promise((resolve, reject) => (this.resolveInit = () => {
-                this.heartbeatMsg = createHeartbeatMsg(this.wc.myId, this.id);
+                this.heartbeatMsg = this.createHeartbeatMsg();
                 resolve();
             }));
             this.wsOrDc.onmessage = ({ data }) => {
@@ -63,18 +60,6 @@ export class Channel {
             return this.wsOrDc.url;
         }
         return '';
-    }
-    initialize() {
-        log.channel('initialize...');
-        this.send(proto.Message.encode(proto.Message.create({
-            initPing: {
-                topology: this.wc.topologyEnum,
-                wcId: this.wc.id,
-                senderId: this.wc.myId,
-                members: this.wc.members,
-                key: this.wc.key,
-            },
-        })).finish());
     }
     encodeAndSend({ senderId = this.wc.myId, recipientId = 0, serviceId, content } = {}) {
         this.send(Message.encode(Message.create({ senderId, recipientId, serviceId, content })).finish());
@@ -189,5 +174,20 @@ export class Channel {
             this.wc.topology.onChannelClose(this);
         };
         this.wsOrDc.onerror = (evt) => log.channel('Channel error: ', evt);
+    }
+    createHeartbeatMsg() {
+        return Message.encode(Message.create({ serviceId: 0, senderId: this.wc.myId, recipientId: this.id })).finish();
+    }
+    sendInitPing() {
+        log.channel('initialize...');
+        this.send(proto.Message.encode(proto.Message.create({
+            initPing: {
+                topology: this.wc.topologyEnum,
+                wcId: this.wc.id,
+                senderId: this.wc.myId,
+                members: this.wc.members,
+                key: this.wc.key,
+            },
+        })).finish());
     }
 }

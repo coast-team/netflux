@@ -1,5 +1,6 @@
 import { BehaviorSubject, Subject } from 'rxjs';
 import { Channel, ChannelType } from './Channel';
+import { env } from './misc/env';
 import { isURL } from './misc/util';
 export const CONNECT_TIMEOUT = 4000;
 export var Route;
@@ -42,9 +43,7 @@ export class WebSocketBuilder {
         }
     }
     newJoinWebSocket(ws) {
-        const ch = new Channel(this.wc, ws, ChannelType.INVITED);
-        ch.initialize();
-        this.channelsSubject.next(ch);
+        this.channelsSubject.next(new Channel(this.wc, ws, ChannelType.INVITED));
     }
     async connectInternal(url, id) {
         if (isURL(url) && url.search(/^wss?/) !== -1) {
@@ -72,7 +71,7 @@ export class WebSocketBuilder {
         else {
             throw new Error(`${url} is not a valid URL`);
         }
-        const ws = new global.WebSocket(url);
+        const ws = new env.WebSocket(url);
         return new Promise((resolve, reject) => {
             const timeout = setTimeout(() => {
                 if (ws.readyState !== ws.OPEN) {
@@ -80,12 +79,9 @@ export class WebSocketBuilder {
                     reject(new Error(`WebSocket ${CONNECT_TIMEOUT}ms connection timeout with '${url}'`));
                 }
             }, CONNECT_TIMEOUT);
-            const channel = new Channel(this.wc, ws, type, id);
             ws.onopen = () => {
+                const channel = new Channel(this.wc, ws, type, id);
                 clearTimeout(timeout);
-                if (type === ChannelType.INVITED) {
-                    channel.initialize();
-                }
                 resolve(channel);
             };
             ws.onerror = (err) => reject(err);

@@ -1,4 +1,5 @@
 import { Subject } from 'rxjs';
+import { env } from './misc/env';
 import { isBrowser, isWebSocketSupported, log } from './misc/util';
 import { Message, signaling as proto } from './proto';
 const MAXIMUM_MISSED_HEARTBEAT = 3;
@@ -46,15 +47,18 @@ export class Signaling {
         return this.stateSubject.asObservable();
     }
     check() {
-        this.setState(SignalingState.CHECKING);
-        this.send({
-            connect: { id: this.wc.myId, members: this.wc.members.filter((id) => id !== this.wc.myId) },
-        });
+        if (this.state === SignalingState.CHECKED || this.state === SignalingState.OPEN) {
+            // console.log('Signaling check: ', new Error().stack)
+            this.setState(SignalingState.CHECKING);
+            this.send({
+                connect: { id: this.wc.myId, members: this.wc.members.filter((id) => id !== this.wc.myId) },
+            });
+        }
     }
     connect(key) {
         if (isWebSocketSupported()) {
             this.setState(SignalingState.CONNECTING);
-            this.ws = new global.WebSocket(this.fullUrl(key));
+            this.ws = new env.WebSocket(this.fullUrl(key));
             this.ws.binaryType = 'arraybuffer';
             this.connectionTimeout = setTimeout(() => {
                 if (this.ws && this.ws.readyState !== this.ws.OPEN) {
@@ -97,10 +101,10 @@ export class Signaling {
     }
     clean() {
         if (this.connectionTimeout) {
-            global.clearTimeout(this.connectionTimeout);
+            clearTimeout(this.connectionTimeout);
         }
         if (this.heartbeatInterval) {
-            global.clearInterval(this.heartbeatInterval);
+            clearInterval(this.heartbeatInterval);
         }
         this.ws = undefined;
     }
@@ -135,7 +139,7 @@ export class Signaling {
     }
     startHeartbeat() {
         this.missedHeartbeat = 0;
-        this.heartbeatInterval = global.setInterval(() => {
+        this.heartbeatInterval = setInterval(() => {
             try {
                 this.missedHeartbeat++;
                 if (this.missedHeartbeat >= MAXIMUM_MISSED_HEARTBEAT) {
@@ -149,7 +153,7 @@ export class Signaling {
         }, HEARTBEAT_INTERVAL);
     }
     send(msg) {
-        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        if (this.ws && this.ws.readyState === env.WebSocket.OPEN) {
             try {
                 this.ws.send(proto.Message.encode(proto.Message.create(msg)).finish());
             }
@@ -159,7 +163,7 @@ export class Signaling {
         }
     }
     heartbeat() {
-        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        if (this.ws && this.ws.readyState === env.WebSocket.OPEN) {
             try {
                 this.ws.send(heartbeatMsg);
             }
