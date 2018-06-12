@@ -62,6 +62,7 @@ export class WebGroup {
   public myId: number
   public key: string
   public members: number[]
+  public neighbors: number[]
   public topology: TopologyEnum
   public state: number
   public signalingState: SignalingState
@@ -121,6 +122,16 @@ export class WebGroup {
       configurable: false,
       enumerable: true,
       get: () => wc.members,
+    })
+    /**
+     * The read-only array of neighbor members (i.e. members who are directly connected to you). Hence they are included in the {@link WebGroup#members} by definition.
+     * @type {number[]}
+     */
+    this.neighbors = undefined as any
+    Reflect.defineProperty(this, 'neighbors', {
+      configurable: false,
+      enumerable: true,
+      get: () => wc.topology.neighbors.map((ch) => ch.id),
     })
     /**
      * The read-only property which is an enum of type {@link Topology}
