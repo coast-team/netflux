@@ -13,7 +13,7 @@ interface IDistantMember {
 const REQUEST_MEMBERS_INTERVAL = 20000
 const MAX_ROUTE_DISTANCE = 3
 const HEARTBEAT_INTERVAL = 3000
-const DELAYED_TIMEOUT = 120000
+const DELAYED_TIMEOUT = 300000
 
 /**
  * Fully connected web channel manager. Implements fully connected topology
@@ -109,6 +109,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
           signalingState: this.wc.signaling.state,
           webGroupState: this.wc.state,
           topologyState: TopologyState[this.state],
+          adjacentBots: Array.from(this.adjacentBots).map((ch: Channel) => ch.id),
           adjacentMembers: Array.from(this.adjacentMembers.keys()).toString(),
           distantMembers: Array.from(this.distantMembers.keys()).toString(),
           distantMembersDETAILS: Array.from(this.distantMembers.keys()).map((id: number) => {
@@ -389,6 +390,9 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
     } else {
       this.antecedentId = 0
     }
-    log.topology(`UPDATE, antecedentId = ${this.antecedentId}`)
+    log.topology(
+      `UPDATE, antecedentId = ${this.antecedentId}, members = `,
+      JSON.stringify(this.wc.members)
+    )
   }
 }
