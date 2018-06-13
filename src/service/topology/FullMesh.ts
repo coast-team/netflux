@@ -73,6 +73,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
     this.wc.channelBuilder.onChannel.subscribe((ch) => {
       log.topology(`New adjacent member: ${ch.id}`)
       this.distantMembers.delete(ch.id)
+      this.delayedMembers.delete(ch.id)
       const am = this.adjacentMembers.get(ch.id)
       if (am) {
         log.topology('Replacing the same channel')
@@ -155,6 +156,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
   onChannelClose(channel: Channel): void {
     if (this.adjacentMembers.delete(channel.id)) {
       this.adjacentBots.delete(channel)
+      this.delayedMembers.delete(channel.id)
       this.wc.onAdjacentMembersLeaveProxy([channel.id])
       if (this.adjacentMembers.size === 0) {
         this.clean()
@@ -212,9 +214,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
   }
 
   private connectToMembers(ids: number[], adjacentId: number): Promise<void | void[]> {
-    const missingIds = ids.filter(
-      (id) => !this.adjacentMembers.has(id) && !this.delayedMembers.has(id) && id !== this.wc.myId
-    )
+    const missingIds = ids.filter((id) => !this.adjacentMembers.has(id) && id !== this.wc.myId)
     if (missingIds.length !== 0) {
       log.topology(`TRY TO CONNECT to members`, missingIds)
       const attempts: Array<Promise<void>> = []
@@ -234,34 +234,32 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
           log.topology(`NEW distant member = ${id}; BIS`, adjacentId)
           this.updateAntecedentId()
         }
-
-        attempts[attempts.length] = this.wc.channelBuilder
-          .connectOverWebChannel(
-            id,
-            () => {
-              log.topology(
-                `distant member ${id} is responding but not yet connected##################`
-              )
-              this.wc.onMemberJoinProxy(id)
-              this.updateAntecedentId()
-            },
-            msg
-          )
-          .catch((err) => {
-            log.topology(`FAILED to connect to ${id}, because: ${err.message}`)
-            if (
-              err.message === ConnectionError.CONNECTION_TIMEOUT ||
-              err.message === ConnectionError.NEGOTIATION_ERROR ||
-              err.message === ConnectionError.IN_PROGRESS
-            ) {
-              this.delayedMembers.add(id)
-              const timer = setTimeout(() => {
-                this.delayedMembers.delete(id)
-                this.delayedMembersTimers.delete(timer)
-              }, DELAYED_TIMEOUT)
-              this.delayedMembersTimers.add(timer)
-            }
-          })
+        if (!this.delayedMembers.has(id)) {
+          attempts[attempts.length] = this.wc.channelBuilder
+            .connectOverWebChannel(
+              id,
+              () => {
+                this.wc.onMemberJoinProxy(id)
+                this.updateAntecedentId()
+              },
+              msg
+            )
+            .catch((err) => {
+              log.topology(`FAILED to connect to ${id}, because: ${err.message}`)
+              if (
+                err.message === ConnectionError.CONNECTION_TIMEOUT ||
+                err.message === ConnectionError.NEGOTIATION_ERROR ||
+                err.message === ConnectionError.IN_PROGRESS
+              ) {
+                this.delayedMembers.add(id)
+                const timer = setTimeout(() => {
+                  this.delayedMembers.delete(id)
+                  this.delayedMembersTimers.delete(timer)
+                }, DELAYED_TIMEOUT)
+                this.delayedMembersTimers.add(timer)
+              }
+            })
+        }
       }
 
       return Promise.all(attempts)
@@ -296,6 +294,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
         if (peer.missedHeartbeat >= MAXIMUM_MISSED_HEARTBEAT + 1) {
           log.topology(`Distant peer ${id} stopped to responding: too many missed heartbeats`)
           if (this.distantMembers.delete(id)) {
+            this.delayedMembers.delete(id)
             this.wc.onDistantMembersLeaveProxy([id])
             this.updateAntecedentId()
           }
