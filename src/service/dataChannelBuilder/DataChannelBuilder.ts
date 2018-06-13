@@ -2,7 +2,7 @@ import { Observable, Subject } from 'rxjs'
 
 import { Channel, ChannelType } from '../../Channel'
 import '../../misc/env'
-import { env } from '../../misc/env'
+import { env, RTCDataChannelEvent } from '../../misc/env'
 import { log } from '../../misc/util'
 import { dataChannelBuilder as proto } from '../../proto'
 import { WebChannel } from '../../WebChannel'
@@ -121,7 +121,7 @@ export class DataChannelBuilder extends Service<proto.IMessage, proto.Message> {
     } else {
       remote = this.createRemote(streamId, id)
     }
-    const dc = remote.pc.createDataChannel(this.wc.myId.toString())
+    const dc = (remote.pc as any).createDataChannel(this.wc.myId.toString())
     const offerInit = await remote.pc.createOffer()
     await remote.pc.setLocalDescription(offerInit)
 
@@ -148,8 +148,8 @@ export class DataChannelBuilder extends Service<proto.IMessage, proto.Message> {
     )
     if (passive) {
       log.webrtc(`create a new remote object with ${id} - PASSIVE`)
-
-      remote.pc.ondatachannel = ({ channel: dc }: RTCDataChannelEvent) => {
+      const pc = remote.pc as any
+      pc.ondatachannel = ({ channel: dc }: RTCDataChannelEvent) => {
         const peerId = Number.parseInt(dc.label, 10)
         let type: ChannelType
         if (streamId === this.wc.STREAM_ID) {

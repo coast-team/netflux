@@ -1,4 +1,5 @@
 import { Bot as BotServer, IBotOptions as BotOptions } from './Bot'
+import { NodeJSHttpServer, NodeJSHttpsServer } from './misc/env'
 import { WebGroup } from './WebChannelFacade'
 
 let botServer: BotServer

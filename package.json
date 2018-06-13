@@ -31,7 +31,7 @@
   ],
   "scripts": {
     "build": "rm -rf dist && tsc -p tsconfig.dist.json && rollup --config",
-    "postbuild": "cp src/misc/typings.d.ts dist/esm/misc && mkdir dist/esm/proto && cp src/proto/index.js src/proto/index.d.ts dist/esm/proto && uglifyjs -o dist/netflux.umd.min.js dist/netflux.umd.js",
+    "postbuild": "mkdir dist/esm/proto && cp src/proto/index.js src/proto/index.d.ts dist/esm/proto && uglifyjs -o dist/netflux.umd.min.js dist/netflux.umd.js",
     "pretest": "rollup -c test/util/rollup.config.js && pm2 --silent restart test/util/process.yml --only netflux-test-signaling && pm2 restart test/util/process.yml --only netflux-test-bot ",
     "test": "karma start",
     "posttest": "pm2 --silent delete test/util/process.yml",

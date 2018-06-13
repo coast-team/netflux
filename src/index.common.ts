@@ -1,5 +1,3 @@
-/// <reference path="./misc/typings.d.ts" />
-
 export { LogLevel, setLogLevel } from './misc/util'
 export { TopologyEnum as Topology } from './service/topology/Topology'
 export { SignalingState } from './Signaling'

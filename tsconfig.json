@@ -5,7 +5,7 @@
     "lib": ["es2017", "dom"],
     "moduleResolution": "node",
     "downlevelIteration": true,
-    "typeRoots": ["src/misc/typings"],
+    "types": [],
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": false,

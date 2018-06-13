@@ -1,3 +1,4 @@
+import { RTCDataChannel } from './misc/env'
 import { isBrowser, log } from './misc/util'
 import { channel as proto, IMessage, Message } from './proto'
 import { UserMessage } from './service/UserMessage'

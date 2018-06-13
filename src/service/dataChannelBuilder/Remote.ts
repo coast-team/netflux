@@ -1,6 +1,6 @@
 import { ReplaySubject } from 'rxjs'
 
-import { env } from '../../misc/env'
+import { env, RTCDataChannel } from '../../misc/env'
 import { log } from '../../misc/util'
 import { dataChannelBuilder as proto } from '../../proto'
 
@@ -88,7 +88,7 @@ export class Remote {
     log.webrtc('CLEAN')
     this.pc.oniceconnectionstatechange = () => {}
     this.pc.onicecandidate = () => {}
-    this.pc.ondatachannel = () => {}
+    ;(this.pc as any).ondatachannel = () => {}
     this._onError = () => {}
     this.candidates.complete()
     this.remotes.delete(this.id)
@@ -106,7 +106,7 @@ export class Remote {
     }
     this.pc.oniceconnectionstatechange = () => {}
     dc.onopen = () => {}
-    this.pc.ondatachannel = () => {}
+    ;(this.pc as any).ondatachannel = () => {}
     this._onError = () => {}
     clearTimeout(this.timer)
   }
