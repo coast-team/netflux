@@ -60,12 +60,17 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
 
     // Set onConnectionRequest callback for ChannelBuilder
     this.wc.channelBuilder.onConnectionRequest = (streamId: number, data: Uint8Array) => {
-      const { id, adjacentIds } = proto.ConnectionRequest.decode(data)
-      if (streamId === this.wc.STREAM_ID) {
-        log.topology(`CONNECTION REQUEST from ${id}, where adjacent members are: `, adjacentIds)
-        return this.createOrUpdateDistantMember(id, adjacentIds)
-      } else {
-        return true
+      try {
+        const { id, adjacentIds } = proto.ConnectionRequest.decode(data)
+        if (streamId === this.wc.STREAM_ID) {
+          log.topology(`CONNECTION REQUEST from ${id}, where adjacent members are: `, adjacentIds)
+          return this.createOrUpdateDistantMember(id, adjacentIds)
+        } else {
+          return true
+        }
+      } catch (err) {
+        log.warn('Decode Fullmesh onConnectionRequest message error: ', err)
+        return false
       }
     }
 

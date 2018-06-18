@@ -83,7 +83,12 @@ export class Channel {
           })
       )
       this.wsOrDc.onmessage = ({ data }: { data: ArrayBuffer }) => {
-        this.handleInitMessage(proto.Message.decode(new Uint8Array(data)))
+        try {
+          const msg = proto.Message.decode(new Uint8Array(data))
+          this.handleInitMessage(msg)
+        } catch (err) {
+          log.warn('Decode inner Channel message error: ', err)
+        }
       }
     }
   }
@@ -188,27 +193,32 @@ export class Channel {
   private initHandlers() {
     // Configure handlers
     this.wsOrDc.onmessage = ({ data }: { data: ArrayBuffer }) => {
-      const msg = Message.decode(new Uint8Array(data))
+      try {
+        const msg = Message.decode(new Uint8Array(data))
 
-      // 0: broadcast message
-      if (msg.recipientId === 0 || msg.recipientId === this.wc.myId) {
-        // User Message
-        if (msg.serviceId === UserMessage.SERVICE_ID) {
-          const userData = this.wc.userMsg.decodeUserMessage(msg.content, msg.senderId)
-          if (userData) {
-            this.wc.onMessage(msg.senderId as number, userData)
+        // 0: broadcast message or a message to me
+        if (msg.recipientId === 0 || msg.recipientId === this.wc.myId) {
+          // User Message
+          if (msg.serviceId === UserMessage.SERVICE_ID) {
+            const userData = this.wc.userMsg.decodeUserMessage(msg.content, msg.senderId)
+            if (userData) {
+              this.wc.onMessage(msg.senderId as number, userData)
+            }
+
+            // Heartbeat message
+          } else if (msg.serviceId === 0) {
+            this.missedHeartbeat = 0
+
+            // Service Message
+          } else {
+            this.wc.streamSubject.next(Object.assign({ channel: this }, msg))
           }
-
-          // Heartbeat message
-        } else if (msg.serviceId === 0) {
-          this.missedHeartbeat = 0
-          // Service Message
-        } else {
-          this.wc.streamSubject.next(Object.assign({ channel: this }, msg))
         }
-      }
-      if (msg.recipientId !== this.wc.myId) {
-        this.wc.topology.forward(msg)
+        if (msg.recipientId !== this.wc.myId) {
+          this.wc.topology.forward(msg)
+        }
+      } catch (err) {
+        log.warn('Decode general Channel message error: ', err)
       }
     }
     this.wsOrDc.onclose = (evt: Event) => {

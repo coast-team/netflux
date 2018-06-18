@@ -141,26 +141,30 @@ export class Signaling implements IStream<OutSigMsg, InSigMsg> {
   }
 
   private handleMessage(bytes: ArrayBuffer) {
-    const msg = proto.Message.decode(new Uint8Array(bytes))
-    switch (msg.type) {
-      case 'heartbeat':
-        this.missedHeartbeat = 0
-        break
-      case 'connected':
-        this.connected = msg.connected
-        this.setState(SignalingState.CHECKED)
-        if (!msg.connected) {
-          this.wc.channelBuilder.connectOverSignaling().catch(() => this.check())
+    try {
+      const msg = proto.Message.decode(new Uint8Array(bytes))
+      switch (msg.type) {
+        case 'heartbeat':
+          this.missedHeartbeat = 0
+          break
+        case 'connected':
+          this.connected = msg.connected
+          this.setState(SignalingState.CHECKED)
+          if (!msg.connected) {
+            this.wc.channelBuilder.connectOverSignaling().catch(() => this.check())
+          }
+          break
+        case 'content': {
+          const { data, id } = msg.content as proto.Content
+          const streamMessage = Message.decode(data)
+          streamMessage.senderId = id
+          log.signaling('StreamMessage RECEIVED: ', streamMessage)
+          this.streamSubject.next(streamMessage)
+          break
         }
-        break
-      case 'content': {
-        const { data, id } = msg.content as proto.Content
-        const streamMessage = Message.decode(data)
-        streamMessage.senderId = id
-        log.signaling('StreamMessage RECEIVED: ', streamMessage)
-        this.streamSubject.next(streamMessage)
-        break
       }
+    } catch (err) {
+      log.warn('Decode Signaling message error: ', err)
     }
   }
 

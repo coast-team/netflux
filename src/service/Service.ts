@@ -69,7 +69,8 @@ export abstract class Service<OutMsg, InMsg extends OutMsg> {
           senderId,
           recipientId,
           msg: this.decode(content),
-        }))
+        })),
+        filter(({ msg }: any) => msg && msg.type)
       ),
       send: (content: Uint8Array | OutMsg, id?: number) => {
         wc.sendOverStream({
@@ -87,7 +88,8 @@ export abstract class Service<OutMsg, InMsg extends OutMsg> {
       id: sig.STREAM_ID,
       message: sig.messageFromStream.pipe(
         filter(({ serviceId }) => serviceId === this.serviceId),
-        map(({ senderId, content }) => ({ senderId, msg: this.decode(content) }))
+        map(({ senderId, content }) => ({ senderId, msg: this.decode(content) })),
+        filter(({ msg }: any) => msg && msg.type)
       ),
       send: (content: Uint8Array | OutMsg, id?: number) => {
         sig.sendOverStream({

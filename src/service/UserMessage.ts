@@ -1,4 +1,5 @@
 import { env } from '../misc/env'
+import { log } from '../misc/util'
 import { userMessage as proto } from '../proto'
 import { Service } from '../service/Service'
 
@@ -65,45 +66,50 @@ export class UserMessage extends Service<proto.IMessage, proto.Message> {
    * Decode user message received from the network.
    */
   decodeUserMessage(bytes: Uint8Array, senderId: number): UserDataType | undefined {
-    const { length, type, contentType, full, chunk } = super.decode(bytes) as {
-      length: number
-      type: proto.Message.Type
-      contentType: string
-      full: Uint8Array | undefined
-      chunk: proto.Message.Chunk
-    }
-    let result
-    switch (contentType) {
-      case 'full': {
-        result = full
-        break
+    try {
+      const { length, type, contentType, full, chunk } = super.decode(bytes) as {
+        length: number
+        type: proto.Message.Type
+        contentType: string
+        full: Uint8Array | undefined
+        chunk: proto.Message.Chunk
       }
-      case 'chunk': {
-        let buffer = this.getBuffer(senderId, chunk.id)
-        if (buffer === undefined) {
-          buffer = new Buffer(length, chunk.content, chunk.nb)
-          this.setBuffer(senderId, chunk.id, buffer)
-          result = undefined
-        } else {
-          result = buffer.append(chunk.content, chunk.nb)
+      let result
+      switch (contentType) {
+        case 'full': {
+          result = full
+          break
         }
-        break
+        case 'chunk': {
+          let buffer = this.getBuffer(senderId, chunk.id)
+          if (buffer === undefined) {
+            buffer = new Buffer(length, chunk.content, chunk.nb)
+            this.setBuffer(senderId, chunk.id, buffer)
+            result = undefined
+          } else {
+            result = buffer.append(chunk.content, chunk.nb)
+          }
+          break
+        }
+        default: {
+          throw new Error('Unknown message integrity')
+        }
       }
-      default: {
-        throw new Error('Unknown message integrity')
+      if (result !== undefined) {
+        switch (type) {
+          case proto.Message.Type.U_INT_8_ARRAY:
+            return result
+          case proto.Message.Type.STRING:
+            return textDecoder.decode(result)
+          default:
+            throw new Error('Unknown message type')
+        }
       }
+      return result
+    } catch (err) {
+      log.warn('Decode user message error: ', err)
+      return undefined
     }
-    if (result !== undefined) {
-      switch (type) {
-        case proto.Message.Type.U_INT_8_ARRAY:
-          return result
-        case proto.Message.Type.STRING:
-          return textDecoder.decode(result)
-        default:
-          throw new Error('Unknown message type')
-      }
-    }
-    return result
   }
 
   /**
