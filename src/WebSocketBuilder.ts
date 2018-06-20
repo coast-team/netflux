@@ -25,15 +25,6 @@ export class WebSocketBuilder {
     return this.channelsSubject.asObservable()
   }
 
-  async connectWithJoining(url: string, recipientId: number, senderId: number): Promise<void> {
-    const fullUrl = this.composeUrl(url, Channel.WITH_MEMBER, this.wc.id, senderId)
-    const channel = await this.connect(
-      fullUrl,
-      Channel.WITH_JOINING
-    )
-    this.channelsSubject.next({ id: recipientId, channel })
-  }
-
   newWebSocket(ws: WebSocket, senderId: number, type: number) {
     const channel =
       type === Channel.WITH_INTERNAL
@@ -42,67 +33,50 @@ export class WebSocketBuilder {
     this.channelsSubject.next({ id: senderId, channel })
   }
 
-  async connectWithMember(
-    url: string,
-    wcId: number,
-    recipientId: number,
-    senderId: number
-  ): Promise<void> {
-    const fullUrl = this.composeUrl(url, Channel.WITH_JOINING, wcId, senderId)
-    const channel = await this.connect(
-      fullUrl,
-      Channel.WITH_MEMBER
-    )
-    this.channelsSubject.next({ id: recipientId, channel })
-  }
-
-  async connectWithInternal(url: string, recipientId: number): Promise<void> {
-    const fullUrl = this.composeUrl(url, Channel.WITH_INTERNAL, this.wc.id)
-    const channel = await this.connect(
-      fullUrl,
-      Channel.WITH_INTERNAL,
-      recipientId
-    )
-    this.channelsSubject.next({ id: recipientId, channel })
-  }
-
-  /**
-   * Establish `WebSocket` with a server if `id` is not specified,
-   * otherwise return an opened `Channel` with a peer identified by the
-   * specified `id`.
-   *
-   * @param url Server URL
-   * @param id  Peer id
-   */
-  private async connect(url: string, type: number, id?: number): Promise<Channel> {
+  async connect(url: string, type: number, targetId: number, myId: number, wcId: number) {
     validateWebSocketURL(url)
-    const ws = new env.WebSocket(url)
-    return new Promise((resolve, reject) => {
+
+    const targetType =
+      type === Channel.WITH_INTERNAL
+        ? Channel.WITH_INTERNAL
+        : type === Channel.WITH_JOINING
+          ? Channel.WITH_MEMBER
+          : Channel.WITH_JOINING
+    const fullUrl = this.composeUrl(url, targetType, wcId, myId)
+
+    const ws = new env.WebSocket(fullUrl)
+    const channel = (await new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         if (ws.readyState !== ws.OPEN) {
           ws.close()
-          reject(new Error(`WebSocket ${CONNECT_TIMEOUT}ms connection timeout with '${url}'`))
+          reject(new Error(`WebSocket ${CONNECT_TIMEOUT}ms connection timeout with '${fullUrl}'`))
         }
       }, CONNECT_TIMEOUT)
       ws.onopen = () => {
-        const channel = new Channel(this.wc, ws, type, id)
         clearTimeout(timeout)
-        resolve(channel)
+        const ch =
+          type === Channel.WITH_INTERNAL
+            ? new Channel(this.wc, ws, type, targetId)
+            : new Channel(this.wc, ws, type)
+        resolve(ch)
       }
       ws.onerror = (err) => reject(err)
       ws.onclose = (closeEvt) => {
         reject(
           new Error(
-            `WebSocket connection to '${url}' failed with code ${closeEvt.code}: ${closeEvt.reason}`
+            `WebSocket connection to '${fullUrl}' failed with code ${closeEvt.code}: ${
+              closeEvt.reason
+            }`
           )
         )
       }
-    }) as Promise<Channel>
+    })) as Channel
+    this.channelsSubject.next({ id: targetId, channel })
   }
 
-  private composeUrl(url: string, type: number, wcId: number, senderId?: number): string {
+  private composeUrl(url: string, type: number, wcId: number, senderId: number): string {
     validateWebSocketURL(url)
-    let result = `${url}/?type=${type}&wcId=${wcId}&senderId=${senderId ? senderId : this.wc.myId}`
+    let result = `${url}/?type=${type}&wcId=${wcId}&senderId=${senderId}`
     if (type !== Channel.WITH_INTERNAL) {
       result += `&key=${this.wc.key}`
     }

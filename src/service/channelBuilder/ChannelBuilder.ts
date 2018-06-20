@@ -268,18 +268,15 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
     amIInitiator: boolean
   ): Promise<boolean> {
     try {
-      if (streamId === this.wc.STREAM_ID) {
-        await this.wc.webSocketBuilder.connectWithInternal(theOther.wss, theOther.id)
-      } else if (amIInitiator) {
-        await this.wc.webSocketBuilder.connectWithMember(
-          theOther.wss,
-          theOther.wcId,
-          theOther.id,
-          me.id
-        )
-      } else {
-        await this.wc.webSocketBuilder.connectWithJoining(theOther.wss, theOther.id, me.id)
-      }
+      const type = this.getType(streamId, amIInitiator)
+      const wcId = type === Channel.WITH_MEMBER ? theOther.wcId : this.wc.myId
+      await this.wc.webSocketBuilder.connect(
+        theOther.wss,
+        type,
+        theOther.id,
+        me.id,
+        wcId
+      )
       log.channelBuilder(`New WebSocket connection with ${theOther.id}`)
       return true
     } catch (err) {
