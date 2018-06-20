@@ -1,3 +1,4 @@
+import { log } from '../../misc/util'
 import { ConnectionError } from './ConnectionError'
 
 export interface IConnectionInProgress {
@@ -7,24 +8,18 @@ export interface IConnectionInProgress {
 }
 
 export class ConnectionsInProgress {
-  private wcStream: Map<number, IConnectionInProgress>
-  private sigStream: Map<number, IConnectionInProgress>
-  private wcStreamId: number
+  private connections: Map<number, IConnectionInProgress>
 
-  constructor(wcStreamId: number) {
-    this.wcStreamId = wcStreamId
-    this.wcStream = new Map()
-    this.sigStream = new Map()
+  constructor() {
+    this.connections = new Map()
   }
 
   create(
-    streamId: number,
     id: number,
     connectionTimeout: number,
     responseTimeout: number,
     onConnectionTimeoutCallback: () => void
   ): IConnectionInProgress {
-    const connections = this.getByStreamId(streamId)
     const connection = {} as IConnectionInProgress
     connection.promise = new Promise((resolveResponse, rejectResponse) => {
       const responseTimer = setTimeout(
@@ -37,20 +32,21 @@ export class ConnectionsInProgress {
         resolveResponse()
         connection.promise = new Promise((resolveConnection, rejectConnection) => {
           const connectionTimer = setTimeout(() => {
+            log.channelBuilder('on Connection timeout callback')
             onConnectionTimeoutCallback()
             connection.reject(new Error(ConnectionError.CONNECTION_TIMEOUT))
           }, connectionTimeout)
 
           connection.resolve = () => {
             clearTimeout(connectionTimer)
-            connections.delete(id)
+            this.connections.delete(id)
             resolveConnection()
           }
           connection.reject = (err) => {
             // This is necessary for some scenarios in order to rid of UnhandledPromiseRejectionWarning errors in NodeJS and similar errors/warnings in browsers
             connection.promise.catch(() => {})
             clearTimeout(connectionTimer)
-            connections.delete(id)
+            this.connections.delete(id)
             rejectConnection(err)
           }
         })
@@ -59,33 +55,24 @@ export class ConnectionsInProgress {
         // This is necessary for some scenarios in order to rid of UnhandledPromiseRejectionWarning errors in NodeJS and similar errors/warnings in browsers
         connection.promise.catch(() => {})
         clearTimeout(responseTimer)
-        connections.delete(id)
+        this.connections.delete(id)
         rejectResponse(err)
       }
-      connections.set(id, connection)
+      this.connections.set(id, connection)
     })
     return connection
   }
 
-  get(streamId: number, id: number): IConnectionInProgress | undefined {
-    return this.getByStreamId(streamId).get(id)
+  get(id: number): IConnectionInProgress | undefined {
+    return this.connections.get(id)
   }
 
   has(streamId: number, id: number) {
-    return this.getByStreamId(streamId).has(id)
+    return this.connections.has(id)
   }
 
   clean() {
-    this.cleanAll(this.wcStream)
-    this.cleanAll(this.sigStream)
-  }
-
-  private cleanAll(connections: Map<number, IConnectionInProgress>) {
-    connections.forEach((c) => c.reject(new Error(ConnectionError.CLEAN)))
-    connections.clear()
-  }
-
-  private getByStreamId(streamId: number): Map<number, IConnectionInProgress> {
-    return streamId === this.wcStreamId ? this.wcStream : this.sigStream
+    this.connections.forEach((c) => c.reject(new Error(ConnectionError.CLEAN)))
+    this.connections.clear()
   }
 }

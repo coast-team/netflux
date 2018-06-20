@@ -88,7 +88,7 @@ export class Bot {
       const { route, wcId, senderId, key } = this.readUrl((ws as any).upgradeReq.url) as {
         route: string
         wcId: number
-        senderId: number | undefined
+        senderId: number
         key: string | undefined
       }
       switch (route) {
@@ -101,7 +101,7 @@ export class Bot {
         case Route.JOIN: {
           const wg = this.webGroups.get(wcId) as WebGroup
           const wc = wcs.get(wg as WebGroup) as WebChannel
-          wc.webSocketBuilder.newJoinWebSocket(ws)
+          wc.webSocketBuilder.newJoinWebSocket(ws, senderId)
           break
         }
         case Route.INVITE: {
@@ -116,7 +116,7 @@ export class Bot {
           }
           wc.init(key as string, wcId)
           this.onWebGroup(wg)
-          wc.webSocketBuilder.newInviteWebSocket(ws)
+          wc.webSocketBuilder.newInviteWebSocket(ws, senderId)
           break
         }
       }
@@ -134,11 +134,17 @@ export class Bot {
         return this.webGroups.has(wcId) && !!senderId
       case Route.INVITE: {
         const wg = this.webGroups.get(wcId)
-        return !!key && (wg === undefined || wg.state === WebGroupState.LEFT)
+        return !!key && (wg === undefined || wg.state === WebGroupState.LEFT) && !!senderId
       }
       case Route.JOIN: {
         const wg = this.webGroups.get(wcId)
-        return !!key && wg !== undefined && wg.key === key && wg.state !== WebGroupState.LEFT
+        return (
+          !!key &&
+          wg !== undefined &&
+          wg.key === key &&
+          wg.state !== WebGroupState.LEFT &&
+          !!senderId
+        )
       }
       default:
         return false

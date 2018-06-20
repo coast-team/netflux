@@ -62,7 +62,8 @@ export class Signaling implements IStream<OutSigMsg, InSigMsg> {
     log.signaling(this.wc.myId + ' Forward message', msg)
     this.send({
       content: {
-        id: msg.recipientId,
+        recipientId: msg.recipientId,
+        senderId: msg.senderId,
         lastData: msg.content === undefined,
         data: Message.encode(Message.create(msg)).finish(),
       },
@@ -155,9 +156,10 @@ export class Signaling implements IStream<OutSigMsg, InSigMsg> {
           }
           break
         case 'content': {
-          const { data, id } = msg.content as proto.Content
+          const { data, senderId, recipientId } = msg.content as proto.Content
           const streamMessage = Message.decode(data)
-          streamMessage.senderId = id
+          streamMessage.senderId = senderId
+          streamMessage.recipientId = recipientId
           log.signaling('StreamMessage RECEIVED: ', streamMessage)
           this.streamSubject.next(streamMessage)
           break

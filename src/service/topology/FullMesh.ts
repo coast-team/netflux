@@ -93,7 +93,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
         this.startHeartbeatInterval()
       }
 
-      if (ch.type === ChannelType.JOINING) {
+      if (ch.type === ChannelType.WITH_MEMBER) {
         super.setState(TopologyState.CONSTRUCTING)
         const { members } = ch.initData as IChannelInitData
         this.connectToMembers(members, ch.id).then(() => {

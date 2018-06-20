@@ -5,9 +5,9 @@ import { UserMessage } from './service/UserMessage'
 import { WebChannel } from './WebChannel'
 
 export enum ChannelType {
-  INTERNAL,
-  INVITED,
-  JOINING,
+  WITH_INTERNAL,
+  WITH_JOINING,
+  WITH_MEMBER,
 }
 
 export interface IChannelInitData {
@@ -67,12 +67,12 @@ export class Channel {
       this.send = this.sendInNodeOverDataChannel
     }
 
-    if (type === ChannelType.INTERNAL) {
+    if (type === ChannelType.WITH_INTERNAL) {
       this.heartbeatMsg = this.createHeartbeatMsg()
       this.init = Promise.resolve()
       this.initHandlers()
     } else {
-      if (type === ChannelType.INVITED) {
+      if (type === ChannelType.WITH_JOINING) {
         this.sendInitPing()
       }
       this.init = new Promise(

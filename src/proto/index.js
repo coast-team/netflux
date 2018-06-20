@@ -4348,7 +4348,8 @@ var signaling = $root.signaling = function () {
          * Properties of a Content.
          * @memberof signaling
          * @interface IContent
-         * @property {number|null} [id] Content id
+         * @property {number|null} [senderId] Content senderId
+         * @property {number|null} [recipientId] Content recipientId
          * @property {boolean|null} [lastData] Content lastData
          * @property {Uint8Array|null} [data] Content data
          */
@@ -4368,12 +4369,20 @@ var signaling = $root.signaling = function () {
         }
 
         /**
-         * Content id.
-         * @member {number} id
+         * Content senderId.
+         * @member {number} senderId
          * @memberof signaling.Content
          * @instance
          */
-        Content.prototype.id = 0;
+        Content.prototype.senderId = 0;
+
+        /**
+         * Content recipientId.
+         * @member {number} recipientId
+         * @memberof signaling.Content
+         * @instance
+         */
+        Content.prototype.recipientId = 0;
 
         /**
          * Content lastData.
@@ -4414,9 +4423,10 @@ var signaling = $root.signaling = function () {
          */
         Content.encode = function encode(message, writer) {
             if (!writer) writer = $Writer.create();
-            if (message.id != null && message.hasOwnProperty("id")) writer.uint32( /* id 1, wireType 0 =*/8).uint32(message.id);
-            if (message.lastData != null && message.hasOwnProperty("lastData")) writer.uint32( /* id 2, wireType 0 =*/16).bool(message.lastData);
-            if (message.data != null && message.hasOwnProperty("data")) writer.uint32( /* id 3, wireType 2 =*/26).bytes(message.data);
+            if (message.senderId != null && message.hasOwnProperty("senderId")) writer.uint32( /* id 1, wireType 0 =*/8).uint32(message.senderId);
+            if (message.recipientId != null && message.hasOwnProperty("recipientId")) writer.uint32( /* id 2, wireType 0 =*/16).uint32(message.recipientId);
+            if (message.lastData != null && message.hasOwnProperty("lastData")) writer.uint32( /* id 3, wireType 0 =*/24).bool(message.lastData);
+            if (message.data != null && message.hasOwnProperty("data")) writer.uint32( /* id 4, wireType 2 =*/34).bytes(message.data);
             return writer;
         };
 
@@ -4439,12 +4449,15 @@ var signaling = $root.signaling = function () {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
                     case 1:
-                        message.id = reader.uint32();
+                        message.senderId = reader.uint32();
                         break;
                     case 2:
-                        message.lastData = reader.bool();
+                        message.recipientId = reader.uint32();
                         break;
                     case 3:
+                        message.lastData = reader.bool();
+                        break;
+                    case 4:
                         message.data = reader.bytes();
                         break;
                     default:

@@ -5,14 +5,14 @@ setLogLevel(
   LogLevel.DEBUG
   // LogLevel.SIGNALING,
   // LogLevel.CHANNEL,
-  // LogLevel.CHANNEL_BUILDER
+  // LogLevel.CHANNEL_BUILDER,
   // LogLevel.WEBRTC,
   // LogLevel.TOPOLOGY,
   // LogLevel.WEB_GROUP
 )
 
 // Main signaling server for all tests
-export const SIGNALING_URL = 'ws://localhost:13477'
+export const SIGNALING_URL = 'ws://localhost:8010'
 
 // Configuration for bot server
 export const BOT_HOST = 'localhost'

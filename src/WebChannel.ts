@@ -8,10 +8,10 @@ import {
   isBrowser,
   isOnline,
   IStream,
-  isURL,
   isVisible,
   log,
   validateKey,
+  validateWebSocketURL,
 } from './misc/util'
 import { IMessage, Message } from './proto'
 import { ChannelBuilder } from './service/channelBuilder/ChannelBuilder'
@@ -159,19 +159,16 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
   }
 
   invite(url: string): void {
-    if (isURL(url)) {
-      const hostnamePort = extractHostnameAndPort(url)
-      for (const ch of this.topology.neighbors) {
-        if (hostnamePort === extractHostnameAndPort(ch.url)) {
-          return
-        }
+    validateWebSocketURL(url)
+    const hostnamePort = extractHostnameAndPort(url)
+    for (const ch of this.topology.neighbors) {
+      if (hostnamePort === extractHostnameAndPort(ch.url)) {
+        return
       }
-      this.webSocketBuilder
-        .connectToInvite(url)
-        .catch((err) => log.webgroup(`Failed to invite the bot ${url}: ${err.message}`))
-    } else {
-      throw new Error(`Failed to invite a bot: ${url} is not a valid URL`)
     }
+    this.webSocketBuilder
+      .connectWithMember(url, -1, -1)
+      .catch((err) => log.webgroup(`Failed to invite the bot ${url}: ${err.message}`))
   }
 
   leave() {

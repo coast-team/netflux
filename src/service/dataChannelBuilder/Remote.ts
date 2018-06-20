@@ -85,7 +85,7 @@ export class Remote {
   }
 
   clean(sendFinalMessage = true) {
-    log.webrtc('CLEAN')
+    log.webrtc('CLEAN, stack trace', new Error().stack)
     this.pc.oniceconnectionstatechange = () => {}
     this.pc.onicecandidate = () => {}
     ;(this.pc as any).ondatachannel = () => {}

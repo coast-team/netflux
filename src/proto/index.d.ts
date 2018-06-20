@@ -875,8 +875,11 @@ export namespace signaling {
     /** Properties of a Content. */
     interface IContent {
 
-        /** Content id */
-        id?: (number|null);
+        /** Content senderId */
+        senderId?: (number|null);
+
+        /** Content recipientId */
+        recipientId?: (number|null);
 
         /** Content lastData */
         lastData?: (boolean|null);
@@ -894,8 +897,11 @@ export namespace signaling {
          */
         constructor(properties?: signaling.IContent);
 
-        /** Content id. */
-        public id: number;
+        /** Content senderId. */
+        public senderId: number;
+
+        /** Content recipientId. */
+        public recipientId: number;
 
         /** Content lastData. */
         public lastData: boolean;

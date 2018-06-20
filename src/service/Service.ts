@@ -20,18 +20,23 @@ export interface IWebChannelStream<OutMsg, InMsg> {
     channel: Channel
     recipientId: number
   }>
-  send: (msg: Uint8Array | OutMsg, id?: number) => void
+  send: (msg: Uint8Array | OutMsg, recipientId: number) => void
 }
 
 export interface ISignalingStream<OutMsg, InMsg> {
   id: number
-  message: Observable<{ senderId: number; msg: InMsg }>
-  send: (msg: Uint8Array | OutMsg, id?: number) => void
+  message: Observable<{ senderId: number; recipientId: number; msg: InMsg }>
+  send: (msg: Uint8Array | OutMsg, recipientId: number, senderId: number) => void
 }
 
 export interface IAllStreams<OutMsg, InMsg> {
-  message: Observable<{ streamId: number; senderId: number; msg: InMsg }>
-  sendOver: (streamId: number, msg: Uint8Array | OutMsg, id?: number) => void
+  message: Observable<{ streamId: number; senderId: number; recipientId: number; msg: InMsg }>
+  sendOver: (
+    streamId: number,
+    msg: Uint8Array | OutMsg,
+    recipientId: number,
+    senderId: number
+  ) => void
 }
 
 /**
@@ -72,10 +77,10 @@ export abstract class Service<OutMsg, InMsg extends OutMsg> {
         })),
         filter(({ msg }: any) => msg && msg.type)
       ),
-      send: (content: Uint8Array | OutMsg, id?: number) => {
+      send: (content: Uint8Array | OutMsg, recipientId: number) => {
         wc.sendOverStream({
           senderId: wc.myId,
-          recipientId: id,
+          recipientId,
           serviceId: this.serviceId,
           content: content instanceof Uint8Array ? content : this.encode(content),
         })
@@ -88,12 +93,17 @@ export abstract class Service<OutMsg, InMsg extends OutMsg> {
       id: sig.STREAM_ID,
       message: sig.messageFromStream.pipe(
         filter(({ serviceId }) => serviceId === this.serviceId),
-        map(({ senderId, content }) => ({ senderId, msg: this.decode(content) })),
+        map(({ senderId, recipientId, content }) => ({
+          senderId,
+          recipientId,
+          msg: this.decode(content),
+        })),
         filter(({ msg }: any) => msg && msg.type)
       ),
-      send: (content: Uint8Array | OutMsg, id?: number) => {
+      send: (content: Uint8Array | OutMsg, recipientId: number, senderId: number) => {
         sig.sendOverStream({
-          recipientId: id,
+          senderId,
+          recipientId,
           serviceId: this.serviceId,
           content: content instanceof Uint8Array ? content : this.encode(content),
         })
@@ -110,17 +120,32 @@ export abstract class Service<OutMsg, InMsg extends OutMsg> {
     return {
       message: merge(
         wcStream.message.pipe(
-          map(({ senderId, msg }) => ({ streamId: wcStream.id, senderId, msg }))
+          map(({ senderId, recipientId, msg }) => ({
+            streamId: wcStream.id,
+            senderId,
+            recipientId,
+            msg,
+          }))
         ),
         sigStream.message.pipe(
-          map(({ senderId, msg }) => ({ streamId: sigStream.id, senderId, msg }))
+          map(({ senderId, recipientId, msg }) => ({
+            streamId: sigStream.id,
+            senderId,
+            recipientId,
+            msg,
+          }))
         )
       ),
-      sendOver: (streamId: number, msg: Uint8Array | OutMsg, id?: number) => {
+      sendOver: (
+        streamId: number,
+        msg: Uint8Array | OutMsg,
+        recipientId: number,
+        senderId: number
+      ) => {
         if (streamId === wcStream.id) {
-          wcStream.send(msg, id)
+          wcStream.send(msg, recipientId)
         } else {
-          sigStream.send(msg, id)
+          sigStream.send(msg, recipientId, senderId)
         }
       },
     }

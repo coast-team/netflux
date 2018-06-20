@@ -11,9 +11,10 @@ message Message {
 }
 
 message Content {
-  uint32 id = 1;
-  bool lastData = 2; // Forward last data and unsubscribe from the peer
-  bytes data = 3;
+  uint32 senderId = 1;
+  uint32 recipientId = 2;
+  bool lastData = 3; // Forward last data and unsubscribe from the peer
+  bytes data = 4;
 }
 
 message GroupData {

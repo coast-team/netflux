@@ -1,6 +1,8 @@
 import { Observable } from 'rxjs'
 import { env } from './env'
 
+const MIN_ID = 2147483648
+
 /**
  * Equals to true in any browser.
  */
@@ -16,18 +18,11 @@ export function isVisible() {
 /**
  * Check whether the string is a valid URL.
  */
-export function isURL(str: string): boolean {
-  const regex =
-    '^' +
-    // protocol identifier
-    '(?:wss|ws)://' +
-    // Host name/IP
-    '[^\\s]+' +
-    // port number
-    '(?::\\d{2,5})?' +
-    '$'
-
-  return new RegExp(regex, 'i').test(str)
+export function validateWebSocketURL(url: string) {
+  const regex = /^(wss|ws):\/\/((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])|(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9]))(:[0-9]{1,5})?(\/.*)?$/
+  if (!new RegExp(regex, 'i').test(url)) {
+    throw new Error(`Invalid URL: ${url}`)
+  }
 }
 
 /**
@@ -45,7 +40,10 @@ export function generateKey(): string {
 }
 
 export function generateId(exclude: number[] = []): number {
-  const id = randNumbers()[0]
+  let id = randNumbers()[0]
+  if (id < MIN_ID) {
+    id += MIN_ID
+  }
   if (exclude.includes(id)) {
     return generateId(exclude)
   }

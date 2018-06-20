@@ -19,8 +19,8 @@ export const CONNECT_TIMEOUT = 9000
 export class DataChannelBuilder extends Service<proto.IMessage, proto.Message> {
   public static readonly SERVICE_ID = 7431
 
-  private readonly remotes: Map<number, Map<number, Remote>>
-  private readonly channelsSubject: Subject<Channel>
+  private readonly remotes: Map<number, Remote>
+  private readonly channelsSubject: Subject<{ id: number; channel: Channel }>
   private rtcConfiguration: RTCConfiguration
   private allStreams: IAllStreams<proto.IMessage, proto.Message>
   private wc: WebChannel
@@ -33,22 +33,21 @@ export class DataChannelBuilder extends Service<proto.IMessage, proto.Message> {
     this.rtcConfiguration = rtcConfiguration
     this.channelsSubject = new Subject()
     this.remotes = new Map()
-    this.remotes.set(this.wc.STREAM_ID, new Map())
-    this.remotes.set(this.wc.signaling.STREAM_ID, new Map())
-    this.allStreams.message.subscribe(({ streamId, senderId, msg }) => {
+    this.allStreams.message.subscribe(({ streamId, senderId, recipientId, msg }) => {
       try {
-        let remote = this.getRemotes(streamId).get(senderId)
+        let remote = this.remotes.get(senderId)
         if (!remote) {
           if (msg.type && (msg.type === 'offer' || msg.type === 'candidate')) {
-            remote = this.createRemote(streamId, senderId, true)
+            remote = this.createRemote(streamId, senderId, recipientId, true)
           } else {
             return
           }
         } else {
           if (remote.finalMessageReceived) {
+            log.webrtc('CLEAN Remote: final message already received')
             remote.clean(false)
             if (msg.type && (msg.type === 'offer' || msg.type === 'candidate')) {
-              remote = this.createRemote(streamId, senderId, true)
+              remote = this.createRemote(streamId, senderId, recipientId, true)
             } else {
               return
             }
@@ -59,118 +58,88 @@ export class DataChannelBuilder extends Service<proto.IMessage, proto.Message> {
     })
   }
 
-  onChannel(): Observable<Channel> {
+  onChannel(): Observable<{ id: number; channel: Channel }> {
     return this.channelsSubject.asObservable()
-  }
-
-  async connectInternal(id: number): Promise<void> {
-    log.webrtc(this.wc.myId + 'connectInternal')
-    this.channelsSubject.next(
-      await this.connect(
-        this.wc.STREAM_ID,
-        ChannelType.INTERNAL,
-        id
-      )
-    )
-  }
-
-  async connectToJoin(id: number): Promise<void> {
-    log.webrtc(this.wc.myId + ' connectToJoin')
-    this.channelsSubject.next(
-      await this.connect(
-        this.wc.signaling.STREAM_ID,
-        ChannelType.JOINING,
-        id
-      )
-    )
-  }
-
-  async connectToInvite(id: number): Promise<void> {
-    log.webrtc(this.wc.myId + 'connectToInvite')
-    this.channelsSubject.next(
-      await this.connect(
-        this.wc.signaling.STREAM_ID,
-        ChannelType.INVITED,
-        id
-      )
-    )
-  }
-
-  clean(id?: number, streamId?: number) {
-    if (id && streamId) {
-      const remote = this.getRemotes(streamId).get(id)
-      if (remote) {
-        remote.clean(false)
-      }
-    } else {
-      this.remotes.forEach((remotes) =>
-        remotes.forEach((remote) => {
-          remote.onError(new Error('clean'))
-        })
-      )
-    }
   }
 
   /**
    * Establish an `RTCDataChannel`. Starts by sending an **SDP offer**.
    */
-  private async connect(streamId: number, type: ChannelType, id: number): Promise<Channel> {
-    let remote = this.getRemotes(streamId).get(id) as Remote
+  async connect(targetId: number, myId: number, type: ChannelType) {
+    log.webrtc('connectWith call', { targetId, myId, type: ChannelType[type] })
+    const streamId =
+      type === ChannelType.WITH_INTERNAL ? this.wc.STREAM_ID : this.wc.signaling.STREAM_ID
+    let remote = this.remotes.get(targetId) as Remote
     if (remote) {
       remote.clean()
     } else {
-      remote = this.createRemote(streamId, id)
+      remote = this.createRemote(streamId, targetId, myId)
     }
     const dc = (remote.pc as any).createDataChannel(this.wc.myId.toString())
     const offerInit = await remote.pc.createOffer()
     await remote.pc.setLocalDescription(offerInit)
 
     const offer = (remote.pc.localDescription as RTCSessionDescription).sdp
-    this.allStreams.sendOver(streamId, { offer }, id)
+    this.allStreams.sendOver(streamId, { offer }, targetId, myId)
     remote.sdpIsSent()
 
-    return new Promise((resolve, reject) => {
+    const channel = (await new Promise((resolve, reject) => {
       remote.onError = (err) => reject(err)
       dc.onopen = () => {
         remote.dataChannelOpen(dc)
-        resolve(new Channel(this.wc, dc, type, id, remote.pc))
+        resolve(new Channel(this.wc, dc, type, targetId, remote.pc))
       }
-    }) as Promise<Channel>
+    })) as Channel
+    this.channelsSubject.next({ id: targetId, channel })
   }
 
-  private createRemote(streamId: number, id: number, passive = false): Remote {
+  clean(id?: number, streamId?: number) {
+    if (id && streamId) {
+      const remote = this.remotes.get(id)
+      if (remote) {
+        log.webrtc('CLEAN Remote: called higher')
+        remote.clean(false)
+      }
+    } else {
+      this.remotes.forEach((remote) => remote.onError(new Error('clean')))
+    }
+  }
+
+  private createRemote(
+    streamId: number,
+    recipientId: number,
+    senderId: number,
+    passive = false
+  ): Remote {
     const remote = new Remote(
-      id,
+      recipientId,
       new env.RTCPeerConnection(this.rtcConfiguration),
-      (msg) => this.allStreams.sendOver(streamId, msg, id),
-      this.getRemotes(streamId),
+      (msg) => this.allStreams.sendOver(streamId, msg, recipientId, senderId),
+      this.remotes,
       CONNECT_TIMEOUT
     )
     if (passive) {
-      log.webrtc(`create a new remote object with ${id} - PASSIVE`)
+      log.webrtc(`create a new remote object with ${recipientId} - PASSIVE`)
       const pc = remote.pc as any
       pc.ondatachannel = ({ channel: dc }: RTCDataChannelEvent) => {
         const peerId = Number.parseInt(dc.label, 10)
         let type: ChannelType
         if (streamId === this.wc.STREAM_ID) {
-          type = ChannelType.INTERNAL
+          type = ChannelType.WITH_INTERNAL
         } else if (this.wc.state === WebChannelState.JOINED) {
-          type = ChannelType.INVITED
+          type = ChannelType.WITH_JOINING
         } else {
-          type = ChannelType.JOINING
+          type = ChannelType.WITH_MEMBER
         }
         dc.onopen = () => {
           remote.dataChannelOpen(dc)
-          this.channelsSubject.next(new Channel(this.wc, dc, type, peerId, remote.pc))
+          const channel = new Channel(this.wc, dc, type, peerId, remote.pc)
+          this.channelsSubject.next({ id: recipientId, channel })
         }
       }
     } else {
-      log.webrtc(`create a new remote object with ${id} - INITIATOR`)
+      log.webrtc(`create a new remote object with ${recipientId} - INITIATOR`)
     }
     return remote
-  }
-
-  private getRemotes(streamId: number): Map<number, Remote> {
-    return this.remotes.get(streamId) as Map<number, Remote>
   }
 }
