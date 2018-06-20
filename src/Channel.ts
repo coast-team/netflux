@@ -37,7 +37,7 @@ export class Channel {
    * Id of the peer who is at the other end of this channel.
    */
   private wsOrDc: any //  WebSocket or RTCDataChannel
-  private rtcPeerConnection: RTCPeerConnection | undefined
+  private pc: RTCPeerConnection | undefined
   private wc: WebChannel
   private heartbeatMsg: Uint8Array
   private resolveInit: () => void
@@ -50,13 +50,13 @@ export class Channel {
     wsOrDc: WebSocket | RTCDataChannel,
     type: number,
     id: number,
-    rtcPeerConnection?: RTCPeerConnection
+    pc?: RTCPeerConnection
   ) {
     log.channel(`New Channel ${type}: Me: ${wc.myId} with ${id}`)
     this.wc = wc
     this.wsOrDc = wsOrDc
     this.type = type
-    this.rtcPeerConnection = rtcPeerConnection
+    this.pc = pc
     this.missedHeartbeat = 0
     this.heartbeatMsg = new Uint8Array(0)
     this.resolveInit = () => {}
@@ -65,7 +65,7 @@ export class Channel {
     if (isBrowser) {
       wsOrDc.binaryType = 'arraybuffer'
       this.send = this.sendInBrowser
-    } else if (!this.rtcPeerConnection) {
+    } else if (!this.pc) {
       this.send = this.sendInNodeOverWebSocket
     } else {
       wsOrDc.binaryType = 'arraybuffer'
@@ -101,7 +101,7 @@ export class Channel {
   }
 
   get url(): string {
-    if (!this.rtcPeerConnection) {
+    if (!this.pc) {
       return (this.wsOrDc as WebSocket).url
     }
     return ''
@@ -117,8 +117,9 @@ export class Channel {
     this.wsOrDc.onmessage = undefined
     this.wsOrDc.onclose = undefined
     this.wsOrDc.onerror = undefined
-    if (this.rtcPeerConnection) {
-      this.rtcPeerConnection.close()
+    if (this.pc) {
+      this.pc.oniceconnectionstatechange = () => {}
+      this.pc.close()
     } else {
       this.wsOrDc.close(1000)
     }
@@ -230,7 +231,18 @@ export class Channel {
     }
     this.wsOrDc.onclose = (evt: Event) => {
       log.channel(`Connection with ${this.id} has closed`, evt)
+      if (this.pc) {
+        this.pc.oniceconnectionstatechange = () => {}
+      }
       this.wc.topology.onChannelClose(this)
+    }
+    if (this.pc) {
+      this.pc.oniceconnectionstatechange = () => {
+        if (this.pc && this.pc.iceConnectionState === 'failed') {
+          this.close()
+          this.wc.topology.onChannelClose(this)
+        }
+      }
     }
     this.wsOrDc.onerror = (evt: Event) => log.channel('Channel error: ', evt)
   }
