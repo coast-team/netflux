@@ -22,7 +22,7 @@ export class WebSocketBuilder {
     this.channelsSubject = new Subject()
   }
 
-  onChannel(): Observable<{ id: number; channel: Channel }> {
+  get channels(): Observable<{ id: number; channel: Channel }> {
     return this.channelsSubject.asObservable()
   }
 

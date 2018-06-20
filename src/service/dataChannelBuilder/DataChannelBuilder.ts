@@ -33,31 +33,27 @@ export class DataChannelBuilder extends Service<proto.IMessage, proto.Message> {
     this.channelsSubject = new Subject()
     this.remotes = new Map()
     this.allStreams.message.subscribe(({ streamId, senderId, recipientId, msg }) => {
-      try {
-        let remote = this.remotes.get(senderId)
-        if (!remote) {
-          if (msg.type && (msg.type === 'offer' || msg.type === 'candidate')) {
+      let remote = this.remotes.get(senderId)
+      if (remote && remote.finalMessageReceived) {
+        remote.clean(false)
+        remote = undefined
+      }
+      if (!remote) {
+        if (msg.type && (msg.type === 'offer' || msg.type === 'candidate')) {
+          try {
             remote = this.createRemote(streamId, senderId, recipientId, true)
-          } else {
+          } catch (err) {
             return
           }
         } else {
-          if (remote.finalMessageReceived) {
-            log.webrtc('CLEAN Remote: final message already received')
-            remote.clean(false)
-            if (msg.type && (msg.type === 'offer' || msg.type === 'candidate')) {
-              remote = this.createRemote(streamId, senderId, recipientId, true)
-            } else {
-              return
-            }
-          }
+          return
         }
-        remote.handleMessage(msg)
-      } catch (err) {}
+      }
+      remote.handleMessage(msg)
     })
   }
 
-  onChannel(): Observable<{ id: number; channel: Channel }> {
+  get channels(): Observable<{ id: number; channel: Channel }> {
     return this.channelsSubject.asObservable()
   }
 
@@ -93,11 +89,10 @@ export class DataChannelBuilder extends Service<proto.IMessage, proto.Message> {
     this.channelsSubject.next({ id: targetId, channel })
   }
 
-  clean(id?: number, streamId?: number) {
-    if (id && streamId) {
+  clean(id?: number) {
+    if (id) {
       const remote = this.remotes.get(id)
       if (remote) {
-        log.webrtc('CLEAN Remote: called higher')
         remote.clean(false)
       }
     } else {

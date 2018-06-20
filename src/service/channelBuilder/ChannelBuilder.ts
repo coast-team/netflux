@@ -100,7 +100,7 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
     if (!connection) {
       this.allStreams.sendOver(streamId, { connectionRequest: data }, id, this.wc.myId)
       connection = this.connectsInProgress.create(id, CONNECT_TIMEOUT, RESPONSE_TIMEOUT, () =>
-        this.dataChannelBuilder.clean(id, streamId)
+        this.dataChannelBuilder.clean(id)
       )
       await connection.promise
       cb()
@@ -133,7 +133,7 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
             senderId,
             CONNECT_TIMEOUT,
             RESPONSE_TIMEOUT,
-            () => this.dataChannelBuilder.clean(senderId, streamId)
+            () => this.dataChannelBuilder.clean(senderId)
           )
           connection.resolve()
           log.channelBuilder('connection Response POSITIVE to ', senderId)
@@ -332,7 +332,7 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
   }
 
   private subscribeToChannels() {
-    merge(this.dataChannelBuilder.onChannel(), this.wc.webSocketBuilder.onChannel()).subscribe(
+    merge(this.dataChannelBuilder.channels, this.wc.webSocketBuilder.channels).subscribe(
       ({ id, channel }) => {
         channel.init.then(() => {
           log.channelBuilder('NEW Channel from ', JSON.stringify({ type: channel.type, id }))
