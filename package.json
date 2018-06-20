@@ -1,13 +1,13 @@
 {
   "name": "netflux",
-  "description": "Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done.",
+  "description": "Peer to peer isomorphic transport API based on WebRTC and WebSocket. Allows to create/join full mesh network",
   "version": "0.0.0-development",
   "license": "AGPL-3.0",
   "main": "dist/netflux.cjs.js",
   "module": "dist/esm/index.node.js",
   "browser": "dist/esm/index.browser.js",
   "types": "dist/esm/index.node.d.ts",
-  "homepage": "https://doc.esdoc.org/github.com/coast-team/netflux",
+  "homepage": "https://coast-team.github.io/netflux",
   "repository": {
     "type": "git",
     "url": "https://github.com/coast-team/netflux.git"
@@ -20,11 +20,13 @@
     "node": ">=8.1.4"
   },
   "keywords": [
-    "netflux",
-    "webRTC",
+    "WebRTC",
+    "WebSocket",
     "p2p",
     "peer",
-    "network"
+    "network",
+    "topology",
+    "fullmesh"
   ],
   "files": [
     "dist/"
@@ -54,7 +56,7 @@
     "protobufjs": "^6.8.6",
     "rxjs": "^6.2.1",
     "text-encoding": "^0.6.4",
-    "uws": "^10.148.0",
+    "uws": "^10.148.1",
     "webrtc-adapter": "^6.2.1"
   },
   "devDependencies": {
@@ -95,14 +97,14 @@
     "rollup-plugin-re": "^1.0.7",
     "rollup-plugin-strip": "^1.1.1",
     "rollup-plugin-typescript2": "^0.15.0",
-    "semantic-release": "^15.5.4",
+    "semantic-release": "^15.6.0",
     "sigver": "^19.1.2",
     "travis-deploy-once": "^5.0.0",
     "tslib": "^1.9.2",
     "tslint": "^5.10.0",
     "tslint-config-prettier": "^1.12.0",
     "typescript": "^2.9.2",
-    "uglify-js": "^3.4.0"
+    "uglify-js": "^3.4.1"
   },
   "commitlint": {
     "extends": [
