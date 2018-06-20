@@ -74,13 +74,8 @@ export class DataChannelBuilder extends Service<proto.IMessage, proto.Message> {
     } else {
       remote = this.createRemote(streamId, targetId, myId)
     }
-    const targetType =
-      type === Channel.WITH_INTERNAL
-        ? Channel.WITH_INTERNAL
-        : type === Channel.WITH_JOINING
-          ? Channel.WITH_MEMBER
-          : Channel.WITH_JOINING
-    const dc = (remote.pc as any).createDataChannel(`{"id":${this.wc.myId},"type":${targetType}}`)
+    const remoteType = Channel.remoteType(type)
+    const dc = (remote.pc as any).createDataChannel(`{"id":${this.wc.myId},"type":${remoteType}}`)
     const offerInit = await remote.pc.createOffer()
     await remote.pc.setLocalDescription(offerInit)
 

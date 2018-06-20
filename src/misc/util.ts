@@ -1,7 +1,7 @@
 import { Observable } from 'rxjs'
 import { env } from './env'
 
-const MIN_ID = 2147483648
+export const MIN_ID = 2147483648
 
 /**
  * Equals to true in any browser.

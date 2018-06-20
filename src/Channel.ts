@@ -1,5 +1,5 @@
 import { RTCDataChannel } from './misc/env'
-import { isBrowser, log } from './misc/util'
+import { isBrowser, log, MIN_ID } from './misc/util'
 import { channel as proto, IMessage, Message } from './proto'
 import { UserMessage } from './service/UserMessage'
 import { WebChannel } from './WebChannel'
@@ -17,6 +17,14 @@ export class Channel {
   public static WITH_INTERNAL = 0
   public static WITH_JOINING = 1
   public static WITH_MEMBER = 2
+
+  public static remoteType(type: number) {
+    return type === Channel.WITH_INTERNAL
+      ? Channel.WITH_INTERNAL
+      : type === Channel.WITH_JOINING
+        ? Channel.WITH_MEMBER
+        : Channel.WITH_JOINING
+  }
 
   public id: number
   public send: (data: Uint8Array) => void
@@ -41,14 +49,13 @@ export class Channel {
     wc: WebChannel,
     wsOrDc: WebSocket | RTCDataChannel,
     type: number,
-    id = 1,
+    id: number,
     rtcPeerConnection?: RTCPeerConnection
   ) {
     log.channel(`New Channel ${type}: Me: ${wc.myId} with ${id}`)
     this.wc = wc
     this.wsOrDc = wsOrDc
     this.type = type
-    this.id = id
     this.rtcPeerConnection = rtcPeerConnection
     this.missedHeartbeat = 0
     this.heartbeatMsg = new Uint8Array(0)
@@ -66,10 +73,12 @@ export class Channel {
     }
 
     if (type === Channel.WITH_INTERNAL) {
+      this.id = id
       this.heartbeatMsg = this.createHeartbeatMsg()
       this.init = Promise.resolve()
       this.initHandlers()
     } else {
+      this.id = MIN_ID
       if (type === Channel.WITH_JOINING) {
         this.sendInitPing()
       }
