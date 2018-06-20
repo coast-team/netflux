@@ -1,8 +1,10 @@
+import { Channel } from './Channel'
 import { WebGroupState } from './index.common.doc'
 import { NodeJSHttpServer, NodeJSHttpsServer } from './misc/env'
+import { log } from './misc/util'
 import { IWebChannelOptions, WebChannel, webChannelDefaultOptions } from './WebChannel'
 import { wcs, WebGroup } from './WebChannelFacade'
-import { Route, WebSocketBuilder } from './WebSocketBuilder'
+import { WebSocketBuilder } from './WebSocketBuilder'
 
 declare const require: any
 
@@ -73,7 +75,7 @@ export class Bot {
   private init(): void {
     this.webSocketServer = new uws.Server({
       perMessageDeflate: this.perMessageDeflate,
-      verifyClient: (info: any) => this.validateConnection(info),
+      verifyClient: (info: any) => this.validateURLQuery(info),
       server: this.server,
     })
     const serverListening = this.server || this.webSocketServer
@@ -85,96 +87,76 @@ export class Bot {
     })
 
     this.webSocketServer.on('connection', (ws: WebSocket) => {
-      const { route, wcId, senderId, key } = this.readUrl((ws as any).upgradeReq.url) as {
-        route: string
-        wcId: number
-        senderId: number
-        key: string | undefined
-      }
-      switch (route) {
-        case Route.INTERNAL: {
-          const wg = this.webGroups.get(wcId) as WebGroup
-          const wc = wcs.get(wg) as WebChannel
-          wc.webSocketBuilder.newInternalWebSocket(ws, senderId as number)
-          break
-        }
-        case Route.JOIN: {
-          const wg = this.webGroups.get(wcId) as WebGroup
-          const wc = wcs.get(wg as WebGroup) as WebChannel
-          wc.webSocketBuilder.newJoinWebSocket(ws, senderId)
-          break
-        }
-        case Route.INVITE: {
-          const wg = new WebGroup(this.wcOptions)
-          this.webGroups.set(wcId, wg)
-          const wc = wcs.get(wg) as WebChannel
-          if (this.leaveOnceAlone) {
-            wc.onAlone = () => {
-              wc.leave()
-              this.webGroups.delete(wcId)
-            }
+      const { type, wcId, senderId, key } = this.readURLQuery((ws as any).upgradeReq.url)
+      let webSocketBuilder: WebSocketBuilder
+      if (type === Channel.WITH_MEMBER) {
+        const wg = new WebGroup(this.wcOptions)
+        this.webGroups.set(wcId, wg)
+        const wc = wcs.get(wg) as WebChannel
+        if (this.leaveOnceAlone) {
+          wc.onAlone = () => {
+            wc.leave()
+            this.webGroups.delete(wcId)
           }
-          wc.init(key as string, wcId)
-          this.onWebGroup(wg)
-          wc.webSocketBuilder.newInviteWebSocket(ws, senderId)
-          break
         }
+        wc.init(key as string, wcId)
+        this.onWebGroup(wg)
+        webSocketBuilder = wc.webSocketBuilder
+      } else {
+        const wg = this.webGroups.get(wcId) as WebGroup
+        const wc = wcs.get(wg) as WebChannel
+        webSocketBuilder = wc.webSocketBuilder
       }
+      webSocketBuilder.newWebSocket(ws, senderId, type)
     })
   }
 
-  private validateConnection(info: any): boolean {
-    const { route, wcId, senderId, key } = this.readUrl(info.req.url)
-    if (wcId === undefined) {
+  private validateURLQuery(info: any): boolean {
+    try {
+      const { type, wcId, key } = this.readURLQuery(info.req.url)
+      switch (type) {
+        case Channel.WITH_INTERNAL:
+          return this.webGroups.has(wcId)
+        case Channel.WITH_MEMBER: {
+          const wg = this.webGroups.get(wcId)
+          return !!key && (wg === undefined || wg.state === WebGroupState.LEFT)
+        }
+        case Channel.WITH_JOINING: {
+          const wg = this.webGroups.get(wcId)
+          return !!key && wg !== undefined && wg.key === key && wg.state !== WebGroupState.LEFT
+        }
+        default:
+          return false
+      }
+    } catch (err) {
+      log.warn(err.message)
       return false
-    }
-
-    switch (route) {
-      case Route.INTERNAL:
-        return this.webGroups.has(wcId) && !!senderId
-      case Route.INVITE: {
-        const wg = this.webGroups.get(wcId)
-        return !!key && (wg === undefined || wg.state === WebGroupState.LEFT) && !!senderId
-      }
-      case Route.JOIN: {
-        const wg = this.webGroups.get(wcId)
-        return (
-          !!key &&
-          wg !== undefined &&
-          wg.key === key &&
-          wg.state !== WebGroupState.LEFT &&
-          !!senderId
-        )
-      }
-      default:
-        return false
     }
   }
 
-  private readUrl(
+  private readURLQuery(
     url: string
   ): {
-    route: string
-    wcId: number | undefined
-    senderId: number | undefined
+    type: number
+    wcId: number
+    senderId: number
     key: string | undefined
   } {
-    const {
-      pathname,
-      query: { senderId, wcId, key },
-    }: {
-      pathname: string
-      query: { senderId: string | undefined; wcId: string; key: string | undefined }
-    } = urlLib.parse(url, true)
-    let lastRoute = pathname
-    if (pathname.endsWith('/')) {
-      lastRoute = pathname.substr(0, pathname.length - 1)
+    const { type, wcId, senderId, key } = urlLib.parse(url, true).query
+    if (!type) {
+      throw new Error('Query parse error: "type" parameter is undefined')
     }
-    lastRoute = lastRoute.split('/').pop() as string
+    if (!wcId) {
+      throw new Error('Query parse error: "wcId" parameter is undefined')
+    }
+    if (!senderId) {
+      throw new Error('Query parse error: "senderId" parameter is undefined')
+    }
+
     return {
-      route: lastRoute,
-      wcId: wcId ? Number(wcId) : undefined,
-      senderId: senderId ? Number(senderId) : undefined,
+      type: Number.parseInt(type, 10),
+      wcId: Number.parseInt(wcId, 10),
+      senderId: Number.parseInt(senderId, 10),
       key,
     }
   }

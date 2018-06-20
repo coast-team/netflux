@@ -7,12 +7,6 @@ import { WebChannel } from './WebChannel'
 
 export const CONNECT_TIMEOUT = 4000
 
-export enum Route {
-  JOIN = 'join',
-  INVITE = 'invite',
-  INTERNAL = 'internal',
-}
-
 /**
  * Service class responsible to establish connections between peers via
  * `WebSocket`.
@@ -31,8 +25,8 @@ export class WebSocketBuilder {
     return this.channelsSubject.asObservable()
   }
 
-  async connectWithMember(url: string, recipientId: number, senderId: number): Promise<void> {
-    const fullUrl = this.composeUrl(url, Route.INVITE, this.wc.id, senderId)
+  async connectWithJoining(url: string, recipientId: number, senderId: number): Promise<void> {
+    const fullUrl = this.composeUrl(url, Channel.WITH_MEMBER, this.wc.id, senderId)
     const channel = await this.connect(
       fullUrl,
       Channel.WITH_JOINING
@@ -40,18 +34,21 @@ export class WebSocketBuilder {
     this.channelsSubject.next({ id: recipientId, channel })
   }
 
-  newInviteWebSocket(ws: WebSocket, senderId: number) {
-    const channel = new Channel(this.wc, ws, Channel.WITH_MEMBER)
+  newWebSocket(ws: WebSocket, senderId: number, type: number) {
+    const channel =
+      type === Channel.WITH_INTERNAL
+        ? new Channel(this.wc, ws, type, senderId)
+        : new Channel(this.wc, ws, type)
     this.channelsSubject.next({ id: senderId, channel })
   }
 
-  async connectWithJoining(
+  async connectWithMember(
     url: string,
     wcId: number,
     recipientId: number,
     senderId: number
   ): Promise<void> {
-    const fullUrl = this.composeUrl(url, Route.JOIN, wcId, senderId)
+    const fullUrl = this.composeUrl(url, Channel.WITH_JOINING, wcId, senderId)
     const channel = await this.connect(
       fullUrl,
       Channel.WITH_MEMBER
@@ -59,24 +56,14 @@ export class WebSocketBuilder {
     this.channelsSubject.next({ id: recipientId, channel })
   }
 
-  newJoinWebSocket(ws: WebSocket, senderId: number) {
-    const channel = new Channel(this.wc, ws, Channel.WITH_JOINING)
-    this.channelsSubject.next({ id: senderId, channel })
-  }
-
   async connectWithInternal(url: string, recipientId: number): Promise<void> {
-    const fullUrl = this.composeUrl(url, Route.INTERNAL, this.wc.id)
+    const fullUrl = this.composeUrl(url, Channel.WITH_INTERNAL, this.wc.id)
     const channel = await this.connect(
       fullUrl,
       Channel.WITH_INTERNAL,
       recipientId
     )
     this.channelsSubject.next({ id: recipientId, channel })
-  }
-
-  newInternalWebSocket(ws: WebSocket, id: number) {
-    const channel = new Channel(this.wc, ws, Channel.WITH_INTERNAL, id)
-    this.channelsSubject.next({ id, channel })
   }
 
   /**
@@ -113,10 +100,10 @@ export class WebSocketBuilder {
     }) as Promise<Channel>
   }
 
-  private composeUrl(url: string, route: Route, wcId: number, senderId?: number): string {
+  private composeUrl(url: string, type: number, wcId: number, senderId?: number): string {
     validateWebSocketURL(url)
-    let result = `${url}/${route}?wcId=${wcId}&senderId=${senderId ? senderId : this.wc.myId}`
-    if (route !== Route.INTERNAL) {
+    let result = `${url}/?type=${type}&wcId=${wcId}&senderId=${senderId ? senderId : this.wc.myId}`
+    if (type !== Channel.WITH_INTERNAL) {
       result += `&key=${this.wc.key}`
     }
     return result

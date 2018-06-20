@@ -271,14 +271,14 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
       if (streamId === this.wc.STREAM_ID) {
         await this.wc.webSocketBuilder.connectWithInternal(theOther.wss, theOther.id)
       } else if (amIInitiator) {
-        await this.wc.webSocketBuilder.connectWithJoining(
+        await this.wc.webSocketBuilder.connectWithMember(
           theOther.wss,
           theOther.wcId,
           theOther.id,
           me.id
         )
       } else {
-        await this.wc.webSocketBuilder.connectWithMember(theOther.wss, theOther.id, me.id)
+        await this.wc.webSocketBuilder.connectWithJoining(theOther.wss, theOther.id, me.id)
       }
       log.channelBuilder(`New WebSocket connection with ${theOther.id}`)
       return true
