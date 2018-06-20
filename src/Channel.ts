@@ -4,12 +4,6 @@ import { channel as proto, IMessage, Message } from './proto'
 import { UserMessage } from './service/UserMessage'
 import { WebChannel } from './WebChannel'
 
-export enum ChannelType {
-  WITH_INTERNAL,
-  WITH_JOINING,
-  WITH_MEMBER,
-}
-
 export interface IChannelInitData {
   members: number[]
 }
@@ -20,9 +14,13 @@ export const MAXIMUM_MISSED_HEARTBEAT = 3
  * Wrapper class for `RTCDataChannel` and `WebSocket`.
  */
 export class Channel {
+  public static WITH_INTERNAL = 0
+  public static WITH_JOINING = 1
+  public static WITH_MEMBER = 2
+
   public id: number
   public send: (data: Uint8Array) => void
-  public type: ChannelType
+  public type: number
   public missedHeartbeat: number
   public init: Promise<void>
   public initData: IChannelInitData | undefined
@@ -42,11 +40,11 @@ export class Channel {
   constructor(
     wc: WebChannel,
     wsOrDc: WebSocket | RTCDataChannel,
-    type: ChannelType,
+    type: number,
     id = 1,
     rtcPeerConnection?: RTCPeerConnection
   ) {
-    log.channel(`New Channel ${ChannelType[type]}: Me: ${wc.myId} with ${id}`)
+    log.channel(`New Channel ${type}: Me: ${wc.myId} with ${id}`)
     this.wc = wc
     this.wsOrDc = wsOrDc
     this.type = type
@@ -67,12 +65,12 @@ export class Channel {
       this.send = this.sendInNodeOverDataChannel
     }
 
-    if (type === ChannelType.WITH_INTERNAL) {
+    if (type === Channel.WITH_INTERNAL) {
       this.heartbeatMsg = this.createHeartbeatMsg()
       this.init = Promise.resolve()
       this.initHandlers()
     } else {
-      if (type === ChannelType.WITH_JOINING) {
+      if (type === Channel.WITH_JOINING) {
         this.sendInitPing()
       }
       this.init = new Promise(

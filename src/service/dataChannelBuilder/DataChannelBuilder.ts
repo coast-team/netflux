@@ -1,12 +1,11 @@
 import { Observable, Subject } from 'rxjs'
 
-import { Channel, ChannelType } from '../../Channel'
+import { Channel } from '../../Channel'
 import '../../misc/env'
 import { env, RTCDataChannelEvent } from '../../misc/env'
 import { log } from '../../misc/util'
 import { dataChannelBuilder as proto } from '../../proto'
 import { WebChannel } from '../../WebChannel'
-import { WebChannelState } from '../../WebChannelState'
 import { IAllStreams, Service } from '../Service'
 import { Remote } from './Remote'
 
@@ -65,17 +64,23 @@ export class DataChannelBuilder extends Service<proto.IMessage, proto.Message> {
   /**
    * Establish an `RTCDataChannel`. Starts by sending an **SDP offer**.
    */
-  async connect(targetId: number, myId: number, type: ChannelType) {
-    log.webrtc('connectWith call', { targetId, myId, type: ChannelType[type] })
+  async connect(targetId: number, myId: number, type: number) {
+    log.webrtc('connectWith call', { targetId, myId, type })
     const streamId =
-      type === ChannelType.WITH_INTERNAL ? this.wc.STREAM_ID : this.wc.signaling.STREAM_ID
+      type === Channel.WITH_INTERNAL ? this.wc.STREAM_ID : this.wc.signaling.STREAM_ID
     let remote = this.remotes.get(targetId) as Remote
     if (remote) {
       remote.clean()
     } else {
       remote = this.createRemote(streamId, targetId, myId)
     }
-    const dc = (remote.pc as any).createDataChannel(this.wc.myId.toString())
+    const targetType =
+      type === Channel.WITH_INTERNAL
+        ? Channel.WITH_INTERNAL
+        : type === Channel.WITH_JOINING
+          ? Channel.WITH_MEMBER
+          : Channel.WITH_JOINING
+    const dc = (remote.pc as any).createDataChannel(`{"id":${this.wc.myId},"type":${targetType}}`)
     const offerInit = await remote.pc.createOffer()
     await remote.pc.setLocalDescription(offerInit)
 
@@ -122,18 +127,10 @@ export class DataChannelBuilder extends Service<proto.IMessage, proto.Message> {
       log.webrtc(`create a new remote object with ${recipientId} - PASSIVE`)
       const pc = remote.pc as any
       pc.ondatachannel = ({ channel: dc }: RTCDataChannelEvent) => {
-        const peerId = Number.parseInt(dc.label, 10)
-        let type: ChannelType
-        if (streamId === this.wc.STREAM_ID) {
-          type = ChannelType.WITH_INTERNAL
-        } else if (this.wc.state === WebChannelState.JOINED) {
-          type = ChannelType.WITH_JOINING
-        } else {
-          type = ChannelType.WITH_MEMBER
-        }
+        const { id, type } = JSON.parse(dc.label) as { id: number; type: number }
         dc.onopen = () => {
           remote.dataChannelOpen(dc)
-          const channel = new Channel(this.wc, dc, type, peerId, remote.pc)
+          const channel = new Channel(this.wc, dc, type, id, remote.pc)
           this.channelsSubject.next({ id: recipientId, channel })
         }
       }

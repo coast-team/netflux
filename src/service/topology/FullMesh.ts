@@ -1,4 +1,4 @@
-import { Channel, ChannelType, IChannelInitData, MAXIMUM_MISSED_HEARTBEAT } from '../../Channel'
+import { Channel, IChannelInitData, MAXIMUM_MISSED_HEARTBEAT } from '../../Channel'
 import { isBrowser, log } from '../../misc/util'
 import { fullMesh as proto } from '../../proto'
 import { InWcMsg, WebChannel } from '../../WebChannel'
@@ -93,7 +93,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
         this.startHeartbeatInterval()
       }
 
-      if (ch.type === ChannelType.WITH_MEMBER) {
+      if (ch.type === Channel.WITH_MEMBER) {
         super.setState(TopologyState.CONSTRUCTING)
         const { members } = ch.initData as IChannelInitData
         this.connectToMembers(members, ch.id).then(() => {

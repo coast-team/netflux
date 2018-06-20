@@ -1,6 +1,6 @@
 import { BehaviorSubject, Observable, Subject } from 'rxjs'
 
-import { Channel, ChannelType } from './Channel'
+import { Channel } from './Channel'
 import { env } from './misc/env'
 import { validateWebSocketURL } from './misc/util'
 import { WebChannel } from './WebChannel'
@@ -35,13 +35,13 @@ export class WebSocketBuilder {
     const fullUrl = this.composeUrl(url, Route.INVITE, this.wc.id, senderId)
     const channel = await this.connect(
       fullUrl,
-      ChannelType.WITH_JOINING
+      Channel.WITH_JOINING
     )
     this.channelsSubject.next({ id: recipientId, channel })
   }
 
   newInviteWebSocket(ws: WebSocket, senderId: number) {
-    const channel = new Channel(this.wc, ws, ChannelType.WITH_MEMBER)
+    const channel = new Channel(this.wc, ws, Channel.WITH_MEMBER)
     this.channelsSubject.next({ id: senderId, channel })
   }
 
@@ -54,13 +54,13 @@ export class WebSocketBuilder {
     const fullUrl = this.composeUrl(url, Route.JOIN, wcId, senderId)
     const channel = await this.connect(
       fullUrl,
-      ChannelType.WITH_MEMBER
+      Channel.WITH_MEMBER
     )
     this.channelsSubject.next({ id: recipientId, channel })
   }
 
   newJoinWebSocket(ws: WebSocket, senderId: number) {
-    const channel = new Channel(this.wc, ws, ChannelType.WITH_JOINING)
+    const channel = new Channel(this.wc, ws, Channel.WITH_JOINING)
     this.channelsSubject.next({ id: senderId, channel })
   }
 
@@ -68,14 +68,14 @@ export class WebSocketBuilder {
     const fullUrl = this.composeUrl(url, Route.INTERNAL, this.wc.id)
     const channel = await this.connect(
       fullUrl,
-      ChannelType.WITH_INTERNAL,
+      Channel.WITH_INTERNAL,
       recipientId
     )
     this.channelsSubject.next({ id: recipientId, channel })
   }
 
   newInternalWebSocket(ws: WebSocket, id: number) {
-    const channel = new Channel(this.wc, ws, ChannelType.WITH_INTERNAL, id)
+    const channel = new Channel(this.wc, ws, Channel.WITH_INTERNAL, id)
     this.channelsSubject.next({ id, channel })
   }
 
@@ -87,7 +87,7 @@ export class WebSocketBuilder {
    * @param url Server URL
    * @param id  Peer id
    */
-  private async connect(url: string, type: ChannelType, id?: number): Promise<Channel> {
+  private async connect(url: string, type: number, id?: number): Promise<Channel> {
     validateWebSocketURL(url)
     const ws = new env.WebSocket(url)
     return new Promise((resolve, reject) => {

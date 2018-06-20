@@ -1,6 +1,6 @@
 import { merge, Observable, Subject } from 'rxjs'
 
-import { Channel, ChannelType } from '../../Channel'
+import { Channel } from '../../Channel'
 import { isWebRTCSupported, isWebSocketSupported, log } from '../../misc/util'
 import { channelBuilder as proto } from '../../proto'
 import { WebChannel } from '../../WebChannel'
@@ -321,9 +321,9 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
 
   private getType(streamId: number, amIInitiator: boolean) {
     if (streamId === this.wc.STREAM_ID) {
-      return ChannelType.WITH_INTERNAL
+      return Channel.WITH_INTERNAL
     }
-    return amIInitiator ? ChannelType.WITH_MEMBER : ChannelType.WITH_JOINING
+    return amIInitiator ? Channel.WITH_MEMBER : Channel.WITH_JOINING
   }
 
   private isNagotiable(peerInfo1: proto.Info, peerInfo2: proto.Info): boolean {
