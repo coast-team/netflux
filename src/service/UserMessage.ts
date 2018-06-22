@@ -54,7 +54,7 @@ export class UserMessage extends Service<proto.IMessage, proto.Message> {
         const length = Math.min(MAX_USER_MSG_SIZE, bytes.length - MAX_USER_MSG_SIZE * i)
         const begin = MAX_USER_MSG_SIZE * i
         const end = begin + length
-        msg.chunk.number = i
+        msg.chunk.nb = i
         msg.chunk.content = new Uint8Array(bytes.slice(begin, end))
         res[i] = super.encode(msg)
       }

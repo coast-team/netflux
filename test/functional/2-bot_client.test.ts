@@ -8,6 +8,8 @@ import {
   botJoin,
   botLeave,
   cleanWebGroup,
+  copyArrayBuffer,
+  randomBigArrayBuffer,
   randomKey,
   SIGNALING_URL,
   wait,
@@ -351,6 +353,30 @@ describe('🤖 🙂 - 2 members: bot first, then client', () => {
             expect(bot.onMessageToBeCalled).toEqual(1)
             expect(bot.messages[0].msg).toEqual(Array.from(msgClient) as any)
             expect(bot.messages[0].id).toEqual(client.myId)
+            done()
+          })
+          .catch(fail)
+      }
+
+      // Start sending message
+      client.send(msgClient)
+    })
+
+    /** @test {WebGroup#sendTo} */
+    it('broadcast message cutted in chunks (> 15kb)', (done) => {
+      const msgClient = randomBigArrayBuffer()
+      const msgBot = copyArrayBuffer(msgClient)
+      msgBot[0] = 42
+
+      // Check bot bot
+      client.onMessage = (id, msg) => {
+        called++
+        expect(msg).toEqual(msgBot)
+
+        // Check bot bot
+        wait(1000)
+          .then((bot) => {
+            expect(called).toEqual(1)
             done()
           })
           .catch(fail)

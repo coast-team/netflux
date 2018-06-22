@@ -33,6 +33,20 @@ export function randomKey(): string {
   return result
 }
 
+export function randomBigArrayBuffer(): Uint8Array {
+  const values = new Uint8Array(40000)
+  crypto.getRandomValues(values)
+  return values
+}
+
+export function copyArrayBuffer(bytes: Uint8Array): Uint8Array {
+  const result = new Uint8Array(bytes.length)
+  for (let i = 0; i < bytes.length; i++) {
+    result[i] = bytes[i]
+  }
+  return result
+}
+
 export function areTheSame(
   array1: Array<number | string | boolean | Uint8Array>,
   array2: Array<number | string | boolean | Uint8Array>
