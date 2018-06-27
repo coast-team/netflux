@@ -88,7 +88,7 @@
     "markdownlint-cli": "^0.10.0",
     "pm2": "^2.10.3",
     "prettier": "^1.13.5",
-    "rollup": "^0.61.1",
+    "rollup": "^0.62.0",
     "rollup-plugin-babel": "^3.0.4",
     "rollup-plugin-cleanup": "^3.0.0-beta.1",
     "rollup-plugin-commonjs": "^9.1.3",
