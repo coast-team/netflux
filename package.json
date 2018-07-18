@@ -96,7 +96,7 @@
     "rollup-plugin-node-resolve": "^3.0.3",
     "rollup-plugin-re": "^1.0.7",
     "rollup-plugin-strip": "^1.1.1",
-    "rollup-plugin-typescript2": "^0.15.0",
+    "rollup-plugin-typescript2": "^0.16.0",
     "semantic-release": "^15.6.0",
     "sigver": "^20.0.0",
     "travis-deploy-once": "^5.0.0",
