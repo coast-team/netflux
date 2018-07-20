@@ -582,10 +582,6 @@ var inquire_1 = inquire;
  * @returns {?Object} Required module if available and not empty, otherwise `null`
  */
 function inquire(moduleName) {
-    try {
-        var mod = undefined; // eslint-disable-line no-eval
-        if (mod && (mod.length || Object.keys(mod).length)) return mod;
-    } catch (e) {} // eslint-disable-line no-empty
     return null;
 }
 
@@ -931,6 +927,9 @@ var minimal = createCommonjsModule(function (module, exports) {
     // utility to work with the low and high bits of a 64 bit value
     util.LongBits = longbits;
 
+    // global object reference
+    util.global = typeof window !== "undefined" && window || typeof commonjsGlobal !== "undefined" && commonjsGlobal || typeof self !== "undefined" && self || commonjsGlobal; // eslint-disable-line no-invalid-this
+
     /**
      * An immuable empty array.
      * @memberof util
@@ -952,7 +951,7 @@ var minimal = createCommonjsModule(function (module, exports) {
      * @type {boolean}
      * @const
      */
-    util.isNode = Boolean(commonjsGlobal.process && commonjsGlobal.process.versions && commonjsGlobal.process.versions.node);
+    util.isNode = Boolean(util.global.process && util.global.process.versions && util.global.process.versions.node);
 
     /**
      * Tests if the specified value is an integer.
@@ -1062,7 +1061,7 @@ var minimal = createCommonjsModule(function (module, exports) {
      * Long.js's Long class if available.
      * @type {Constructor<Long>}
      */
-    util.Long = /* istanbul ignore next */commonjsGlobal.dcodeIO && /* istanbul ignore next */commonjsGlobal.dcodeIO.Long || util.inquire("long");
+    util.Long = /* istanbul ignore next */util.global.dcodeIO && /* istanbul ignore next */util.global.dcodeIO.Long || /* istanbul ignore next */util.global.Long || util.inquire("long");
 
     /**
      * Regular expression used to verify 2 bit (`bool`) map keys.
@@ -1278,6 +1277,7 @@ var minimal = createCommonjsModule(function (module, exports) {
         json: true
     };
 
+    // Sets up buffer utility according to the environment (called in index-minimal)
     util._configure = function () {
         var Buffer = util.Buffer;
         /* istanbul ignore if */
@@ -2149,11 +2149,9 @@ Reader.prototype.skipType = function (wireType) {
             this.skip(this.uint32());
             break;
         case 3:
-            do {
-                // eslint-disable-line no-constant-condition
-                if ((wireType = this.uint32() & 7) === 4) break;
+            while ((wireType = this.uint32() & 7) !== 4) {
                 this.skipType(wireType);
-            } while (true);
+            }
             break;
         case 5:
             this.skip(4);
@@ -2441,7 +2439,7 @@ var indexMinimal = createCommonjsModule(function (module, exports) {
     protobuf.util._configure();
   }
 
-  // Configure serialization
+  // Set up buffer utility according to the environment
   protobuf.Writer._configure(protobuf.BufferWriter);
   configure();
 });
@@ -2452,7 +2450,7 @@ var minimal_2 = minimal$1.Writer;
 var minimal_3 = minimal$1.util;
 var minimal_4 = minimal$1.roots;
 
-/*eslint-disable block-scoped-var, no-redeclare, no-control-regex, no-prototype-builtins*/
+/*eslint-disable block-scoped-var, id-length, no-control-regex, no-magic-numbers, no-prototype-builtins, no-redeclare, no-shadow, no-var, sort-vars*/
 
 // Common aliases
 var $Reader = minimal_1,
