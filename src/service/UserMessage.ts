@@ -1,6 +1,6 @@
 import { env } from '../misc/env'
 import { log } from '../misc/util'
-import { userMessage as proto } from '../proto'
+import { userMessage as proto } from '../proto/index'
 import { Service } from '../service/Service'
 
 /**

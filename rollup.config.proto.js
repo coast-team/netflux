@@ -1,11 +1,12 @@
 import commonjs from 'rollup-plugin-commonjs'
 import resolve from 'rollup-plugin-node-resolve'
 import replace from 'rollup-plugin-re'
-import babel from 'rollup-plugin-babel'
+import typescript from 'rollup-plugin-typescript2'
+import cleanup from 'rollup-plugin-cleanup'
 
 export default [
   {
-    input: 'src/proto/index.es6.js',
+    input: 'src/proto/index.js',
     output: [{ file: 'src/proto/index.js', format: 'es' }],
     plugins: [
       replace({
@@ -16,23 +17,22 @@ export default [
           },
         ],
       }),
+      typescript({
+        tsconfigOverride: {
+          compilerOptions: {
+            allowJs: true,
+            removeComments: true,
+          },
+        },
+        include: ['src/proto/index.js'],
+      }),
       resolve(),
       commonjs({
         namedExports: {
           'node_modules/protobufjs/minimal.js': ['Reader', 'Writer', 'util', 'roots'],
         },
       }),
-      babel({
-        babelrc: false,
-        presets: [
-          [
-            'env',
-            {
-              modules: false,
-            },
-          ],
-        ],
-      }),
+      cleanup(),
     ],
   },
 ]

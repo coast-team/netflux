@@ -3,10 +3,24 @@
 ## NPM
 
 ```shell
-npm install -S netflux
+npm install netflux
 ```
 
-Netflux has an optional peer dependency: `wrtc`. This package provides WebRTC API in NodeJS, but for now it is not in use as more tests needed. Checkout [wrtc repository](https://github.com/js-platform/node-webrtc) for more info on it.
+3 peer dependencies to be installed for some cases:
+
+- `rxjs` is necessary for both NodeJS and browsers if you want to take advantage of EcmaScript modules, tree-shaking etc. Otherwise for it is already included into `dist/netflux.browser.es5.umd.js` and `dist/netflux.node.es5.cjs.js` bundles.
+
+```shell
+npm install rxjs
+```
+
+- `uws` and `text-encoding` if you target NodeJS (developing a bot):
+
+```shell
+npm install uws text-encoding
+```
+
+Netflux has an optional dependency: `wrtc`. This package provides WebRTC API in NodeJS, but for now it is not in use as more tests needed. Checkout [wrtc repository](https://github.com/js-platform/node-webrtc) for more info on it.
 
 ## What you need
 

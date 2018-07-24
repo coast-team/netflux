@@ -1,6 +1,6 @@
 import { Channel, IChannelInitData, MAXIMUM_MISSED_HEARTBEAT } from '../../Channel'
 import { isBrowser, log } from '../../misc/util'
-import { fullMesh as proto } from '../../proto'
+import { fullMesh as proto } from '../../proto/index'
 import { InWcMsg, WebChannel } from '../../WebChannel'
 import { ConnectionError } from '../channelBuilder/ConnectionError'
 import { ITopology, Topology, TopologyState } from './Topology'

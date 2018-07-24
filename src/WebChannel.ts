@@ -13,7 +13,7 @@ import {
   validateKey,
   validateWebSocketURL,
 } from './misc/util'
-import { IMessage, Message } from './proto'
+import { IMessage, Message } from './proto/index'
 import { ChannelBuilder } from './service/channelBuilder/ChannelBuilder'
 import { FullMesh } from './service/topology/FullMesh'
 import { ITopology, TopologyEnum, TopologyState } from './service/topology/Topology'

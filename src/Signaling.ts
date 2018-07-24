@@ -2,7 +2,7 @@ import { Observable, Subject } from 'rxjs'
 
 import { env } from './misc/env'
 import { isBrowser, IStream, isWebSocketSupported, log } from './misc/util'
-import { IMessage, Message, signaling as proto } from './proto'
+import { IMessage, Message, signaling as proto } from './proto/index'
 import { WebChannel } from './WebChannel'
 
 export type InSigMsg = Message

@@ -41,17 +41,40 @@ Documentation: <https://coast-team.github.io/netflux>
 - Universal API (works in Chrome/Firefox and NodeJS).
 - TypeScript declaration files are included.
 - Simple and familiar API usage.
-- 4 builds (ES5 code):
-  - `dist/netflux.cjs.js` CommonJS format for NodeJS (see _package.json#main_).
-  - `dist/esm/index.node.js` ES module format for NodeJS (see _package.json#module_).
-  - `dist/esm/index.browser.js` ES module format for browsers (see _package.json#browser_).
-  - `dist/netflux.umd.js` UMD format for browsers.
+- Multiple bundles for any configuration:
+  - For NodeJS
+    - `dist/netflux.node.es5.cjs.js` commonjs format, es5 code (see _package.json#main_).
+    - `dist/netflux.node.es5.esm.js` ES module format, es5 code (see _package.json#module_).
+  - For browsers
+    - `dist/netflux.browser.es5.umd.js` UMD format, es5 code
+    - `dist/netflux.browser.es5.esm.js` ES module format, es5 code (see _package.json#browser_).
+    - `dist/netflux.browser.es2015.esm.js` ES module format, es2015 code (see _package.json#es2015_).
+    - `dist/netflux.browser.esnext.esm.js` ES module format, esnext code (see _package.json#esnext_).
 
 ## Install
 
 ```shell
 npm install netflux
 ```
+
+3 peer dependencies to be installed for some cases:
+
+- `rxjs` is necessary for both NodeJS and browsers if you want to take advantage of EcmaScript modules, tree-shaking etc. Otherwise for it is already included into `dist/netflux.browser.es5.umd.js` and `dist/netflux.node.es5.cjs.js` bundles.
+
+```shell
+npm install rxjs
+```
+
+- `uws` and `text-encoding` if you target NodeJS (developing a bot):
+
+```shell
+npm install uws text-encoding
+```
+
+**Why peer dependencies?**
+
+- Reduce the installation size by not omitting unused dependencies.
+- Take advantage of new standards and techniques: EcmaScript modules, bundle tools like Webpack, RollupJS etc.
 
 ## Usage
 

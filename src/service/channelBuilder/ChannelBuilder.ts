@@ -2,7 +2,7 @@ import { merge, Observable, Subject } from 'rxjs'
 
 import { Channel } from '../../Channel'
 import { isWebRTCSupported, isWebSocketSupported, log } from '../../misc/util'
-import { channelBuilder as proto } from '../../proto'
+import { channelBuilder as proto } from '../../proto/index'
 import { WebChannel } from '../../WebChannel'
 import { CONNECT_TIMEOUT as WEBSOCKET_TIMEOUT, WebSocketBuilder } from '../../WebSocketBuilder'
 import {

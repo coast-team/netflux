@@ -2,7 +2,7 @@ import { Observable, Subject } from 'rxjs'
 
 import { Channel } from '../../Channel'
 import { log } from '../../misc/util'
-import { IMessage } from '../../proto'
+import { IMessage } from '../../proto/index'
 import { WebChannel } from '../../WebChannel'
 import { IMessageFactory, IWebChannelStream, Service } from '../Service'
 

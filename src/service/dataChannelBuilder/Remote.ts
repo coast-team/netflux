@@ -2,7 +2,7 @@ import { ReplaySubject } from 'rxjs'
 
 import { env, RTCDataChannel } from '../../misc/env'
 import { log } from '../../misc/util'
-import { dataChannelBuilder as proto } from '../../proto'
+import { dataChannelBuilder as proto } from '../../proto/index'
 
 export class Remote {
   public readonly id: number

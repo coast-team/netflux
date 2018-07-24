@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "declarationDir": "dist/types",
     "target": "es5",
     "module": "es2015",
     "lib": ["es2017", "dom"],
@@ -12,6 +13,5 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src/**/*", "test/**/*"],
-  "exclude": ["**/proto/index.d.ts"]
+  "include": ["src/**/*", "test/**/*"]
 }
