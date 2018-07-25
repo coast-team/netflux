@@ -1,5 +1,6 @@
 import { Subject } from 'rxjs';
-import { extractHostnameAndPort, generateId, generateKey, isBrowser, isOnline, isURL, isVisible, log, validateKey, } from './misc/util';
+import { Channel } from './Channel';
+import { extractHostnameAndPort, generateId, generateKey, isBrowser, isOnline, isVisible, log, validateKey, validateWebSocketURL, } from './misc/util';
 import { ChannelBuilder } from './service/channelBuilder/ChannelBuilder';
 import { FullMesh } from './service/topology/FullMesh';
 import { TopologyEnum, TopologyState } from './service/topology/Topology';
@@ -85,20 +86,16 @@ export class WebChannel {
         }
     }
     invite(url) {
-        if (isURL(url)) {
-            const hostnamePort = extractHostnameAndPort(url);
-            for (const ch of this.topology.neighbors) {
-                if (hostnamePort === extractHostnameAndPort(ch.url)) {
-                    return;
-                }
+        validateWebSocketURL(url);
+        const hostnamePort = extractHostnameAndPort(url);
+        for (const ch of this.topology.neighbors) {
+            if (hostnamePort === extractHostnameAndPort(ch.url)) {
+                return;
             }
-            this.webSocketBuilder
-                .connectToInvite(url)
-                .catch((err) => log.webgroup(`Failed to invite the bot ${url}: ${err.message}`));
         }
-        else {
-            throw new Error(`Failed to invite a bot: ${url} is not a valid URL`);
-        }
+        this.webSocketBuilder
+            .connect(url, Channel.WITH_JOINING, -1, -1, this.id)
+            .catch((err) => log.webgroup(`Failed to invite the bot ${url}: ${err.message}`));
     }
     leave() {
         if (this.state !== WebChannelState.LEFT) {

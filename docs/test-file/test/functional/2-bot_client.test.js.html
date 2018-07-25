@@ -52,7 +52,7 @@
 /* tslint:disable:one-variable-per-declaration */
 import { SignalingState, Topology, WebGroup } from &apos;../../src/index.browser&apos;;
 import { WebGroupState } from &apos;../../src/index.browser&apos;;
-import { areTheSame, botGetData, botJoin, botLeave, cleanWebGroup, randomKey, SIGNALING_URL, wait, } from &apos;../util/helper&apos;;
+import { areTheSame, botGetData, botJoin, botLeave, cleanWebGroup, copyArrayBuffer, randomBigArrayBuffer, randomKey, SIGNALING_URL, wait, } from &apos;../util/helper&apos;;
 const WebGroupOptions = {
     signalingServer: SIGNALING_URL,
     autoRejoin: false,
@@ -345,6 +345,26 @@ describe(&apos;&#x1F916; &#x1F642; - 2 members: bot first, then client&apos;, ()
                     expect(bot.onMessageToBeCalled).toEqual(1);
                     expect(bot.messages[0].msg).toEqual(Array.from(msgClient));
                     expect(bot.messages[0].id).toEqual(client.myId);
+                    done();
+                })
+                    .catch(fail);
+            };
+            // Start sending message
+            client.send(msgClient);
+        });
+        /** @test {WebGroup#sendTo} */
+        it(&apos;broadcast message cutted in chunks (&gt; 15kb)&apos;, (done) =&gt; {
+            const msgClient = randomBigArrayBuffer();
+            const msgBot = copyArrayBuffer(msgClient);
+            msgBot[0] = 42;
+            // Check bot bot
+            client.onMessage = (id, msg) =&gt; {
+                called++;
+                expect(msg).toEqual(msgBot);
+                // Check bot bot
+                wait(1000)
+                    .then((bot) =&gt; {
+                    expect(called).toEqual(1);
                     done();
                 })
                     .catch(fail);

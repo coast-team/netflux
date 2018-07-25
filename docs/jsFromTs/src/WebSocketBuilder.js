@@ -1,14 +1,8 @@
 import { BehaviorSubject, Subject } from 'rxjs';
-import { Channel, ChannelType } from './Channel';
+import { Channel } from './Channel';
 import { env } from './misc/env';
-import { isURL } from './misc/util';
+import { validateWebSocketURL } from './misc/util';
 export const CONNECT_TIMEOUT = 4000;
-export var Route;
-(function (Route) {
-    Route["JOIN"] = "join";
-    Route["INVITE"] = "invite";
-    Route["INTERNAL"] = "internal";
-})(Route || (Route = {}));
 /**
  * Service class responsible to establish connections between peers via
  * `WebSocket`.
@@ -18,61 +12,17 @@ export class WebSocketBuilder {
         this.wc = wc;
         this.channelsSubject = new Subject();
     }
-    onChannel() {
+    get channels() {
         return this.channelsSubject.asObservable();
     }
-    async connectToInvite(url) {
-        if (isURL(url) && url.search(/^wss?/) !== -1) {
-            const fullUrl = this.composeUrl(url, Route.INVITE);
-            this.channelsSubject.next(await this.connect(fullUrl, ChannelType.INVITED));
-        }
-        else {
-            throw new Error(`Invalid URL format: ${url}`);
-        }
+    newWebSocket(ws, id, type) {
+        this.channelsSubject.next({ id, channel: new Channel(this.wc, ws, type, id) });
     }
-    newInviteWebSocket(ws) {
-        this.channelsSubject.next(new Channel(this.wc, ws, ChannelType.JOINING));
-    }
-    async connectToJoin(url, wcId) {
-        if (isURL(url) && url.search(/^wss?/) !== -1) {
-            const fullUrl = this.composeUrl(url, Route.JOIN, wcId);
-            this.channelsSubject.next(await this.connect(fullUrl, ChannelType.JOINING));
-        }
-        else {
-            throw new Error(`Invalid URL format: ${url}`);
-        }
-    }
-    newJoinWebSocket(ws) {
-        this.channelsSubject.next(new Channel(this.wc, ws, ChannelType.INVITED));
-    }
-    async connectInternal(url, id) {
-        if (isURL(url) && url.search(/^wss?/) !== -1) {
-            const fullUrl = this.composeUrl(url, Route.INTERNAL);
-            this.channelsSubject.next(await this.connect(fullUrl, ChannelType.INTERNAL, id));
-        }
-        else {
-            throw new Error(`Invalid URL format: ${url}`);
-        }
-    }
-    newInternalWebSocket(ws, id) {
-        this.channelsSubject.next(new Channel(this.wc, ws, ChannelType.INTERNAL, id));
-    }
-    /**
-     * Establish `WebSocket` with a server if `id` is not specified,
-     * otherwise return an opened `Channel` with a peer identified by the
-     * specified `id`.
-     *
-     * @param url Server URL
-     * @param id  Peer id
-     */
-    async connect(url, type, id) {
-        if (isURL(url) && url.search(/^wss?/) !== -1) {
-        }
-        else {
-            throw new Error(`${url} is not a valid URL`);
-        }
-        const ws = new env.WebSocket(url);
-        return new Promise((resolve, reject) => {
+    async connect(url, type, targetId, myId, wcId) {
+        validateWebSocketURL(url);
+        const fullUrl = this.composeUrl(url, Channel.remoteType(type), wcId, myId);
+        const ws = new env.WebSocket(fullUrl);
+        const channel = (await new Promise((resolve, reject) => {
             const timeout = setTimeout(() => {
                 if (ws.readyState !== ws.OPEN) {
                     ws.close();
@@ -80,23 +30,22 @@ export class WebSocketBuilder {
                 }
             }, CONNECT_TIMEOUT);
             ws.onopen = () => {
-                const channel = new Channel(this.wc, ws, type, id);
                 clearTimeout(timeout);
-                resolve(channel);
+                resolve(new Channel(this.wc, ws, type, targetId));
             };
             ws.onerror = (err) => reject(err);
             ws.onclose = (closeEvt) => {
-                reject(new Error(`WebSocket connection to '${url}' failed with code ${closeEvt.code}: ${closeEvt.reason}`));
+                reject(new Error(`WebSocket with '${url}' closed ${closeEvt.code}: ${closeEvt.reason}`));
             };
-        });
+        }));
+        this.channelsSubject.next({ id: targetId, channel });
     }
-    composeUrl(url, route, wcId = this.wc.id) {
-        if (route === Route.INTERNAL) {
-            return `${url}/${route}?wcId=${wcId}&senderId=${this.wc.myId}`;
+    composeUrl(url, type, wcId, senderId) {
+        let result = `${url}/?type=${type}&wcId=${wcId}&senderId=${senderId}`;
+        if (type !== Channel.WITH_INTERNAL) {
+            result += `&key=${this.wc.key}`;
         }
-        else {
-            return `${url}/${route}?wcId=${wcId}&key=${this.wc.key}`;
-        }
+        return result;
     }
 }
 WebSocketBuilder.listenUrl = new BehaviorSubject('');

@@ -21,11 +21,11 @@ export class Service {
                 senderId,
                 recipientId,
                 msg: this.decode(content),
-            }))),
-            send: (content, id) => {
+            })), filter(({ msg }) => msg && msg.type)),
+            send: (content, recipientId) => {
                 wc.sendOverStream({
                     senderId: wc.myId,
-                    recipientId: id,
+                    recipientId,
                     serviceId: this.serviceId,
                     content: content instanceof Uint8Array ? content : this.encode(content),
                 });
@@ -35,10 +35,15 @@ export class Service {
     useSignalingStream(sig) {
         return {
             id: sig.STREAM_ID,
-            message: sig.messageFromStream.pipe(filter(({ serviceId }) => serviceId === this.serviceId), map(({ senderId, content }) => ({ senderId, msg: this.decode(content) }))),
-            send: (content, id) => {
+            message: sig.messageFromStream.pipe(filter(({ serviceId }) => serviceId === this.serviceId), map(({ senderId, recipientId, content }) => ({
+                senderId,
+                recipientId,
+                msg: this.decode(content),
+            })), filter(({ msg }) => msg && msg.type)),
+            send: (content, recipientId, senderId) => {
                 sig.sendOverStream({
-                    recipientId: id,
+                    senderId,
+                    recipientId,
                     serviceId: this.serviceId,
                     content: content instanceof Uint8Array ? content : this.encode(content),
                 });
@@ -49,13 +54,23 @@ export class Service {
         const wcStream = this.useWebChannelStream(wc);
         const sigStream = this.useSignalingStream(sig);
         return {
-            message: merge(wcStream.message.pipe(map(({ senderId, msg }) => ({ streamId: wcStream.id, senderId, msg }))), sigStream.message.pipe(map(({ senderId, msg }) => ({ streamId: sigStream.id, senderId, msg })))),
-            sendOver: (streamId, msg, id) => {
+            message: merge(wcStream.message.pipe(map(({ senderId, recipientId, msg }) => ({
+                streamId: wcStream.id,
+                senderId,
+                recipientId,
+                msg,
+            }))), sigStream.message.pipe(map(({ senderId, recipientId, msg }) => ({
+                streamId: sigStream.id,
+                senderId,
+                recipientId,
+                msg,
+            })))),
+            sendOver: (streamId, msg, recipientId, senderId) => {
                 if (streamId === wcStream.id) {
-                    wcStream.send(msg, id);
+                    wcStream.send(msg, recipientId);
                 }
                 else {
-                    sigStream.send(msg, id);
+                    sigStream.send(msg, recipientId, senderId);
                 }
             },
         };

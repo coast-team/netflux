@@ -2,7 +2,7 @@ import { LogLevel, setLogLevel } from '../../src/misc/util';
 setLogLevel(LogLevel.DEBUG
 // LogLevel.SIGNALING,
 // LogLevel.CHANNEL,
-// LogLevel.CHANNEL_BUILDER
+// LogLevel.CHANNEL_BUILDER,
 // LogLevel.WEBRTC,
 // LogLevel.TOPOLOGY,
 // LogLevel.WEB_GROUP
@@ -22,6 +22,18 @@ export function randomKey() {
     let result = '';
     for (let i = 0; i < length; i++) {
         result += mask[values[i] % mask.length];
+    }
+    return result;
+}
+export function randomBigArrayBuffer() {
+    const values = new Uint8Array(40000);
+    crypto.getRandomValues(values);
+    return values;
+}
+export function copyArrayBuffer(bytes) {
+    const result = new Uint8Array(bytes.length);
+    for (let i = 0; i < bytes.length; i++) {
+        result[i] = bytes[i];
     }
     return result;
 }

@@ -52,7 +52,7 @@
 /* tslint:disable:one-variable-per-declaration */
 import { SignalingState, WebGroup, WebGroupState } from &apos;../../src/index.browser&apos;;
 import { Topology } from &apos;../../src/index.common.doc&apos;;
-import { areTheSame, BOT_URL, botGetData, botWaitJoin, cleanWebGroup, Queue, SIGNALING_URL, wait, } from &apos;../util/helper&apos;;
+import { areTheSame, BOT_URL, botGetData, botWaitJoin, cleanWebGroup, Queue, randomBigArrayBuffer, SIGNALING_URL, wait, } from &apos;../util/helper&apos;;
 const WebGroupOptions = {
     signalingServer: SIGNALING_URL,
     autoRejoin: false,
@@ -360,6 +360,22 @@ describe(&apos;&#x1F642; &#x1F916; - 2 members: client invites bot&apos;, () =&g
                 };
                 // Start sending message
                 client.send(msg1);
+            });
+            /** @test {WebGroup#sendTo} */
+            it(&apos;broadcast message cutted in chunks (&gt; 15kb)&apos;, (done) =&gt; {
+                const bytes = randomBigArrayBuffer();
+                // Check bot bot
+                wait(1000)
+                    .then(() =&gt; botGetData(client.key))
+                    .then((bot) =&gt; {
+                    expect(bot.onMessageToBeCalled).toEqual(1);
+                    expect(bot.messages[0].msg).toEqual(Array.from(bytes));
+                    expect(bot.messages[0].id).toEqual(client.myId);
+                    done();
+                })
+                    .catch(fail);
+                // Start sending message
+                client.send(bytes);
             });
             /** @test {WebGroup#sendTo} */
             it(&apos;private String&apos;, (done) =&gt; {

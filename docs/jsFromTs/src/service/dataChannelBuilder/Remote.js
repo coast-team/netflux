@@ -13,7 +13,12 @@ export class Remote {
         this.remotes = remotes;
         this.isSDPSent = false;
         this.remotes.set(id, this);
-        this.timer = setTimeout(() => this._onError(new Error(`${timeout}ms connection timeout`)), timeout);
+        this.timer = setTimeout(() => {
+            if (this.pc.iceConnectionState !== 'connected' &&
+                this.pc.iceConnectionState !== 'completed') {
+                this._onError(new Error(`${timeout}ms connection timeout`));
+            }
+        }, timeout);
         pc.oniceconnectionstatechange = () => {
             log.webrtc('LOCAL ICE CONNECTION STATE', pc.iceConnectionState);
             if (pc.iceConnectionState === 'failed') {
@@ -56,7 +61,7 @@ export class Remote {
         }
     }
     clean(sendFinalMessage = true) {
-        log.webrtc('CLEAN');
+        log.webrtc('CLEAN REMOTE');
         this.pc.oniceconnectionstatechange = () => { };
         this.pc.onicecandidate = () => { };
         this.pc.ondatachannel = () => { };
@@ -78,7 +83,6 @@ export class Remote {
         dc.onopen = () => { };
         this.pc.ondatachannel = () => { };
         this._onError = () => { };
-        clearTimeout(this.timer);
     }
     handleMessage(msg) {
         if (msg.type) {

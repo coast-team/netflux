@@ -1,5 +1,6 @@
 import { env } from '../misc/env';
-import { userMessage as proto } from '../proto';
+import { log } from '../misc/util';
+import { userMessage as proto } from '../proto/index';
 import { Service } from '../service/Service';
 /**
  * Maximum size of the user message sent over `Channel` (without metadata).
@@ -43,7 +44,7 @@ export class UserMessage extends Service {
                 const length = Math.min(MAX_USER_MSG_SIZE, bytes.length - MAX_USER_MSG_SIZE * i);
                 const begin = MAX_USER_MSG_SIZE * i;
                 const end = begin + length;
-                msg.chunk.number = i;
+                msg.chunk.nb = i;
                 msg.chunk.content = new Uint8Array(bytes.slice(begin, end));
                 res[i] = super.encode(msg);
             }
@@ -54,40 +55,46 @@ export class UserMessage extends Service {
      * Decode user message received from the network.
      */
     decodeUserMessage(bytes, senderId) {
-        const { length, type, contentType, full, chunk } = super.decode(bytes);
-        let result;
-        switch (contentType) {
-            case 'full': {
-                result = full;
-                break;
-            }
-            case 'chunk': {
-                let buffer = this.getBuffer(senderId, chunk.id);
-                if (buffer === undefined) {
-                    buffer = new Buffer(length, chunk.content, chunk.nb);
-                    this.setBuffer(senderId, chunk.id, buffer);
-                    result = undefined;
+        try {
+            const { length, type, contentType, full, chunk } = super.decode(bytes);
+            let result;
+            switch (contentType) {
+                case 'full': {
+                    result = full;
+                    break;
                 }
-                else {
-                    result = buffer.append(chunk.content, chunk.nb);
+                case 'chunk': {
+                    let buffer = this.getBuffer(senderId, chunk.id);
+                    if (buffer === undefined) {
+                        buffer = new Buffer(length, chunk.content, chunk.nb);
+                        this.setBuffer(senderId, chunk.id, buffer);
+                        result = undefined;
+                    }
+                    else {
+                        result = buffer.append(chunk.content, chunk.nb);
+                    }
+                    break;
                 }
-                break;
+                default: {
+                    throw new Error('Unknown message integrity');
+                }
             }
-            default: {
-                throw new Error('Unknown message integrity');
+            if (result !== undefined) {
+                switch (type) {
+                    case proto.Message.Type.U_INT_8_ARRAY:
+                        return result;
+                    case proto.Message.Type.STRING:
+                        return textDecoder.decode(result);
+                    default:
+                        throw new Error('Unknown message type');
+                }
             }
+            return result;
         }
-        if (result !== undefined) {
-            switch (type) {
-                case proto.Message.Type.U_INT_8_ARRAY:
-                    return result;
-                case proto.Message.Type.STRING:
-                    return textDecoder.decode(result);
-                default:
-                    throw new Error('Unknown message type');
-            }
+        catch (err) {
+            log.warn('Decode user message error: ', err);
+            return undefined;
         }
-        return result;
     }
     /**
      * Identify the user data type.

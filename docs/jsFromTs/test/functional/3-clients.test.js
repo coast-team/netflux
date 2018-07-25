@@ -1,7 +1,7 @@
 /// <reference types='jasmine' />
 /* tslint:disable:one-variable-per-declaration */
 import { SignalingState, WebGroup, WebGroupState } from '../../src/index.browser';
-import { areTheSame, cleanWebGroup, Queue, SIGNALING_URL, wait } from '../util/helper';
+import { areTheSame, cleanWebGroup, Queue, randomBigArrayBuffer, SIGNALING_URL, wait, } from '../util/helper';
 const WebGroupOptions = {
     signalingServer: SIGNALING_URL,
     autoRejoin: false,
@@ -306,6 +306,33 @@ describe('🙂 🙂 🙂 - 3 clients', () => {
             wg1.send(msg1);
             wg2.send(msg2);
             wg3.send(msg3);
+        });
+        /** @test {WebGroup#sendTo} */
+        it('broadcast message cutted in chunks (> 15kb)', (done) => {
+            const bytes = randomBigArrayBuffer();
+            const queue = new Queue(2, () => {
+                wait(1000).then(() => {
+                    expect(called2).toEqual(1);
+                    expect(called3).toEqual(1);
+                    done();
+                });
+            });
+            // Code for peer 2
+            wg2.onMessage = (id, msg) => {
+                expect(msg instanceof Uint8Array).toBeTruthy();
+                expect(msg).toEqual(bytes);
+                called2++;
+                queue.done();
+            };
+            // Code for peer 3
+            wg3.onMessage = (id, msg) => {
+                expect(msg instanceof Uint8Array).toBeTruthy();
+                expect(msg).toEqual(bytes);
+                called3++;
+                queue.done();
+            };
+            // Start sending message
+            wg1.send(bytes);
         });
         /** @test {WebGroup#sendTo} */
         it('private String', (done) => {

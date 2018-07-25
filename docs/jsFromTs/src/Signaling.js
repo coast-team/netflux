@@ -1,7 +1,7 @@
 import { Subject } from 'rxjs';
 import { env } from './misc/env';
 import { isBrowser, isWebSocketSupported, log } from './misc/util';
-import { Message, signaling as proto } from './proto';
+import { Message, signaling as proto } from './proto/index';
 const MAXIMUM_MISSED_HEARTBEAT = 3;
 const HEARTBEAT_INTERVAL = 5000;
 /* Preconstructed messages */
@@ -37,7 +37,8 @@ export class Signaling {
         log.signaling(this.wc.myId + ' Forward message', msg);
         this.send({
             content: {
-                id: msg.recipientId,
+                recipientId: msg.recipientId,
+                senderId: msg.senderId,
                 lastData: msg.content === undefined,
                 data: Message.encode(Message.create(msg)).finish(),
             },
@@ -109,26 +110,32 @@ export class Signaling {
         this.ws = undefined;
     }
     handleMessage(bytes) {
-        const msg = proto.Message.decode(new Uint8Array(bytes));
-        switch (msg.type) {
-            case 'heartbeat':
-                this.missedHeartbeat = 0;
-                break;
-            case 'connected':
-                this.connected = msg.connected;
-                this.setState(SignalingState.CHECKED);
-                if (!msg.connected) {
-                    this.wc.channelBuilder.connectOverSignaling().catch(() => this.check());
+        try {
+            const msg = proto.Message.decode(new Uint8Array(bytes));
+            switch (msg.type) {
+                case 'heartbeat':
+                    this.missedHeartbeat = 0;
+                    break;
+                case 'connected':
+                    this.connected = msg.connected;
+                    this.setState(SignalingState.CHECKED);
+                    if (!msg.connected) {
+                        this.wc.channelBuilder.connectOverSignaling().catch(() => this.check());
+                    }
+                    break;
+                case 'content': {
+                    const { data, senderId, recipientId } = msg.content;
+                    const streamMessage = Message.decode(data);
+                    streamMessage.senderId = senderId;
+                    streamMessage.recipientId = recipientId;
+                    log.signaling('StreamMessage RECEIVED: ', streamMessage);
+                    this.streamSubject.next(streamMessage);
+                    break;
                 }
-                break;
-            case 'content': {
-                const { data, id } = msg.content;
-                const streamMessage = Message.decode(data);
-                streamMessage.senderId = id;
-                log.signaling('StreamMessage RECEIVED: ', streamMessage);
-                this.streamSubject.next(streamMessage);
-                break;
             }
+        }
+        catch (err) {
+            log.warn('Decode Signaling message error: ', err);
         }
     }
     setState(state) {

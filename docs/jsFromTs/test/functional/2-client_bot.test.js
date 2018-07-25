@@ -2,7 +2,7 @@
 /* tslint:disable:one-variable-per-declaration */
 import { SignalingState, WebGroup, WebGroupState } from '../../src/index.browser';
 import { Topology } from '../../src/index.common.doc';
-import { areTheSame, BOT_URL, botGetData, botWaitJoin, cleanWebGroup, Queue, SIGNALING_URL, wait, } from '../util/helper';
+import { areTheSame, BOT_URL, botGetData, botWaitJoin, cleanWebGroup, Queue, randomBigArrayBuffer, SIGNALING_URL, wait, } from '../util/helper';
 const WebGroupOptions = {
     signalingServer: SIGNALING_URL,
     autoRejoin: false,
@@ -310,6 +310,22 @@ describe('🙂 🤖 - 2 members: client invites bot', () => {
                 };
                 // Start sending message
                 client.send(msg1);
+            });
+            /** @test {WebGroup#sendTo} */
+            it('broadcast message cutted in chunks (> 15kb)', (done) => {
+                const bytes = randomBigArrayBuffer();
+                // Check bot bot
+                wait(1000)
+                    .then(() => botGetData(client.key))
+                    .then((bot) => {
+                    expect(bot.onMessageToBeCalled).toEqual(1);
+                    expect(bot.messages[0].msg).toEqual(Array.from(bytes));
+                    expect(bot.messages[0].id).toEqual(client.myId);
+                    done();
+                })
+                    .catch(fail);
+                // Start sending message
+                client.send(bytes);
             });
             /** @test {WebGroup#sendTo} */
             it('private String', (done) => {
