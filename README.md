@@ -2,7 +2,7 @@
 
 ![Netflux logo][logo]
 
-Universal Javascript **peer to peer** transport API for client and server.
+Isomorphic Javascript **peer to peer** transport API for client and server.
 
 Secure and fault tolerant full mesh peer to peer network based on **RTCDataChannel** and **WebSocket**.
 
@@ -25,23 +25,21 @@ Documentation: <https://coast-team.github.io/netflux>
 
 ## Features
 
-- Peer to peer full mesh network which accepts connection failures between some peers.
-- If connection between two members failed, other members will retransmit messages for them.
-- Automatic rejoin the group if connection lost.
-- Automatic selection between [WebSocket][websocket] & [RTCDataChannel][rtcdatachannel].
-- Possible to have mixed members: clients (Chrome, Firefox) and servers (NodeJS bot).
-- Send private or broadcast [String][string], [Uint8Array][uint8array] data types.
-- Possible to send data > 1MB.
+- Peer to peer full mesh network tolerant to connection failures.
+- Same API for clients (Chrome, Firefox) and servers (NodeJS).
+- Send private or broadcast messages with [String][string], [Uint8Array][uint8array] data types.
+- Send large amounts of data (over the limit of ~16kb used in RTCDataChannel).
+- Automatic rejoin the group when connection lost.
+- Hide the connection nature ( [WebSocket][websocket] or [RTCDataChannel][rtcdatachannel]) from API consumer.
 - All connections are encrypted.
 - Full control over WebRTC servers: Signaling, STUN and TURN.
-  - Deploy your own Signaling server ([Sigver][sigver]) or use one provided by default.
+  - Deploy your own Signaling server ([Sigver][sigver]) or use the one provided by default.
   - Configure STUN and TURN servers.
 - Small Signaling server payload.
-- Signaling server is used only to establish connection between two peers, no user data is passing through it.
-- Universal API (works in Chrome/Firefox and NodeJS).
+- Signaling server is only used to establish connection between two peers, no user data is passing through it.
 - TypeScript declaration files are included.
 - Simple and familiar API usage.
-- Multiple bundles for any configuration:
+- Multiple bundles to suit your workflow:
   - For NodeJS
     - `dist/netflux.node.es5.cjs.js` commonjs format, es5 code (see _package.json#main_).
     - `dist/netflux.node.es5.esm.js` ES module format, es5 code (see _package.json#module_).
@@ -57,9 +55,9 @@ Documentation: <https://coast-team.github.io/netflux>
 npm install netflux
 ```
 
-3 peer dependencies to be installed for some cases:
+3 peer dependencies to be installed in some cases:
 
-- `rxjs` is necessary for both NodeJS and browsers if you want to take advantage of EcmaScript modules, tree-shaking etc. Otherwise for it is already included into `dist/netflux.browser.es5.umd.js` and `dist/netflux.node.es5.cjs.js` bundles.
+- `rxjs` is necessary for both NodeJS and browsers if you want to take advantage of EcmaScript modules, tree-shaking etc. Otherwise it is already included into `dist/netflux.browser.es5.umd.js` and `dist/netflux.node.es5.cjs.js` bundles.
 
 ```shell
 npm install rxjs
@@ -73,14 +71,14 @@ npm install uws text-encoding
 
 **Why peer dependencies?**
 
-- Reduce the installation size by not omitting unused dependencies.
-- Take advantage of new standards and techniques: EcmaScript modules, bundle tools like Webpack, RollupJS etc.
+- Reduce the installation size by omitting unused dependencies.
+- Take advantage of new standards and techniques: EcmaScript modules, bundle tools like Webpack, Rollup etc.
 
 ## Usage
 
 Here is a basic usage example for client and server (checkout the [documenation](https://coast-team.github.io/netflux) for more details).
 
-> It is possible to have only clients without any bot server as his is not a mandatory member, but like any other group member.
+> Bot server is not mandatory. The group may completely be composed of clients only, as well as be composed of servers only or may also be mixed.
 
 ### Client example
 
