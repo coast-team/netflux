@@ -48,7 +48,7 @@
 </nav>
 
 <div class="content" data-ice="content"><div data-ice="index" class="github-markdown"><h1 id="netflux">Netflux</h1><p><img src="manual/asset/logo_760px.png" alt="Netflux logo"></p>
-<p>Universal Javascript <strong>peer to peer</strong> transport API for client and server.</p>
+<p>Isomorphic Javascript <strong>peer to peer</strong> transport API for client and server.</p>
 <p>Secure and fault tolerant full mesh peer to peer network based on <strong>RTCDataChannel</strong> and <strong>WebSocket</strong>.</p>
 <p>Send/receive <strong>String</strong> and <strong>Uint8Array</strong> data types.</p>
 <p>Documentation: <a href="https://coast-team.github.io/netflux">https://coast-team.github.io/netflux</a></p>
@@ -62,25 +62,23 @@
 <a href="https://gitter.im/coast-team/netflux?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge&amp;utm_content=badge"><img src="https://img.shields.io/badge/GITTER-join%20chat-green.svg?style=flat-square" alt="gitter"></a></p>
 <p><img src="manual/asset/example.png" alt="Netflux example"></p>
 <h2 id="features">Features</h2><ul>
-<li>Peer to peer full mesh network which accepts connection failures between some peers.</li>
-<li>If connection between two members failed, other members will retransmit messages for them.</li>
-<li>Automatic rejoin the group if connection lost.</li>
-<li>Automatic selection between <a href="https://developer.mozilla.org/en/docs/Web/API/WebSocket">WebSocket</a> &amp; <a href="https://developer.mozilla.org/en/docs/Web/API/RTCDataChannel">RTCDataChannel</a>.</li>
-<li>Possible to have mixed members: clients (Chrome, Firefox) and servers (NodeJS bot).</li>
-<li>Send private or broadcast <a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/String">String</a>, <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array">Uint8Array</a> data types.</li>
-<li>Possible to send data &gt; 1MB.</li>
+<li>Peer to peer full mesh network tolerant to connection failures.</li>
+<li>Same API for clients (Chrome, Firefox) and servers (NodeJS).</li>
+<li>Send private or broadcast messages with <a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/String">String</a>, <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array">Uint8Array</a> data types.</li>
+<li>Send large amounts of data (over the limit of ~16kb used in RTCDataChannel).</li>
+<li>Automatic rejoin the group when connection lost.</li>
+<li>Hide the connection nature ( <a href="https://developer.mozilla.org/en/docs/Web/API/WebSocket">WebSocket</a> or <a href="https://developer.mozilla.org/en/docs/Web/API/RTCDataChannel">RTCDataChannel</a>) from API consumer.</li>
 <li>All connections are encrypted.</li>
 <li>Full control over WebRTC servers: Signaling, STUN and TURN.<ul>
-<li>Deploy your own Signaling server (<a href="https://github.com/coast-team/sigver">Sigver</a>) or use one provided by default.</li>
+<li>Deploy your own Signaling server (<a href="https://github.com/coast-team/sigver">Sigver</a>) or use the one provided by default.</li>
 <li>Configure STUN and TURN servers.</li>
 </ul>
 </li>
 <li>Small Signaling server payload.</li>
-<li>Signaling server is used only to establish connection between two peers, no user data is passing through it.</li>
-<li>Universal API (works in Chrome/Firefox and NodeJS).</li>
+<li>Signaling server is only used to establish connection between two peers, no user data is passing through it.</li>
 <li>TypeScript declaration files are included.</li>
 <li>Simple and familiar API usage.</li>
-<li>Multiple bundles for any configuration:<ul>
+<li>Multiple bundles to suit your workflow:<ul>
 <li>For NodeJS<ul>
 <li><code>dist/netflux.node.es5.cjs.js</code> commonjs format, es5 code (see <em>package.json#main</em>).</li>
 <li><code>dist/netflux.node.es5.esm.js</code> ES module format, es5 code (see <em>package.json#module</em>).</li>
@@ -98,9 +96,9 @@
 </ul>
 <h2 id="install">Install</h2><pre><code class="lang-shell"><code class="source-code prettyprint">npm install netflux</code>
 </code></pre>
-<p>3 peer dependencies to be installed for some cases:</p>
+<p>3 peer dependencies to be installed in some cases:</p>
 <ul>
-<li><code>rxjs</code> is necessary for both NodeJS and browsers if you want to take advantage of EcmaScript modules, tree-shaking etc. Otherwise for it is already included into <code>dist/netflux.browser.es5.umd.js</code> and <code>dist/netflux.node.es5.cjs.js</code> bundles.</li>
+<li><code>rxjs</code> is necessary for both NodeJS and browsers if you want to take advantage of EcmaScript modules, tree-shaking etc. Otherwise it is already included into <code>dist/netflux.browser.es5.umd.js</code> and <code>dist/netflux.node.es5.cjs.js</code> bundles.</li>
 </ul>
 <pre><code class="lang-shell"><code class="source-code prettyprint">npm install rxjs</code>
 </code></pre>
@@ -111,12 +109,12 @@
 </code></pre>
 <p><strong>Why peer dependencies?</strong></p>
 <ul>
-<li>Reduce the installation size by not omitting unused dependencies.</li>
-<li>Take advantage of new standards and techniques: EcmaScript modules, bundle tools like Webpack, RollupJS etc.</li>
+<li>Reduce the installation size by omitting unused dependencies.</li>
+<li>Take advantage of new standards and techniques: EcmaScript modules, bundle tools like Webpack, Rollup etc.</li>
 </ul>
 <h2 id="usage">Usage</h2><p>Here is a basic usage example for client and server (checkout the <a href="https://coast-team.github.io/netflux">documenation</a> for more details).</p>
 <blockquote>
-<p>It is possible to have only clients without any bot server as his is not a mandatory member, but like any other group member.</p>
+<p>Bot server is not mandatory. The group may completely be composed of clients only, as well as be composed of servers only or may also be mixed.</p>
 </blockquote>
 <h3 id="client-example">Client example</h3><pre><code class="lang-javascript"><code class="source-code prettyprint">import { WebGroup, WebGroupState } from &apos;netflux&apos;
 
