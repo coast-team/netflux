@@ -7,7 +7,6 @@ const tsConfigEs5 = {
   tsconfigOverride: {
     compilerOptions: {
       removeComments: true,
-      downlevelIteration: true,
       sourceMap: true,
     },
   },
@@ -39,7 +38,6 @@ const tsConfigDeclaration = {
   useTsconfigDeclarationDir: true,
   tsconfigOverride: {
     compilerOptions: {
-      downlevelIteration: true,
       declaration: true,
       removeComments: true,
       sourceMap: true,
@@ -60,14 +58,7 @@ export default [
         sourcemap: true,
       },
     ],
-    plugins: [
-      typescript(tsConfigEs5),
-      resolve({
-        module: true,
-      }),
-      filesize(filesizeConfig),
-      cleanup(),
-    ],
+    plugins: [typescript(tsConfigEs5), resolve(), filesize(filesizeConfig), cleanup()],
   },
   {
     input: 'src/index.browser.ts',
@@ -79,9 +70,7 @@ export default [
     },
     plugins: [
       typescript(tsConfigEs5),
-      resolve({
-        browser: true,
-      }),
+      resolve({ browser: true }),
       filesize(filesizeConfig),
       cleanup(),
     ],

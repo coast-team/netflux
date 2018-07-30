@@ -167,13 +167,7 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
       }
     }
     this.webSocketBuilder
-      .connect(
-        url,
-        Channel.WITH_JOINING,
-        -1,
-        -1,
-        this.id
-      )
+      .connect(url, Channel.WITH_JOINING, -1, -1, this.id)
       .catch((err) => log.webgroup(`Failed to invite the bot ${url}: ${err.message}`))
   }
 

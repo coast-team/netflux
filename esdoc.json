@@ -13,8 +13,7 @@
         "brand": {
           "logo": "./manual/asset/logo_favicon.jpg",
           "title": "Netflux",
-          "description":
-            "Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done.",
+          "description": "Abstract peer to peer client transport API. Implementations based on WebRTC and webSocket to be done.",
           "repository": "https://github.com/coast-team/netflux"
         },
         "manual": {
