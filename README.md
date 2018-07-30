@@ -137,7 +137,7 @@ import { Bot, WebGroupState } from 'netflux'
 const http = require('http') // https is also possible
 const server = http.createServer()
 
-const bot = new WebGroupBotServer({
+const bot = new Bot({
   server: server,
   webGroupOptions: {
     // Any WebGroup options like for a client
@@ -156,7 +156,7 @@ server.listen(BOT_PORT, _BOT_HOST)
 
 ## Demo
 
-Netflux is used by our team for Multi User Text Editor ([MUTE repo](https://github.com/coast-team/mute)) development. The demo version is available on: <https://coedit.re>.
+Netflux used as a transport layer for Multi User Text Editor ([MUTE repo](https://github.com/coast-team/mute)) developed by our team. The demo version is available on: <https://coedit.re>.
 
 [websocket]: https://developer.mozilla.org/en/docs/Web/API/WebSocket
 [rtcdatachannel]: https://developer.mozilla.org/en/docs/Web/API/RTCDataChannel

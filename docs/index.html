@@ -166,7 +166,7 @@ wg.join(&apos;MY_UNIQUE_KEY_FOR_THE_GROUP&apos;)</code>
 const http = require(&apos;http&apos;) // https is also possible
 const server = http.createServer()
 
-const bot = new WebGroupBotServer({
+const bot = new Bot({
   server: server,
   webGroupOptions: {
     // Any WebGroup options like for a client
@@ -182,7 +182,7 @@ bot.onWebGroup = (wg) =&gt; {
 server.listen(BOT_PORT, _BOT_HOST)
 // A client may invite this bot with the following URL: &apos;ws://BOT_HOST:BOT_PORT&apos;</code>
 </code></pre>
-<h2 id="demo">Demo</h2><p>Netflux is used by our team for Multi User Text Editor (<a href="https://github.com/coast-team/mute">MUTE repo</a>) development. The demo version is available on: <a href="https://coedit.re">https://coedit.re</a>.</p>
+<h2 id="demo">Demo</h2><p>Netflux used as a transport layer for Multi User Text Editor (<a href="https://github.com/coast-team/mute">MUTE repo</a>) developed by our team. The demo version is available on: <a href="https://coedit.re">https://coedit.re</a>.</p>
 </div>
 </div>
 
