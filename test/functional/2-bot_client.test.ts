@@ -178,6 +178,23 @@ describe('🤖 🙂 - 2 members: bot first, then client', () => {
       client.join(key)
     })
 
+    /** @test {WebGroup#onMyId} */
+    it('should be called', (done) => {
+      client.onMyId = (id) => called++
+
+      client.onStateChange = (state: WebGroupState) => {
+        if (state === WebGroupState.JOINED) {
+          botGetData(key).then((bot) => {
+            expect(called).toEqual(1)
+            expect(bot.onMyIdToBeCalled).toEqual(1)
+            done()
+          })
+        }
+      }
+
+      client.join(key)
+    })
+
     /** @test {WebGroup#members} */
     it('should have 2 members', (done) => {
       client.onStateChange = (state: WebGroupState) => {

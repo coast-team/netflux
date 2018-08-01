@@ -69,6 +69,7 @@ describe('🙂 - 1 client', () => {
     expect(wg.onMemberJoin).toBeUndefined()
     expect(wg.onMemberLeave).toBeUndefined()
     expect(wg.onMessage).toBeUndefined()
+    expect(wg.onMyId).toBeUndefined()
     expect(wg.onStateChange).toBeUndefined()
     expect(wg.onSignalingStateChange).toBeUndefined()
 
@@ -213,6 +214,26 @@ describe('🙂 - 1 client', () => {
         if (state === WebGroupState.JOINED) {
           wait(1000).then(() => {
             expect(called1).toEqual(0)
+            done()
+          })
+        }
+      }
+
+      wg1.join()
+    })
+
+    /** @test {WebGroup#onMyId} */
+    it('should be called', (done) => {
+      let called1 = 0
+
+      wg1.onMyId = (id) => {
+        expect(id).toEqual(wg1.myId)
+        called1++
+      }
+      wg1.onStateChange = (state: WebGroupState) => {
+        if (state === WebGroupState.JOINED) {
+          wait(1000).then(() => {
+            expect(called1).toEqual(1)
             done()
           })
         }
@@ -476,6 +497,23 @@ describe('🙂 - 1 client', () => {
       let called1 = 0
 
       wg1.onMessage = () => called1++
+      wg1.onStateChange = (state: WebGroupState) => {
+        if (state === WebGroupState.LEFT) {
+          wait(1000).then(() => {
+            expect(called1).toEqual(0)
+            done()
+          })
+        }
+      }
+
+      wg1.leave()
+    })
+
+    /** @test {WebGroup#onMyId} */
+    it('should NOT be called', (done) => {
+      let called1 = 0
+
+      wg1.onMyId = () => called1++
       wg1.onStateChange = (state: WebGroupState) => {
         if (state === WebGroupState.LEFT) {
           wait(1000).then(() => {

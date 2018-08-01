@@ -125,6 +125,7 @@ function configWebGroup(wg: WebGroup) {
     signalingStates: [],
     messages: [],
     onMessageToBeCalled: 0,
+    onMyIdToBeCalled: 0,
     signalingServer: '',
   }
   const anyWg = wg as any
@@ -137,6 +138,7 @@ function configWebGroup(wg: WebGroup) {
       data.states.push(state)
     }
   })
+  wg.onMyId = (id) => data.onMyIdToBeCalled++
   wg.onMessage = (id, msg) => {
     data.onMessageToBeCalled++
     data.messages.push({

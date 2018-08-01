@@ -130,6 +130,7 @@ export interface IBotData {
   signalingStates: number[]
   messages: IBotMessage[]
   onMessageToBeCalled: number
+  onMyIdToBeCalled: number
   state: WebGroupState
   signalingState: SignalingState
   key: string

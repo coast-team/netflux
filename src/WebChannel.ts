@@ -76,6 +76,7 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
   public onMemberJoin: (id: number) => void
   public onMemberLeave: (id: number) => void
   public onMessage: (id: number, msg: UserDataType) => void
+  public onMyId: (id: number) => void
 
   public webSocketBuilder: WebSocketBuilder
   public channelBuilder: ChannelBuilder
@@ -109,6 +110,7 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
     this.onMemberJoin = function none() {}
     this.onMemberLeave = function none() {}
     this.onMessage = function none() {}
+    this.onMyId = function none() {}
     this.onStateChange = function none() {}
     this.onSignalingStateChange = function none() {}
 
@@ -236,6 +238,7 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
     this.members = [this.myId]
     this.key = key
     this.rejoinEnabled = this.autoRejoin
+    this.onMyId(this.myId)
     if (this.rejoinTimer) {
       clearTimeout(this.rejoinTimer)
       this.rejoinTimer = undefined

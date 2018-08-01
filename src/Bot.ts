@@ -101,6 +101,7 @@ export class Bot {
         }
         wc.init(key as string, wcId)
         this.onWebGroup(wg)
+        wc.onMyId(wc.myId)
         webSocketBuilder = wc.webSocketBuilder
       } else {
         const wg = this.webGroups.get(wcId) as WebGroup
