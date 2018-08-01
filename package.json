@@ -87,7 +87,7 @@
     "pm2": "^3.0.3",
     "prettier": "^1.14.0",
     "protobufjs": "^6.8.8",
-    "rollup": "^0.63.3",
+    "rollup": "^0.63.5",
     "rollup-plugin-cleanup": "^3.0.0",
     "rollup-plugin-commonjs": "^9.1.4",
     "rollup-plugin-filesize": "^4.0.1",
@@ -95,16 +95,16 @@
     "rollup-plugin-re": "^1.0.7",
     "rollup-plugin-typescript2": "^0.16.1",
     "rxjs": "^6.2.2",
-    "semantic-release": "^15.9.1",
+    "semantic-release": "^15.9.3",
     "sigver": "^20.0.1",
     "text-encoding": "^0.6.4",
     "travis-deploy-once": "^5.0.1",
     "tslib": "^1.9.3",
     "tslint": "^5.11.0",
     "tslint-config-prettier": "^1.14.0",
-    "typescript": "^2.9.2",
+    "typescript": "^3.0.1",
     "uws": "10.148.1",
-    "webrtc-adapter": "^6.3.0"
+    "webrtc-adapter": "^6.3.1"
   },
   "commitlint": {
     "extends": [
