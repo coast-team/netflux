@@ -105,6 +105,7 @@ describe(&apos;&#x1F642; - 1 client&apos;, () =&gt; {
         expect(wg.onMemberJoin).toBeUndefined();
         expect(wg.onMemberLeave).toBeUndefined();
         expect(wg.onMessage).toBeUndefined();
+        expect(wg.onMyId).toBeUndefined();
         expect(wg.onStateChange).toBeUndefined();
         expect(wg.onSignalingStateChange).toBeUndefined();
         // Check methods
@@ -228,6 +229,23 @@ describe(&apos;&#x1F642; - 1 client&apos;, () =&gt; {
                 if (state === WebGroupState.JOINED) {
                     wait(1000).then(() =&gt; {
                         expect(called1).toEqual(0);
+                        done();
+                    });
+                }
+            };
+            wg1.join();
+        });
+        /** @test {WebGroup#onMyId} */
+        it(&apos;should be called&apos;, (done) =&gt; {
+            let called1 = 0;
+            wg1.onMyId = (id) =&gt; {
+                expect(id).toEqual(wg1.myId);
+                called1++;
+            };
+            wg1.onStateChange = (state) =&gt; {
+                if (state === WebGroupState.JOINED) {
+                    wait(1000).then(() =&gt; {
+                        expect(called1).toEqual(1);
                         done();
                     });
                 }
@@ -446,6 +464,20 @@ describe(&apos;&#x1F642; - 1 client&apos;, () =&gt; {
         it(&apos;should NOT receive any message&apos;, (done) =&gt; {
             let called1 = 0;
             wg1.onMessage = () =&gt; called1++;
+            wg1.onStateChange = (state) =&gt; {
+                if (state === WebGroupState.LEFT) {
+                    wait(1000).then(() =&gt; {
+                        expect(called1).toEqual(0);
+                        done();
+                    });
+                }
+            };
+            wg1.leave();
+        });
+        /** @test {WebGroup#onMyId} */
+        it(&apos;should NOT be called&apos;, (done) =&gt; {
+            let called1 = 0;
+            wg1.onMyId = () =&gt; called1++;
             wg1.onStateChange = (state) =&gt; {
                 if (state === WebGroupState.LEFT) {
                     wait(1000).then(() =&gt; {

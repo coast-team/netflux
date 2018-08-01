@@ -211,6 +211,20 @@ describe(&apos;&#x1F642; &#x1F642; - 2 clients&apos;, () =&gt; {
             };
             wg2.join(wg1.key);
         });
+        /** @test {WebGroup#onMyId} */
+        it(&apos;should be called&apos;, (done) =&gt; {
+            // Code for peer 2
+            wg2.onMyId = () =&gt; called2++;
+            wg2.onStateChange = (state) =&gt; {
+                if (state === WebGroupState.JOINED) {
+                    wait(1000).then(() =&gt; {
+                        expect(called2).toEqual(1);
+                        done();
+                    });
+                }
+            };
+            wg2.join(wg1.key);
+        });
         /** @test {WebGroup#members} */
         it(&apos;should have 2 members&apos;, (done) =&gt; {
             const queue = new Queue(3, () =&gt; {

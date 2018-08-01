@@ -186,6 +186,12 @@ window.esdocSearchIndex = [
     "member"
   ],
   [
+    "src/webchannelfacade.js~webgroup#onmyid",
+    "class/src/WebChannelFacade.js~WebGroup.html#instance-member-onMyId",
+    "src/WebChannelFacade.js~WebGroup#onMyId",
+    "member"
+  ],
+  [
     "src/webchannelfacade.js~webgroup#onsignalingstatechange",
     "class/src/WebChannelFacade.js~WebGroup.html#instance-member-onSignalingStateChange",
     "src/WebChannelFacade.js~WebGroup#onSignalingStateChange",
@@ -439,187 +445,199 @@ window.esdocSearchIndex = [
   ],
   [
     "webgroup#join src/webchannelfacade.js~webgroup#join,webgroup#join",
-    "test-file/test/functional/1-client.test.js.html#lineNumber68",
+    "test-file/test/functional/1-client.test.js.html#lineNumber69",
     "🙂 - 1 client join",
     "test"
   ],
   [
     "webgroup#signalingserver src/webchannelfacade.js~webgroup#signalingserver,webgroup#signalingserver",
-    "test-file/test/functional/1-client.test.js.html#lineNumber253",
+    "test-file/test/functional/1-client.test.js.html#lineNumber271",
     "🙂 - 1 client join Signaling server should not change",
     "test"
   ],
   [
     "webgroup#signalingstate src/webchannelfacade.js~webgroup#signalingstate,webgroup#signalingstate",
-    "test-file/test/functional/1-client.test.js.html#lineNumber102",
+    "test-file/test/functional/1-client.test.js.html#lineNumber103",
     "🙂 - 1 client join Signaling state should be CHECKED",
     "test"
   ],
   [
     "webgroup#id src/webchannelfacade.js~webgroup#id,webgroup#id",
-    "test-file/test/functional/1-client.test.js.html#lineNumber214",
+    "test-file/test/functional/1-client.test.js.html#lineNumber232",
     "🙂 - 1 client join WebGroup id should not be 0",
     "test"
   ],
   [
     "webgroup#state src/webchannelfacade.js~webgroup#state,webgroup#state",
-    "test-file/test/functional/1-client.test.js.html#lineNumber134",
+    "test-file/test/functional/1-client.test.js.html#lineNumber135",
     "🙂 - 1 client join WebGroup state should be JOINED",
     "test"
   ],
   [
     "webgroup#autorejoin src/webchannelfacade.js~webgroup#autorejoin,webgroup#autorejoin",
-    "test-file/test/functional/1-client.test.js.html#lineNumber266",
+    "test-file/test/functional/1-client.test.js.html#lineNumber284",
     "🙂 - 1 client join autoRejoin should be disabled",
     "test"
   ],
   [
     "webgroup#key src/webchannelfacade.js~webgroup#key,webgroup#key",
-    "test-file/test/functional/1-client.test.js.html#lineNumber227",
+    "test-file/test/functional/1-client.test.js.html#lineNumber245",
     "🙂 - 1 client join key should not be empty",
     "test"
   ],
   [
     "webgroup#myid src/webchannelfacade.js~webgroup#myid,webgroup#myid",
-    "test-file/test/functional/1-client.test.js.html#lineNumber201",
+    "test-file/test/functional/1-client.test.js.html#lineNumber219",
     "🙂 - 1 client join my id should not be 0",
     "test"
   ],
   [
     "webgroup#onmemberleave src/webchannelfacade.js~webgroup#onmemberleave,webgroup#onmemberleave",
-    "test-file/test/functional/1-client.test.js.html#lineNumber160",
+    "test-file/test/functional/1-client.test.js.html#lineNumber161",
     "🙂 - 1 client join should NOT be notified about left member",
     "test"
   ],
   [
     "webgroup#onmemberjoin src/webchannelfacade.js~webgroup#onmemberjoin,webgroup#onmemberjoin",
-    "test-file/test/functional/1-client.test.js.html#lineNumber146",
+    "test-file/test/functional/1-client.test.js.html#lineNumber147",
     "🙂 - 1 client join should NOT be notified about new member",
     "test"
   ],
   [
     "webgroup#onmessage src/webchannelfacade.js~webgroup#onmessage,webgroup#onmessage",
-    "test-file/test/functional/1-client.test.js.html#lineNumber174",
+    "test-file/test/functional/1-client.test.js.html#lineNumber175",
     "🙂 - 1 client join should NOT receive any message",
     "test"
   ],
   [
+    "webgroup#onmyid src/webchannelfacade.js~webgroup#onmyid,webgroup#onmyid",
+    "test-file/test/functional/1-client.test.js.html#lineNumber189",
+    "🙂 - 1 client join should be called",
+    "test"
+  ],
+  [
     "webgroup#onsignalingstatechange src/webchannelfacade.js~webgroup#onsignalingstatechange,webgroup#onsignalingstatechange",
-    "test-file/test/functional/1-client.test.js.html#lineNumber77",
+    "test-file/test/functional/1-client.test.js.html#lineNumber78",
     "🙂 - 1 client join should change the Signaling state",
     "test"
   ],
   [
     "webgroup#onstatechange src/webchannelfacade.js~webgroup#onstatechange,webgroup#onstatechange",
-    "test-file/test/functional/1-client.test.js.html#lineNumber116",
+    "test-file/test/functional/1-client.test.js.html#lineNumber117",
     "🙂 - 1 client join should change the WebGroup state",
     "test"
   ],
   [
     "webgroup#members src/webchannelfacade.js~webgroup#members,webgroup#members",
-    "test-file/test/functional/1-client.test.js.html#lineNumber188",
+    "test-file/test/functional/1-client.test.js.html#lineNumber206",
     "🙂 - 1 client join should have only me as a member",
     "test"
   ],
   [
     "webgroup#join src/webchannelfacade.js~webgroup#join,webgroup#join",
-    "test-file/test/functional/1-client.test.js.html#lineNumber279",
+    "test-file/test/functional/1-client.test.js.html#lineNumber297",
     "🙂 - 1 client join should join with a specified key",
     "test"
   ],
   [
     "webgroup#topology src/webchannelfacade.js~webgroup#topology,webgroup#topology",
-    "test-file/test/functional/1-client.test.js.html#lineNumber240",
+    "test-file/test/functional/1-client.test.js.html#lineNumber258",
     "🙂 - 1 client join topology should not change",
     "test"
   ],
   [
     "webgroup#leave src/webchannelfacade.js~webgroup#leave,webgroup#leave",
-    "test-file/test/functional/1-client.test.js.html#lineNumber291",
+    "test-file/test/functional/1-client.test.js.html#lineNumber309",
     "🙂 - 1 client leave",
     "test"
   ],
   [
     "webgroup#signalingserver src/webchannelfacade.js~webgroup#signalingserver,webgroup#signalingserver",
-    "test-file/test/functional/1-client.test.js.html#lineNumber475",
+    "test-file/test/functional/1-client.test.js.html#lineNumber507",
     "🙂 - 1 client leave Signaling server should not change",
     "test"
   ],
   [
     "webgroup#signalingstate src/webchannelfacade.js~webgroup#signalingstate,webgroup#signalingstate",
-    "test-file/test/functional/1-client.test.js.html#lineNumber338",
+    "test-file/test/functional/1-client.test.js.html#lineNumber356",
     "🙂 - 1 client leave Signaling state should be CLOSED",
     "test"
   ],
   [
     "webgroup#id src/webchannelfacade.js~webgroup#id,webgroup#id",
-    "test-file/test/functional/1-client.test.js.html#lineNumber436",
+    "test-file/test/functional/1-client.test.js.html#lineNumber468",
     "🙂 - 1 client leave WebGroup id should be 0",
     "test"
   ],
   [
     "webgroup#state src/webchannelfacade.js~webgroup#state,webgroup#state",
-    "test-file/test/functional/1-client.test.js.html#lineNumber353",
+    "test-file/test/functional/1-client.test.js.html#lineNumber371",
     "🙂 - 1 client leave WebGroup state should be LEFT",
     "test"
   ],
   [
     "webgroup#autorejoin src/webchannelfacade.js~webgroup#autorejoin,webgroup#autorejoin",
-    "test-file/test/functional/1-client.test.js.html#lineNumber488",
+    "test-file/test/functional/1-client.test.js.html#lineNumber520",
     "🙂 - 1 client leave autoRejoin should be disabled",
     "test"
   ],
   [
     "webgroup#key src/webchannelfacade.js~webgroup#key,webgroup#key",
-    "test-file/test/functional/1-client.test.js.html#lineNumber449",
+    "test-file/test/functional/1-client.test.js.html#lineNumber481",
     "🙂 - 1 client leave key should be empty",
     "test"
   ],
   [
     "webgroup#myid src/webchannelfacade.js~webgroup#myid,webgroup#myid",
-    "test-file/test/functional/1-client.test.js.html#lineNumber423",
+    "test-file/test/functional/1-client.test.js.html#lineNumber455",
     "🙂 - 1 client leave my id should be 0",
     "test"
   ],
   [
+    "webgroup#onmyid src/webchannelfacade.js~webgroup#onmyid,webgroup#onmyid",
+    "test-file/test/functional/1-client.test.js.html#lineNumber428",
+    "🙂 - 1 client leave should NOT be called",
+    "test"
+  ],
+  [
     "webgroup#onmemberleave src/webchannelfacade.js~webgroup#onmemberleave,webgroup#onmemberleave",
-    "test-file/test/functional/1-client.test.js.html#lineNumber382",
+    "test-file/test/functional/1-client.test.js.html#lineNumber400",
     "🙂 - 1 client leave should NOT be notified about left member",
     "test"
   ],
   [
     "webgroup#onmemberjoin src/webchannelfacade.js~webgroup#onmemberjoin,webgroup#onmemberjoin",
-    "test-file/test/functional/1-client.test.js.html#lineNumber368",
+    "test-file/test/functional/1-client.test.js.html#lineNumber386",
     "🙂 - 1 client leave should NOT be notified about new member",
     "test"
   ],
   [
     "webgroup#onmessage src/webchannelfacade.js~webgroup#onmessage,webgroup#onmessage",
-    "test-file/test/functional/1-client.test.js.html#lineNumber396",
+    "test-file/test/functional/1-client.test.js.html#lineNumber414",
     "🙂 - 1 client leave should NOT receive any message",
     "test"
   ],
   [
     "webgroup#onsignalingstatechange src/webchannelfacade.js~webgroup#onsignalingstatechange,webgroup#onsignalingstatechange",
-    "test-file/test/functional/1-client.test.js.html#lineNumber322",
+    "test-file/test/functional/1-client.test.js.html#lineNumber340",
     "🙂 - 1 client leave should change the Signaling state",
     "test"
   ],
   [
     "webgroup#onstatechange src/webchannelfacade.js~webgroup#onstatechange,webgroup#onstatechange",
-    "test-file/test/functional/1-client.test.js.html#lineNumber304",
+    "test-file/test/functional/1-client.test.js.html#lineNumber322",
     "🙂 - 1 client leave should change the WebGroup state",
     "test"
   ],
   [
     "webgroup#members src/webchannelfacade.js~webgroup#members,webgroup#members",
-    "test-file/test/functional/1-client.test.js.html#lineNumber410",
+    "test-file/test/functional/1-client.test.js.html#lineNumber442",
     "🙂 - 1 client leave should have no members",
     "test"
   ],
   [
     "webgroup#topology src/webchannelfacade.js~webgroup#topology,webgroup#topology",
-    "test-file/test/functional/1-client.test.js.html#lineNumber462",
+    "test-file/test/functional/1-client.test.js.html#lineNumber494",
     "🙂 - 1 client leave topology should not change",
     "test"
   ],
@@ -637,7 +655,7 @@ window.esdocSearchIndex = [
   ],
   [
     "webgroup#signalingserver src/webchannelfacade.js~webgroup#signalingserver,webgroup#signalingserver",
-    "test-file/test/functional/2-clients.test.js.html#lineNumber260",
+    "test-file/test/functional/2-clients.test.js.html#lineNumber274",
     "🙂 🙂 - 2 clients join Signaling server should not change",
     "test"
   ],
@@ -649,7 +667,7 @@ window.esdocSearchIndex = [
   ],
   [
     "webgroup#id src/webchannelfacade.js~webgroup#id,webgroup#id",
-    "test-file/test/functional/2-clients.test.js.html#lineNumber209",
+    "test-file/test/functional/2-clients.test.js.html#lineNumber223",
     "🙂 🙂 - 2 clients join WebGroup id should not change, should be the same and not 0",
     "test"
   ],
@@ -661,19 +679,19 @@ window.esdocSearchIndex = [
   ],
   [
     "webgroup#autorejoin src/webchannelfacade.js~webgroup#autorejoin,webgroup#autorejoin",
-    "test-file/test/functional/2-clients.test.js.html#lineNumber275",
+    "test-file/test/functional/2-clients.test.js.html#lineNumber289",
     "🙂 🙂 - 2 clients join autoRejoin should be disabled",
     "test"
   ],
   [
     "webgroup#myid src/webchannelfacade.js~webgroup#myid,webgroup#myid",
-    "test-file/test/functional/2-clients.test.js.html#lineNumber193",
+    "test-file/test/functional/2-clients.test.js.html#lineNumber207",
     "🙂 🙂 - 2 clients join first client's id should not change and second client's id should not be 0",
     "test"
   ],
   [
     "webgroup#key src/webchannelfacade.js~webgroup#key,webgroup#key",
-    "test-file/test/functional/2-clients.test.js.html#lineNumber227",
+    "test-file/test/functional/2-clients.test.js.html#lineNumber241",
     "🙂 🙂 - 2 clients join key should not change, should be the same and not empty",
     "test"
   ],
@@ -687,6 +705,12 @@ window.esdocSearchIndex = [
     "webgroup#onmessage src/webchannelfacade.js~webgroup#onmessage,webgroup#onmessage",
     "test-file/test/functional/2-clients.test.js.html#lineNumber148",
     "🙂 🙂 - 2 clients join should NOT receive any message",
+    "test"
+  ],
+  [
+    "webgroup#onmyid src/webchannelfacade.js~webgroup#onmyid,webgroup#onmyid",
+    "test-file/test/functional/2-clients.test.js.html#lineNumber165",
+    "🙂 🙂 - 2 clients join should be called",
     "test"
   ],
   [
@@ -709,145 +733,145 @@ window.esdocSearchIndex = [
   ],
   [
     "webgroup#members src/webchannelfacade.js~webgroup#members,webgroup#members",
-    "test-file/test/functional/2-clients.test.js.html#lineNumber165",
+    "test-file/test/functional/2-clients.test.js.html#lineNumber179",
     "🙂 🙂 - 2 clients join should have 2 members",
     "test"
   ],
   [
     "webgroup#join src/webchannelfacade.js~webgroup#join,webgroup#join",
-    "test-file/test/functional/2-clients.test.js.html#lineNumber290",
+    "test-file/test/functional/2-clients.test.js.html#lineNumber304",
     "🙂 🙂 - 2 clients join should join with a specified key",
     "test"
   ],
   [
     "webgroup#topology src/webchannelfacade.js~webgroup#topology,webgroup#topology",
-    "test-file/test/functional/2-clients.test.js.html#lineNumber245",
+    "test-file/test/functional/2-clients.test.js.html#lineNumber259",
     "🙂 🙂 - 2 clients join topology should not change",
     "test"
   ],
   [
     "webgroup#leave src/webchannelfacade.js~webgroup#leave,webgroup#leave",
-    "test-file/test/functional/2-clients.test.js.html#lineNumber465",
+    "test-file/test/functional/2-clients.test.js.html#lineNumber479",
     "🙂 🙂 - 2 clients leave",
     "test"
   ],
   [
     "webgroup#signalingserver src/webchannelfacade.js~webgroup#signalingserver,webgroup#signalingserver",
-    "test-file/test/functional/2-clients.test.js.html#lineNumber695",
+    "test-file/test/functional/2-clients.test.js.html#lineNumber709",
     "🙂 🙂 - 2 clients leave Signaling server should not change",
     "test"
   ],
   [
     "webgroup#signalingstate src/webchannelfacade.js~webgroup#signalingstate,webgroup#signalingstate",
-    "test-file/test/functional/2-clients.test.js.html#lineNumber565",
+    "test-file/test/functional/2-clients.test.js.html#lineNumber579",
     "🙂 🙂 - 2 clients leave Signaling state of the first client should not be CLOSED and of the second should be CLOSED",
     "test"
   ],
   [
     "webgroup#id src/webchannelfacade.js~webgroup#id,webgroup#id",
-    "test-file/test/functional/2-clients.test.js.html#lineNumber650",
+    "test-file/test/functional/2-clients.test.js.html#lineNumber664",
     "🙂 🙂 - 2 clients leave WebGroup id of the first client should NOT be 0 and of second should be 0",
     "test"
   ],
   [
     "webgroup#state src/webchannelfacade.js~webgroup#state,webgroup#state",
-    "test-file/test/functional/2-clients.test.js.html#lineNumber537",
+    "test-file/test/functional/2-clients.test.js.html#lineNumber551",
     "🙂 🙂 - 2 clients leave WebGroup state of the first client should be JOINED and of the second should be LEFT",
     "test"
   ],
   [
     "webgroup#autorejoin src/webchannelfacade.js~webgroup#autorejoin,webgroup#autorejoin",
-    "test-file/test/functional/2-clients.test.js.html#lineNumber710",
+    "test-file/test/functional/2-clients.test.js.html#lineNumber724",
     "🙂 🙂 - 2 clients leave autoRejoin should be disabled",
     "test"
   ],
   [
     "webgroup#members src/webchannelfacade.js~webgroup#members,webgroup#members",
-    "test-file/test/functional/2-clients.test.js.html#lineNumber612",
+    "test-file/test/functional/2-clients.test.js.html#lineNumber626",
     "🙂 🙂 - 2 clients leave first client should have only him as a member and second client should have no members",
     "test"
   ],
   [
     "webgroup#key src/webchannelfacade.js~webgroup#key,webgroup#key",
-    "test-file/test/functional/2-clients.test.js.html#lineNumber665",
+    "test-file/test/functional/2-clients.test.js.html#lineNumber679",
     "🙂 🙂 - 2 clients leave key of the first client should NOT be empty and of second should be empty",
     "test"
   ],
   [
     "webgroup#onmemberleave src/webchannelfacade.js~webgroup#onmemberleave,webgroup#onmemberleave",
-    "test-file/test/functional/2-clients.test.js.html#lineNumber578",
+    "test-file/test/functional/2-clients.test.js.html#lineNumber592",
     "🙂 🙂 - 2 clients leave should NOT be notified about joined member",
     "test"
   ],
   [
     "webgroup#onmessage src/webchannelfacade.js~webgroup#onmessage,webgroup#onmessage",
-    "test-file/test/functional/2-clients.test.js.html#lineNumber595",
+    "test-file/test/functional/2-clients.test.js.html#lineNumber609",
     "🙂 🙂 - 2 clients leave should NOT receive any message",
     "test"
   ],
   [
     "webgroup#onmemberleave src/webchannelfacade.js~webgroup#onmemberleave,webgroup#onmemberleave",
-    "test-file/test/functional/2-clients.test.js.html#lineNumber495",
+    "test-file/test/functional/2-clients.test.js.html#lineNumber509",
     "🙂 🙂 - 2 clients leave should be notified about left member",
     "test"
   ],
   [
     "webgroup#onsignalingstatechange src/webchannelfacade.js~webgroup#onsignalingstatechange,webgroup#onsignalingstatechange",
-    "test-file/test/functional/2-clients.test.js.html#lineNumber550",
+    "test-file/test/functional/2-clients.test.js.html#lineNumber564",
     "🙂 🙂 - 2 clients leave should change the Signaling state",
     "test"
   ],
   [
     "webgroup#onstatechange src/webchannelfacade.js~webgroup#onstatechange,webgroup#onstatechange",
-    "test-file/test/functional/2-clients.test.js.html#lineNumber519",
+    "test-file/test/functional/2-clients.test.js.html#lineNumber533",
     "🙂 🙂 - 2 clients leave should change the WebGroup state of the second client only",
     "test"
   ],
   [
     "webgroup#myid src/webchannelfacade.js~webgroup#myid,webgroup#myid",
-    "test-file/test/functional/2-clients.test.js.html#lineNumber635",
+    "test-file/test/functional/2-clients.test.js.html#lineNumber649",
     "🙂 🙂 - 2 clients leave the id of the first client should NOT be 0 and of second should be 0",
     "test"
   ],
   [
     "webgroup#topology src/webchannelfacade.js~webgroup#topology,webgroup#topology",
-    "test-file/test/functional/2-clients.test.js.html#lineNumber680",
+    "test-file/test/functional/2-clients.test.js.html#lineNumber694",
     "🙂 🙂 - 2 clients leave topology should not change",
     "test"
   ],
   [
     "",
-    "test-file/test/functional/2-clients.test.js.html#lineNumber316",
+    "test-file/test/functional/2-clients.test.js.html#lineNumber330",
     "🙂 🙂 - 2 clients should send/receive",
     "test"
   ],
   [
     "webgroup#send src/webchannelfacade.js~webgroup#send,webgroup#send",
-    "test-file/test/functional/2-clients.test.js.html#lineNumber370",
+    "test-file/test/functional/2-clients.test.js.html#lineNumber384",
     "🙂 🙂 - 2 clients should send/receive broadcast ArrayBuffer",
     "test"
   ],
   [
     "webgroup#send src/webchannelfacade.js~webgroup#send,webgroup#send",
-    "test-file/test/functional/2-clients.test.js.html#lineNumber346",
+    "test-file/test/functional/2-clients.test.js.html#lineNumber360",
     "🙂 🙂 - 2 clients should send/receive broadcast String",
     "test"
   ],
   [
     "webgroup#sendto src/webchannelfacade.js~webgroup#sendto,webgroup#sendto",
-    "test-file/test/functional/2-clients.test.js.html#lineNumber396",
+    "test-file/test/functional/2-clients.test.js.html#lineNumber410",
     "🙂 🙂 - 2 clients should send/receive broadcast message cutted in chunks (> 15kb)",
     "test"
   ],
   [
     "webgroup#sendto src/webchannelfacade.js~webgroup#sendto,webgroup#sendto",
-    "test-file/test/functional/2-clients.test.js.html#lineNumber437",
+    "test-file/test/functional/2-clients.test.js.html#lineNumber451",
     "🙂 🙂 - 2 clients should send/receive private ArrayBuffer",
     "test"
   ],
   [
     "webgroup#sendto src/webchannelfacade.js~webgroup#sendto,webgroup#sendto",
-    "test-file/test/functional/2-clients.test.js.html#lineNumber413",
+    "test-file/test/functional/2-clients.test.js.html#lineNumber427",
     "🙂 🙂 - 2 clients should send/receive private String",
     "test"
   ],
@@ -949,7 +973,7 @@ window.esdocSearchIndex = [
   ],
   [
     "webgroup#signalingserver src/webchannelfacade.js~webgroup#signalingserver,webgroup#signalingserver",
-    "test-file/test/functional/2-client_bot.test.js.html#lineNumber219",
+    "test-file/test/functional/2-client_bot.test.js.html#lineNumber231",
     "🙂 🤖 - 2 members: client invites bot invite Signaling server should not change",
     "test"
   ],
@@ -961,7 +985,7 @@ window.esdocSearchIndex = [
   ],
   [
     "webgroup#id src/webchannelfacade.js~webgroup#id,webgroup#id",
-    "test-file/test/functional/2-client_bot.test.js.html#lineNumber176",
+    "test-file/test/functional/2-client_bot.test.js.html#lineNumber188",
     "🙂 🤖 - 2 members: client invites bot invite WebGroup id should not change, should be the same and not 0",
     "test"
   ],
@@ -973,19 +997,19 @@ window.esdocSearchIndex = [
   ],
   [
     "webgroup#autorejoin src/webchannelfacade.js~webgroup#autorejoin,webgroup#autorejoin",
-    "test-file/test/functional/2-client_bot.test.js.html#lineNumber232",
+    "test-file/test/functional/2-client_bot.test.js.html#lineNumber244",
     "🙂 🤖 - 2 members: client invites bot invite autoRejoin should be disabled",
     "test"
   ],
   [
     "webgroup#myid src/webchannelfacade.js~webgroup#myid,webgroup#myid",
-    "test-file/test/functional/2-client_bot.test.js.html#lineNumber162",
+    "test-file/test/functional/2-client_bot.test.js.html#lineNumber174",
     "🙂 🤖 - 2 members: client invites bot invite client's id should not change and bot's id should not be 0",
     "test"
   ],
   [
     "webgroup#key src/webchannelfacade.js~webgroup#key,webgroup#key",
-    "test-file/test/functional/2-client_bot.test.js.html#lineNumber191",
+    "test-file/test/functional/2-client_bot.test.js.html#lineNumber203",
     "🙂 🤖 - 2 members: client invites bot invite key should not change, should be the same and not empty",
     "test"
   ],
@@ -999,6 +1023,12 @@ window.esdocSearchIndex = [
     "webgroup#onmessage src/webchannelfacade.js~webgroup#onmessage,webgroup#onmessage",
     "test-file/test/functional/2-client_bot.test.js.html#lineNumber121",
     "🙂 🤖 - 2 members: client invites bot invite should NOT receive any message",
+    "test"
+  ],
+  [
+    "webgroup#onmyid src/webchannelfacade.js~webgroup#onmyid,webgroup#onmyid",
+    "test-file/test/functional/2-client_bot.test.js.html#lineNumber136",
+    "🙂 🤖 - 2 members: client invites bot invite should be called",
     "test"
   ],
   [
@@ -1021,49 +1051,49 @@ window.esdocSearchIndex = [
   ],
   [
     "webgroup#members src/webchannelfacade.js~webgroup#members,webgroup#members",
-    "test-file/test/functional/2-client_bot.test.js.html#lineNumber136",
+    "test-file/test/functional/2-client_bot.test.js.html#lineNumber148",
     "🙂 🤖 - 2 members: client invites bot invite should have 2 members",
     "test"
   ],
   [
     "",
-    "test-file/test/functional/2-client_bot.test.js.html#lineNumber244",
+    "test-file/test/functional/2-client_bot.test.js.html#lineNumber256",
     "🙂 🤖 - 2 members: client invites bot invite should send/receive",
     "test"
   ],
   [
     "webgroup#send src/webchannelfacade.js~webgroup#send,webgroup#send",
-    "test-file/test/functional/2-client_bot.test.js.html#lineNumber291",
+    "test-file/test/functional/2-client_bot.test.js.html#lineNumber303",
     "🙂 🤖 - 2 members: client invites bot invite should send/receive broadcast ArrayBuffer",
     "test"
   ],
   [
     "webgroup#send src/webchannelfacade.js~webgroup#send,webgroup#send",
-    "test-file/test/functional/2-client_bot.test.js.html#lineNumber267",
+    "test-file/test/functional/2-client_bot.test.js.html#lineNumber279",
     "🙂 🤖 - 2 members: client invites bot invite should send/receive broadcast String",
     "test"
   ],
   [
     "webgroup#sendto src/webchannelfacade.js~webgroup#sendto,webgroup#sendto",
-    "test-file/test/functional/2-client_bot.test.js.html#lineNumber315",
+    "test-file/test/functional/2-client_bot.test.js.html#lineNumber327",
     "🙂 🤖 - 2 members: client invites bot invite should send/receive broadcast message cutted in chunks (> 15kb)",
     "test"
   ],
   [
     "webgroup#sendto src/webchannelfacade.js~webgroup#sendto,webgroup#sendto",
-    "test-file/test/functional/2-client_bot.test.js.html#lineNumber355",
+    "test-file/test/functional/2-client_bot.test.js.html#lineNumber367",
     "🙂 🤖 - 2 members: client invites bot invite should send/receive private ArrayBuffer",
     "test"
   ],
   [
     "webgroup#sendto src/webchannelfacade.js~webgroup#sendto,webgroup#sendto",
-    "test-file/test/functional/2-client_bot.test.js.html#lineNumber331",
+    "test-file/test/functional/2-client_bot.test.js.html#lineNumber343",
     "🙂 🤖 - 2 members: client invites bot invite should send/receive private String",
     "test"
   ],
   [
     "webgroup#topology src/webchannelfacade.js~webgroup#topology,webgroup#topology",
-    "test-file/test/functional/2-client_bot.test.js.html#lineNumber206",
+    "test-file/test/functional/2-client_bot.test.js.html#lineNumber218",
     "🙂 🤖 - 2 members: client invites bot invite topology should not change",
     "test"
   ],
@@ -1093,37 +1123,37 @@ window.esdocSearchIndex = [
   ],
   [
     "webgroup#signalingstate src/webchannelfacade.js~webgroup#signalingstate,webgroup#signalingstate",
-    "test-file/test/functional/1-bot.test.js.html#lineNumber150",
+    "test-file/test/functional/1-bot.test.js.html#lineNumber160",
     "🤖 - 1 bot join Signaling state should be CHECKED",
     "test"
   ],
   [
     "webgroup#id src/webchannelfacade.js~webgroup#id,webgroup#id",
-    "test-file/test/functional/1-bot.test.js.html#lineNumber123",
+    "test-file/test/functional/1-bot.test.js.html#lineNumber133",
     "🤖 - 1 bot join WebGroup id should not be 0",
     "test"
   ],
   [
     "webgroup#state src/webchannelfacade.js~webgroup#state,webgroup#state",
-    "test-file/test/functional/1-bot.test.js.html#lineNumber141",
+    "test-file/test/functional/1-bot.test.js.html#lineNumber151",
     "🤖 - 1 bot join WebGroup state should be JOINED",
     "test"
   ],
   [
     "webgroup#autorejoin src/webchannelfacade.js~webgroup#autorejoin,webgroup#autorejoin",
-    "test-file/test/functional/1-bot.test.js.html#lineNumber78",
+    "test-file/test/functional/1-bot.test.js.html#lineNumber88",
     "🤖 - 1 bot join autoRejoin should be disabled",
     "test"
   ],
   [
     "webgroup#key src/webchannelfacade.js~webgroup#key,webgroup#key",
-    "test-file/test/functional/1-bot.test.js.html#lineNumber132",
+    "test-file/test/functional/1-bot.test.js.html#lineNumber142",
     "🤖 - 1 bot join key should be the one provided to the join method",
     "test"
   ],
   [
     "webgroup#myid src/webchannelfacade.js~webgroup#myid,webgroup#myid",
-    "test-file/test/functional/1-bot.test.js.html#lineNumber114",
+    "test-file/test/functional/1-bot.test.js.html#lineNumber124",
     "🤖 - 1 bot join my id should not be 0",
     "test"
   ],
@@ -1146,6 +1176,12 @@ window.esdocSearchIndex = [
     "test"
   ],
   [
+    "webgroup#onmyid src/webchannelfacade.js~webgroup#onmyid,webgroup#onmyid",
+    "test-file/test/functional/1-bot.test.js.html#lineNumber78",
+    "🤖 - 1 bot join should be called",
+    "test"
+  ],
+  [
     "webgroup#onsignalingstatechange src/webchannelfacade.js~webgroup#onsignalingstatechange,webgroup#onsignalingstatechange",
     "test-file/test/functional/1-bot.test.js.html#lineNumber17",
     "🤖 - 1 bot join should change the Signaling state",
@@ -1159,109 +1195,115 @@ window.esdocSearchIndex = [
   ],
   [
     "webgroup#members src/webchannelfacade.js~webgroup#members,webgroup#members",
-    "test-file/test/functional/1-bot.test.js.html#lineNumber105",
+    "test-file/test/functional/1-bot.test.js.html#lineNumber115",
     "🤖 - 1 bot join should have only me as a member",
     "test"
   ],
   [
     "webgroup#signalinserver webgroup#signalinserver,webgroup#signalinserver",
-    "test-file/test/functional/1-bot.test.js.html#lineNumber87",
+    "test-file/test/functional/1-bot.test.js.html#lineNumber97",
     "🤖 - 1 bot join signalinServer should not change",
     "test"
   ],
   [
     "webgroup#topology src/webchannelfacade.js~webgroup#topology,webgroup#topology",
-    "test-file/test/functional/1-bot.test.js.html#lineNumber96",
+    "test-file/test/functional/1-bot.test.js.html#lineNumber106",
     "🤖 - 1 bot join topology should not change",
     "test"
   ],
   [
     "webgroup#leave src/webchannelfacade.js~webgroup#leave,webgroup#leave",
-    "test-file/test/functional/1-bot.test.js.html#lineNumber160",
+    "test-file/test/functional/1-bot.test.js.html#lineNumber170",
     "🤖 - 1 bot leave",
     "test"
   ],
   [
     "webgroup#signalingstate src/webchannelfacade.js~webgroup#signalingstate,webgroup#signalingstate",
-    "test-file/test/functional/1-bot.test.js.html#lineNumber273",
+    "test-file/test/functional/1-bot.test.js.html#lineNumber291",
     "🤖 - 1 bot leave Signaling state should be CLOSED",
     "test"
   ],
   [
     "webgroup#id src/webchannelfacade.js~webgroup#id,webgroup#id",
-    "test-file/test/functional/1-bot.test.js.html#lineNumber252",
+    "test-file/test/functional/1-bot.test.js.html#lineNumber270",
     "🤖 - 1 bot leave WebGroup id should be 0",
     "test"
   ],
   [
     "webgroup#state src/webchannelfacade.js~webgroup#state,webgroup#state",
-    "test-file/test/functional/1-bot.test.js.html#lineNumber266",
+    "test-file/test/functional/1-bot.test.js.html#lineNumber284",
     "🤖 - 1 bot leave WebGroup state should be LEFT",
     "test"
   ],
   [
     "webgroup#autorejoin src/webchannelfacade.js~webgroup#autorejoin,webgroup#autorejoin",
-    "test-file/test/functional/1-bot.test.js.html#lineNumber217",
+    "test-file/test/functional/1-bot.test.js.html#lineNumber235",
     "🤖 - 1 bot leave autoRejoin should be disabled",
     "test"
   ],
   [
     "webgroup#key src/webchannelfacade.js~webgroup#key,webgroup#key",
-    "test-file/test/functional/1-bot.test.js.html#lineNumber259",
+    "test-file/test/functional/1-bot.test.js.html#lineNumber277",
     "🤖 - 1 bot leave key should be empty",
     "test"
   ],
   [
     "webgroup#myid src/webchannelfacade.js~webgroup#myid,webgroup#myid",
-    "test-file/test/functional/1-bot.test.js.html#lineNumber245",
+    "test-file/test/functional/1-bot.test.js.html#lineNumber263",
     "🤖 - 1 bot leave my id should be 0",
     "test"
   ],
   [
+    "webgroup#onmyid src/webchannelfacade.js~webgroup#onmyid,webgroup#onmyid",
+    "test-file/test/functional/1-bot.test.js.html#lineNumber227",
+    "🤖 - 1 bot leave should NOT be called",
+    "test"
+  ],
+  [
     "webgroup#onmemberleave src/webchannelfacade.js~webgroup#onmemberleave,webgroup#onmemberleave",
-    "test-file/test/functional/1-bot.test.js.html#lineNumber201",
+    "test-file/test/functional/1-bot.test.js.html#lineNumber211",
     "🤖 - 1 bot leave should NOT be notified about left member",
     "test"
   ],
   [
     "webgroup#onmemberjoin src/webchannelfacade.js~webgroup#onmemberjoin,webgroup#onmemberjoin",
-    "test-file/test/functional/1-bot.test.js.html#lineNumber193",
+    "test-file/test/functional/1-bot.test.js.html#lineNumber203",
     "🤖 - 1 bot leave should NOT be notified about new member",
     "test"
   ],
   [
     "webgroup#onmessage src/webchannelfacade.js~webgroup#onmessage,webgroup#onmessage",
-    "test-file/test/functional/1-bot.test.js.html#lineNumber209",
+    "test-file/test/functional/1-bot.test.js.html#lineNumber219",
     "🤖 - 1 bot leave should NOT receive any message",
     "test"
   ],
   [
     "webgroup#onsignalingstatechange src/webchannelfacade.js~webgroup#onsignalingstatechange,webgroup#onsignalingstatechange",
-    "test-file/test/functional/1-bot.test.js.html#lineNumber176",
+    "test-file/test/functional/1-bot.test.js.html#lineNumber186",
     "🤖 - 1 bot leave should change the Signaling state",
     "test"
   ],
   [
     "webgroup#onstatechange src/webchannelfacade.js~webgroup#onstatechange,webgroup#onstatechange",
-    "test-file/test/functional/1-bot.test.js.html#lineNumber167",
+    "test-file/test/functional/1-bot.test.js.html#lineNumber177",
     "🤖 - 1 bot leave should change the WebGroup state",
     "test"
   ],
   [
     "webgroup#members src/webchannelfacade.js~webgroup#members,webgroup#members",
-    "test-file/test/functional/1-bot.test.js.html#lineNumber238",
+    "test-file/test/functional/1-bot.test.js.html#lineNumber256",
     "🤖 - 1 bot leave should have no members",
     "test"
   ],
   [
     "webgroup#signalinserver webgroup#signalinserver,webgroup#signalinserver",
-    "test-file/test/functional/1-bot.test.js.html#lineNumber224",
+    "test-file/test/functional/1-bot.test.js.html#lineNumber242",
     "🤖 - 1 bot leave signalinServer should not change",
     "test"
   ],
   [
     "webgroup#topology src/webchannelfacade.js~webgroup#topology,webgroup#topology",
-    "test-file/test/functional/1-bot.test.js.html#lineNumber231",
+    "test-file/test/functional/1-bot.test.js.html#lineNumber249",
     "🤖 - 1 bot leave topology should not change",
     "test"
   ],
@@ -1279,7 +1321,7 @@ window.esdocSearchIndex = [
   ],
   [
     "webgroup#signalingserver src/webchannelfacade.js~webgroup#signalingserver,webgroup#signalingserver",
-    "test-file/test/functional/2-bot_client.test.js.html#lineNumber218",
+    "test-file/test/functional/2-bot_client.test.js.html#lineNumber232",
     "🤖 🙂 - 2 members: bot first, then client join Signaling server should not change",
     "test"
   ],
@@ -1291,7 +1333,7 @@ window.esdocSearchIndex = [
   ],
   [
     "webgroup#id src/webchannelfacade.js~webgroup#id,webgroup#id",
-    "test-file/test/functional/2-bot_client.test.js.html#lineNumber175",
+    "test-file/test/functional/2-bot_client.test.js.html#lineNumber189",
     "🤖 🙂 - 2 members: bot first, then client join WebGroup id should not change, should be the same and not 0",
     "test"
   ],
@@ -1303,19 +1345,19 @@ window.esdocSearchIndex = [
   ],
   [
     "webgroup#autorejoin src/webchannelfacade.js~webgroup#autorejoin,webgroup#autorejoin",
-    "test-file/test/functional/2-bot_client.test.js.html#lineNumber231",
+    "test-file/test/functional/2-bot_client.test.js.html#lineNumber245",
     "🤖 🙂 - 2 members: bot first, then client join autoRejoin should be disabled",
     "test"
   ],
   [
     "webgroup#myid src/webchannelfacade.js~webgroup#myid,webgroup#myid",
-    "test-file/test/functional/2-bot_client.test.js.html#lineNumber159",
+    "test-file/test/functional/2-bot_client.test.js.html#lineNumber173",
     "🤖 🙂 - 2 members: bot first, then client join bot's id should not change and the client's id should not be 0",
     "test"
   ],
   [
     "webgroup#key src/webchannelfacade.js~webgroup#key,webgroup#key",
-    "test-file/test/functional/2-bot_client.test.js.html#lineNumber192",
+    "test-file/test/functional/2-bot_client.test.js.html#lineNumber206",
     "🤖 🙂 - 2 members: bot first, then client join key should not change, should be the same and not empty",
     "test"
   ],
@@ -1329,6 +1371,12 @@ window.esdocSearchIndex = [
     "webgroup#onmessage src/webchannelfacade.js~webgroup#onmessage,webgroup#onmessage",
     "test-file/test/functional/2-bot_client.test.js.html#lineNumber131",
     "🤖 🙂 - 2 members: bot first, then client join should NOT receive any message",
+    "test"
+  ],
+  [
+    "webgroup#onmyid src/webchannelfacade.js~webgroup#onmyid,webgroup#onmyid",
+    "test-file/test/functional/2-bot_client.test.js.html#lineNumber145",
+    "🤖 🙂 - 2 members: bot first, then client join should be called",
     "test"
   ],
   [
@@ -1351,61 +1399,61 @@ window.esdocSearchIndex = [
   ],
   [
     "webgroup#members src/webchannelfacade.js~webgroup#members,webgroup#members",
-    "test-file/test/functional/2-bot_client.test.js.html#lineNumber145",
+    "test-file/test/functional/2-bot_client.test.js.html#lineNumber159",
     "🤖 🙂 - 2 members: bot first, then client join should have 2 members",
     "test"
   ],
   [
     "webgroup#topology src/webchannelfacade.js~webgroup#topology,webgroup#topology",
-    "test-file/test/functional/2-bot_client.test.js.html#lineNumber205",
+    "test-file/test/functional/2-bot_client.test.js.html#lineNumber219",
     "🤖 🙂 - 2 members: bot first, then client join topology should not change",
     "test"
   ],
   [
     "",
-    "test-file/test/functional/2-bot_client.test.js.html#lineNumber374",
+    "test-file/test/functional/2-bot_client.test.js.html#lineNumber388",
     "🤖 🙂 - 2 members: bot first, then client leave",
     "test"
   ],
   [
     "",
-    "test-file/test/functional/2-bot_client.test.js.html#lineNumber388",
+    "test-file/test/functional/2-bot_client.test.js.html#lineNumber402",
     "🤖 🙂 - 2 members: bot first, then client leave bot should still be connected to the signaling server",
     "test"
   ],
   [
     "",
-    "test-file/test/functional/2-bot_client.test.js.html#lineNumber244",
+    "test-file/test/functional/2-bot_client.test.js.html#lineNumber258",
     "🤖 🙂 - 2 members: bot first, then client should send/receive",
     "test"
   ],
   [
     "webgroup#send src/webchannelfacade.js~webgroup#send,webgroup#send",
-    "test-file/test/functional/2-bot_client.test.js.html#lineNumber282",
+    "test-file/test/functional/2-bot_client.test.js.html#lineNumber296",
     "🤖 🙂 - 2 members: bot first, then client should send/receive broadcast ArrayBuffer",
     "test"
   ],
   [
     "webgroup#send src/webchannelfacade.js~webgroup#send,webgroup#send",
-    "test-file/test/functional/2-bot_client.test.js.html#lineNumber259",
+    "test-file/test/functional/2-bot_client.test.js.html#lineNumber273",
     "🤖 🙂 - 2 members: bot first, then client should send/receive broadcast String",
     "test"
   ],
   [
     "webgroup#sendto src/webchannelfacade.js~webgroup#sendto,webgroup#sendto",
-    "test-file/test/functional/2-bot_client.test.js.html#lineNumber306",
+    "test-file/test/functional/2-bot_client.test.js.html#lineNumber320",
     "🤖 🙂 - 2 members: bot first, then client should send/receive broadcast message cutted in chunks (> 15kb)",
     "test"
   ],
   [
     "webgroup#sendto src/webchannelfacade.js~webgroup#sendto,webgroup#sendto",
-    "test-file/test/functional/2-bot_client.test.js.html#lineNumber350",
+    "test-file/test/functional/2-bot_client.test.js.html#lineNumber364",
     "🤖 🙂 - 2 members: bot first, then client should send/receive private ArrayBuffer",
     "test"
   ],
   [
     "webgroup#sendto src/webchannelfacade.js~webgroup#sendto,webgroup#sendto",
-    "test-file/test/functional/2-bot_client.test.js.html#lineNumber326",
+    "test-file/test/functional/2-bot_client.test.js.html#lineNumber340",
     "🤖 🙂 - 2 members: bot first, then client should send/receive private String",
     "test"
   ],

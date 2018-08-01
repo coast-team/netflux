@@ -112,6 +112,7 @@ function configWebGroup(wg) {
         signalingStates: [],
         messages: [],
         onMessageToBeCalled: 0,
+        onMyIdToBeCalled: 0,
         signalingServer: '',
     };
     const anyWg = wg;
@@ -124,6 +125,7 @@ function configWebGroup(wg) {
             data.states.push(state);
         };
     });
+    wg.onMyId = (id) => data.onMyIdToBeCalled++;
     wg.onMessage = (id, msg) => {
         data.onMessageToBeCalled++;
         data.messages.push({

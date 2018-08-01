@@ -191,6 +191,20 @@ describe(&apos;&#x1F916; &#x1F642; - 2 members: bot first, then client&apos;, ()
             };
             client.join(key);
         });
+        /** @test {WebGroup#onMyId} */
+        it(&apos;should be called&apos;, (done) =&gt; {
+            client.onMyId = (id) =&gt; called++;
+            client.onStateChange = (state) =&gt; {
+                if (state === WebGroupState.JOINED) {
+                    botGetData(key).then((bot) =&gt; {
+                        expect(called).toEqual(1);
+                        expect(bot.onMyIdToBeCalled).toEqual(1);
+                        done();
+                    });
+                }
+            };
+            client.join(key);
+        });
         /** @test {WebGroup#members} */
         it(&apos;should have 2 members&apos;, (done) =&gt; {
             client.onStateChange = (state) =&gt; {

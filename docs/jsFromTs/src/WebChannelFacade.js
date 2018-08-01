@@ -161,7 +161,6 @@ export class WebGroup {
         /**
          * This handler is called when a message has been received from the group.
          * `id` is an identifier of the member who sent this message.
-         * and false if sent via {@link WebGroup#sendTo}.
          * @type {function(id: number, data: DataType)}
          */
         this.onMessage = undefined;
@@ -170,12 +169,20 @@ export class WebGroup {
             enumerable: true,
             get: () => (wc.onMessage.name === 'none' ? undefined : wc.onMessage),
             set: (handler) => {
-                if (typeof handler !== 'function') {
-                    wc.onMessage = function none() { };
-                }
-                else {
-                    wc.onMessage = handler;
-                }
+                wc.onMessage = typeof handler !== 'function' ? function none() { } : handler;
+            },
+        });
+        /**
+         * This handler is called when `myId` is set.
+         * @type {function(myId: number)}
+         */
+        this.onMyId = undefined;
+        Reflect.defineProperty(this, 'onMyId', {
+            configurable: true,
+            enumerable: true,
+            get: () => (wc.onMyId.name === 'none' ? undefined : wc.onMyId),
+            set: (handler) => {
+                wc.onMyId = typeof handler !== 'function' ? function none() { } : handler;
             },
         });
         /**
@@ -188,12 +195,7 @@ export class WebGroup {
             enumerable: true,
             get: () => (wc.onMemberJoin.name === 'none' ? undefined : wc.onMemberJoin),
             set: (handler) => {
-                if (typeof handler !== 'function') {
-                    wc.onMemberJoin = function none() { };
-                }
-                else {
-                    wc.onMemberJoin = handler;
-                }
+                wc.onMemberJoin = typeof handler !== 'function' ? function none() { } : handler;
             },
         });
         /**
@@ -206,12 +208,7 @@ export class WebGroup {
             enumerable: true,
             get: () => (wc.onMemberLeave.name === 'none' ? undefined : wc.onMemberLeave),
             set: (handler) => {
-                if (typeof handler !== 'function') {
-                    wc.onMemberLeave = function none() { };
-                }
-                else {
-                    wc.onMemberLeave = handler;
-                }
+                wc.onMemberLeave = typeof handler !== 'function' ? function none() { } : handler;
             },
         });
         /**
@@ -224,12 +221,7 @@ export class WebGroup {
             enumerable: true,
             get: () => (wc.onStateChange.name === 'none' ? undefined : wc.onStateChange),
             set: (handler) => {
-                if (typeof handler !== 'function') {
-                    wc.onStateChange = function none() { };
-                }
-                else {
-                    wc.onStateChange = handler;
-                }
+                wc.onStateChange = typeof handler !== 'function' ? function none() { } : handler;
             },
         });
         /**
@@ -242,12 +234,7 @@ export class WebGroup {
             enumerable: true,
             get: () => wc.onSignalingStateChange.name === 'none' ? undefined : wc.onSignalingStateChange,
             set: (handler) => {
-                if (typeof handler !== 'function') {
-                    wc.onSignalingStateChange = function none() { };
-                }
-                else {
-                    wc.onSignalingStateChange = handler;
-                }
+                wc.onSignalingStateChange = typeof handler !== 'function' ? function none() { } : handler;
             },
         });
     }

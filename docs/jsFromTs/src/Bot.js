@@ -64,6 +64,7 @@ export class Bot {
                 }
                 wc.init(key, wcId);
                 this.onWebGroup(wg);
+                wc.onMyId(wc.myId);
                 webSocketBuilder = wc.webSocketBuilder;
             }
             else {

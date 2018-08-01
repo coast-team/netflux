@@ -161,6 +161,20 @@ describe('🙂 🙂 - 2 clients', () => {
             };
             wg2.join(wg1.key);
         });
+        /** @test {WebGroup#onMyId} */
+        it('should be called', (done) => {
+            // Code for peer 2
+            wg2.onMyId = () => called2++;
+            wg2.onStateChange = (state) => {
+                if (state === WebGroupState.JOINED) {
+                    wait(1000).then(() => {
+                        expect(called2).toEqual(1);
+                        done();
+                    });
+                }
+            };
+            wg2.join(wg1.key);
+        });
         /** @test {WebGroup#members} */
         it('should have 2 members', (done) => {
             const queue = new Queue(3, () => {

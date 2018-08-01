@@ -46,6 +46,7 @@ export class WebChannel {
         this.onMemberJoin = function none() { };
         this.onMemberLeave = function none() { };
         this.onMessage = function none() { };
+        this.onMyId = function none() { };
         this.onStateChange = function none() { };
         this.onSignalingStateChange = function none() { };
         // Initialize services
@@ -155,6 +156,7 @@ export class WebChannel {
         this.members = [this.myId];
         this.key = key;
         this.rejoinEnabled = this.autoRejoin;
+        this.onMyId(this.myId);
         if (this.rejoinTimer) {
             clearTimeout(this.rejoinTimer);
             this.rejoinTimer = undefined;

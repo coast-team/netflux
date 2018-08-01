@@ -132,6 +132,18 @@ describe('🙂 🤖 - 2 members: client invites bot', () => {
             })
                 .catch(fail);
         });
+        /** @test {WebGroup#onMyId} */
+        it('should be called', (done) => {
+            client.invite(BOT_URL);
+            // Check bot bot
+            botWaitJoin(client.key)
+                .then(() => botGetData(client.key))
+                .then((bot) => {
+                expect(bot.onMyIdToBeCalled).toEqual(1);
+                done();
+            })
+                .catch(fail);
+        });
         /** @test {WebGroup#members} */
         it('should have 2 members', (done) => {
             let _bot;

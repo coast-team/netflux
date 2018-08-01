@@ -124,6 +124,16 @@ describe(&apos;&#x1F916; - 1 bot&apos;, () =&gt; {
                 done();
             });
         });
+        /** @test {WebGroup#onMyId} */
+        it(&apos;should be called&apos;, (done) =&gt; {
+            botWaitJoin(key)
+                .then(() =&gt; botGetData(key))
+                .then((data) =&gt; {
+                expect(data.onMyIdToBeCalled).toEqual(1);
+                expect(data.messages).toEqual([]);
+                done();
+            });
+        });
         /** @test {WebGroup#autoRejoin} */
         it(&apos;autoRejoin should be disabled&apos;, (done) =&gt; {
             botWaitJoin(key)
@@ -259,6 +269,14 @@ describe(&apos;&#x1F916; - 1 bot&apos;, () =&gt; {
         it(&apos;should NOT receive any message&apos;, (done) =&gt; {
             botLeave(key).then((data) =&gt; {
                 expect(data.onMessageToBeCalled).toEqual(0);
+                expect(data.messages).toEqual([]);
+                done();
+            });
+        });
+        /** @test {WebGroup#onMyId} */
+        it(&apos;should NOT be called&apos;, (done) =&gt; {
+            botLeave(key).then((data) =&gt; {
+                expect(data.onMyIdToBeCalled).toEqual(1);
                 expect(data.messages).toEqual([]);
                 done();
             });

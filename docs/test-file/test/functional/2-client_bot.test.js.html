@@ -182,6 +182,18 @@ describe(&apos;&#x1F642; &#x1F916; - 2 members: client invites bot&apos;, () =&g
             })
                 .catch(fail);
         });
+        /** @test {WebGroup#onMyId} */
+        it(&apos;should be called&apos;, (done) =&gt; {
+            client.invite(BOT_URL);
+            // Check bot bot
+            botWaitJoin(client.key)
+                .then(() =&gt; botGetData(client.key))
+                .then((bot) =&gt; {
+                expect(bot.onMyIdToBeCalled).toEqual(1);
+                done();
+            })
+                .catch(fail);
+        });
         /** @test {WebGroup#members} */
         it(&apos;should have 2 members&apos;, (done) =&gt; {
             let _bot;

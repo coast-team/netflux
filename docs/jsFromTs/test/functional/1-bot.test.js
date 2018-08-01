@@ -74,6 +74,16 @@ describe('🤖 - 1 bot', () => {
                 done();
             });
         });
+        /** @test {WebGroup#onMyId} */
+        it('should be called', (done) => {
+            botWaitJoin(key)
+                .then(() => botGetData(key))
+                .then((data) => {
+                expect(data.onMyIdToBeCalled).toEqual(1);
+                expect(data.messages).toEqual([]);
+                done();
+            });
+        });
         /** @test {WebGroup#autoRejoin} */
         it('autoRejoin should be disabled', (done) => {
             botWaitJoin(key)
@@ -209,6 +219,14 @@ describe('🤖 - 1 bot', () => {
         it('should NOT receive any message', (done) => {
             botLeave(key).then((data) => {
                 expect(data.onMessageToBeCalled).toEqual(0);
+                expect(data.messages).toEqual([]);
+                done();
+            });
+        });
+        /** @test {WebGroup#onMyId} */
+        it('should NOT be called', (done) => {
+            botLeave(key).then((data) => {
+                expect(data.onMyIdToBeCalled).toEqual(1);
                 expect(data.messages).toEqual([]);
                 done();
             });
