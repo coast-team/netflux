@@ -87,7 +87,7 @@
     "pm2": "^3.0.3",
     "prettier": "^1.14.0",
     "protobufjs": "^6.8.8",
-    "rollup": "^0.63.5",
+    "rollup": "^0.64.0",
     "rollup-plugin-cleanup": "^3.0.0",
     "rollup-plugin-commonjs": "^9.1.4",
     "rollup-plugin-filesize": "^4.0.1",
