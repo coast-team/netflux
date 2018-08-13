@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "declarationDir": "dist/types",
     "target": "es5",
     "module": "es2015",
     "lib": ["es2017", "dom"],
@@ -11,7 +10,9 @@
     "noUnusedLocals": true,
     "noUnusedParameters": false,
     "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "sourceMap": true,
+    "removeComments": true
   },
   "include": ["src/**/*", "test/**/*"]
 }
