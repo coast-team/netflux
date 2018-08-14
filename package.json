@@ -83,7 +83,7 @@
     "koa": "^2.5.2",
     "koa-router": "^7.4.0",
     "lint-staged": "^7.2.0",
-    "markdownlint-cli": "^0.12.0",
+    "markdownlint-cli": "^0.13.0",
     "pm2": "^3.0.3",
     "prettier": "^1.14.0",
     "protobufjs": "^6.8.8",
