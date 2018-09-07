@@ -29,14 +29,7 @@ export interface IWebChannelOptions {
   autoRejoin?: boolean
 }
 
-export interface IWebChannelFullOptions {
-  topology: TopologyEnum
-  signalingServer: string
-  rtcConfiguration: RTCConfiguration
-  autoRejoin: boolean
-}
-
-export const webChannelDefaultOptions: IWebChannelFullOptions = {
+export const webChannelDefaultOptions = {
   topology: TopologyEnum.FULL_MESH,
   signalingServer: 'wss://signaling.netflux.coedit.re',
   rtcConfiguration: {
@@ -92,12 +85,15 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
   private rejoinTimer: any
 
   constructor(options: IWebChannelOptions) {
-    const fullOptions = Object.assign({}, webChannelDefaultOptions, options)
+    const { topology, autoRejoin, rtcConfiguration, signalingServer } = {
+      ...webChannelDefaultOptions,
+      ...options,
+    }
     this.streamSubject = new Subject()
     this.idSubject = new Subject()
-    this.topologyEnum = fullOptions.topology
-    this.autoRejoin = fullOptions.autoRejoin
-    this.rtcConfiguration = fullOptions.rtcConfiguration
+    this.topologyEnum = topology
+    this.autoRejoin = autoRejoin
+    this.rtcConfiguration = rtcConfiguration
     this.members = []
     this._id = 0
     this.key = ''
@@ -116,11 +112,11 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
 
     // Initialize services
     this.userMsg = new UserMessage()
-    this.signaling = new Signaling(this, fullOptions.signalingServer)
+    this.signaling = new Signaling(this, signalingServer)
     this.subscribeToSignalingState()
     this.webSocketBuilder = new WebSocketBuilder(this)
     this.channelBuilder = new ChannelBuilder(this)
-    this.setTopology(fullOptions.topology)
+    this.setTopology(topology)
 
     // Listen to browser events
     if (isBrowser) {

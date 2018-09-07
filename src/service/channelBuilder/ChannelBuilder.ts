@@ -177,7 +177,7 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
           if (!passive) {
             // This is the first message sent by the initiator
             initiator.id = senderId
-            passive = Object.assign({}, this.myInfo) as proto.Info
+            passive = { ...this.myInfo } as proto.Info
             passive.id = recipientId
           }
 
@@ -270,7 +270,13 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
     try {
       const type = this.getType(streamId, amIInitiator)
       const wcId = type === Channel.WITH_MEMBER ? theOther.wcId : this.wc.myId
-      await this.wc.webSocketBuilder.connect(theOther.wss, type, theOther.id, me.id, wcId)
+      await this.wc.webSocketBuilder.connect(
+        theOther.wss,
+        type,
+        theOther.id,
+        me.id,
+        wcId
+      )
       log.channelBuilder(`New WebSocket connection with ${theOther.id}`)
       return true
     } catch (err) {
@@ -292,7 +298,11 @@ export class ChannelBuilder extends Service<proto.IMessage, proto.Message> {
   ): Promise<boolean> {
     try {
       const type = this.getType(streamId, amIInitiator)
-      await this.dataChannelBuilder.connect(theOther.id, me.id, type)
+      await this.dataChannelBuilder.connect(
+        theOther.id,
+        me.id,
+        type
+      )
       log.channelBuilder(`New RTCDataChannel with ${theOther.id}`)
       return true
     } catch (err) {

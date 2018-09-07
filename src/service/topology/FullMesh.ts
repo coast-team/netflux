@@ -130,7 +130,7 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
   send(msg: InWcMsg): void {
     this.adjacentMembers.forEach((ch) => ch.encodeAndSend(msg))
     this.distantMembers.forEach((distantMember, id) => {
-      this.sendToDistantPeer(distantMember, Object.assign(msg, { recipientId: id }))
+      this.sendToDistantPeer(distantMember, { ...msg, recipientId: id })
     })
   }
 

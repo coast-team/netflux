@@ -19,15 +19,7 @@ export interface IBotOptions {
   webGroupOptions?: IWebChannelOptions
 }
 
-interface IBotFullOptions {
-  url: string
-  server: HttpServer | HttpsServer | undefined
-  perMessageDeflate: boolean
-  leaveOnceAlone: boolean
-  webGroupOptions: IWebChannelOptions
-}
-
-const botDefaultOptions: IBotFullOptions = {
+const botDefaultOptions = {
   url: '',
   perMessageDeflate: false,
   leaveOnceAlone: true,
@@ -48,13 +40,12 @@ export class Bot {
   private wcOptions: IWebChannelOptions
 
   constructor(options: IBotOptions) {
-    this.wcOptions = Object.assign({}, webChannelDefaultOptions, options.webGroupOptions)
-    const fullOptions = Object.assign({}, botDefaultOptions, options)
-    fullOptions.webGroupOptions = this.wcOptions
-    this.leaveOnceAlone = fullOptions.leaveOnceAlone
-    this.server = fullOptions.server
-    this.listenUrl = fullOptions.url
-    this.perMessageDeflate = fullOptions.perMessageDeflate
+    this.wcOptions = { ...webChannelDefaultOptions, ...options.webGroupOptions }
+    const { leaveOnceAlone, server, url, perMessageDeflate } = { ...botDefaultOptions, ...options }
+    this.leaveOnceAlone = leaveOnceAlone
+    this.server = server
+    this.listenUrl = url
+    this.perMessageDeflate = perMessageDeflate
     this.webGroups = new Map()
     this.onWebGroup = function none() {}
     this.onError = function none() {}
