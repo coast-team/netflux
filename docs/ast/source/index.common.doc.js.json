@@ -1,7 +1,7 @@
 {
   "type": "File",
   "start": 0,
-  "end": 5547,
+  "end": 5523,
   "loc": {
     "start": {
       "line": 1,
@@ -15,7 +15,7 @@
   "program": {
     "type": "Program",
     "start": 0,
-    "end": 5547,
+    "end": 5523,
     "loc": {
       "start": {
         "line": 1,
@@ -3796,9 +3796,9 @@
             },
             {
               "type": "CommentBlock",
-              "value": "*\n * The options to be passed into {@link Bot} constructor.\n * @typedef {Object} BotOptions\n * @property {Topology} [topology] See WebGroupOptions.topology\n * @property {string} [signalingServer] See WebGroupOptions.signalingServer\n * @property {RTCConfiguration} [rtcConfiguration] See WebGroupOptions.rtcConfiguration\n * @property {boolean} [autoRejoin] See WebGroupOptions.autoRejoin\n * @property {Object} bot Server related options of the bot.\n * @property {NodeJSHttpServer|NodeJSHttpsServer} bot.server NodeJS http(s) server.\n * @property {string} [bot.url] Bot server URL.\n * @property {boolean} [bot.perMessageDeflate] Enable/disable permessage-deflate.\n * @property {boolean} [bot.leaveOnceAlone] If true, bot will live (disconnect from the signaling server) if no other peers left in the group.\n ",
+              "value": "*\n * The options to be passed into {@link Bot} constructor.\n * @typedef {Object} BotOptions\n * @property {Topology} [topology] See WebGroupOptions.topology\n * @property {string} [signalingServer] See WebGroupOptions.signalingServer\n * @property {RTCConfiguration} [rtcConfiguration] See WebGroupOptions.rtcConfiguration\n * @property {boolean} [autoRejoin] See WebGroupOptions.autoRejoin\n * @property {Object} bot Server related options of the bot.\n * @property {HttpServer|HttpsServer} bot.server NodeJS http(s) server.\n * @property {string} [bot.url] Bot server URL.\n * @property {boolean} [bot.perMessageDeflate] Enable/disable permessage-deflate.\n * @property {boolean} [bot.leaveOnceAlone] If true, bot will live (disconnect from the signaling server) if no other peers left in the group.\n ",
               "start": 4314,
-              "end": 5124,
+              "end": 5112,
               "loc": {
                 "start": {
                   "line": 158,
@@ -3813,8 +3813,8 @@
             {
               "type": "CommentBlock",
               "value": "*\n * @external {RTCConfiguration} https://developer.mozilla.org/en/docs/Web/API/RTCConfiguration\n ",
-              "start": 5125,
-              "end": 5227,
+              "start": 5113,
+              "end": 5215,
               "loc": {
                 "start": {
                   "line": 171,
@@ -3829,8 +3829,8 @@
             {
               "type": "CommentBlock",
               "value": "*\n * @external {Uint8Array} https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array\n ",
-              "start": 5228,
-              "end": 5350,
+              "start": 5216,
+              "end": 5338,
               "loc": {
                 "start": {
                   "line": 174,
@@ -3844,9 +3844,9 @@
             },
             {
               "type": "CommentBlock",
-              "value": "*\n * @external {NodeJSHttpServer} https://nodejs.org/api/http.html#http_class_http_server\n ",
-              "start": 5351,
-              "end": 5446,
+              "value": "*\n * @external {HttpServer} https://nodejs.org/api/http.html#http_class_http_server\n ",
+              "start": 5339,
+              "end": 5428,
               "loc": {
                 "start": {
                   "line": 177,
@@ -3860,9 +3860,9 @@
             },
             {
               "type": "CommentBlock",
-              "value": "*\n * @external {NodeJSHttpsServer} https://nodejs.org/api/https.html#https_class_https_server\n ",
-              "start": 5447,
-              "end": 5546,
+              "value": "*\n * @external {HttpsServer} https://nodejs.org/api/https.html#https_class_https_server\n ",
+              "start": 5429,
+              "end": 5522,
               "loc": {
                 "start": {
                   "line": 180,
@@ -3913,9 +3913,9 @@
           },
           {
             "type": "CommentBlock",
-            "value": "*\n * The options to be passed into {@link Bot} constructor.\n * @typedef {Object} BotOptions\n * @property {Topology} [topology] See WebGroupOptions.topology\n * @property {string} [signalingServer] See WebGroupOptions.signalingServer\n * @property {RTCConfiguration} [rtcConfiguration] See WebGroupOptions.rtcConfiguration\n * @property {boolean} [autoRejoin] See WebGroupOptions.autoRejoin\n * @property {Object} bot Server related options of the bot.\n * @property {NodeJSHttpServer|NodeJSHttpsServer} bot.server NodeJS http(s) server.\n * @property {string} [bot.url] Bot server URL.\n * @property {boolean} [bot.perMessageDeflate] Enable/disable permessage-deflate.\n * @property {boolean} [bot.leaveOnceAlone] If true, bot will live (disconnect from the signaling server) if no other peers left in the group.\n ",
+            "value": "*\n * The options to be passed into {@link Bot} constructor.\n * @typedef {Object} BotOptions\n * @property {Topology} [topology] See WebGroupOptions.topology\n * @property {string} [signalingServer] See WebGroupOptions.signalingServer\n * @property {RTCConfiguration} [rtcConfiguration] See WebGroupOptions.rtcConfiguration\n * @property {boolean} [autoRejoin] See WebGroupOptions.autoRejoin\n * @property {Object} bot Server related options of the bot.\n * @property {HttpServer|HttpsServer} bot.server NodeJS http(s) server.\n * @property {string} [bot.url] Bot server URL.\n * @property {boolean} [bot.perMessageDeflate] Enable/disable permessage-deflate.\n * @property {boolean} [bot.leaveOnceAlone] If true, bot will live (disconnect from the signaling server) if no other peers left in the group.\n ",
             "start": 4314,
-            "end": 5124,
+            "end": 5112,
             "loc": {
               "start": {
                 "line": 158,
@@ -3930,8 +3930,8 @@
           {
             "type": "CommentBlock",
             "value": "*\n * @external {RTCConfiguration} https://developer.mozilla.org/en/docs/Web/API/RTCConfiguration\n ",
-            "start": 5125,
-            "end": 5227,
+            "start": 5113,
+            "end": 5215,
             "loc": {
               "start": {
                 "line": 171,
@@ -3946,8 +3946,8 @@
           {
             "type": "CommentBlock",
             "value": "*\n * @external {Uint8Array} https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array\n ",
-            "start": 5228,
-            "end": 5350,
+            "start": 5216,
+            "end": 5338,
             "loc": {
               "start": {
                 "line": 174,
@@ -3961,9 +3961,9 @@
           },
           {
             "type": "CommentBlock",
-            "value": "*\n * @external {NodeJSHttpServer} https://nodejs.org/api/http.html#http_class_http_server\n ",
-            "start": 5351,
-            "end": 5446,
+            "value": "*\n * @external {HttpServer} https://nodejs.org/api/http.html#http_class_http_server\n ",
+            "start": 5339,
+            "end": 5428,
             "loc": {
               "start": {
                 "line": 177,
@@ -3977,9 +3977,9 @@
           },
           {
             "type": "CommentBlock",
-            "value": "*\n * @external {NodeJSHttpsServer} https://nodejs.org/api/https.html#https_class_https_server\n ",
-            "start": 5447,
-            "end": 5546,
+            "value": "*\n * @external {HttpsServer} https://nodejs.org/api/https.html#https_class_https_server\n ",
+            "start": 5429,
+            "end": 5522,
             "loc": {
               "start": {
                 "line": 180,
@@ -4351,9 +4351,9 @@
     },
     {
       "type": "CommentBlock",
-      "value": "*\n * The options to be passed into {@link Bot} constructor.\n * @typedef {Object} BotOptions\n * @property {Topology} [topology] See WebGroupOptions.topology\n * @property {string} [signalingServer] See WebGroupOptions.signalingServer\n * @property {RTCConfiguration} [rtcConfiguration] See WebGroupOptions.rtcConfiguration\n * @property {boolean} [autoRejoin] See WebGroupOptions.autoRejoin\n * @property {Object} bot Server related options of the bot.\n * @property {NodeJSHttpServer|NodeJSHttpsServer} bot.server NodeJS http(s) server.\n * @property {string} [bot.url] Bot server URL.\n * @property {boolean} [bot.perMessageDeflate] Enable/disable permessage-deflate.\n * @property {boolean} [bot.leaveOnceAlone] If true, bot will live (disconnect from the signaling server) if no other peers left in the group.\n ",
+      "value": "*\n * The options to be passed into {@link Bot} constructor.\n * @typedef {Object} BotOptions\n * @property {Topology} [topology] See WebGroupOptions.topology\n * @property {string} [signalingServer] See WebGroupOptions.signalingServer\n * @property {RTCConfiguration} [rtcConfiguration] See WebGroupOptions.rtcConfiguration\n * @property {boolean} [autoRejoin] See WebGroupOptions.autoRejoin\n * @property {Object} bot Server related options of the bot.\n * @property {HttpServer|HttpsServer} bot.server NodeJS http(s) server.\n * @property {string} [bot.url] Bot server URL.\n * @property {boolean} [bot.perMessageDeflate] Enable/disable permessage-deflate.\n * @property {boolean} [bot.leaveOnceAlone] If true, bot will live (disconnect from the signaling server) if no other peers left in the group.\n ",
       "start": 4314,
-      "end": 5124,
+      "end": 5112,
       "loc": {
         "start": {
           "line": 158,
@@ -4368,8 +4368,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n * @external {RTCConfiguration} https://developer.mozilla.org/en/docs/Web/API/RTCConfiguration\n ",
-      "start": 5125,
-      "end": 5227,
+      "start": 5113,
+      "end": 5215,
       "loc": {
         "start": {
           "line": 171,
@@ -4384,8 +4384,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n * @external {Uint8Array} https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array\n ",
-      "start": 5228,
-      "end": 5350,
+      "start": 5216,
+      "end": 5338,
       "loc": {
         "start": {
           "line": 174,
@@ -4399,9 +4399,9 @@
     },
     {
       "type": "CommentBlock",
-      "value": "*\n * @external {NodeJSHttpServer} https://nodejs.org/api/http.html#http_class_http_server\n ",
-      "start": 5351,
-      "end": 5446,
+      "value": "*\n * @external {HttpServer} https://nodejs.org/api/http.html#http_class_http_server\n ",
+      "start": 5339,
+      "end": 5428,
       "loc": {
         "start": {
           "line": 177,
@@ -4415,9 +4415,9 @@
     },
     {
       "type": "CommentBlock",
-      "value": "*\n * @external {NodeJSHttpsServer} https://nodejs.org/api/https.html#https_class_https_server\n ",
-      "start": 5447,
-      "end": 5546,
+      "value": "*\n * @external {HttpsServer} https://nodejs.org/api/https.html#https_class_https_server\n ",
+      "start": 5429,
+      "end": 5522,
       "loc": {
         "start": {
           "line": 180,
@@ -11783,9 +11783,9 @@
     },
     {
       "type": "CommentBlock",
-      "value": "*\n * The options to be passed into {@link Bot} constructor.\n * @typedef {Object} BotOptions\n * @property {Topology} [topology] See WebGroupOptions.topology\n * @property {string} [signalingServer] See WebGroupOptions.signalingServer\n * @property {RTCConfiguration} [rtcConfiguration] See WebGroupOptions.rtcConfiguration\n * @property {boolean} [autoRejoin] See WebGroupOptions.autoRejoin\n * @property {Object} bot Server related options of the bot.\n * @property {NodeJSHttpServer|NodeJSHttpsServer} bot.server NodeJS http(s) server.\n * @property {string} [bot.url] Bot server URL.\n * @property {boolean} [bot.perMessageDeflate] Enable/disable permessage-deflate.\n * @property {boolean} [bot.leaveOnceAlone] If true, bot will live (disconnect from the signaling server) if no other peers left in the group.\n ",
+      "value": "*\n * The options to be passed into {@link Bot} constructor.\n * @typedef {Object} BotOptions\n * @property {Topology} [topology] See WebGroupOptions.topology\n * @property {string} [signalingServer] See WebGroupOptions.signalingServer\n * @property {RTCConfiguration} [rtcConfiguration] See WebGroupOptions.rtcConfiguration\n * @property {boolean} [autoRejoin] See WebGroupOptions.autoRejoin\n * @property {Object} bot Server related options of the bot.\n * @property {HttpServer|HttpsServer} bot.server NodeJS http(s) server.\n * @property {string} [bot.url] Bot server URL.\n * @property {boolean} [bot.perMessageDeflate] Enable/disable permessage-deflate.\n * @property {boolean} [bot.leaveOnceAlone] If true, bot will live (disconnect from the signaling server) if no other peers left in the group.\n ",
       "start": 4314,
-      "end": 5124,
+      "end": 5112,
       "loc": {
         "start": {
           "line": 158,
@@ -11800,8 +11800,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n * @external {RTCConfiguration} https://developer.mozilla.org/en/docs/Web/API/RTCConfiguration\n ",
-      "start": 5125,
-      "end": 5227,
+      "start": 5113,
+      "end": 5215,
       "loc": {
         "start": {
           "line": 171,
@@ -11816,8 +11816,8 @@
     {
       "type": "CommentBlock",
       "value": "*\n * @external {Uint8Array} https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array\n ",
-      "start": 5228,
-      "end": 5350,
+      "start": 5216,
+      "end": 5338,
       "loc": {
         "start": {
           "line": 174,
@@ -11831,9 +11831,9 @@
     },
     {
       "type": "CommentBlock",
-      "value": "*\n * @external {NodeJSHttpServer} https://nodejs.org/api/http.html#http_class_http_server\n ",
-      "start": 5351,
-      "end": 5446,
+      "value": "*\n * @external {HttpServer} https://nodejs.org/api/http.html#http_class_http_server\n ",
+      "start": 5339,
+      "end": 5428,
       "loc": {
         "start": {
           "line": 177,
@@ -11847,9 +11847,9 @@
     },
     {
       "type": "CommentBlock",
-      "value": "*\n * @external {NodeJSHttpsServer} https://nodejs.org/api/https.html#https_class_https_server\n ",
-      "start": 5447,
-      "end": 5546,
+      "value": "*\n * @external {HttpsServer} https://nodejs.org/api/https.html#https_class_https_server\n ",
+      "start": 5429,
+      "end": 5522,
       "loc": {
         "start": {
           "line": 180,
@@ -11874,8 +11874,8 @@
         "binop": null,
         "updateContext": null
       },
-      "start": 5547,
-      "end": 5547,
+      "start": 5523,
+      "end": 5523,
       "loc": {
         "start": {
           "line": 183,

@@ -1,11 +1,11 @@
+import * as urlLib from 'url';
+import { Server } from 'uws';
 import { Channel } from './Channel';
 import { WebGroupState } from './index.common.doc';
 import { log } from './misc/util';
 import { webChannelDefaultOptions } from './WebChannel';
 import { wcs, WebGroup } from './WebChannelFacade';
 import { WebSocketBuilder } from './WebSocketBuilder';
-const urlLib = require('url');
-const uws = require('uws');
 const botDefaultOptions = {
     url: '',
     perMessageDeflate: false,
@@ -15,13 +15,12 @@ const botDefaultOptions = {
 };
 export class Bot {
     constructor(options) {
-        this.wcOptions = Object.assign({}, webChannelDefaultOptions, options.webGroupOptions);
-        const fullOptions = Object.assign({}, botDefaultOptions, options);
-        fullOptions.webGroupOptions = this.wcOptions;
-        this.leaveOnceAlone = fullOptions.leaveOnceAlone;
-        this.server = fullOptions.server;
-        this.listenUrl = fullOptions.url;
-        this.perMessageDeflate = fullOptions.perMessageDeflate;
+        this.wcOptions = { ...webChannelDefaultOptions, ...options.webGroupOptions };
+        const { leaveOnceAlone, server, url, perMessageDeflate } = { ...botDefaultOptions, ...options };
+        this.leaveOnceAlone = leaveOnceAlone;
+        this.server = server;
+        this.listenUrl = url;
+        this.perMessageDeflate = perMessageDeflate;
         this.webGroups = new Map();
         this.onWebGroup = function none() { };
         this.onError = function none() { };
@@ -33,12 +32,12 @@ export class Bot {
             return this.listenUrl;
         }
         else {
-            const info = this.server.address();
-            return `ws://${info.address}:${info.port}`;
+            const { address, port } = this.server.address();
+            return `ws://${address}:${port}`;
         }
     }
     init() {
-        this.webSocketServer = new uws.Server({
+        this.webSocketServer = new Server({
             perMessageDeflate: this.perMessageDeflate,
             verifyClient: (info) => this.validateURLQuery(info),
             server: this.server,
@@ -52,8 +51,9 @@ export class Bot {
         this.webSocketServer.on('connection', (ws) => {
             const { type, wcId, senderId, key } = this.readURLQuery(ws.upgradeReq.url);
             let webSocketBuilder;
-            if (type === Channel.WITH_MEMBER) {
-                const wg = new WebGroup(this.wcOptions);
+            let wg = this.webGroups.get(wcId);
+            if (type === Channel.WITH_MEMBER && (wg === undefined || wg.state === WebGroupState.LEFT)) {
+                wg = new WebGroup(this.wcOptions);
                 this.webGroups.set(wcId, wg);
                 const wc = wcs.get(wg);
                 if (this.leaveOnceAlone) {
@@ -67,10 +67,12 @@ export class Bot {
                 wc.onMyId(wc.myId);
                 webSocketBuilder = wc.webSocketBuilder;
             }
+            else if (wg !== undefined) {
+                webSocketBuilder = wcs.get(wg).webSocketBuilder;
+            }
             else {
-                const wg = this.webGroups.get(wcId);
-                const wc = wcs.get(wg);
-                webSocketBuilder = wc.webSocketBuilder;
+                ws.close();
+                return;
             }
             webSocketBuilder.newWebSocket(ws, senderId, type);
         });
@@ -99,15 +101,28 @@ export class Bot {
         }
     }
     readURLQuery(url) {
+        const prefix = 'Query parse error: ';
         const { type, wcId, senderId, key } = urlLib.parse(url, true).query;
+        if (typeof type !== 'string') {
+            throw new Error(`${prefix}"type" parameter is not a string `);
+        }
+        if (typeof wcId !== 'string') {
+            throw new Error(`${prefix}"wcId" parameter is not a string `);
+        }
+        if (typeof senderId !== 'string') {
+            throw new Error(`${prefix}"senderId" parameter is not a string `);
+        }
+        if (typeof key !== 'string' && typeof key !== 'undefined') {
+            throw new Error(`${prefix}"type" parameter is not a string `);
+        }
         if (!type) {
-            throw new Error('Query parse error: "type" parameter is undefined');
+            throw new Error(`${prefix}"type" parameter is undefined`);
         }
         if (!wcId) {
-            throw new Error('Query parse error: "wcId" parameter is undefined');
+            throw new Error(`${prefix}"wcId" parameter is undefined`);
         }
         if (!senderId) {
-            throw new Error('Query parse error: "senderId" parameter is undefined');
+            throw new Error(`${prefix}"senderId" parameter is undefined`);
         }
         return {
             type: Number.parseInt(type, 10),

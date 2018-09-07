@@ -120,7 +120,7 @@ export class ChannelBuilder extends Service {
                     if (!passive) {
                         // This is the first message sent by the initiator
                         initiator.id = senderId;
-                        passive = Object.assign({}, this.myInfo);
+                        passive = { ...this.myInfo };
                         passive.id = recipientId;
                     }
                     log.channelBuilder(`NEGOTIATION message to proceed from ${senderId}: `, JSON.stringify({

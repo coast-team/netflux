@@ -172,7 +172,7 @@ export class Channel {
                         // Service Message
                     }
                     else {
-                        this.wc.streamSubject.next(Object.assign({ channel: this }, msg));
+                        this.wc.streamSubject.next({ channel: this, ...msg });
                     }
                 }
                 if (msg.recipientId !== this.wc.myId) {

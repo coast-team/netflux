@@ -28,12 +28,15 @@ const REJOIN_TIMEOUT = 3000;
 export class WebChannel {
     constructor(options) {
         this.STREAM_ID = 2;
-        const fullOptions = Object.assign({}, webChannelDefaultOptions, options);
+        const { topology, autoRejoin, rtcConfiguration, signalingServer } = {
+            ...webChannelDefaultOptions,
+            ...options,
+        };
         this.streamSubject = new Subject();
         this.idSubject = new Subject();
-        this.topologyEnum = fullOptions.topology;
-        this.autoRejoin = fullOptions.autoRejoin;
-        this.rtcConfiguration = fullOptions.rtcConfiguration;
+        this.topologyEnum = topology;
+        this.autoRejoin = autoRejoin;
+        this.rtcConfiguration = rtcConfiguration;
         this.members = [];
         this._id = 0;
         this.key = '';
@@ -51,11 +54,11 @@ export class WebChannel {
         this.onSignalingStateChange = function none() { };
         // Initialize services
         this.userMsg = new UserMessage();
-        this.signaling = new Signaling(this, fullOptions.signalingServer);
+        this.signaling = new Signaling(this, signalingServer);
         this.subscribeToSignalingState();
         this.webSocketBuilder = new WebSocketBuilder(this);
         this.channelBuilder = new ChannelBuilder(this);
-        this.setTopology(fullOptions.topology);
+        this.setTopology(topology);
         // Listen to browser events
         if (isBrowser) {
             this.subscribeToBrowserEvents();

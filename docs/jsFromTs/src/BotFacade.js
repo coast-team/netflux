@@ -43,7 +43,7 @@ let botServer;
 export class Bot {
     /**
      * @param {BotOptions} options
-     * @param {NodeJSHttpServer|NodeJSHttpsServer} options.server NodeJS http(s) server.
+     * @param {HttpServer|HttpsServer} options.server NodeJS http(s) server.
      * @param {string} [options.url] Bot server URL.
      * @param {boolean} [options.perMessageDeflate=false] Enable/disable permessage-deflate.
      * @param {boolean} [options.leaveOnceAlone=false] If true, bot will live (disconnect from the signaling server) if no other peers left in the group.
@@ -57,7 +57,7 @@ export class Bot {
         botServer = new BotServer(options);
         /**
          * Read-only NodeJS http server instance.
-         * @type {NodeJSHttpServer|NodeJSHttpsServer}
+         * @type {HttpServer|HttpsServer}
          */
         this.server = undefined;
         Reflect.defineProperty(this, 'server', {
@@ -67,7 +67,7 @@ export class Bot {
         });
         /**
          * Read-only property of WebSocket server: permessage-deflate.
-         * @type {NodeJSHttpServer|NodeJSHttpsServer}
+         * @type {HttpServer|HttpsServer}
          */
         this.perMessageDeflate = undefined;
         Reflect.defineProperty(this, 'perMessageDeflate', {
@@ -77,7 +77,7 @@ export class Bot {
         });
         /**
          * Read-only property leaveOnceAlone.
-         * @type {NodeJSHttpServer|NodeJSHttpsServer}
+         * @type {HttpServer|HttpsServer}
          */
         this.leaveOnceAlone = undefined;
         Reflect.defineProperty(this, 'leaveOnceAlone', {

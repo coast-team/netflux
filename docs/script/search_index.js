@@ -252,6 +252,18 @@ window.esdocSearchIndex = [
     "typedef"
   ],
   [
+    "src/index.common.doc.js~httpserver",
+    "https://nodejs.org/api/http.html#http_class_http_server",
+    "src/index.common.doc.js~HttpServer",
+    "external"
+  ],
+  [
+    "src/index.common.doc.js~httpsserver",
+    "https://nodejs.org/api/https.html#https_class_https_server",
+    "src/index.common.doc.js~HttpsServer",
+    "external"
+  ],
+  [
     "src/index.common.doc.js~loglevel.channel",
     "class/src/index.common.doc.js~LogLevel.html#static-get-CHANNEL",
     "src/index.common.doc.js~LogLevel.CHANNEL",
@@ -292,18 +304,6 @@ window.esdocSearchIndex = [
     "class/src/index.common.doc.js~LogLevel.html#static-get-WEB_GROUP",
     "src/index.common.doc.js~LogLevel.WEB_GROUP",
     "member"
-  ],
-  [
-    "src/index.common.doc.js~nodejshttpserver",
-    "https://nodejs.org/api/http.html#http_class_http_server",
-    "src/index.common.doc.js~NodeJSHttpServer",
-    "external"
-  ],
-  [
-    "src/index.common.doc.js~nodejshttpsserver",
-    "https://nodejs.org/api/https.html#https_class_https_server",
-    "src/index.common.doc.js~NodeJSHttpsServer",
-    "external"
   ],
   [
     "src/index.common.doc.js~rtcconfiguration",
