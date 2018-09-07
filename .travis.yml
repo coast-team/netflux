@@ -9,13 +9,14 @@ branches:
   except:
     - "/^v\\d+\\.\\d+\\.\\d+$/"
 addons:
-  firefox: "latest"
+  firefox: 'latest'
 apt:
   packages:
     - google-chrome-stable
 language: node_js
 node_js:
-  - "8"
+  - '8'
+  - '10'
 rvm:
   - 2.2.0
 before_script:
