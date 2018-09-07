@@ -47,7 +47,7 @@
     "postproto": "rollup -c rollup.config.proto.js",
     "semantic-release": "semantic-release",
     "travis-deploy-once": "travis-deploy-once",
-    "predoc": "rm -rf ./docs; tsc -p tsconfig.json --outDir docs/jsFromTs --target esnext --declaration",
+    "predoc": "rm -rf ./docs; tsc -p tsconfig.json --outDir docs/jsFromTs --target esnext --declaration --sourceMap false --removeComments false",
     "doc": "esdoc -c esdoc.json",
     "lint": "tslint --fix -p tsconfig.json && prettier --write --list-different 'manual/**/*.md' 'src/**/*.ts' 'test/**/*.{ts,config.js}' './*.{ts,js,json,md}' && markdownlint ./*.md manual/*.md manual/**/*.md",
     "precommit": "lint-staged && npm test -- -- precommit-githook",
