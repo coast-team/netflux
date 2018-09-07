@@ -88,9 +88,10 @@ export class Bot {
 
     this.webSocketServer.on('connection', (ws: WebSocket) => {
       const { type, wcId, senderId, key } = this.readURLQuery((ws as any).upgradeReq.url)
-      let webSocketBuilder: WebSocketBuilder
-      if (type === Channel.WITH_MEMBER) {
-        const wg = new WebGroup(this.wcOptions)
+      let webSocketBuilder
+      let wg = this.webGroups.get(wcId)
+      if (type === Channel.WITH_MEMBER && (wg === undefined || wg.state === WebGroupState.LEFT)) {
+        wg = new WebGroup(this.wcOptions)
         this.webGroups.set(wcId, wg)
         const wc = wcs.get(wg) as WebChannel
         if (this.leaveOnceAlone) {
@@ -103,10 +104,11 @@ export class Bot {
         this.onWebGroup(wg)
         wc.onMyId(wc.myId)
         webSocketBuilder = wc.webSocketBuilder
+      } else if (wg !== undefined) {
+        webSocketBuilder = (wcs.get(wg) as WebChannel).webSocketBuilder
       } else {
-        const wg = this.webGroups.get(wcId) as WebGroup
-        const wc = wcs.get(wg) as WebChannel
-        webSocketBuilder = wc.webSocketBuilder
+        ws.close()
+        return
       }
       webSocketBuilder.newWebSocket(ws, senderId, type)
     })
