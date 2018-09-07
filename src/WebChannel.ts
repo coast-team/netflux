@@ -89,7 +89,7 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
   private idSubject: Subject<number>
   private _onAlone: () => void
   private rejoinEnabled: boolean
-  private rejoinTimer: number | undefined
+  private rejoinTimer: any
 
   constructor(options: IWebChannelOptions) {
     const fullOptions = Object.assign({}, webChannelDefaultOptions, options)
@@ -169,7 +169,13 @@ export class WebChannel implements IStream<OutWcMessage, InWcMsg> {
       }
     }
     this.webSocketBuilder
-      .connect(url, Channel.WITH_JOINING, -1, -1, this.id)
+      .connect(
+        url,
+        Channel.WITH_JOINING,
+        -1,
+        -1,
+        this.id
+      )
       .catch((err) => log.webgroup(`Failed to invite the bot ${url}: ${err.message}`))
   }
 

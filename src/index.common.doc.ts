@@ -183,7 +183,7 @@ export class LogLevel {
  * @property {RTCConfiguration} [rtcConfiguration] See WebGroupOptions.rtcConfiguration
  * @property {boolean} [autoRejoin] See WebGroupOptions.autoRejoin
  * @property {Object} bot Server related options of the bot.
- * @property {NodeJSHttpServer|NodeJSHttpsServer} bot.server NodeJS http(s) server.
+ * @property {HttpServer|HttpsServer} bot.server NodeJS http(s) server.
  * @property {string} [bot.url] Bot server URL.
  * @property {boolean} [bot.perMessageDeflate] Enable/disable permessage-deflate.
  * @property {boolean} [bot.leaveOnceAlone] If true, bot will live (disconnect from the signaling server) if no other peers left in the group.
@@ -198,9 +198,9 @@ export class LogLevel {
  */
 
 /**
- * @external {NodeJSHttpServer} https://nodejs.org/api/http.html#http_class_http_server
+ * @external {HttpServer} https://nodejs.org/api/http.html#http_class_http_server
  */
 
 /**
- * @external {NodeJSHttpsServer} https://nodejs.org/api/https.html#https_class_https_server
+ * @external {HttpsServer} https://nodejs.org/api/https.html#https_class_https_server
  */

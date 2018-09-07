@@ -1,9 +1,9 @@
+import { Server as HttpServer } from 'http'
+import { Server as HttpsServer } from 'https'
 import { Bot as BotServer, IBotOptions as BotOptions } from './Bot'
-import { NodeJSHttpServer, NodeJSHttpsServer } from './misc/env'
 import { WebGroup } from './WebChannelFacade'
 
 let botServer: BotServer
-
 export { BotOptions }
 
 /**
@@ -47,7 +47,7 @@ export { BotOptions }
  * server.listen(BOT_PORT, BOT_HOST)
  */
 export class Bot {
-  public server: NodeJSHttpServer | NodeJSHttpsServer
+  public server: HttpServer | HttpsServer
   public perMessageDeflate: boolean
   public webGroups: Map<number, WebGroup>
   public url: string
@@ -57,7 +57,7 @@ export class Bot {
 
   /**
    * @param {BotOptions} options
-   * @param {NodeJSHttpServer|NodeJSHttpsServer} options.server NodeJS http(s) server.
+   * @param {HttpServer|HttpsServer} options.server NodeJS http(s) server.
    * @param {string} [options.url] Bot server URL.
    * @param {boolean} [options.perMessageDeflate=false] Enable/disable permessage-deflate.
    * @param {boolean} [options.leaveOnceAlone=false] If true, bot will live (disconnect from the signaling server) if no other peers left in the group.
@@ -72,7 +72,7 @@ export class Bot {
 
     /**
      * Read-only NodeJS http server instance.
-     * @type {NodeJSHttpServer|NodeJSHttpsServer}
+     * @type {HttpServer|HttpsServer}
      */
     this.server = undefined as any
     Reflect.defineProperty(this, 'server', {
@@ -83,7 +83,7 @@ export class Bot {
 
     /**
      * Read-only property of WebSocket server: permessage-deflate.
-     * @type {NodeJSHttpServer|NodeJSHttpsServer}
+     * @type {HttpServer|HttpsServer}
      */
     this.perMessageDeflate = undefined as any
     Reflect.defineProperty(this, 'perMessageDeflate', {
@@ -94,7 +94,7 @@ export class Bot {
 
     /**
      * Read-only property leaveOnceAlone.
-     * @type {NodeJSHttpServer|NodeJSHttpsServer}
+     * @type {HttpServer|HttpsServer}
      */
     this.leaveOnceAlone = undefined as any
     Reflect.defineProperty(this, 'leaveOnceAlone', {

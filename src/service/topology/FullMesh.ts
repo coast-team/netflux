@@ -34,10 +34,10 @@ export class FullMesh extends Topology<proto.IMessage, proto.Message> implements
    */
   private distantMembers: Map<number, IDistantMember>
   private antecedentId: number
-  private heartbeatInterval: number | undefined
+  private heartbeatInterval: any
   private delayedMembers: Set<number>
-  private delayedMembersTimers: Set<number>
-  private membersCheckInterval: number | undefined
+  private delayedMembersTimers: Set<any>
+  private membersCheckInterval: any
   private heartbeatMsg: Uint8Array
   private adjacentBots: Set<Channel>
 

@@ -35,11 +35,11 @@ module.exports = (config) => {
         lib: ['es2017', 'dom'],
         moduleResolution: 'node',
         downlevelIteration: true,
-        typeRoots: ['src/misc/typings'],
+        types: ['node', 'text-encoding'],
         allowJs: true,
       },
       bundlerOptions: {
-        exclude: ['wrtc', 'text-encoding', 'uws', 'url'],
+        exclude: ['wrtc', 'text-encoding', 'uws', 'url', 'crypto'],
         noParse: ['webrtc-adapter/out/adapter_no_edge_no_global.js'],
         addNodeGlobals: false,
       },

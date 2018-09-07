@@ -14,7 +14,7 @@ export class Remote {
   private readonly remotes: Map<number, Remote>
   private isSDPSent: boolean
   private _onError: (err: Error) => void
-  private timer: number
+  private timer: any
   private finalMessageSent: boolean
 
   constructor(

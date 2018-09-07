@@ -1,19 +1,19 @@
+import { Server as HttpServer } from 'http'
+import { Server as HttpsServer } from 'https'
+import { AddressInfo } from 'net'
+import * as urlLib from 'url'
+import { Server } from 'uws'
+
 import { Channel } from './Channel'
 import { WebGroupState } from './index.common.doc'
-import { NodeJSHttpServer, NodeJSHttpsServer } from './misc/env'
 import { log } from './misc/util'
 import { IWebChannelOptions, WebChannel, webChannelDefaultOptions } from './WebChannel'
 import { wcs, WebGroup } from './WebChannelFacade'
 import { WebSocketBuilder } from './WebSocketBuilder'
 
-declare const require: any
-
-const urlLib = require('url')
-const uws = require('uws')
-
 export interface IBotOptions {
   url?: string
-  server: NodeJSHttpServer | NodeJSHttpsServer
+  server: HttpServer | HttpsServer
   perMessageDeflate?: boolean
   leaveOnceAlone?: boolean
   webGroupOptions?: IWebChannelOptions
@@ -21,7 +21,7 @@ export interface IBotOptions {
 
 interface IBotFullOptions {
   url: string
-  server: NodeJSHttpServer | NodeJSHttpsServer
+  server: HttpServer | HttpsServer | undefined
   perMessageDeflate: boolean
   leaveOnceAlone: boolean
   webGroupOptions: IWebChannelOptions
@@ -36,7 +36,7 @@ const botDefaultOptions: IBotFullOptions = {
 }
 
 export class Bot {
-  public server: NodeJSHttpServer | NodeJSHttpsServer
+  public server: HttpServer | HttpsServer
   public perMessageDeflate: boolean
   public webGroups: Map<number, WebGroup>
   public onWebGroup: (wg: WebGroup) => void
@@ -67,13 +67,13 @@ export class Bot {
     if (this.listenUrl !== '') {
       return this.listenUrl
     } else {
-      const info = this.server.address()
-      return `ws://${info.address}:${info.port}`
+      const { address, port } = this.server.address() as AddressInfo
+      return `ws://${address}:${port}`
     }
   }
 
   private init(): void {
-    this.webSocketServer = new uws.Server({
+    this.webSocketServer = new Server({
       perMessageDeflate: this.perMessageDeflate,
       verifyClient: (info: any) => this.validateURLQuery(info),
       server: this.server,
@@ -145,15 +145,29 @@ export class Bot {
     senderId: number
     key: string | undefined
   } {
+    const prefix = 'Query parse error: '
     const { type, wcId, senderId, key } = urlLib.parse(url, true).query
+
+    if (typeof type !== 'string') {
+      throw new Error(`${prefix}"type" parameter is not a string `)
+    }
+    if (typeof wcId !== 'string') {
+      throw new Error(`${prefix}"wcId" parameter is not a string `)
+    }
+    if (typeof senderId !== 'string') {
+      throw new Error(`${prefix}"senderId" parameter is not a string `)
+    }
+    if (typeof key !== 'string' && typeof key !== 'undefined') {
+      throw new Error(`${prefix}"type" parameter is not a string `)
+    }
     if (!type) {
-      throw new Error('Query parse error: "type" parameter is undefined')
+      throw new Error(`${prefix}"type" parameter is undefined`)
     }
     if (!wcId) {
-      throw new Error('Query parse error: "wcId" parameter is undefined')
+      throw new Error(`${prefix}"wcId" parameter is undefined`)
     }
     if (!senderId) {
-      throw new Error('Query parse error: "senderId" parameter is undefined')
+      throw new Error(`${prefix}"senderId" parameter is undefined`)
     }
 
     return {

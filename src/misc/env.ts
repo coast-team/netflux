@@ -1,4 +1,5 @@
 /* tslint:disable:interface-name */
+import * as CryptoNode from 'crypto'
 
 export interface RTCDataChannelEvent {
   readonly channel: RTCDataChannel
@@ -18,18 +19,14 @@ export interface RTCDataChannel extends EventTarget {
   send(data: string | ArrayBuffer | Blob): void
 }
 
-// Types for NodeJS environment, just for visual understanding
-export type NodeJSHttpServer = any // NodeJS http.Server
-export type NodeJSHttpsServer = any // NodeJS https.Server
-
 export interface IEnvironment {
-  RTCPeerConnection: any
-  RTCIceCandidate: any
-  TextEncoder: any
-  TextDecoder: any
+  RTCPeerConnection: typeof RTCPeerConnection
+  RTCIceCandidate: typeof RTCIceCandidate
+  TextEncoder: typeof TextEncoder
+  TextDecoder: typeof TextDecoder
   WebSocket: typeof WebSocket
   crypto: Crypto
-  cryptoNode: any
+  cryptoNode: typeof CryptoNode
 }
 
 export const env: IEnvironment = {} as IEnvironment

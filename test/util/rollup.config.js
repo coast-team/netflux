@@ -10,6 +10,7 @@ export default {
     format: 'cjs',
   },
   context: 'global',
+  external: ['url', 'crypto', 'uws', 'text-encoding'],
   plugins: [
     typescript({
       include: ['src/**/*.ts', 'test/**/*.ts'],
@@ -22,7 +23,7 @@ export default {
         },
       ],
     }),
-    resolve(),
+    resolve({ preferBuiltins: true }),
     commonjs({
       namedExports: {
         'node_modules/protobufjs/minimal.js': ['Reader', 'Writer', 'util', 'roots'],

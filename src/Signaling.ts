@@ -36,11 +36,11 @@ export class Signaling implements IStream<OutSigMsg, InSigMsg> {
   private wc: WebChannel
   private stateSubject: Subject<SignalingState>
   private ws: WebSocket | undefined
-  private connectionTimeout: number | undefined
+  private connectionTimeout: any
   private streamSubject: Subject<InSigMsg>
 
   // Heartbeat
-  private heartbeatInterval: number | undefined
+  private heartbeatInterval: any
   private missedHeartbeat: number
 
   constructor(wc: WebChannel, url: string) {
