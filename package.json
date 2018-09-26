@@ -70,7 +70,7 @@
     "esdoc": "^1.1.0",
     "esdoc-inject-style-plugin": "^1.0.0",
     "esdoc-standard-plugin": "^1.0.0",
-    "husky": "^0.14.3",
+    "husky": "^1.0.0",
     "jasmine": "^3.2.0",
     "jasmine-core": "^3.2.1",
     "jasmine-spec-reporter": "^4.1.0",
