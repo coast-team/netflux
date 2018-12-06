@@ -106,7 +106,7 @@
     "tslint-config-prettier": "^1.15.0",
     "typescript": "^3.0.3",
     "uws": "10.148.1",
-    "webrtc-adapter": "^6.3.2"
+    "webrtc-adapter": "^7.0.0"
   },
   "commitlint": {
     "extends": [
