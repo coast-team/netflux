@@ -78,7 +78,7 @@ function randNumbers(length: number = 1): number[] | Uint32Array {
     res = []
     const bytes = env.cryptoNode.randomBytes(4 * length)
     for (let i = 0; i < bytes.length; i += 4) {
-      res[res.length] = bytes.readUInt32BE(i, true)
+      res[res.length] = bytes.readUInt32BE(i)
     }
   }
   return res
