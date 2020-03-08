@@ -1,8 +1,8 @@
 import filesize from 'rollup-plugin-filesize'
-import resolve from 'rollup-plugin-node-resolve'
+import resolve from '@rollup/plugin-node-resolve'
 import typescript from 'rollup-plugin-typescript2'
 import cleanup from 'rollup-plugin-cleanup'
-import commonjs from 'rollup-plugin-commonjs'
+import commonjs from '@rollup/plugin-commonjs'
 
 const tsConfigEs2015 = {
   tsconfigOverride: {
@@ -45,8 +45,14 @@ export default [
         sourcemap: true,
       },
     ],
-    external: ['url', 'crypto', 'uws', 'text-encoding'],
-    plugins: [typescript(), resolve(), commonjs(), filesize(filesizeConfig), cleanup()],
+    external: ['url', 'crypto', 'ws', 'text-encoding', 'util'],
+    plugins: [
+      typescript(),
+      resolve({ preferBuiltins: true }),
+      commonjs(),
+      filesize(filesizeConfig),
+      cleanup()
+    ],
   },
   {
     input: 'src/index.browser.ts',
@@ -75,10 +81,10 @@ export default [
       format: 'es',
       sourcemap: true,
     },
-    external: ['url', 'crypto', 'uws', 'text-encoding', 'rxjs', 'rxjs/operators'],
+    external: ['url', 'crypto', 'ws', 'text-encoding', 'uil', 'rxjs', 'rxjs/operators'],
     plugins: [
       typescript(tsConfigDeclaration),
-      resolve(),
+      resolve({ preferBuiltins: true }),
       commonjs(),
       filesize(filesizeConfig),
       cleanup(),

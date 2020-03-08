@@ -1,7 +1,7 @@
 import { BehaviorSubject, Observable, Subject } from 'rxjs'
 
 import { Channel } from './Channel'
-import { env } from './misc/env'
+import { env, WebSocket } from './misc/env'
 import { validateWebSocketURL } from './misc/util'
 import { WebChannel } from './WebChannel'
 

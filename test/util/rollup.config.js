@@ -1,5 +1,5 @@
-import commonjs from 'rollup-plugin-commonjs'
-import resolve from 'rollup-plugin-node-resolve'
+import commonjs from '@rollup/plugin-commonjs'
+import resolve from '@rollup/plugin-node-resolve'
 import replace from 'rollup-plugin-re'
 import typescript from 'rollup-plugin-typescript2'
 
@@ -10,7 +10,7 @@ export default {
     format: 'cjs',
   },
   context: 'global',
-  external: ['url', 'crypto', 'uws', 'text-encoding'],
+  external: ['url', 'crypto', 'ws', 'text-encoding'],
   plugins: [
     typescript({
       include: ['src/**/*.ts', 'test/**/*.ts'],

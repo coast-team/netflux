@@ -1,8 +1,8 @@
-import { Server as HttpServer } from 'http'
+import { Server as HttpServer, IncomingMessage } from 'http'
 import { Server as HttpsServer } from 'https'
 import { AddressInfo } from 'net'
 import * as urlLib from 'url'
-import { Server } from 'uws'
+import * as WebSocket from 'ws'
 
 import { Channel } from './Channel'
 import { WebGroupState } from './index.common.doc'
@@ -10,6 +10,8 @@ import { log } from './misc/util'
 import { IWebChannelOptions, WebChannel, webChannelDefaultOptions } from './WebChannel'
 import { wcs, WebGroup } from './WebChannelFacade'
 import { WebSocketBuilder } from './WebSocketBuilder'
+
+const Server = WebSocket.Server
 
 export interface IBotOptions {
   url?: string
@@ -77,8 +79,8 @@ export class Bot {
       this.onError(err)
     })
 
-    this.webSocketServer.on('connection', (ws: WebSocket) => {
-      const { type, wcId, senderId, key } = this.readURLQuery((ws as any).upgradeReq.url)
+    this.webSocketServer.on('connection', (ws: WebSocket, req: IncomingMessage) => {
+      const { type, wcId, senderId, key } = this.readURLQuery(req.url as string)
       let webSocketBuilder
       let wg = this.webGroups.get(wcId)
       if (type === Channel.WITH_MEMBER && (wg === undefined || wg.state === WebGroupState.LEFT)) {

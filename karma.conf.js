@@ -39,7 +39,7 @@ module.exports = (config) => {
         allowJs: true,
       },
       bundlerOptions: {
-        exclude: ['wrtc', 'text-encoding', 'uws', 'url', 'crypto'],
+        exclude: ['wrtc', 'text-encoding', 'util', 'ws', 'url', 'crypto'],
         noParse: ['webrtc-adapter/out/adapter_no_edge_no_global.js'],
         addNodeGlobals: false,
       },

@@ -10,8 +10,8 @@ declare const require: any
 // Require dependencies
 const http = require('http')
 const Koa = require('koa')
-const Router = require('koa-router')
-const cors = require('kcors')
+const Router = require('@koa/router')
+const cors = require('@koa/cors')
 
 const webGroupOptions = { signalingServer: SIGNALING_URL, autoRejoin: false }
 try {

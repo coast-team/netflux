@@ -1,6 +1,6 @@
 import * as crypto from 'crypto'
 import { TextDecoder, TextEncoder } from 'text-encoding'
-import * as WebSocket from 'uws'
+import * as WebSocket from 'ws'
 
 import { env } from './env'
 

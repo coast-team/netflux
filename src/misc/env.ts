@@ -1,5 +1,8 @@
 /* tslint:disable:interface-name */
 import * as CryptoNode from 'crypto'
+import * as WS from 'ws'
+
+type WebSocket = WS
 
 export interface RTCDataChannelEvent {
   readonly channel: RTCDataChannel
@@ -24,9 +27,11 @@ export interface IEnvironment {
   RTCIceCandidate: typeof RTCIceCandidate
   TextEncoder: typeof TextEncoder
   TextDecoder: typeof TextDecoder
-  WebSocket: typeof WebSocket
+  WebSocket: typeof WS
   crypto: Crypto
   cryptoNode: typeof CryptoNode
 }
+
+export { WebSocket }
 
 export const env: IEnvironment = {} as IEnvironment

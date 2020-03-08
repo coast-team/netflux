@@ -1,6 +1,6 @@
 import { Observable, Subject } from 'rxjs'
 
-import { env } from './misc/env'
+import { env, WebSocket } from './misc/env'
 import { isBrowser, IStream, isWebSocketSupported, log } from './misc/util'
 import { IMessage, Message, signaling as proto } from './proto/index'
 import { WebChannel } from './WebChannel'
@@ -87,27 +87,29 @@ export class Signaling implements IStream<OutSigMsg, InSigMsg> {
   connect(key: string): void {
     if (isWebSocketSupported()) {
       this.setState(SignalingState.CONNECTING)
-      this.ws = new env.WebSocket(this.fullUrl(key))
-      this.ws.binaryType = 'arraybuffer'
+      const ws = new env.WebSocket(this.fullUrl(key))
+      this.ws = ws
+      ws.binaryType = 'arraybuffer'
       this.connectionTimeout = setTimeout(() => {
-        if (this.ws && this.ws.readyState !== this.ws.OPEN) {
+        if (ws && ws.readyState !== ws.OPEN) {
           log.signaling(`Failed to connect to Signaling server ${this.url}: connection timeout`)
           this.close()
         }
       }, 10000)
-      this.ws.onopen = () => {
+      ws.onopen = () => {
         this.setState(SignalingState.OPEN)
         if (this.connectionTimeout) {
           clearTimeout(this.connectionTimeout)
         }
         this.startHeartbeat()
       }
-      this.ws.onerror = (err) => log.signaling(`WebSocket ERROR`, err)
-      this.ws.onclose = (closeEvt) => {
+      ws.onerror = (err) => log.signaling(`WebSocket ERROR`, err)
+      ws.onclose = (closeEvt) => {
         this.clean()
         this.setState(SignalingState.CLOSED)
       }
-      this.ws.onmessage = ({ data }: { data: ArrayBuffer }) => this.handleMessage(data)
+      ws.onmessage = ({ data }) => this.handleMessage(data as ArrayBuffer)
+      // FIXME: data is not necessarly an ArrayBuffer?
     } else {
       throw new Error(
         'Failed to join over Signaling: WebSocket is not supported by your environment'

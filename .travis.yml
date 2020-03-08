@@ -15,7 +15,6 @@ apt:
     - google-chrome-stable
 language: node_js
 node_js:
-  - '8'
   - '10'
 rvm:
   - 2.2.0

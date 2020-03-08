@@ -63,10 +63,10 @@ npm install netflux
 npm install rxjs
 ```
 
-- `uws` and `text-encoding` if you target NodeJS (developing a bot):
+- `ws` and `text-encoding` if you target NodeJS (developing a bot):
 
 ```shell
-npm install uws text-encoding
+npm install ws text-encoding
 ```
 
 **Why peer dependencies?**

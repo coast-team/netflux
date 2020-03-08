@@ -3,6 +3,7 @@ import { isBrowser, log, MIN_ID } from './misc/util'
 import { channel as proto, IMessage, Message } from './proto/index'
 import { UserMessage } from './service/UserMessage'
 import { WebChannel } from './WebChannel'
+import { WebSocket } from './misc/env'
 
 export interface IChannelInitData {
   members: number[]
@@ -22,8 +23,8 @@ export class Channel {
     return type === Channel.WITH_INTERNAL
       ? Channel.WITH_INTERNAL
       : type === Channel.WITH_JOINING
-        ? Channel.WITH_MEMBER
-        : Channel.WITH_JOINING
+      ? Channel.WITH_MEMBER
+      : Channel.WITH_JOINING
   }
 
   public id: number
@@ -191,9 +192,7 @@ export class Channel {
         break
       default:
         log.channel(
-          `Unknown message type: "${
-            msg.type
-          }". This message should never be shown: something went wrong`
+          `Unknown message type: "${msg.type}". This message should never be shown: something went wrong`
         )
     }
   }
