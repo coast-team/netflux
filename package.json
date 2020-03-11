@@ -93,7 +93,7 @@
     "travis-deploy-once": "^5.0.7",
     "tslib": "^1.11.1",
     "typescript": "^3.8.3",
-    "webrtc-adapter": "^6.3.2",
+    "webrtc-adapter": "^7.5.0",
     "ws": "^7.2.2"
   },
   "optionalDependencies": {
