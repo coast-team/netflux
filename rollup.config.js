@@ -45,7 +45,7 @@ export default [
         sourcemap: true,
       },
     ],
-    external: ['url', 'crypto', 'ws', 'text-encoding', 'util'],
+    external: ['url', 'crypto', 'ws', 'util'],
     plugins: [
       typescript(),
       resolve({ preferBuiltins: true }),
@@ -81,7 +81,7 @@ export default [
       format: 'es',
       sourcemap: true,
     },
-    external: ['url', 'crypto', 'ws', 'text-encoding', 'uil', 'rxjs', 'rxjs/operators'],
+    external: ['url', 'crypto', 'ws', 'uil', 'rxjs', 'rxjs/operators'],
     plugins: [
       typescript(tsConfigDeclaration),
       resolve({ preferBuiltins: true }),

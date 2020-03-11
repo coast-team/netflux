@@ -10,7 +10,7 @@ export default {
     format: 'cjs',
   },
   context: 'global',
-  external: ['url', 'crypto', 'ws', 'text-encoding'],
+  external: ['url', 'crypto', 'ws'],
   plugins: [
     typescript({
       include: ['src/**/*.ts', 'test/**/*.ts'],

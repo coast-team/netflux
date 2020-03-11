@@ -1,6 +1,6 @@
 import * as crypto from 'crypto'
-import { TextDecoder, TextEncoder } from 'text-encoding'
 import * as WebSocket from 'ws'
+const util = require('util')
 
 import { env } from './env'
 
@@ -13,6 +13,6 @@ import { env } from './env'
 //   console.warn(err.message)
 // }
 env.WebSocket = WebSocket as any
-env.TextEncoder = TextEncoder
-env.TextDecoder = TextDecoder
+env.TextEncoder = util.TextEncoder
+env.TextDecoder = util.TextDecoder
 env.cryptoNode = crypto
