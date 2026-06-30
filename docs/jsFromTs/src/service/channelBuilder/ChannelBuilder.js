@@ -133,7 +133,7 @@ export class ChannelBuilder extends Service {
                     if (this.isNagotiable(initiator, passive)) {
                         this.proceedNegotiation(streamId, initiator, passive, passive.id === senderId).catch((err) => {
                             this.rejectConnection(streamId, senderId, err);
-                            log.channelBuilder(`NEGOTIATION with ${senderId} FIALED: `, { passive, initiator });
+                            log.channelBuilder(`NEGOTIATION with ${senderId} FAILED: `, { passive, initiator });
                             this.allStreams.sendOver(streamId, { negotiation: { initiator, passive } }, senderId, recipientId);
                         });
                     }
